@@ -18,6 +18,7 @@ o3djs.require('o3djs.pack');
 o3djs.require('o3djs.arcball');
 o3djs.require('o3djs.event');
 o3djs.require('o3djs.scene');
+o3djs.require('o3djs.primitives');
 
 // Events
 // Run the init() function once the page has finished loading.
@@ -45,6 +46,85 @@ var g_camera = {
 };
 
 
+function createMaterial(baseColor) {
+  // Create a new, empty Material object.
+  return o3djs.material.createBasicMaterial(g_pack, viewInfo, baseColor);
+}
+
+function createSphere(pack,   material,
+                                         radius,
+                                         subdivisionsAxis,
+                                         subdivisionsHeight,
+                                         opt_matrix) {
+  var vertexInfo = o3djs.primitives.createSphereVertices(
+      radius,
+      subdivisionsAxis,
+      subdivisionsHeight,
+      opt_matrix);
+
+  return vertexInfo.createShape(pack, material);
+}
+
+function sphere(radius,subdivisionsAxis,subdivisionsHeight,opt_matrix) {
+  if (subdivisionsAxis <= 0 || subdivisionsHeight <= 0) {
+    throw Error('subdivisionAxis and subdivisionHeight must be > 0');
+  }
+
+  // We are going to generate our sphere by iterating through its
+  // spherical coordinates and generating 2 triangles for each quad on a
+  // ring of the sphere.
+
+  var vertexInfo = o3djs.primitives.createVertexInfo();
+  var positionStream = vertexInfo.addStream(
+      3, o3djs.base.o3d.Stream.POSITION);
+  var normalStream = vertexInfo.addStream(
+      3, o3djs.base.o3d.Stream.NORMAL);
+  var texCoordStream = vertexInfo.addStream(
+      2, o3djs.base.o3d.Stream.TEXCOORD, 0);
+
+  // Generate the individual vertices in our vertex buffer.
+  for (var y = 0; y <= subdivisionsHeight; y++) {
+    for (var x = 0; x <= subdivisionsAxis; x++) {
+      // Generate a vertex based on its spherical coordinates
+      var u = x / subdivisionsAxis;
+      var v = y / subdivisionsHeight;
+      var theta = 2 * Math.PI * u;
+      var phi = Math.PI * v;
+      var sinTheta = Math.sin(theta);
+      var cosTheta = Math.cos(theta);
+      var sinPhi = Math.sin(phi);
+      var cosPhi = Math.cos(phi);
+      var ux = cosTheta * sinPhi;
+      var uy = cosPhi;
+      var uz = sinTheta * sinPhi;
+      positionStream.addElement(radius * ux, radius * uy, radius * uz);
+      normalStream.addElement(ux, uy, uz);
+      texCoordStream.addElement(1 - u, 1 - v);
+    }
+  }
+  var numVertsAround = subdivisionsAxis + 1;
+
+  for (var x = 0; x < subdivisionsAxis; x++) {
+    for (var y = 0; y < subdivisionsHeight; y++) {
+      // Make triangle 1 of quad.
+      vertexInfo.addTriangle(
+          (y + 0) * numVertsAround + x,
+          (y + 0) * numVertsAround + x + 1,
+          (y + 1) * numVertsAround + x);
+
+      // Make triangle 2 of quad.
+      vertexInfo.addTriangle(
+          (y + 1) * numVertsAround + x,
+          (y + 0) * numVertsAround + x + 1,
+          (y + 1) * numVertsAround + x + 1);
+    }
+  }
+
+  if (opt_matrix) {
+    vertexInfo.reorient(opt_matrix);
+  }
+  return vertexInfo;
+}
 
 function trimAll(sString) 
 { 
@@ -59,7 +139,7 @@ function trimAll(sString)
 return sString; 
 } 
 
-function createMaterial(){
+function createMaterial2(){
   // Create an Effect object and initialize it using the shaders from the
   // text area.
   var effect = g_pack.createObject('Effect');
@@ -89,8 +169,6 @@ function createMaterial(){
 }
 
 function createMeshFromXML(file) {
-
-	var material=createMaterial();
 
 	if (window.XMLHttpRequest)
 	{// code for IE7+, Firefox, Chrome, Opera, Safari
@@ -200,7 +278,7 @@ function createMeshFromXML(file) {
   var streamBank = g_pack.createObject('StreamBank');
 
   // Assign the material that was passed in to the primitive.
-  thePrimitive.material = material;
+  thePrimitive.material = createMaterial2();
 
   // Assign the Primitive to the Shape.
   thePrimitive.owner = theShape;
@@ -235,7 +313,15 @@ function createMeshFromXML(file) {
   // Associate the triangle indices Buffer with the primitive.
   thePrimitive.indexBuffer = indexBuffer;
 
-  return theShape;
+//  return theShape;
+//  return (createSphere(g_pack,createMaterial([0,0,1,0]),1,20,20,0));
+  return (createSphere(
+      g_pack,
+      createMaterial([1,0,0,1]),
+      1.0,   // Radius of the sphere.
+      30,    // Number of meridians.
+      20))  // Number of parallels.
+
 }
 
 function updateClient() {
@@ -353,7 +439,6 @@ function initStep2(clientElements) {
   g_aball = o3djs.arcball.create(100, 100);
   setClientSize();
 
-
   // Create the Shape for the mesh
   var Shape = createMeshFromXML("skull.xml");
 
@@ -368,8 +453,6 @@ function initStep2(clientElements) {
   o3djs.event.addEventListener(o3dElement, 'mousemove', drag);
   o3djs.event.addEventListener(o3dElement, 'mouseup', stopDragging);
   o3djs.event.addEventListener(o3dElement, 'wheel', scrollMe);
-
-
 
   // Set our render callback for animation.
   // This sets a function to be executed every time a frame is rendered.
@@ -395,7 +478,7 @@ This example shows a VTK mesh exported to ASCII xml
 
 
 <!-- Start of O3D plugin -->
-<div id="o3d" style="width: 100%; height: 100%;"></div>
+<div id="o3d" style="width: 100%; height: 80%;"></div>
 <!-- End of O3D plugin -->
 
 <!-- Don't render the textarea -->
@@ -421,8 +504,8 @@ This example shows a VTK mesh exported to ASCII xml
     gl_Position = worldViewProjection * position;
     vec4 ambientLight = vec4(0.5, 0.5, 0.5, 1);
 //    vLighting = vec4(0,0,0,0);//ambientLight + ambientLight*gl_Position[1];
-    vLighting = vec4(1,1,1,1)*gl_Position[2]*0.01;
-//    vLighting = vec4(1,1,1,1)*normal[2]*0.01;
+//    vLighting = vec4(1,1,1,1)*gl_Position[2]*0.01;
+    vLighting = vec4(1,1,1,1)*normal[2]*0.01;
       }
 
 
