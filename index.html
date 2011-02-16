@@ -109,7 +109,6 @@ function createfromXML(file,pack,color) {
 					{
 						index2=0;
 						positionStream.addElement(Coord[0],Coord[1],Coord[2]);
-						normalStream.addElement(1, 0, 0);
 					}
 					
 				}
@@ -123,7 +122,7 @@ function createfromXML(file,pack,color) {
 
 //get triangles
 	var polys=piece.getElementsByTagName("Polys")[0];
-	for (i=0;i<polys.childNodes.length;i++)
+	for (var i=0;i<polys.childNodes.length;i++)
 	{
 		var child=polys.childNodes[i];
 		if ((child.tagName == "DataArray") && (child.getAttribute("Name")=="connectivity"))
@@ -141,11 +140,10 @@ function createfromXML(file,pack,color) {
 			var reg=new RegExp("[ ,;]+", "g");
 			var connectivityDataArray=trimAll(connectivityData).split(reg)
 
-			var j=0;
 			var index=0;
 			var index2=0;
 			var connect=[0,0,0];
-			for (j=0;j<connectivityDataArray.length;j++)
+			for (var j=0;j<connectivityDataArray.length;j++)
 			{
 				var value=parseInt(connectivityDataArray[j]);
 				if (!isNaN(value))
@@ -165,6 +163,36 @@ function createfromXML(file,pack,color) {
 			  alert ("Error reading "+file+" : \n Number of read indices : "+index+
 			  "\n Number of wanted connectivities : "+ wantedSize);
 		}
+	}
+
+// compute normals
+	for (var i=0;i<numberOfPoints;i++)
+		normalStream.addElement(0,0,0);
+
+	for (var i=0;i<numberOfPolys;i++)
+	{
+		var triangle=vertexInfo.getTriangle(i);
+		var positions = [];
+		for (var ii = 0; ii < 3; ++ii)
+		{
+			positions[ii] = positionStream.getElementVector(triangle[ii]);
+		}
+
+		var v0 = o3djs.math.subVector(positions[1],positions[0]);
+		var v1 = o3djs.math.subVector(positions[2],positions[1]);
+		var normal=o3djs.math.normalize(o3djs.math.cross(v0, v1));
+		for (var iii=0;iii<3;iii++)
+		{
+			var normal2=normalStream.getElementVector(triangle[iii]);
+			normal2+=normal;
+			normalStream.setElementVector(triangle[iii],normal);
+		}
+	}
+
+	for (var i=0;i<numberOfPoints;i++)
+	{
+		var normal=normalStream.getElementVector(i);
+		normalStream.setElementVector(i,o3djs.math.normalize(normal));
 	}
 	return vertexInfo.createShape(pack, material);
 }
