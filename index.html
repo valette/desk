@@ -124,6 +124,7 @@ function createfromXML(file,pack,color) {
 		}
 	}
 
+//get triangles
 	var polys=piece.getElementsByTagName("Polys")[0];
 	for (i=0;i<polys.childNodes.length;i++)
 	{
@@ -191,7 +192,6 @@ function updateClient() {
     g_client.render();
   }
 }
-
 
 function renderCallback(renderEvent) {
   resize();
@@ -336,57 +336,10 @@ function uninit() {
 This example shows a VTK mesh exported to ASCII xml
 <br/>
 
-
 <!-- Start of O3D plugin -->
 <div id="o3d" style="width: 100%; height: 80%;"></div>
 <!-- End of O3D plugin -->
 
-<!-- Don't render the textarea -->
-<div style="display:none">
-<!-- Start of effect -->
-<textarea id="vshader">
-  // World View Projection matrix that will transform the input vertices
-  // to screen space.
-  uniform mat4 worldViewProjection;
-
-  // input parameters for our vertex shader
-  attribute vec4 position;
-  attribute vec3 normal;
-
-      varying vec4 vLighting;
-
-  /**
-   * The vertex shader simply transforms the input vertices to screen space.
-   */
-  void main() {
-    // Multiply the vertex positions by the worldViewProjection matrix to
-    // transform them to screen space.
-    gl_Position = worldViewProjection * position;
-    vec4 ambientLight = vec4(0.5, 0.5, 0.5, 1);
-//    vLighting = vec4(0,0,0,0);//ambientLight + ambientLight*gl_Position[1];
-//    vLighting = vec4(1,1,1,1)*gl_Position[2]*0.01;
-    vLighting = vec4(1,1,1,1)*normal[2]*0.01;
-      }
-
-
-
-</textarea>
-<textarea id="pshader">
-  // Color to draw with.
-  uniform vec4 color;
-  varying vec4 vLighting;
-
-  /**
-   * This pixel shader just returns the color red.
-   */
-  void main() {
-    gl_FragColor = color*vLighting;
-  }
-
-  // Here we tell our effect file *which* functions are
-  // our vertex and pixel shaders.
-</textarea>
-<!-- End of effect -->
 </div>
 </body>
 </html>
