@@ -1,0 +1,449 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+  "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>
+VTK Mesh display
+</title>
+<script type="text/javascript" src="o3d-webgl/base.js"></script>
+<script type="text/javascript" src="o3djs/base.js"></script>
+<script type="text/javascript" id="o3dscript">
+o3djs.base.o3d = o3d;
+o3djs.require('o3djs.webgl');
+o3djs.require('o3djs.math');
+o3djs.require('o3djs.quaternions');
+o3djs.require('o3djs.rendergraph');
+o3djs.require('o3djs.pack');
+o3djs.require('o3djs.arcball');
+o3djs.require('o3djs.event');
+o3djs.require('o3djs.scene');
+
+// Events
+// Run the init() function once the page has finished loading.
+// Run the uninit() function when the page has is unloaded.
+window.onload = init;
+window.onunload = uninit;
+
+// global variables
+var g_o3d;
+var g_math;
+var g_pack;
+var g_client;
+
+var g_thisRot;
+var g_lastRot;
+
+var g_o3dWidth = -1;
+var g_o3dHeight = -1;
+
+var g_aball;
+var viewInfo;
+var g_camera = {
+ eye: [0, 0, 20],
+ target: [0, 0, 0]
+};
+
+
+
+function trimAll(sString) 
+{ 
+	while (sString.substring(0,1) == ' ') 
+	{ 
+	sString = sString.substring(1, sString.length); 
+	} 
+	while (sString.substring(sString.length-1, sString.length) == ' ') 
+	{ 
+	sString = sString.substring(0,sString.length-1); 
+	} 
+return sString; 
+} 
+
+function createMaterial(){
+  // Create an Effect object and initialize it using the shaders from the
+  // text area.
+  var effect = g_pack.createObject('Effect');
+  var vertexShaderString = document.getElementById('vshader').value;
+  var pixelShaderString = document.getElementById('pshader').value;
+  effect.loadVertexShaderFromString(vertexShaderString);
+  effect.loadPixelShaderFromString(pixelShaderString);
+
+  // Create a Material for the mesh.
+  var Material = g_pack.createObject('Material');
+
+  // Set the material's drawList.
+  Material.drawList = viewInfo.performanceDrawList;
+
+  // Apply our effect to this material. The effect tells the 3D hardware
+  // which shaders to use.
+  Material.effect = effect;
+
+  // Create an O3D Param on the material for every uniform used by the
+  // shader.
+  effect.createUniformParameters(Material);
+
+  // Get the color parameter from the material and set its value to red.
+  var ColorParam = Material.getParam('color');
+  ColorParam.value = [1, 0, 0, 1];
+  return (Material);
+}
+
+function createMeshFromXML(file) {
+
+	var material=createMaterial();
+
+	if (window.XMLHttpRequest)
+	{// code for IE7+, Firefox, Chrome, Opera, Safari
+		var xmlhttp=new XMLHttpRequest();
+	}
+	else
+	{// code for IE6, IE5
+		var xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+	}
+	xmlhttp.open("GET",file,false);
+	xmlhttp.send();
+	var xmlDoc=xmlhttp.responseXML;
+
+	var xmlString = (new XMLSerializer()).serializeToString(xmlDoc);
+
+// get points
+	var piece=xmlDoc.getElementsByTagName("Piece")[0];
+	var numberOfPoints=parseInt(piece.getAttribute("NumberOfPoints"));
+	var numberOfPolys=parseInt(piece.getAttribute("NumberOfPolys"));
+	var points=piece.getElementsByTagName("Points")[0];
+
+	var pointsCoordinates = new Array();
+	var connectivity = new Array();
+
+	var i=0;
+	for (i=0;i<points.childNodes.length;i++)
+	{
+		var child=points.childNodes[i];
+		if ((child.tagName == "DataArray") && (child.getAttribute("Name")=="Points"))
+		{
+			var numberOfComponents=parseInt(child.getAttribute("NumberOfComponents"));
+			var pointsData;
+			// IE supports the text property
+			if (window.ActiveXObject) {
+				pointsData = child.text;
+			}
+			// Other browsers use textContent
+			else {
+				pointsData = child.textContent;
+			}
+			var reg=new RegExp("[ ,;]+", "g");
+			var pointsDataArray=trimAll(pointsData).split(reg)
+
+			var j=0;
+			var index=0;
+			for (j=0;j<pointsDataArray.length;j++)
+			{
+				var value=parseFloat(pointsDataArray[j]);
+				if (!isNaN(value))
+				{
+					pointsCoordinates[index]=value;
+					index++;
+				}
+			}
+			var wantedSize=numberOfComponents*numberOfPoints;
+			if (index!=wantedSize)
+			  alert ("Error reading "+file+" : \n Number of read coordinates : "+index+
+			  "\n Number of wanted coordinates : "+ wantedSize);
+		}
+	}
+
+	var polys=piece.getElementsByTagName("Polys")[0];
+	for (i=0;i<polys.childNodes.length;i++)
+	{
+		var child=polys.childNodes[i];
+		if ((child.tagName == "DataArray") && (child.getAttribute("Name")=="connectivity"))
+		{
+			var connectivityData
+			// IE supports the text property
+			if (window.ActiveXObject) {
+				connectivityData = child.text
+			}
+			// Other browsers use textContent
+			else {
+				connectivityData = child.textContent;
+			}
+
+			var reg=new RegExp("[ ,;]+", "g");
+			var connectivityDataArray=trimAll(connectivityData).split(reg)
+
+			var j=0;
+			var index=0;
+			for (j=0;j<connectivityDataArray.length;j++)
+			{
+				var value=parseInt(connectivityDataArray[j]);
+				if (!isNaN(value))
+				{
+					connectivity[index]=value;
+					index++;
+				}
+			}
+			var wantedSize=3*numberOfPolys;
+			if (index!=wantedSize)
+			  alert ("Error reading "+file+" : \n Number of read indices : "+index+
+			  "\n Number of wanted connectivities : "+ wantedSize);
+		}
+	}
+
+  // Create a Shape object for the mesh.
+  var theShape = g_pack.createObject('Shape');
+
+  // Create the Primitive that will contain the geometry data for
+  // the object.
+  var thePrimitive = g_pack.createObject('Primitive');
+
+  // Create a StreamBank to hold the streams of vertex data.
+  var streamBank = g_pack.createObject('StreamBank');
+
+  // Assign the material that was passed in to the primitive.
+  thePrimitive.material = material;
+
+  // Assign the Primitive to the Shape.
+  thePrimitive.owner = theShape;
+
+  // Assign the StreamBank to the Primitive.
+  thePrimitive.streamBank = streamBank;
+
+
+  thePrimitive.primitiveType = g_o3d.Primitive.TRIANGLELIST;
+  thePrimitive.numberPrimitives = numberOfPolys;
+  thePrimitive.numberVertices = numberOfPoints;
+
+
+  thePrimitive.createDrawElement(g_pack, null);
+
+  // Create buffers containing the vertex data.
+  var positionsBuffer = g_pack.createObject('VertexBuffer');
+  var positionsField = positionsBuffer.createField('FloatField', 3);
+  positionsBuffer.set(pointsCoordinates);
+
+  var indexBuffer = g_pack.createObject('IndexBuffer');
+  indexBuffer.set(connectivity);
+
+  // Associate the positions Buffer with the StreamBank.
+  streamBank.setVertexStream(
+      g_o3d.Stream.POSITION, // semantic: This stream stores vertex positions
+      0,                     // semantic index: First (and only) position stream
+      positionsField,        // field: the field this stream uses.
+      0);                    // start_index: How many elements to skip in the
+                             //     field.
+
+  // Associate the triangle indices Buffer with the primitive.
+  thePrimitive.indexBuffer = indexBuffer;
+
+  return theShape;
+}
+
+function updateClient() {
+  // If we are in RENDERMODE_ON_DEMAND mode then set the render mode again
+  // which will cause the client re-render the display.
+  if (g_client.renderMode == g_o3d.Client.RENDERMODE_ON_DEMAND) {
+    g_client.render();
+  }
+}
+
+
+function renderCallback(renderEvent) {
+  resize();
+    g_client.renderMode = g_o3d.Client.RENDERMODE_ON_DEMAND;
+}
+
+/**
+ * Creates the client area.
+ */
+function init() {
+  o3djs.webgl.makeClients(initStep2);
+}
+
+function setClientSize() {
+  var newWidth  = g_client.width;
+  var newHeight = g_client.height;
+
+  if (newWidth != g_o3dWidth || newHeight != g_o3dHeight) {
+    g_o3dWidth = newWidth;
+    g_o3dHeight = newHeight;
+
+    // Set the perspective projection matrix
+    viewInfo.drawContext.projection = g_math.matrix4.perspective(
+      g_math.degToRad(45), g_o3dWidth / g_o3dHeight, 0.1, 100);
+
+    // Sets a new area size for arcball.
+    g_aball.setAreaSize(g_o3dWidth, g_o3dHeight);
+
+    //o3djs.dump.dump("areaWidth: " + g_o3dWidth + "\n");
+    //o3djs.dump.dump("areaHeight: " + g_o3dHeight + "\n");
+  }
+}
+
+function resize() {
+  setClientSize();
+}
+
+var g_dragging = false;
+
+function startDragging(e) {
+  g_lastRot = g_thisRot;
+  g_aball.click([e.x, e.y]);
+  g_dragging = true;
+}
+
+function drag(e) {
+  if (g_dragging) {
+    var rotationQuat = g_aball.drag([e.x, e.y]);
+    var rot_mat = g_quaternions.quaternionToRotation(rotationQuat);
+    g_thisRot = g_math.matrix4.mul(g_lastRot, rot_mat);
+    var m = g_client.root.localMatrix;
+    g_math.matrix4.setUpper3x3(m, g_thisRot);
+    g_client.root.localMatrix = m;
+    updateClient();
+  }
+}
+
+function stopDragging(e) {
+  g_dragging = false;
+}
+
+function scrollMe(e) {
+  if (e.deltaY) {
+    g_camera.eye =
+        g_math.mulScalarVector((-e.deltaY < 0 ? 11 : 13) / 12, g_camera.eye);
+    viewInfo.drawContext.view = g_math.matrix4.lookAt(g_camera.eye,
+                                                        g_camera.target,
+                                                        [0, 1, 0]);
+    updateClient();
+  }
+}
+/**
+ * Initializes O3D, creates the object and sets up the transform and
+ * render graphs.
+ * @param {Array} clientElements Array of o3d object elements.
+ */
+function initStep2(clientElements) {
+  // Initializes global variables and libraries.
+  var o3dElement = clientElements[0];
+  g_client = o3dElement.client;
+  g_o3d = o3dElement.o3d;
+  g_math = o3djs.math;
+
+  g_quaternions = o3djs.quaternions;
+  g_lastRot = g_math.matrix4.identity();
+  g_thisRot = g_math.matrix4.identity();
+
+  // Create a pack to manage the objects created.
+  g_pack = g_client.createPack();
+
+  // Create the render graph for a view.
+  viewInfo = o3djs.rendergraph.createBasicView(
+      g_pack,
+      g_client.root,
+      g_client.renderGraphRoot,
+      [1, 1, 1, 1]);
+
+  // Set up our view transformation to look towards the world origin where the
+  // object is located.
+  viewInfo.drawContext.view = g_math.matrix4.lookAt(
+  g_camera.eye,
+  g_camera.target,
+  [0, 1, 0]);  // up
+
+  g_aball = o3djs.arcball.create(100, 100);
+  setClientSize();
+
+
+  // Create the Shape for the mesh
+  var Shape = createMeshFromXML("skull.xml");
+
+  // Create a new transform and parent the Shape under it.
+  var Transform = g_pack.createObject('Transform');
+  Transform.addShape(Shape);
+
+  // Parent the object's transform to the client root.
+  Transform.parent = g_client.root;
+
+  o3djs.event.addEventListener(o3dElement, 'mousedown', startDragging);
+  o3djs.event.addEventListener(o3dElement, 'mousemove', drag);
+  o3djs.event.addEventListener(o3dElement, 'mouseup', stopDragging);
+  o3djs.event.addEventListener(o3dElement, 'wheel', scrollMe);
+
+
+
+  // Set our render callback for animation.
+  // This sets a function to be executed every time a frame is rendered.
+  g_client.setRenderCallback(renderCallback);
+  window.onresize = updateClient;
+}
+
+/**
+ * Removes any callbacks so they don't get called after the page has unloaded.
+ */
+function uninit() {
+  if (g_client) {
+    g_client.cleanup();
+  }
+}
+
+</script>
+</head>
+<body>
+<h1>Mesh Display</h1>
+This example shows a VTK mesh exported to ASCII xml
+<br/>
+
+
+<!-- Start of O3D plugin -->
+<div id="o3d" style="width: 100%; height: 100%;"></div>
+<!-- End of O3D plugin -->
+
+<!-- Don't render the textarea -->
+<div style="display:none">
+<!-- Start of effect -->
+<textarea id="vshader">
+  // World View Projection matrix that will transform the input vertices
+  // to screen space.
+  uniform mat4 worldViewProjection;
+
+  // input parameters for our vertex shader
+  attribute vec4 position;
+  attribute vec3 normal;
+
+      varying vec4 vLighting;
+
+  /**
+   * The vertex shader simply transforms the input vertices to screen space.
+   */
+  void main() {
+    // Multiply the vertex positions by the worldViewProjection matrix to
+    // transform them to screen space.
+    gl_Position = worldViewProjection * position;
+    vec4 ambientLight = vec4(0.5, 0.5, 0.5, 1);
+//    vLighting = vec4(0,0,0,0);//ambientLight + ambientLight*gl_Position[1];
+    vLighting = vec4(1,1,1,1)*gl_Position[2]*0.01;
+//    vLighting = vec4(1,1,1,1)*normal[2]*0.01;
+      }
+
+
+
+</textarea>
+<textarea id="pshader">
+  // Color to draw with.
+  uniform vec4 color;
+  varying vec4 vLighting;
+
+  /**
+   * This pixel shader just returns the color red.
+   */
+  void main() {
+    gl_FragColor = color*vLighting;
+  }
+
+  // Here we tell our effect file *which* functions are
+  // our vertex and pixel shaders.
+</textarea>
+<!-- End of effect -->
+</div>
+</body>
+</html>
