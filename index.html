@@ -17,7 +17,7 @@ o3djs.require('o3djs.rendergraph');
 o3djs.require('o3djs.pack');
 o3djs.require('o3djs.arcball');
 o3djs.require('o3djs.event');
-o3djs.require('o3djs.scene');
+//o3djs.require('o3djs.scene');
 o3djs.require('o3djs.primitives');
 
 // Events
@@ -73,9 +73,6 @@ function createfromXML(file,pack,color) {
 	var numberOfPoints=parseInt(piece.getAttribute("NumberOfPoints"));
 	var numberOfPolys=parseInt(piece.getAttribute("NumberOfPolys"));
 	var points=piece.getElementsByTagName("Points")[0];
-
-	var pointsCoordinates = new Array();
-	var connectivity = new Array();
 
 	var i=0;
 	for (i=0;i<points.childNodes.length;i++)
