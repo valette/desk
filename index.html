@@ -39,136 +39,20 @@ var g_o3dWidth = -1;
 var g_o3dHeight = -1;
 
 var g_aball;
-var viewInfo;
+var g_viewInfo;
 var g_camera = {
  eye: [0, 0, 20],
  target: [0, 0, 0]
 };
 
+function createfromXML(file,pack,color) {
+	var material=o3djs.material.createBasicMaterial(pack, g_viewInfo, color);
 
-function createMaterial(baseColor) {
-  // Create a new, empty Material object.
-  return o3djs.material.createBasicMaterial(g_pack, viewInfo, baseColor);
-}
-
-function createSphere(pack,   material,
-                                         radius,
-                                         subdivisionsAxis,
-                                         subdivisionsHeight,
-                                         opt_matrix) {
-  var vertexInfo = o3djs.primitives.createSphereVertices(
-      radius,
-      subdivisionsAxis,
-      subdivisionsHeight,
-      opt_matrix);
-
-  return vertexInfo.createShape(pack, material);
-}
-
-function sphere(radius,subdivisionsAxis,subdivisionsHeight,opt_matrix) {
-  if (subdivisionsAxis <= 0 || subdivisionsHeight <= 0) {
-    throw Error('subdivisionAxis and subdivisionHeight must be > 0');
-  }
-
-  // We are going to generate our sphere by iterating through its
-  // spherical coordinates and generating 2 triangles for each quad on a
-  // ring of the sphere.
-
-  var vertexInfo = o3djs.primitives.createVertexInfo();
-  var positionStream = vertexInfo.addStream(
-      3, o3djs.base.o3d.Stream.POSITION);
-  var normalStream = vertexInfo.addStream(
-      3, o3djs.base.o3d.Stream.NORMAL);
-  var texCoordStream = vertexInfo.addStream(
-      2, o3djs.base.o3d.Stream.TEXCOORD, 0);
-
-  // Generate the individual vertices in our vertex buffer.
-  for (var y = 0; y <= subdivisionsHeight; y++) {
-    for (var x = 0; x <= subdivisionsAxis; x++) {
-      // Generate a vertex based on its spherical coordinates
-      var u = x / subdivisionsAxis;
-      var v = y / subdivisionsHeight;
-      var theta = 2 * Math.PI * u;
-      var phi = Math.PI * v;
-      var sinTheta = Math.sin(theta);
-      var cosTheta = Math.cos(theta);
-      var sinPhi = Math.sin(phi);
-      var cosPhi = Math.cos(phi);
-      var ux = cosTheta * sinPhi;
-      var uy = cosPhi;
-      var uz = sinTheta * sinPhi;
-      positionStream.addElement(radius * ux, radius * uy, radius * uz);
-      normalStream.addElement(ux, uy, uz);
-      texCoordStream.addElement(1 - u, 1 - v);
-    }
-  }
-  var numVertsAround = subdivisionsAxis + 1;
-
-  for (var x = 0; x < subdivisionsAxis; x++) {
-    for (var y = 0; y < subdivisionsHeight; y++) {
-      // Make triangle 1 of quad.
-      vertexInfo.addTriangle(
-          (y + 0) * numVertsAround + x,
-          (y + 0) * numVertsAround + x + 1,
-          (y + 1) * numVertsAround + x);
-
-      // Make triangle 2 of quad.
-      vertexInfo.addTriangle(
-          (y + 1) * numVertsAround + x,
-          (y + 0) * numVertsAround + x + 1,
-          (y + 1) * numVertsAround + x + 1);
-    }
-  }
-
-  if (opt_matrix) {
-    vertexInfo.reorient(opt_matrix);
-  }
-  return vertexInfo;
-}
-
-function trimAll(sString) 
-{ 
-	while (sString.substring(0,1) == ' ') 
-	{ 
-	sString = sString.substring(1, sString.length); 
-	} 
-	while (sString.substring(sString.length-1, sString.length) == ' ') 
-	{ 
-	sString = sString.substring(0,sString.length-1); 
-	} 
-return sString; 
-} 
-
-function createMaterial2(){
-  // Create an Effect object and initialize it using the shaders from the
-  // text area.
-  var effect = g_pack.createObject('Effect');
-  var vertexShaderString = document.getElementById('vshader').value;
-  var pixelShaderString = document.getElementById('pshader').value;
-  effect.loadVertexShaderFromString(vertexShaderString);
-  effect.loadPixelShaderFromString(pixelShaderString);
-
-  // Create a Material for the mesh.
-  var Material = g_pack.createObject('Material');
-
-  // Set the material's drawList.
-  Material.drawList = viewInfo.performanceDrawList;
-
-  // Apply our effect to this material. The effect tells the 3D hardware
-  // which shaders to use.
-  Material.effect = effect;
-
-  // Create an O3D Param on the material for every uniform used by the
-  // shader.
-  effect.createUniformParameters(Material);
-
-  // Get the color parameter from the material and set its value to red.
-  var ColorParam = Material.getParam('color');
-  ColorParam.value = [1, 0, 0, 1];
-  return (Material);
-}
-
-function createMeshFromXML(file) {
+	var vertexInfo = o3djs.primitives.createVertexInfo();
+	var positionStream = vertexInfo.addStream(
+		3, o3djs.base.o3d.Stream.POSITION);
+	var normalStream = vertexInfo.addStream(
+		3, o3djs.base.o3d.Stream.NORMAL);
 
 	if (window.XMLHttpRequest)
 	{// code for IE7+, Firefox, Chrome, Opera, Safari
@@ -214,13 +98,23 @@ function createMeshFromXML(file) {
 
 			var j=0;
 			var index=0;
+			var index2=0;
+			var Coord=[0,0,0];
 			for (j=0;j<pointsDataArray.length;j++)
 			{
 				var value=parseFloat(pointsDataArray[j]);
 				if (!isNaN(value))
 				{
-					pointsCoordinates[index]=value;
+					Coord[index2]=value;
 					index++;
+					index2++;
+					if (index2==3)
+					{
+						index2=0;
+						positionStream.addElement(Coord[0],Coord[1],Coord[2]);
+						normalStream.addElement(1, 0, 0);
+					}
+					
 				}
 			}
 			var wantedSize=numberOfComponents*numberOfPoints;
@@ -251,13 +145,21 @@ function createMeshFromXML(file) {
 
 			var j=0;
 			var index=0;
+			var index2=0;
+			var connect=[0,0,0];
 			for (j=0;j<connectivityDataArray.length;j++)
 			{
 				var value=parseInt(connectivityDataArray[j]);
 				if (!isNaN(value))
 				{
-					connectivity[index]=value;
+					connect[index2]=value;
 					index++;
+					index2++;
+					if (index2==3)
+					{
+						index2=0;
+						vertexInfo.addTriangle(connect[0],connect[1],connect[2]);						
+					}
 				}
 			}
 			var wantedSize=3*numberOfPolys;
@@ -266,62 +168,20 @@ function createMeshFromXML(file) {
 			  "\n Number of wanted connectivities : "+ wantedSize);
 		}
 	}
+	return vertexInfo.createShape(pack, material);
+}
 
-  // Create a Shape object for the mesh.
-  var theShape = g_pack.createObject('Shape');
-
-  // Create the Primitive that will contain the geometry data for
-  // the object.
-  var thePrimitive = g_pack.createObject('Primitive');
-
-  // Create a StreamBank to hold the streams of vertex data.
-  var streamBank = g_pack.createObject('StreamBank');
-
-  // Assign the material that was passed in to the primitive.
-  thePrimitive.material = createMaterial2();
-
-  // Assign the Primitive to the Shape.
-  thePrimitive.owner = theShape;
-
-  // Assign the StreamBank to the Primitive.
-  thePrimitive.streamBank = streamBank;
-
-
-  thePrimitive.primitiveType = g_o3d.Primitive.TRIANGLELIST;
-  thePrimitive.numberPrimitives = numberOfPolys;
-  thePrimitive.numberVertices = numberOfPoints;
-
-
-  thePrimitive.createDrawElement(g_pack, null);
-
-  // Create buffers containing the vertex data.
-  var positionsBuffer = g_pack.createObject('VertexBuffer');
-  var positionsField = positionsBuffer.createField('FloatField', 3);
-  positionsBuffer.set(pointsCoordinates);
-
-  var indexBuffer = g_pack.createObject('IndexBuffer');
-  indexBuffer.set(connectivity);
-
-  // Associate the positions Buffer with the StreamBank.
-  streamBank.setVertexStream(
-      g_o3d.Stream.POSITION, // semantic: This stream stores vertex positions
-      0,                     // semantic index: First (and only) position stream
-      positionsField,        // field: the field this stream uses.
-      0);                    // start_index: How many elements to skip in the
-                             //     field.
-
-  // Associate the triangle indices Buffer with the primitive.
-  thePrimitive.indexBuffer = indexBuffer;
-
-//  return theShape;
-//  return (createSphere(g_pack,createMaterial([0,0,1,0]),1,20,20,0));
-  return (createSphere(
-      g_pack,
-      createMaterial([1,0,0,1]),
-      1.0,   // Radius of the sphere.
-      30,    // Number of meridians.
-      20))  // Number of parallels.
-
+function trimAll(sString) 
+{ 
+	while (sString.substring(0,1) == ' ') 
+	{ 
+	sString = sString.substring(1, sString.length); 
+	} 
+	while (sString.substring(sString.length-1, sString.length) == ' ') 
+	{ 
+	sString = sString.substring(0,sString.length-1); 
+	} 
+return sString; 
 }
 
 function updateClient() {
@@ -354,7 +214,7 @@ function setClientSize() {
     g_o3dHeight = newHeight;
 
     // Set the perspective projection matrix
-    viewInfo.drawContext.projection = g_math.matrix4.perspective(
+    g_viewInfo.drawContext.projection = g_math.matrix4.perspective(
       g_math.degToRad(45), g_o3dWidth / g_o3dHeight, 0.1, 100);
 
     // Sets a new area size for arcball.
@@ -397,7 +257,7 @@ function scrollMe(e) {
   if (e.deltaY) {
     g_camera.eye =
         g_math.mulScalarVector((-e.deltaY < 0 ? 11 : 13) / 12, g_camera.eye);
-    viewInfo.drawContext.view = g_math.matrix4.lookAt(g_camera.eye,
+    g_viewInfo.drawContext.view = g_math.matrix4.lookAt(g_camera.eye,
                                                         g_camera.target,
                                                         [0, 1, 0]);
     updateClient();
@@ -409,55 +269,55 @@ function scrollMe(e) {
  * @param {Array} clientElements Array of o3d object elements.
  */
 function initStep2(clientElements) {
-  // Initializes global variables and libraries.
-  var o3dElement = clientElements[0];
-  g_client = o3dElement.client;
-  g_o3d = o3dElement.o3d;
-  g_math = o3djs.math;
+	// Initializes global variables and libraries.
+	var o3dElement = clientElements[0];
+	g_client = o3dElement.client;
+	g_o3d = o3dElement.o3d;
+	g_math = o3djs.math;
 
-  g_quaternions = o3djs.quaternions;
-  g_lastRot = g_math.matrix4.identity();
-  g_thisRot = g_math.matrix4.identity();
+	g_quaternions = o3djs.quaternions;
+	g_lastRot = g_math.matrix4.identity();
+	g_thisRot = g_math.matrix4.identity();
 
-  // Create a pack to manage the objects created.
-  g_pack = g_client.createPack();
+	// Create a pack to manage the objects created.
+	g_pack = g_client.createPack();
 
-  // Create the render graph for a view.
-  viewInfo = o3djs.rendergraph.createBasicView(
-      g_pack,
-      g_client.root,
-      g_client.renderGraphRoot,
-      [1, 1, 1, 1]);
+	// Create the render graph for a view.
+	g_viewInfo = o3djs.rendergraph.createBasicView(
+	  g_pack,
+	  g_client.root,
+	  g_client.renderGraphRoot,
+	  [1, 1, 1, 1]);
 
-  // Set up our view transformation to look towards the world origin where the
-  // object is located.
-  viewInfo.drawContext.view = g_math.matrix4.lookAt(
-  g_camera.eye,
-  g_camera.target,
-  [0, 1, 0]);  // up
+	// Set up our view transformation to look towards the world origin where the
+	// object is located.
+	g_viewInfo.drawContext.view = g_math.matrix4.lookAt(
+	g_camera.eye,
+	g_camera.target,
+	[0, 1, 0]);  // up
 
-  g_aball = o3djs.arcball.create(100, 100);
-  setClientSize();
+	g_aball = o3djs.arcball.create(100, 100);
+	setClientSize();
 
-  // Create the Shape for the mesh
-  var Shape = createMeshFromXML("skull.xml");
+	// Create the Shape for the mesh
+	var Shape=createfromXML("skull.xml",g_pack,[0.8,0.8,0.8,1]);
 
-  // Create a new transform and parent the Shape under it.
-  var Transform = g_pack.createObject('Transform');
-  Transform.addShape(Shape);
+	// Create a new transform and parent the Shape under it.
+	var Transform = g_pack.createObject('Transform');
+	Transform.addShape(Shape);
 
-  // Parent the object's transform to the client root.
-  Transform.parent = g_client.root;
+	// Parent the object's transform to the client root.
+	Transform.parent = g_client.root;
 
-  o3djs.event.addEventListener(o3dElement, 'mousedown', startDragging);
-  o3djs.event.addEventListener(o3dElement, 'mousemove', drag);
-  o3djs.event.addEventListener(o3dElement, 'mouseup', stopDragging);
-  o3djs.event.addEventListener(o3dElement, 'wheel', scrollMe);
+	o3djs.event.addEventListener(o3dElement, 'mousedown', startDragging);
+	o3djs.event.addEventListener(o3dElement, 'mousemove', drag);
+	o3djs.event.addEventListener(o3dElement, 'mouseup', stopDragging);
+	o3djs.event.addEventListener(o3dElement, 'wheel', scrollMe);
 
-  // Set our render callback for animation.
-  // This sets a function to be executed every time a frame is rendered.
-  g_client.setRenderCallback(renderCallback);
-  window.onresize = updateClient;
+	// Set our render callback for animation.
+	// This sets a function to be executed every time a frame is rendered.
+	g_client.setRenderCallback(renderCallback);
+	window.onresize = updateClient;
 }
 
 /**
