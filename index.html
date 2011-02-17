@@ -57,7 +57,7 @@ function createfromXML(file,pack,color) {
 	material.getParam('specular').value = [0.1, 0.1, 0.1, 0.01];
 	material.getParam('shininess').value=0.02;
 	material.getParam('specularFactor').value = 0.1;
-	material.getParam('lightColor').value = [0.7, 0.7, 0.7, 0.5];
+	material.getParam('lightColor').value = [0.8, 0.8, 0.8, 0.5];
 //  var lightPositionParam = material.createParam('lightWorldPos','ParamFloat3');
 //  o3djs.material.attachStandardEffect(pack, material, viewInfo, 'phong');
 
@@ -91,8 +91,7 @@ function createfromXML(file,pack,color) {
 	var numberOfPolys=parseInt(piece.getAttribute("NumberOfPolys"));
 	var points=piece.getElementsByTagName("Points")[0];
 
-	var i=0;
-	for (i=0;i<points.childNodes.length;i++)
+	for (var i=0;i<points.childNodes.length;i++)
 	{
 		var child=points.childNodes[i];
 		if ((child.tagName == "DataArray") && (child.getAttribute("Name")=="Points"))
@@ -342,7 +341,10 @@ function initStep2(clientElements) {
 	setClientSize();
 
 	// Create the Shape for the mesh
-	var Shape=createfromXML("bunny.xml",g_pack,[1,1,1,1]);
+//	var Shape=createfromXML("foot.xml",g_pack,[1,1,1,1]);
+	var Shape=createfromXML("skull.xml",g_pack,[1,1,1,0.6]);
+//	var Shape=createfromXML("rockerarm.xml",g_pack,[1,1,1,0.6]);
+//	var Shape=createfromXML("bunny.xml",g_pack,[1,1,1,0.6]);
 //	var Shape=createfromXML("hand.xml",g_pack,[1,1,1,1]);
 //	var Shape=createfromXML("skull.xml",g_pack,[1,1,1,1]);
 //	var Shape=createfromXML("heart.xml",g_pack,[1,1,1,1]);
