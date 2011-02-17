@@ -18,7 +18,7 @@ o3djs.require('o3djs.rendergraph');
 o3djs.require('o3djs.pack');
 o3djs.require('o3djs.arcball');
 o3djs.require('o3djs.event');
-//o3djs.require('o3djs.scene');
+o3djs.require('o3djs.cameracontroller');
 o3djs.require('o3djs.primitives');
 
 // Events
@@ -49,6 +49,7 @@ var g_camera = {
 // target: [60, 60, 60]
 };
 
+var g_cameracontroller;
 
 function updateClient() {
   // If we are in RENDERMODE_ON_DEMAND mode then set the render mode again
@@ -152,17 +153,8 @@ function initStep2(clientElements) {
 	  g_pack,
 	  g_client.root,
 	  g_client.renderGraphRoot,
-	  [1, 1, 1, 1]);
+	  [1, 1, 1, 1]); //background color
 
-	// Set up our view transformation to look towards the world origin where the
-	// object is located.
-	g_viewInfo.drawContext.view = g_math.matrix4.lookAt(
-	g_camera.eye,
-	g_camera.target,
-	[0, 1, 0]);  // up
-
-	g_aball = o3djs.arcball.create(100, 100);
-	setClientSize();
 
 	// Create the Shape for the mesh
 //	var Shape=createfromXML("foot.xml",g_pack,[1,1,1,1]);
@@ -179,6 +171,27 @@ function initStep2(clientElements) {
 
 	// Parent the object's transform to the client root.
 	Transform.parent = g_client.root;
+
+	g_cameracontroller=o3djs.cameracontroller.createCameraController(
+	[-100,0,0],//centerPos,
+	10,//backpedal,
+	0,//heightAngle,
+	0,//rotationAngle,
+   0.3//fieldOfViewAngle,
+   )//opt_onChange)
+
+//	alert(o3djs.util.getBoundingBoxOfTree(g_client.root).minExtent);
+//	alert(o3djs.util.getBoundingBoxOfTree(g_client.root).maxExtent);
+	g_cameracontroller.viewAll(o3djs.util.getBoundingBoxOfTree(g_client.root),1);
+
+//	o3djs.camera.fitContextToScene = function(treeRoot,
+//                                          clientWidth,
+//                                          clientHeight,
+//                                          drawContext)
+
+	g_viewInfo.drawContext.view=g_cameracontroller.calculateViewMatrix();
+	g_aball = o3djs.arcball.create(100, 100);
+	setClientSize();
 
 	o3djs.event.addEventListener(o3dElement, 'mousedown', startDragging);
 	o3djs.event.addEventListener(o3dElement, 'mousemove', drag);
