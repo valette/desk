@@ -41,12 +41,29 @@ var g_o3dHeight = -1;
 var g_aball;
 var g_viewInfo;
 var g_camera = {
- eye: [0, 0, 20],
+// eye: [0, 0, 4],
+ eye: [0, 0, 10],
  target: [0, 0, 0]
+// eye: [60, 60, 100],
+// target: [60, 60, 60]
 };
 
 function createfromXML(file,pack,color) {
 	var material=o3djs.material.createBasicMaterial(pack, g_viewInfo, color);
+// change lighting parameters
+//color = emissive + lightColor * (ambient * diffuse + diffuse * lighting + specular * lightingSpecular * specularFactor) 
+	material.getParam('emissive').value = [0.1, 0.1, 0.1 , 0.08];
+	material.getParam('ambient').value = [0.1, 0.1, 0.1, 0.005];
+	material.getParam('specular').value = [0.1, 0.1, 0.1, 0.01];
+	material.getParam('shininess').value=0.02;
+	material.getParam('specularFactor').value = 0.1;
+	material.getParam('lightColor').value = [0.7, 0.7, 0.7, 0.5];
+//  var lightPositionParam = material.createParam('lightWorldPos','ParamFloat3');
+//  o3djs.material.attachStandardEffect(pack, material, viewInfo, 'phong');
+
+  // We have to set the light position after calling attachStandardEffect
+  // because attachStandardEffect sets it based on the view.
+//  lightPositionParam.value = [1000, 2000, 3000];
 
 	var vertexInfo = o3djs.primitives.createVertexInfo();
 	var positionStream = vertexInfo.addStream(
@@ -184,8 +201,8 @@ function createfromXML(file,pack,color) {
 		for (var iii=0;iii<3;iii++)
 		{
 			var normal2=normalStream.getElementVector(triangle[iii]);
-			normal2+=normal;
-			normalStream.setElementVector(triangle[iii],normal);
+			normalStream.setElementVector(triangle[iii],
+				o3djs.math.addVector(normal,normal2));
 		}
 	}
 
@@ -325,7 +342,10 @@ function initStep2(clientElements) {
 	setClientSize();
 
 	// Create the Shape for the mesh
-	var Shape=createfromXML("skull.xml",g_pack,[0.8,0.8,0.8,1]);
+	var Shape=createfromXML("bunny.xml",g_pack,[1,1,1,1]);
+//	var Shape=createfromXML("hand.xml",g_pack,[1,1,1,1]);
+//	var Shape=createfromXML("skull.xml",g_pack,[1,1,1,1]);
+//	var Shape=createfromXML("heart.xml",g_pack,[1,1,1,1]);
 
 	// Create a new transform and parent the Shape under it.
 	var Transform = g_pack.createObject('Transform');
