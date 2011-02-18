@@ -12,8 +12,9 @@ function trimAll(sString)
 return sString; 
 }
 
-function createfromXML(file,pack,color) {
-	var material=o3djs.material.createBasicMaterial(pack, g_viewInfo, color);
+function createDefaultMaterial(pack, viewInfo, color) {
+
+var material=o3djs.material.createBasicMaterial(pack, viewInfo, color);
 // change lighting parameters
 //color = emissive + lightColor * (ambient * diffuse + diffuse * lighting + specular * lightingSpecular * specularFactor) 
 	material.getParam('emissive').value = [0.1, 0.1, 0.1 , 0.08];
@@ -22,31 +23,10 @@ function createfromXML(file,pack,color) {
 	material.getParam('shininess').value=0.02;
 	material.getParam('specularFactor').value = 0.1;
 	material.getParam('lightColor').value = [0.8, 0.8, 0.8, 0.5];
-//  var lightPositionParam = material.createParam('lightWorldPos','ParamFloat3');
-//  o3djs.material.attachStandardEffect(pack, material, viewInfo, 'phong');
+	return material;
+}
 
-  // We have to set the light position after calling attachStandardEffect
-  // because attachStandardEffect sets it based on the view.
-//  lightPositionParam.value = [1000, 2000, 3000];
-
-	var vertexInfo = o3djs.primitives.createVertexInfo();
-	var positionStream = vertexInfo.addStream(
-		3, o3djs.base.o3d.Stream.POSITION);
-	var normalStream = vertexInfo.addStream(
-		3, o3djs.base.o3d.Stream.NORMAL);
-
-	if (window.XMLHttpRequest)
-	{// code for IE7+, Firefox, Chrome, Opera, Safari
-		var xmlhttp=new XMLHttpRequest();
-	}
-	else
-	{// code for IE6, IE5
-		var xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
-	}
-	xmlhttp.open("GET",file,false);
-	xmlhttp.send();
-	var xmlDoc=xmlhttp.responseXML;
-
+function readXMLFile(xmlDoc,vertexInfo ,positionStream ){
 	var xmlString = (new XMLSerializer()).serializeToString(xmlDoc);
 
 // get points
@@ -144,12 +124,44 @@ function createfromXML(file,pack,color) {
 			  "\n Number of wanted connectivities : "+ wantedSize);
 		}
 	}
+}
 
+function createfromXML(file,pack,color) {
+	var material=createDefaultMaterial(pack, g_viewInfo, color)
+//  var lightPositionParam = material.createParam('lightWorldPos','ParamFloat3');
+//  o3djs.material.attachStandardEffect(pack, material, viewInfo, 'phong');
+
+  // We have to set the light position after calling attachStandardEffect
+  // because attachStandardEffect sets it based on the view.
+//  lightPositionParam.value = [1000, 2000, 3000];
+
+	var vertexInfo = o3djs.primitives.createVertexInfo();
+	var positionStream = vertexInfo.addStream(
+		3, o3djs.base.o3d.Stream.POSITION);
+	var normalStream = vertexInfo.addStream(
+		3, o3djs.base.o3d.Stream.NORMAL);
+
+	if (window.XMLHttpRequest)
+	{// code for IE7+, Firefox, Chrome, Opera, Safari
+		var xmlhttp=new XMLHttpRequest();
+	}
+	else
+	{// code for IE6, IE5
+		var xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+	}
+	xmlhttp.open("GET",file,false);
+	xmlhttp.send();
+	var xmlDoc=xmlhttp.responseXML;
+
+	readXMLFile(xmlDoc,vertexInfo ,positionStream );
+
+	var numberOfPoints=positionStream.numElements();
+	var numberOfTriangles=vertexInfo.numTriangles();
 // compute normals
 	for (var i=0;i<numberOfPoints;i++)
 		normalStream.addElement(0,0,0);
 
-	for (var i=0;i<numberOfPolys;i++)
+	for (var i=0;i<numberOfTriangles;i++)
 	{
 		var triangle=vertexInfo.getTriangle(i);
 		var positions = [];
