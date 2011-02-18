@@ -128,10 +128,70 @@ function readXMLFile(xmlDoc,vertexInfo ,positionStream ){
 }
 
 function readVTKFile(filestring,vertexInfo ,positionStream ){
-	var data=filestring.split(" ");
-	alert (data);
+	var reg2=new RegExp("[ \n]+", "gm");
+	var data=filestring.split(reg2);
+	
+	// read point data
+	var index=0;
+	while (data[index]!="POINTS")
+	{
+		index++;
+	}
+	index++;
+	var numberOfPoints=data[index];
+	index++
+	var coord=[0,0,0];
+	var index2=0;
+	while (1)
+	{
+		while (isNaN(parseFloat(data[index])))
+			index++;
+		coord[index2]=parseFloat(data[index]);
+		index2++;
+		index++;
+		if (index2==3)
+		{
+			index2=0;
+			positionStream.addElement(coord[0],coord[1],coord[2]);
+			numberOfPoints--;
+			if (numberOfPoints==0)
+			{
+				break;
+			}
+		}
+	}
+	alert("index="+index);
+	while (data[index]!="POLYGONS")
+	{
+		index++;
+	}
+	index++
+	var connectivity=[0,0,0,0];
+	var numberOfPolygons=data[index];
+	alert(numberOfPolygons);
+	index++;
+	index++;
+	index2=0;
+	while (1)
+	{
+		while (isNaN(parseInt(data[index])))
+			index++;
 
-	alert ("OK!");
+		connectivity[index2]=parseInt(data[index]);
+		index2++;
+		index++;
+		if (index2==4)
+		{
+			index2=0;
+			vertexInfo.addTriangle(connectivity[1],connectivity[2],connectivity[3]);
+			alert(connectivity);
+			numberOfPolygons--;
+			if (numberOfPolygons==0)
+			{
+				break;
+			}
+		}
+	}
 }
 
 function createFromFile(file,pack,color) {
@@ -153,7 +213,7 @@ function createFromFile(file,pack,color) {
 	}
 	xmlhttp.open("GET",file,false);
 	xmlhttp.send();
-	var xmlDoc=xmlhttp.responseXML;
+
 
 
 	var filename=file.split(".");
@@ -162,9 +222,11 @@ function createFromFile(file,pack,color) {
 	switch (extension)
 	{
 		case "xml":
-			readXMLFile(xmlDoc,vertexInfo ,positionStream );
+			var readString=xmlhttp.responseXML;
+			readXMLFile(readString,vertexInfo ,positionStream );
 			break;
 		case "vtk":
+			var readString=xmlhttp.responseText;
 			readVTKFile(readString,vertexInfo ,positionStream );
 			break;
 		default:
