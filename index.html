@@ -33,22 +33,10 @@ var g_math;
 var g_pack;
 var g_client;
 
-var g_thisRot;
-var g_lastRot;
-
 var g_o3dWidth = -1;
 var g_o3dHeight = -1;
 
-var g_aball;
 var g_viewInfo;
-var g_camera = {
-// eye: [0, 0, 4],
- eye: [0, 0, 10],
- target: [0, 0, 0]
-// eye: [60, 60, 100],
-// target: [60, 60, 60]
-};
-
 var g_cameracontroller;
 
 function updateClient() {
@@ -99,21 +87,13 @@ var g_dragging = false;
 
 function startDragging(e) {
 	g_cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.SPIN_ABOUT_CENTER,e.x,e.y);
-	g_lastRot = g_thisRot;
-	g_aball.click([e.x, e.y]);
 	g_dragging = true;
 }
 
 function drag(e) {
-	g_cameracontroller.mouseMoved(e.x,e.y);
 	if (g_dragging) {
-		var rotationQuat = g_aball.drag([e.x, e.y]);
-		var rot_mat = g_quaternions.quaternionToRotation(rotationQuat);
-		g_thisRot = g_math.matrix4.mul(g_lastRot, rot_mat);
-		var m = g_client.root.localMatrix;
-		g_math.matrix4.setUpper3x3(m, g_thisRot);
-		g_client.root.localMatrix=g_cameracontroller.calculateViewMatrix();
-//		g_client.root.localMatrix = m;
+		g_cameracontroller.mouseMoved(e.x,e.y);
+		g_viewInfo.drawContext.view=g_cameracontroller.calculateViewMatrix();
 		updateClient();
 	}
 }
@@ -125,12 +105,14 @@ function stopDragging(e) {
 
 function scrollMe(e) {
   if (e.deltaY) {
-    g_camera.eye =
-        g_math.mulScalarVector((-e.deltaY < 0 ? 11 : 13) / 12, g_camera.eye);
-    g_viewInfo.drawContext.view = g_math.matrix4.lookAt(g_camera.eye,
-                                                        g_camera.target,
-                                                        [0, 1, 0]);
-    updateClient();
+//    g_camera.eye =
+ //       g_math.mulScalarVector((-e.deltaY < 0 ? 15 : 7) / 12, g_camera.eye);
+ //   g_viewInfo.drawContext.view = g_math.matrix4.lookAt(g_camera.eye,
+  //                                                      g_camera.target,
+  //                                                      [0, 1, 0]);
+	g_cameracontroller.backpedal*=(e.deltaY < 0 ? 15 : 7)/12;
+	g_viewInfo.drawContext.view=g_cameracontroller.calculateViewMatrix();
+	updateClient();
   }
 }
 /**
