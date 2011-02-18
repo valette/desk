@@ -165,13 +165,16 @@ function initStep2(clientElements) {
 	setClientSize();
 
 	// Create the Shape for the mesh
-//	var Shape=createfromXML("foot.xml",g_pack,[1,1,1,1]);
-	var Shape=createfromXML("skull.xml",g_pack,[1,1,1,0.6]);
-//	var Shape=createfromXML("rockerarm.xml",g_pack,[1,1,1,0.6]);
-//	var Shape=createfromXML("bunny.xml",g_pack,[1,1,1,0.6]);
-//	var Shape=createfromXML("hand.xml",g_pack,[1,1,1,1]);
-//	var Shape=createfromXML("skull.xml",g_pack,[1,1,1,1]);
-//	var Shape=createfromXML("heart.xml",g_pack,[1,1,1,1]);
+//	var Shape=createFromFile("foot.xml",g_pack,[1,1,1,1]);
+	var Shape=createFromFile("skull.xml",g_pack,[1,1,1,0.6]);
+//	var Shape=createFromFile("ventriculeDroit.vtk",g_pack,[1,1,1,0.6]);
+
+//	var Shape=createFromFile("oreillette_droite.xml",g_pack,[1,1,1,0.6]);
+//	var Shape=createFromFile("rockerarm.xml",g_pack,[1,1,1,0.6]);
+//	var Shape=createFromFile("bunny.xml",g_pack,[1,1,1,0.6]);
+//	var Shape=createFromFile("hand.xml",g_pack,[1,1,1,1]);
+//	var Shape=createFromFile("skull.xml",g_pack,[1,1,1,1]);
+//	var Shape=createFromFile("heart.xml",g_pack,[1,1,1,1]);
 
 	// Create a new transform and parent the Shape under it.
 	var Transform = g_pack.createObject('Transform');

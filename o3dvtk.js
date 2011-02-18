@@ -17,6 +17,7 @@ function createDefaultMaterial(pack, viewInfo, color) {
 var material=o3djs.material.createBasicMaterial(pack, viewInfo, color);
 // change lighting parameters
 //color = emissive + lightColor * (ambient * diffuse + diffuse * lighting + specular * lightingSpecular * specularFactor) 
+//  lightPositionParam.value = [1000, 2000, 3000];
 	material.getParam('emissive').value = [0.1, 0.1, 0.1 , 0.08];
 	material.getParam('ambient').value = [0.1, 0.1, 0.1, 0.005];
 	material.getParam('specular').value = [0.1, 0.1, 0.1, 0.01];
@@ -27,8 +28,8 @@ var material=o3djs.material.createBasicMaterial(pack, viewInfo, color);
 }
 
 function readXMLFile(xmlDoc,vertexInfo ,positionStream ){
-	var xmlString = (new XMLSerializer()).serializeToString(xmlDoc);
 
+	var readString = (new XMLSerializer()).serializeToString(xmlDoc);
 // get points
 	var piece=xmlDoc.getElementsByTagName("Piece")[0];
 	var numberOfPoints=parseInt(piece.getAttribute("NumberOfPoints"));
@@ -126,14 +127,15 @@ function readXMLFile(xmlDoc,vertexInfo ,positionStream ){
 	}
 }
 
-function createfromXML(file,pack,color) {
-	var material=createDefaultMaterial(pack, g_viewInfo, color)
-//  var lightPositionParam = material.createParam('lightWorldPos','ParamFloat3');
-//  o3djs.material.attachStandardEffect(pack, material, viewInfo, 'phong');
+function readVTKFile(filestring,vertexInfo ,positionStream ){
+	var data=filestring.split(" ");
+	alert (data);
 
-  // We have to set the light position after calling attachStandardEffect
-  // because attachStandardEffect sets it based on the view.
-//  lightPositionParam.value = [1000, 2000, 3000];
+	alert ("OK!");
+}
+
+function createFromFile(file,pack,color) {
+	var material=createDefaultMaterial(pack, g_viewInfo, color)
 
 	var vertexInfo = o3djs.primitives.createVertexInfo();
 	var positionStream = vertexInfo.addStream(
@@ -153,10 +155,26 @@ function createfromXML(file,pack,color) {
 	xmlhttp.send();
 	var xmlDoc=xmlhttp.responseXML;
 
-	readXMLFile(xmlDoc,vertexInfo ,positionStream );
+
+	var filename=file.split(".");
+	var extension=filename[filename.length-1].toLowerCase();
+
+	switch (extension)
+	{
+		case "xml":
+			readXMLFile(xmlDoc,vertexInfo ,positionStream );
+			break;
+		case "vtk":
+			readVTKFile(readString,vertexInfo ,positionStream );
+			break;
+		default:
+		alert (extension+"file format not supported yet!");
+	}
 
 	var numberOfPoints=positionStream.numElements();
 	var numberOfTriangles=vertexInfo.numTriangles();
+
+
 // compute normals
 	for (var i=0;i<numberOfPoints;i++)
 		normalStream.addElement(0,0,0);
