@@ -160,7 +160,6 @@ function readVTKFile(filestring,vertexInfo ,positionStream ){
 			}
 		}
 	}
-	alert("index="+index);
 	while (data[index]!="POLYGONS")
 	{
 		index++;
@@ -168,7 +167,6 @@ function readVTKFile(filestring,vertexInfo ,positionStream ){
 	index++
 	var connectivity=[0,0,0,0];
 	var numberOfPolygons=data[index];
-	alert(numberOfPolygons);
 	index++;
 	index++;
 	index2=0;
@@ -184,7 +182,6 @@ function readVTKFile(filestring,vertexInfo ,positionStream ){
 		{
 			index2=0;
 			vertexInfo.addTriangle(connectivity[1],connectivity[2],connectivity[3]);
-			alert(connectivity);
 			numberOfPolygons--;
 			if (numberOfPolygons==0)
 			{
