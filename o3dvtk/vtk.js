@@ -29,7 +29,6 @@ var material=o3djs.material.createBasicMaterial(pack, viewInfo, color);
 
 function readXMLFile(xmlDoc,vertexInfo ,positionStream ){
 
-	var readString = (new XMLSerializer()).serializeToString(xmlDoc);
 // get points
 	var piece=xmlDoc.getElementsByTagName("Piece")[0];
 	var numberOfPoints=parseInt(piece.getAttribute("NumberOfPoints"));
@@ -231,7 +230,7 @@ function createFromFile(file,pack,color) {
 			readVTKFile(readString,vertexInfo ,positionStream );
 			break;
 		default:
-		alert (extension+"file format not supported yet!");
+		alert (extension+" file format not supported yet!");
 	}
 
 	var numberOfPoints=positionStream.numElements();

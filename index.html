@@ -52,6 +52,24 @@ function renderCallback(renderEvent) {
     g_client.renderMode = g_o3d.Client.RENDERMODE_ON_DEMAND;
 }
 
+
+function AddMeshes(xmlFile, transform)
+{
+	var xmlhttp=new XMLHttpRequest();
+	xmlhttp.open("GET",xmlFile,false);
+	xmlhttp.send();
+	var readString=xmlhttp.responseXML;
+
+	var meshes=readString.getElementsByTagName("mesh");
+	
+	for (var i=0;i<meshes.length;i++)
+	{
+		var file=meshes[i].getAttribute("Mesh");
+		var Label=meshes[i].getAttribute("Label");
+		if (Label!="0")
+			transform.addShape(createFromFile(file,g_pack,[1,1,1,1]));
+	}
+}
 /**
  * Creates the client area.
  */
@@ -149,12 +167,14 @@ function initStep2(clientElements) {
 	var Transform = g_pack.createObject('Transform');
 	// Create the Shape for the mesh
 
-	Transform.addShape(createFromFile("skull.vtk",g_pack,[1,1,1,0.6]));
+//	AddMeshes("output.xml", Transform);
+
+	Transform.addShape(createFromFile("skull.xml",g_pack,[1,1,1,0.6]));
 //	Transform.addShape(createFromFile("tore.vtk",g_pack,[1,1,1,0.6]));
 //	var Shape=createFromFile("hand_full.vtk",g_pack,[1,1,1,0.6]);
-	Transform.addShape(createFromFile("sphere_80k.vtk",g_pack,[1,0,0,0.6]));
-	Transform.addShape(createFromFile("mesh.vtk",g_pack,[1,0,0,0.6]));
-	Transform.addShape(createFromFile("1.vtk",g_pack,[1,0,0,0.6]));
+//	Transform.addShape(createFromFile("sphere_80k.vtk",g_pack,[1,0,0,0.6]));
+//	Transform.addShape(createFromFile("mesh.vtk",g_pack,[1,0,0,0.6]));
+//	Transform.addShape(createFromFile("1.vtk",g_pack,[1,0,0,0.6]));
 //	var Shape=createFromFile("ventriculeDroit.vtk",g_pack,[1,1,1,0.6]);
 
 //	var Shape=createFromFile("oreillette_droite.xml",g_pack,[1,1,1,0.6]);
