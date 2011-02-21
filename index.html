@@ -69,7 +69,7 @@ function setClientSize() {
 
     // Set the perspective projection matrix
     g_viewInfo.drawContext.projection = g_math.matrix4.perspective(
-      g_math.degToRad(45), g_o3dWidth / g_o3dHeight, 0.1, 100);
+      g_math.degToRad(45), g_o3dWidth / g_o3dHeight, 0.1, 10000);
 
     // Sets a new area size for arcball.
     g_aball.setAreaSize(g_o3dWidth, g_o3dHeight);
@@ -86,8 +86,12 @@ function resize() {
 var g_dragging = false;
 
 function startDragging(e) {
-	g_cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.SPIN_ABOUT_CENTER,e.x,e.y);
 	g_dragging = true;
+
+	if (e.ctrlKey)
+		g_cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.MOVE_CENTER_IN_VIEW_PLANE,e.x,e.y);
+	else
+		g_cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.SPIN_ABOUT_CENTER,e.x,e.y);
 }
 
 function drag(e) {
@@ -207,7 +211,7 @@ function uninit() {
 <body>
 
 <!-- Start of O3D plugin -->
-<div id="o3d" style="width: 100%; height: 80%;"></div>
+<div id="o3d" style="width: 100%; height: 100%;"></div>
 <!-- End of O3D plugin -->
 
 </div>
