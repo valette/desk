@@ -90,7 +90,7 @@ function setClientSize() {
       g_math.degToRad(45), g_o3dWidth / g_o3dHeight, 0.1, 10000);
 
     // Sets a new area size for arcball.
-    g_aball.setAreaSize(g_o3dWidth, g_o3dHeight);
+    g_cameracontroller.setAreaSize(g_o3dWidth, g_o3dHeight);
 
     //o3djs.dump.dump("areaWidth: " + g_o3dWidth + "\n");
     //o3djs.dump.dump("areaHeight: " + g_o3dHeight + "\n");
@@ -167,7 +167,7 @@ function initStep2(clientElements) {
 	var Transform = g_pack.createObject('Transform');
 	// Create the Shape for the mesh
 
-	AddMeshes("output.xml", Transform);
+//	AddMeshes("output.xml", Transform);
 
 	Transform.addShape(createFromFile("skull.vtk",g_pack,[1,1,1,0.6]));
 //	Transform.addShape(createFromFile("tore.vtk",g_pack,[1,1,1,0.6]));

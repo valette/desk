@@ -107,14 +107,14 @@ o3djs.cameracontroller.DragMode = {
  */
 o3djs.cameracontroller.createCameraController = function(centerPos,
                                                          backpedal,
-                                                         heightAngle,
-                                                         rotationAngle,
+                                                         areaWidth,
+                                                         areaHeight,
                                                          fieldOfViewAngle,
                                                          opt_onChange) {
   return new o3djs.cameracontroller.CameraController(centerPos,
                                                      backpedal,
-                                                     heightAngle,
-                                                     rotationAngle,
+                                                     areaWidth,
+                                                     areaHeight,
                                                      fieldOfViewAngle,
                                                      opt_onChange);
 };
@@ -148,8 +148,8 @@ o3djs.cameracontroller.createCameraController = function(centerPos,
  */
 o3djs.cameracontroller.CameraController = function(centerPos,
                                                    backpedal,
-                                                   heightAngle,
-                                                   rotationAngle,
+                                                   areaWidth,
+                                                   areaHeight,
                                                    fieldOfViewAngle,
                                                    opt_onChange) {
   /**
@@ -165,17 +165,6 @@ o3djs.cameracontroller.CameraController = function(centerPos,
    */
   this.backpedal = backpedal;
 
-  /**
-   * The angle the camera rotates up or down.
-   * @type {number}
-   */
-  this.heightAngle = heightAngle;
-
-  /**
-   * The angle the camera rotates left or right.
-   * @type {number}
-   */
-  this.rotationAngle = rotationAngle;
 
   /**
    * The vertical angle of the perspective viewing frustum.
@@ -248,7 +237,72 @@ o3djs.cameracontroller.CameraController = function(centerPos,
    * @type {number}
    */
   this.zoomPerUnit = 1.0;
+
+  /**
+   * The start vector.
+   * @private
+   * @type {!o3djs.math.Vector3}
+   */
+  this.startVector_ = [0, 0, 0];
+
+  /**
+   * The end vector.
+   * @private
+   * @type {!o3djs.math.Vector3}
+   */
+  this.endVector_ = [0, 0, 0];
+
+  /**
+   * The width of the arcBall area.
+   * @private
+   * @type {number}
+   */
+  this.areaWidth_ = areaWidth;
+
+  /**
+   * The height of the arcBall area.
+   * @private
+   * @type {number}
+   */
+  this.areaHeight_ = areaHeight;
+
 };
+
+/**
+ * Sets the size of the arcball.
+ * @param {number} areaWidth width of area arcball should cover.
+ * @param {number} areaHeight height of area arcball should cover.
+ */
+o3djs.cameracontroller.CameraController.prototype.setAreaSize = function(areaWidth, areaHeight) {
+  this.areaWidth_ = areaWidth;
+  this.areaHeight_ = areaHeight;
+};
+
+/**
+ * Converts a 2d point to a point on the sphere of radius 1 sphere.
+ * @param {!o3djs.math.Vector2} newPoint A point in 2d.
+ * @return {!o3djs.math.Vector3} A point on the sphere of radius 1.
+ */
+o3djs.cameracontroller.CameraController.prototype.mapToSphere = function(newPoint) {
+  // Copy parameter into temp
+  var tempPoint = o3djs.math.copyVector(newPoint);
+
+  // Scale to -1.0 <-> 1.0
+  tempPoint[0] = tempPoint[0] / this.areaWidth_ * 2.0 - 1.0;
+  tempPoint[1] = 1.0 - tempPoint[1] / this.areaHeight_ * 2.0;
+
+  // Compute square of length from center
+  var lengthSquared = o3djs.math.lengthSquared(tempPoint);
+
+  // If the point is mapped outside of the sphere... (length > radius squared)
+  if (lengthSquared > 1.0) {
+    return o3djs.math.normalize(tempPoint).concat(0);
+  } else {
+    // Otherwise it's on the inside.
+    return tempPoint.concat(Math.sqrt(1.0 - lengthSquared));
+  }
+};
+
 
 /**
  * Calculates the center point and backpedal which will make the
@@ -323,8 +377,8 @@ o3djs.cameracontroller.CameraController.prototype.calculateViewMatrix_ =
     function(centerPoint, backpedal) {
   var matrix4 = o3djs.math.matrix4;
   var view = matrix4.translation(o3djs.math.negativeVector(centerPoint));
-  view = matrix4.mul(view, matrix4.rotationY(this.rotationAngle));
-  view = matrix4.mul(view, matrix4.rotationX(this.heightAngle));
+//  view = matrix4.mul(view, matrix4.rotationY(this.rotationAngle));
+//  view = matrix4.mul(view, matrix4.rotationX(this.heightAngle));
   view = matrix4.mul(view, matrix4.translation([0, 0, -backpedal]));
   return view;
 };
@@ -342,6 +396,7 @@ o3djs.cameracontroller.CameraController.prototype.setDragMode =
   this.dragMode_ = dragMode;
   this.mouseX_ = x;
   this.mouseY_ = y;
+  this.startVector_ = this.mapToSphere([x,y])
 };
 
 /**
@@ -357,8 +412,8 @@ o3djs.cameracontroller.CameraController.prototype.mouseMoved = function(x, y) {
   this.mouseY_ = y;
 
   if (this.dragMode_ == o3djs.cameracontroller.DragMode.SPIN_ABOUT_CENTER) {
-    this.rotationAngle += deltaX * this.radiansPerUnit;
-    this.heightAngle += deltaY * this.radiansPerUnit;
+ //   this.rotationAngle += deltaX * this.radiansPerUnit;
+ //   this.heightAngle += deltaY * this.radiansPerUnit;
   }
   if (this.dragMode_ == o3djs.cameracontroller.DragMode.DOLLY_IN_OUT) {
     this.backpedal += deltaY * this.distancePerUnit;
