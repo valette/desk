@@ -167,9 +167,9 @@ function initStep2(clientElements) {
 	var Transform = g_pack.createObject('Transform');
 	// Create the Shape for the mesh
 
-//	AddMeshes("output.xml", Transform);
+	AddMeshes("output.xml", Transform);
 
-	Transform.addShape(createFromFile("skull.xml",g_pack,[1,1,1,0.6]));
+	Transform.addShape(createFromFile("skull.vtk",g_pack,[1,1,1,0.6]));
 //	Transform.addShape(createFromFile("tore.vtk",g_pack,[1,1,1,0.6]));
 //	var Shape=createFromFile("hand_full.vtk",g_pack,[1,1,1,0.6]);
 //	Transform.addShape(createFromFile("sphere_80k.vtk",g_pack,[1,0,0,0.6]));
