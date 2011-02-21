@@ -178,10 +178,12 @@ function readVTKFile(filestring,vertexInfo ,positionStream ){
 		connectivity[index2]=parseInt(data[index]);
 		index2++;
 		index++;
-		if (index2==4)
+		if (index2==connectivity[0]+1)
 		{
 			index2=0;
 			vertexInfo.addTriangle(connectivity[1],connectivity[2],connectivity[3]);
+			if (connectivity[0]==4)
+				vertexInfo.addTriangle(connectivity[1],connectivity[3],connectivity[4]);
 			numberOfPolygons--;
 			if (numberOfPolygons==0)
 			{
@@ -251,8 +253,8 @@ function createFromFile(file,pack,color) {
 
 		var v0 = o3djs.math.subVector(positions[1],positions[0]);
 		var v1 = o3djs.math.subVector(positions[2],positions[1]);
-//		var normal=o3djs.math.normalize(o3djs.math.cross(v0, v1));
-		var normal=o3djs.math.normalize(o3djs.math.cross(v1, v0));
+		var normal=o3djs.math.normalize(o3djs.math.cross(v0, v1));
+//		var normal=o3djs.math.normalize(o3djs.math.cross(v1, v0));
 		for (var iii=0;iii<3;iii++)
 		{
 			var normal2=normalStream.getElementVector(triangle[iii]);
