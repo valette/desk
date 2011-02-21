@@ -266,6 +266,8 @@ o3djs.cameracontroller.CameraController = function(centerPos,
    */
   this.areaHeight_ = areaHeight;
 
+  this.thisRot_=g_math.matrix4.identity();
+  this.lastRot_=g_math.matrix4.identity();
 };
 
 /**
@@ -396,7 +398,8 @@ o3djs.cameracontroller.CameraController.prototype.setDragMode =
   this.dragMode_ = dragMode;
   this.mouseX_ = x;
   this.mouseY_ = y;
-  this.startVector_ = this.mapToSphere([x,y])
+  this.startVector_ = this.mapToSphere([x,y]);
+  this.lastRot_ = this.thisRot_;
 };
 
 /**
@@ -412,6 +415,11 @@ o3djs.cameracontroller.CameraController.prototype.mouseMoved = function(x, y) {
   this.mouseY_ = y;
 
   if (this.dragMode_ == o3djs.cameracontroller.DragMode.SPIN_ABOUT_CENTER) {
+    this.endVector_ = this.mapToSphere([x,y]);
+    var rotationQuat=o3djs.math.cross(this.startVector_, this.endVector_).concat(
+      o3djs.math.dot(this.startVector_, this.endVector_));
+    var rot_mat = g_quaternions.quaternionToRotation(rotationQuat);
+    this.thisRot_ = g_math.matrix4.mul(this.lastRot_, rot_mat);
  //   this.rotationAngle += deltaX * this.radiansPerUnit;
  //   this.heightAngle += deltaY * this.radiansPerUnit;
   }
