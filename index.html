@@ -226,6 +226,7 @@ function initStep2(clientElements) {
 	o3djs.event.addEventListener(o3dElement, 'mouseup', stopDragging);
 	o3djs.event.addEventListener(o3dElement, 'wheel', scrollMe);
 
+	g_client.render();
 	// Set our render callback for animation.
 	// This sets a function to be executed every time a frame is rendered.
 	g_client.setRenderCallback(renderCallback);
