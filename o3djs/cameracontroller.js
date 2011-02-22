@@ -239,20 +239,6 @@ o3djs.cameracontroller.CameraController = function(centerPos,
   this.zoomPerUnit = 1.0;
 
   /**
-   * The start vector.
-   * @private
-   * @type {!o3djs.math.Vector3}
-   */
-  this.startVector_ = [0, 0, 0];
-
-  /**
-   * The end vector.
-   * @private
-   * @type {!o3djs.math.Vector3}
-   */
-  this.endVector_ = [0, 0, 0];
-
-  /**
    * The width of the arcBall area.
    * @private
    * @type {number}
@@ -370,7 +356,6 @@ o3djs.cameracontroller.CameraController.prototype.setDragMode =
   this.dragMode_ = dragMode;
   this.mouseX_ = x;
   this.mouseY_ = y;
-  this.startVector_ = this.mapToSphere([x,y]);
   this.lastRot_ = this.thisRot_;
 };
 
@@ -415,8 +400,9 @@ o3djs.cameracontroller.CameraController.prototype.mouseMoved = function(x, y) {
   if (this.dragMode_ ==
       o3djs.cameracontroller.DragMode.MOVE_CENTER_IN_VIEW_PLANE) {
     var matrix4 = o3djs.math.matrix4;
-    var translationVector = [-deltaX * this.distancePerUnit,
-                              deltaY * this.distancePerUnit, 0];
+    var factor=this.distancePerUnit*this.backpedal/50.0;
+    var translationVector = [-deltaX * factor,
+                              deltaY * factor, 0];
     var inverseViewMatrix = matrix4.inverse(this.calculateViewMatrix());
     translationVector = matrix4.transformDirection(
         inverseViewMatrix, translationVector);
