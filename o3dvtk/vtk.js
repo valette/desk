@@ -24,6 +24,11 @@ var material=o3djs.material.createBasicMaterial(pack, viewInfo, color);
 	material.getParam('shininess').value=0.02;
 	material.getParam('specularFactor').value = 0.1;
 	material.getParam('lightColor').value = [0.8, 0.8, 0.8, 0.5];
+
+ var state = pack.createObject('State'); 
+                material.state = state; 
+//                state.getStateParam('FillMode').value = g_o3d.State.WIREFRAME; 
+
 	return material;
 }
 
@@ -143,9 +148,13 @@ function readVTKFile(filestring,vertexInfo ,positionStream ){
 	var index2=0;
 	while (1)
 	{
-		while (isNaN(parseFloat(data[index])))
+		var number=parseFloat(data[index]);
+		while (isNaN(number))
+		{
 			index++;
-		coord[index2]=parseFloat(data[index]);
+			number=parseFloat(data[index]);
+		}
+		coord[index2]=number;
 		index2++;
 		index++;
 		if (index2==3)
@@ -171,10 +180,14 @@ function readVTKFile(filestring,vertexInfo ,positionStream ){
 	index2=0;
 	while (1)
 	{
-		while (isNaN(parseInt(data[index])))
+		var number=parseInt(data[index]);
+		while (isNaN(number))
+		{
 			index++;
+			number=parseInt(data[index]);
+		}
 
-		connectivity[index2]=parseInt(data[index]);
+		connectivity[index2]=number;
 		index2++;
 		index++;
 		if (index2==connectivity[0]+1)
@@ -250,14 +263,15 @@ function createFromFile(file,pack,color) {
 			positions[ii] = positionStream.getElementVector(triangle[ii]);
 		}
 
-		var v0 = o3djs.math.subVector(positions[1],positions[0]);
-		var v1 = o3djs.math.subVector(positions[2],positions[1]);
+		var v0 = o3djs.math.normalize(o3djs.math.subVector(positions[1],positions[0]));
+		var v1 = o3djs.math.normalize(o3djs.math.subVector(positions[2],positions[1]));
 		var normal=o3djs.math.normalize(o3djs.math.cross(v0, v1));
 //		var normal=o3djs.math.normalize(o3djs.math.cross(v1, v0));
 		for (var iii=0;iii<3;iii++)
 		{
-			var normal2=normalStream.getElementVector(triangle[iii]);
-			normalStream.setElementVector(triangle[iii],
+			var currentPoint=triangle[iii];
+			var normal2=normalStream.getElementVector(currentPoint);
+			normalStream.setElementVector(currentPoint,
 				o3djs.math.addVector(normal,normal2));
 		}
 	}
