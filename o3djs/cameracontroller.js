@@ -265,8 +265,6 @@ o3djs.cameracontroller.CameraController = function(centerPos,
    * @type {number}
    */
   this.areaHeight_ = areaHeight;
-  this.rotationAngle=0;
-  this.heightAngle=0;
   this.thisRot_=g_math.matrix4.identity();
   this.lastRot_=g_math.matrix4.identity();
 };
@@ -280,32 +278,6 @@ o3djs.cameracontroller.CameraController.prototype.setAreaSize = function(areaWid
   this.areaWidth_ = areaWidth;
   this.areaHeight_ = areaHeight;
 };
-
-/**
- * Converts a 2d point to a point on the sphere of radius 1 sphere.
- * @param {!o3djs.math.Vector2} newPoint A point in 2d.
- * @return {!o3djs.math.Vector3} A point on the sphere of radius 1.
- */
-o3djs.cameracontroller.CameraController.prototype.mapToSphere = function(newPoint) {
-  // Copy parameter into temp
-  var tempPoint = o3djs.math.copyVector(newPoint);
-
-  // Scale to -1.0 <-> 1.0
-  tempPoint[0] = tempPoint[0] / this.areaWidth_ * 2.0 - 1.0;
-  tempPoint[1] = 1.0 - tempPoint[1] / this.areaHeight_ * 2.0;
-
-  // Compute square of length from center
-  var lengthSquared = o3djs.math.lengthSquared(tempPoint);
-
-  // If the point is mapped outside of the sphere... (length > radius squared)
-  if (lengthSquared > 1.0) {
-    return o3djs.math.normalize(tempPoint).concat(0);
-  } else {
-    // Otherwise it's on the inside.
-    return tempPoint.concat(Math.sqrt(1.0 - lengthSquared));
-  }
-};
-
 
 /**
  * Calculates the center point and backpedal which will make the
@@ -381,8 +353,6 @@ o3djs.cameracontroller.CameraController.prototype.calculateViewMatrix_ =
   var matrix4 = o3djs.math.matrix4;
   var view = matrix4.translation(o3djs.math.negativeVector(centerPoint));
   view = matrix4.mul(view, this.thisRot_);
-//  view = matrix4.mul(view, matrix4.rotationY(this.rotationAngle));
-//  view = matrix4.mul(view, matrix4.rotationX(this.heightAngle));
   view = matrix4.mul(view, matrix4.translation([0, 0, -backpedal]));
   return view;
 };
@@ -402,8 +372,6 @@ o3djs.cameracontroller.CameraController.prototype.setDragMode =
   this.mouseY_ = y;
   this.startVector_ = this.mapToSphere([x,y]);
   this.lastRot_ = this.thisRot_;
-  this.rotationAngle=0;
-  this.heightAngle=0;
 };
 
 /**
@@ -419,17 +387,12 @@ o3djs.cameracontroller.CameraController.prototype.mouseMoved = function(x, y) {
   this.mouseY_ = y;
 
   if (this.dragMode_ == o3djs.cameracontroller.DragMode.SPIN_ABOUT_CENTER) {
-    this.rotationAngle += deltaX * this.radiansPerUnit;
-    this.heightAngle += deltaY * this.radiansPerUnit;
-//    this.endVector_ = this.mapToSphere([x,y]);
-//    var rotationQuat=o3djs.math.cross(this.startVector_, this.endVector_).concat(
-//      o3djs.math.dot(this.startVector_, this.endVector_));
-//    var rot_mat = g_quaternions.quaternionToRotation(rotationQuat);
-//    this.thisRot_ = g_math.matrix4.mul(this.lastRot_, rot_mat);
+    var rotationAngle = deltaX * this.radiansPerUnit;
+    var heightAngle = deltaY * this.radiansPerUnit;
 
      var matrix4 = o3djs.math.matrix4;
-     this.thisRot_ = g_math.matrix4.mul(this.lastRot_, matrix4.rotationY(this.rotationAngle));
-     this.thisRot_ = g_math.matrix4.mul(this.thisRot_, matrix4.rotationX(this.heightAngle));
+     this.thisRot_ = g_math.matrix4.mul(this.thisRot_, matrix4.rotationX(heightAngle));
+     this.thisRot_ = g_math.matrix4.mul(this.thisRot_, matrix4.rotationY(rotationAngle));
   }
   if (this.dragMode_ == o3djs.cameracontroller.DragMode.DOLLY_IN_OUT) {
     this.backpedal += deltaY * this.distancePerUnit;
