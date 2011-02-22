@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<Tmesh Label="10" Mesh="thoraxExt.vtk"/>
+	<Tmesh Label="10" Mesh="thoraxInt.vtk"/>
+	<mesh Label="50" Mesh="colonne.vtk"/>
+	<mesh Label="160" Mesh="moelle.vtk"/>
+	<mesh Label="181" Mesh="poumonGauche.vtk"/>
+	<mesh Label="182" Mesh="poumonDroit.vtk"/>
+	<mesh Label="200" Mesh="pericarde.vtk"/>
+	<mesh Label="240" Mesh="aorte.vtk"/>
+	<mesh Label="251" Mesh="oreilletteGauche.vtk"/>
+	<mesh Label="252" Mesh="oreilletteDroite.vtk"/>
+	<mesh Label="253" Mesh="ventriculeGauche.vtk"/>
+	<mesh Label="254" Mesh="ventriculeDroit.vtk"/>
+</root>
+
+ 
+
