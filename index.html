@@ -56,6 +56,7 @@ function renderCallback(renderEvent) {
 function AddMeshes(xmlFile, transform)
 {
 	var xmlhttp=new XMLHttpRequest();
+//	xmlhttp.setRequestHeader( Cache-Control,no-cache);
 	xmlhttp.open("GET",xmlFile,false);
 	xmlhttp.send();
 	var readString=xmlhttp.responseXML;
@@ -70,10 +71,19 @@ function AddMeshes(xmlFile, transform)
 
 	for (var i=0;i<meshes.length;i++)
 	{
-		var file=meshes[i].getAttribute("Mesh");
-		var Label=meshes[i].getAttribute("Label");
+		var mesh=meshes[i];
+		var file=mesh.getAttribute("Mesh");
+		var Label=mesh.getAttribute("Label");
+		var color=[1.0,1.0,1.0,1.0];
+		if (mesh.hasAttribute("color"))
+		{
+			var colorstring=mesh.getAttribute("color");
+			var colors=colorstring.split(" ");
+			for (var j=0;j<4;j++)
+				color[j]=parseFloat(colors[j]);
+		}
 		if (Label!="0")
-			transform.addShape(createFromFile(path+"/"+file,g_pack,[1,1,1,1]));
+			transform.addShape(createFromFile(path+"/"+file,g_pack,color));
 	}
 }
 /**

@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-	<Tmesh Label="10" Mesh="thoraxExt.vtk"/>
-	<Tmesh Label="10" Mesh="thoraxInt.vtk"/>
-	<mesh Label="50" Mesh="colonne.vtk"/>
-	<mesh Label="160" Mesh="moelle.vtk"/>
-	<mesh Label="181" Mesh="poumonGauche.vtk"/>
-	<mesh Label="182" Mesh="poumonDroit.vtk"/>
-	<mesh Label="200" Mesh="pericarde.vtk"/>
-	<mesh Label="240" Mesh="aorte.vtk"/>
+	<Tmesh Label="10" Mesh="thoraxExt.vtk" color="1 1 1 1"/>
+	<Tmesh Label="10" Mesh="thoraxInt.vtk" color="1 1 1 1"/>
+	<mesh Label="50" Mesh="colonne.vtk" color="1 1 1 1"/>
+	<mesh Label="160" Mesh="moelle.vtk" color="1 1 1 1"/>
+	<mesh Label="181" Mesh="poumonGauche.vtk" color="0.5 0.2 0.1 1"/>
+	<mesh Label="182" Mesh="poumonDroit.vtk" color="0.5 0.2 0.1 1"/>
+	<mesh Label="200" Mesh="pericarde.vtk" color="1 0 0 0"/>
+	<mesh Label="240" Mesh="aorte.vtk" color="1 0 0 0"/>
 	<mesh Label="251" Mesh="oreilletteGauche.vtk"/>
 	<mesh Label="252" Mesh="oreilletteDroite.vtk"/>
 	<mesh Label="253" Mesh="ventriculeGauche.vtk"/>
