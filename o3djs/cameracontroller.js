@@ -263,6 +263,9 @@ o3djs.cameracontroller.CameraController = function(centerPos,
 o3djs.cameracontroller.CameraController.prototype.setAreaSize = function(areaWidth, areaHeight) {
   this.areaWidth_ = areaWidth;
   this.areaHeight_ = areaHeight;
+  var min=Math.min(areaWidth,areaHeight);
+  this.distancePerUnit=min/100.0;
+  this.pixelsPerUnit=min/5.0;
 };
 
 /**
