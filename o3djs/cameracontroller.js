@@ -379,6 +379,7 @@ o3djs.cameracontroller.CameraController.prototype.calculateViewMatrix_ =
     function(centerPoint, backpedal) {
   var matrix4 = o3djs.math.matrix4;
   var view = matrix4.translation(o3djs.math.negativeVector(centerPoint));
+  view = matrix4.mul(view, this.thisRot_);
 //  view = matrix4.mul(view, matrix4.rotationY(this.rotationAngle));
 //  view = matrix4.mul(view, matrix4.rotationX(this.heightAngle));
   view = matrix4.mul(view, matrix4.translation([0, 0, -backpedal]));
