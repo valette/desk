@@ -163,13 +163,18 @@ function initStep2(clientElements) {
 	  g_client.renderGraphRoot,
 	  [1, 1, 1, 1]); //background color
 
+	g_viewInfo.performanceState.getStateParam('CullMode').value = 
+		g_o3d.State.CULL_NONE; 
 
 	var Transform = g_pack.createObject('Transform');
 	// Create the Shape for the mesh
 
 //	AddMeshes("output.xml", Transform);
+	AddMeshes("coeur.xml", Transform);
+//	Transform.addShape(createFromFile("heart.vtk",g_pack,[1,1,1,0.6]));
+//	Transform.addShape(createFromFile("pericarde.vtk",g_pack,[1,1,1,0.6]));
 
-	Transform.addShape(createFromFile("skull.vtk",g_pack,[1,1,1,0.6]));
+//	Transform.addShape(createFromFile("skull.vtk",g_pack,[1,1,1,0.6]));
 //	Transform.addShape(createFromFile("tore.vtk",g_pack,[1,1,1,0.6]));
 //	var Shape=createFromFile("hand_full.vtk",g_pack,[1,1,1,0.6]);
 //	Transform.addShape(createFromFile("sphere_80k.vtk",g_pack,[1,0,0,0.6]));
