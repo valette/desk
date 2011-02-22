@@ -106,7 +106,7 @@ var g_dragging = false;
 function startDragging(e) {
 	g_dragging = true;
 
-	if (e.shiftKey)
+	if ((e.shiftKey)||(e.button==1))
 		g_cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.MOVE_CENTER_IN_VIEW_PLANE,e.x,e.y);
 	else
 		g_cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.SPIN_ABOUT_CENTER,e.x,e.y);
