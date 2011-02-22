@@ -61,13 +61,19 @@ function AddMeshes(xmlFile, transform)
 	var readString=xmlhttp.responseXML;
 
 	var meshes=readString.getElementsByTagName("mesh");
-	
+
+	var slashIndex=xmlFile.lastIndexOf("/");
+
+	var path="";
+	if (slashIndex>0)
+		path=xmlFile.substring(0,slashIndex);
+
 	for (var i=0;i<meshes.length;i++)
 	{
 		var file=meshes[i].getAttribute("Mesh");
 		var Label=meshes[i].getAttribute("Label");
 		if (Label!="0")
-			transform.addShape(createFromFile(file,g_pack,[1,1,1,1]));
+			transform.addShape(createFromFile(path+"/"+file,g_pack,[1,1,1,1]));
 	}
 }
 /**
@@ -169,8 +175,9 @@ function initStep2(clientElements) {
 	var Transform = g_pack.createObject('Transform');
 	// Create the Shape for the mesh
 
+	AddMeshes("coeurThorax/coeurthorax.xml", Transform);
 //	AddMeshes("output.xml", Transform);
-	AddMeshes("coeur.xml", Transform);
+//	AddMeshes("coeur.xml", Transform);
 //	Transform.addShape(createFromFile("heart.vtk",g_pack,[1,1,1,0.6]));
 //	Transform.addShape(createFromFile("pericarde.vtk",g_pack,[1,1,1,0.6]));
 
