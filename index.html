@@ -192,8 +192,8 @@ function initStep2(clientElements) {
 	g_cameracontroller=o3djs.cameracontroller.createCameraController(
 	[0,0,0],//centerPos,
 	10,//backpedal,
-	0,//heightAngle,
-	0,//rotationAngle,
+	100,//heightAngle,
+	100,//rotationAngle,
    0.8//fieldOfViewAngle,
    )//opt_onChange)
 
@@ -204,9 +204,10 @@ function initStep2(clientElements) {
 //                                          clientHeight,
 //                                          drawContext)
 
-	g_viewInfo.drawContext.view=g_cameracontroller.calculateViewMatrix();
+//	g_viewInfo.drawContext.view=g_cameracontroller.calculateViewMatrix();
 	g_aball = o3djs.arcball.create(100, 100);
 	setClientSize();
+	g_viewInfo.drawContext.view=g_cameracontroller.calculateViewMatrix();
 
 	o3djs.event.addEventListener(o3dElement, 'mousedown', startDragging);
 	o3djs.event.addEventListener(o3dElement, 'mousemove', drag);
