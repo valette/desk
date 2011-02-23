@@ -14,12 +14,17 @@ return sString;
 
 function createDefaultMaterial(pack, viewInfo, color) {
 
-var material=o3djs.material.createBasicMaterial(pack, viewInfo, color);
+var transparency=0;
+if (color[3]<0.99)
+	transparency=1;
+	
+var material=o3djs.material.createBasicMaterial(pack, viewInfo, color, transparency);
 // change lighting parameters
 //color = emissive + lightColor * (ambient * diffuse + diffuse * lighting + specular * lightingSpecular * specularFactor) 
 //  lightPositionParam.value = [1000, 2000, 3000];
 
-	material.getParam('lightWorldPos').value=[-2000,-2000,-10000];
+//	material.getParam('lightWorldPos').value=[-2000,-2000,-10000];
+	material.getParam('lightWorldPos').value=[2000,2000,10000];
 	material.getParam('emissive').value = [0.1, 0.1, 0.1 , 0.08];
 	material.getParam('ambient').value = [0.1, 0.1, 0.1, 0.005];
 	material.getParam('specular').value = [0.1, 0.1, 0.1, 0.01];
@@ -277,8 +282,8 @@ function createFromFile(file,pack,color, opt_flip) {
 
 		var v0 = o3djs.math.normalize(o3djs.math.subVector(positions[1],positions[0]));
 		var v1 = o3djs.math.normalize(o3djs.math.subVector(positions[2],positions[1]));
-//		var normal=o3djs.math.normalize(o3djs.math.cross(v0, v1));
-		var normal=o3djs.math.normalize(o3djs.math.cross(v1, v0));
+		var normal=o3djs.math.normalize(o3djs.math.cross(v0, v1));
+//		var normal=o3djs.math.normalize(o3djs.math.cross(v1, v0));
 		for (var iii=0;iii<3;iii++)
 		{
 			var currentPoint=triangle[iii];
