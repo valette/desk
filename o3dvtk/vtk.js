@@ -267,8 +267,8 @@ function createFromFile(file,pack,color) {
 
 		var v0 = o3djs.math.normalize(o3djs.math.subVector(positions[1],positions[0]));
 		var v1 = o3djs.math.normalize(o3djs.math.subVector(positions[2],positions[1]));
-		var normal=o3djs.math.normalize(o3djs.math.cross(v0, v1));
-//		var normal=o3djs.math.normalize(o3djs.math.cross(v1, v0));
+//		var normal=o3djs.math.normalize(o3djs.math.cross(v0, v1));
+		var normal=o3djs.math.normalize(o3djs.math.cross(v1, v0));
 		for (var iii=0;iii<3;iii++)
 		{
 			var currentPoint=triangle[iii];

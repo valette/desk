@@ -28,9 +28,6 @@ var g_o3dHeight = -1;
 var g_viewInfo;
 var g_cameracontroller;
 
-var g_lightPosition=[1000,0,-1000];
-var g_transformedLightPosition=[0,0,0];
-
 function updateClient() {
   if (g_client.renderMode == g_o3d.Client.RENDERMODE_ON_DEMAND) {
     g_client.render();
@@ -117,17 +114,7 @@ function drag(e) {
 	if (g_dragging) {
 		g_cameracontroller.mouseMoved(e.x,e.y);
 		var matrix=g_cameracontroller.calculateViewMatrix();
-		g_viewInfo.drawContext.view=matrix;
-		g_transformedLightPosition=o3djs.math.matrix4.transformDirection(matrix, g_lightPosition);
-//		var primitives = g_pack.getObjectsByClassName('o3d.Primitive');
-//		for (var ii = 0; ii < primitives.length; ++ii) {
-//			var primitive = primitives[ii];
-//			var oldmMaterial=primitive.material;
-//			var color=oldmMaterial.getParam('diffuse').value;
-//			var newMaterial=createDefaultMaterial(g_pack, g_viewInfo, color);
-//			newMaterial.getParam('lightWorldPos').value=g_transformedLightPosition;
-//			primitive.material = newMaterial;
-//		}; 
+		g_client.root.localMatrix=matrix;
 		updateClient();
 	}
 }
@@ -140,12 +127,11 @@ function stopDragging(e) {
 function scrollMe(e) {
   if (e.deltaY) {
 	g_cameracontroller.backpedal*=(e.deltaY < 0 ? 14 : 10)/12;
-	g_viewInfo.drawContext.view=g_cameracontroller.calculateViewMatrix();
+	g_client.root.localMatrix=g_cameracontroller.calculateViewMatrix();
 	updateClient();
   }
 }
 
-var g_param;
 /**
  * Initializes O3D, creates the object and sets up the transform and
  * render graphs.
@@ -200,16 +186,12 @@ function initStep2(clientElements) {
 	g_client.render();
 
 //	g_cameracontroller.viewAll(o3djs.util.getBoundingBoxOfTree(g_client.root),1);
-	g_viewInfo.drawContext.view=g_cameracontroller.calculateViewMatrix();
+	g_client.root.localMatrix=g_cameracontroller.calculateViewMatrix();
 
 	o3djs.event.addEventListener(o3dElement, 'mousedown', startDragging);
 	o3djs.event.addEventListener(o3dElement, 'mousemove', drag);
 	o3djs.event.addEventListener(o3dElement, 'mouseup', stopDragging);
 	o3djs.event.addEventListener(o3dElement, 'wheel', scrollMe); 
-
-//	g_params = o3djs.material.createAndBindStandardParams(g_pack);
-//	g_param.lightColor.value = [1, 0, 0, 1];  // red
-//	g_param.lightWorldPos.value = [0, 2000, 0];  // set light position.
 
 	g_client.render();
 	// Set our render callback for animation.
