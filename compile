@@ -1,0 +1,4 @@
+#!/bin/bash
+rm concat.js
+cat o3djs/*.js o3dvtk/*.js o3d-webgl/*.js >>concat.js
+#/home/valette/qooxdoo/qooxdoo/tool/bin/compile.py
