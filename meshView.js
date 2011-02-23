@@ -55,12 +55,15 @@ function AddMeshes(xmlFile, transform)
 	if (slashIndex>0)
 		path=xmlFile.substring(0,slashIndex);
 
+	var flip=0;
 	for (var i=0;i<meshes.length;i++)
 	{
 		var mesh=meshes[i];
 		var file=mesh.getAttribute("Mesh");
 		var Label=mesh.getAttribute("Label");
 		var color=[1.0,1.0,1.0,1.0];
+		if (mesh.hasAttribute("flip"))
+			flip=1;
 		if (mesh.hasAttribute("color"))
 		{
 			var colorstring=mesh.getAttribute("color");
@@ -69,7 +72,7 @@ function AddMeshes(xmlFile, transform)
 				color[j]=parseFloat(colors[j]);
 		}
 		if (Label!="0")
-			transform.addShape(createFromFile(path+"/"+file,g_pack,color));
+			transform.addShape(createFromFile(path+"/"+file,g_pack,color,flip));
 	}
 }
 /**
@@ -144,7 +147,6 @@ function initStep2(clientElements) {
 	g_o3d = o3dElement.o3d;
 	g_math = o3djs.math;
 
-	g_quaternions = o3djs.quaternions;
 	g_lastRot = g_math.matrix4.identity();
 	g_thisRot = g_math.matrix4.identity();
 
@@ -158,8 +160,7 @@ function initStep2(clientElements) {
 	  g_client.renderGraphRoot,
 	  [1, 1, 1, 1]); //background color
 
-	g_viewInfo.performanceState.getStateParam('CullMode').value = 
-		g_o3d.State.CULL_NONE; 
+//	g_viewInfo.performanceState.getStateParam('CullMode').value=g_o3d.State.CULL_NONE; 
 
 	// Create a new transform and parent the Shape under it.
 	var Transform = g_pack.createObject('Transform');

@@ -19,7 +19,7 @@ var material=o3djs.material.createBasicMaterial(pack, viewInfo, color);
 //color = emissive + lightColor * (ambient * diffuse + diffuse * lighting + specular * lightingSpecular * specularFactor) 
 //  lightPositionParam.value = [1000, 2000, 3000];
 
-	material.getParam('lightWorldPos').value=[1000,2000,3000];
+	material.getParam('lightWorldPos').value=[-2000,-2000,-10000];
 	material.getParam('emissive').value = [0.1, 0.1, 0.1 , 0.08];
 	material.getParam('ambient').value = [0.1, 0.1, 0.1, 0.005];
 	material.getParam('specular').value = [0.1, 0.1, 0.1, 0.01];
@@ -133,7 +133,7 @@ function readXMLFile(xmlDoc,vertexInfo ,positionStream ){
 	}
 }
 
-function readVTKFile(filestring,vertexInfo ,positionStream ){
+function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip){
 	var reg2=new RegExp("[ \n]+", "gm");
 	var data=filestring.split(reg2);
 	
@@ -195,9 +195,19 @@ function readVTKFile(filestring,vertexInfo ,positionStream ){
 		if (index2==connectivity[0]+1)
 		{
 			index2=0;
-			vertexInfo.addTriangle(connectivity[1],connectivity[2],connectivity[3]);
-			if (connectivity[0]==4)
-				vertexInfo.addTriangle(connectivity[1],connectivity[3],connectivity[4]);
+			if (!opt_flip)
+			{
+				vertexInfo.addTriangle(connectivity[1],connectivity[2],connectivity[3]);
+				if (connectivity[0]==4)
+					vertexInfo.addTriangle(connectivity[1],connectivity[3],connectivity[4]);
+			}
+			else
+			{
+				vertexInfo.addTriangle(connectivity[1],connectivity[3],connectivity[2]);
+				if (connectivity[0]==4)
+					vertexInfo.addTriangle(connectivity[1],connectivity[4],connectivity[3]);
+			}
+
 			numberOfPolygons--;
 			if (numberOfPolygons==0)
 			{
@@ -207,7 +217,7 @@ function readVTKFile(filestring,vertexInfo ,positionStream ){
 	}
 }
 
-function createFromFile(file,pack,color) {
+function createFromFile(file,pack,color, opt_flip) {
 //  state.getStateParam('o3d.CullMode') = o3djs.base.o3d.State.CULL_CCW; 
 
 	var material=createDefaultMaterial(pack, g_viewInfo, color)
@@ -242,7 +252,7 @@ function createFromFile(file,pack,color) {
 			break;
 		case "vtk":
 			var readString=xmlhttp.responseText;
-			readVTKFile(readString,vertexInfo ,positionStream );
+			readVTKFile(readString,vertexInfo ,positionStream ,opt_flip);
 			break;
 		default:
 		alert (extension+" file format not supported yet!");
