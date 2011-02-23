@@ -18,6 +18,8 @@ var material=o3djs.material.createBasicMaterial(pack, viewInfo, color);
 // change lighting parameters
 //color = emissive + lightColor * (ambient * diffuse + diffuse * lighting + specular * lightingSpecular * specularFactor) 
 //  lightPositionParam.value = [1000, 2000, 3000];
+
+	material.getParam('lightWorldPos').value=[1000,2000,3000];
 	material.getParam('emissive').value = [0.1, 0.1, 0.1 , 0.08];
 	material.getParam('ambient').value = [0.1, 0.1, 0.1, 0.005];
 	material.getParam('specular').value = [0.1, 0.1, 0.1, 0.01];
