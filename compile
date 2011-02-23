@@ -1,5 +1,5 @@
 #!/bin/bash
 rm concat.js
-cat o3djs/*.js o3dvtk/*.js o3d-webgl/*.js >>concat.js
+cat meshView.js o3djs/*.js o3dvtk/*.js o3d-webgl/*.js >>concat.js
 rm compiled.js
 java -jar ./compiler.jar --compilation_level ADVANCED_OPTIMIZATIONS --js concat.js >>compiled.js
