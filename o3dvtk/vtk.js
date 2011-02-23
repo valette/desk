@@ -15,7 +15,7 @@ return sString;
 function createDefaultMaterial(pack, viewInfo, color) {
 
 var transparency=0;
-if (color[3]<0.99)
+if ((color[3]<0.99)&&(color[3]>0))
 	transparency=1;
 	
 var material=o3djs.material.createBasicMaterial(pack, viewInfo, color, transparency);
@@ -31,10 +31,6 @@ var material=o3djs.material.createBasicMaterial(pack, viewInfo, color, transpare
 	material.getParam('shininess').value=0.02;
 	material.getParam('specularFactor').value = 0.1;
 	material.getParam('lightColor').value = [0.8, 0.8, 0.8, 0.5];
-
- var state = pack.createObject('State'); 
-                material.state = state; 
-//                state.getStateParam('FillMode').value = g_o3d.State.WIREFRAME; 
 
 	return material;
 }
@@ -225,8 +221,13 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip){
 function createFromFile(file,pack,color, opt_flip) {
 //  state.getStateParam('o3d.CullMode') = o3djs.base.o3d.State.CULL_CCW; 
 
-	var material=createDefaultMaterial(pack, g_viewInfo, color)
-
+	var material=createDefaultMaterial(pack, g_viewInfo, color);
+	if (color[3]<0)
+	{
+		var state = pack.createObject('State'); 
+		material.state = state; 
+		state.getStateParam('FillMode').value = g_o3d.State.WIREFRAME; 
+	}
 	var vertexInfo = o3djs.primitives.createVertexInfo();
 	var positionStream = vertexInfo.addStream(
 		3, o3djs.base.o3d.Stream.POSITION);
