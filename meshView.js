@@ -29,15 +29,13 @@ var g_viewInfo;
 var g_cameracontroller;
 
 function updateClient() {
-  // If we are in RENDERMODE_ON_DEMAND mode then set the render mode again
-  // which will cause the client re-render the display.
   if (g_client.renderMode == g_o3d.Client.RENDERMODE_ON_DEMAND) {
     g_client.render();
   }
 }
 
 function renderCallback(renderEvent) {
-  resize();
+ setClientSize();
     g_client.renderMode = g_o3d.Client.RENDERMODE_ON_DEMAND;
 }
 
@@ -45,7 +43,6 @@ function renderCallback(renderEvent) {
 function AddMeshes(xmlFile, transform)
 {
 	var xmlhttp=new XMLHttpRequest();
-//	xmlhttp.setRequestHeader( Cache-Control,no-cache);
 	xmlhttp.open("GET",xmlFile,false);
 	xmlhttp.send();
 	var readString=xmlhttp.responseXML;
@@ -102,10 +99,6 @@ function setClientSize() {
   }
 }
 
-function resize() {
-  setClientSize();
-}
-
 var g_dragging = false;
 
 function startDragging(e) {
@@ -132,11 +125,6 @@ function stopDragging(e) {
 
 function scrollMe(e) {
   if (e.deltaY) {
-//    g_camera.eye =
- //       g_math.mulScalarVector((-e.deltaY < 0 ? 15 : 7) / 12, g_camera.eye);
- //   g_viewInfo.drawContext.view = g_math.matrix4.lookAt(g_camera.eye,
-  //                                                      g_camera.target,
-  //                                                      [0, 1, 0]);
 	g_cameracontroller.backpedal*=(e.deltaY < 0 ? 14 : 10)/12;
 	g_viewInfo.drawContext.view=g_cameracontroller.calculateViewMatrix();
 	updateClient();
@@ -171,32 +159,15 @@ function initStep2(clientElements) {
 	g_viewInfo.performanceState.getStateParam('CullMode').value = 
 		g_o3d.State.CULL_NONE; 
 
+	// Create a new transform and parent the Shape under it.
 	var Transform = g_pack.createObject('Transform');
 	// Create the Shape for the mesh
 
 	AddMeshes("http://www.creatis.insa-lyon.fr/~valette/meshView/coeurThorax/coeurthorax.xml", Transform);
-//	AddMeshes("output.xml", Transform);
-//	AddMeshes("coeur.xml", Transform);
-//	Transform.addShape(createFromFile("heart.vtk",g_pack,[1,1,1,0.6]));
-//	Transform.addShape(createFromFile("pericarde.vtk",g_pack,[1,1,1,0.6]));
-
-//	Transform.addShape(createFromFile("skull.vtk",g_pack,[1,1,1,0.6]));
-//	Transform.addShape(createFromFile("tore.vtk",g_pack,[1,1,1,0.6]));
-//	var Shape=createFromFile("hand_full.vtk",g_pack,[1,1,1,0.6]);
-//	Transform.addShape(createFromFile("sphere_80k.vtk",g_pack,[1,0,0,0.6]));
-//	Transform.addShape(createFromFile("mesh.vtk",g_pack,[1,0,0,0.6]));
-//	Transform.addShape(createFromFile("1.vtk",g_pack,[1,0,0,0.6]));
-//	var Shape=createFromFile("ventriculeDroit.vtk",g_pack,[1,1,1,0.6]);
-
-//	var Shape=createFromFile("oreillette_droite.xml",g_pack,[1,1,1,0.6]);
-//	var Shape=createFromFile("rockerarm.xml",g_pack,[1,1,1,0.6]);
-//	var Shape=createFromFile("bunny.xml",g_pack,[1,1,1,0.6]);
-//	var Shape=createFromFile("hand.xml",g_pack,[1,1,1,1]);
-//	var Shape=createFromFile("skull.xml",g_pack,[1,1,1,1]);
-//	var Shape=createFromFile("heart.xml",g_pack,[1,1,1,1]);
-
-	// Create a new transform and parent the Shape under it.
-
+//	AddMeshes("data/output.xml", Transform);
+//	AddMeshes("data/coeur.xml", Transform);
+//	Transform.addShape(createFromFile("data/heart.vtk",g_pack,[1,1,1,0.6]));
+//	Transform.addShape(createFromFile("data/skull.xml",g_pack,[1,1,1,0.6]));
 
 	Transform.parent = g_client.root;
 
@@ -210,13 +181,6 @@ function initStep2(clientElements) {
 
 //	g_cameracontroller.viewAll(o3djs.util.getBoundingBoxOfTree(g_client.root),1);
 
-//	o3djs.camera.fitContextToScene = function(treeRoot,
-//                                          clientWidth,
-//                                          clientHeight,
-//                                          drawContext)
-
-//	g_viewInfo.drawContext.view=g_cameracontroller.calculateViewMatrix();
-	g_aball = o3djs.arcball.create(100, 100);
 	setClientSize();
 	g_viewInfo.drawContext.view=g_cameracontroller.calculateViewMatrix();
 
