@@ -136,10 +136,8 @@ o3djs.cameracontroller.createCameraController = function(centerPos,
  *     of the camera. In world space.
  * @param {number} backpedal The distance the camera moves back from the
  *     centerPos.
- * @param {number} heightAngle The angle the camera rotates up or down
- *     (about the x axis that passes through the centerPos). In radians.
- * @param {number} rotationAngle The angle the camera rotates left or right
- *     (about the y axis that passes through the centerPos). In radians.
+ * @param {number} areaWidth 
+ * @param {number} areaHeight 
  * @param {number} fieldOfViewAngle The vertical angle of the viewing frustum.
  *     In radians, between 0 and PI/2. This does not affect the view matrix,
  *     but it can still be useful to let this class control the field of view.
@@ -251,7 +249,19 @@ o3djs.cameracontroller.CameraController = function(centerPos,
    * @type {number}
    */
   this.areaHeight_ = areaHeight;
+
+/**
+   * The current rotation matrix
+   * @private
+   * @type {o3djs.math.Matrix4}
+   */
   this.thisRot_=g_math.matrix4.identity();
+
+/**
+   * The last rotation matrix
+   * @private
+   * @type {o3djs.math.Matrix4}
+   */
   this.lastRot_=g_math.matrix4.identity();
 };
 

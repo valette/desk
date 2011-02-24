@@ -43,7 +43,7 @@ function renderCallback(renderEvent) {
 function AddMeshes(xmlFile, transform)
 {
 	var xmlhttp=new XMLHttpRequest();
-	xmlhttp.open("GET",xmlFile,false);
+	xmlhttp.open("GET",xmlFile+"?nocache=" + Math.random(),false);
 	xmlhttp.send();
 	var readString=xmlhttp.responseXML;
 
