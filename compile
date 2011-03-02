@@ -1,3 +1,5 @@
 #!/bin/bash
 cat o3djs/*.js o3dvtk/*.js o3d-webgl/*.js meshView.js >essai.js
+rm concat.js
+cat o3djs/base.js o3djs/webgl.js o3djs/util.js o3djs/arcball.js o3djs/cameracontroller.js o3djs/camera.js o3djs/canvas.js o3djs/dump.js o3djs/effect.js o3djs/element.js o3djs/error.js o3djs/event.js o3djs/fps.js o3djs/gpu2d.js o3djs/io.js o3djs/primitives.js o3djs/lineprimitives.js o3djs/loader.js o3djs/manipulators.js o3djs/material.js o3djs/math.js o3djs/pack.js o3djs/particles.js o3djs/performance.js o3djs/picking.js o3djs/quaternions.js o3djs/rendergraph.js o3djs/scene.js o3djs/serialization.js o3djs/shape.js o3djs/serialization.js o3djs/simple.js o3djs/test.js o3djs/texture.js o3djs/util.js o3djs/webgl.js o3dvtk/vtk.js meshView.js >concat.js
 java -jar ./compiler.jar --compilation_level ADVANCED_OPTIMIZATIONS --js concat.js >compiled.js
