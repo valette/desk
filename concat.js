@@ -24047,6 +24047,15319 @@ o3djs.webgl.createClient = function(element, opt_features, opt_debug) {
 };
 
 
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * @fileoverview Base for all o3d classes implemented in javscript.
+ *    Include just this file in a script tag and it will include all other
+ *    source files needed by o3d.
+ *    For more information about o3d see
+ *    http://code.google.com/p/o3d.
+ */
+
+/**
+ * A namespace for all the o3d classes.
+ * @namespace
+ */
+var o3d = o3d || {};
+
+/**
+ * Define this because the Google internal JSCompiler needs goog.typedef below.
+ */
+var goog = goog || {};
+
+/**
+ * A macro for defining composite types.
+ *
+ * By assigning goog.typedef to a name, this tells Google internal JSCompiler
+ * that this is not the name of a class, but rather it's the name of a composite
+ * type.
+ *
+ * For example,
+ * /** @type {Array|NodeList} / goog.ArrayLike = goog.typedef;
+ * will tell JSCompiler to replace all appearances of goog.ArrayLike in type
+ * definitions with the union of Array and NodeList.
+ *
+ * Does nothing in uncompiled code.
+ */
+goog.typedef = true;
+
+/**
+ * Reference to the global context.  In most cases this will be 'window'.
+ */
+o3d.global = this;
+
+/**
+ * Path for included scripts.
+ * @type {string}
+ */
+o3d.basePath = '';
+
+/**
+ * Some javascripts don't support __defineGetter__ or __defineSetter__
+ * so we define some here so at least we don't get compile errors.
+ * We expect the initialzation code will check and complain. This stubs
+ * are just here to make sure we can actually get to the initialization code.
+ */
+if (!Object.prototype.__defineSetter__) {
+  Object.prototype.__defineSetter__ = function() {}
+  Object.prototype.__defineGetter__ = function() {}
+}
+
+/**
+ * Tries to detect the base path of the base.js script that
+ * bootstraps the o3d libraries.
+ * @private
+ */
+o3d.findBasePath_ = function() {
+  var doc = o3d.global.document;
+  if (typeof doc == 'undefined') {
+    return;
+  }
+  if (o3d.global.BASE_PATH) {
+    o3d.basePath = o3d.global.BASE_PATH;
+    return;
+  } else {
+    // HACK to hide compiler warnings :(
+    o3d.global.BASE_PATH = null;
+  }
+  var scripts = doc.getElementsByTagName('script');
+  for (var script, i = 0; script = scripts[i]; i++) {
+    var src = script.src;
+    var l = src.length;
+    var s = 'o3d-webgl/base.js';
+    var sl = s.length;
+    if (src.substr(l - sl) == s) {
+      o3d.basePath = src.substr(0, l - sl) + 'o3d-webgl/';
+      return;
+    }
+  }
+};
+
+/**
+ * Writes a script tag for the given o3d source file name
+ * to the document.  (Must be called at execution time.)
+ * @param {string} src The full path to the source file.
+ * @private
+ */
+o3d.writeScriptTag_ = function(src) {
+  var doc = o3d.global.document;
+  if (typeof doc != 'undefined') {
+    doc.write('<script type="text/javascript" src="' +
+              src + '"></' + 'script>');
+  }
+};
+
+/**
+ * Filters any "o3d." prefix from the given type name.
+ * @param {string} type_name The type name to filter.
+ * @return {string} Filtered type name.
+ * @private
+ */
+o3d.filterTypeName_ = function(type_name) {
+  if (type_name.length >= 4 && type_name.substr(0, 4) == 'o3d.') {
+    type_name = type_name.substr(4);
+  }
+  return type_name;
+};
+
+/**
+ * Includes the file indicated by the rule by adding a script tag.
+ * @param {string} rule Rule to include, in the form o3d.package.part.
+ */
+o3d.include = function(rule) {
+  var parts = rule.split('.');
+  var path = parts[parts.length - 1] + '.js';
+  o3d.writeScriptTag_(o3d.basePath + path);
+};
+
+
+/**
+ * Makes one class inherit from another.  Adds the member variables superClass
+ * and superClassName to the prototype of the sub class.
+ * @param {string} subClass Class that wants to inherit.
+ * @param {string} superClass Class to inherit from.
+ */
+o3d.inherit = function(subClassName, superClassName) {
+  var superClass = o3d.global.o3d[superClassName];
+  var subClass = o3d.global.o3d[subClassName];
+
+  if (!superClass)
+    throw ('Invalid superclass: ' + superClassName);
+  if (!subClass)
+    throw ('Invalid subclass: ' + subClassName);
+
+  subClass.prototype = new superClass;
+  subClass.prototype.superClassName = superClassName;
+  subClass.prototype.superClass = superClass;
+  subClass.prototype.className = subClassName;
+};
+
+
+/**
+ * Utility function to remove an object from an array.
+ * @param {!Array} array The array.
+ * @param {Object} object The thing to be removed.
+ */
+o3d.removeFromArray = function(array, object) {
+  var i = array.indexOf(object);
+  if (i >= 0) {
+    array.splice(i, 1);
+  }
+};
+
+
+/**
+ * Determine whether a value is an array. Do not use instanceof because that
+ * will not work for V8 arrays (the browser thinks they are Objects).
+ * @param {*} value A value.
+ * @return {boolean} Whether the value is an array.
+ */
+o3d.isArray_ = function(value) {
+  var valueAsObject = /** @type {!Object} **/ (value);
+  return typeof(value) === 'object' && value !== null &&
+      'length' in valueAsObject && 'splice' in valueAsObject;
+};
+
+
+/**
+ * Utility function to clone an object.
+ *
+ * @param {Object} object The object to clone.
+ * @return {Object} A clone of that object.
+ */
+o3d.clone = function(object) {
+  var result = o3d.isArray_(object) ? [] : {};
+  for (var name in object) {
+    var property = object[name];
+    if (typeof property == 'Object') {
+      result[name] = o3d.clone(property);
+    } else {
+      result[name] = property;
+    }
+  }
+  return result;
+};
+
+
+/**
+ * If an o3d function has not been implemented in javascript yet, it should
+ * call this function to throw an error because it's better than doing
+ * nothing.
+ */
+o3d.notImplemented = function() {
+  debugger;
+  throw 'Not implemented.';
+};
+
+
+// First find the path to the directory where all o3d-webgl sources live.
+o3d.findBasePath_();
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A ObjectBase is a base class that manages a set of components in a
+ * Buffer of a specific type. ObjectBases are managed by Buffers and can
+ * not be directly created. When a Buffer is destroyed or if a ObjectBase
+ * is removed from a Buffer the ObjectBase's buffer property will be set
+ * to null.
+ */
+o3d.ObjectBase = function() { };
+
+
+/**
+ * Used by isAClassName.
+ * @type {string}
+ */
+o3d.ObjectBase.prototype.className = 'o3d.ObjectBase';
+
+/**
+ * @type {o3d.ObjectBase}
+ */
+o3d.ObjectBase.prototype.superClass = null;
+
+/**
+ * Traverses the current object's class and all its superclasses and
+ * determines if any of them are of the given name.
+ * @param {string} class_type_name The name of a class.
+ * @return {boolean} Whether this is counts as a className.
+ */
+o3d.ObjectBase.prototype.isAClassName = function(class_type_name) {
+  class_type_name = o3d.filterTypeName_(class_type_name);
+  var object = this;
+  while (object != undefined) {
+    if (object.className == class_type_name) {
+      return true;
+    }
+    object = object.superClass && object.superClass.prototype;
+  }
+  return false;
+};
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * Base class for all objects that are identifiable by a name.
+ * @constructor
+ */
+o3d.NamedObjectBase = function() {
+  o3d.ObjectBase.call(this);
+};
+o3d.inherit('NamedObjectBase', 'ObjectBase');
+
+
+/**
+ * The object's name.
+ * @type {string}
+ */
+o3d.NamedObjectBase.prototype.name = "";
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * Base class for all objects that can have their name set.
+ * @constructor
+ */
+o3d.NamedObject = function() {
+  o3d.NamedObjectBase.call(this);
+};
+o3d.inherit('NamedObject', 'NamedObjectBase');
+
+
+/**
+ * The object's name.
+ *
+ * Setting this has no meaning to O3D, but is useful for debugging and for
+ * the functions Client.getObjects, Pack.getObject,
+ * RenderNode.getRenderNodesByNameInTree and
+ * RenderNode.getTransformsByNameInTree
+ * which search for objects by name.
+ * @type {string}
+ */
+o3d.NamedObject.prototype.name = '';
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A ParamObject is the base class for all objects that can have Params.
+ * Defines methods to add and remove params, search for params, etc.
+ * @constructor
+ */
+o3d.ParamObject = function() {
+  o3d.NamedObject.call(this);
+  this.params_ = {};
+};
+o3d.inherit('ParamObject', 'NamedObject');
+
+o3d.ParamObject.prototype.__defineGetter__('params',
+    function() {
+      var paramList = [];
+      for (name in this.params_) {
+        paramList.push(this.params_[name]);
+      }
+      return paramList;
+    });
+
+o3d.ParamObject.prototype.__defineSetter__('params', function() {});
+
+o3d.ParamObject.O3D_PREFIX_ = 'o3d.';
+
+/**
+ * Creates a Param with the given name and type on the ParamObject.
+ * Will fail if a param with the same name already exists.
+ *
+ * @param {string} param_name The name of the Param to be created.
+ * @param {string} param_type_name The type of Param to create.
+ *     Valid types are
+ *     'ParamBoolean'
+ *     'ParamBoundingBox'
+ *     'ParamDrawContext'
+ *     'ParamDrawList'
+ *     'ParamEffect'
+ *     'ParamFloat'
+ *     'ParamFloat2'
+ *     'ParamFloat3'
+ *     'ParamFloat4'
+ *     'ParamFunction'
+ *     'ParamInteger'
+ *     'ParamMaterial'
+ *     'ParamMatrix4'
+ *     'ParamParamArray'
+ *     'ParamRenderSurface'
+ *     'ParamRenderDepthStencilSurface'
+ *     'ParamSampler'
+ *     'ParamSkin'
+ *     'ParamSteamBank'
+ *     'ParamState'
+ *     'ParamString'
+ *     'ParamTexture'
+ *     'ParamTransform'
+ *     'ProjectionParamMatrix4'
+ *     'ProjectionInverseParamMatrix4'
+ *     'ProjectionTransposeParamMatrix4'
+ *     'ProjectionInverseTransposeParamMatrix4'
+ *     'ViewParamMatrix4'
+ *     'ViewInverseParamMatrix4'
+ *     'ViewTransposeParamMatrix4'
+ *     'ViewInverseTransposeParamMatrix4'
+ *     'ViewProjectionParamMatrix4'
+ *     'ViewProjectionInverseParamMatrix4'
+ *     'ViewProjectionTransposeParamMatrix4'
+ *     'ViewProjectionInverseTransposeParamMatrix4'
+ *     'WorldParamMatrix4'
+ *     'WorldInverseParamMatrix4'
+ *     'WorldTransposeParamMatrix4'
+ *     'WorldInverseTransposeParamMatrix4'
+ *     'WorldViewParamMatrix4'
+ *     'WorldViewInverseParamMatrix4'
+ *     'WorldViewTransposeParamMatrix4'
+ *     'WorldViewInverseTransposeParamMatrix4'
+ *     'WorldViewProjectionParamMatrix4'
+ *     'WorldViewProjectionInverseParamMatrix4'
+ *     'WorldViewProjectionTransposeParamMatrix4'
+ *     'WorldViewProjectionInverseTransposeParamMatrix4'
+ * @return {!o3d.Param}  The newly created Param or null on failure.
+ */
+o3d.ParamObject.prototype.createParam =
+    function(param_name, param_type_name) {
+  if (this.params_[param_name])
+    return null;
+  param_type_name = o3d.filterTypeName_(param_type_name);
+  if (!o3d.global.o3d[param_type_name])
+    throw ('Invalid param type name: ' + param_type_name);
+  var param = new o3d.global.o3d[param_type_name];
+  param.gl = this.gl;
+  param.owner_ = this;
+  param.name = param_name;
+  this.params_[param_name] = param;
+  return this.filterResult_(this.params_[param_name]);
+};
+
+
+/**
+ * Searches by name for a Param defined in the object.
+ *
+ * @param {string} param_name Name to search for.
+ * @return {!o3d.Param}  The Param with the given name, or null otherwise.
+ */
+o3d.ParamObject.prototype.getParam =
+    function(param_name) {
+  var result = this.params_[param_name];
+  var o3d_name;
+  if (!result) {
+    // Try again with O3D prefix.
+    o3d_name = o3d.ParamObject.O3D_PREFIX_ + param_name;
+    result = this.params_[o3d_name];
+  }
+
+  if (!result) {
+    // See if it's one of the params which needs to be created lazily.
+    // If it is, initialize it with the current value in the object.
+    var lazyParamMap = this.lazyParamMap_;
+    if (lazyParamMap) {
+      var name = param_name;
+      var param_type = this.lazyParamMap_[name];
+      if (!param_type) {
+        name = o3d_name;
+        param_type = this.lazyParamMap_[name];
+      }
+      if (param_type) {
+        result = this.createParam(name, param_type);
+      }
+    }
+  }
+
+  return this.filterResult_(result);
+};
+
+
+/**
+ * Removes a Param from a ParamObject.
+ *
+ * This function will fail if the param does not exist on this ParamObject
+ * or if the param is unremovable.
+ *
+ * @param {!o3d.Param} param param to remove.
+ * @return {boolean}  True if the param was removed.
+ */
+o3d.ParamObject.prototype.removeParam =
+    function(param) {
+  for (var i in this.params_) {
+    if (this.params_[i] == param) {
+      delete this.params_[i];
+    }
+  }
+};
+
+
+/**
+ * Gets all the param on this param object.
+ *
+ * Each access to this field gets the entire list, so it is best to get it
+ * just once. For example:
+ *
+ * var params = paramObject.params;
+ * for (var i = 0; i < params.length; i++) {
+ *   var param = params[i];
+ * }
+ *
+ * Note that modifications to this array [e.g. push()] will not affect
+ * the underlying ParamObject, while modifications to the array's members
+ * will affect them.
+ */
+o3d.ParamObject.prototype.params_ = {};
+
+
+/**
+ * Copies all the params from a the given source_param_object to this param
+ * object. Does not replace any currently existing params with the same name.
+ *
+ * @param {o3d.ParamObject} source_param_object param object to copy params
+ *     from.
+ */
+o3d.ParamObject.prototype.copyParams =
+    function(source_param_object) {
+  for (name in source_param_object.params_) {
+    var param = source_param_object.params_[name];
+    this.createParam(name, param.className);
+    this.getParam(name).value = param.value;
+  }
+};
+
+
+/**
+ * Filters results, turning 'undefined' into 'null'.
+ * @private
+ */
+o3d.ParamObject.prototype.filterResult_= function(result) {
+  return (result ? result : null);
+};
+
+
+/**
+ * Sets up an o3d-scoped parameter against the given constructor
+ * function of the given type for the given field.
+ * @private
+ */
+o3d.ParamObject.setUpO3DParam_ = function(constructor,
+                                          fieldName,
+                                          paramType) {
+  var o3dParamName = o3d.ParamObject.O3D_PREFIX_ + fieldName;
+
+  // The lazyParamMap primarily handles the case where getParam is
+  // called before the getter or setter below. It also simplifies the
+  // code below since it can simply call getParam and the param will
+  // be created on demand.
+  var lazyParamMap = constructor.prototype.lazyParamMap_;
+  if (!lazyParamMap) {
+    lazyParamMap = {};
+    constructor.prototype.lazyParamMap_ = lazyParamMap;
+  }
+  lazyParamMap[o3dParamName] = paramType;
+
+  constructor.prototype.__defineGetter__(fieldName,
+      function() {
+        var param = this.getParam(o3dParamName);
+        return param.value;
+      });
+  constructor.prototype.__defineSetter__(fieldName,
+      function(v) {
+        var param = this.getParam(o3dParamName);
+        param.value = v;
+      });
+};
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A ParamArray is an object that holds an array of Params.
+ * @constructor
+ */
+o3d.ParamArray = function() {
+  o3d.NamedObject.call(this);
+  this.params_ = [];
+};
+o3d.inherit('ParamArray', 'NamedObject');
+
+
+/**
+ * Creates a Param of the given type at the index requested. If a Param already
+ * exists at that index the new param will be replace it. If the index is past
+ * the end of the current array params of the requested type will be created to
+ * fill out the array to the requested index.
+ *
+ * @param {number} index Index at which to create new param.
+ * @param {string} param_type_name The type of Param to create. For a list of
+ *     valid types see ParamObject.createParam
+ * @return {!o3d.ParamArray}  The newly created Param or null if failure.
+ */
+o3d.ParamArray.prototype.createParam = function(index, param_type_name) {
+  param_type_name = o3d.filterTypeName_(param_type_name);
+  if (!o3d.global.o3d[param_type_name])
+    throw ('Invalid param type name: ' + param_type_name);
+  if (index >= this.params_.length) {
+    this.resize(index + 1, param_type_name);
+  } else {
+    var param = new o3d.global.o3d[param_type_name];
+    param.gl = this.gl;
+    param.owner_ = this;
+    this.params_[index] = param;
+  }
+
+  return this.filterResult_(this.params_[index]);
+};
+
+
+/**
+ * Gets a Param by index.
+ *
+ * @param {number} index Index of Param to get.
+ * @return {!o3d.Param}  The Param at index, or null if out of range.
+ */
+o3d.ParamArray.prototype.getParam = function(index) {
+  var result = this.params_[index];
+  return this.filterResult_(result);
+};
+
+
+/**
+ * Removes a range of params. This shrinks the array and affects the indices of
+ * later occurring items.
+ *
+ * @param {number} start_index Index of first param to remove.
+ * @param {number} num_to_remove The number of params to remove starting at
+ *     start_index.
+ */
+o3d.ParamArray.prototype.removeParams = function(start_index, num_to_remove) {
+  var paramsNew = [];
+  var j = 0;
+  for (var i = 0; i < this.params_.length; i++) {
+    if (i >= start_index && i < start_index + num_to_remove) {
+      // Skip these to remove them.
+    } else {
+      paramsNew[j] = this.params_[i];
+      j++;
+    }
+  }
+  this.params_ = paramsNew;
+};
+
+
+/**
+ * Resizes the array.
+ *
+ * @param {number} num_params The number of params to make the array.
+ * @param {string} param_type_name The type of Param to create if resizing
+ *     requires params to be created. For a list of valid types see
+ *     ParamObject.createParam.
+ */
+o3d.ParamArray.prototype.resize = function(num_params, param_type_name) {
+  param_type_name = o3d.filterTypeName_(param_type_name);
+  if (!o3d.global.o3d[param_type_name])
+    throw ('Invalid param type name: ' + param_type_name);
+
+  for (var i = this.params_.length; i < num_params; i++) {
+    var param = new o3d.global.o3d[param_type_name];
+    param.gl = this.gl;
+    param.owner_ = this;
+    this.params_[i] = param;
+  }
+};
+
+/**
+ * The params stored in this ParamArray.
+ *
+ * @type {!Array.<!o3d.Param>}
+ * @private
+ */
+o3d.ParamArray.prototype.params_ = [];
+
+/**
+ * Gets all the param on this param object.
+ *
+ * Each access to this field gets the entire list, so it is best to get it
+ * just once. For example:
+ *
+ * var params = ParamArray.params;
+ * for (var i = 0; i < params.length; i++) {
+ *   var param = params[i];
+ * }
+ *
+ * Note that modifications to this array [e.g. push()] will not affect
+ * the underlying ParamArray, while modifications to the array's members
+ * <b>will</b> affect them.
+ *
+ * @type {!Array.<!o3d.Param>}
+ */
+o3d.ParamArray.prototype.__defineGetter__('params',
+    function() {
+      var params = [];
+      for (var i = 0; i < this.length; i++) {
+        params[i] = this.params_[i];
+      }
+      return params;
+    }
+);
+
+
+/**
+ * Returns the number of parameters in this ParamArray.
+ *
+ * @type {number}
+ */
+o3d.ParamArray.prototype.__defineGetter__('length',
+    function() {
+      return this.params_.length;
+    }
+);
+
+
+/**
+ * Filters results, turning 'undefined' into 'null'.
+ *
+ * @param {*} result
+ * @private
+ */
+o3d.ParamArray.prototype.filterResult_= function(result) {
+  return (result ? result : null);
+};
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * Params store data defined name/value pairs on ParamObjects.
+ * Each Param has a name, a type and a value that can be set and queried.
+ * One of their uses is to hold "uniform constants" used to parameterize
+ * shaders.  Params can be connected in a source/destination fashion such
+ * that a target Param gets its value from the source param.
+ * @constructor
+ */
+o3d.Param = function(param_type_name) {
+  o3d.Param.prototype.output_connections = [];
+  this.outputConnections = [];
+}
+o3d.inherit('Param', 'NamedObject');
+
+
+/**
+ * If true, this param will make sure its input param is up to date when
+ * using it as a source. Default = true.
+ *
+ * This is for helping with Param cycles.
+ *
+ * If paramA gets its value from paramB and paramB gets its value from
+ * paramA:
+ * If you go paramA.value, paramB will evaluate then copy to paramA.
+ * If you go paramB.value, paramA will evaluate then copy to paramB.
+ * If you set paramB.updateInput = false, then:
+ * If you go paramA.value, paramB will evaluate then copy to paramA.
+ * If you go paramB.value, paramB just copy paramA. paramA will NOT evaluate
+ * when paramB asks for its value.
+ */
+o3d.Param.prototype.update_input = true;
+
+/**
+ * @type {o3d.Param}
+ */
+o3d.Param.prototype.inputConnection = null;
+
+/**
+ * @type {Array.<!o3d.Param>}
+ */
+o3d.Param.prototype.outputConnections = [];
+
+
+/**
+ * @type {o3d.ParamObject}
+ */
+o3d.Param.prototype.owner_ = null;
+
+/**
+ * @type {Object} The value of the parameter.
+ */
+o3d.Param.prototype.value_ = null;
+
+o3d.Param.prototype.__defineSetter__('value',
+    function(v) {
+      if (this.inputConnection) {
+        throw ('Tried to set bound parameter.');
+      } else {
+        if (this.value_ != undefined && (
+           typeof this.value_ != typeof v ||
+           (this.value_.length_ !== undefined &&
+            (this.value_.length_ != v.length)))) {
+          this.gl.client.error_callback('Param type error.');
+        }
+        this.value_ = v;
+      }
+    }
+);
+
+o3d.Param.prototype.__defineGetter__('value',
+    function() {
+      if (this.inputConnection) {
+        return this.inputConnection.value;
+      } else {
+        return this.value_;
+      }
+    }
+);
+
+
+/**
+ * Directly binds two Param elements such that this parameter gets its value
+ * from the source parameter.  The source must be compatible with this
+ * parameter.
+ *
+ * @param {o3d.Param} source_param The parameter that the value originates
+ *     from. Passing in null will unbind any parameter currently bound.
+ * @return {boolean}  True if the bind succeeded.
+ */
+o3d.Param.prototype.bind =
+    function(source_param) {
+  source_param.outputConnections.push(this);
+  this.inputConnection = source_param;
+};
+
+
+/**
+ * Breaks any input connection coming into the Param.
+ */
+o3d.Param.prototype.unbindInput =
+    function() {
+  o3d.notImplemented();
+};
+
+
+/**
+ * Breaks a specific param-bind output connection on this param.
+ *
+ * @param {o3d.Param} destination_param param to unbind.
+ */
+o3d.Param.prototype.unbindOutput =
+    function(destination_param) {
+  o3d.notImplemented();
+};
+
+
+/**
+ * Breaks all param-bind output connections on this param.
+ */
+o3d.Param.prototype.unbindOutputs = function() {
+  o3d.notImplemented();
+};
+
+
+
+/**
+ * If true the param is read only. Its value can not be set nor can it be used
+ * as the destination in a ParamBind.
+ */
+o3d.Param.prototype.read_only_ = false;
+
+
+/**
+ * @constructor
+ */
+o3d.ParamBoolean = function() {
+  o3d.Param.call(this);
+  this.value = false;
+};
+o3d.inherit('ParamBoolean', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamBoundingBox = function() {
+  o3d.Param.call(this);
+  this.value = null;
+};
+o3d.inherit('ParamBoundingBox', 'Param');
+
+// ParamBoundingBox requires a specialized setter because it must
+// accept arrays of arrays and convert them into BoundingBoxes. It
+// seems that if we define a setter against this prototype we must
+// also define a getter -- it is not inherited.
+o3d.ParamBoundingBox.prototype.__defineSetter__('value',
+    function(v) {
+      if (this.inputConnection) {
+        throw ('Tried to set bound parameter.');
+      } else {
+        if (!v) {
+          v = new o3d.BoundingBox();
+        } else if (v.length !== undefined) {
+          if (v.length == 0) {
+            v = new o3d.BoundingBox();
+          } else if (v.length == 2) {
+            for (var ii = 0; ii < 2; ++ii) {
+              if (v[ii].length != 3) {
+                throw ('Expected sub-array of length 3 at index ' + ii +
+                       ', got ' + v[ii].length);
+              }
+            }
+            v = new o3d.BoundingBox(v[0], v[1]);
+          } else {
+            throw 'Expected array of length 2';
+          }
+        }
+        this.value_ = v;
+      }
+    }
+);
+
+o3d.ParamBoundingBox.prototype.__defineGetter__('value',
+    function() {
+      if (this.inputConnection) {
+        return this.inputConnection.value;
+      } else {
+        return this.value_;
+      }
+    }
+);
+
+/**
+ * @constructor
+ */
+o3d.ParamDrawContext = function() {
+  o3d.Param.call(this);
+  this.value = null;
+};
+o3d.inherit('ParamDrawContext', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamDrawList = function() {
+  o3d.Param.call(this);
+  this.value = null;
+};
+o3d.inherit('ParamDrawList', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamEffect = function() {
+  o3d.Param.call(this);
+  this.value = null;
+};
+o3d.inherit('ParamEffect', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamFloat = function() {
+  o3d.Param.call(this);
+  this.value = 0.0;
+};
+o3d.inherit('ParamFloat', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamFloat2 = function() {
+  o3d.Param.call(this);
+  this.value = [0.0, 0.0];
+};
+o3d.inherit('ParamFloat2', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamFloat3 = function() {
+  o3d.Param.call(this);
+  this.value = [0.0, 0.0, 0.0];
+};
+o3d.inherit('ParamFloat3', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamFloat4 = function() {
+  o3d.Param.call(this);
+  this.value = [0.0, 0.0, 0.0, 0.0];
+};
+o3d.inherit('ParamFloat4', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamFunction = function() {
+  o3d.Param.call(this);
+  this.value = null;
+};
+o3d.inherit('ParamFunction', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamInteger = function() {
+  o3d.Param.call(this);
+  this.value = 0;
+};
+o3d.inherit('ParamInteger', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamMaterial = function() {
+  o3d.Param.call(this);
+  this.value = null;
+};
+o3d.inherit('ParamMaterial', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamMatrix4 = function() {
+  o3d.Param.call(this);
+  this.value = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+};
+o3d.inherit('ParamMatrix4', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamParamArray = function() {
+  o3d.Param.call(this);
+  this.value = null;
+};
+o3d.inherit('ParamParamArray', 'Param');
+
+/**
+ * Acts like ParamParamArray, but asks its owner object to update the array
+ * contents every time its value is queried.
+ *
+ * @constructor
+ * @extends {o3d.ParamParamArray}
+ */
+o3d.ParamParamArrayOutput = function() {
+  o3d.ParamParamArray.call(this);
+};
+o3d.inherit('ParamParamArrayOutput', 'ParamParamArray');
+o3d.ParamParamArrayOutput.prototype.__defineGetter__("value",
+    function() {
+      this.owner_.updateOutputs(this);
+      return this.value_;
+    }
+);
+o3d.ParamParamArrayOutput.prototype.__defineSetter__("value",
+    function(value) {
+      // Creating a new array is fine.
+      this.value_ = value;
+    }
+);
+
+/**
+ * @constructor
+ */
+o3d.ParamRenderSurface = function() {
+  o3d.Param.call(this);
+  this.value = null;
+};
+o3d.inherit('ParamRenderSurface', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamRenderDepthStencilSurface = function() {
+  o3d.Param.call(this);
+  this.value = null;
+};
+o3d.inherit('ParamRenderDepthStencilSurface', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamSampler = function() {
+  o3d.Param.call(this);
+  this.value = null;
+};
+o3d.inherit('ParamSampler', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamSkin = function() {
+  o3d.Param.call(this);
+  this.value = null;
+};
+o3d.inherit('ParamSkin', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamSteamBank = function() {
+  o3d.Param.call(this);
+  this.value = null;
+};
+o3d.inherit('ParamSteamBank', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamState = function() {
+  o3d.Param.call(this);
+  this.value = null;
+};
+o3d.inherit('ParamState', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamStreamBank = function() {
+  o3d.Param.call(this);
+  this.value = null;
+};
+o3d.inherit('ParamStreamBank', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamString = function() {
+  o3d.Param.call(this);
+  this.value = null;
+};
+o3d.inherit('ParamString', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamTexture = function() {
+  o3d.Param.call(this);
+  this.value = null;
+};
+o3d.inherit('ParamTexture', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamTransform = function() {
+  o3d.Param.call(this);
+  this.value = null;
+};
+o3d.inherit('ParamTransform', 'Param');
+
+
+/**
+ * @constructor
+ */
+o3d.ParamVertexBufferStream = function() {
+  o3d.Param.call(this);
+  this.stream = null;
+};
+o3d.inherit('ParamVertexBufferStream', 'Param');
+
+/**
+ * Base class for the types of matrix4 params that compute their own
+ * value when asked (ProjectionParamMatrix4 etc).
+ * @constructor
+ */
+o3d.CompositionParamMatrix4 = function() {
+  o3d.ParamMatrix4.call(this);
+  this.matrix_names_ = [];
+};
+o3d.inherit('CompositionParamMatrix4', 'ParamMatrix4');
+
+/**
+ * The array of names of matrix params for the matrices that are to be
+ * composed to get the value.
+ * @type {Array.<o3d.ParamMatrix4>}
+ */
+o3d.CompositionParamMatrix4.prototype.matrix_names_ = [];
+
+/**
+ * Whether the inverse is taken right before returning the value.
+ * @type {Array.<o3d.ParamMatrix4>}
+ */
+o3d.CompositionParamMatrix4.prototype.inverse_ = false;
+
+
+/**
+ * Whether the inverse is taken right before returning the value.
+ * @type {Array.<o3d.ParamMatrix4>}
+ */
+o3d.CompositionParamMatrix4.prototype.transpose_ = false;
+
+o3d.CompositionParamMatrix4.prototype.__defineGetter__('value',
+    // TODO(petersont): Cache the result if it hasn't changed.
+    function() {
+      var product = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+      for (var i = 0; i < this.matrix_names_.length; ++i) {
+        o3d.Transform.compose(product, o3d.Param.SAS[this.matrix_names_[i]]);
+      }
+      if (this.inverse_) {
+        o3d.Transform.inverse(product);
+      }
+      if (this.transpose_) {
+        o3d.Transform.transpose(product);
+      }
+      return product;
+    }
+);
+
+o3d.CompositionParamMatrix4.prototype.__defineSetter__('value',
+    function(value) { }
+);
+
+
+/**
+ * @constructor
+ */
+o3d.ProjectionParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['projection'];
+};
+o3d.inherit('ProjectionParamMatrix4', 'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.ProjectionInverseParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['projection'];
+  this.inverse_ = true;
+};
+o3d.inherit('ProjectionInverseParamMatrix4', 'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.ProjectionTransposeParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['projection'];
+  this.transpose_ = true;
+};
+o3d.inherit('ProjectionTransposeParamMatrix4', 'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.ProjectionInverseTransposeParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['projection'];
+  this.inverse_ = true;
+  this.transpose_ = true;
+};
+o3d.inherit('ProjectionInverseTransposeParamMatrix4',
+    'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.ViewParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['view'];
+};
+o3d.inherit('ViewParamMatrix4', 'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.ViewInverseParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['view'];
+  this.inverse_ = true;
+};
+o3d.inherit('ViewInverseParamMatrix4', 'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.ViewTransposeParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['view'];
+  this.transpose_ = true;
+};
+o3d.inherit('ViewTransposeParamMatrix4', 'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.ViewInverseTransposeParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['view'];
+  this.inverse_ = true;
+  this.transpose_ = true;
+};
+o3d.inherit('ViewInverseTransposeParamMatrix4', 'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.ViewProjectionParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['viewProjection'];
+};
+o3d.inherit('ViewProjectionParamMatrix4', 'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.ViewProjectionInverseParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['viewProjection'];
+  this.inverse_ = true;
+};
+o3d.inherit('ViewProjectionInverseParamMatrix4', 'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.ViewProjectionTransposeParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['viewProjection'];
+  this.transpose_ = true;
+};
+o3d.inherit('ViewProjectionTransposeParamMatrix4', 'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.ViewProjectionInverseTransposeParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['viewProjection'];
+  this.inverse_ = true;
+  this.transpose_ = true;
+};
+o3d.inherit('ViewProjectionInverseTransposeParamMatrix4',
+    'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.WorldParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['world'];
+};
+o3d.inherit('WorldParamMatrix4', 'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.WorldInverseParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['world'];
+  this.inverse_ = true;
+};
+o3d.inherit('WorldInverseParamMatrix4', 'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.WorldTransposeParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['world'];
+  this.transpose_ = true;
+};
+o3d.inherit('WorldTransposeParamMatrix4', 'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.WorldInverseTransposeParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['world'];
+  this.inverse_ = true;
+  this.transpose_ = true;
+};
+o3d.inherit('WorldInverseTransposeParamMatrix4', 'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.WorldViewParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['view', 'world'];
+};
+o3d.inherit('WorldViewParamMatrix4', 'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.WorldViewInverseParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['view', 'world'];
+  this.inverse_ = true;
+};
+o3d.inherit('WorldViewInverseParamMatrix4',
+    'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.WorldViewTransposeParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['view', 'world'];
+  this.transpose_ = true;
+};
+o3d.inherit('WorldViewTransposeParamMatrix4',
+    'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.WorldViewInverseTransposeParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['view', 'world'];
+  this.inverse_ = true;
+  this.transpose_ = true;
+};
+o3d.inherit('WorldViewInverseTransposeParamMatrix4',
+    'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.WorldViewProjectionParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['worldViewProjection'];
+};
+o3d.inherit('WorldViewProjectionParamMatrix4',
+    'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.WorldViewProjectionInverseParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['worldViewProjection'];
+  this.inverse_ = true;
+};
+o3d.inherit('WorldViewProjectionInverseParamMatrix4',
+    'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.WorldViewProjectionTransposeParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['worldViewProjection'];
+  this.transpose_ = true;
+};
+o3d.inherit('WorldViewProjectionTransposeParamMatrix4',
+    'CompositionParamMatrix4');
+
+
+/**
+ * @constructor
+ */
+o3d.WorldViewProjectionInverseTransposeParamMatrix4 = function() {
+  o3d.CompositionParamMatrix4.call(this);
+  this.matrix_names_ = ['worldViewProjection'];
+  this.inverse_ = true;
+  this.transpose_ = true;
+};
+o3d.inherit('WorldViewProjectionInverseTransposeParamMatrix4',
+    'CompositionParamMatrix4');
+
+
+/**
+ * Called to specify the value of a uniform variable.
+ * @param {WebGLContext} gl The current context.
+ * @param {WebGLUniformLocation} location The location to which to apply.
+ */
+o3d.ParamInteger.prototype.applyToLocation = function(gl, location) {
+  gl.uniform1i(location, this.value);
+};
+
+/**
+ * Called to specify the value of a uniform variable.
+ * @param {WebGLContext} gl The current context.
+ * @param {WebGLUniformLocation} location The location to which to apply.
+ */
+o3d.ParamBoolean.prototype.applyToLocation = function(gl, location) {
+  gl.uniform1i(location, this.value);
+};
+
+/**
+ * Called to specify the value of a uniform variable.
+ * @param {WebGLContext} gl The current context.
+ * @param {WebGLUniformLocation} location The location to which to apply.
+ */
+o3d.ParamFloat.prototype.applyToLocation = function(gl, location) {
+  gl.uniform1f(location, this.value);
+};
+
+/**
+ * Called to specify the value of a uniform variable.
+ * @param {WebGLContext} gl The current context.
+ * @param {WebGLUniformLocation} location The location to which to apply.
+ */
+o3d.ParamFloat2.prototype.applyToLocation = function(gl, location) {
+  gl.uniform2fv(location, this.value);
+};
+
+/**
+ * Called to specify the value of a uniform variable.
+ * @param {WebGLContext} gl The current context.
+ * @param {WebGLUniformLocation} location The location to which to apply.
+ */
+o3d.ParamFloat3.prototype.applyToLocation = function(gl, location) {
+  gl.uniform3fv(location, this.value);
+};
+
+/**
+ * Called to specify the value of a uniform variable.
+ * @param {WebGLContext} gl The current context.
+ * @param {WebGLUniformLocation} location The location to which to apply.
+ */
+o3d.ParamFloat4.prototype.applyToLocation = function(gl, location) {
+  gl.uniform4fv(location, this.value);
+};
+
+/**
+ * Called to specify the value of a uniform variable.
+ * @param {WebGLContext} gl The current context.
+ * @param {WebGLUniformLocation} location The location to which to apply.
+ */
+o3d.ParamMatrix4.prototype.applyToLocation = function(gl, location) {
+  gl.uniformMatrix4fv(location,
+                      false,
+                      o3d.Transform.flattenMatrix4(this.value));
+};
+
+/**
+ * Called to specify the values of a uniform array.
+ * @param {WebGLContext} gl The current context.
+ * @param {!Array.<!WebGLUniformLocation>} locationArray An array of locations
+ *    to which to apply the values.
+ */
+o3d.ParamParamArray.prototype.applyToLocations = function(gl, locationArray) {
+  var computedValue = this.value;
+  if (locationArray.length != computedValue.length) {
+    gl.client.error_callback(
+        'Invalid uniform param array: incorrect number of elements.');
+  }
+  for (var i = 0; i < computedValue.length; i++) {
+    // Cannot have a ParamArray of ParamArrays, so safe to call applyToLocation
+    computedValue.getParam(i).applyToLocation(gl, locationArray[i]);
+  }
+};
+
+/**
+ * A counter to ensure each texture sampler gets a unqiue id.
+ * @private
+ */
+o3d.Param.texture_index_ = 0;
+
+/**
+ * Called to specify the value of a uniform variable.
+ * @param {WebGLContext} gl The current context.
+ * @param {WebGLUniformLocation} location The location to which to apply.
+ * @param {boolean} opt_isCube Optional boolean indicating whether the Sampler
+ *     connects to a samplerCube type uniform.  If set to true, and there is an
+ *     error, we use the error cube map.
+ */
+o3d.ParamSampler.prototype.applyToLocation =
+    function(gl, location, opt_isCube) {
+  // When before the effect object assigns values to parameters,
+  // it sets this variable to 0.
+  var i = o3d.Param.texture_index_;
+  gl.activeTexture(gl.TEXTURE0 + i);
+
+  var value = null;
+  var target = 0;
+  var sampler = null;
+
+  if (this.value) {
+    sampler = this.value;
+  } else {
+    o3d.Sampler.defaultSampler_.gl = gl;
+    sampler = o3d.Sampler.defaultSampler_;
+    if (gl.client.reportErrors_()) {
+      gl.client.error_callback("Missing Sampler for ParamSampler " + this.name);
+    }
+  }
+
+  sampler.bindAndSetParameters_(opt_isCube);
+  gl.uniform1i(location, i);
+  o3d.Param.texture_index_++;
+};
+
+/**
+ * A default ParamSampler to be used if client does not assign one.
+ *
+ * @type {!o3d.ParamSampler}
+ * @private
+ */
+o3d.ParamSampler.defaultParamSampler_ = new o3d.ParamSampler();
+
+/**
+ * Object to compute all combinations of world/view/projection
+ * inverse/transpose matrices and provide them as parameters.
+ *
+ * @type {o3d.ParamObject}
+ */
+o3d.Param.SAS = new o3d.ParamObject;
+
+/**
+ * A map linking the names of SAS parameters to their standard matrix parameter
+ * types.
+ * @private
+ */
+o3d.Param.sasTypes_ = {
+  'world': 'WorldParamMatrix4',
+  'view': 'ViewParamMatrix4',
+  'projection': 'ProjectionParamMatrix4',
+  'worldView': 'WorldViewParamMatrix4',
+  'viewProjection': 'ViewProjectionParamMatrix4',
+  'worldViewProjection': 'WorldViewProjectionParamMatrix4',
+  'worldInverse': 'WorldInverseParamMatrix4',
+  'viewInverse': 'ViewInverseParamMatrix4',
+  'projectionInverse': 'ProjectionInverseParamMatrix4',
+  'worldViewInverse': 'WorldViewInverseParamMatrix4',
+  'viewProjectionInverse': 'ViewProjectionInverseParamMatrix4',
+  'worldViewProjectionInverse': 'WorldViewProjectionInverseParamMatrix4',
+  'worldTranspose': 'WorldTransposeParamMatrix4',
+  'viewTranspose': 'ViewTransposeParamMatrix4',
+  'projectionTranspose': 'ProjectionTransposeParamMatrix4',
+  'worldViewTranspose': 'WorldViewTransposeParamMatrix4',
+  'viewProjectionTranspose': 'ViewProjectionTransposeParamMatrix4',
+  'worldViewProjectionTranspose': 'WorldViewProjectionTransposeParamMatrix4',
+  'worldInverseTranspose': 'WorldInverseTransposeParamMatrix4',
+  'viewInverseTranspose': 'ViewInverseTransposeParamMatrix4',
+  'projectionInverseTranspose': 'ProjectionInverseTransposeParamMatrix4',
+  'worldViewInverseTranspose': 'WorldViewInverseTransposeParamMatrix4',
+  'viewProjectionInverseTranspose':
+      'ViewProjectionInverseTransposeParamMatrix4',
+  'worldViewProjectionInverseTranspose':
+      'WorldViewProjectionInverseTransposeParamMatrix4'
+};
+
+for (name in o3d.Param.sasTypes_) {
+  o3d.Param.SAS.createParam(name, o3d.Param.sasTypes_[name]);
+}
+
+/**
+ * Sets the base world matrix that gets use to compute all other products for
+ * SAS parameters.
+ */
+o3d.Param.SAS.setWorld = function(world) {
+  this['world'] = world;
+};
+
+/**
+ * Sets the base world matrix that gets use to compute all other products for
+ * SAS parameters.
+ */
+o3d.Param.SAS.setView = function(view) {
+  this['view'] = view;
+};
+
+/**
+ * Sets the base world matrix that gets use to compute all other products for
+ * SAS parameters.
+ */
+o3d.Param.SAS.setProjection = function(projection) {
+  this['projection'] = projection;
+};
+
+/**
+ * Sets the viewProjection matrix.
+ */
+o3d.Param.SAS.setViewProjection = function(viewProjection) {
+  this['viewProjection'] = viewProjection;
+};
+
+/**
+ * Sets the worldViewProjection matrix.
+ */
+o3d.Param.SAS.setWorldViewProjection = function(worldViewProjection) {
+  this['worldViewProjection'] = worldViewProjection;
+};
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * An Event object contains information describing a JavaScript event; it's used
+ * as an argument to event handlers triggered by the plugin.
+ * @constructor
+ */
+o3d.Event = function() {
+  o3d.ObjectBase.call(this);
+};
+o3d.inherit('Event', 'ObjectBase');
+
+
+/**
+ * @type {number}
+ */
+o3d.Event.Type = goog.typedef;
+
+/**
+ * String identifiers for JavaScript events.
+ *  type
+ *  invalid
+ *  click
+ *  dblclick
+ *  mousedown
+ *  mousemove
+ *  mouseup
+ *  wheel
+ *  keydown
+ *  keypress
+ *  keyup
+ *  resize
+ */
+o3d.Event.TYPE_INVALID = 0;
+o3d.Event.TYPE_CLICK = 1;
+o3d.Event.TYPE_DBLCLICK = 2;
+o3d.Event.TYPE_MOUSEDOWN = 3;
+o3d.Event.TYPE_MOUSEMOVE = 4;
+o3d.Event.TYPE_MOUSEUP = 5;
+o3d.Event.TYPE_WHEEL = 6;
+o3d.Event.TYPE_KEYDOWN = 7;
+o3d.Event.TYPE_KEYPRESS = 8;
+o3d.Event.TYPE_KEYUP = 9;
+o3d.Event.TYPE_RESIZE = 10;
+
+/**
+ * The type of event this object represents.
+ * @type {o3d.Event.Type}
+ */
+o3d.Event.prototype.type = o3d.Event.TYPE_INVALID;
+
+
+/**
+ * @type {number}
+ */
+o3d.Event.Button = goog.typedef;
+
+/**
+ * Constants used to identify mouse buttons.
+ */
+o3d.Event.BUTTON_LEFT = 0;
+o3d.Event.BUTTON_MIDDLE = 1;
+o3d.Event.BUTTON_RIGHT = 2;
+o3d.Event.BUTTON_4 = 3;
+o3d.Event.BUTTON_5 = 4;
+
+
+
+/**
+ * Which mouse button caused the event, in the case of mousedown, mouseup,
+ * click, and dblclick events.  This uses the values in enum Button.
+ */
+o3d.Event.prototype.button = o3d.Event.BUTTON_LEFT;
+
+
+
+/**
+ * Whether the ctrl key was pressed at the time of the event.
+ * @type {boolean}
+ */
+o3d.Event.prototype.ctrl_key = false;
+
+
+
+/**
+ * Whether the alt [option, on OSX] key was pressed at the time of the event.
+ * @type {boolean}
+ */
+o3d.Event.prototype.alt_key = false;
+
+
+
+/**
+ * Whether the shift key was pressed at the time of the event.
+ * @type {boolean}
+ */
+o3d.Event.prototype.shift_key = false;
+
+
+
+/**
+ * Whether the meta [command, on OSX] key was pressed at the time of the event.
+ * @type {boolean}
+ */
+o3d.Event.prototype.meta_key = false;
+
+
+
+/**
+ * The key code of the key pressed or released.
+ * @type {number}
+ */
+o3d.Event.prototype.key_code = 0;
+
+
+
+/**
+ * The character created by a keypress event.
+ * @type {number}
+ */
+o3d.Event.prototype.char_code = 0;
+
+
+
+/**
+ * The x-coordinate in pixels from the left side of the plugin or fullscreen
+ * display region.
+ * @type {number}
+ */
+o3d.Event.prototype.x = 0;
+
+
+
+/**
+ * The y-coordinate in pixels from the top of the plugin or fullscreen
+ * display region.
+ * @type {number}
+ */
+o3d.Event.prototype.y = 0;
+
+
+
+/**
+ * The x-coordinate in pixels from the left side of the screen.
+ * @type {number}
+ */
+o3d.Event.prototype.screenX = 0;
+
+
+
+/**
+ * The y-coordinate in pixels from the top of the screen.
+ * @type {number}
+ */
+o3d.Event.prototype.screenY = 0;
+
+
+
+/**
+ * The horizontal scroll offset for wheel events, in arbitrary units.
+ * Positive values mean right; negative mean left.
+ * @type {number}
+ */
+o3d.Event.prototype.deltaX = 0;
+
+
+
+/**
+ * The vertical scroll offset for wheel events, in arbitrary units.
+ * Positive values mean up or away from the user; negative mean down or toward
+ * the user.
+ * @type {number}
+ */
+o3d.Event.prototype.deltaY = 0;
+
+
+
+/**
+ * The width in pixels of the plugin or fullscreen display region as a result
+ * of this event.
+ * @type {number}
+ */
+o3d.Event.prototype.width = 0;
+
+
+
+/**
+ * The height in pixels of the plugin or fullscreen display region as a result
+ * of this event.
+ * @type {number}
+ */
+o3d.Event.prototype.height = 0;
+
+
+
+/**
+ * Whether we're currently displaying in fullscreen mode.
+ * @type {boolean}
+ */
+o3d.Event.prototype.fullscreen = false;
+
+
+
+/**
+ * An Event that gets sent to the render callback.
+ * @constructor
+ */
+o3d.RenderEvent = function() {
+  o3d.Event.call(this);
+};
+o3d.inherit('RenderEvent', 'Event');
+
+
+/**
+ * Time in seconds since the last time the client rendered.
+ * @type {number}
+ */
+o3d.RenderEvent.prototype.elapsedTime = 0;
+
+
+/**
+ * An Event that gets sent to the render callback.
+ * @constructor
+ */
+o3d.TickEvent = function() {
+  o3d.Event.call(this);
+};
+o3d.inherit('RenderEvent', 'Event');
+
+
+/**
+ * Time in seconds since the last time the client rendered.
+ * @type {number}
+ */
+o3d.TickEvent.prototype.elapsedTime = 0;
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A RawData object contains raw binary data which could contain
+ * image, audio, text, or other information.
+ *
+ * var request =  g_pack.createArchiveRequest();
+ *
+ * request.onfileavailable = function(rawData) {
+ *   var texture = g_pack.createTextureFromRawData(rawData, true);
+ *   ...
+ * };
+ *
+ * request.send();
+ * @constructor
+ */
+o3d.RawData = function() {
+  o3d.NamedObject.call(this);
+};
+o3d.inherit('RawData', 'NamedObject');
+
+
+/**
+ * Returns the raw data as a string. The data must be a valid utf-8 string
+ * and the uri must end in .json, .txt, .xml, .ini or .csv
+ * @type {string}
+ */
+o3d.RawData.prototype.stringValue = '';
+
+
+/**
+ * The data as an image if it is an image.
+ * @type {Image}
+ * @private
+ */
+o3d.RawData.prototype.image_ = null;
+
+
+/**
+ * The uri of the RawData.
+ * @type {string}
+ */
+o3d.RawData.prototype.uri = '';
+
+
+
+/**
+ * The length in bytes of the RawData.
+ * @type {number}
+ */
+o3d.RawData.prototype.length = 0;
+
+
+
+/**
+ * Discards all the resources associated with this data object.
+ */
+o3d.RawData.prototype.discard = function() {
+  o3d.notImplemented();
+};
+
+
+
+/**
+ * Flushes the memory resources associated with this data object,
+ * but keeps a cache in case the data object is used later.
+ */
+o3d.RawData.prototype.flush = function() {
+  o3d.notImplemented();
+};
+
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * The Texture class is a base class for image data used in texture mapping.
+ * @constructor
+ */
+o3d.Texture = function() {
+  o3d.ParamObject.call(this);
+
+  /**
+   * The memory format used for storing the bitmap associated with the texture
+   * object.
+   * @type {o3d.Texture.Format}
+   */
+  this.format = o3d.Texture.UNKNOWN_FORMAT;
+
+  /**
+   * The number of mipmap levels used by the texture.
+   * @type {number}
+   */
+  this.levels = 1;
+
+  /**
+   * True if all the alpha values in the texture are 1.0
+   * @type {boolean}
+   */
+  this.alphaIsOne = true;
+
+  /**
+   * The associated gl texture.
+   * @type {WebGLTexture}
+   * @private
+   */
+  this.texture_ = null;
+
+  /**
+   * The associated GL texture target: TEXTURE_2D or TEXTURE_CUBE_MAP.
+   * This is the argument "target" to calls to bindTeture.
+   * NOT THE SAME THING AS the argument "target" to texImage2D.
+   * @type {number}
+   * @private
+   */
+  this.texture_target_ = 0;
+
+  /**
+   * The width of the underlying webgl texture.
+   * @type {number}
+   * private
+   */
+  this.texture_width_ = 0;
+
+  /**
+   * The width of the underlying webgl texture.
+   * @type {number}
+   * private
+   */
+  this.texture_height_ = 0;
+
+ /**
+  * When texParameters get set, this keeps track of what they are so we don't
+  * set them again next time if we don't have to.
+  * @private
+  */
+  this.parameter_cache_ = {};
+};
+o3d.inherit('Texture', 'ParamObject');
+
+
+/**
+ * @type {number}
+ */
+o3d.Texture.Format = goog.typedef;
+
+/**
+ *  Format,
+ *  UNKNOWN_FORMAT
+ *  XRGB8
+ *  ARGB8
+ *  ABGR16F
+ *  R32F
+ *  ABGR32F
+ *  DXT1
+ *  DXT3
+ *  DXT5
+ *
+ * The in-memory format of the texture bitmap.
+ *
+ * NOTE: The R32F format is different on GL vs D3D. If you use it in a shader
+ * you must only use the red channel. The green, blue and alpha channels are
+ * undefined.
+ *
+ * For example:
+ *
+ * ...
+ *
+ * sampler texSampler0;
+ *
+ * ...
+ *
+ * struct PixelShaderInput {
+ *   float4 position : POSITION;
+ *   float2 texcoord : TEXCOORD0;
+ * };
+ *
+ * float4 pixelShaderFunction(PixelShaderInput input): COLOR {
+ *   return tex2D(texSampler0, input.texcoord).rrrr;
+ * }
+ *
+ * @param {number} levels The number of mip levels in this texture.
+ */
+o3d.Texture.UNKNOWN_FORMAT = 0;
+o3d.Texture.XRGB8 = 1;
+o3d.Texture.ARGB8 = 2;
+o3d.Texture.ABGR16F = 3;
+o3d.Texture.R32F = 4;
+o3d.Texture.ABGR32F = 5;
+o3d.Texture.DXT1 = 6;
+o3d.Texture.DXT3 = 7;
+o3d.Texture.DXT5 = 8;
+
+
+/**
+ * Generates Mips.
+ * @param {number} source_level the mip to use as the source.
+ * @param {number} num_levels the number of mips from the source to generate.
+ */
+o3d.Texture.prototype.generateMips =
+    function(source_level, num_levels) {
+  this.gl.bindTexture(this.texture_target_, this.texture_);
+  this.gl.generateMipmap(this.texture_target_);
+  this.levels = num_levels;
+};
+
+
+/**
+ * Indicates whether the given number is a power of two.
+ * @param {number} value The number.
+ * @private
+ */
+o3d.Texture.isPowerOfTwo_ = function(value) {
+  return (value & (value - 1)) == 0;
+};
+
+
+/**
+ * Computes the smallest power of two that is greater than or equal to the
+ * the given number.
+ * @param {number} value The number.
+ * @private
+ */
+o3d.Texture.nextHighestPowerOfTwo_ = function(value) {
+  var r = 1;
+  while (r < value) {
+    r *= 2;
+  }
+  return r;
+};
+
+
+/**
+ * Returns the GL texture format that is closest to this texture's O3D texture
+ * format. Not all formats specified in o3d.Texture have a webgl equivalent,
+ * thus we return the one with the correct number of channels, if such exists.
+ *
+ * @return {number} A webgl format.
+ * @private
+ */
+o3d.Texture.prototype.getGLTextureFormat_ = function() {
+  switch (this.format) {
+    case o3d.Texture.XRGB8:
+      return this.gl.RGB;
+
+    case o3d.Texture.ARGB8:
+    case o3d.Texture.ABGR16F:
+    case o3d.Texture.ABGR32F:
+      return this.gl.RGBA;
+
+    case o3d.Texture.R32F:
+    case o3d.Texture.DXT1:
+    case o3d.Texture.DXT3:
+    case o3d.Texture.DXT5:
+    default:
+      o3d.notImplemented();
+      return 0;
+  }
+}
+
+
+/**
+ * Helper function to determine the proper argument for the texture target
+ * This is either gl.TEXTURE_2D or gl.TEXTURE_CUBE_MAP_POSITIVE_X + face.
+ *
+ * @param {o3d.TextureCUBE.CubeFace} face The current face if applicable.
+ * @return {number} The proper argument for the texture target.
+ */
+o3d.Texture.prototype.getTexImage2DTarget_ = function(opt_face) {
+  if (this.texture_target_ == this.gl.TEXTURE_CUBE_MAP) {
+    return this.gl.TEXTURE_CUBE_MAP_POSITIVE_X + opt_face;
+  } else {
+    return this.gl.TEXTURE_2D;
+  }
+};
+
+
+/**
+ * Computes the maximum number of levels of mips a given width and height could
+ * use.
+ * @param {number} width Width of texture.
+ * @param {number} height Height of texture.
+ * @return {number} The maximum number of levels for the given width and height.
+ */
+o3d.Texture.maxLevels_ = function(width, height) {
+  if (width == 0 || height == 0) {
+    return 0;
+  }
+  var max = Math.max(width, height);
+  var levels = 0;
+  while (max > 0) {
+    ++levels;
+    max = max >> 1;
+  }
+  return levels;
+};
+
+
+var g_counter = 0;
+
+
+/**
+ * Creates a webgl texture from the given image object rescaling to the
+ * smallest power of 2 in each dimension still no smaller than the original
+ * size.
+ * @param {HTMLCanvas} canvas The canvas to load into the texture.
+ * @param {boolean} resize_to_pot Whether or not to resize to a power of two
+ *     size.
+ * @param {boolean} generate_mips Whether or not to generate mips.
+ * @param {o3d.TextureCUBE.CubeFace} opt_face The face number, if this is a
+ *     cube map.
+ * @private
+ */
+o3d.Texture.prototype.setFromCanvas_ =
+    function(canvas, resize_to_pot, flip, generate_mips, opt_face) {
+  var gl = this.gl;
+
+  if (resize_to_pot && (!o3d.Texture.isPowerOfTwo_(canvas.width) ||
+      !o3d.Texture.isPowerOfTwo_(canvas.height))) {
+    // Get a scratch canvas.
+    var scratch = o3d.Bitmap.getScratchCanvas_();
+    // Set the size of the canvas to the power-of-two size.
+    scratch.width = o3d.Texture.nextHighestPowerOfTwo_(canvas.width);
+    scratch.height = o3d.Texture.nextHighestPowerOfTwo_(canvas.height);
+    // Draw the given canvas into that scratch canvas.
+    scratch.getContext("2d").drawImage(canvas,
+        0, 0, canvas.width, canvas.height,
+        0, 0, scratch.width, scratch.height);
+    canvas = scratch;
+  }
+
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flip);
+
+  gl.bindTexture(this.texture_target_, this.texture_);
+  gl.texImage2D(this.getTexImage2DTarget_(opt_face), 0 /*level*/, gl.RGBA,
+      gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
+
+
+  this.texture_width_ = canvas.width;
+  this.texture_height_ = canvas.height;
+
+  if (generate_mips) {
+    // The texture target is already bound so why bind it again by calling
+    // this.generateMip.
+    this.gl.generateMipmap(this.texture_target_);
+    this.levels = o3d.Texture.maxLevels_(
+        this.texture_width_, this.texture_height_);
+  }
+
+  g_counter++;
+};
+
+
+/**
+ * Copy pixels from source bitmap to certain mip level.
+ * Scales if the width and height of source and dest do not match.
+ *
+ * @param {HTMLCanvas} source_img The source canvas.
+ * @param {number} source_x x-coordinate of the starting pixel in the
+ *     source image.
+ * @param {number} source_y y-coordinate of the starting pixel in the
+ *     source image.
+ * @param {number} source_width width of the source image to draw.
+ * @param {number} source_height Height of the source image to draw.
+ * @param {number} dest_mip on which mip level to draw to.
+ * @param {number} dest_x x-coordinate of the starting pixel in the
+ *     destination texture.
+ * @param {number} dest_y y-coordinate of the starting pixel in the
+ *     destination texture.
+ * @param {number} dest_width width of the dest image.
+ * @param {number} dest_height height of the dest image.
+ * @param {number} opt_face The face number if this is a cube map.
+ */
+o3d.Texture.prototype.drawImageFromCanvas_ =
+    function(source_canvas, source_x, source_y, source_width, source_height,
+             dest_mip, dest_x, dest_y, dest_width, dest_height, opt_face) {
+  var canvas = o3d.Bitmap.getScratchCanvas_();
+  canvas.width = dest_width;
+  canvas.height = dest_height;
+
+  // Get a scratch canvas and set its size to that of the source material.
+  // Set up transformation so that the draw into the canvas fill it with the
+  // source bitmap.
+  var context = canvas.getContext('2d');
+  context.save();
+
+  context.translate(-source_x, -source_y);
+  context.scale(dest_width / source_width,
+                dest_height / source_height);
+
+  // Draw the source image into the canvas, filling it.
+  context.drawImage(
+      source_canvas, 0, 0, source_canvas.width, source_canvas.height);
+
+  // Call texSubImage2D to upload the source image from the scratch canvas
+  // to the texture.
+  var gl = this.gl;
+  gl.bindTexture(this.texture_target_, this.texture_);
+  var format = this.getGLTextureFormat_();
+
+  //*/
+  // TODO(petersont): Replace this with a call to texSubImage2D once
+  // browsers support it.
+  gl.texImage2D(this.getTexImage2DTarget_(opt_face), dest_mip, gl.RGBA,
+      gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+  /*/
+  gl.texSubImage2D(target, 0, dest_x, dest_y, dest_width, dest_height,
+      gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+  //*/
+  this.texture_width_ = canvas.width;
+  this.texture_height_ = canvas.height;
+
+  context.restore();
+};
+
+
+/**
+ * Sets the values of the data stored in the texture.
+ *
+ * @param {number} level the mip level to update.
+ * @param {number} values Values to be stored in the buffer.
+ * @param {o3d.TextureCUBE.CubeFace} opt_face The face to set if this is a cube
+ *     texture.
+ * @private
+ */
+o3d.Texture.prototype.setValues_ = function(level, values, opt_face) {
+  var pixels = new Uint8Array(values.length);
+  for (var i = 0; i < values.length; ++i) {
+    pixels[i] = Math.min(255, Math.max(0, values[i] * 256.0));
+  }
+
+  var format = this.getGLTextureFormat_();
+  this.gl.bindTexture(this.texture_target_, this.texture_);
+
+  this.gl.texSubImage2D(this.getTexImage2DTarget_(opt_face),
+      level, 0, 0, this.texture_width_, this.texture_height_,
+      format, this.gl.UNSIGNED_BYTE, pixels);
+};
+
+
+/**
+ * Initializes this Texture2D object of the specified size and format and
+ * reserves the necessary resources for it.
+ *
+ * Note: If enable_render_surfaces is true, then the dimensions must be a
+ * power of two.
+ *
+ * @param {number} texture_target The apropriate value for texture_target.
+ * @param {number} width The width of the texture area in texels (max = 2048)
+ * @param {number} height The height of the texture area in texels (max = 2048)
+ * @param {o3d.Texture.Format} format The memory format of each texel
+ * @param {number} levels The number of mipmap levels.  Use zero to create the
+ *     compelete mipmap chain.
+ * @param {boolean} enable_render_surfaces If true, the texture object will
+ *     expose RenderSurface objects through GetRenderSurface(...).
+ * @return {!o3d.Texture2D}  The Texture2D object.
+ */
+o3d.Texture.prototype.initWithTarget_ =
+    function(texture_target, width, height, format, levels,
+        enable_render_surfaces, debug) {
+  this.width = width;
+  this.height = height;
+  this.format = format;
+  this.levels = levels;
+  this.texture_ = this.gl.createTexture();
+  this.texture_target_ = texture_target;
+
+  if (width != undefined && height != undefined) {
+    this.gl.bindTexture(this.texture_target_, this.texture_);
+
+    var format = this.getGLTextureFormat_();
+
+    // TODO(petersont): remove this allocation once Firefox supports
+    // passing null as argument to this form of ... some function.
+    var pixels = new Uint8Array(width * height * 4);
+
+    var canvas = o3d.Bitmap.getScratchCanvas_();
+    canvas.width = width;
+    canvas.height = height;
+
+    var numFaces = 1;
+    if (this.texture_target_ == this.gl.TEXTURE_CUBE_MAP) {
+      numFaces = 6;
+    }
+
+    for (var face = 0; face < numFaces; ++face) {
+      this.gl.texImage2D(this.getTexImage2DTarget_(face), 0, format, width,
+          height, 0, format, this.gl.UNSIGNED_BYTE, pixels);
+    }
+
+    this.texture_width_ = width;
+    this.texture_height_ = height;
+  }
+};
+
+
+/**
+ * A class for 2D textures that defines the interface for getting
+ * the dimensions of the texture, its memory format and number of mipmap levels.
+ *
+ * @param {number} opt_width The width of this texture in pixels.
+ * @param {number} opt_height The height of this texture in pixels.
+ * @constructor
+ */
+o3d.Texture2D = function(opt_width, opt_height) {
+  o3d.Texture.call(this);
+
+  /**
+   * The width of the texture, in texels.
+   * @type {number}
+   */
+  this.width = opt_width || 0;
+
+  /**
+   * The height of the texture, in texels.
+   * @type {number}
+   */
+  this.height = opt_height || 0;
+
+  /**
+   * The cache of rendersurface objects.
+   * @private
+   */
+  this.renderSurfaces_ = [];
+};
+o3d.inherit('Texture2D', 'Texture');
+
+o3d.ParamObject.setUpO3DParam_(o3d.Texture2D, 'width', 'ParamInteger');
+o3d.ParamObject.setUpO3DParam_(o3d.Texture2D, 'height', 'ParamInteger');
+
+
+/**
+ * Initializes this Texture2D object of the specified size and format and
+ * reserves the necessary resources for it.
+ *
+ * Note: If enable_render_surfaces is true, then the dimensions must be a
+ * power of two.
+ *
+ * @param {number} width The width of the texture area in texels (max = 2048)
+ * @param {number} height The height of the texture area in texels (max = 2048)
+ * @param {o3d.Texture.Format} format The memory format of each texel
+ * @param {number} levels The number of mipmap levels.  Use zero to create the
+ *     compelete mipmap chain.
+ * @param {boolean} enable_render_surfaces If true, the texture object will
+ *     expose RenderSurface objects through GetRenderSurface(...).
+ * @return {!o3d.Texture2D}  The Texture2D object.
+ */
+o3d.Texture2D.prototype.init_ =
+    function(width, height, format, levels, enable_render_surfaces) {
+  this.initWithTarget_(this.gl.TEXTURE_2D,
+      width, height, format, levels, enable_render_surfaces);
+};
+
+
+/**
+ * Returns a RenderSurface object associated with a mip_level of a texture.
+ *
+ * @param {number} mip_level The mip-level of the surface to be returned.
+ * @return {o3d.RenderSurface}  The RenderSurface object.
+ */
+o3d.Texture2D.prototype.getRenderSurface =
+    function(mip_level) {
+  if (!this.renderSurfaces_[mip_level]) {
+    var renderSurface = new o3d.RenderSurface();
+    renderSurface.gl = this.gl;
+    renderSurface.initWithTexture(this, mip_level);
+    this.renderSurfaces_[mip_level] = renderSurface;
+  }
+
+  return this.renderSurfaces_[mip_level];
+};
+
+
+/**
+ * Sets the values of the data stored in the texture.
+ *
+ * It is not recommend that you call this for large textures but it is useful
+ * for making simple ramps or noise textures for shaders.
+ *
+ * NOTE: the number of values must equal the size of the texture * the number
+ *  of elements. In other words, for a XRGB8 texture there must be
+ *  width * height * 3 values. For an ARGB8, ABGR16F or ABGR32F texture there
+ *  must be width * height * 4 values. For an R32F texture there must be
+ *  width * height values.
+ *
+ * NOTE: the order of channels is R G B for XRGB8 textures and R G B A
+ * for ARGB8, ABGR16F and ABGR32F textures so for example for XRGB8 textures
+ *
+ * [1, 0, 0] = a red pixel
+ * [0, 0, 1] = a blue pixel
+ *
+ * For ARGB8, ABGR16F, ABGR32F textures
+ *
+ * [1, 0, 0, 0] = a red pixel with zero alpha
+ * [1, 0, 0, 1] = a red pixel with one alpha
+ * [0, 0, 1, 1] = a blue pixel with one alpha
+ *
+ * @param {number} level the mip level to update.
+ * @param {values} values Values to be stored in the buffer.
+ */
+o3d.Texture2D.prototype.set =
+    function(level, values) {
+  this.setValues_(level, values);
+};
+
+
+/**
+ * Sets a rectangular area of values in a texture.
+ *
+ * Does clipping. In other words if you pass in a 10x10 pixel array
+ * and give it destination of (-5, -5) it will only use the bottom 5x5
+ * pixels of the array you passed in to set the top 5x5 pixels of the
+ * texture.
+ *
+ * See o3d.Texture2D.set for details on formats.
+ *
+ * @param {number} level the mip level to update.
+ * @param {number} destination_x The x coordinate of the area in the texture
+ *     to affect.
+ * @param {number} destination_y The y coordinate of the area in the texture
+ *     to affect.
+ * @param {number} source_width The width of the area to effect. The height is
+ *     determined by the size of the array passed in.
+ * @param {number} values Values to be stored in the buffer.
+ */
+o3d.Texture2D.prototype.setRect =
+    function(level, destination_x, destination_y, source_width, values) {
+  var format = this.getGLTextureFormat_();
+  var numChannels = (format == this.gl.RGB ? 3 : 4);
+  var source_height = (values.length / numChannels) / source_width;
+
+  // If completely clipped off, do nothing and return.
+  if (destination_x > this.width || destination_y > this.height ||
+      destination_x + source_width < 0 || destination_y + source_height < 0) {
+    return;
+  }
+
+  // Size of the unclipped, remaining rectangle.
+  var size_x = source_width;
+  if (destination_x < 0) {
+    size_x += destination_x;
+  }
+  if (destination_x + source_width > this.width) {
+    size_x -= (destination_x + source_width) - this.width;
+  }
+
+  var size_y = source_height;
+  if (destination_y < 0) {
+    size_y += destination_y;
+  }
+  if (destination_y + source_height > this.height) {
+    size_y -= (destination_y + source_height) - this.height;
+  }
+
+  // The upper left corner of the rectangle that is not clipped and will be
+  // copied into the texture.
+  var start_x = (destination_x < 0) ? Math.abs(destination_x) : 0;
+  var start_y = (destination_y < 0) ? Math.abs(destination_y) : 0;
+
+  var keptPixels = new Uint8Array(size_x * size_y * numChannels);
+  var count = 0;
+  for (var y = 0; y < size_y; ++y) {
+    for (var x = 0; x < size_x; ++x) {
+      var t = (((start_y + y) * source_width) + (start_x + x)) * numChannels;
+      keptPixels[count++] = Math.min(255, Math.max(0, values[t] * 256.0));
+      keptPixels[count++] = Math.min(255, Math.max(0, values[t + 1] * 256.0));
+      keptPixels[count++] = Math.min(255, Math.max(0, values[t + 2] * 256.0));
+      keptPixels[count++] = Math.min(255, Math.max(0, values[t + 3] * 256.0));
+    }
+  }
+
+  // The (x, y) at which to begin drawing the rectangle on the original texture,
+  // measured from the *BOTTOM* left hand corner.
+  var where_x = Math.max(destination_x, 0);
+  var where_y = this.height - (Math.max(destination_y, 0) + size_y);
+
+  this.gl.bindTexture(this.texture_target_, this.texture_);
+  this.gl.texSubImage2D(this.gl.TEXTURE_2D, level, where_x, where_y,
+      size_x, size_y, format, this.gl.UNSIGNED_BYTE, keptPixels);
+};
+
+
+/**
+ * Gets a rectangular area of values from a texture.
+ *
+ * See o3d.Texture2D.set for details on formats.
+ * Can not be used for compressed textures.
+ *
+ * @param {number} level the mip level to get.
+ * @param {number} x The x coordinate of the area in the texture to retrieve.
+ * @param {number} y The y coordinate of the area in the texture to retrieve.
+ * @param {number} width The width of the area to retrieve.
+ * @param {number} height The height of the area to retrieve.
+ * @return {number}  Array of pixel values.
+ */
+o3d.Texture2D.prototype.getRect =
+    function(level, x, y, width, height) {
+  o3d.notImplemented();
+};
+
+
+/**
+ * Sets the content of the texture to the content of the bitmap. The texture
+ * and the bitmap must be the same dimensions and the same format.
+ *
+ * @param {o3d.Bitmap} bitmap The bitmap to copy data from.
+ */
+o3d.Texture2D.prototype.setFromBitmap = function(bitmap) {
+  // Whether to resize the texture to power-of-two size.
+  var resize_to_pot = bitmap.defer_mipmaps_to_texture_;
+  this.setFromCanvas_(bitmap.canvas_,
+                      resize_to_pot,
+                      bitmap.defer_flip_vertically_to_texture_,
+                      bitmap.defer_mipmaps_to_texture_);
+};
+
+
+/**
+ * Copy pixels from source bitmap to certain face and mip level.
+ * Scales if the width and height of source and dest do not match.
+ *
+ * @param {o3d.Bitmap} source_img The source bitmap.
+ * @param {number} source_mip which mip of the source to copy from.
+ * @param {number} source_x x-coordinate of the starting pixel in the
+ *     source image.
+ * @param {number} source_y y-coordinate of the starting pixel in the
+ *     source image.
+ * @param {number} source_width width of the source image to draw.
+ * @param {number} source_height Height of the source image to draw.
+ * @param {number} dest_mip on which mip level to draw to.
+ * @param {number} dest_x x-coordinate of the starting pixel in the
+ *     destination texture.
+ * @param {number} dest_y y-coordinate of the starting pixel in the
+ *     destination texture.
+ * @param {number} dest_width width of the destination image.
+ * @param {number} dest_height height of the destination image.
+ */
+o3d.Texture2D.prototype.drawImage =
+    function(source_img, source_mip, source_x, source_y, source_width,
+             source_height, dest_mip, dest_x, dest_y, dest_width, dest_height) {
+  this.drawImageFromCanvas_(source_img.canvas_,
+      source_x, source_y, source_width, source_height, dest_mip,
+      dest_x, dest_y, dest_width, dest_height);
+};
+
+
+/**
+ * TextureCUBE is a class for textures used for cube mapping.  A cube texture
+ * stores bitmaps for the 6 faces of a cube and is addressed via three texture
+ * coordinates.
+ *
+ * @param {number} edgeLength The length of any edge of this texture
+ * @constructor
+ */
+o3d.TextureCUBE = function() {
+  o3d.Texture.call(this);
+
+  /**
+   * The length of each edge of the cube, in texels.
+   * @type {number}
+   */
+  this.edgeLength = 0;
+
+  /**
+   * Keeps track of whether the faces of the cube map have been set to a
+   * bitmap of some sort.  Used to prolong the generation of mipmaps until the
+   * last cube face has been set to something.
+   * @type {!Object}
+   * @private
+   */
+   this.faces_set_ = {
+     0: false, 1: false, 2: false, 3: false, 4: false, 5: false
+   };
+};
+o3d.inherit('TextureCUBE', 'Texture');
+
+
+/**
+ * @type {number}
+ */
+o3d.TextureCUBE.CubeFace = goog.typedef;
+
+
+/**
+ *  CubeFace,
+ *  FACE_POSITIVE_X
+ *  FACE_NEGATIVE_X
+ *  FACE_POSITIVE_Y
+ *  FACE_NEGATIVE_Y
+ *  FACE_POSITIVE_Z
+ *  FACE_NEGATIVE_Z
+ *
+ * The names of each of the six faces of a cube map texture.
+ */
+o3d.TextureCUBE.FACE_POSITIVE_X = 0;
+o3d.TextureCUBE.FACE_NEGATIVE_X = 1;
+o3d.TextureCUBE.FACE_POSITIVE_Y = 2;
+o3d.TextureCUBE.FACE_NEGATIVE_Y = 3;
+o3d.TextureCUBE.FACE_POSITIVE_Z = 4;
+o3d.TextureCUBE.FACE_NEGATIVE_Z = 5;
+
+o3d.ParamObject.setUpO3DParam_(o3d.TextureCUBE, 'edgeLength', 'ParamInteger');
+
+
+/**
+ * Initializes this TextureCUBE object of the specified size and format and
+ * reserves the necessary resources for it.
+ * Note:  If enable_render_surfaces is true, then the dimensions must be a
+ * power of two.
+ *
+ * @param {number} edgeLength The edge of the texture area in texels
+ *     (max = 2048)
+ * @param {o3d.Texture.Format} format The memory format of each texel.
+ * @param {number} levels The number of mipmap levels.   Use zero to create
+ *     the compelete mipmap chain.
+ * @param {boolean} enableRenderSurfaces If true, the texture object
+ *     will expose RenderSurface objects through GetRenderSurface(...).
+ * @private
+ */
+o3d.TextureCUBE.prototype.init_ =
+    function(edgeLength, format, levels, enable_render_surfaces, debug) {
+  this.initWithTarget_(this.gl.TEXTURE_CUBE_MAP,
+      edgeLength, edgeLength, format, levels, enable_render_surfaces, debug);
+};
+
+
+/**
+ * Returns a RenderSurface object associated with a given cube face and
+ * mip_level of a texture.
+ *
+ * @param {o3d.TextureCUBE.CubeFace} face The cube face from which to extract
+ *     the surface.
+ * @param {o3d.Pack} pack This parameter is no longer used. The surface exists
+ *     as long as the texture it came from exists.
+ * @param {number} mip_level The mip-level of the surface to be returned.
+ * @return {o3d.RenderSurface}  The RenderSurface object.
+ */
+o3d.TextureCUBE.prototype.getRenderSurface =
+    function(face, mip_level, opt_pack) {
+  o3d.notImplemented();
+};
+
+
+/**
+ * Sets the values of the data stored in the texture.
+ *
+ * It is not recommend that you call this for large textures but it is useful
+ * for making simple ramps or noise textures for shaders.
+ *
+ * See o3d.Texture2D.set for details on formats.
+ *
+ * @param {o3d.TextureCUBE.CubeFace} face the face to update.
+ * @param {number} level the mip level to update.
+ * @param {number} values Values to be stored in the buffer.
+ */
+o3d.TextureCUBE.prototype.set =
+    function(face, level, values) {
+  this.setValues_(level, values, face);
+  this.faces_set_[face] = true;
+};
+
+
+/**
+ * Sets a rectangular area of values in a texture.
+ *
+ * Does clipping. In other words if you pass in a 10x10 pixel array
+ * and give it destination of (-5, -5) it will only use the bottom 5x5
+ * pixels of the array you passed in to set the top 5x5 pixels of the
+ * texture.
+ *
+ * See o3d.Texture2D.set for details on formats.
+ *
+ * @param {o3d.TextureCUBE.CubeFace} face the face to update.
+ * @param {number} level the mip level to update.
+ * @param {number} destination_x The x coordinate of the area in the texture
+ *     to affect.
+ * @param {number} destination_y The y coordinate of the area in the texture
+ *     to affect.
+ * @param {number} source_width The width of the area to effect. The height is
+ *     determined by the size of the array passed in.
+ * @param {number} values Values to be stored in the buffer.
+ */
+o3d.TextureCUBE.prototype.setRect =
+    function(face, level, destination_x, destination_y, source_width, values) {
+  o3d.notImplemented();
+};
+
+
+/**
+ * Gets a rectangular area of values from a texture.
+ *
+ * See o3d.Texture2D.set for details on formats.
+ * Can not be used for compressed textures.
+ *
+ * @param {o3d.TextureCUBE.CubeFace} face the face to get.
+ * @param {number} level the mip level to get.
+ * @param {number} x The x coordinate of the area in the texture to retrieve.
+ * @param {number} y The y coordinate of the area in the texture to retrieve.
+ * @param {number} width The width of the area to retrieve.
+ * @param {number} height The height of the area to retrieve.
+ * @return {number}  Array of pixel values.
+ */
+o3d.TextureCUBE.prototype.getRect =
+    function(face, level, x, y, width, height) {
+  o3d.notImplemented();
+};
+
+
+/**
+ * Sets the content of a face of the texture to the content of the bitmap. The
+ * texture and the bitmap must be the same dimensions and the same format.
+ *
+ * @param {o3d.TextureCUBE.CubeFace} face The face to set.
+ * @param {o3d.Bitmap} bitmap The bitmap to copy data from.
+ */
+o3d.TextureCUBE.prototype.setFromBitmap =
+    function(face, bitmap) {
+  var generate_mipmaps = bitmap.defer_mipmaps_to_texture_;
+  for (var f in this.faces_set_) {
+    generate_mipmaps = generate_mipmaps &&
+        (this.faces_set_[f] || f == face);
+  }
+  var resize_to_pot = bitmap.defer_mipmaps_to_texture_;
+  this.setFromCanvas_(bitmap.canvas_,
+                      resize_to_pot,
+                      false, // Never flip cube maps.
+                      generate_mipmaps,
+                      face);
+  this.faces_set_[face] = true;
+};
+
+
+/**
+ * Copy pixels from source bitmap to certain face and mip level.
+ * Scales if the width and height of source and dest do not match.
+ * TODO(petersont): Should take optional arguments.
+ *
+ * @param {o3d.Bitmap} source_img The source bitmap.
+ * @param {number} source_mip which mip of the source to copy from.
+ * @param {number} source_x x-coordinate of the starting pixel in the
+ *     source image.
+ * @param {number} source_y y-coordinate of the starting pixel in the
+ *     source image.
+ * @param {number} source_width width of the source image to draw.
+ * @param {number} source_height Height of the source image to draw.
+ * @param {o3d.TextureCUBE.CubeFace} face on which face to draw on.
+ * @param {number} dest_mip on which mip level to draw on.
+ * @param {number} dest_x x-coordinate of the starting pixel in the
+ *     destination texture.
+ * @param {number} dest_y y-coordinate of the starting pixel in the
+ *     destination texture.
+ * @param {number} dest_width width of the destination image.
+ * @param {number} dest_height height of the destination image.
+ */
+o3d.TextureCUBE.prototype.drawImage =
+    function(source_img, source_mip, source_x, source_y, source_width,
+             source_height, face, dest_mip, dest_x, dest_y, dest_width,
+             dest_height) {
+  this.drawImageFromCanvas_(source_img.canvas_,
+      source_x, source_y, source_width, source_height, dest_mip,
+      dest_x, dest_y, dest_width, dest_height, face);
+};
+
+
+/**
+ * Makes this texture currrent, and sets various texParameters provided they
+ * have changed since the last time bindAndSetParameters_ was called for this
+ * texture.
+ * @param {number} addressModeU  The address mode in the U coordinate.
+ * @param {number} addressModeV  The address mode in the V coordinate.
+ * @param {number} minFilter The type of the min filter.
+ * @param {number} magFilter The type of the mag filter.
+ */
+o3d.Texture.prototype.bindAndSetParameters_ =
+    function(addressModeU, addressModeV, minFilter, magFilter) {
+  var target = this.texture_target_;
+  this.gl.bindTexture(target, this.texture_);
+
+  if (!(o3d.Texture.isPowerOfTwo_(this.texture_width_) &&
+        o3d.Texture.isPowerOfTwo_(this.texture_height_)) ||
+        this.texture_target_ == this.gl.TEXTURE_CUBE_MAP) {
+    addressModeU = addressModeV = this.gl.CLAMP_TO_EDGE;
+  }
+
+  if (this.parameter_cache_.addressModeU != addressModeU) {
+    this.gl.texParameteri(target, this.gl.TEXTURE_WRAP_S, addressModeU);
+    this.parameter_cache_.addressModeU = addressModeU;
+  }
+
+  if (this.parameter_cache_.addressModeV != addressModeV) {
+    this.gl.texParameteri(target, this.gl.TEXTURE_WRAP_T, addressModeV);
+    this.parameter_cache_.addressModeV = addressModeV;
+  }
+
+  if (this.parameter_cache_.minFilter != minFilter) {
+    this.gl.texParameteri(target, this.gl.TEXTURE_MIN_FILTER, minFilter);
+    this.parameter_cache_.minFilter = minFilter;
+  }
+
+  if (this.parameter_cache_.magFilter != magFilter) {
+    this.gl.texParameteri(target, this.gl.TEXTURE_MAG_FILTER, magFilter);
+    this.parameter_cache_.magFilter = magFilter;
+  }
+};
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * Bitmap provides an interface for basic image operations on bitmap,
+ * including scale and crop. A Bitmap can be created from RawData via
+ * pack.createBitmapsFromRawData(), and also can be transferred to mip of a
+ * Texure2D or a specific face of TextureCUBE via methods in Texture.
+ * @constructor
+ */
+o3d.Bitmap = function() {
+  o3d.ParamObject.call(this);
+};
+o3d.inherit('Bitmap', 'ParamObject');
+
+
+/**
+ * @type {number}
+ */
+o3d.Bitmap.Semantic = goog.typedef;
+
+/**
+ * After loading an array of Bitmaps with pack.createBitmapsFromRawData
+ * you can inspect their semantic to see what they were intended for. This is
+ * mostly to distinguish between 6 bitmaps that are faces of a cubemap and 6
+ * bitmaps that are slices of a 3d texture.
+ *
+ *  FACE_POSITIVE_X, 1 face of a cubemap
+ *  FACE_NEGATIVE_X, 1 face of a cubemap
+ *  FACE_POSITIVE_Y, 1 face of a cubemap
+ *  FACE_NEGATIVE_Y, 1 face of a cubemap
+ *  FACE_POSITIVE_Z, 1 face of a cubemap
+ *  FACE_NEGATIVE_Z, 1 face of a cubemap
+ *  IMAGE, normal 2d image
+ *  SLICE, a slice of a 3d texture.
+ */
+o3d.Bitmap.FACE_POSITIVE_X = 0;
+o3d.Bitmap.FACE_NEGATIVE_X = 1;
+o3d.Bitmap.FACE_POSITIVE_Y = 2;
+o3d.Bitmap.FACE_NEGATIVE_Y = 3;
+o3d.Bitmap.FACE_POSITIVE_Z = 4;
+o3d.Bitmap.FACE_NEGATIVE_Z = 5;
+o3d.Bitmap.IMAGE = 6;
+o3d.Bitmap.SLICE = 7;
+
+
+/**
+ * The scratch canvas object.
+ * @private
+ */
+o3d.Bitmap.scratch_canvas_ = null;
+
+
+/**
+ * Gets a canvas to use for scratch work.
+ * @return {Canvas} The canvas.
+ * @private
+ */
+o3d.Bitmap.getScratchCanvas_ = function() {
+  if (!o3d.Bitmap.scratch_canvas_)
+    o3d.Bitmap.scratch_canvas_ = document.createElement('CANVAS');
+  return o3d.Bitmap.scratch_canvas_;
+}
+
+
+/**
+ * In webgl the bitmap object is represented by an offscreen canvas.
+ * @type {Canvas}
+ * @private
+ */
+o3d.Bitmap.prototype.canvas_ = null;
+
+
+/**
+ * Flips a bitmap vertically in place.
+ */
+o3d.Bitmap.prototype.flipVertically = function() {
+  var temp_canvas = document.createElement('CANVAS');
+  temp_canvas.width = this.width;
+  temp_canvas.height = this.height;
+  var context = temp_canvas.getContext('2d');
+  // Flip it.
+  context.translate(0, this.height);
+  context.scale(1, -1);
+  context.drawImage(this.canvas_,
+                    0, 0, this.width, this.height);
+  this.canvas_ = temp_canvas;
+};
+
+
+/**
+ * Flips a bitmap vertically in place lazily.
+ * @private
+ */
+o3d.Bitmap.prototype.flipVerticallyLazily_ = function() {
+  this.defer_flip_vertically_to_texture_ = true;
+};
+
+
+/**
+ * Generates mip maps from the source level to lower levels.
+ *
+ * You can not currently generate mips for DXT textures although you can load
+ * them from dds files.
+ *
+ * @param {number} source_level The level to use as the source of the mips.
+ * @param {number} num_levels The number of levels to generate below the
+ *     source level.
+ */
+o3d.Bitmap.prototype.generateMips =
+    function(source_level, num_levels) {
+  this.defer_mipmaps_to_texture_ = true;
+};
+
+
+/**
+ * The width of the bitmap (read only).
+ * @type {number}
+ */
+o3d.Bitmap.prototype.width = 0;
+
+
+
+/**
+ * The height of the bitmap (read only).
+ * @type {number}
+ */
+o3d.Bitmap.prototype.height = 0;
+
+
+/**
+ * Instead of generating mipmaps in the bitmap object, just set this boolean
+ * to true, then the texture will generate mipmaps when it loads the bitmap.
+ * @type {boolean}
+ * @private
+ */
+o3d.Bitmap.prototype.defer_mipmaps_to_texture_ = false;
+
+
+/**
+ * Instead of flipping vertically in the bitmap object, just set this boolean
+ * to true, then the texture will generate mipmaps when it loads the bitmap.
+ * @type {boolean}
+ * @private
+ */
+o3d.Bitmap.prototype.defer_flip_vertically_to_texture_ = false;
+
+
+/**
+ * The format of the bitmap (read only).
+ * @type {!o3d.Texture.Format}
+ */
+o3d.Bitmap.prototype.format = o3d.Texture.UNKNOWN_FORMAT;
+
+
+
+/**
+ * Number mip-maps (read only)
+ * @type {number}
+ */
+o3d.Bitmap.prototype.numMipmaps = 1;
+
+
+
+/**
+ * The Semantic of the bitmap.
+ * @type {!o3d.Bitmap.Semantic}
+ */
+o3d.Bitmap.prototype.semantic = o3d.Bitmap.UNKNOWN_SEMANTIC;
+
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A FileRequest is used to carry out an asynchronous request for a file
+ * to be loaded.  Its use parallels that of XMLHttpRequest; you create one, call
+ * open, set the onreadystatechange callback, and call send.
+ * Note that unlike XMLHttpRequests, FileRequests cannot be reused.
+ *
+ * For RawData loads, on success the RawData will be stored in the data field
+ * on the FileRequest itself. It is only valid until the FileRequest is freed by
+ * calling pack.removeObject(request).
+ *
+ * var request = pack.createFileRequest("RAWDATA");
+ * request.open("GET", url, true);
+ * request.onreadystatechange = function() {
+ *   if (request.done) {
+ *     if (request.success) {
+ *       var rawData = request.data;
+ *
+ *       ...
+ *     } else {
+ *       dump('Load of rawdata returned failure.');
+ *     }
+ *
+ *     pack.removeObject(request);
+ *   }
+ * };
+ * request.send();
+ */
+o3d.FileRequest = function() {
+  this.method_ = "";
+  this.async_ = true;
+  this.request_ = new XMLHttpRequest();
+  var fileRequest = this;
+  this.request_.onreadystatechange = function() {
+    fileRequest.readyState = this.readyState;
+    fileRequest.done = fileRequest.done || this.done;
+    if (this.readyState == 4) {
+      if (this.responseText) {
+        fileRequest.success = true;
+      }
+      fileRequest.done = true;
+    }
+    fileRequest.data = this.responseText;
+    if (fileRequest.onreadystatechange)
+      fileRequest.onreadystatechange.apply(fileRequest, arguments);
+  }
+};
+o3d.inherit('FileRequest', 'NamedObject');
+
+
+/**
+ * A callback to call whenever the ready state of the request changes.
+ * @type {Object}
+ */
+o3d.FileRequest.prototype.onreadystatechange = null;
+
+
+
+/**
+ * The URI this request is for.
+ * @type {string}
+ */
+o3d.FileRequest.prototype.uri = '';
+
+
+
+/**
+ * On completion of successful RawData file loads, this holds the loaded
+ * RawData.
+ * @type {o3d.RawData}
+ */
+o3d.FileRequest.prototype.data = null;
+
+
+
+/**
+ * This holds the same values as in XMLHttpRequest:
+ *  0 = uninitialized
+ *  1 = opened
+ *  2 = sent
+ *  3 = receiving
+ *  4 = loaded (the file has been downloaded, but may or may not have been
+ * parsed yet)
+ * @type {number}
+ */
+o3d.FileRequest.prototype.readyState = 0;
+
+
+
+/**
+ * This indicates whether any further processing will be done on this
+ * FileRequest.
+ * @type {boolean}
+ */
+o3d.FileRequest.prototype.done = false;
+
+
+
+/**
+ * This field is only valid if done is true.  It indicates whether or not the
+ * request succeeded. If it failed error holds an error message.
+ * @type {boolean}
+ */
+o3d.FileRequest.prototype.success = false;
+
+
+/**
+ * The image object if we are opening an image.
+ * @type {Image}
+ * @private
+ */
+o3d.FileRequest.prototype.image_ = null;
+
+
+/**
+ * An error message.
+ * If done is true and success is false this will be an error message
+ * describing what went wrong.
+ * @type {string}
+ */
+o3d.FileRequest.prototype.error = '';
+
+
+/**
+ * Guesses from a url whether the url is an image file.
+ * @param {string} url The URL.
+ * @private
+ */
+o3d.FileRequest.prototype.isImageUrl_ = function(url) {
+  var extension = url.substring(url.length - 4);
+  return (extension == '.png' || extension == '.jpg');
+};
+
+
+/**
+ * Called by the image class when the image file is loaded... if we're
+ * loading an image.
+ * @private
+ */
+o3d.FileRequest.prototype.imageLoaded_ = function() {
+  if (this.image_.complete) {
+    this.success = true;
+    this.done = true;
+    this.readyState = 4;
+    this.data = new o3d.RawData();
+    this.data.image_ = this.image_;
+  }
+  this.onreadystatechange.apply(this, arguments);
+};
+
+
+/**
+ * Set up several of the request fields.
+ * @param {string} method "GET" is the only supported method at this time
+ * @param {string} uri the location of the file to fetch
+ * @param {boolean} async true is the only legal value at this time.
+ */
+o3d.FileRequest.prototype.open =
+    function(method, uri, async) {
+  this.uri = uri;
+  this.method_ = method;
+  this.async_ = async;
+};
+
+
+/**
+ * Send the request.
+ * Unlike XMLHttpRequest the onreadystatechange callback will be called no
+ * matter what, with success or failure.
+ */
+o3d.FileRequest.prototype.send = function() {
+  if (this.isImageUrl_(this.uri)) {
+    this.image_ = new Image();
+    var that = this;
+    this.image_.onload = function() {
+      that.imageLoaded_.call(that);
+    }
+    this.image_.src = this.uri;
+  } else {
+    this.request_.open(this.method_, this.uri, this.async_);
+  }
+};
+
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+ * A namespace to hold the list of all clients.
+ * @namespace
+ */
+o3d.Renderer = {};
+
+
+/**
+ * @type {number}
+ */
+o3d.Renderer.InitStatus = goog.typedef;
+
+/**
+ * The initialization status of the renderer.
+ *
+ *  InitStatus,
+ *  UNINITIALIZED,
+ *  SUCCESS,  The renderer is initialized.
+ *  GPU_NOT_UP_TO_SPEC,  The renderer determined the user's machine cannot
+ *     run O3D.
+ *  OUT_OF_RESOURCES,  The user's machine does not have enough graphic
+ *     resources available to start another instance of the O3D renderer.
+ *  INITIALIZATION_ERROR,  Some unknown error such as e.g. drivers not
+ *     being installed correctly.
+ */
+o3d.Renderer.UNINITIALIZED = 0;
+o3d.Renderer.SUCCESS = 1;
+o3d.Renderer.GPU_NOT_UP_TO_SPEC = 2;
+o3d.Renderer.OUT_OF_RESOURCES = 3;
+o3d.Renderer.INITIALIZATION_ERROR = 4;
+
+
+/**
+ * @type {number}
+ */
+o3d.Renderer.DisplayMode = goog.typedef;
+
+/**
+ * This is used in SetFullscreenClickRegion to request the current display
+ * mode, such that the change to full-screen mode won't change the screen
+ * resolution or refresh rate.
+ *
+ *  DisplayModes,
+ *  DISPLAY_MODE_DEFAULT
+ */
+o3d.Renderer.DISPLAY_MODE_DEFAULT = 0;
+
+
+/**
+ * The interval timer for the render callback.
+ * @type {Object}
+ */
+o3d.Renderer.render_callback_interval_ = null;
+
+
+/**
+ * Global private list of all clients to be rendered every frame.
+ * @type {!Array.<!o3d.Client>}
+ */
+o3d.Renderer.clients_ = [];
+
+
+/**
+ * Renders all clients associated with this renderer.
+ */
+o3d.Renderer.renderClients = function() {
+  for (var i = 0; i < o3d.Renderer.clients_.length; ++i) {
+    var client = o3d.Renderer.clients_[i];
+    client.counter_manager_.tick();
+    if (client.renderMode == o3d.Client.RENDERMODE_CONTINUOUS) {
+      client.render();
+    }
+  }
+};
+
+
+/**
+ * Sets a timer to traverse the rendergraph every sixtieth of a second.
+ */
+o3d.Renderer.installRenderInterval = function() {
+  o3d.Renderer.render_callback_interval_ = setInterval(
+      "o3d.Renderer.renderClients()", 1000.0 / 60.0);
+};
+
+
+/**
+ * The ClientInfo is used to get information about the client.
+ * @constructor
+ */
+o3d.ClientInfo = function() {
+  o3d.NamedObject.call(this);
+};
+o3d.inherit('ClientInfo', 'NamedObject');
+
+
+/**
+ * The number of objects the client is currently tracking.
+ * You can use this to check that you are correctly freeing resources.
+ * @type {number}
+ */
+o3d.ClientInfo.prototype.num_objects = 0;
+
+
+
+/**
+ * The amount of texture memory used.
+ * @type {number}
+ */
+o3d.ClientInfo.prototype.texture_memory_used = 0;
+
+
+
+/**
+ * The amount of texture memory used.
+ * @type {number}
+ */
+o3d.ClientInfo.prototype.buffer_memory_used = 0;
+
+
+
+/**
+ * Whether or not O3D is using the software renderer.
+ *
+ * For testing purposes you can force O3D to use the software renderer
+ * by setting the environment variable O3D_FORCE_SOFTWARE_RENDERER to
+ * anything.
+ *
+ *
+ * set O3D_FORCE_SOFTWARE_RENDERER=foo
+ *
+ * or
+ *
+ * export O3D_FORCE_SOFTWARE_RENDERER=foo
+ *
+ *
+ * You can set it at a system level if you want to set it for all
+ * browser instances or set it from a command line and start your
+ * browser from that same command line if you want to effect just
+ * that instance of the browser.
+ *
+ * Note that many browers require special command line options to
+ * run in a separate process, otherwise they default to finding
+ * the browser process already running and using that. For example
+ * firefox requires the option -no-remote.
+ *
+ * @type {boolean}
+ */
+o3d.ClientInfo.prototype.software_renderer = false;
+
+
+
+/**
+ * Whether or not the GPU supports non power of two textures.
+ * NOTE: O3D always allows non power of two textures.
+ *
+ * The only reason to look at this flag is for things like video that are
+ * updating the texture every frame. In that case, you might want to know
+ * that you could run faster if you used a power of 2 texture instead of
+ * a non power of 2 texture.
+ *
+ * @type {boolean}
+ */
+o3d.ClientInfo.prototype.non_power_of_two_textures = true;
+
+
+
+/**
+ * True if shaders need to be GLSL instead of Cg/HLSL.
+ * In this implementation of o3d, that is true by default.
+ **/
+o3d.ClientInfo.prototype.glsl = true;
+
+
+
+/**
+ * The Client class is the main point of entry to O3D.  It defines methods
+ * for creating and deleting packs. Each new object created by the Client is
+ * assigned a unique ID.
+ *
+ * The Client has a root transform for the transform graph and a root render
+ * node for the render graph.
+ * @constructor
+ */
+o3d.Client = function() {
+  o3d.NamedObject.call(this);
+
+  var tempPack = this.createPack();
+  this.root = tempPack.createObject('Transform');
+  this.renderGraphRoot = tempPack.createObject('RenderNode');
+  this.clientId = o3d.Client.nextId++;
+  this.packs_ = [tempPack];
+  this.clientInfo = tempPack.createObject('ClientInfo');
+  this.counter_manager_ = new o3d.CounterManager;
+
+  if (o3d.Renderer.clients_.length == 0)
+    o3d.Renderer.installRenderInterval();
+
+  o3d.Renderer.clients_.push(this);
+
+  /**
+   * Stack of objects showing how the state has changed.
+   * @type {!Array.<!Object>}
+   * @private
+   */
+  this.stateMapStack_ = [];
+
+  /**
+   * An object containing an entry for each state variable that has changed.
+   * @type {Object}
+   * @private
+   */
+  this.stateVariableStacks_ = {};
+};
+o3d.inherit('Client', 'NamedObject');
+
+/**
+ * @type {function(!o3d.RenderEvent): void}
+ */
+o3d.Client.RenderCallback = goog.typedef;
+
+/**
+ * @type {function(!o3d.TickEvent): void}
+ */
+o3d.Client.TickCallback = goog.typedef;
+
+/**
+ * @type {function(string): void}
+ */
+o3d.Client.ErrorCallback = goog.typedef;
+
+/**
+ * The root of the render graph.
+ * @type {o3d.RenderNode}
+ */
+o3d.Client.prototype.renderGraphRoot = null;
+
+
+/**
+ * Global counter to give the client a unique ID number.
+ * @type {number}
+ */
+o3d.Client.nextId = 0;
+
+
+/**
+ * The time of the last render in seconds.
+ * @type {number}
+ */
+o3d.Client.prototype.then_ = 0;
+
+
+/**
+ * The transform graph root.
+ * @type {o3d.Transform}
+ */
+o3d.Client.prototype.root = null;
+
+
+/**
+ * A list of all packs for this client.
+ * @type {!Array.<!o3d.Pack>}
+ */
+o3d.Client.prototype.packs_ = [];
+
+/**
+ * Keeps track of all counters associated with this client.
+ * @type {o3d.CounterManager}
+ */
+o3d.Client.prototype.counter_manager_ = null;
+
+/**
+ * Whether or not the client sets the alpha channel of all pixels to 1 in the
+ * final stage of rendering.
+ *
+ * By default, this is set to true to mimic the plugin's behavior. If
+ * a transparent canvas background is desirable, this should be set to false.
+ *
+ * @type {boolean}
+ */
+o3d.Client.prototype.normalizeClearColorAlpha = true;
+
+/**
+ * Function that gets called when the client encounters an error.
+ */
+o3d.Client.prototype.error_callback = function(error_message) {
+  alert(error_message);
+};
+
+
+/**
+ * Function that gets called right before the client renders.
+ */
+o3d.Client.prototype.render_callback = function(render_event) {};
+
+
+/**
+ * Function that gets called every tick.
+ */
+o3d.Client.prototype.tick_callback = function(tick_event) {};
+
+
+/**
+ * Call this function from window.onunload to ensure the browser does not
+ * continue to call callbacks (like the render callback) after the page is
+ * unloaded.  It is possible that during unload the browser unloads all the
+ * javascript code, but then, after that, still asks the plugin to render.  The
+ * browser then calls javascript functions that no longer exist which causes an
+ * error. To prevent that situation you need to clear all your callbacks on
+ * unload. cleanup handles that for you so you don't have to dispose each and
+ * every callback by hand.
+ */
+o3d.Client.prototype.cleanup = function () {
+  this.clearRenderCallback();
+  this.clearTickCallback();
+  this.clearErrorCallback();
+};
+
+
+/**
+ * Creates a pack object.
+ *   A pack object.
+ * @return {!o3d.Pack} A new pack object.
+ */
+o3d.Client.prototype.createPack =
+    function() {
+  var pack = new o3d.Pack;
+  pack.client = this;
+  pack.gl = this.gl;
+  this.packs_.push(pack);
+  return pack;
+};
+
+
+/**
+ * Creates a pack object.
+ *   A pack object.
+ * @param {!o3d.Pack} pack The pack to remove.
+ */
+o3d.Client.prototype.destroyPack =
+    function(pack) {
+  o3d.removeFromArray(this.packs_, pack);
+};
+
+
+
+/**
+ * Searches the Client for an object matching the given id.
+ *
+ * @param {number} id The id of the object to look for.
+ * @return {o3d.ObjectBase}  The object or null if a object
+ *     with the given id is not found.
+ */
+o3d.Client.prototype.getObjectById =
+    function(id) {
+  o3d.notImplemented();
+};
+
+
+/**
+ * Searches the Client for objects of a particular name and type.
+ * @param {string} name name of object to look for.
+ * @param {string} class_name name of class to look for.
+ * @return {!Array.<!o3d.ObjectBase>}  Array of objects found.
+ */
+o3d.Client.prototype.getObjects =
+    function(name, class_name) {
+  var objects = [];
+
+  for (var i = 0; i < this.packs_.length; ++i) {
+    var pack = this.packs_[i];
+    objects = objects.concat(pack.getObjects(name, class_name));
+  }
+
+  return objects;
+};
+
+
+/**
+ * Searches the Client for objects of a particular type.
+ * @param {string} class_name name of class to look for.
+ * @return {!Array.<!Object>}  Array of objects found.
+ */
+o3d.Client.prototype.getObjectsByClassName =
+    function(class_name) {
+  var objects = [];
+
+  for (var i = 0; i < this.packs_.length; ++i) {
+    var pack = this.packs_[i];
+    objects = objects.concat(pack.getObjectsByClassName(class_name));
+  }
+
+  return objects;
+};
+
+
+/**
+ * @type {number}
+ */
+o3d.Client.RenderMode = goog.typedef;
+
+/**
+ *  RENDERMODE_CONTINUOUS,  Draw as often as possible up to refresh rate.
+ *  RENDERMODE_ON_DEMAND,   Draw once then only when the OS requests it
+ *      (like uncovering part of a window.)
+ */
+o3d.Client.RENDERMODE_CONTINUOUS = 0;
+o3d.Client.RENDERMODE_ON_DEMAND = 1;
+
+
+/**
+ * The current render mode. The default mode is RENDERMODE_CONTINUOUS.\n
+ * Valid values are:
+ *  RENDERMODE_CONTINUOUS,  Draw as often as possible up to refresh rate.
+ *  RENDERMODE_ON_DEMAND,   Draw when the OS requests it (like uncovering
+ *                             part of a window.)
+ * @type {o3d.Client.RenderMode}
+ */
+o3d.Client.prototype.renderMode = o3d.Client.RENDERMODE_CONTINUOUS;
+
+
+/**
+ * Forces a render of the current scene if the current render mode is
+ * RENDERMODE_ON_DEMAND.
+ */
+o3d.Client.prototype.render = function() {
+  if (!this.gl) {
+    return;
+  }
+  // Synthesize a render event.
+  var render_event = new o3d.RenderEvent;
+  this.counter_manager_.advanceRenderFrameCounters();
+
+  this.clearStateStack_();
+
+  var now = (new Date()).getTime() * 0.001;
+  if(this.then_ == 0.0)
+    render_event.elapsedTime = 0.0;
+  else
+    render_event.elapsedTime = now - this.then_;
+
+  if (this.render_callback) {
+    for (var stat in this.render_stats_) {
+      render_event[stat] = this.render_stats_[stat];
+    }
+    this.render_callback(render_event);
+  }
+  this.then_ = now;
+
+  this.gl.colorMask(true, true, true, true);
+
+  this.renderTree(this.renderGraphRoot);
+
+  // When o3d finally draws to the webpage, the alpha channel should be all 1's
+  // So we clear with a color mask to set all alpha bytes to 1 before drawing.
+  // Before we draw again, the color mask gets set back to all true (above).
+  if (this.normalizeClearColorAlpha) {
+    this.gl.colorMask(false, false, false, true);
+    this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+  }
+};
+
+
+/**
+ * An object for various statistics that are gather during the render tree
+ * tranversal.
+ *
+ * @type {Object}
+ */
+o3d.Client.prototype.render_stats = {}
+
+
+/**
+ * Renders a render graph.
+ *
+ * Normally the client calls this function automatically for you effectively
+ * doing a client.renderTree(client.renderGraphRoot) but there are cases
+ * where it is beneficial to be able to call this yourself and pass it
+ * different roots when you need to manipulate something between calls.
+ *
+ * This function can only be called from inside a render callback. If you call
+ * it the client will not do its default call as mentioned above.
+ *
+ * @param {!o3d.RenderNode} render_node root RenderNode to start rendering from.
+ */
+o3d.Client.prototype.renderTree =
+    function(render_node) {
+  this.render_stats_ = {
+    drawElementsCulled: 0,
+    drawElementsProcessed: 0,
+    drawElementsRendered: 0,
+    primitivesRendered: 0,
+    transformsCulled: 0,
+    transformsProcessed: 0
+  };
+
+  render_node.render();
+};
+
+
+/**
+ * Returns an array of DisplayModes which are available for use in full-screen
+ * mode.
+ *  An array of DisplayModes.
+ * @type {!Array.<!o3d.Client.DispalyMode>}
+ */
+o3d.Client.prototype.getDisplayModes = [];
+
+
+/**
+ * Makes a region of the plugin area that will invoke full-screen mode if
+ * clicked.  The developer is responsible for communicating this to the user,
+ * as this region has no visible marker.  The developer is also responsible for
+ * updating this region if the plugin gets resized, as we don't know whether or
+ * how to scale it.  There can be only one full-screen click region at a time;
+ * calling this again will override any previous call.
+ *
+ * @param {number} x x position in pixels.
+ * @param {number} y y position in pixels.
+ * @param {number} width width in pixels.
+ * @param {number} height height in pixels.
+ * @param {number} mode_id Id of mode to use.
+ */
+o3d.Client.prototype.setFullscreenClickRegion =
+    function(x, y, width, height, mode_id) {
+  o3d.notImplemented();
+};
+
+
+/**
+ * Deactivates the plugin click region that was previously created with
+ * SetFullscreenClickRegion().
+ */
+o3d.Client.prototype.clearFullscreenClickRegion = function() {
+  o3d.notImplemented();
+};
+
+
+
+/**
+ * Cancels full-screen display, reverting to displaying content only in the
+ * plugin region.  If the plugin is already not in full-screen mode, this has
+ * no effect.  This does not deactivate the plugin click region--if the user
+ * clicks there again, we'll go back to full-screen display.
+ */
+o3d.Client.prototype.cancelFullscreenDisplay = function() {
+  render_node.render();
+};
+
+
+
+/**
+ * Gets info about the client.
+ * @type {!o3d.ClientInfo}
+ */
+o3d.Client.prototype.client_info = null;
+
+
+
+/**
+ * Whether content is displayed in full-screen mode or in a plugin window.  The
+ * default is false [not full-screen].
+ * @type {boolean}
+ */
+o3d.Client.prototype.fullscreen = false;
+
+
+/**
+ * Returns the width of the current drawing area [plugin or full-screen] in
+ * pixels.
+ */
+o3d.Client.prototype.__defineGetter__('width',
+    function() {
+      return this.gl.hack_canvas.width;
+    }
+);
+
+o3d.Client.prototype.__defineSetter__('width',
+    function(x) {
+      this.gl.hack_canvas.width = x;
+    }
+);
+
+
+/**
+ * Returns the height of the current drawing area [plugin or full-screen] in
+ * pixels.
+ */
+o3d.Client.prototype.__defineGetter__('height',
+    function() {
+      return this.gl.hack_canvas.height;
+    }
+);
+
+o3d.Client.prototype.__defineSetter__('height',
+    function(x) {
+      this.gl.hack_canvas.height = x;
+    }
+);
+
+
+/**
+ * Initializes this client using the canvas.
+ * @param {Canvas}
+ * @return {boolean} Success.
+ */
+o3d.Client.prototype.initWithCanvas = function(canvas) {
+  var gl;
+
+  var standard_attributes = {
+    alpha : true,
+    depth : true,
+    stencil : true,
+    antialias : true,
+    premultipliedAlpha : true
+  };
+
+  if (!canvas || !canvas.getContext) {
+    return false;
+  }
+
+  var names = ["webgl", "experimental-webgl", "moz-webgl"];
+  for (var ii = 0; ii < names.length; ++ii) {
+    try {
+      gl = canvas.getContext(names[ii], standard_attributes)
+    } catch(e) { }
+    if (gl) {
+      break;
+    }
+  }
+
+  if (!gl) {
+    return false;
+  }
+
+  // TODO(petersont): Remove this workaround once WebGLRenderingContext.canvas
+  // is implemented in Firefox.
+  gl.hack_canvas = canvas;
+  this.gl = gl;
+  this.root.gl = gl;
+  this.renderGraphRoot.gl = gl;
+
+  gl.client = this;
+  gl.displayInfo = {width: canvas.width,
+                    height: canvas.height};
+  o3d.State.createDefaultState_(gl).push_();
+
+  this.initErrorTextures_();
+
+  return true;
+}
+
+
+/**
+ * Creates the yellow-and-red 8x8 error textures.
+ * @private
+ */
+o3d.Client.prototype.initErrorTextures_ = function() {
+  // First create the yellow-and-red pattern.
+  var r = [1, 0, 0, 1];
+  var Y = [1, 1, 0, 1];
+  var error = [r, r, r, r, r, r, r, r,
+               r, r, Y, Y, Y, Y, r, r,
+               r, Y, r, r, r, Y, Y, r,
+               r, Y, r, r, Y, r, Y, r,
+               r, Y, r, Y, r, r, Y, r,
+               r, Y, Y, r, r, r, Y, r,
+               r, r, Y, Y, Y, Y, r, r,
+               r, r, r, r, r, r, r, r];
+  var pixels = [];
+  for (var i = 0; i < error.length; i++) {
+    for (var j = 0; j < 4; j++) {
+      pixels[i * 4 + j] = error[i][j];
+    }
+  }
+
+  // Create the default error cube map using the same data.
+  var defaultTextureCube = new o3d.TextureCUBE();
+
+  defaultTextureCube.gl = this.gl;
+  defaultTextureCube.init_(8, o3d.Texture.ARGB8, 1, false, true);
+
+  for (var i = 0; i < 6; ++i) {
+    defaultTextureCube.set(i, 0, pixels);
+  }
+  defaultTextureCube.name = 'DefaultTextureCube';
+  this.error_texture_cube_ = defaultTextureCube;
+  this.fallback_error_texture_cube_ = defaultTextureCube;
+
+  // Create the default error texture.
+  var defaultTexture = new o3d.Texture2D();
+  defaultTexture.gl = this.gl;
+  defaultTexture.init_(8, 8, o3d.Texture.ARGB8, 1, false);
+
+  defaultTexture.set(0, pixels);
+  defaultTexture.name = 'DefaultTexture';
+  this.error_texture_ = defaultTexture;
+  this.fallback_error_texture_ = defaultTexture;
+};
+
+
+/**
+ * Sets the per frame render callback.
+ *
+ * Note: The callback will not be called recursively. When your callback is
+ * called if you somehow manage to cause the client to render more frames
+ * before you've returned from the callback you will not be called for those
+ * frames.
+ *
+ * g_client.setRenderCallback(onrender);
+ *
+ * function onrender(render_event) {
+ *   var elapsedTime = render_event.elapsedTime;
+ * }
+ *
+ * @param {!o3d.RenderCallback} render_callback The callback to call
+ *     each frame.
+ */
+o3d.Client.prototype.setRenderCallback =
+    function(render_callback) {
+  if (this.render_callback) {
+    this.clearRenderCallback();
+  }
+  this.render_callback = render_callback;
+};
+
+
+/**
+ * Clears the per frame render callback.
+ */
+o3d.Client.prototype.clearRenderCallback = function() {
+  clearInterval(this.render_callback_interval_);
+  this.render_callback = null;
+};
+
+
+/**
+ * Sets a render callback to be called at the end of the
+ * rendering cycle of each frame.
+ *
+ * Note: The callback will not be called recursively. When your callback is
+ * called if you somehow manage to cause the client to render more frames
+ * before you've returned from the callback you will not be called for those
+ * frames.
+ *
+ *
+ * g_client.setPostRenderCallback(onpostrender);
+ *
+ * function onpostrender(render_event) {
+ *   var elapsedTime = render_event.elapsedTime;
+ * }
+ *
+ * @param {!o3d.RenderCallback} post_render_callback The callback to call
+ *     each frame.
+ */
+o3d.Client.prototype.setPostRenderCallback =
+    function(post_render_callback) {
+  this.postRenderCallback = post_render_callback;
+};
+
+
+/**
+ * Clears the post render callback.
+ */
+o3d.Client.prototype.clearPostRenderCallback = function() {
+  this.postRenderCallback = null;
+};
+
+
+
+/**
+ * Sets the lost resources callback.
+ *
+ * The contents of certain resources, RenderSurfaces, can get discarded by the
+ * system under certain circumstances. If you application needs that contents
+ * to be in a certain state then you can set a callback giving your program the
+ * opportunity to restore that state if and when it is lost.
+ *
+ * @param {!o3d.LostResourcesCallback} lost_resources_callback The callback when
+ *     resources are lost.
+ */
+o3d.Client.prototype.setLostResourcesCallback =
+    function(lost_resources_callback) {
+  this.lostResourcesCallback = lost_resources_callback;
+};
+
+
+/**
+ * Clears the lost resources callback.
+ */
+o3d.Client.prototype.clearLostResourcesCallback =
+    function() {
+  this.lostResourcesCallback = null;
+};
+
+
+/**
+ * Returns the event object for processing.
+ * @param {Event} event A mouse-related DOM event.
+ * @private
+ */
+o3d.Client.getEvent_ = function(event) {
+  return event ? event : window.event;
+};
+
+
+/**
+ * Returns an object with event, element, name and wheel in a semi cross
+ * browser way. Note: this can only be called from since an event because
+ * depending on the browser it expects that window.event is valid.
+ * @param {!Event} event A mouse-related DOM event.
+ * @return {!EventInfo} Info about the event.
+ * @private
+ */
+o3d.Client.getEventInfo_ = function(event) {
+  var elem = event.target ? event.target : event.srcElement;
+  var name = elem.id ? elem.id : ('->' + elem.toString());
+  var wheel = event.detail ? event.detail : -event.wheelDelta;
+  return { event: event,
+           element: elem,
+           name: name,
+           wheel: wheel };
+};
+
+
+/**
+ * Returns the absolute position of an element.
+ * @param {!HTMLElement} element The element to get a position for.
+ * @return {!Object} An object containing x and y as the absolute position
+ *     of the given element.
+ * @private
+ */
+o3d.Client.getAbsolutePosition_ = function(element) {
+  var r = {x: 0, y: 0};
+  for (var e = element; e; e = e.offsetParent) {
+    r.x += e.offsetLeft;
+    r.y += e.offsetTop;
+  }
+  return r;
+};
+
+/**
+ * Compute the x and y of an event with respect to the element which received
+ * the event.
+ *
+ * @param {!Object} eventInfo As returned from
+ *     o3d.Client.getEventInfo.
+ * @return {!Object} An object containing keys 'x' and 'y'.
+ * @private
+ */
+o3d.Client.getLocalXY_ = function(eventInfo) {
+  var event = eventInfo.event;
+  var p = o3d.Client.getAbsolutePosition_(eventInfo.element);
+  return {x: event.pageX - p.x, y: event.pageY - p.y};
+};
+
+
+/**
+ * Wraps a user's event callback with one that properly computes
+ * relative coordinates for the event.
+ * @param {!o3d.EventCallback} handler Function to call on event.
+ * @param {boolean} doCancelEvent If event should be canceled after callback.
+ * @return {!o3d.EventCallback} Wrapped handler function.
+ * @private
+ */
+o3d.Client.wrapEventCallback_ = function(handler, doCancelEvent) {
+  return function(event) {
+    event = o3d.Client.getEvent_(event);
+    var originalEvent = event;
+    var info = o3d.Client.getEventInfo_(event);
+    var relativeCoords = o3d.Client.getLocalXY_(info);
+    // In a proper event, there are read only properties, so we clone it.
+    event = o3d.clone(event);
+    event.x = relativeCoords.x;
+    event.y = relativeCoords.y;
+    // Invert value to meet contract for deltaY. @see event.js.
+    event.deltaY = -info.wheel;
+    handler(event);
+    if (doCancelEvent) {
+      // Need to cancel the original, un-cloned event.
+      o3djs.event.cancel(originalEvent);
+    }
+  };
+};
+
+
+/**
+ * Sets a callback for a given event type.
+ * types.
+ * There can be only one callback for a given event type at a time; setting a
+ * new one deletes the old one.
+ *
+ * @param {string} type Type of event to set callback for.
+ * @param {!o3d.EventCallback} handler Function to call on event.
+ */
+o3d.Client.prototype.setEventCallback =
+    function(type, handler) {
+  var listener = this.gl.hack_canvas;
+  // TODO(petersont): Figure out a way for a canvas to listen to a key event
+  // directly.
+
+  var isWheelEvent = type == 'wheel';
+  var forKeyEvent = type.substr(0, 3) == 'key';
+  if (forKeyEvent) {
+    listener = document;
+  } else {
+    handler = o3d.Client.wrapEventCallback_(handler, isWheelEvent);
+  }
+  if (isWheelEvent) {
+    listener.addEventListener('DOMMouseScroll', handler, true);
+    listener.addEventListener('mousewheel', handler, true);
+  } else {
+    listener.addEventListener(type, handler, true);
+  }
+};
+
+
+/**
+ * Removes the previously-registered callback for an event of the given type.
+ * @param {string} type Type of event to clear callback for.
+ */
+o3d.Client.prototype.clearEventCallback =
+    function(type) {
+  //TODO(petersont): Same as TODO in setEventCallback above.
+  var listener = this.gl.hack_canvas;
+
+  var isWheelEvent = type == 'wheel';
+  var forKeyEvent = type.substr(0, 3) == 'key';
+  if (forKeyEvent) {
+    listener = document;
+  }
+
+  if (isWheelEvent) {
+    listener.removeEventListener('DOMMouseScroll');
+    listener.removeEventListener('mousewheel');
+  } else {
+    listener.removeEventListener(type);
+  }
+};
+
+
+/**
+ * Sets the texture to use when a Texture or Sampler is missing while
+ * rendering. The default is a red texture with a yellow no symbol.
+ * <span style="color:yellow; background-color: red;">&Oslash;.
+ * If you set it to null you'll get an error if you try to render something
+ * that is missing a needed Texture, Sampler or ParamSampler.
+ *
+ * For example if you don't care about missing textures, setting it to a black
+ * texture would be one option. Another example is if you want to write all
+ * your shaders to expect a texture then set this to a white texture. If you
+ * want to make sure you are not missing any textures set it null and see if
+ * you get any errors using Client.setErrorCallback or Client.lastError.
+ *
+ * var t = g_pack.createTexture2D('', 1, 1, g_o3d.Texture.XRGB8, 1);
+ * t.set(0, [0, 0, 0]);
+ * g_client.setErrorTexture(t);
+ *
+ * @param {o3d.Texture} texture texture to use for missing textures or null.
+ */
+o3d.Client.prototype.setErrorTexture =
+    function(texture) {
+  this.error_texture_ = texture;
+};
+
+
+/**
+ * Sets the cubemap texture to use when a Texture or Sampler is missing while
+ * rendering. The default is a red texture with a yellow no symbol.
+ * <span style="color:yellow; background-color: red;">&Oslash;.
+ * If you set it to null you'll get an error if you try to render something
+ * that is missing a needed Texture, Sampler or ParamSampler.
+ *
+ * @param {o3d.Texture} texture Texture to use for missing textures or null.
+ */
+o3d.Client.prototype.setErrorTextureCube =
+    function(texture) {
+  this.error_texture_cube_map_ = texture;
+};
+
+
+/**
+ * Sets a callback for when the client ticks. The client processes some things
+ * like animation timers at up to 100hz.  This callback will get called before
+ * each of those process ticks.
+ *
+ * NOTE: The client takes ownership of the TickCallback you
+ * pass in. It will be deleted if you call SetTickCallback a
+ * second time or if you call clearTickCallback.
+ *
+ * Note: The callback will not be called recursively.
+ *
+ * @param {o3d.TickCallback} tick_callback TickCallback to call when the
+ *     Client ticks.
+ */
+o3d.Client.prototype.setTickCallback =
+    function(tick_callback) {
+  this.tickCallback = tick_callback;
+};
+
+
+/**
+ * Clears the tick callback
+ *
+ * NOTE: The client takes ownership of the TickCallback you
+ * pass in. It will be deleted if you call SetTickCallback a second
+ * time or if you call clearTickCallback
+ */
+o3d.Client.prototype.clearTickCallback = function() {
+  this.tickCallback = null;
+};
+
+
+/**
+ * Sets a callback for when the client gets an error. For example when a shader
+ * is compiled and there is an error or if you attempt to bind a param to a
+ * param of an incompatible type.
+ *
+ * NOTE: The client takes ownership of the ErrorCallback you
+ * pass in. It will be deleted if you call SetErrorCallback a
+ * second time or if you call ClearErrorCallback.
+ *
+ * NOTE: The callback will not be called recursively. If you are in a
+ * callback, and do something that causes another error before you have
+ * returned from the callback, your callback will not be called a second time.
+ *
+ * NOTE: If you put up an alert in response to an error it is best if you
+ * clear the error callback before you put up the alert. Otherwise you'll get
+ * an alert everytime the client tries to render which is every time you close
+ * the current alert which means you'll be in an infinite loop of alerts.
+ *
+ * @param {o3d.ErrorCallback} error_callback ErrorCallback to call when the
+ *     Client gets an error.
+ */
+o3d.Client.prototype.setErrorCallback =
+    function(error_callback) {
+  // Other code expects to not see a null error callback.
+  if (error_callback) {
+    this.error_callback = this.wrapErrorCallback_(error_callback);
+  } else {
+    this.error_callback = function(string) {
+      this.last_error_ = string;
+    };
+  }
+};
+
+
+/**
+ * Wraps a callback function, saving the error string so that the
+ * lastError variable can access it.
+ *
+ * @param {function} error_callback User-defined error callback.
+ * @return {function} Wrapped error callback.
+ * @private
+ */
+o3d.Client.prototype.wrapErrorCallback_ = function(error_callback) {
+  return function(string) {
+    this.last_error_ = string;
+    error_callback(string);
+  }
+}
+
+
+/**
+ * Clears the Error callback
+ *
+ * NOTE: The client takes ownership of the ErrorCallback you
+ * pass in. It will be deleted if you call SetErrorCallback a second
+ * time or if you call ClearErrorCallback.
+ */
+o3d.Client.prototype.clearErrorCallback = function() {
+  this.setErrorCallback(null);
+};
+
+
+
+/**
+ * Makes all parameters get re-evaluated.
+ */
+o3d.Client.prototype.invalidateAllParameters = function() {
+  o3d.notImplemented();
+};
+
+
+/**
+ * Gets a copy of the current backbuffer of O3D as a data: url.
+ * @param {string} mime_type The type of data url you want.
+ *    Currently O3D only supports image/png. See HTML5 canvas tag
+ *    for info about toDataURL.
+ * @return {string}  A Data URL for the backbuffer.
+ */
+o3d.Client.prototype.toDataURL =
+    function(opt_mime_type) {
+  o3d.notImplemented();
+};
+
+
+/**
+ * Saves data needed to return state to current, then sets the state according
+ * to the given object.
+ * @private
+ */
+o3d.Client.prototype.clearStateStack_ = function() {
+  this.stateMapStack_ = [];
+  for (var name in this.stateVariableStacks_) {
+    var l = this.stateVariableStacks_[name];
+    // Recall there is a default value at the bottom of each of these stacks.
+    if (l.length != 1) {
+      this.stateVariableStacks_[name] = l.slice(0, 1);
+    }
+  }
+};
+
+
+/**
+ * Saves data needed to return state to current, then sets the state according
+ * to the given object.
+ * @param {Object} variable_map A map linking names to values.
+ * @private
+ */
+o3d.Client.prototype.pushState_ = function(variable_map) {
+  // Save the variable map itself in a stack.
+  this.stateMapStack_.push(variable_map);
+
+  // Save each of the state's variable's value in its own stack.
+  for (var name in variable_map) {
+    var value = variable_map[name];
+    if (this.stateVariableStacks_[name] == undefined) {
+      this.stateVariableStacks_[name] = [];
+    }
+    this.stateVariableStacks_[name].push(value);
+  }
+
+  // The value on the top of the stack in stateVariableStacks_
+  // is current at this point.
+  o3d.State.setVariables_(this.gl, variable_map);
+};
+
+
+/**
+ * Returns the state to the way it was before the current state
+ * @private
+ */
+o3d.Client.prototype.popState_ = function() {
+  var variable_map = this.stateMapStack_.pop();
+
+  for (var name in variable_map) {
+    var stack = this.stateVariableStacks_[name];
+    stack.pop();
+    variable_map[name] = stack.length ? stack[stack.length - 1] :
+        o3d.State.stateVariableInfos_[name]['defaultValue'];
+  }
+
+  o3d.State.setVariables_(this.gl, variable_map);
+};
+
+
+/**
+ * Gets the current value of the state variable with the give name.
+ * @param {string} name The name of the state variable in question.
+ * @private
+ */
+o3d.Client.prototype.getState_ = function(name) {
+  var stack = this.stateVariableStacks_[name];
+  return stack.length ? stack[stack.length - 1] :
+        o3d.State.stateVariableInfos_[name]['defaultValue'];
+};
+
+
+/**
+ * Returns the status of initializing the renderer so we can display the
+ * appropriate message. We require a certain minimum set of graphics
+ * capabilities. If the user's computer does not have his minimum
+ * set this will be GPU_NOT_UP_TO_SPEC. If the user is out of graphics
+ * resources this will be OUT_OF_RESOURCES. If some other error happened this
+ * will be INITIALIZATION_ERROR. Otherwise it will be SUCCESS.
+ */
+o3d.Client.prototype.renderer_init_status = 0;
+
+
+/**
+ * Gets / Sets the cursor's shape.
+ *
+ * @type {o3d.Cursor}
+ */
+o3d.Client.prototype.cursor = null;
+
+
+/**
+ * The current error texture.
+ *
+ * @type {o3d.Texture2D}
+ * @private
+ */
+o3d.Client.prototype.error_texture_ = null;
+
+
+/**
+ * The current error cube texture.
+ *
+ * @type {o3d.TextureCUBE}
+ * @private
+ */
+o3d.Client.prototype.error_texture_cube_ = null;
+
+
+/**
+ * The fallback error texture. Should only be initialized once per client and
+ * is read-only.
+ *
+ * @type {!o3d.Texture2D}
+ * @private
+ */
+o3d.Client.prototype.fallback_error_texture_ = null;
+
+
+/**
+ * The fallback error texture. Should only be initialized once per client and
+ * is read-only.
+ *
+ * @type {!o3d.TextureCUBE}
+ * @private
+ */
+o3d.Client.prototype.fallback_error_texture_cube_ = null;
+
+
+/**
+ * The last error reported by the plugin.
+ *
+ * @type {string}
+ * @private
+ */
+o3d.Client.prototype.last_error_ = '';
+o3d.Client.prototype.__defineGetter__('lastError',
+    function() {
+      return this.last_error_;
+    }
+);
+
+/**
+ * Returns true if missing textures, samplers or ParamSamplers should be
+ * reported by calling the error callback. We assume that if the user
+ * explicitly sets the error texture to null, then they want such errors to
+ * trigger the error callback.
+ *
+ * @return {boolean}
+ * @private
+ */
+o3d.Client.prototype.reportErrors_ = function() {
+  return (this.error_texture_ == null);
+}
+
+
+/**
+ * All the objects managed by this client.
+ *
+ * Each access to this field gets the entire list so it is best to get it
+ * just once. For example:
+ *
+ * var objects = client.objects;
+ * for (var i = 0; i < objects.length; i++) {
+ *   var object = objects[i];
+ * }
+ *
+ *
+ * Note that modifications to this array [e.g. push()] will not affect
+ * the underlying Client, while modifications to the array's members
+ * will affect them.
+ *
+ * @type {!Array.<!o3d.ObjectBase>}
+ */
+o3d.Client.prototype.objects = [];
+
+
+
+/**
+ * Clears the error returned in lastError.
+ */
+o3d.Client.prototype.clearLastError = function () {
+  this.last_error_ = '';
+};
+
+
+
+/**
+ * Resets the profiling information.
+ */
+o3d.Client.prototype.profileReset = function() {
+  o3d.notImplemented();
+};
+
+
+
+/**
+ * Returns the profiling information as a string.
+ *  The profiling info.
+ * @return {string}
+ */
+o3d.Client.prototype.profileToString = function() {
+  o3d.notImplemented();
+};
+
+
+
+/**
+ * A unique id for this client.
+ * @type {number}
+ */
+o3d.Client.prototype.clientId = 0;
+
+
+
+/**
+ * Gets info about the client.
+ */
+o3d.Client.prototype.clientInfo = null;
+
+
+/**
+ * The canvas associated with this client.
+ * @type {Element}
+ */
+o3d.Client.prototype.canvas = null;
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * RenderNode is the base of all RenderNodes in the render graph.
+ * RenderNodes are rendered in order of priority.
+ *
+ * @param {number} opt_priority The priority of this render node. Lower
+ *     priorities are rendered first.
+ * @param {boolean} opt_active If true this node is processed. If false
+ *     it is not.
+ * @constructor
+ */
+o3d.RenderNode = function(opt_priority, opt_active) {
+  o3d.ParamObject.call(this);
+
+  /**
+   * Sets the priority of this render node. lower priorities are
+   * rendered first.
+   *
+   * @type {number}
+   */
+  this.priority = opt_priority || 0;
+
+  /**
+   * The immediate children of this RenderNode.
+   *
+   * Each access to this field gets the entire list so it is best to get it
+   * just once. For example:
+   *
+   * var children = renderNode.children;
+   * for (var i = 0; i < children.length; i++) {
+   *   var child = children[i];
+   * }
+   *
+   * Note that modifications to this array [e.g. push()] will not affect
+   * the underlying RenderNode, while modifications to the array's members
+   * will affect them.
+   *
+   * @type {!Array.<o3d.RenderNode>}
+   */
+  this.children = [];
+
+  /**
+   * Setting false skips this render node. Setting true processes this render
+   * node. (ie, renders whatever it's supposed to render)
+   *
+   * @type {boolean}
+   */
+  this.active = opt_active || true;
+
+  /**
+   * Sets the parent of the node by re-parenting the node under parent_node.
+   * Setting parent_node to null removes the node and the entire subtree below
+   * it from the render graph.
+   *
+   * @type {o3d.RenderNode}
+   */
+  this.parent = null;
+};
+o3d.inherit('RenderNode','ParamObject');
+
+o3d.ParamObject.setUpO3DParam_(o3d.RenderNode, 'priority', 'ParamFloat');
+o3d.ParamObject.setUpO3DParam_(o3d.RenderNode, 'active', 'ParamBoolean');
+
+o3d.RenderNode.prototype.__defineSetter__('parent',
+    function(p) {
+      if (this.parent_) {
+        this.parent_.removeChild(this);
+      }
+      this.parent_ = p;
+      if (this.parent_) {
+        if (!this.parent_.addChild) {
+          throw ('Parent of render node must be render node or null.');
+        }
+        this.parent_.addChild(this);
+      }
+    }
+);
+
+o3d.RenderNode.prototype.__defineGetter__('parent',
+    function(p) {
+      return this.parent_;
+    }
+);
+
+/**
+ * Adds a child node.
+ * @param {o3d.RenderNode} child The child to add.
+ */
+o3d.RenderNode.prototype.addChild = function(child) {
+  this.children.push(child);
+};
+
+
+/**
+ * Removes a child node.
+ * @param {o3d.RenderNode} child The child to add.
+ */
+o3d.RenderNode.prototype.removeChild = function(child) {
+  o3d.removeFromArray(this.children, child);
+};
+
+
+/**
+ * Returns this render node and all its descendants. Note that this render node
+ * might not be in the render graph.
+ *
+ * Note that modifications to this array [e.g. push()] will not affect
+ * the underlying RenderNode, while modifications to the array's members
+ * will affect them.
+ *
+ * An array containing all render nodes of the subtree.
+ */
+o3d.RenderNode.prototype.getRenderNodesInTree =
+    function() {
+  o3d.notImplemented();
+};
+
+
+
+/**
+ * Searches for render nodes that match the given name in the hierarchy under
+ * and including this render node. Since there can be several render nodes
+ * with a given name the results are returned in an array.
+ *
+ * Note that modifications to this array [e.g. push()] will not affect
+ * the underlying RenderNode, while modifications to the array's members
+ * will affect them.
+ *
+ * @param {string} name Rendernode name to look for.
+ * @return {Array.<!o3d.RenderNode>}  An array containing all nodes among
+ *     this node and its decendants that have the given name.
+ */
+o3d.RenderNode.prototype.getRenderNodesByNameInTree =
+    function(name) {
+  o3d.notImplemented();
+};
+
+
+/**
+ * Searches for render nodes that match the given class name in the hierarchy
+ * under and including this render node.
+ *
+ * Note that modifications to this array [e.g. push()] will not affect
+ * the underlying RenderNode, while modifications to the array's members
+ * will affect them.
+ *
+ * @param {string} class_name class name to look for.
+ * @return {Array.<!o3d.RenderNode>}  An array containing all nodes among
+ *     this node and its decendants whose type is class_name.
+ */
+o3d.RenderNode.prototype.getRenderNodesByClassNameInTree =
+    function(class_name) {
+  o3d.notImplemented();
+};
+
+
+/**
+ * Recursively traverses the render graph starting at this node.
+ */
+o3d.RenderNode.prototype.render = function() {
+  function compare(a, b) {
+    return a.priority - b.priority;
+  }
+  this.children.sort(compare);
+  var children = this.children;
+
+  this.before();
+  for (var i = 0; i < children.length; ++i) {
+    children[i].render();
+  }
+  this.after();
+};
+
+
+/**
+ * Called during the rendergraph traversal before the children are rendered.
+ */
+o3d.RenderNode.prototype.before = function() { };
+
+
+/**
+ * Called during the rendergraph traversal after the children are rendered.
+ */
+o3d.RenderNode.prototype.after = function() { };
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A ClearBuffer is a render node that clears the color buffer, zbuffer and/or
+ * stencil buffer of the current render target.
+ *
+ * @constructor
+ */
+o3d.ClearBuffer = function() {
+  o3d.RenderNode.call(this);
+  /**
+   * The color to clear the buffer in RGBA Float4 format.
+   * @type {!o3d.Float4}
+   */
+  this.clearColor = [0, 0, 0, 1];
+
+  /**
+   * true clears the current render target's color buffer to the clear color.
+   * false does not clear the color buffer.
+   * @type {boolean}
+   */
+  this.clearColorFlag = true;
+
+  /**
+   * The value to clear the depth buffer (0.0 - 1.0)
+   * @type {number}
+   */
+  this.clearDepth = 1;
+
+  /**
+   * true clears the current render target's depth buffer to the clear depth
+   * value. false does not clear the depth buffer.
+   * @type {boolean}
+   */
+  this.clearDepthFlag = true;
+
+  /**
+   * The value to clear the stencil buffer to (0 - 255).
+   * @type {number}
+   */
+  this.clearStencil = 0;
+
+  /**
+   * true clears the current render target's stencil buffer to the clear stencil
+   * value. false does not clear the stencil buffer
+   * @type {boolean}
+   */
+  this.clearStencilFlag = true;
+};
+o3d.inherit('ClearBuffer', 'RenderNode');
+
+o3d.ParamObject.setUpO3DParam_(o3d.ClearBuffer, 'clearColor', 'ParamFloat4');
+o3d.ParamObject.setUpO3DParam_(o3d.ClearBuffer,
+                               'clearColorFlag', 'ParamBoolean');
+o3d.ParamObject.setUpO3DParam_(o3d.ClearBuffer, 'clearDepth', 'ParamFloat');
+o3d.ParamObject.setUpO3DParam_(o3d.ClearBuffer,
+                               'clearDepthFlag', 'ParamBoolean');
+o3d.ParamObject.setUpO3DParam_(o3d.ClearBuffer,
+                               'clearStencil', 'ParamInteger');
+o3d.ParamObject.setUpO3DParam_(o3d.ClearBuffer,
+                               'clearStencilFlag', 'ParamBoolean');
+
+/**
+ * Function called in the render graph traversal before the children are
+ * rendered.
+ */
+o3d.ClearBuffer.prototype.before = function() {
+  var flags = 0;
+
+  this.gl.clearColor(
+      this.clearColor[0],
+      this.clearColor[1],
+      this.clearColor[2],
+      this.clearColor[3]);
+
+  this.gl.clearDepth(this.clearDepth);
+  this.gl.clearStencil(this.clearStencil);
+
+  if (this.clearColorFlag)
+    flags = flags | this.gl.COLOR_BUFFER_BIT;
+  if (this.clearDepthFlag)
+    flags = flags | this.gl.DEPTH_BUFFER_BIT;
+  if (this.clearStencilFlag)
+    flags = flags | this.gl.STENCIL_BUFFER_BIT;
+
+  this.gl.clear(flags);
+};
+
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A StateSet is a render node that sets render states of all of its
+ * children. You can make this a parent of a part of the render graph to set
+ * render states in a more global way.
+ *
+ * @param {o3d.State} opt_state The State the defines what states to set.
+ * @constructor
+ */
+o3d.StateSet = function(opt_state) {
+  o3d.RenderNode.call(this);
+
+  /**
+   * The State for this StateSet.
+   * @type {o3d.State}
+   */
+  this.state = opt_state || null;
+};
+o3d.inherit('StateSet', 'RenderNode');
+
+o3d.ParamObject.setUpO3DParam_(o3d.StateSet, 'state', 'ParamState');
+
+/**
+ * Sets the current state to the member state.
+ */
+o3d.StateSet.prototype.before = function() {
+  if (this.state) {
+    this.state.push_();
+  }
+};
+
+/**
+ * Sets the current state to the member state.
+ */
+o3d.StateSet.prototype.after = function() {
+  if (this.state) {
+    this.state.pop_();
+  }
+};
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A Viewport is a render node that sets the render viewport and depth range
+ * for its children.  It uses an array in the format [left, top, width, height]
+ * where left, top, width and height are in a 0.0 to 1.0 range that represent
+ * positions and dimensions relative to the size of the client's rendering
+ * area. The depth range is represented by an array in the format
+ * [min Z, max Z]. The depth range provides the mapping of the clip space
+ * coordinates into normalized z buffer coordinates.
+ *
+ * @param {o3d.math.Float4} viewport The viewport setting.
+ * @param {o3d.math.Float2} depthRange ParamFloat2 The depth range setting.
+ * @constructor
+ */
+o3d.Viewport = function(opt_viewport, opt_depthRange) {
+  o3d.RenderNode.call(this);
+
+  /**
+   * The position and size to set the viewport in
+   * [left, top, width, height] format.
+   *
+   * Note: These values must describe a rectangle that is 100% inside
+   * the client area. In other words, [0.5, 0.0, 1.0, 1.0] would
+   * describe an area that is 1/2 off right side of the screen. That
+   * is an invalid value and will be clipped to [0.5, 0.0, 0.5, 1.0].
+   *
+   * Default = [0.0, 0.0, 1.0, 1.0]. In other words, the full area.
+   *
+   * @type {!Array.<number>}
+   */
+  this.viewport = opt_viewport || [0.0, 0.0, 1.0, 1.0];
+
+  /**
+   * The min Z and max Z depth range in [min Z, max Z] format.
+   * Default = [0.0, 1.0].
+   *
+   * @type {!Array.<number>}
+   */
+  this.depthRange = opt_depthRange || [0.0, 1.0];
+};
+o3d.inherit('Viewport', 'RenderNode');
+
+o3d.ParamObject.setUpO3DParam_(o3d.Viewport, 'viewport', 'ParamFloat4');
+o3d.ParamObject.setUpO3DParam_(o3d.Viewport, 'depthRange', 'ParamFloat2');
+
+/**
+ * Called before the children are rendered.  Sets up a viewport and
+ * scissor region in gl.
+ */
+o3d.Viewport.prototype.before = function() {
+  var x = this.viewport[0] * this.gl.displayInfo.width;
+  var y = (1 - this.viewport[1] - this.viewport[3]) *
+      this.gl.displayInfo.height;
+  var width = this.viewport[2] * this.gl.displayInfo.width;
+  var height = this.viewport[3] * this.gl.displayInfo.height;
+
+  this.gl.viewport(x, y, width, height);
+  if (x != 0 || y != 0 || this.viewport[2] != 1 || this.viewport[3] != 1) {
+    this.gl.enable(this.gl.SCISSOR_TEST);
+    this.gl.scissor(x, y, width, height);
+  } else {
+     this.gl.disable(this.gl.SCISSOR_TEST);
+  }
+};
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A TreeTraversal has multiple DrawLists registered with it. Each DrawList has
+ * a DrawContext registered with it. At render time the TreeTraversal walks the
+ * transform graph from the transform it's pointing at and for each DrawElement
+ * it finds who's matertial matches one of its registered DrawLists it adds that
+ * DrawElement to that DrawList.
+ *
+ * @param {o3d.Transform} opt_transform The root transform to start traversing
+ *     by this TreeTraveral.
+ * @constructor
+ */
+o3d.TreeTraversal = function(opt_transform) {
+  o3d.RenderNode.call(this);
+
+  /**
+   * The root Transform this TreeTraversal will start traversing from.
+   */
+  this.transform = opt_transform || null;
+
+  /**
+   * Private list of registered drawlists.
+   * @private
+   */
+  this.drawLists_ = [];
+
+  /**
+   * Private list of drawlists to reset at render-time before traversal.
+   * @private
+   */
+  this.drawListsToReset_ = [];
+};
+o3d.inherit('TreeTraversal', 'RenderNode');
+
+o3d.ParamObject.setUpO3DParam_(o3d.TreeTraversal,
+                               'transform', 'ParamTransform');
+
+/**
+ * Registers a DrawList with this TreeTraversal so that when this
+ * TreeTraversal traverses its tree, DrawElements using materials that use
+ * this DrawList will be added though possibly culled by the view frustum of
+ * the DrawContext. Note: passing in the same DrawList more than once will
+ * override the previous settings for that DrawList.
+ * @param {o3d.DrawList} draw_list DrawList to register.
+ * @param {o3d.DrawContext} draw_context DrawContext to use with the DrawList.
+ * @param {boolean} reset true if you want the DrawList reset before
+ *     traversing.
+ */
+o3d.TreeTraversal.prototype.registerDrawList =
+    function(draw_list, draw_context, reset) {
+  if (reset == undefined || reset) {
+    this.drawListsToReset_.push(draw_list);
+  }
+  this.drawLists_.push({
+    list:draw_list,
+    context:draw_context});
+};
+
+
+/**
+ * Unregisters a DrawList with this TreeTraversal.
+ * @param {o3d.DrawList} draw_list DrawList to unregister.
+ * @return {boolean}  true if unregistered. false if this draw_list was
+ *     not registered.
+ */
+o3d.TreeTraversal.prototype.unregisterDrawList =
+    function(draw_list) {
+  o3d.notImplemented();
+};
+
+
+/**
+ * Called in the render graph traversal before the children are rendered.
+ */
+o3d.TreeTraversal.prototype.before =
+    function() {
+  for(var i = 0; i < this.drawListsToReset_.length; ++i) {
+    this.drawListsToReset_[i].list_ = [];
+  }
+  this.transform.traverse(this.drawLists_);
+};
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A DrawList gets used during rendering to collect DrawElements to
+ * render.  Each Material references a DrawList.  Depending on the material, as
+ * DrawElements get collected they will be put on different DrawLists.
+ * @constructor
+ */
+o3d.DrawList = function() {
+  o3d.NamedObject.call(this);
+  this.list_ = [];
+};
+o3d.inherit('DrawList', 'NamedObject');
+
+/**
+ * Private list to actually hold the DrawElements
+ * @type {!Array.<!Object>}
+ */
+this.list_ = [];
+
+
+/**
+ * @type {number}
+ */
+o3d.DrawList.SortMethod = goog.typedef;
+
+
+/**
+ *  SortMethod,
+ *    BY_PERFORMANCE
+ *    BY_Z_ORDER
+ *    BY_PRIORITY
+ *
+ * Method to sort DrawList by.
+ */
+o3d.DrawList.BY_PERFORMANCE = 0;
+o3d.DrawList.BY_Z_ORDER = 1;
+o3d.DrawList.BY_PRIORITY = 2;
+
+
+/**
+ * Compare function for by-priority sort.
+ */
+o3d.DrawList.comparePriority_ = function(drawElementInfoA, drawElementInfoB) {
+  return drawElementInfoA.drawElement.owner.priority -
+         drawElementInfoB.drawElement.owner.priority;
+};
+
+
+/**
+ * Compare function for by-z-coordinate sort.
+ * @param {!o3d.DrawElement} drawElementInfoA
+ * @param {!o3d.DrawElement} drawElementInfoB
+ */
+o3d.DrawList.compareZ_ = function(drawElementInfoA, drawElementInfoB) {
+  return o3d.Transform.transformPointZOnly(
+            drawElementInfoB.worldViewProjection,
+            drawElementInfoB.drawElement.owner.zSortPoint) -
+         o3d.Transform.transformPointZOnly(
+            drawElementInfoA.worldViewProjection,
+            drawElementInfoA.drawElement.owner.zSortPoint);
+};
+
+
+/**
+ * Sorts this list according to the given sort method.
+ * @param {o3d.DrawList.SortMethod} sort_method Which method to use.
+ * @private
+ */
+o3d.DrawList.prototype.sort_ = function(sort_method) {
+  switch (sort_method) {
+    case o3d.DrawList.BY_PRIORITY:
+      this.list_.sort(o3d.DrawList.comparePriority_);
+      break;
+
+    case o3d.DrawList.BY_Z_ORDER:
+      this.list_.sort(o3d.DrawList.compareZ_);
+      break;
+
+    case o3d.DrawList.BY_PERFORMANCE:
+    default:
+      break;
+  }
+};
+
+
+/**
+ * Renders the draw list.
+ */
+o3d.DrawList.prototype.render = function() {
+  for (var i = 0; i < this.list_.length; ++i) {
+    var drawElementInfo = this.list_[i];
+    var world = drawElementInfo.world;
+    var view = drawElementInfo.view;
+    var viewProjection = drawElementInfo.viewProjection;
+    var worldViewProjection = drawElementInfo.worldViewProjection;
+    var projection = drawElementInfo.projection;
+    var transform = drawElementInfo.transform;
+    var drawElement = drawElementInfo.drawElement;
+    var element = drawElement.owner;
+    var material = drawElement.material || element.material;
+    var effect = material.effect;
+
+    o3d.Param.SAS.setWorld(world);
+    o3d.Param.SAS.setView(view);
+    o3d.Param.SAS.setProjection(projection);
+    o3d.Param.SAS.setViewProjection(viewProjection);
+    o3d.Param.SAS.setWorldViewProjection(worldViewProjection);
+
+    var paramObjects = [
+      transform,
+      drawElement,
+      element
+    ];
+    if (element.streamBank) {
+      paramObjects.push(element.streamBank);
+    }
+    paramObjects.push(
+      material,
+      effect,
+      o3d.Param.SAS);
+
+    effect.searchForParams_(paramObjects);
+
+    var state_on = (material.state != undefined);
+    if (state_on) {
+      material.state.push_();
+    }
+    element.render();
+    if (state_on) {
+      material.state.pop_();
+    }
+  }
+};
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A DrawPass renders a DrawList.
+ *
+ * @param {o3d.DrawList} drawList The DrawList used by this DrawPass.
+ * @param {o3d.DrawPass.SortMethod} sortMethod ParamInteger The method
+ *     of sorting this DrawPass.
+ * @constructor
+ */
+o3d.DrawPass = function(opt_drawList, opt_sortMethod) {
+  o3d.RenderNode.call(this);
+
+  /**
+   * The DrawList for this DrawPass.
+   * @type {o3d.DrawList}
+   */
+  this.drawList = opt_drawList || null;
+
+  /**
+   * The sort method for this DrawPass to draw the DrawList by.
+   * Default = BY_PERFORMANCE.
+   * @type {o3d.DrawList.SortMethod}
+   */
+  this.sortMethod = opt_sortMethod || o3d.DrawList.BY_PERFORMANCE;
+};
+o3d.inherit('DrawPass', 'RenderNode');
+
+/**
+ * @type {number}
+ */
+o3d.DrawPass.SortMethod = goog.typedef;
+
+o3d.ParamObject.setUpO3DParam_(o3d.DrawPass, 'drawList', 'ParamDrawList');
+o3d.ParamObject.setUpO3DParam_(o3d.DrawPass, 'sortMethod', 'ParamInteger');
+
+/**
+ * Called in rendergraph traversal before children are rendered.
+ */
+o3d.DrawPass.prototype.before = function() {
+  if (this.drawList) {
+    this.drawList.sort_(this.sortMethod);
+    this.drawList.render();
+  }
+};
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A RenderSurfaceSet node will bind depth and color RenderSurface nodes
+ * to the current rendering context.  All RenderNodes descending
+ * from the given RenderSurfaceSet node will operate on the contents of
+ * the bound depth and color buffers.
+ * Note the following usage constraints of this node:
+ * 1)  If both a color and depth surface is bound, then they must be of
+ *     matching dimensions.
+ * 2)  At least one of render_surface and render_depth_surface must non-null.
+ *
+ * @param {o3d.RenderSurface} opt_renderSurface The render surface to set.
+ * @param {o3d.RenderDepthStencilSurface} opt_renderDepthStencilSurface The
+ *     depth stencil render surface to set.
+ * @constructor
+ */
+o3d.RenderSurfaceSet =
+    function(opt_renderSurface, opt_renderDepthStencilSurface) {
+  o3d.RenderNode.call(this);
+
+  /**
+   * The render surface to which the color contents of all RenderNode children
+   * should be drawn.
+   * @type {o3d.RenderSurface}
+   */
+  this.renderSurface = opt_renderSurface || null;
+
+
+  /**
+   * The render depth stencil surface to which the depth contents of all
+   * RenderNode children should be drawn.
+   * @type {o3d.RenderDepthStencilSurface}
+   */
+  this.renderDepthStencilSurface = opt_renderDepthStencilSurface || null;
+};
+o3d.inherit('RenderSurfaceSet', 'RenderNode');
+
+
+o3d.ParamObject.setUpO3DParam_(o3d.RenderSurfaceSet,
+                               'renderSurface', 'ParamRenderSurface');
+o3d.ParamObject.setUpO3DParam_(o3d.RenderSurfaceSet,
+                               'renderDepthStencilSurface',
+                               'ParamRenderDepthStencilSurface');
+
+/**
+ * Helper function to set the framebuffer back to the default one.
+ * @private
+ */
+o3d.RenderSurfaceSet.prototype.clearFramebufferObjects_ =
+    function() {
+  this.gl.bindFramebuffer(
+      this.gl.FRAMEBUFFER, this.renderSurface.framebuffer_);
+
+  this.gl.framebufferRenderbuffer(
+      this.gl.FRAMEBUFFER,
+      this.gl.COLOR_ATTACHMENT0,
+      this.gl.RENDERBUFFER,
+      null);
+
+  this.gl.framebufferRenderbuffer(
+      this.gl.FRAMEBUFFER,
+      this.gl.DEPTH_ATTACHMENT,
+      this.gl.RENDERBUFFER,
+      null);
+
+  this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+};
+
+
+/**
+ * Helper function to set up both the color and depth-stencil targets.
+ * @private
+ */
+o3d.RenderSurfaceSet.prototype.installFramebufferObjects_ =
+    function() {
+  // Reset the bound attachments to the current framebuffer object.
+  this.clearFramebufferObjects_();
+
+  this.gl.bindFramebuffer(
+      this.gl.FRAMEBUFFER, this.renderSurface.framebuffer_);
+
+  if (this.renderSurface) {
+    var texture = this.renderSurface.texture.texture_;
+    var level = this.renderSurface.level;
+
+    // TODO(petersont): If it's a cube, this call should be different.
+    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+    this.gl.framebufferTexture2D(
+        this.gl.FRAMEBUFFER,
+        this.gl.COLOR_ATTACHMENT0,
+        this.gl.TEXTURE_2D,
+        texture,
+        level);
+  }
+
+  if (this.renderDepthStencilSurface) {
+    var depth_stencil_buffer =
+        this.renderDepthStencilSurface.depth_stencil_buffer_;
+
+    // TODO(petersont): In the WebGL spec, there is a depth-stencil
+    // attachment, but it hasn't been implemented yet, once it is,
+    // this should use one of those.
+    this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, depth_stencil_buffer);
+    this.gl.framebufferRenderbuffer(
+        this.gl.FRAMEBUFFER,
+        this.gl.DEPTH_ATTACHMENT,
+        this.gl.RENDERBUFFER,
+        depth_stencil_buffer);
+  }
+};
+
+
+/**
+ * Called during the rendergraph traversal before the children are rendered.
+ * @private
+ */
+o3d.RenderSurfaceSet.prototype.before = function() {
+  this.installFramebufferObjects_();
+  this.previousHeight = this.gl.displayInfo.height;
+  this.previousWidth = this.gl.displayInfo.width;
+  this.previousRenderSurfaceSet = this.gl.currentRenderSurfaceSet;
+  this.gl.displayInfo.height = this.renderSurface.height;
+  this.gl.displayInfo.width = this.renderSurface.width;
+  this.gl.currentRenderSurfaceSet = this;
+};
+
+
+/**
+ * Called during the rendergraph traversal after the children are rendered.
+ * @private
+ */
+o3d.RenderSurfaceSet.prototype.after = function() {
+  this.clearFramebufferObjects_();
+  this.gl.displayInfo.height = this.previousHeight;
+  this.gl.displayInfo.width = this.previousWidth;
+  // This is consumed in effect.js.
+  this.gl.currentRenderSurfaceSet = this.previousRenderSurfaceSet;
+};
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A RenderSurfaceBase is the base for RenderSurface and
+ * RenderDepthStencilSurface.
+ *
+ * @param {number} width The width of this RenderSurface.
+ * @param {number} height The height of this RenderSurface.
+ * @param {o3d.Texture} texture The texture of this RenderSurface.
+ * @constructor
+ */
+o3d.RenderSurfaceBase = function(width, height, texture) {
+  o3d.ParamObject.call(this);
+
+  /**
+   * The width of the surface, in pixels.
+   * @type {number}
+   */
+  this.width = width || 0;
+
+  /**
+   * The height of the surface, in pixels.
+   * @type {number}
+   */
+  this.height = height || 0;
+
+  /**
+   * The texture in which this surface is contained.
+   */
+  this.texture = texture || null;
+
+  /**
+   * The mip level targeted by this render surface.
+   * @type {number}
+   */
+  this.level = 0;
+
+  /**
+   * The underlying GL framebuffer object.
+   * @type {WebGLFramebuffer}
+   * @private
+   */
+  this.framebuffer_ = null;
+
+};
+o3d.inherit('RenderSurfaceBase', 'ParamObject');
+
+o3d.ParamObject.setUpO3DParam_(o3d.RenderSurfaceBase, 'width', 'ParamInteger');
+o3d.ParamObject.setUpO3DParam_(o3d.RenderSurfaceBase, 'height', 'ParamInteger');
+
+/**
+ * A RenderSurface encapsulates the notion of a renderable surface.
+ * When used in conjunction with a RenderSurfaceSet node in the render graph,
+ * the API allows for rendering of primitives to the given surface.
+ * RenderSurface objects are not constructable through the Pack API, they may
+ * only be accessed through the texture getRenderSurface(...) interfaces.
+ * @constructor
+ */
+o3d.RenderSurface = function() {
+  o3d.RenderSurfaceBase.call(this);
+};
+o3d.inherit('RenderSurface', 'RenderSurfaceBase');
+
+
+/**
+ * Initializes a render surface to render to the given texture.
+ * @param {o3d.Texture2D} texture The texture.
+ */
+o3d.RenderSurface.prototype.initWithTexture = function(texture, level) {
+  this.framebuffer_ = this.gl.createFramebuffer();
+  this.texture = texture;
+  this.level = level;
+  this.width = texture.width;
+  this.height = texture.height;
+};
+
+/**
+ * A RenderDepthStencilSurface represents a depth stencil render surface.
+ * @constructor
+ */
+o3d.RenderDepthStencilSurface = function() {
+  o3d.RenderSurfaceBase.call(this);
+
+  /**
+   * The GL renderbuffer object for the depth / stencil buffer.
+   * @type {WebGLRenderbuffer}
+   * @private
+   */
+  this.depth_stencil_buffer_ = null;
+};
+o3d.inherit('RenderDepthStencilSurface', 'RenderSurfaceBase');
+
+
+/**
+ * Allocates depth and stnecil buffers of the given size.
+ * @param {number} width
+ * @param {number} height
+ * @private
+ */
+o3d.RenderDepthStencilSurface.prototype.initWithSize_ =
+    function(width, height) {
+  this.depth_stencil_buffer_ = this.gl.createRenderbuffer();
+  this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depth_stencil_buffer_);
+  this.gl.renderbufferStorage(
+     this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, width, height);
+  this.width = width;
+  this.height = height;
+};
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A State object sets the RenderStates for a particular material or StateSet.
+ * @constructor
+ */
+o3d.State = function() {
+  o3d.ParamObject.call(this);
+
+  this.state_params_ = {};
+
+ /**
+ * The names types and default values of all the state variables.
+ * @type {Object}
+ * @private
+ */
+ o3d.State.stateVariableInfos_ = o3d.State.stateVariableInfos_ || {
+    'AlphaBlendEnable':
+        {paramType: 'ParamBoolean', defaultValue: false},
+    'AlphaComparisonFunction':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.CMP_ALWAYS},
+    'AlphaReference':
+        {paramType: 'ParamFloat', defaultValue: 0},
+    'AlphaTestEnable':
+        {paramType: 'ParamBoolean', defaultValue: false},
+    'BlendAlphaEquation':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.BLEND_ADD},
+    'BlendEquation':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.BLEND_ADD},
+    'CCWStencilComparisonFunction':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.CMP_ALWAYS},
+    'CCWStencilFailOperation':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.STENCIL_KEEP},
+    'CCWStencilPassOperation':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.STENCIL_KEEP},
+    'CCWStencilZFailOperation':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.STENCIL_KEEP},
+    'ColorWriteEnable':
+        {paramType: 'ParamInteger', defaultValue: 15},
+    'CullMode':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.CULL_CW},
+    'DestinationBlendAlphaFunction':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.BLENDFUNC_ZERO},
+    'DestinationBlendFunction':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.BLENDFUNC_ZERO},
+    'DitherEnable':
+        {paramType: 'ParamBoolean', defaultValue: false},
+    'FillMode':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.SOLID},
+    'LineSmoothEnable':
+        {paramType: 'ParamBoolean', defaultValue: false},
+    'PointSize':
+        {paramType: 'ParamFloat', defaultValue: 0},
+    'PointSpriteEnable':
+        {paramType: 'ParamBoolean', defaultValue: false},
+    'PolygonOffset1':
+        {paramType: 'ParamFloat', defaultValue: 0},
+    'PolygonOffset2':
+        {paramType: 'ParamFloat', defaultValue: 0},
+    'SeparateAlphaBlendEnable':
+        {paramType: 'ParamBoolean', defaultValue: false},
+    'SourceBlendAlphaFunction':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.BLENDFUNC_ONE},
+    'SourceBlendFunction':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.BLENDFUNC_ONE},
+    'StencilComparisonFunction':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.CMP_ALWAYS},
+    'StencilEnable':
+        {paramType: 'ParamBoolean', defaultValue: false},
+    'StencilFailOperation':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.STENCIL_KEEP},
+    'StencilMask':
+        {paramType: 'ParamInteger', defaultValue: 255},
+    'StencilPassOperation':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.STENCIL_KEEP},
+    'StencilReference':
+        {paramType: 'ParamInteger', defaultValue: 0},
+    'StencilWriteMask':
+        {paramType: 'ParamInteger', defaultValue: 255},
+    'StencilZFailOperation':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.STENCIL_KEEP},
+    'TwoSidedStencilEnable':
+        {paramType: 'ParamBoolean', defaultValue: false},
+    'ZComparisonFunction':
+        {paramType: 'ParamInteger', defaultValue: o3d.State.CMP_LESS},
+    'ZEnable':
+        {paramType: 'ParamBoolean', defaultValue: true},
+    'ZWriteEnable':
+        {paramType: 'ParamBoolean', defaultValue: true}
+  };
+};
+o3d.inherit('State', 'ParamObject');
+
+
+/**
+ * A private object containing the the state params by name.
+ */
+o3d.State.prototype.state_params_ = { };
+
+
+/**
+ *  Comparison
+ *  CMP_NEVER  (Never)
+ *  CMP_LESS  (Less Than)
+ *  CMP_EQUAL  (Equal To)
+ *  CMP_LEQUAL  (Less Than or Equal To)
+ *  CMP_GREATER  (Greater Than)
+ *  CMP_NOTEQUAL  (Not Equal To)
+ *  CMP_GEQUAL  (Greater Than or Equal To)
+ *  CMP_ALWAYS  (Always)
+ */
+o3d.State.CMP_NEVER = 0;
+o3d.State.CMP_LESS = 1;
+o3d.State.CMP_EQUAL = 2;
+o3d.State.CMP_LEQUAL = 3;
+o3d.State.CMP_GREATER = 4;
+o3d.State.CMP_NOTEQUAL = 5;
+o3d.State.CMP_GEQUAL = 6;
+o3d.State.CMP_ALWAYS = 7;
+
+
+
+/**
+ * type {number}
+ */
+o3d.Cull = goog.typedef;
+
+/**
+ *  Cull
+ *  CULL_NONE  Don't Cull by face
+ *  CULL_CW  Cull clock-wise faces
+ *  CULL_CCW  Cull counter clock-wise faces
+ */
+o3d.State.CULL_NONE = 0;
+o3d.State.CULL_CW = 1;
+o3d.State.CULL_CCW = 2;
+
+
+
+
+/**
+ *  Fill
+ *  POINT
+ *  WIREFRAME
+ *  SOLID
+ */
+o3d.State.POINT = 0;
+o3d.State.WIREFRAME = 1;
+o3d.State.SOLID = 2;
+
+
+
+/**
+ *  BlendingFunction
+ *  BLENDFUNC_ZERO
+ *  BLENDFUNC_ONE
+ *  BLENDFUNC_SOURCE_COLOR
+ *  BLENDFUNC_INVERSE_SOURCE_COLOR
+ *  BLENDFUNC_SOURCE_ALPHA
+ *  BLENDFUNC_INVERSE_SOURCE_ALPHA
+ *  BLENDFUNC_DESTINATION_ALPHA
+ *  BLENDFUNC_INVERSE_DESTINATION_ALPHA
+ *  BLENDFUNC_DESTINATION_COLOR
+ *  BLENDFUNC_INVERSE_DESTINATION_COLOR
+ *  BLENDFUNC_SOURCE_ALPHA_SATUTRATE
+ */
+o3d.State.BLENDFUNC_ZERO = 0;
+o3d.State.BLENDFUNC_ONE = 1;
+o3d.State.BLENDFUNC_SOURCE_COLOR = 2;
+o3d.State.BLENDFUNC_INVERSE_SOURCE_COLOR = 3;
+o3d.State.BLENDFUNC_SOURCE_ALPHA = 4;
+o3d.State.BLENDFUNC_INVERSE_SOURCE_ALPHA = 5;
+o3d.State.BLENDFUNC_DESTINATION_ALPHA = 6;
+o3d.State.BLENDFUNC_INVERSE_DESTINATION_ALPHA = 7;
+o3d.State.BLENDFUNC_DESTINATION_COLOR = 8;
+o3d.State.BLENDFUNC_INVERSE_DESTINATION_COLOR = 9;
+o3d.State.BLENDFUNC_SOURCE_ALPHA_SATUTRATE = 10;
+
+
+
+/**
+ *  BlendingEquation
+ *  BLEND_ADD
+ *  BLEND_SUBTRACT
+ *  BLEND_REVERSE_SUBTRACT
+ *  BLEND_MIN
+ *  BLEND_MAX
+ */
+o3d.State.BLEND_ADD = 0;
+o3d.State.BLEND_SUBTRACT = 1;
+o3d.State.BLEND_REVERSE_SUBTRACT = 2;
+o3d.State.BLEND_MIN = 3;
+o3d.State.BLEND_MAX = 4;
+
+
+
+/**
+ *  StencilOperation
+ *  STENCIL_KEEP
+ *  STENCIL_ZERO
+ *  STENCIL_REPLACE
+ *  STENCIL_INCREMENT_SATURATE
+ *  STENCIL_DECREMENT_SATURATE
+ *  STENCIL_INVERT
+ *  STENCIL_INCREMENT
+ *  STENCIL_DECREMENT
+ */
+o3d.State.STENCIL_KEEP = 0;
+o3d.State.STENCIL_ZERO = 1;
+o3d.State.STENCIL_REPLACE = 2;
+o3d.State.STENCIL_INCREMENT_SATURATE = 3;
+o3d.State.STENCIL_DECREMENT_SATURATE = 4;
+o3d.State.STENCIL_INVERT = 5;
+o3d.State.STENCIL_INCREMENT = 6;
+o3d.State.STENCIL_DECREMENT = 7;
+
+
+
+/**
+ * Returns a Param for a given state. If the param does not already exist it
+ * will be created. If the state_name is invalid it will return null.
+ * @param {string} state_name name of the state
+ * @return {o3d.Param}  param or null if no matching state.
+ *
+ * Example:
+ *
+ *
+ * g_o3d = document.o3d.o3d;
+ * ...
+ *
+ * var state = my_pack.createState("my_state");
+ *
+ *
+ * state.getStateParam('StencilEnable').value = true;
+ * state.getStateParam('StencilReference').value = 25;
+ * state.getStateParam('StencilPassOperation').value =
+ *     g_o3d.State.STENCIL_REPLACE;
+ * state.getStateParam('StencilComparisonFunction').value =
+ *     g_o3d.State.CMP_ALWAYS;
+ * state.getStateParam('ZEnable').value = false;
+ * state.getStateParam('ZWriteEnable').value = false;
+ * state.getStateParam('ColorWriteEnable').value = 0;
+ *
+ * Valid states:
+ *
+ * State NameTypeDefault Value
+ * o3d.AlphaBlendEnableParamBoolean
+ *     default = false
+ * o3d.AlphaComparisonFunctionParamInteger,
+ *     State.Comparisondefault = State.CMP_ALWAYS
+ * o3d.AlphaReferenceParamFloat 0-1
+ *     default = 0
+ * o3d.AlphaTestEnableParamBoolean
+ *     default = false
+ * o3d.BlendAlphaEquation
+ *     ParamInteger, State.BlendingEquation
+ *     default = State.BLEND_ADD
+ * o3d.BlendEquation
+ *     ParamInteger, State.BlendingEquation
+ *     default = State.BLEND_ADD
+ * o3d.CCWStencilComparisonFunction
+ *     ParamInteger, State.Comparison
+ *     default = State.CMP_ALWAYS
+ * o3d.CCWStencilFailOperation
+ *     ParamInteger, State.StencilOperation
+ *     default = State.STENCIL_KEEP
+ * o3d.CCWStencilPassOperation
+ *     ParamInteger, State.StencilOperation
+ *     default = State.STENCIL_KEEP
+ * o3d.CCWStencilZFailOperation
+ *     ParamInteger, State.StencilOperation
+ *     default = State.STENCIL_KEEP
+ * o3d.ColorWriteEnable
+ *     ParamInteger 0-15 bit 0 = red, bit 1 = green,
+ *     bit 2 = blue, bit 3 = alphadefault = 15
+ * o3d.CullModeParamInteger, State.Cull
+ *     default = State.CULL_CW
+ * o3d.DestinationBlendAlphaFunction
+ *     ParamInteger, State.BlendingFunction
+ *     default = State.BLENDFUNC_ZERO
+ * o3d.DestinationBlendFunction
+ *     ParamInteger, State.BlendingFunction
+ *     default = State.BLENDFUNC_ZERO
+ * o3d.DitherEnableParamBoolean
+ *     default = false
+ * o3d.FillModeParamInteger, State.Fill
+ *     default = State.SOLID
+ * o3d.LineSmoothEnableParamBoolean
+ *     default = false
+ * o3d.PointSizeParamFloatTBD
+ * o3d.PointSpriteEnableParamBoolean
+ *     default = false
+ * o3d.PolygonOffset1
+ *     ParamFloat, polygon offset slope factor0
+ * o3d.PolygonOffset2ParamFloat, polygon offset bias (in
+ *     resolvable units)0
+ * o3d.SeparateAlphaBlendEnableParamBoolean
+ *     default = false
+ * o3d.SourceBlendAlphaFunction
+ *     ParamInteger, State.BlendingFunction
+ *     default = State.BLENDFUNC_ONE
+ * o3d.SourceBlendFunction
+ *     ParamInteger, State.BlendingFunction
+ *     default = State.BLENDFUNC_ONE
+ * o3d.StencilComparisonFunction
+ *     ParamInteger, State.Comparison
+ *     default = State.CMP_ALWAYS
+ * o3d.StencilEnableParamBoolean
+ *     default = false
+ * o3d.StencilFailOperation
+ *     ParamInteger, State.StencilOperation
+ *     default = State.STENCIL_KEEP
+ * o3d.StencilMaskParamInteger 0-255
+ *     default = 255
+ * o3d.StencilPassOperation
+ *     ParamInteger, State.StencilOperation
+ *     default = State.STENCIL_KEEP
+ * o3d.StencilReferenceParamInteger 0-255
+ *     default = 0
+ * o3d.StencilWriteMaskParamInteger 0-255
+ *     default = 255
+ * o3d.StencilZFailOperation
+ *     ParamInteger, State.StencilOperation
+ *     default = State.STENCIL_KEEP
+ * o3d.TwoSidedStencilEnableParamBoolean
+ *     default = false
+ * o3d.ZComparisonFunction
+ *     ParamInteger, State.Comparison
+ *     default = State.CMP_LESS
+ * o3d.ZEnableParamBoolean
+ *     default = true
+ * o3d.ZWriteEnableParamBoolean
+ *     default = true
+ *
+ *
+ * Note: Polygon offset is computed with the following formula:
+ *
+ * totalOffset = PolygonOffset1 * slope + PolygonOffset2 * r
+ *
+ * Slope is the maximum difference in depth between 2 adjacent pixels of the
+ * polygon. r is the smallest value that would fail the NOTEQUAL test against
+ * 0.
+ * Typical useful values to layer a polygon on top of another one are -1.0 for
+ * each of PolygonOffset1 and PolygonOffset2.
+ */
+o3d.State.prototype.getStateParam =
+    function(state_name) {
+  if (!this.state_params_[state_name]) {
+    var info = o3d.State.stateVariableInfos_[state_name];
+    var param = new o3d.global.o3d[info.paramType];
+    param.value = info.defaultValue;
+    this.state_params_[state_name] = param;
+  }
+  return this.state_params_[state_name];
+};
+
+
+/**
+ * Constructs a state to set all state variables to their default value.
+ * This is meant to be called once at client initialization.
+ * @param {WebGLContext} gl The context associated with the calling client.
+ * @return {o3d.State} A new state object.
+ * @private
+ */
+o3d.State.createDefaultState_ = function(gl) {
+  var state = new o3d.State;
+  state.gl = gl;
+  var infos = o3d.State.stateVariableInfos_;
+  for (name in infos) {
+    var info = infos[name];
+    state.getStateParam(name).value = info.defaultValue;
+  }
+  return state;
+};
+
+
+/**
+ * Converts a comparison function type constant from o3d to WebGL.
+ * @param {!WebGLContext} gl The current context.
+ * @param {number} blend_func The o3d constant.
+ * @return {number} The WebGL version of the constant.
+ * @private
+ */
+o3d.State.convertCmpFunc_ = function(gl, cmp) {
+  switch(cmp) {
+    case o3d.State.CMP_ALWAYS:
+      return gl.ALWAYS;
+    case o3d.State.CMP_NEVER:
+      return gl.NEVER;
+    case o3d.State.CMP_LESS:
+      return gl.LESS;
+    case o3d.State.CMP_GREATER:
+      return gl.GREATER;
+    case o3d.State.CMP_LEQUAL:
+      return gl.LEQUAL;
+    case o3d.State.CMP_GEQUAL:
+      return gl.GEQUAL;
+    case o3d.State.CMP_EQUAL:
+      return gl.EQUAL;
+    case o3d.State.CMP_NOTEQUAL:
+      return gl.NOTEQUAL;
+    default:
+      break;
+  }
+  return gl.ALWAYS;
+};
+
+
+/**
+ * Converts a blend function type constant from o3d to WebGL.
+ * @param {!WebGLContext} gl The current context.
+ * @param {number} blend_func The o3d constant.
+ * @return {number} The WebGL version of the constant.
+ * @private
+ */
+o3d.State.convertBlendFunc_ = function(gl, blend_func) {
+  switch (blend_func) {
+    case o3d.State.BLENDFUNC_ZERO:
+      return gl.ZERO;
+    case o3d.State.BLENDFUNC_ONE:
+      return gl.ONE;
+    case o3d.State.BLENDFUNC_SOURCE_COLOR:
+      return gl.SRC_COLOR;
+    case o3d.State.BLENDFUNC_INVERSE_SOURCE_COLOR:
+      return gl.ONE_MINUS_SRC_COLOR;
+    case o3d.State.BLENDFUNC_SOURCE_ALPHA:
+      return gl.SRC_ALPHA;
+    case o3d.State.BLENDFUNC_INVERSE_SOURCE_ALPHA:
+      return gl.ONE_MINUS_SRC_ALPHA;
+    case o3d.State.BLENDFUNC_DESTINATION_ALPHA:
+      return gl.DST_ALPHA;
+    case o3d.State.BLENDFUNC_INVERSE_DESTINATION_ALPHA:
+      return gl.ONE_MINUS_DST_ALPHA;
+    case o3d.State.BLENDFUNC_DESTINATION_COLOR:
+      return gl.DST_COLOR;
+    case o3d.State.BLENDFUNC_INVERSE_DESTINATION_COLOR:
+      return gl.ONE_MINUS_DST_COLOR;
+    case o3d.State.BLENDFUNC_SOURCE_ALPHA_SATUTRATE:
+      return gl.SRC_ALPHA_SATURATE;
+    default:
+      break;
+  }
+  return gl.ONE;
+};
+
+
+/**
+ * Converts a stencil type constant from o3d to WebGL.
+ * @param {!WebGLContext} gl The current context.
+ * @param {number} stencil_func The o3d constant.
+ * @return {number} The WebGL version of the constant.
+ * @private
+ */
+o3d.State.convertBlendEquation_ = function(gl, blend_equation) {
+  switch (blend_equation) {
+    case o3d.State.BLEND_ADD:
+      return gl.FUNC_ADD;
+    case o3d.State.BLEND_SUBTRACT:
+      return gl.FUNC_SUBTRACT;
+    case o3d.State.BLEND_REVERSE_SUBTRACT:
+      return gl.FUNC_REVERSE_SUBTRACT;
+    case o3d.State.BLEND_MIN:
+      return gl.MIN;
+    case o3d.State.BLEND_MAX:
+      return gl.MAX;
+    default:
+      break;
+  }
+  return gl.FUNC_ADD;
+};
+
+
+/**
+ * Sets the internal state to the this state.
+ * @private
+ */
+o3d.State.prototype.push_ = function() {
+  this.gl.client.pushState_(this.getVariableMap_());
+};
+
+
+/**
+ * Recovers the internal state prior to this state gettings set.
+ * @private
+ */
+o3d.State.prototype.pop_ = function() {
+  this.gl.client.popState_();
+};
+
+
+/**
+ * Returns a new javascript object of name value pairs indicating
+ * what values to set each of the (changing) state variables.
+ * @return {!Object} The variable map.
+ * @private
+ */
+o3d.State.prototype.getVariableMap_ = function() {
+  var m = {};
+  var stateParams = this.state_params_;
+  for (var name in stateParams) {
+    m[name] = stateParams[name].value;
+  }
+  return m;
+};
+
+
+
+/**
+ * Helper function for setVariables_, looks for each of the given state
+ * variables' names in the given variable map.  If any one of them is a key
+ * in the map, it fills in the rest in the target_map with the value either
+ * from the variable map or from the state if it isn't on the variable map.
+ * @param {Array.<!string>} names The names of the variables in question.
+ * @param {!Object} variable_map An object connecting names to values.
+ * @param {!Object} target_map An object to fill out with the variables from
+ *    the given array of names.
+ * @return {boolean} True if any of the variable names in the given array were
+ *    found in the variable_map
+ * @private
+ */
+o3d.State.relevantValues_ =
+    function(gl, names, variable_map, target_map) {
+  var found = false;
+  for (var i = 0; i < names.length; ++i) {
+    var name = names[i];
+    if (variable_map[name] !== undefined) {
+      found = true;
+      break;
+    }
+  }
+
+  if (found) {
+    for (var i = 0; i < names.length; ++i) {
+      var name = names[i];
+      var value = variable_map[name];
+      if (value === undefined) {
+        value = gl.client.getState_(name);
+      }
+      target_map[name] = value;
+    }
+  }
+  return found;
+};
+
+
+/**
+ * Sets the internal state according to the name value pairs in the given
+ * object.
+ * @param {WebGLContext} gl The gl context to use.
+ * @param {Object} variable_map A map linking state variable names to values.
+ * @private
+ */
+o3d.State.setVariables_ = function(gl, variable_map) {
+  // TODO(petersont): Only some of the state variables have been implemented.
+  // Others are unavailable in webgl.
+
+  // Remember, any state variable might be missing from variable_map.  When the
+  // key is not present, the state should be left alone.
+
+  // Temporary map to hold name value pairs.
+  var v = {};
+
+  if (this.relevantValues_(gl, ['AlphaBlendEnable'], variable_map, v)) {
+    if (v['AlphaBlendEnable']) {
+      gl.enable(gl.BLEND);
+    } else {
+      gl.disable(gl.BLEND);
+    }
+  }
+
+  if (this.relevantValues_(gl, ['SeparateAlphaBlendEnable',
+                                'SourceBlendFunction',
+                                'SourceBlendAlphaFunction',
+                                'DestinationBlendAlphaFunction',
+                                'BlendEquation',
+                                'BlendAlphaEquation'], variable_map, v)) {
+    if (v['SeparateAlphaBlendEnable']) {
+      gl.blendFuncSeparate(
+          o3d.State.convertBlendFunc_(gl, v['SourceBlendFunction']),
+          o3d.State.convertBlendFunc_(gl, v['DestinationBlendFunction']),
+          o3d.State.convertBlendFunc_(gl, v['SourceBlendAlphaFunction']),
+          o3d.State.convertBlendFunc_(gl, v['DestinationBlendAlphaFunction']));
+      gl.blendEquationSeparate(
+        o3d.State.convertBlendEquation_(gl, v['BlendEquation']),
+        o3d.State.convertBlendEquation_(gl, v['BlendAlphaEquation']));
+    }
+  }
+
+  if (this.relevantValues_(gl, ['SourceBlendFunction',
+                                'DestinationBlendFunction'], variable_map, v)) {
+    gl.blendFunc(
+        o3d.State.convertBlendFunc_(gl, v['SourceBlendFunction']),
+        o3d.State.convertBlendFunc_(gl, v['DestinationBlendFunction']));
+  }
+
+  if (this.relevantValues_(gl, ['BlendEquation'], variable_map, v)) {
+    gl.blendEquation(o3d.State.convertBlendEquation_(gl, v['BlendEquation']));
+  }
+
+  if (this.relevantValues_(gl, ['CullMode'], variable_map, v)) {
+    switch (v['CullMode']) {
+      case o3d.State.CULL_CW:
+        gl.enable(gl.CULL_FACE);
+        gl.cullFace(gl.BACK);
+        break;
+      case o3d.State.CULL_CCW:
+        gl.enable(gl.CULL_FACE);
+        gl.cullFace(gl.FRONT);
+        break;
+      default:
+        gl.disable(gl.CULL_FACE);
+        break;
+    }
+  }
+
+  if (this.relevantValues_(gl, ['DitherEnable'], variable_map, v)) {
+    if (v['DitherEnable']) {
+      gl.enable(gl.DITHER);
+    } else {
+      gl.disable(gl.DITHER);
+    }
+  }
+
+  if (this.relevantValues_(gl, ['ZEnable', 'ZComparisonFunction'],
+      variable_map, v)) {
+    if (v['ZEnable']) {
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(
+          this.convertCmpFunc_(gl, v['ZComparisonFunction']));
+    } else {
+      gl.disable(gl.DEPTH_TEST);
+    }
+  }
+
+  if (this.relevantValues_(gl, ['ZWriteEnable'], variable_map, v)) {
+    gl.depthMask(v['ZWriteEnable']);
+  }
+
+  if (this.relevantValues_(gl, ['StencilEnable', 'StencilComparisonFunction'],
+      variable_map, v)) {
+    if (v['StencilEnable']) {
+      gl.enable(gl.STENCIL_TEST);
+      gl.stencilFunc(
+          this.convertCmpFunc_(gl, v['StencilComparisonFunction']));
+    } else {
+      gl.disable(gl.STENCIL_TEST);
+    }
+  }
+
+  if (this.relevantValues_(gl, ['PolygonOffset1',
+                                'PolygonOffset2'], variable_map, v)) {
+    var polygon_offset_factor = v['PolygonOffset1'] || 0;
+    var polygon_offset_bias = v['PolygonOffset2'] || 0;
+
+    if (polygon_offset_factor || polygon_offset_bias) {
+      gl.enable(gl.POLYGON_OFFSET_FILL);
+      gl.polygonOffset(polygon_offset_factor, polygon_offset_bias);
+    } else {
+      gl.disable(gl.POLYGON_OFFSET_FILL);
+    }
+  }
+
+  if (this.relevantValues_(gl, ['FillMode'], variable_map, v)) {
+    // We emulate the behavior of the fill mode state in the primitive class.
+    gl.fillMode_ = v['FillMode'];
+  }
+};
+
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * The DrawContext defines the parameters used for a particular drawing pass.
+ * It contains two 4-by-4 matrix params, view and
+ * projection. These correspond to the viewing and projection transformation
+ * matrices.
+ *
+ * @param {!o3d.Matrix4} opt_view The view matrix for this DrawContext.
+ * @param {!o3d.Matrix4} opt_projection The projection matrix
+ *     for this DrawContext.
+ * @constructor
+ */
+o3d.DrawContext = function(opt_view, opt_projection) {
+  o3d.ParamObject.call(this);
+
+  /**
+   * The view matrix represents the viewing transformation, used to
+   * take vertices from world space to view space.
+   * @type {o3d.Matrix4}
+   */
+  this.view = opt_view ||
+      [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+
+  /**
+   * The projection matrix represents the projection transformation,
+   * used to take vertices from view space to screen space.  This
+   * matrix is usually an orthographic or perspective transformation.
+   * @type {o3d.Matrix4}
+   */
+  this.projection = opt_projection ||
+      [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+};
+o3d.inherit('DrawContext', 'ParamObject');
+
+o3d.ParamObject.setUpO3DParam_(o3d.DrawContext, 'view', 'ParamMatrix4');
+o3d.ParamObject.setUpO3DParam_(o3d.DrawContext, 'projection', 'ParamMatrix4');
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A RayIntersectionInfo is used to return the results of ray intersection
+ * tests.
+ * @constructor
+ */
+o3d.RayIntersectionInfo = function() {
+  o3d.NamedObject.call(this);
+  o3d.RayIntersectionInfo.prototype.position = [0, 0, 0];
+};
+o3d.inherit('RayIntersectionInfo', 'NamedObject');
+
+
+/**
+ * True if this ray intersection info is valid. For example if you call
+ * element.intersectRay on an element that has no vertex buffers the result
+ * will be invalid.
+ * @type {boolean}
+ */
+o3d.RayIntersectionInfo.prototype.valid = false;
+
+
+/**
+ * True if the origin of the ray is found to be inside the box.
+ * @type {boolean}
+ */
+o3d.RayIntersectionInfo.prototype.inside = false;
+
+
+/**
+ * True if this ray intersection intersected something.
+ * @type {boolean}
+ */
+o3d.RayIntersectionInfo.prototype.intersected = false;
+
+
+
+/**
+ * The position the ray intersected something.
+ * type {!o3d.Point3}
+ */
+o3d.RayIntersectionInfo.prototype.position = [0, 0, 0];
+
+
+
+/**
+ * The index of the primitive that was intersected.
+ * @type {number}
+ */
+o3d.RayIntersectionInfo.prototype.primitiveIndex = -1;
+
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * Sampler is the base of all texture samplers.  Texture samplers encapsulate
+ * a texture reference with a set of states that define how the texture
+ * gets applied to a surface.  Sampler states are set either via Params defined
+ * on the Sampler object or directly via one the convenience methods defined
+ * on the Sampler.  The following states are supported (default values are in
+ * parenthesis):
+ *  \li 'addressModeU' (WRAP)
+ *  \li 'addressModeV' (WRAP)
+ *  \li 'addressModeW' (WRAP)
+ *  \li 'magFilter' (LINEAR)
+ *  \li 'minFilter' (LINEAR)
+ *  \li 'mipFilter' (POINT)
+ *  \li 'borderColor' ([0,0,0,0])
+ *  \li 'maxAnisotropy' (1)
+ */
+o3d.Sampler = function() {
+  o3d.ParamObject.call(this);
+
+  /**
+   * The texture address mode for the u coordinate.
+   * @type {!o3d.Sampler.AddressMode}
+   */
+  this.addressModeU = o3d.Sampler.WRAP;
+
+  /**
+   * The texture address mode for the v coordinate.
+   * @type {!o3d.Sampler.AddressMode}
+   */
+  this.addressModeV = o3d.Sampler.WRAP;
+
+  /**
+   * The texture address mode for the w coordinate.
+   * @type {!o3d.Sampler.AddressMode}
+   */
+  this.addressModeW = o3d.Sampler.WRAP;
+
+  /**
+   * The magnification filter.  Valid values for the mag filter are:
+   * POINT and LINEAR. Default = LINEAR.
+   * @type {!o3d.Sampler.FilterType}
+   */
+  this.magFilter = o3d.Sampler.LINEAR;
+
+  /**
+   * The minification filter. Valid values for the min filter are:
+   * POINT, LINEAR and ANISOTROPIC. Default = LINEAR.
+   * @type {!o3d.Sampler.FilterType}
+   */
+  this.minFilter = o3d.Sampler.LINEAR;
+
+  /**
+   * The mipmap filter used during minification.  Valid values for the
+   * mip filter are: NONE, POINT and LINEAR. Default = LINEAR.
+   * @type {!o3d.Sampler.FilterType}
+   */
+  this.mipFilter = o3d.Sampler.LINEAR;
+
+  /**
+   * Color returned for texture coordinates outside the [0,1] range when the
+   * address mode is set to BORDER.
+   * @type {!Array.<number>}
+   */
+  this.borderColor = [0, 0, 0, 0];
+
+  /**
+   * Degree of anisotropy used when the ANISOTROPIC filter type is used.
+   * @type {number}
+   */
+  this.maxAnisotropy = 1;
+
+  /**
+   * The Texture object used by this Sampler.
+   * @type {o3d.Texture}
+   */
+  this.texture = null;
+};
+o3d.inherit('Sampler', 'ParamObject');
+
+
+
+/**
+ * @type {number}
+ */
+o3d.Sampler.AddressMode = goog.typedef;
+
+
+/**
+ *  AddressMode,
+ *   Controls what happens with texture coordinates outside the [0..1] range.
+ *  WRAP
+ *  MIRROR
+ *  CLAMP
+ *  BORDER
+ */
+o3d.Sampler.WRAP = 0;
+o3d.Sampler.MIRROR = 1;
+o3d.Sampler.CLAMP = 2;
+o3d.Sampler.BORDER = 3;
+
+
+/**
+ * @type {number}
+ */
+o3d.Sampler.FilterType = goog.typedef;
+
+/**
+ *  FilterType,
+ *   Texture filtering types.
+ *  NONE
+ *  POINT
+ *  LINEAR
+ *  ANISOTROPIC
+ */
+o3d.Sampler.NONE = 0;
+o3d.Sampler.POINT = 1;
+o3d.Sampler.LINEAR = 2;
+o3d.Sampler.ANISOTROPIC = 3;
+
+
+o3d.ParamObject.setUpO3DParam_(o3d.Sampler, 'addressModeU', 'ParamInteger');
+o3d.ParamObject.setUpO3DParam_(o3d.Sampler, 'addressModeV', 'ParamInteger');
+o3d.ParamObject.setUpO3DParam_(o3d.Sampler, 'addressModeW', 'ParamInteger');
+o3d.ParamObject.setUpO3DParam_(o3d.Sampler, 'magFilter', 'ParamInteger');
+o3d.ParamObject.setUpO3DParam_(o3d.Sampler, 'minFilter', 'ParamInteger');
+o3d.ParamObject.setUpO3DParam_(o3d.Sampler, 'mipFilter', 'ParamInteger');
+o3d.ParamObject.setUpO3DParam_(o3d.Sampler, 'borderColor', 'ParamFloat4');
+o3d.ParamObject.setUpO3DParam_(o3d.Sampler, 'maxAnisotropy', 'ParamInteger');
+o3d.ParamObject.setUpO3DParam_(o3d.Sampler, 'texture', 'ParamTexture');
+
+
+/**
+ * Converts the addressing mode of the sampler from an o3d constant to a webgl
+ * constant.
+ * @param {!o3d.Sampler.AddressMode} o3d_mode, the O3D addressing mode.
+ * @return {number} The webgl mode.
+ */
+o3d.Sampler.prototype.convertAddressMode_ = function(o3d_mode) {
+  var gl_mode = this.gl.REPEAT;
+  switch (o3d_mode) {
+    case o3d.Sampler.WRAP:
+      gl_mode = this.gl.REPEAT;
+      break;
+    case o3d.Sampler.MIRROR:
+      gl_mode = this.gl.MIRRORED_REPEAT;
+      break;
+    case o3d.Sampler.CLAMP:
+      gl_mode = this.gl.CLAMP_TO_EDGE;
+      break;
+    case o3d.Sampler.BORDER:
+      // This is not supported in WebGL.
+    default:
+      this.gl.client.error_callback("Unknown/Unavailable Address mode");
+      break;
+  }
+  return gl_mode;
+}
+
+
+/**
+ * Converts the min filter mode of the sampler from an o3d constant to a webgl
+ * constant.
+ * @param {!o3d.Sampler.FilterType} o3d_filter, the O3D filter.
+ * @param {!o3d.Sampler.FilterType} mip_filter, the O3D mip filter.
+ * @return {number} The webgl filter.
+ */
+o3d.Sampler.prototype.convertMinFilter_ = function(o3d_filter, mip_filter) {
+  switch (o3d_filter) {
+    case o3d.Sampler.NONE:
+      return this.gl.NEAREST;
+    case o3d.Sampler.POINT:
+      if (mip_filter == o3d.Sampler.NONE) {
+        return this.gl.NEAREST;
+      } else if (mip_filter == o3d.Sampler.POINT) {
+        return this.gl.NEAREST_MIPMAP_NEAREST;
+      } else if (mip_filter == o3d.Sampler.LINEAR) {
+        return this.gl.NEAREST_MIPMAP_LINEAR;
+      } else if (mip_filter == o3d.Sampler.ANISOTROPIC) {
+        return this.gl.NEAREST_MIPMAP_LINEAR;
+      }
+    case o3d.Sampler.ANISOTROPIC:
+    case o3d.Sampler.LINEAR:
+      if (mip_filter == o3d.Sampler.NONE) {
+        return this.gl.LINEAR;
+      } else if (mip_filter == o3d.Sampler.POINT) {
+        return this.gl.LINEAR_MIPMAP_NEAREST;
+      } else if (mip_filter == o3d.Sampler.LINEAR) {
+        return this.gl.LINEAR_MIPMAP_LINEAR;
+      } else if (mip_filter == o3d.Sampler.ANISOTROPIC) {
+        return this.gl.LINEAR_MIPMAP_LINEAR;
+      }
+  }
+
+  this.gl.client.error_callback("Unknown filter.");
+  return this.gl.NONE;
+}
+
+
+/**
+ * Converts the mag filter mode of the sampler from an o3d constant to a webgl
+ * constant.
+ * @param {!o3d.Sampler.FilterType} o3d_filter, the O3D filter.
+ * @return {number} The webgl filter.
+ */
+o3d.Sampler.prototype.convertMagFilter_ = function(o3d_filter) {
+  switch (o3d_filter) {
+    case o3d.Sampler.NONE:
+    case o3d.Sampler.POINT:
+      return this.gl.NEAREST;
+    case o3d.Sampler.LINEAR:
+    case o3d.Sampler.ANISOTROPIC:
+      return this.gl.LINEAR;
+  }
+  this.gl.client.error_callback("Unknown filter.");
+  return this.gl.LINEAR;
+}
+
+
+/**
+ * A default Sampler that has no texture, thus uses the client's error texture.
+ *
+ * @type {!o3d.Sampler}
+ * @private
+ */
+o3d.Sampler.defaultSampler_ = new o3d.Sampler();
+o3d.Sampler.defaultSampler_.magFilter = o3d.Sampler.POINT;
+
+/**
+ * Binds the texture for this sampler and sets texParameters according to the
+ * states of the sampler.
+ * @param {boolean} opt_isCube Optional boolean indicating if this is a cube
+ *     map, so we can use the right error texture.
+ */
+o3d.Sampler.prototype.bindAndSetParameters_ = function(opt_isCube) {
+  var currentTexture = null;
+  if (this.texture) {
+    currentTexture = this.texture;
+  } else if (!this.gl.client.reportErrors_()) {
+    if (opt_isCube) {
+      currentTexture = this.gl.client.error_texture_cube_;
+    } else {
+      currentTexture = this.gl.client.error_texture_;
+    }
+  } else {
+    currentTexture = this.gl.client.fallback_error_texture_;
+    this.gl.client.error_callback("Missing texture for sampler " + this.name);
+  }
+
+  var mip_filter = this.mipFilter;
+  if (currentTexture.levels == 1) {
+    mip_filter = o3d.Sampler.NONE;
+  }
+  currentTexture.bindAndSetParameters_(
+    this.convertAddressMode_(this.addressModeU),
+    this.convertAddressMode_(this.addressModeV),
+    this.convertMinFilter_(this.minFilter, mip_filter),
+    this.convertMagFilter_(this.magFilter));
+}
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * The Transform defines parent child relationship and a localMatrix..
+ * A Transform can have one or no parents and
+ * an arbitrary number of children.
+ *
+ * @param {o3d.math.Matrix4} opt_localMatrix The local matrix for this
+ *     transform.
+ * @param {o3d.math.Matrix4} opt_worldMatrix ParamMatrix4 The world matrix of
+ *     this transform.
+ * @param {boolean} opt_visible Whether or not this transform and all its
+ *     children are visible.
+ * @param {o3d.BoundingBox} opt_boundingBox ParamBoundingBox The bounding box
+ *     for this transform and all its children.
+ * @param {boolean} opt_cull ParamBoolean Whether or not to attempt to
+ *    cull this transform and all its children based on whether or not its
+ *    bounding box is in the view frustum.
+ * @constructor
+ */
+o3d.Transform =
+    function(opt_localMatrix, opt_worldMatrix, opt_visible, opt_boundingBox,
+             opt_cull) {
+  o3d.ParamObject.call(this);
+
+  /**
+   * Local transformation matrix.
+   * Default = Identity.
+   */
+  this.localMatrix = opt_localMatrix ||
+      [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+
+  /**
+   * World (model) matrix as it was last computed.
+   */
+  this.worldMatrix = opt_worldMatrix ||
+      [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+
+  /**
+   * Sets the parent of the transform by re-parenting the transform under
+   * parent. Setting parent to null removes the transform and the
+   * entire subtree below it from the transform graph.
+   * If the operation would create a cycle it fails.
+   */
+  this.parent = null;
+
+  /**
+   * The Visibility for this transform.
+   * Default = true.
+   */
+  this.visible = opt_visible || true;
+
+  /**
+   * The BoundingBox for this Transform. If culling is on this
+   * bounding box will be tested against the view frustum of any draw
+   * context used to with this Transform.
+   * @type {!o3d.BoundingBox}
+   */
+  this.boundingBox = opt_boundingBox ||
+      new o3d.BoundingBox([-1, -1, -1], [1, 1, 1]);
+
+  /**
+   * The cull setting for this transform. If true this Transform will
+   * be culled by having its bounding box compared to the view frustum
+   * of any draw context it is used with.
+   * Default = false.
+   */
+  this.cull = opt_cull || false;
+
+  /**
+   * The immediate children of this Transform.
+   *
+   * Each access to this field gets the entire list, so it is best to get it
+   * just once. For example:
+   *
+   * var children = transform.children;
+   * for (var i = 0; i < children.length; i++) {
+   *   var child = children[i];
+   * }
+   *
+   * Note that modifications to this array [e.g. additions to it] will
+   * not affect the underlying Transform, while modifications to the
+   * members of the array will affect them.
+   */
+  this.children = [];
+
+  /**
+   * Gets the shapes owned by this transform.
+   *
+   * Each access to this field gets the entire list so it is best to get it
+   * just once. For example:
+   *
+   * var shapes = transform.shapes;
+   * for (var i = 0; i < shapes.length; i++) {
+   *   var shape = shapes[i];
+   * }
+   *
+   *
+   * Note that modifications to this array [e.g. additions to it] will
+   * not affect the underlying Transform, while modifications to the
+   * members of the array will affect them.
+   */
+  this.shapes = [];
+};
+o3d.inherit('Transform', 'ParamObject');
+
+o3d.ParamObject.setUpO3DParam_(o3d.Transform, 'visible', 'ParamBoolean');
+// TODO(petersont): need to better understand and possibly implement
+// the semantics of SlaveParamMatrix4.
+o3d.ParamObject.setUpO3DParam_(o3d.Transform, 'worldMatrix', 'ParamMatrix4');
+o3d.ParamObject.setUpO3DParam_(o3d.Transform, 'localMatrix', 'ParamMatrix4');
+o3d.ParamObject.setUpO3DParam_(o3d.Transform, 'cull', 'ParamBoolean');
+o3d.ParamObject.setUpO3DParam_(o3d.Transform,
+                               'boundingBox', 'ParamBoundingBox');
+
+
+o3d.Transform.prototype.__defineSetter__('parent',
+    function(p) {
+      if (this.parent_ != null) {
+        o3d.removeFromArray(this.parent_.children, this);
+      }
+      this.parent_ = p;
+      if (p) {
+        p.addChild(this);
+      }
+    }
+);
+
+o3d.Transform.prototype.__defineGetter__('parent',
+    function(p) {
+      return this.parent_;
+    }
+);
+
+/**
+ * Adds a child transform.
+ * @param {o3d.Transform} The new child.
+ */
+o3d.Transform.prototype.addChild = function(child) {
+  this.children.push(child);
+};
+
+
+/**
+ * Returns all the transforms under this transform including this one.
+ *
+ * Note that modifications to this array [e.g. additions to it] will not affect
+ * the underlying Transform, while modifications to the members of the array
+ * will affect them.
+ *
+ *  An array containing the transforms of the subtree.
+ */
+o3d.Transform.prototype.getTransformsInTree =
+    function() {
+  var result = [];
+  o3d.Transform.getTransformInTreeRecursive_(this, result);
+  return result;
+};
+
+
+/**
+ * Recursive helper function for getTransformInTree.
+ * @private
+ */
+o3d.Transform.getTransformInTreeRecursive_ =
+    function(treeRoot, children) {
+  children.push(treeRoot);
+  var childrenArray = treeRoot.children;
+  for (var ii = 0; ii < childrenArray.length; ++ii) {
+    o3d.Transform.getTransformInTreeRecursive_(childrenArray[ii], children);
+  }
+};
+
+
+/**
+ * Searches for transforms that match the given name in the hierarchy under and
+ * including this transform. Since there can be more than one transform with a
+ * given name, results are returned in an array.
+ *
+ * Note that modifications to this array [e.g. additions to it] will not affect
+ * the underlying Transform, while modifications to the members of the array
+ * will affect them.
+ *
+ * @param {string} name Transform name to look for.
+ * @return {Array.<o3d.Transform>}  An array containing the transforms of the
+ *     under and including this transform matching the given name.
+ */
+o3d.Transform.prototype.getTransformsByNameInTree =
+    function(name) {
+  o3d.notImplemented();
+};
+
+/**
+ * Evaluates and returns the current world matrix.
+ *
+ *  The updated world matrix.
+ */
+o3d.Transform.prototype.getUpdatedWorldMatrix =
+    function() {
+  var parentWorldMatrix;
+  if (!this.parent) {
+    parentWorldMatrix =
+        [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+  } else {
+    parentWorldMatrix = this.parent.getUpdatedWorldMatrix();
+  }
+  o3d.Transform.compose(parentWorldMatrix, this.localMatrix, this.worldMatrix);
+  return this.worldMatrix;
+};
+
+
+/**
+ * Adds a shape do this transform.
+ * @param {o3d.Shape} shape Shape to add.
+ */
+o3d.Transform.prototype.addShape =
+    function(shape) {
+  this.shapes.push(shape);
+};
+
+
+/**
+ * Removes a shape from this transform.
+ * @param {o3d.Shape} shape Shape to remove.
+ * @return {boolean}  true if successful, false if shape was not in
+ *     this transform.
+ */
+o3d.Transform.prototype.removeShape =
+    function(shape) {
+  o3d.removeFromArray(this.shapes, shape);
+};
+
+
+/**
+ * Walks the tree of transforms starting with this transform and creates
+ * draw elements. If an Element already has a DrawElement that uses material a
+ * new DrawElement will not be created.
+ * @param {o3d.Pack} pack Pack used to manage created elements.
+ * @param {o3d.Material} material Material to use for each element. If you
+ *     pass null, it will use the material on the element to which a draw
+ *     element is being added. In other words, a DrawElement will use the
+ *     material of the corresponding Element if material is null. This allows
+ *     you to easily setup the default (just draw as is) by passing null or
+ *     setup a shadow pass by passing in a shadow material.
+ */
+o3d.Transform.prototype.createDrawElements =
+    function(pack, material) {
+  var children = this.children;
+  var shapes = this.shapes;
+
+  for (var i = 0; i < shapes.length; ++i) {
+    shapes[i].createDrawElements(pack, material);
+  }
+
+  for (var i = 0; i < children.length; ++i) {
+    children[i].createDrawElements(pack, material);
+  }
+};
+
+
+/**
+ * Sets the local matrix of this transform to the identity matrix.
+ */
+o3d.Transform.prototype.identity = function() {
+  var m = this.localMatrix;
+  for (var i = 0; i < 4; ++i) {
+    for (var j = 0; j < 4; ++j) {
+      m[i][j] = i==j ? 1 : 0;
+    }
+  }
+};
+
+
+/*
+ * Utility function to copose a matrix with another matrix.
+ * Precomposes b with a, changing a, or if the target matrix if
+ * one is provided.
+ *
+ * @param {!Array.<!Array.<number>>} a
+ * @param {!Array.<!Array.<number>>} b
+ * @param {!Array.<!Array.<number>>} opt_target
+ */
+o3d.Transform.compose = function(a, b, opt_target) {
+  var t = opt_target || a;
+  var a0 = a[0];
+  var a1 = a[1];
+  var a2 = a[2];
+  var a3 = a[3];
+  var b0 = b[0];
+  var b1 = b[1];
+  var b2 = b[2];
+  var b3 = b[3];
+  var a00 = a0[0];
+  var a01 = a0[1];
+  var a02 = a0[2];
+  var a03 = a0[3];
+  var a10 = a1[0];
+  var a11 = a1[1];
+  var a12 = a1[2];
+  var a13 = a1[3];
+  var a20 = a2[0];
+  var a21 = a2[1];
+  var a22 = a2[2];
+  var a23 = a2[3];
+  var a30 = a3[0];
+  var a31 = a3[1];
+  var a32 = a3[2];
+  var a33 = a3[3];
+  var b00 = b0[0];
+  var b01 = b0[1];
+  var b02 = b0[2];
+  var b03 = b0[3];
+  var b10 = b1[0];
+  var b11 = b1[1];
+  var b12 = b1[2];
+  var b13 = b1[3];
+  var b20 = b2[0];
+  var b21 = b2[1];
+  var b22 = b2[2];
+  var b23 = b2[3];
+  var b30 = b3[0];
+  var b31 = b3[1];
+  var b32 = b3[2];
+  var b33 = b3[3];
+  t[0].splice(0, 4, a00 * b00 + a10 * b01 + a20 * b02 + a30 * b03,
+                    a01 * b00 + a11 * b01 + a21 * b02 + a31 * b03,
+                    a02 * b00 + a12 * b01 + a22 * b02 + a32 * b03,
+                    a03 * b00 + a13 * b01 + a23 * b02 + a33 * b03);
+  t[1].splice(0, 4, a00 * b10 + a10 * b11 + a20 * b12 + a30 * b13,
+                    a01 * b10 + a11 * b11 + a21 * b12 + a31 * b13,
+                    a02 * b10 + a12 * b11 + a22 * b12 + a32 * b13,
+                    a03 * b10 + a13 * b11 + a23 * b12 + a33 * b13);
+  t[2].splice(0, 4, a00 * b20 + a10 * b21 + a20 * b22 + a30 * b23,
+                    a01 * b20 + a11 * b21 + a21 * b22 + a31 * b23,
+                    a02 * b20 + a12 * b21 + a22 * b22 + a32 * b23,
+                    a03 * b20 + a13 * b21 + a23 * b22 + a33 * b23);
+  t[3].splice(0, 4, a00 * b30 + a10 * b31 + a20 * b32 + a30 * b33,
+                    a01 * b30 + a11 * b31 + a21 * b32 + a31 * b33,
+                    a02 * b30 + a12 * b31 + a22 * b32 + a32 * b33,
+                    a03 * b30 + a13 * b31 + a23 * b32 + a33 * b33);
+};
+
+
+/**
+ * Tests whether two matrices are either equal in the sense that they
+ * refer to the same memory, or equal in the sense that they have equal
+ * entries.
+ *
+ * @param {!Array.<!Array.<number>>} a A matrix.
+ * @param {!Array.<!Array.<number>>} b Another matrix.
+ * @return {boolean} Whether they are equal.
+ */
+o3d.Transform.matricesEqual = function(a, b) {
+  if (a==b) {
+    return true;
+  }
+  for (var i = 0; i < 4; ++i) {
+    for (var j = 0; j < 4; ++j) {
+      if (a[i][j] != b[i][j]) {
+        return false;
+      }
+    }
+  }
+  return true;
+};
+
+
+/**
+ * Computes the transpose of the matrix a in place if no target is provided.
+ * Or if a target is provided, turns the target into the transpose of a.
+ *
+ * @param {!Array.<!Array.<number>>} m A matrix.
+ * @param {Array.<!Array.<number>>} opt_target
+ *     The matrix to become the transpose of m.
+ */
+o3d.Transform.transpose = function(m, opt_target) {
+  var t = opt_target || m;
+  var m0 = m[0];
+  var m1 = m[1];
+  var m2 = m[2];
+  var m3 = m[3];
+  var m00 = m0[0];
+  var m01 = m0[1];
+  var m02 = m0[2];
+  var m03 = m0[3];
+  var m10 = m1[0];
+  var m11 = m1[1];
+  var m12 = m1[2];
+  var m13 = m1[3];
+  var m20 = m2[0];
+  var m21 = m2[1];
+  var m22 = m2[2];
+  var m23 = m2[3];
+  var m30 = m3[0];
+  var m31 = m3[1];
+  var m32 = m3[2];
+  var m33 = m3[3];
+  t[0].splice(0, 4, m00, m10, m20, m30);
+  t[1].splice(0, 4, m01, m11, m21, m31);
+  t[2].splice(0, 4, m02, m12, m22, m32);
+  t[3].splice(0, 4, m03, m13, m23, m33);
+};
+
+
+/**
+ * Computes the inverse of the matrix a in place if no target is provided.
+ * Or if a target is provided, turns the target into the transpose of a.
+ *
+ * @param {!Array.<!Array.<number>>} m A matrix.
+ * @param {Array.<!Array.<number>>} opt_target The matrix to become the
+ *     inverse of a.
+ */
+o3d.Transform.inverse = function(m, opt_target) {
+  var t = opt_target || m;
+  var m0 = m[0];
+  var m1 = m[1];
+  var m2 = m[2];
+  var m3 = m[3];
+  var m00 = m0[0];
+  var m01 = m0[1];
+  var m02 = m0[2];
+  var m03 = m0[3];
+  var m10 = m1[0];
+  var m11 = m1[1];
+  var m12 = m1[2];
+  var m13 = m1[3];
+  var m20 = m2[0];
+  var m21 = m2[1];
+  var m22 = m2[2];
+  var m23 = m2[3];
+  var m30 = m3[0];
+  var m31 = m3[1];
+  var m32 = m3[2];
+  var m33 = m3[3];
+
+  var tmp_0 = m22 * m33;
+  var tmp_1 = m32 * m23;
+  var tmp_2 = m12 * m33;
+  var tmp_3 = m32 * m13;
+  var tmp_4 = m12 * m23;
+  var tmp_5 = m22 * m13;
+  var tmp_6 = m02 * m33;
+  var tmp_7 = m32 * m03;
+  var tmp_8 = m02 * m23;
+  var tmp_9 = m22 * m03;
+  var tmp_10 = m02 * m13;
+  var tmp_11 = m12 * m03;
+  var tmp_12 = m20 * m31;
+  var tmp_13 = m30 * m21;
+  var tmp_14 = m10 * m31;
+  var tmp_15 = m30 * m11;
+  var tmp_16 = m10 * m21;
+  var tmp_17 = m20 * m11;
+  var tmp_18 = m00 * m31;
+  var tmp_19 = m30 * m01;
+  var tmp_20 = m00 * m21;
+  var tmp_21 = m20 * m01;
+  var tmp_22 = m00 * m11;
+  var tmp_23 = m10 * m01;
+
+  var t0 = (tmp_0 * m11 + tmp_3 * m21 + tmp_4 * m31) -
+      (tmp_1 * m11 + tmp_2 * m21 + tmp_5 * m31);
+  var t1 = (tmp_1 * m01 + tmp_6 * m21 + tmp_9 * m31) -
+      (tmp_0 * m01 + tmp_7 * m21 + tmp_8 * m31);
+  var t2 = (tmp_2 * m01 + tmp_7 * m11 + tmp_10 * m31) -
+      (tmp_3 * m01 + tmp_6 * m11 + tmp_11 * m31);
+  var t3 = (tmp_5 * m01 + tmp_8 * m11 + tmp_11 * m21) -
+      (tmp_4 * m01 + tmp_9 * m11 + tmp_10 * m21);
+
+  var d = 1.0 / (m00 * t0 + m10 * t1 + m20 * t2 + m30 * t3);
+
+  t[0].splice(0, 4, d * t0, d * t1, d * t2, d * t3);
+  t[1].splice(0, 4, d * ((tmp_1 * m10 + tmp_2 * m20 + tmp_5 * m30) -
+          (tmp_0 * m10 + tmp_3 * m20 + tmp_4 * m30)),
+       d * ((tmp_0 * m00 + tmp_7 * m20 + tmp_8 * m30) -
+          (tmp_1 * m00 + tmp_6 * m20 + tmp_9 * m30)),
+       d * ((tmp_3 * m00 + tmp_6 * m10 + tmp_11 * m30) -
+          (tmp_2 * m00 + tmp_7 * m10 + tmp_10 * m30)),
+       d * ((tmp_4 * m00 + tmp_9 * m10 + tmp_10 * m20) -
+          (tmp_5 * m00 + tmp_8 * m10 + tmp_11 * m20)));
+  t[2].splice(0, 4, d * ((tmp_12 * m13 + tmp_15 * m23 + tmp_16 * m33) -
+          (tmp_13 * m13 + tmp_14 * m23 + tmp_17 * m33)),
+       d * ((tmp_13 * m03 + tmp_18 * m23 + tmp_21 * m33) -
+          (tmp_12 * m03 + tmp_19 * m23 + tmp_20 * m33)),
+       d * ((tmp_14 * m03 + tmp_19 * m13 + tmp_22 * m33) -
+          (tmp_15 * m03 + tmp_18 * m13 + tmp_23 * m33)),
+       d * ((tmp_17 * m03 + tmp_20 * m13 + tmp_23 * m23) -
+          (tmp_16 * m03 + tmp_21 * m13 + tmp_22 * m23)));
+  t[3].splice(0, 4, d * ((tmp_14 * m22 + tmp_17 * m32 + tmp_13 * m12) -
+          (tmp_16 * m32 + tmp_12 * m12 + tmp_15 * m22)),
+       d * ((tmp_20 * m32 + tmp_12 * m02 + tmp_19 * m22) -
+          (tmp_18 * m22 + tmp_21 * m32 + tmp_13 * m02)),
+       d * ((tmp_18 * m12 + tmp_23 * m32 + tmp_15 * m02) -
+          (tmp_22 * m32 + tmp_14 * m02 + tmp_19 * m12)),
+       d * ((tmp_22 * m22 + tmp_16 * m02 + tmp_21 * m12) -
+          (tmp_20 * m12 + tmp_23 * m22 + tmp_17 * m02)));
+};
+
+
+/**
+ * Pre-composes the local matrix of this Transform with a translation.  For
+ * example, if the local matrix is a rotation then new local matrix will
+ * translate by the given vector and then rotated.
+ */
+o3d.Transform.prototype.translate =
+    function() {
+  var v;
+  if (arguments.length == 3) {
+    v = arguments;
+  } else {
+    v = arguments[0];
+  }
+  var m = this.localMatrix;
+
+  var v0 = v[0];
+  var v1 = v[1];
+  var v2 = v[2];
+  var m0 = m[0];
+  var m1 = m[1];
+  var m2 = m[2];
+  var m3 = m[3];
+  var m00 = m0[0];
+  var m01 = m0[1];
+  var m02 = m0[2];
+  var m03 = m0[3];
+  var m10 = m1[0];
+  var m11 = m1[1];
+  var m12 = m1[2];
+  var m13 = m1[3];
+  var m20 = m2[0];
+  var m21 = m2[1];
+  var m22 = m2[2];
+  var m23 = m2[3];
+  var m30 = m3[0];
+  var m31 = m3[1];
+  var m32 = m3[2];
+  var m33 = m3[3];
+
+  m3.splice(0, 4, m00 * v0 + m10 * v1 + m20 * v2 + m30,
+                  m01 * v0 + m11 * v1 + m21 * v2 + m31,
+                  m02 * v0 + m12 * v1 + m22 * v2 + m32,
+                  m03 * v0 + m13 * v1 + m23 * v2 + m33);
+};
+
+
+/**
+ * Pre-composes the local matrix of this Transform with a rotation about the
+ * x-axis.  For example, if the local matrix is a tranlsation, the new local
+ * matrix will rotate around the x-axis and then translate.
+ *
+ * @param {number} radians The number of radians to rotate around x-axis.
+ */
+o3d.Transform.prototype.rotateX =
+    function(angle) {
+  var m = this.localMatrix;
+
+  var m0 = m[0];
+  var m1 = m[1];
+  var m2 = m[2];
+  var m3 = m[3];
+  var m10 = m1[0];
+  var m11 = m1[1];
+  var m12 = m1[2];
+  var m13 = m1[3];
+  var m20 = m2[0];
+  var m21 = m2[1];
+  var m22 = m2[2];
+  var m23 = m2[3];
+  var c = Math.cos(angle);
+  var s = Math.sin(angle);
+
+  m1.splice(0, 4, c * m10 + s * m20,
+                  c * m11 + s * m21,
+                  c * m12 + s * m22,
+                  c * m13 + s * m23);
+  m2.splice(0, 4, c * m20 - s * m10,
+                  c * m21 - s * m11,
+                  c * m22 - s * m12,
+                  c * m23 - s * m13);
+};
+
+
+/**
+ * Takes a 4-by-4 matrix and a vector with 3 entries,
+ * interprets the vector as a point, transforms that point by the matrix, and
+ * returns the result as a vector with 3 entries.
+ * @param {!o3djs.math.Matrix4} m The matrix.
+ * @param {!o3djs.math.Vector3} v The point.
+ * @return {!o3djs.math.Vector3} The transformed point.
+ */
+o3d.Transform.transformPoint = function(m, v) {
+  var v0 = v[0];
+  var v1 = v[1];
+  var v2 = v[2];
+  var m0 = m[0];
+  var m1 = m[1];
+  var m2 = m[2];
+  var m3 = m[3];
+
+  var d = v0 * m0[3] + v1 * m1[3] + v2 * m2[3] + m3[3];
+  return [(v0 * m0[0] + v1 * m1[0] + v2 * m2[0] + m3[0]) / d,
+          (v0 * m0[1] + v1 * m1[1] + v2 * m2[1] + m3[1]) / d,
+          (v0 * m0[2] + v1 * m1[2] + v2 * m2[2] + m3[2]) / d];
+};
+
+
+/**
+ * Takes a 4-by-4 matrix and a vector with 4 entries,
+ * interprets the vector as a point, transforms that point by the matrix, and
+ * returns the result as a vector with 4 entries.
+ * @param {!o3djs.math.Matrix4} m The matrix.
+ * @param {!o3djs.math.Vector4} v The vector.
+ * @return {!o3djs.math.Vector4} The transformed vector.
+ */
+o3d.Transform.multiplyVector = function(m, v) {
+  var v0 = v[0];
+  var v1 = v[1];
+  var v2 = v[2];
+  var v3 = v[3];
+  var m0 = m[0];
+  var m1 = m[1];
+  var m2 = m[2];
+  var m3 = m[3];
+
+  return [(v0 * m0[0] + v1 * m1[0] + v2 * m2[0] + v3 * m3[0]),
+          (v0 * m0[1] + v1 * m1[1] + v2 * m2[1] + v3 * m3[1]),
+          (v0 * m0[2] + v1 * m1[2] + v2 * m2[2] + v3 * m3[2]),
+          (v0 * m0[3] + v1 * m1[3] + v2 * m2[3] + v3 * m3[3])];
+};
+
+
+/**
+ * Takes a 4-by-4 matrix and a vector with 3 entries,
+ * interprets the vector as a point, transforms that point by the matrix,
+ * returning the z-component of the result only.
+ * @param {!o3djs.math.Matrix4} m The matrix.
+ * @param {!o3djs.math.Vector3} v The point.
+ * @return {number} The z coordinate of the transformed point.
+ */
+o3d.Transform.transformPointZOnly = function(m, v) {
+  var v0 = v[0];
+  var v1 = v[1];
+  var v2 = v[2];
+  var m0 = m[0];
+  var m1 = m[1];
+  var m2 = m[2];
+  var m3 = m[3];
+
+  return (v0 * m0[2] + v1 * m1[2] + v2 * m2[2] + m3[2]) /
+      (v0 * m0[3] + v1 * m1[3] + v2 * m2[3] + m3[3]);
+};
+
+
+/**
+ * Pre-composes the local matrix of this Transform with a rotation about the
+ * y-axis.  For example, if the local matrix is a translation, the new local
+ * matrix will rotate around the y-axis and then translate.
+ *
+ * @param {number} radians The number of radians to rotate around y-axis.
+ */
+o3d.Transform.prototype.rotateY =
+    function(angle) {
+  var m = this.localMatrix;
+
+  var m0 = m[0];
+  var m1 = m[1];
+  var m2 = m[2];
+  var m3 = m[3];
+  var m00 = m0[0];
+  var m01 = m0[1];
+  var m02 = m0[2];
+  var m03 = m0[3];
+  var m20 = m2[0];
+  var m21 = m2[1];
+  var m22 = m2[2];
+  var m23 = m2[3];
+  var c = Math.cos(angle);
+  var s = Math.sin(angle);
+
+  m0.splice(0, 4, c * m00 - s * m20,
+                  c * m01 - s * m21,
+                  c * m02 - s * m22,
+                  c * m03 - s * m23);
+  m2.splice(0, 4, c * m20 + s * m00,
+                  c * m21 + s * m01,
+                  c * m22 + s * m02,
+                  c * m23 + s * m03);
+};
+
+
+/**
+ * Pre-composes the local matrix of this Transform with a rotation about the
+ * z-axis.  For example, if the local matrix is a translation, the new local
+ * matrix will rotate around the z-axis and then translate.
+ *
+ * @param {number} radians The number of radians to rotate around z-axis.
+ */
+o3d.Transform.prototype.rotateZ =
+    function(angle) {
+  var m = this.localMatrix;
+
+  var m0 = m[0];
+  var m1 = m[1];
+  var m2 = m[2];
+  var m3 = m[3];
+  var m00 = m0[0];
+  var m01 = m0[1];
+  var m02 = m0[2];
+  var m03 = m0[3];
+  var m10 = m1[0];
+  var m11 = m1[1];
+  var m12 = m1[2];
+  var m13 = m1[3];
+  var c = Math.cos(angle);
+  var s = Math.sin(angle);
+
+  m0.splice(0, 4, c * m00 + s * m10,
+                  c * m01 + s * m11,
+                  c * m02 + s * m12,
+                  c * m03 + s * m13);
+  m1.splice(0, 4, c * m10 - s * m00,
+                  c * m11 - s * m01,
+                  c * m12 - s * m02,
+                  c * m13 - s * m03);
+};
+
+
+/**
+ * Pre-composes the local matrix of this Transform with a rotation.
+ * Interprets the three entries of the given vector as angles by which to
+ * rotate around the x, y and z axes.  Rotates around the x-axis first,
+ * then the y-axis, then the z-axis.
+ *
+ * @param {!o3d.math.Vector3} v A vector of angles (in radians) by which
+ *     to rotate around the x, y and z axes.
+ */
+o3d.Transform.prototype.rotateZYX =
+    function(v) {
+  var m = this.localMatrix;
+
+  var sinX = Math.sin(v[0]);
+  var cosX = Math.cos(v[0]);
+  var sinY = Math.sin(v[1]);
+  var cosY = Math.cos(v[1]);
+  var sinZ = Math.sin(v[2]);
+  var cosZ = Math.cos(v[2]);
+
+  var cosZSinY = cosZ * sinY;
+  var sinZSinY = sinZ * sinY;
+
+  var r00 = cosZ * cosY;
+  var r01 = sinZ * cosY;
+  var r02 = -sinY;
+  var r10 = cosZSinY * sinX - sinZ * cosX;
+  var r11 = sinZSinY * sinX + cosZ * cosX;
+  var r12 = cosY * sinX;
+  var r20 = cosZSinY * cosX + sinZ * sinX;
+  var r21 = sinZSinY * cosX - cosZ * sinX;
+  var r22 = cosY * cosX;
+
+  var m0 = m[0];
+  var m1 = m[1];
+  var m2 = m[2];
+  var m3 = m[3];
+
+  var m00 = m0[0];
+  var m01 = m0[1];
+  var m02 = m0[2];
+  var m03 = m0[3];
+  var m10 = m1[0];
+  var m11 = m1[1];
+  var m12 = m1[2];
+  var m13 = m1[3];
+  var m20 = m2[0];
+  var m21 = m2[1];
+  var m22 = m2[2];
+  var m23 = m2[3];
+  var m30 = m3[0];
+  var m31 = m3[1];
+  var m32 = m3[2];
+  var m33 = m3[3];
+
+  m0.splice(0, 4,
+      r00 * m00 + r01 * m10 + r02 * m20,
+      r00 * m01 + r01 * m11 + r02 * m21,
+      r00 * m02 + r01 * m12 + r02 * m22,
+      r00 * m03 + r01 * m13 + r02 * m23);
+
+  m1.splice(0, 4,
+      r10 * m00 + r11 * m10 + r12 * m20,
+      r10 * m01 + r11 * m11 + r12 * m21,
+      r10 * m02 + r11 * m12 + r12 * m22,
+      r10 * m03 + r11 * m13 + r12 * m23);
+
+  m2.splice(0, 4,
+      r20 * m00 + r21 * m10 + r22 * m20,
+      r20 * m01 + r21 * m11 + r22 * m21,
+      r20 * m02 + r21 * m12 + r22 * m22,
+      r20 * m03 + r21 * m13 + r22 * m23);
+};
+
+
+/**
+ * Pre-composes the local matrix of this Transform with a rotation around the
+ * given axis.  For example, if the local matrix is a translation, the new
+ * local matrix will rotate around the given axis and then translate.
+ *
+ * @param {number} angle The number of radians to rotate.
+ * @param {!o3d.math.Vector3} axis a non-zero vector representing the axis
+ *     around which to rotate.
+ */
+o3d.Transform.prototype.axisRotate =
+    function(axis, angle) {
+  o3d.Transform.axisRotateMatrix(this.localMatrix, axis, angle);
+};
+
+o3d.Transform.axisRotateMatrix =
+    function(m, axis, angle, opt_target) {
+  opt_target = opt_target || m;
+  var x = axis[0];
+  var y = axis[1];
+  var z = axis[2];
+  var n = Math.sqrt(x * x + y * y + z * z);
+  x /= n;
+  y /= n;
+  z /= n;
+  var xx = x * x;
+  var yy = y * y;
+  var zz = z * z;
+  var c = Math.cos(angle);
+  var s = Math.sin(angle);
+  var oneMinusCosine = 1 - c;
+
+  var r00 = xx + (1 - xx) * c;
+  var r01 = x * y * oneMinusCosine + z * s;
+  var r02 = x * z * oneMinusCosine - y * s;
+  var r10 = x * y * oneMinusCosine - z * s;
+  var r11 = yy + (1 - yy) * c;
+  var r12 = y * z * oneMinusCosine + x * s;
+  var r20 = x * z * oneMinusCosine + y * s;
+  var r21 = y * z * oneMinusCosine - x * s;
+  var r22 = zz + (1 - zz) * c;
+
+  var m0 = m[0];
+  var m1 = m[1];
+  var m2 = m[2];
+  var m3 = m[3];
+
+  var m00 = m0[0];
+  var m01 = m0[1];
+  var m02 = m0[2];
+  var m03 = m0[3];
+  var m10 = m1[0];
+  var m11 = m1[1];
+  var m12 = m1[2];
+  var m13 = m1[3];
+  var m20 = m2[0];
+  var m21 = m2[1];
+  var m22 = m2[2];
+  var m23 = m2[3];
+  var m30 = m3[0];
+  var m31 = m3[1];
+  var m32 = m3[2];
+  var m33 = m3[3];
+
+  opt_target[0].splice(0, 4,
+      r00 * m00 + r01 * m10 + r02 * m20,
+      r00 * m01 + r01 * m11 + r02 * m21,
+      r00 * m02 + r01 * m12 + r02 * m22,
+      r00 * m03 + r01 * m13 + r02 * m23);
+
+  opt_target[1].splice(0, 4,
+      r10 * m00 + r11 * m10 + r12 * m20,
+      r10 * m01 + r11 * m11 + r12 * m21,
+      r10 * m02 + r11 * m12 + r12 * m22,
+      r10 * m03 + r11 * m13 + r12 * m23);
+
+  opt_target[2].splice(0, 4,
+      r20 * m00 + r21 * m10 + r22 * m20,
+      r20 * m01 + r21 * m11 + r22 * m21,
+      r20 * m02 + r21 * m12 + r22 * m22,
+      r20 * m03 + r21 * m13 + r22 * m23);
+
+  opt_target[3].splice(0, 4, m30, m31, m32, m33);
+};
+
+
+/**
+ * Pre-composes the local matrix of this Transform with a rotation defined by
+ * the given quaternion.
+ *
+ * @param {o3d.math.Quat} q A non-zero quaternion to be interpreted as a
+ *     rotation.
+ */
+o3d.Transform.prototype.quaternionRotate =
+    function(q) {
+   var m = this.localMatrix;
+
+  var qX = q[0];
+  var qY = q[1];
+  var qZ = q[2];
+  var qW = q[3];
+
+  var qWqW = qW * qW;
+  var qWqX = qW * qX;
+  var qWqY = qW * qY;
+  var qWqZ = qW * qZ;
+  var qXqW = qX * qW;
+  var qXqX = qX * qX;
+  var qXqY = qX * qY;
+  var qXqZ = qX * qZ;
+  var qYqW = qY * qW;
+  var qYqX = qY * qX;
+  var qYqY = qY * qY;
+  var qYqZ = qY * qZ;
+  var qZqW = qZ * qW;
+  var qZqX = qZ * qX;
+  var qZqY = qZ * qY;
+  var qZqZ = qZ * qZ;
+
+  var d = qWqW + qXqX + qYqY + qZqZ;
+
+  o3d.Transform.compose(this.localMatrix, [
+    [(qWqW + qXqX - qYqY - qZqZ) / d,
+     2 * (qWqZ + qXqY) / d,
+     2 * (qXqZ - qWqY) / d, 0],
+    [2 * (qXqY - qWqZ) / d,
+     (qWqW - qXqX + qYqY - qZqZ) / d,
+     2 * (qWqX + qYqZ) / d, 0],
+    [2 * (qWqY + qXqZ) / d,
+     2 * (qYqZ - qWqX) / d,
+     (qWqW - qXqX - qYqY + qZqZ) / d, 0],
+    [0, 0, 0, 1]]);
+};
+
+
+/**
+ * Pre-composes the local matrix of this transform by a scaling transformation.
+ * For example, if the local matrix is a rotation, the new local matrix will
+ * scale and then rotate.
+ */
+o3d.Transform.prototype.scale =
+    function() {
+     var v;
+  if (arguments.length == 3) {
+    v = arguments;
+  } else {
+    v = arguments[0];
+  }
+
+  var m = this.localMatrix;
+
+  var v0 = v[0];
+  var v1 = v[1];
+  var v2 = v[2];
+
+  var m0 = m[0];
+  var m1 = m[1];
+  var m2 = m[2];
+  var m3 = m[3];
+
+  m0.splice(0, 4, v0 * m0[0], v0 * m0[1], v0 * m0[2], v0 * m0[3]);
+  m1.splice(0, 4, v1 * m1[0], v1 * m1[1], v1 * m1[2], v1 * m1[3]);
+  m2.splice(0, 4, v2 * m2[0], v2 * m2[1], v2 * m2[2], v2 * m2[3]);
+};
+
+
+/**
+ * Utility function to flatten an o3djs-style matrix
+ * (which is an array of arrays) into one array of entries.
+ * @param {Array.<Array.<number> >} m The o3djs-style matrix.
+ * @return {Array.<number>} The flattened matrix.
+ */
+o3d.Transform.flattenMatrix4 = function(m) {
+  var m0 = m[0];
+  var m1 = m[1];
+  var m2 = m[2];
+  var m3 = m[3];
+  return [m0[0], m0[1], m0[2], m0[3],
+          m1[0], m1[1], m1[2], m1[3],
+          m2[0], m2[1], m2[2], m2[3],
+          m3[0], m3[1], m3[2], m3[3]];
+};
+
+
+/**
+ * Traverses the transform tree starting at this node and adds DrawElements
+ * for each shape to DrawList.
+ * @param {Array.<Object>} drawListInfos A list of objects containing a draw
+ *     list and matrix information.
+ * @param {o3d.math.Matrix4} opt_parentWorldMatrix
+ */
+o3d.Transform.prototype.traverse =
+    function(drawListInfos, opt_parentWorldMatrix) {
+  this.gl.client.render_stats_['transformsProcessed']++;
+  if (drawListInfos.length == 0 || !this.visible) {
+    return;
+  }
+  opt_parentWorldMatrix =
+      opt_parentWorldMatrix ||
+          [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+
+  o3d.Transform.compose(
+      opt_parentWorldMatrix, this.localMatrix, this.worldMatrix);
+
+  var remainingDrawListInfos = [];
+
+  if (this.cull) {
+    if (this.boundingBox) {
+      for (var i = 0; i < drawListInfos.length; ++i) {
+        var drawListInfo = drawListInfos[i];
+
+        var worldViewProjection = [[], [], [], []];
+        o3d.Transform.compose(drawListInfo.context.view,
+            this.worldMatrix, worldViewProjection);
+        o3d.Transform.compose(drawListInfo.context.projection,
+            worldViewProjection, worldViewProjection);
+
+        if (this.boundingBox.inFrustum(worldViewProjection)) {
+          remainingDrawListInfos.push(drawListInfo);
+        }
+      }
+    }
+  } else {
+    remainingDrawListInfos = drawListInfos;
+  }
+
+  if (remainingDrawListInfos.length == 0) {
+    this.gl.client.render_stats_['transformsCulled']++;
+    return;
+  }
+
+  var children = this.children;
+  var shapes = this.shapes;
+
+  for (var i = 0; i < shapes.length; ++i) {
+    shapes[i].writeToDrawLists(remainingDrawListInfos, this.worldMatrix, this);
+  }
+
+  for (var i = 0; i < children.length; ++i) {
+    children[i].traverse(remainingDrawListInfos, this.worldMatrix);
+  }
+};
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A Pack object functions as a container for O3D objects. The Pack
+ * is used to control the lifetime scope of a collection of objects in bulk. The
+ * Pack object achieves this by simply storing a set of references to its
+ * contained objects, which ensures that the ref-counts for those objects never
+ * reach zero while the pack is alive.
+ * @constructor
+ */
+o3d.Pack = function() {
+  o3d.NamedObject.call(this);
+  this.objects_ = [];
+};
+o3d.inherit('Pack', 'NamedObject');
+
+
+/**
+ * Removes all internal references to the Pack from the client.
+ * The pack, and all objects contained in it are permitted to be destroyed
+ * after the pack's destruction.  Objects will only be destroyed after all
+ * references to them have been removed.
+ *
+ * NOTE: Calling pack.destroy does NOT free your resources. It justs releases
+ * the pack's reference to those resources.  An example should hopefully make
+ * it clearer.
+ *
+ * pack.destroy() is effectively almost the same as this.
+ *
+ * var objectsInPack = pack.getObjectsByClassName('o3d.ObjectBase');
+ * for (var ii = 0; ii < objectsInPack.length; ++ii) {
+ *   pack.removeObject(objectsInPack[ii]);
+ * }
+ *
+ * The only difference is that after all the objects are removed the pack
+ * itself will be released from the client.  See documentation on
+ * pack.removeObject for why this is important.
+ *
+ * It's important to note that many objects are only referenced by the pack.
+ * Textures, Effects, Materials, for example. That means the moment you call
+ * pack.destroy() those objects will be freed. If the client then tries to
+ * render and some objects are missing you'll immediately get an error.
+ */
+o3d.Pack.prototype.destroy = function() {
+  this.objects_ = [];
+  this.client.destroyPack(this);
+};
+
+
+
+/**
+ * Removes a pack's reference to an object. Any object created from
+ * pack.create___ function can be removed. This releases the pack's reference
+ * to that object so if nothing else is referencing that object it will be
+ * deleted.
+ *
+ * NOTE: Calling pack.removeObject does NOT automatically free your resource.
+ * It just releases the pack's reference to that resource. An example should
+ * hopefully make it clearer.
+ *
+ * Suppose you make a transform like this:
+ *
+ *
+ * var myTransform = pack.createObject('Transform');
+ * myTransform.parent = g_client.root;
+ * pack.removeObject(myTransform);
+ *
+ *
+ * In the code above, myTransform is referenced twice. Once by the pack, and
+ * again by g_client.root  So in this case, calling pack.removeObject()
+ * only releases the pack's reference leaving the reference by g_client.root.
+ *
+ *
+ * myTransform.parent = null;
+ *
+ *
+ * Now the last reference has been removed and myTransform will be freed.
+ *
+ * @param {o3d.ObjectBase} object Object to remove.
+ * @return {boolean}  True if the object was successfully removed.
+ *     False if the object is not part of this pack.
+ */
+o3d.Pack.prototype.removeObject =
+    function(object) {
+  o3d.removeFromArray(this.objects_, object);
+};
+
+
+/**
+ * Creates an Object by Class name.
+ *
+ * Note: You may omit the 'o3d.'.
+ *
+ * @param {string} type_name name of Class to create. Valid type names are:
+ *      Bitmap
+ *      Canvas
+ *      CanvasLinearGradient
+ *      CanvasPaint
+ *      ClearBuffer
+ *      Counter
+ *      Curve
+ *      DrawContext
+ *      DrawElement
+ *      DrawList
+ *      DrawPass
+ *      Effect
+ *      FunctionEval
+ *      IndexBuffer
+ *      Material
+ *      ParamArray
+ *      ParamObject
+ *      Primitive
+ *      RenderFrameCounter
+ *      RenderNode
+ *      RenderSurfaceSet
+ *      Sampler
+ *      SecondCounter
+ *      Shape
+ *      Skin
+ *      SkinEval
+ *      SourceBuffer
+ *      State
+ *      StateSet
+ *      StreamBank
+ *      Texture2D
+ *      TextureCUBE
+ *      TickCounter
+ *      Transform
+ *      TreeTraversal
+ *      VertexBuffer
+ *      Viewport
+ *      Matrix4AxisRotation
+ *      Matrix4Composition
+ *      Matrix4Scale
+ *      Matrix4Translation
+ *      ParamOp2FloatsToFloat2
+ *      ParamOp3FloatsToFloat3
+ *      ParamOp4FloatsToFloat4
+ *      ParamOp16FloatsToMatrix4
+ *      TRSToMatrix4
+ * @return {o3d.ObjectBase}  The created object.
+ */
+o3d.Pack.prototype.createObject =
+    function(type_name) {
+  var foo = o3d.global.o3d[o3d.filterTypeName_(type_name)];
+  if (typeof foo != 'function') {
+    throw 'cannot find type in o3d namespace: ' + type_name
+  }
+  var object = new foo();
+  object.gl = this.gl;
+  object.clientId = o3d.Client.nextId++;
+  this.objects_.push(object);
+  return object;
+};
+
+
+/**
+ * Creates a new Texture2D object of the specified size and format and
+ * reserves the necessary resources for it.
+ *
+ * Note: If enable_render_surfaces is true, then the dimensions must be a
+ * power of two.
+ *
+ * @param {number} width The width of the texture area in texels (max = 2048)
+ * @param {number} height The height of the texture area in texels (max = 2048)
+ * @param {o3d.Texture.Format} format The memory format of each texel
+ * @param {number} levels The number of mipmap levels.  Use zero to create the
+ *     compelete mipmap chain.
+ * @param {boolean} enable_render_surfaces If true, the texture object will
+ *     expose RenderSurface objects through GetRenderSurface(...).
+ * @return {!o3d.Texture2D}  The Texture2D object.
+ */
+o3d.Pack.prototype.createTexture2D =
+    function(width, height, format, levels, enable_render_surfaces) {
+  var texture = this.createObject('Texture2D');
+  texture.init_(width, height, format, levels, enable_render_surfaces);
+  return texture;
+};
+
+
+/**
+ * Creates a new TextureCUBE object of the specified size and format and
+ * reserves the necessary resources for it.
+ * Note:  If enable_render_surfaces is true, then the dimensions must be a
+ * power of two.
+ *
+ * @param {number} edgeLength The edge of the texture area in texels
+ *     (max = 2048)
+ * @param {o3d.Texture.Format} format The memory format of each texel.
+ * @param {number} levels The number of mipmap levels.   Use zero to create
+ *     the compelete mipmap chain.
+ * @param {boolean} enableRenderSurfaces If true, the texture object
+ *     will expose RenderSurface objects through GetRenderSurface(...).
+ * @return {!o3d.TextureCUBE}  The TextureCUBE object.
+ */
+o3d.Pack.prototype.createTextureCUBE =
+    function(edgeLength, format, levels, enableRenderSurfaces) {
+  var textureCube = this.createObject('TextureCUBE');
+  textureCube.init_(edgeLength, format, levels, enableRenderSurfaces);
+  return textureCube;
+};
+
+
+/**
+ * Creates a new RenderDepthStencilSurface object of a format suitable for use
+ * as a depth-stencil render target.
+ * Note: The dimensions of the RenderDepthStencilSurface must be a power of
+ *     two.
+ *
+ * @param {number} width The width of the RenderSurface in pixels
+ * @param {number} height The height of the RenderSurface in pixels
+ * @return {!o3d.RenderDepthStencilSurface}  The RenderSurface object.
+ */
+o3d.Pack.prototype.createDepthStencilSurface =
+    function(width, height) {
+  var surface = this.createObject("RenderDepthStencilSurface");
+  surface.initWithSize_(width, height);
+  return surface;
+};
+
+
+/**
+ * Search the pack for all objects of a certain class with a certain name.
+ *
+ * Note that modifications to this array [e.g. push()] will not affect
+ * the underlying Pack, while modifications to the array's members
+ * will affect them.
+ *
+ * @param {string} name Name to look for
+ * @param {string} class_type_name the Class of the object. It is okay
+ *     to pass base types for example "o3d.RenderNode" will return
+ *     ClearBuffers, DrawPasses, etc...
+ * @return {!Array.<!o3d.ObjectBase>}  Array of Objects.
+ */
+o3d.Pack.prototype.getObjects =
+    function(name, class_type_name) {
+  class_type_name = o3d.filterTypeName_(class_type_name);
+
+  var found = [];
+
+  for (var i = 0; i < this.objects_.length; ++i) {
+    var object = this.objects_[i];
+    if (object.isAClassName(class_type_name) &&
+        object.name == name) {
+      found.push(object);
+    }
+  }
+
+  return found;
+};
+
+
+/**
+ * Search the pack for all objects of a certain class
+ *
+ * Note that modifications to this array [e.g. push()] will not affect
+ * the underlying Pack, while modifications to the array's members
+ * will affect them.
+ *
+ * @param {string} class_type_name the Class of the object. It is
+ *     okay to pass base types for example "o3d.RenderNode" will return
+ *     ClearBuffers, DrawPasses, etc...
+ * @return {!Array.<!o3d.ObjectBase>}  Array of Objects.
+ */
+o3d.Pack.prototype.getObjectsByClassName =
+    function(class_type_name) {
+  class_type_name = o3d.filterTypeName_(class_type_name);
+
+  var found = [];
+
+  for (var i = 0; i < this.objects_.length; ++i) {
+    var object = this.objects_[i];
+    if (object.isAClassName(class_type_name)) {
+      found.push(object);
+    }
+  }
+
+  return found;
+};
+
+
+/**
+ * All the objects managed by this pack.
+ *
+ * Each access to this field gets the entire list so it is best to get it
+ * just once. For example:
+ *
+ * var objects = pack.objects;
+ * for (var i = 0; i < objects.length; i++) {
+ *   var object = objects[i];
+ * }
+ *
+ *
+ * Note that modifications to this array [e.g. push()] will not affect
+ * the underlying Pack, while modifications to the array's members
+ * will affect them.
+ */
+o3d.Pack.prototype.objects_ = [];
+
+
+/**
+ * Creates a FileRequest to be used to asynchronously load a Texture or
+ * RawData. Note: Loading a "TEXTURE" is deprecated. The recommended way to
+ * load a texture is to load a RawData, use that to create Bitmap, Massage
+ * the Bitmap to your liking the use that to create a Texture.
+ * @param {string} type Must be "TEXTURE" or "RAWDATA"
+ * @return {!o3d.FileRequest}  a FileRequest
+ */
+o3d.Pack.prototype.createFileRequest =
+    function(type) {
+  return this.createObject('FileRequest');
+};
+
+/**
+ * Creates an ArchiveRequest so we can stream in assets from an archive.
+ * @return {!o3d.ArchiveRequest}  an ArchiveRequest
+ */
+o3d.Pack.prototype.createArchiveRequest =
+    function() {
+  return this.createObject('ArchiveRequest');
+};
+
+/**
+ * Create Bitmaps from RawData.
+ *
+ * If you load a cube map you'll get an array of 6 Bitmaps.
+ * If you load a volume map you'll get an array of n Bitmaps.
+ * If there is an error you'll get an empty array.
+ *
+ * @param {!o3d.RawData} raw_data contains the bitmap data in a supported
+ *     format.
+ * @return {!Array.<!o3d.Bitmap>}  An Array of Bitmaps object.
+ */
+o3d.Pack.prototype.createBitmapsFromRawData =
+    function(raw_data) {
+  var bitmap = this.createObject('Bitmap')
+  if (!raw_data.image_) {
+    throw ('Cannot create bitmap from non-image data.');
+    return [];
+  }
+  bitmap.height = raw_data.image_.height;
+  bitmap.width = raw_data.image_.width;
+
+  var canvas = document.createElement('CANVAS');
+
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  var context = canvas.getContext('2d');
+  context.drawImage(raw_data.image_,
+      0, 0, bitmap.width, bitmap.height);
+
+  bitmap.canvas_ = canvas;
+  // Most images require a vertical flip.
+  bitmap.flipVerticallyLazily_();
+
+  // TODO(petersont): Find out if any other formats are possible at this point.
+  bitmap.format = o3d.Texture.ARGB8;
+  bitmap.numMipmaps = 1;
+
+  return [bitmap];
+};
+
+
+/**
+ * Create RawData given a data URL.
+ * @param {string} data_url The data URL from which to create the RawData.
+ * @return {!o3d.RawData}  The RawData.
+ */
+o3d.Pack.prototype.createRawDataFromDataURL =
+    function(data_url) {
+  o3d.notImplemented();
+};
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * Creates BoundingBox from minExtent and maxExtent
+ * @param {!o3d.math.Point3} opt_minExtent optional minimum extent of the box.
+ * @param {!o3d.math.Point3} opt_maxExtent optional maximum extent of the box.
+ * @constructor
+ */
+o3d.BoundingBox =
+    function(opt_minExtent, opt_maxExtent) {
+  o3d.ParamObject.call(this);
+  var minExtent = opt_minExtent || [0, 0, 0];
+  var maxExtent = opt_maxExtent || [0, 0, 0];
+
+  this.minExtent = [minExtent[0], minExtent[1], minExtent[2]];
+  this.maxExtent = [maxExtent[0], maxExtent[1], maxExtent[2]];
+
+  // If there were extents passed in, that validates the box.
+  if (opt_minExtent && opt_maxExtent) {
+    this.valid = true;
+  }
+};
+o3d.inherit('BoundingBox', 'ParamObject');
+
+
+/**
+ * Computes a list of 8 3-dimensional vectors for the corners of the box.
+ * @return {!Array.<Array<numbers>>} The list of corners.
+ */
+o3d.BoundingBox.prototype.corners_ = function() {
+  var result = [];
+  var m = [this.minExtent, this.maxExtent];
+  for (var i = 0; i < 2; ++i) {
+    for (var j = 0; j < 2; ++j) {
+      for (var k = 0; k < 2; ++k) {
+        result.push([m[i][0], m[j][1], m[k][2]]);
+      }
+    }
+  }
+
+  return result;
+};
+
+
+/**
+ * Computes the smallest bounding box containing all the points in the given
+ * list, and either modifies the optional box passed in to match, or returns
+ * that box as a new box.
+ * @param {!Array.<Array<numbers>>} points A non-empty list of points.
+ * @param {o3d.BoundingBox} opt_targetBox Optional box to modify instead of
+ *     returning a new box.
+ * @private
+ */
+o3d.BoundingBox.fitBoxToPoints_ = function(points, opt_targetBox) {
+  var target = opt_targetBox || new o3d.BoundingBox();
+  for (var index = 0; index < 3; ++index) {
+    target.maxExtent[index] = target.minExtent[index] = points[0][index];
+    for (var i = 1; i < points.length; ++i) {
+      var point = points[i];
+      target.minExtent[index] = Math.min(target.minExtent[index], point[index]);
+      target.maxExtent[index] = Math.max(target.maxExtent[index], point[index]);
+    }
+  }
+  target.valid = true;
+  return target;
+};
+
+
+/**
+ * True if this boundingbox has been initialized.
+ * @type {boolean}
+ */
+o3d.BoundingBox.prototype.valid = false;
+
+
+/**
+ * The min extent of the box.
+ * @type {!o3d.math.Point3}
+ */
+o3d.BoundingBox.prototype.minExtent = [0, 0, 0];
+
+
+/**
+ * The max extent of the box.
+ * @type {!o3d.math.Point3}
+ */
+o3d.BoundingBox.prototype.maxExtent = [0, 0, 0];
+
+
+/**
+ * Multiplies the bounding box by the given matrix returning a new bounding
+ * box.
+ * @param {!o3d.math.Matrix4} matrix The matrix to multiply by.
+ * @return {!o3d.BoundingBox}  The new bounding box.
+ */
+o3d.BoundingBox.prototype.mul =
+    function(matrix) {
+  var corners = this.corners_();
+  var new_corners = [];
+
+  for (var i = 0; i < corners.length; ++i) {
+    new_corners.push(o3d.Transform.transformPoint(matrix, corners[i]));
+  }
+
+  return o3d.BoundingBox.fitBoxToPoints_(new_corners);
+};
+
+
+/**
+ * Adds a bounding box to this bounding box returning a bounding box that
+ * encompases both.
+ * @param {!o3d.BoundingBox} box BoundingBox to add to this BoundingBox.
+ * @return {!o3d.BoundingBox}  The new bounding box.
+ */
+o3d.BoundingBox.prototype.add =
+    function(box) {
+  return new o3d.BoundingBox(
+    [Math.min(box.minExtent[0], this.minExtent[0]),
+     Math.min(box.minExtent[1], this.minExtent[1]),
+     Math.min(box.minExtent[2], this.minExtent[2])],
+    [Math.max(box.maxExtent[0], this.maxExtent[0]),
+     Math.max(box.maxExtent[1], this.maxExtent[1]),
+     Math.max(box.maxExtent[2], this.maxExtent[2])]);
+};
+
+
+/**
+ * Checks if a ray defined in same coordinate system as this box intersects
+ * this bounding box.
+ * @param {!o3d.math.Point3} start position of start of ray in local space.
+ * @param {!o3d.math.Point3} end position of end of ray in local space.
+ * @return {!o3d.RayIntersectionInfo}  RayIntersectionInfo. If result.value
+ *     is false then something was wrong like using this function with an
+ *     uninitialized bounding box. If result.intersected is true then the ray
+ *     intersected the box and result.position is the exact point of
+ *     intersection.
+ */
+o3d.BoundingBox.prototype.intersectRay =
+    function(start, end) {
+  // If there are six arguments, assume they are the coordinates of two points.
+  if (arguments.length == 6) {
+    start = [arguments[0], arguments[1], arguments[2]];
+    end = [arguments[3], arguments[4], arguments[5]];
+  }
+
+  var result = new o3d.RayIntersectionInfo;
+
+  if (this.valid) {
+    result.valid = true;
+    result.intersected = true;  // True until proven false.
+
+    var kNumberOfDimensions = 3;
+    var kRight = 0;
+    var kLeft = 1;
+    var kMiddle = 2;
+
+    var direction = [end[0] - start[0], end[1] - start[1], end[2] - start[2]];
+    var coord = [0, 0, 0];
+    var inside = true;
+
+    var quadrant = [];
+    var max_t = [];
+    var candidate_plane = [];
+
+    for (var i = 0; i < kNumberOfDimensions; ++i) {
+      quadrant.push(0.0);
+      max_t.push(0.0);
+      candidate_plane.push(0,0);
+    }
+
+    var which_plane;
+
+    // Find candidate planes; this loop can be avoided if rays cast all from
+    // the eye (assumes perpsective view).
+    for (var i = 0; i < kNumberOfDimensions; ++i) {
+      if (start[i] < this.minExtent[i]) {
+        quadrant[i] = kLeft;
+        candidate_plane[i] = this.minExtent[i];
+        inside = false;
+      } else if (start[i] >  this.maxExtent[i]) {
+        quadrant[i] = kRight;
+        candidate_plane[i] =  this.maxExtent[i];
+        inside = false;
+      } else  {
+        quadrant[i] = kMiddle;
+      }
+    }
+
+    // Ray origin inside bounding box.
+    if (inside) {
+      result.position = start;
+      result.inside = true;
+    } else {
+      // Calculate T distances to candidate planes.
+      for (var i = 0; i < kNumberOfDimensions; ++i) {
+        if (quadrant[i] != kMiddle && direction[i] != 0.0) {
+          max_t[i] = (candidate_plane[i] - start[i]) / direction[i];
+        } else {
+          max_t[i] = -1.0;
+        }
+      }
+
+      // Get largest of the max_t's for final choice of intersection.
+      which_plane = 0;
+      for (var i = 1; i < kNumberOfDimensions; ++i) {
+        if (max_t[which_plane] < max_t[i]) {
+          which_plane = i;
+        }
+      }
+
+      // Check final candidate actually inside box.
+      if (max_t[which_plane] < 0.0) {
+        result.intersected = false;
+      } else {
+        for (var i = 0; i < kNumberOfDimensions; ++i) {
+          if (which_plane != i) {
+            coord[i] = start[i] + max_t[which_plane] * direction[i];
+            if (coord[i] < this.minExtent[i] || coord[i] > this.maxExtent[i]) {
+              result.intersected = false;
+              break;
+            }
+          } else {
+            coord[i] = candidate_plane[i];
+          }
+        }
+
+        // Ray hits box.
+        result.position = coord;
+      }
+    }
+  }
+
+  return result;
+};
+
+
+/**
+ * Returns true if the bounding box is inside the frustum matrix.
+ * It checks all 8 corners of the bounding box against the 6 frustum planes
+ * and determines whether there's at least one plane for which all 6 points lie
+ * on the outside side of it.  In that case it reports that the bounding box
+ * is outside the frustum.  Note that this is a conservative check in that
+ * it in certain cases it will report that a box is in the frustum even if it
+ * really isn't.  However if it reports that the box is outside then it's
+ * guaranteed to be outside.
+ * @param {!o3d.math.Matrix4} matrix Matrix to transform the box from its
+ *     local space to view frustum space.
+ * @return {boolean} True if the box is in the frustum.
+ */
+o3d.BoundingBox.prototype.inFrustum =
+    function(matrix) {
+  var corners = this.corners_();
+  var bb_test = 0x3f;
+  for (var i = 0; i < corners.length; ++i) {
+    var corner = corners[i];
+    var p = o3d.Transform.transformPoint(matrix, corner);
+    bb_test &= (((p[0] > 1.0) << 0) |
+                ((p[0] < -1.0) << 1) |
+                ((p[1] > 1.0) << 2) |
+                ((p[1] < -1.0) << 3) |
+                ((p[2] > 1.0) << 4) |
+                ((p[2] < 0.0) << 5));
+    if (bb_test == 0) {
+      return true;
+    }
+  }
+
+  return (bb_test == 0);
+};
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A DrawElement causes an Element to be Drawn with a particular material.
+ * You can override other Effect parameters by adding corresponding params to
+ * the DrawElement.
+ *
+ * @param {!o3d.Material} opt_material The material used to render this element.
+ * @constructor
+ */
+o3d.DrawElement = function(opt_material) {
+  o3d.ParamObject.call(this);
+
+  /**
+   * The Material for this DrawElement. If it is null the material of
+   * owner will be used.
+   * @type {o3d.Material}
+   */
+  this.material = opt_material || null;
+
+  /**
+   * The current owner of this Draw Element. Set to null to stop being owned.
+   *
+   * Note: DrawElements are referenced by the Pack they are created in
+   * and their owner. If the DrawElement is removed from its Pack then
+   * setting the owner to null will free the DrawElement. Or, visa
+   * versa, if you set the DrawElement's owner to null then removing
+   * it from its Pack will free the DrawElement.
+   * @type {o3d.Element}
+   */
+  this.owner_ = null;
+};
+o3d.inherit('DrawElement', 'ParamObject');
+
+o3d.ParamObject.setUpO3DParam_(o3d.DrawElement, 'material', 'ParamMaterial');
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * An Element manages DrawElements for classes inherited from Element.
+ *
+ * @param {!o3d.Material} opt_material The Material used by this Element.
+ * @param {!o3d.BoundingBox} opt_boundingBox The BoundingBox used by this
+ *     Element for culling.
+ * @param {!o3d.Point3} opt_zSortPoint The point to sort by when rendering
+ *     this Element in a z ordered DrawPass.
+ * @param {boolean} opt_cull Whether or not to attempt to cull this
+ *     Element based on whether or not its bounding box is in the view
+ *     frustum.
+ * @constructor
+ */
+o3d.Element =
+    function(opt_material, opt_boundingBox, opt_zSortPoint, opt_cull) {
+  o3d.ParamObject.call(this);
+
+  /**
+   * The Material for this element.
+   * @type {o3d.Material}
+   */
+  this.material = opt_material;
+
+  /**
+   * The BoundingBox for this element. If culling is on this bounding
+   * box will be tested against the view frustum of any draw context
+   * used to render this Element.
+   * @type {o3d.BoundingBox}
+   */
+  this.boundingBox = opt_boundingBox ||
+      new o3d.BoundingBox([-1, -1, -1], [1, 1, 1]);
+
+  /**
+   * The z sort point for this element. If this Element is drawn by a DrawPass
+   * that is set to sort by z order this value will be multiplied by the
+   * worldViewProjection matrix to compute a z value to sort by.
+   * @type {o3d.Point3}
+   */
+  this.zSortPoint = opt_zSortPoint || [0, 0, 0];
+
+  /**
+   * The priority for this element. Used to sort if this Element is drawn by a
+   * DrawPass that is set to sort by priority.
+   * @type {number}
+   */
+  this.priority = 0;
+
+  /**
+   * The cull settings for this element. If true this Element will be
+   * culled by the bounding box above compared to the view frustum it
+   * is being rendered with.
+   *
+   * @type {boolean}
+   */
+  this.cull = opt_cull || false;
+
+  /**
+   * The current owner of this Draw Element. Pass in null to stop
+   * being owned.
+   *
+   * Note: Elements are referenced by the Pack they are created in and
+   * their owner. If the Element is removed from its Pack, then
+   * setting the owner to null will free the Element. Or, visa versa,
+   * if you set the Element's owner to null then removing it from its
+   * Pack will free the Element.
+   *
+   * @type {o3d.Element}
+   */
+  this.owner_ = null;
+
+  /**
+   * Gets all the DrawElements under this Element.
+   *
+   * Each access to this field gets the entire list so it is best to get it
+   * just once. For example:
+   *
+   * var drawElements = element.drawElements;
+   * for (var i = 0; i < drawElements.length; i++) {
+   *   var drawElement = drawElements[i];
+   * }
+   *
+   *
+   * Note that modifications to this array [e.g. push()] will not affect
+   * the underlying Element, while modifications to the members of the array.
+   * will affect them.
+   *
+   * @type {!Array.<!o3d.DrawElement>}
+   */
+  this.drawElements = [];
+};
+o3d.inherit('Element', 'ParamObject');
+
+o3d.ParamObject.setUpO3DParam_(o3d.Element, 'material', 'ParamMaterial');
+o3d.ParamObject.setUpO3DParam_(o3d.Element, 'boundingBox', 'ParamBoundingBox');
+o3d.ParamObject.setUpO3DParam_(o3d.Element, 'zSortPoint', 'ParamFloat3');
+o3d.ParamObject.setUpO3DParam_(o3d.Element, 'priority', 'ParamFloat');
+o3d.ParamObject.setUpO3DParam_(o3d.Element, 'cull', 'ParamBoolean');
+
+o3d.Element.prototype.__defineSetter__('owner',
+    function(o) {
+      this.owner_ = o;
+      o.addElement(this);
+    }
+);
+
+o3d.Element.prototype.__defineGetter__('owner',
+    function() {
+      return this.owner_;
+    }
+);
+
+/**
+ * Creates a DrawElement for this Element. Note that unlike
+ * Shape.createDrawElements and Transform.createDrawElements this one will
+ * create more than one element for the same material.
+ *
+ * @param {!o3d.Pack} pack pack used to manage created DrawElement.
+ * @param {!o3d.Material} material material to use for DrawElement.
+ *     Note: When a DrawElement with a material of null is rendered, the
+ *     material on the corresponding Element will get used instead.
+ *     This allows you to easily setup the default (just draw as is) by passing
+ *     null or setup a shadow pass by passing in a shadow material.
+ * @return {!o3d.DrawElement} The created draw element.
+ */
+o3d.Element.prototype.createDrawElement =
+    function(pack, material) {
+  drawElement = pack.createObject('DrawElement');
+  drawElement.owner = this;
+  drawElement.material = material;
+  this.drawElements.push(drawElement);
+  return drawElement;
+};
+
+
+/**
+ * Computes the intersection of a ray in the same coordinate system as
+ * the specified POSITION stream.
+ * @param {number} position_stream_index Index of POSITION stream.
+ * @param {o3d.Cull} cull which side of the triangles to ignore.
+ * @param {!o3d.math.Point3} start position of start of ray in local space.
+ * @param {!o3d.math.Point3} end position of end of ray. in local space.
+ * @return {!o3d.RayIntersectionInfo}  RayIntersectionInfo class. If valid()
+ *     is false then something was wrong, Check GetLastError(). If
+ *     intersected() is true then the ray intersected a something. position()
+ *     is the exact point of intersection.
+ */
+o3d.Element.prototype.intersectRay =
+    function(position_stream_index, cull, start, end) {
+  o3d.notImplemented();
+};
+
+
+/**
+ * Computes the bounding box in same coordinate system as the specified
+ * POSITION stream.
+ * @param {number} position_stream_index Index of POSITION stream.
+ * @return {!o3d.BoundingBox}  The boundingbox for this element in local space.
+ */
+o3d.Element.prototype.getBoundingBox =
+    function(position_stream_index) {
+  return this.boundingBox;
+};
+
+
+/**
+ * Virtual function that renders the element.
+ */
+o3d.Element.prototype.render = function() { };
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A Field is a base class that manages a set of components in a
+ * Buffer of a specific type. Fields are managed by Buffers and can not be
+ * directly created. When a Buffer is destroyed or if a Field is removed from a
+ * Buffer the Field's buffer property will be set to null.
+ * @constructor
+ */
+o3d.Field = function() {
+  o3d.NamedObject.call(this);
+};
+o3d.inherit('Field', 'NamedObject');
+
+/**
+ * The number of components in this field.
+ * @type {number}
+ */
+o3d.Field.prototype.numComponents = 0;
+
+
+/**
+ * The Buffer the field belongs to.
+ * @type {o3d.Buffer}
+ */
+o3d.Field.prototype.buffer = null;
+
+
+/**
+ * The offset of this field in the Buffer.
+ * @type {number}
+ */
+o3d.Field.prototype.offset_ = 0;
+
+
+/**
+ * The size of one element of this field.
+ * @type {number}
+ */
+o3d.Field.prototype.size = 0;
+
+
+/**
+ * Sets the values of the data stored in the field.
+ *
+ * The buffer for the field  must have already been created either through
+ * buffer.set or through buffer.allocateElements.
+ *
+ * The number of values passed in must be a multiple of the number of
+ * components needed for the field.
+ *
+ * @param {number} start_index index of first value to set.
+ * @param {!Array.<number>} values Values to be stored in the buffer starting at
+ *     index.
+ */
+o3d.Field.prototype.setAt =
+    function(start_index, values) {
+  this.buffer.lock();
+  var l = values.length / this.numComponents;
+  for (var i = 0; i < l; ++i) {
+    for (var c = 0; c < this.numComponents; ++c) {
+      this.buffer.array_[
+          (start_index + i) * this.buffer.totalComponents + this.offset_ + c] =
+              values[this.numComponents * i + c];
+    }
+  }
+  this.buffer.unlock();
+  return true;
+};
+
+
+/**
+ * Gets the values stored in the field.
+ *
+ * @param {number} start_index index of the first value to get.
+ * @param {number} num_elements number of elements to read from field.
+ * @return {!Array.<number>}  The values of the field.
+ */
+o3d.Field.prototype.getAt =
+    function(start_index, num_elements) {
+  return this.buffer.getAtHelper_(start_index, num_elements, this.offset_,
+      this.numComponents);
+};
+
+
+
+/**
+ * A field that contains floating point numbers.
+ * @constructor
+ */
+o3d.FloatField = function() {
+  o3d.Field.call(this);
+};
+o3d.inherit('FloatField', 'Field');
+
+/**
+ * A field that contains unsigned integers.
+ * @constructor
+ */
+o3d.UInt32Field = function() {
+  o3d.Field.call(this);
+};
+o3d.inherit('UInt32Field', 'Field');
+
+/**
+ * A field that contains unsigned bytes.
+ * @constructor
+ */
+o3d.UByteNField = function() {
+  o3d.Field.call(this);
+};
+o3d.inherit('UByteNField', 'Field');
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * The Buffer object is a low level container for a flat list of
+ * floating point or integer values. These are currently used to define
+ * geometry.
+ * @constructor
+ */
+o3d.Buffer = function() {
+  this.fields = [];
+  this.array_ = null;
+};
+o3d.inherit('Buffer', 'NamedObject');
+
+
+/**
+ * The fields currently set on the buffer.
+ * @type {!Array.<o3d.Field>}
+ */
+o3d.Buffer.prototype.fields = [];
+
+
+/**
+ * Total number of components.
+ * @type {number}
+ */
+o3d.Buffer.prototype.totalComponents = 0;
+
+/**
+ * Index of the corresponding gl buffer object.
+ * @type {number}
+ */
+o3d.Buffer.prototype.gl_buffer_ = 0;
+
+/**
+ * Function to create an array for the buffer.
+ * @param {number} numElements
+ * @return {!Float32Array}
+ */
+o3d.Buffer.prototype.createArray = function(numElements) {
+  return new Float32Array(numElements);
+};
+
+o3d.Buffer.prototype.__defineGetter__('numElements',
+    function() {
+      return (!this.array_) ? 0 : this.array_.length / this.totalComponents;
+    }
+);
+
+/**
+ * Computes and stores the correct total components from the
+ * fields so far.
+ */
+o3d.Buffer.prototype.updateTotalComponents_ = function() {
+  var total = 0;
+  for (var i = 0; i < this.fields.length; ++i) {
+    this.fields[i].offset_ = total;
+    total += this.fields[i].numComponents;
+  }
+  this.totalComponents = total;
+};
+
+/**
+ * Allocates memory for the data to be stored in the buffer based on
+ * the types of fields set on the buffer.
+ *
+ * @param {number} numElements Number of elements to allocate..
+ * @return {boolean}  True if operation was successful.
+ */
+o3d.Buffer.prototype.allocateElements =
+    function(numElements) {
+  this.updateTotalComponents_();
+  this.resize(numElements * this.totalComponents);
+};
+
+/**
+ * Reallocate the array element to have the given number of elements.
+ * @param {number} numElements The new number of elements.
+ */
+o3d.Buffer.prototype.resize = function(numElements) {
+  this.gl_buffer_ = this.gl.createBuffer();
+  // Callers (in particular the deserializer) occasionally call this
+  // with floating-point numbers.
+  this.array_ = this.createArray(Math.floor(numElements));
+};
+
+/**
+ * Defines a field on this buffer.
+ *
+ * Note: Creating a field after having allocated the buffer is an expensive
+ * operation as the data currently in the buffer has to be shuffled around
+ * to make room for the new field.
+ *
+ * @param {string} field_type type of data in the field. Valid types
+ *     are "FloatField", "UInt32Field", and "UByteNField".
+ * @param {number} num_components number of components in the field.
+ * @return {!o3d.Field}  The created field.
+ */
+o3d.Buffer.prototype.createField =
+    function(fieldType, numComponents) {
+  // Check if array has already been allocated. If so, we need to reshuffle
+  // the data currently stored.
+  var alreadyAllocated = this.array_ && this.array_.length > 0;
+  var savedData = [];
+  var numElements = this.numElements;
+
+  // Make copies of the existing field data.
+  if (alreadyAllocated) {
+    for (var i = 0; i < this.fields.length; i++) {
+      savedData[i] = this.fields[i].getAt(0, numElements);
+    }
+  }
+
+  // Create the new field.
+  var f = new o3d.Field();
+  f.buffer = this;
+  f.numComponents = numComponents;
+  f.size = numComponents * (fieldType=='UByteNField' ? 1 : 4);
+  this.fields.push(f);
+  this.updateTotalComponents_();
+
+  // Resize the buffer with the new field, and replace data.
+  if (alreadyAllocated) {
+    this.allocateElements(numElements);
+    for (var i = 0; i < this.fields.length; i++) {
+      var fieldData = savedData[i];
+      if (fieldData) {
+        this.fields[i].setAt(0, fieldData);
+      }
+    }
+  }
+
+  return f;
+};
+
+
+/**
+ * Removes a field from this buffer.
+ *
+ * Note: Removing a field after having allocated the buffer is an expensive
+ * operation as the data currently in the buffer has to be shuffled around
+ * to remove the old field.
+ *
+ * @param {!o3d.Field} field field to remove.
+ */
+o3d.Buffer.prototype.removeField =
+    function(field) {
+  o3d.removeFromArray(this.fields, field);
+  // TODO(petersont): Have this function actually shuffle the buffer around to
+  // remove the field properly.
+  this.updateTotalComponents_();
+};
+
+
+/**
+ * Helper function for buffer's and field's getAt functions.  Gets elements in
+ * the buffer as an array.
+ * @param {number} start_index Index of the first element value to get.
+ * @param {number} num_elements the number of elements to get.
+ * @return {!Array.<number>}  An array of values.
+ */
+o3d.Buffer.prototype.getAtHelper_ =
+    function(start_index, num_elements, offset, num_components) {
+  var values = [];
+  for (var i = 0; i < num_elements; ++i) {
+    for (var c = 0; c < num_components; ++c) {
+      values.push(this.array_[(start_index + i) *
+          this.totalComponents + offset + c]);
+    }
+  }
+  return values;
+};
+
+
+/**
+ * Prepares the buffer for read/write.
+ */
+o3d.Buffer.prototype.lock = function() {
+  // For now, this doesn't need to do anything.
+};
+
+
+/**
+ * Delivers the buffer to the graphics hardware when read/write is finished.
+ */
+o3d.Buffer.prototype.unlock = function() {
+  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.gl_buffer_);
+  this.gl.bufferData(this.gl.ARRAY_BUFFER, this.array_, this.gl.STATIC_DRAW);
+};
+
+
+/**
+ * Sets the values in the buffer given array.
+ *
+ * @param {!Array.<number>} values contains data to assign to the Buffer
+ *     data itself.
+ * @return {boolean}  True if operation was successful.
+ */
+o3d.Buffer.prototype.set =
+    function(values) {
+  if (!values.length) {
+    o3d.notImplemented();
+  }
+  if (this.array_ == null || this.array_.length != values.length) {
+    this.resize(values.length);
+  }
+  this.lock();
+  for (var i = 0; i < values.length; ++i) {
+    this.array_[i] = values[i];
+  }
+  this.unlock();
+};
+
+
+/**
+ * VertexBufferBase is a the base class for both VertexBuffer and SourceBuffer
+ * @constructor
+ */
+o3d.VertexBufferBase = function() {
+  o3d.Buffer.call(this);
+};
+o3d.inherit('VertexBufferBase', 'Buffer');
+
+
+/**
+ * Gets a copy of the values of the data stored in the buffer.
+ * Modifying this copy has no effect on the buffer.
+ */
+o3d.VertexBufferBase.prototype.get = function() {
+  return this.getAtHelper_(0, this.numElements,
+      0, this.totalComponents);
+};
+
+
+/**
+ * Gets a copy of a sub range of the values in the data stored in the buffer.
+ * Modifying this copy has no effect on the buffer.
+ *
+ * @param {number} start_index index of the element value to get.
+ * @param {number} num_elements the number of elements to get.
+ * @return {!Array.<number>}  An array of values.
+ */
+o3d.VertexBufferBase.prototype.getAt =
+    function(start_index, num_elements) {
+  return this.getAtHelper_(start_index, num_elements, 0, this.totalComponents);
+};
+
+
+/**
+ * VertexBuffer is a Buffer object used for storing vertex data for geometry.
+ * (e.g. vertex positions, normals, colors, etc).
+ * A VertexBuffer can be rendered directly by the GPU.
+ * @constructor
+ */
+o3d.VertexBuffer = function() {
+  o3d.Buffer.call(this);
+};
+o3d.inherit('VertexBuffer', 'Buffer');
+
+/**
+ * The name of the class as a string.
+ * @type {string}
+ */
+o3d.VertexBuffer.prototype.className = "o3d.VertexBuffer";
+
+
+/**
+ * SourceBuffer is a Buffer object used for storing vertex data for
+ * geometry. (e.g. vertex positions, normals, colors, etc).
+ *
+ * A SourceBuffer is the source for operations like skinning and morph
+ * targets. It can not be directly rendered by the GPU.
+ * @constructor
+ */
+o3d.SourceBuffer = function() {
+  o3d.Buffer.call(this);
+};
+o3d.inherit('SourceBuffer', 'Buffer');
+
+
+/**
+ * IndexBuffer is a buffer object used for storing geometry index data (e.g.
+ * triangle indices).
+ * @constructor
+ */
+o3d.IndexBuffer = function() {
+  o3d.Buffer.call(this);
+};
+o3d.inherit('IndexBuffer', 'Buffer');
+
+
+/**
+ * Type of the array element.
+ * @type {!Uint16Array}
+ */
+o3d.IndexBuffer.prototype.createArray = function(numElements) {
+  return new Uint16Array(numElements);
+};
+
+/**
+ * Delivers the buffer to the graphics hardware when read/write is finished.
+ */
+o3d.IndexBuffer.prototype.unlock = function() {
+  this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.gl_buffer_);
+  this.gl.bufferData(
+      this.gl.ELEMENT_ARRAY_BUFFER, this.array_, this.gl.STATIC_DRAW);
+};
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * Namespace o3d
+ * @constructor
+ */
+o3d.Stream = function(semantic, semantic_index, field, start_index) {
+  o3d.NamedObject.call(this);
+  this.semantic = semantic;
+  this.semanticIndex = semantic_index;
+  this.field = field;
+  this.startIndex = start_index;
+};
+o3d.inherit('Stream', 'NamedObject');
+
+/**
+ * @type {number}
+ */
+o3d.Stream.Semantic = goog.typedef;
+
+/**
+ *  Semantic,
+ *  UNKNOWN_SEMANTIC = 0,
+ *  POSITION,
+ *  NORMAL,
+ *  TANGENT,
+ *  BINORMAL,
+ *  COLOR,
+ *  TEXCOORD,
+ *  INFLUENCE_WEIGHTS,
+ *  INFLUENCE_INDICES
+ *
+ * Semantics used when binding buffers to the streambank.  They determine how
+ * the Stream links up to the shader inputs.
+ */
+o3d.Stream.UNKNOWN_SEMANTIC = 0;
+o3d.Stream.POSITION = 1;
+o3d.Stream.NORMAL = 2;
+o3d.Stream.TANGENT = 3;
+o3d.Stream.BINORMAL = 4;
+o3d.Stream.COLOR = 5;
+o3d.Stream.TEXCOORD = 6;
+o3d.Stream.INFLUENCE_WEIGHTS = 7;
+o3d.Stream.INFLUENCE_INDICES = 8;
+
+
+
+/**
+ * The associated Field.
+ */
+o3d.Stream.prototype.field = null;
+
+
+
+/**
+ * The semantic specified for the Stream.
+ */
+o3d.Stream.prototype.semantic = o3d.Stream.UNKNOWN_SEMANTIC;
+
+
+
+/**
+ * The semantic index specified for the Stream
+ * (eg., TEXCOORD1 = 1, BINORMAL7 = 7, etc).
+ */
+o3d.Stream.prototype.semanticIndex = 0;
+
+
+
+/**
+ * The start index for the Stream.
+ */
+o3d.Stream.prototype.startIndex = 0;
+
+
+/**
+ * Gets the max number of vertices in this stream.
+ *
+ * @return {number} The maximum vertices available given the stream's settings
+ *     and its buffer.
+ * @private
+ */
+o3d.Stream.prototype.getMaxVertices_ = function() {
+  var buffer = this.field.buffer;
+  if (!buffer)
+    return 0;
+
+  var num_elements = buffer.numElements;
+  if (this.startIndex > num_elements)
+    return 0;
+
+  return num_elements - this.startIndex;
+};
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+ * A VertexSource is an object that allows binding Streams such that the
+ * VertexSource updates the Buffers of the Streams that have been bound to it.
+ * An example of a VertexSource object is a SkinEval
+ *
+ * @constructor
+ * @extends ParamObject
+ */
+o3d.VertexSource = function() {
+  o3d.ParamObject.call(this);
+};
+o3d.inherit('VertexSource', 'ParamObject');
+
+/**
+ * Bind the source stream to the corresponding stream in this VertexSource.
+ *
+ * @param {o3d.VertexSource} source Source to get vertices from.
+ * @param {o3d.Stream.Semantic} semantic The semantic of the vertices to get.
+ * @param {number} semantic_index The semantic index of the vertices to get.
+ * @return {boolean} True if success. False if failure. If the requested
+ *     semantic or semantic index do not exist on the source or this source
+ *     the bind will fail.
+ */
+o3d.VertexSource.prototype.bindStream = function(
+    source, semantic, semantic_index) {
+  if (source) {
+    var source_param = source.getVertexStreamParam(semantic, semantic_index);
+    var dest_param = this.getVertexStreamParam(semantic, semantic_index);
+    if (source_param && dest_param &&
+        source_param.stream.field.className ==
+            dest_param.stream.field.className &&
+        source_param.stream.field.numComponents ==
+        dest_param.stream.field.numComponents) {
+      dest_param.bind(source_param);
+      source.streamWasBound_(this, semantic, semantic_index);
+      return true;
+    }
+  }
+
+  return false;
+};
+
+/**
+ * Unbinds the requested stream.
+ *
+ * @param {o3d.Stream.Semantic} semantic The semantic of the vertices to unbind.
+ * @param {number} semantic_index The semantic index of the vertices to unbind.
+ * @return {boolean} True if unbound. False those vertices do not exist or were
+ *     not bound.
+ */
+o3d.VertexSource.prototype.unbindStream = function(semantic, semantic_index) {
+  var dest_param = this.getVertexStreamParam(semantic, semantic_index);
+  if (dest_param && dest_param.inputConnection != null) {
+    dest_param.unbindInput();
+    return true;
+  }
+  return false;
+};
+
+/**
+ * Used by bindStream. Each derived class must provide this function.
+ *
+ * @param {o3d.Stream.Semantic} semantic The semantic of the vertices to get.
+ * @param {number} semantic_index The semantic index of the vertices to get.
+ * @return {ParamVertexBufferStream} Returns the ParamVertexBufferStream that
+ *     manages the given stream as an output param for this VertexSource.
+ * @protected
+ */
+o3d.VertexSource.prototype.getVertexStreamParam = function(
+    semantic, semantic_index) {
+  o3d.notImplemented();
+};
+
+/**
+ * Used by bindStream. Derived classes may override if needed.
+ *
+ * @param {o3d.VertexSource} dest VertexSource that bound to this VertexSource.
+ * @param {o3d.ParamVertexBufferStream} dest_param Other param which was bound.
+ * @protected
+ */
+o3d.VertexSource.prototype.streamWasBound_ = function(
+    dest, semantic, semantic_index) {
+};
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * The StreamBank a collection of streams that hold vertices.
+ * @constructor
+ * @extends {o3d.VertexSource}
+ */
+o3d.StreamBank = function() {
+  o3d.VertexSource.call(this);
+  this.vertex_streams_ = [];
+};
+o3d.inherit('StreamBank', 'VertexSource');
+
+/**
+ * Array of streams.
+ */
+o3d.StreamBank.prototype.vertex_streams_ = [];
+
+o3d.StreamBank.prototype.__defineGetter__('vertexStreams',
+    function() {
+      var result = [];
+      for (var i = 0; i < this.vertex_streams_.length; ++i) {
+        var stream_array = this.vertex_streams_[i];
+        if (stream_array && stream_array.length) {
+          for (var j = 0; j < stream_array.length; ++j) {
+            var stream = stream_array[j];
+            if (stream) {
+              result.push(stream.stream);
+            }
+          }
+        }
+      }
+      return result;
+    }
+);
+
+
+/**
+ * Binds a VertexBuffer field to the StreamBank and defines how the data in
+ * the buffer should be interpreted. The field's buffer must be of a
+ * compatible type otherwise the binding fails and the function returns false.
+ * @param {o3d.Stream.Semantic} semantic The particular use of this stream.
+ * @param {number} semantic_index Which index of a particular semantic to use.
+ * @param {o3d.Field} field The field containing information for this stream.
+ * @param {number} start_index The first element to use.
+ * @return {boolean}  True if successful.
+ */
+o3d.StreamBank.prototype.setVertexStream =
+    function(semantic, semantic_index, field, start_index) {
+  if (this.vertex_streams_[semantic] == undefined) {
+    this.vertex_streams_[semantic] = [];
+  }
+  var stream = new o3d.Stream(semantic, semantic_index, field, start_index);
+  var stream_param = new o3d.ParamVertexBufferStream;
+  stream_param.stream = stream;
+  stream_param.owner_ = this;
+  this.vertex_streams_[semantic][semantic_index] = stream_param;
+};
+
+
+/**
+ * Searches the vertex streams bound to the StreamBank for one with the given
+ * stream semantic.  If a stream is not found then it returns null.
+ * @param {o3d.Stream.Semantic} semantic The particular use of this stream.
+ * @param {number} semantic_index Which index of a particular semantic to use.
+ * @return {o3d.Stream}  The found stream or null if it does not exist.
+ */
+o3d.StreamBank.prototype.getVertexStream =
+    function(semantic, semantic_index) {
+  if (this.vertex_streams_[semantic] == undefined) {
+    return null;
+  }
+  if (!this.vertex_streams_[semantic][semantic_index]) {
+    return null;
+  }
+  return this.vertex_streams_[semantic][semantic_index].stream;
+};
+
+
+/**
+ * Searches the vertex streams bound to the StreamBank for one with the given
+ * stream semantic.  If a stream is not found then it returns null.
+ * @param {o3d.Stream.Semantic} semantic The particular use of this stream.
+ * @param {number} semantic_index Which index of a particular semantic to use.
+ * @return {o3d.ParamVertexBufferStream}  The found stream param or null if it
+ *     does not exist.
+ * @override
+ * @protected
+ */
+o3d.StreamBank.prototype.getVertexStreamParam =
+    function(semantic, semantic_index) {
+  if (this.vertex_streams_[semantic] == undefined) {
+    return null;
+  }
+  return this.vertex_streams_[semantic][semantic_index];
+};
+
+
+/**
+ * Removes a vertex stream from this StreamBank.
+ * @param {o3d.Stream.Semantic} semantic The particular use of this stream.
+ * @param {o3d.Stream.Semantic} semantic_index Which index of a particular
+ *     semantic to use.
+ * @return {boolean}  true if the specified stream existed.
+ */
+o3d.StreamBank.prototype.removeVertexStream =
+    function(semantic, semantic_index) {
+  if (this.vertex_streams_[semantic] == undefined) {
+    return false;
+  }
+  delete this.vertex_streams_[semantic][semantic_index];
+  return true;
+};
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A Primitive is a type of Element that is made from a list of points,
+ * lines or triangles that use a single material.
+ *
+ * @param opt_streamBank o3d.StreamBank The StreamBank used by this
+ *     Primitive.
+ * @constructor
+ */
+o3d.Primitive = function(opt_streamBank) {
+  o3d.Element.call(this);
+
+  /**
+   * The index buffer for the primitive. If null the primitive is non-indexed.
+   * @type {o3d.IndexBuffer}
+   */
+  this.indexBuffer = null;
+
+  /**
+   * The stream bank this primitive uses for vertices.
+   * @type {o3d.StreamBank}
+   */
+  this.streamBank = opt_streamBank || null;
+
+  /**
+   * The type of primitive the primitive is (i.e., POINTLIST, LINELIST,
+   * TRIANGLELIST, etc.)
+   *
+   * @type {o3d.Primitive.Type}
+   */
+  this.primitiveType = o3d.Primitive.TRIANGLELIST;
+
+  /**
+   * The number of vertices the primitive has.
+   *
+   * @type {number}
+   */
+  this.numberVertices = 0;
+
+  /**
+   * The number of rendering primitives (i.e., triangles, points, lines) the
+   * primitive has.
+   *
+   * @type {number}
+   */
+  this.numberPrimitives = 0;
+
+  /**
+   * The index of the first vertex to render.
+   *
+   * @type {number}
+   */
+  this.startIndex = 0;
+
+  /**
+   * The index buffer for the wireframe version of the primitive.
+   * @type {o3d.IndexBuffer}
+   * @private
+   */
+  this.wireframeIndexBuffer_ = null;
+};
+o3d.inherit('Primitive', 'Element');
+
+
+/**
+ * @type {number}
+ */
+o3d.Primitive.Type = goog.typedef;
+
+/**
+ * Type of geometric primitives used by the Primitive.
+ */
+o3d.Primitive.POINTLIST = 1;
+o3d.Primitive.LINELIST = 2;
+o3d.Primitive.LINESTRIP = 3;
+o3d.Primitive.TRIANGLELIST = 4;
+o3d.Primitive.TRIANGLESTRIP = 5;
+o3d.Primitive.TRIANGLEFAN = 6;
+
+o3d.ParamObject.setUpO3DParam_(o3d.Primitive, 'streamBank', 'ParamStreamBank');
+
+/**
+ * Binds the vertex and index streams required to draw the shape.
+ */
+o3d.Primitive.prototype.render = function() {
+  var streamBank = this.streamBank;
+  var indexBuffer = this.indexBuffer;
+
+  var enabled_attribs = [];
+
+  for (var semantic = 0;
+       semantic < streamBank.vertex_streams_.length;
+       ++semantic) {
+    var streams = streamBank.vertex_streams_[semantic];
+    if (streams && streams.length) {
+      for (var semantic_index = 0;
+           semantic_index < streams.length;
+           ++semantic_index) {
+        var gl_index = o3d.Effect.reverseSemanticMap_[semantic][semantic_index];
+        var stream = streams[semantic_index].stream;
+        var field = stream.field;
+        var buffer = field.buffer;
+
+        if (gl_index == undefined) {
+          this.gl.client.error_callback('uknown semantic');
+        }
+
+        var stream_param = streams[semantic_index];
+        while (!stream_param.owner_.updateStreams &&
+               stream_param.inputConnection) {
+          stream_param = stream_param.inputConnection;
+        }
+        if (stream_param.owner_.updateStreams) {
+          // By now, stream_param should point to the SkinEval's streams.
+          stream_param.owner_.updateStreams();  // Triggers updating.
+        }
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.gl_buffer_);
+        this.gl.enableVertexAttribArray(gl_index);
+        enabled_attribs.push(gl_index);
+
+        var kFloatSize = Float32Array.BYTES_PER_ELEMENT;
+
+        this.gl.vertexAttribPointer(
+            gl_index, field.numComponents, this.gl.FLOAT, false,
+            buffer.totalComponents * kFloatSize, field.offset_ * kFloatSize);
+      }
+    }
+  }
+
+  this.gl.client.render_stats_['primitivesRendered'] += this.numberPrimitives;
+
+  var glMode;
+  var glNumElements;
+
+  switch (this.primitiveType) {
+    case o3d.Primitive.POINTLIST:
+      glMode = this.gl.POINTS;
+      glNumElements = this.numberPrimitives;
+      break;
+    case o3d.Primitive.LINELIST:
+      glMode = this.gl.LINES;
+      glNumElements = this.numberPrimitives * 2;
+      break;
+    case o3d.Primitive.LINESTRIP:
+      glMode = this.gl.LINE_STRIP;
+      glNumElements = this.numberPrimitives + 1;
+      break;
+    case o3d.Primitive.TRIANGLELIST:
+      glMode = this.gl.TRIANGLES;
+      glNumElements = this.numberPrimitives * 3;
+      break;
+    case o3d.Primitive.TRIANGLESTRIP:
+      glMode = this.gl.TRIANGLE_STRIP;
+      glNumElements = this.numberPrimitives + 2;
+      break;
+    case o3d.Primitive.TRIANGLEFAN:
+      glMode = this.gl.TRIANGLE_FAN;
+      glNumElements = this.numberPrimitives + 2;
+      break;
+    case o3d.Primitive.TRIANGLELIST:
+    default:
+      glMode = this.gl.TRIANGLES;
+      glNumElements = this.numberPrimitives * 3;
+      break;
+  }
+
+  var use_wireframe_indices = false;
+
+  if (this.gl.fillMode_ == o3d.State.POINT) {
+    // If the fill mode is points, then we just replace the gl primitive type
+    // with POINTS and let the (possibly redundant) list of points draw.
+    glMode = this.gl.POINTS;
+  } else if (this.gl.fillMode_ == o3d.State.WIREFRAME) {
+    // If the fill mode is lines, and the primitive type is some kind of
+    // triangle, then we need to reorder indices to draw the right thing.
+
+    if (this.primitiveType == o3d.Primitive.TRIANGLELIST ||
+        this.primitiveType == o3d.Primitive.TRIANGLEFAN ||
+        this.primitiveType == o3d.Primitive.TRIANGLESTRIP) {
+      use_wireframe_indices = true;
+      glMode = this.gl.LINES;
+      this.computeWireframeIndices_();
+    }
+  }
+
+  if (use_wireframe_indices) {
+    indexBuffer = this.wireframeIndexBuffer_;
+
+    switch(this.primitiveType) {
+      default:
+      case o3d.Primitive.TRIANGLELIST:
+        glNumElements = this.numberPrimitives * 6;
+        break;
+      case o3d.Primitive.TRIANGLESTRIP:
+      case o3d.Primitive.TRIANGLEFAN:
+        glNumElements = (this.numberPrimitives == 0) ? 0 :
+            this.numberPrimitives * 4 + 2;
+        break;
+    }
+  }
+
+  if (!indexBuffer) {
+    this.gl.drawArrays(glMode, 0, glNumElements);
+  } else {
+    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indexBuffer.gl_buffer_);
+    this.gl.drawElements(glMode,
+                         glNumElements,
+                         this.gl.UNSIGNED_SHORT,
+                         0);
+  }
+
+  for (var i = 0; i < enabled_attribs.length; ++i) {
+    this.gl.disableVertexAttribArray(enabled_attribs[i]);
+  }
+};
+
+
+/**
+ * Given n, gets index number n in the index buffer if there is an index buffer
+ * otherwise returns n.
+ * @param {number} n The number of the entry in the index buffer.
+ * @return {return} The index.
+ * @private
+ */
+o3d.Primitive.prototype.getIndex_ = function(n) {
+  if (this.indexBuffer) {
+    return this.indexBuffer.array_[n]
+  }
+  return n;
+};
+
+
+/**
+ * Generates an index buffer for a wireframe outline of a triangle-based
+ * primitive.
+ * @private
+ */
+o3d.Primitive.prototype.computeWireframeIndices_ = function() {
+  this.wireframeIndexBuffer_ = new o3d.IndexBuffer;
+  this.wireframeIndexBuffer_.gl = this.gl;
+
+  var numTriangles = this.numberPrimitives;
+  var numLines = (this.primitiveType == o3d.Primitive.TRIANGLELIST) ?
+    (3 * numTriangles) : (2 * numTriangles + 1);
+
+  this.wireframeIndexBuffer_.resize(2 * numLines);
+
+  var j = 0;  // The current index in wireframeIndices.
+  switch (this.primitiveType) {
+    default:
+    case o3d.Primitive.TRIANGLELIST: {
+      var wireframeIndices = this.wireframeIndexBuffer_.array_;
+      this.wireframeIndexBuffer_.lock();
+      // Iterate through triangles.
+      for (var i = 0; i < numTriangles; ++i) {
+        // Indices the vertices of the triangle a, b, c.
+        var a = this.getIndex_(3 * i);
+        var b = this.getIndex_(3 * i + 1);
+        var c = this.getIndex_(3 * i + 2);
+        wireframeIndices[j++] = a;
+        wireframeIndices[j++] = b;
+        wireframeIndices[j++] = b;
+        wireframeIndices[j++] = c;
+        wireframeIndices[j++] = c;
+        wireframeIndices[j++] = a;
+      }
+      this.wireframeIndexBuffer_.unlock();
+    }
+    break;
+
+    case o3d.Primitive.TRIANGLEFAN: {
+      var wireframeIndices = this.wireframeIndexBuffer_.array_;
+      this.wireframeIndexBuffer_.lock();
+      // The first two points make a line.
+      var z;
+      if (numTriangles > 0) {
+        z = this.getIndex_(0);
+        wireframeIndices[j++] = z;
+        wireframeIndices[j++] = this.getIndex_(1);
+      }
+      // Each additional point forms a new triangle by adding two lines.
+      for (var i = 2; i < numTriangles + 2; ++i) {
+        var a = this.getIndex_(i);
+        wireframeIndices[j++] = z;
+        wireframeIndices[j++] = a;
+        wireframeIndices[j++] = a;
+        wireframeIndices[j++] = this.getIndex_(i - 1);
+      }
+      this.wireframeIndexBuffer_.unlock();
+    }
+    break;
+
+    case o3d.Primitive.TRIANGLESTRIP: {
+      var wireframeIndices = this.wireframeIndexBuffer_.array_;
+      this.wireframeIndexBuffer_.lock();
+      // The frist two points make a line.
+      var a;
+      var b;
+      if (numTriangles > 0) {
+        a = this.getIndex_(0);
+        b = this.getIndex_(1);
+        wireframeIndices[j++] = a;
+        wireframeIndices[j++] = b;
+      }
+      // Each additional point forms a new triangle by adding two lines.
+      for (var i = 2; i < numTriangles + 2; ++i) {
+        var c = this.getIndex_(i);
+        wireframeIndices[j++] = b;
+        wireframeIndices[j++] = c;
+        wireframeIndices[j++] = c;
+        wireframeIndices[j++] = a;
+        a = b;
+        b = c;
+      }
+      this.wireframeIndexBuffer_.unlock();
+    }
+    break;
+  }
+};
+
+/**
+ * Returns the three indices of the n-th triangle of this primitive. If the
+ * primitive has no index buffer, then the buffer is assumed to be [0 ... n-1].
+ * These indices can then be used to reference the vertex buffer and get the
+ * triangle vertices' positions.
+ *
+ * @param {number} n The number of the triangle we want. Zero-indexed.
+ * @return {!Array.<Number>} Array containing three indices that correspond to
+ *    the n-th triangle of this primitive.
+ * @private
+ */
+o3d.Primitive.prototype.computeTriangleIndices_ = function(n) {
+  var indices;
+  switch (this.primitiveType) {
+    case o3d.Primitive.TRIANGLESTRIP:
+      if (n % 2 == 0) {
+        indices = [n, n + 1, n + 2];
+      } else {
+        indices = [n + 1, n, n + 2];
+      }
+      break;
+    case o3d.Primitive.TRIANGLEFAN:
+      indices = [0, n + 1, n + 2];
+      break;
+    case o3d.Primitive.TRIANGLELIST:
+    default:
+      indices = [3 * n, 3 * n + 1, 3 * n + 2];
+      break;
+  }
+  if (this.indexBuffer) {
+    var buffer = this.indexBuffer.array_;
+    return [buffer[indices[0]],
+            buffer[indices[1]],
+            buffer[indices[2]]];
+  } else {
+    return indices;
+  }
+};
+
+/**
+ * Computes the intersection of a ray in the coordinate system of
+ * the specified POSITION stream.
+ * @param {number} position_stream_index Index of POSITION stream.
+ * @param {o3d.Cull} cull which side of the triangles to ignore.
+ * @param {!o3d.math.Point3} start position of start of ray in local space.
+ * @param {!o3d.math.Point3} end position of end of ray. in local space.
+ * @return {!o3d.RayIntersectionInfo}  RayIntersectionInfo class. If valid()
+ *     is false then something was wrong, Check GetLastError(). If
+ *     intersected() is true then the ray intersected a something. position()
+ *     is the exact point of intersection.
+ */
+o3d.Primitive.prototype.intersectRay =
+    function(position_stream_index, cull, start, end) {
+  var result = new o3d.RayIntersectionInfo;
+  result.valid = true;
+
+  var streamBank = this.streamBank;
+  var indexBuffer = this.indexBuffer;
+  var positionStreams = this.streamBank.vertex_streams_[o3d.Stream.POSITION];
+  var stream = positionStreams[position_stream_index].stream;
+
+  var field = stream.field;
+  var buffer = field.buffer;
+  var numPoints = buffer.array_.length / buffer.totalComponents;
+  var elements = field.getAt(0, numPoints);
+
+  // The direction of the vector of the ray.
+  var x = end[0] - start[0];
+  var y = end[1] - start[1];
+  var z = end[2] - start[2];
+
+  // Find two vectors orthogonal to direction for use in quickly eliminating
+  // triangles which can't possibly intersect the ray.
+  var direction = [x, y, z];
+
+  // Pick a vector orthogonal to direction called u.
+  var ux = -y;
+  var uy = x;
+  var uz = 0;
+  if (x * x + y * y < z * z) {
+    ux = -z;
+    uy = 0;
+    uz = x;
+  }
+
+  // Cross product direction and u get a third orthogonal vector v.
+  var vx = y * uz - z * uy;
+  var vy = z * ux - x * uz;
+  var vz = x * uy - y * ux;
+
+  var udotstart = ux * start[0] + uy * start[1] + uz * start[2];
+  var vdotstart = vx * start[0] + vy * start[1] + vz * start[2];
+
+  // As we search for an intersection point, we keep track of how far out
+  // from the start the point with this variable.
+  var min_distance = 0;
+
+  // Iterate through the indices and examine triples of indices that each
+  // define a triangle.  For each triangle, we test for intersection with
+  // the ray.  We need to find the closest one to start, so we have to
+  // check them all.
+
+  var numIndices = indexBuffer ? indexBuffer.array_.length : numPoints;
+  switch (this.primitiveType) {
+    case o3d.Primitive.TRIANGLESTRIP:
+      numTriangles = numIndices - 2;
+      break;
+    case o3d.Primitive.TRIANGLEFAN:
+      numTriangles = numIndices - 2;
+      break;
+    case o3d.Primitive.TRIANGLELIST:
+    default:
+      numTriangles = numIndices / 3;
+      break;
+  }
+
+  for (var i = 0; i < numTriangles; ++i) {
+    var indices = this.computeTriangleIndices_(i);
+
+    // Check if the current triangle is too far to one side of the ray
+    // to intersect at all.  (This is what the orthogonal vectors are for)
+    var u_sides = [false, false, false];
+    var v_sides = [false, false, false];
+    for (var j = 0; j < 3; ++j) {
+      var t = 3 * indices[j];
+      var r = elements.slice(t, t + 3);
+      u_sides[j] = ux * r[0] + uy * r[1] + uz * r[2] - udotstart > 0;
+      v_sides[j] = vx * r[0] + vy * r[1] + vz * r[2] - vdotstart > 0;
+    }
+
+    // All vertices of the triangle are on the same side of the start point,
+    // the ray cannot intersect, so we move on.
+    if (((u_sides[0] == u_sides[1]) && (u_sides[0] == u_sides[2])) ||
+        ((v_sides[0] == v_sides[1]) && (v_sides[0] == v_sides[2]))) {
+      continue;
+    }
+
+    // Compute a matrix that transforms the unit triangle
+    // (1, 0, 0)..(0, 1, 0)..(0, 0, 1) into the current triangle.
+    var t;
+    t = 3 * indices[0];
+    var m00 = elements[t] - start[0];
+    var m01 = elements[t + 1] - start[1];
+    var m02 = elements[t + 2] - start[2];
+    t = 3 * indices[1];
+    var m10 = elements[t] - start[0];
+    var m11 = elements[t + 1] - start[1];
+    var m12 = elements[t + 2] - start[2];
+    t = 3 * indices[2];
+    var m20 = elements[t] - start[0];
+    var m21 = elements[t + 1] - start[1];
+    var m22 = elements[t + 2] - start[2];
+
+    var t00 = m11 * m22 - m12 * m21;
+    var t10 = m01 * m22 - m02 * m21;
+    var t20 = m01 * m12 - m02 * m11;
+
+    // Compute the determinant of the matrix.  The sign (+/-) tells us
+    // if it's culled.
+    var d = m00 * t00 - m10 * t10 + m20 * t20;
+
+    if ((cull == o3d.State.CULL_CW && d < 0) ||
+        (cull == o3d.State.CULL_CCW && d > 0)) {
+      continue;
+    }
+
+    // Transform the direction vector by the inverse of that matrix.
+    // If the end point is in the first octant, it's a hit.
+    var v0 = (t00 * x -
+        (m10 * m22 - m12 * m20) * y +
+        (m10 * m21 - m11 * m20) * z) / d;
+    var v1 = (-t10 * x +
+        (m00 * m22 - m02 * m20) * y -
+        (m00 * m21 - m01 * m20) * z) / d;
+    var v2 = (t20 * x -
+        (m00 * m12 - m02 * m10) * y +
+        (m00 * m11 - m01 * m10) * z) / d;
+
+    if (v0 >= 0 && v1 >= 0 && v2 >= 0 && (v0 + v1 + v2 > 0)) {
+      // Rescale by the one-norm to find the intersection of the transformed.
+      // ray with the unit triangle.
+      var one_norm = v0 + v1 + v2;
+      v0 /= one_norm;
+      v1 /= one_norm;
+      v2 /= one_norm;
+      // Multiply m to get back to the original triangle.
+      var px = m00 * v0 + m10 * v1 + m20 * v2;
+      var py = m01 * v0 + m11 * v1 + m21 * v2;
+      var pz = m02 * v0 + m12 * v1 + m22 * v2;
+      // Compute the distance (actually distance squared) from the start point
+      // to the intersection.
+      var distance = px * px + py * py + pz * pz;
+      if (!result.intersected || distance < min_distance) {
+        min_distance = distance;
+        result.position[0] = px + start[0];
+        result.position[1] = py + start[1];
+        result.position[2] = pz + start[2];
+        result.primitiveIndex = i;
+      }
+      result.intersected = true;
+    }
+  }
+
+  return result;
+};
+
+
+/**
+ * Computes the bounding box in same coordinate system as the specified
+ * POSITION stream.
+ * @param {number} position_stream_index Index of POSITION stream.
+ * @return {!o3d.BoundingBox}  The boundingbox for this element in local space.
+ */
+o3d.Primitive.prototype.getBoundingBox =
+    function(position_stream_index) {
+  var streamBank = this.streamBank;
+  var indexBuffer = this.indexBuffer;
+  var stream =
+    this.streamBank.getVertexStream(o3d.Stream.POSITION, position_stream_index);
+
+  var points = [];
+  var field = stream.field;
+  var buffer = field.buffer;
+  var numPoints = buffer.array_.length / buffer.totalComponents;
+
+  var elements = field.getAt(0, numPoints);
+
+  for (var index = 0; index < numPoints; ++index) {
+    var p = [0, 0, 0];
+    for (var i = 0; i < field.numComponents; ++i) {
+      p[i] = elements[field.numComponents * index + i];
+    }
+    points.push(p);
+  }
+
+  o3d.BoundingBox.fitBoxToPoints_(points, this.boundingBox);
+  return this.boundingBox;
+};
+
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * The Shape represents a collection of Elements. The typical example is a
+ * cube with 6 faces where each face uses a different material would be
+ * represented as 1 Shape with 6 Elements, one for each material.
+ * @constructor
+ */
+o3d.Shape = function() {
+  o3d.ParamObject.call(this);
+  this.elements = [];
+};
+o3d.inherit('Shape', 'ParamObject');
+
+
+/**
+ * The elements owned by this shape.
+ *
+ * Each access to this field gets the entire list so it is best to get it
+ * just once. For example:
+ *
+ * var elements = renderNode.elements;
+ * for (var i = 0; i < elements.length; i++) {
+ *   var element = elements[i];
+ * }
+ *
+ * Note that modifications to this array [e.g. push()] will not affect
+ * the underlying Shape, while modifications to the array's members
+ * will affect them.
+ */
+o3d.Shape.prototype.elements = [];
+
+
+/**
+ * Finds a draw element in the given list of draw elements that uses the given
+ * material if such a draw element exists.  Returns null otherwise.
+ * @param {Array.<!o3d.DrawElements>} drawElements An array of draw elements.
+ * @param {o3d.Material} material A material to search for.
+ * @private
+ */
+o3d.Shape.findDrawElementWithMaterial_ = function(drawElements, material) {
+  for (var j = 0; j < drawElements.length; ++j) {
+    if (drawElements[j].material == material) {
+      return drawElements[j];
+    }
+  }
+  return null;
+};
+
+
+/**
+ * Creates a DrawElement for each Element owned by this Shape.
+ * If an Element already has a DrawElement that uses material a new
+ * DrawElement will not be created.
+ * @param {o3d.Pack} pack pack used to manage created DrawElements.
+ * @param {o3d.Material} material material to use for each DrawElement.
+ *     Note: When a DrawElement with a material of null is rendered, the
+ *     material on the corresponding Element will get used instead.
+ *     This allows you to easily setup the default (just draw as is) by
+ *     passing null or setup a shadow pass by passing in a shadow material.
+ */
+o3d.Shape.prototype.createDrawElements =
+    function(pack, material) {
+  var elements = this.elements;
+  for (var i = 0; i < elements.length; ++i) {
+    var element = elements[i];
+    if (!o3d.Shape.findDrawElementWithMaterial_(element.drawElements,
+                                                material)) {
+      element.createDrawElement(pack, material);
+    }
+  }
+};
+
+
+/**
+ * Adds and element to the list of elements for this shape.
+ * @param {o3d.Element} element The element to add.
+ */
+o3d.Shape.prototype.addElement = function(element) {
+  this.elements.push(element);
+};
+
+
+/**
+ * Removes and element to the list of elements for this shape.
+ * @param {o3d.Element} element The element to add.
+ */
+o3d.Shape.prototype.removeElement = function(element) {
+  o3d.removeFromArray(this.elements, element);
+};
+
+
+/**
+ * Called when the tree traversal finds this shape in the transform tree.
+ * Adds objects to the given drawlists if the drawlist of the material matches.
+ * @param {Array.<Object>} drawListInfos A list of objects containing
+ *     drawlists and matrix info.
+ * @param {o3d.math.Matrix4} world The world matrix.
+ */
+o3d.Shape.prototype.writeToDrawLists =
+    function(drawListInfos, world, transform) {
+  var elements = this.elements;
+
+  // Iterate through elements of this shape.
+  for (var i = 0; i < elements.length; ++i) {
+    var element = elements[i];
+
+    // For each element look at the DrawElements for that element.
+    for (var j = 0; j < element.drawElements.length; ++j) {
+      this.gl.client.render_stats_['drawElementsProcessed']++;
+      var drawElement = element.drawElements[j];
+      var material = drawElement.material || drawElement.owner.material;
+      var materialDrawList = material.drawList;
+      var rendered = false;
+
+      // Iterate through the drawlists we might write to.
+      for (var k = 0; k < drawListInfos.length; ++k) {
+        var drawListInfo = drawListInfos[k];
+        var list = drawListInfo.list;
+
+        // If any of those drawlists matches the material on the drawElement,
+        // add the drawElement to the list.
+        if (materialDrawList == list) {
+          var context = drawListInfo.context;
+          var view = context.view;
+          var projection = context.projection;
+
+          var worldViewProjection = [[], [], [], []];
+          var viewProjection = [[], [], [], []];
+          o3d.Transform.compose(projection, view, viewProjection);
+          o3d.Transform.compose(viewProjection, world, worldViewProjection);
+
+          if (element.cull && element.boundingBox) {
+            if (!element.boundingBox.inFrustum(worldViewProjection)) {
+              continue;
+            }
+          }
+
+          rendered = true;
+          list.list_.push({
+            view: view,
+            projection: projection,
+            world: world,
+            viewProjection: viewProjection,
+            worldViewProjection: worldViewProjection,
+            transform: transform,
+            drawElement: drawElement
+          });
+        }
+      }
+
+      if (rendered) {
+        this.gl.client.render_stats_['drawElementsRendered']++;
+      } else {
+        this.gl.client.render_stats_['drawElementsCulled']++;
+      }
+    }
+  }
+};
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * EffectParameterInfo holds information about the Parameters an Effect needs.
+ * o3d.Effect.getParameterInfo
+ * @param {string} name Tne name of the parameter.
+ * @param {string} className The param class name.
+ * @param {number} numElements The number of Elements if the param is an array.
+ * @param {string} sasClassName The sas class name if the param is an sas type.
+ * @param {string} semantic The relevant semantic.
+ */
+o3d.EffectParameterInfo =
+    function(name, className, numElements, semantic, sasClassName) {
+  /**
+   * The name of the parameter.
+   * @type {string}
+   */
+  this.name = name || '';
+
+  /**
+   * The type of the parameter.
+   * @type {string}
+   */
+  this.className = className || '';
+
+  /**
+   * The number of elements.  Non-zero for array types, zero for non-array
+   * types.
+   * @type {number}
+   */
+  this.numElements = numElements || 0;
+
+  /**
+   * The semantic of the parameter. This is always in UPPERCASE.
+   * @type {string}
+   */
+  this.semantic = semantic || '';
+
+  /**
+   * If this is a standard parameter (SAS) this will be the name of the type
+   * of Param needed. Otherwise it will be the empty string.
+   *
+   * Standard Parameters are generally handled automatically by o3d but you
+   * can supply your own if you have a unique situation.
+   *
+   * @type {string}
+   */
+  this.sasClassName = sasClassName || '';
+};
+o3d.inherit('EffectParameterInfo', 'NamedObject');
+
+
+/**
+ * EffectStreamInfo holds information about the Streams an Effect needs.
+ * @param {o3d.Stream.Semantic} opt_semantic The semantic of the stream
+ * @param {number} opt_semantic_index
+ * @constructor
+ */
+o3d.EffectStreamInfo = function(opt_semantic, opt_semantic_index) {
+  o3d.NamedObject.call(this);
+  if (!opt_semantic) {
+    opt_semantic = o3d.Stream.UNKNOWN_SEMANTIC;
+  }
+  if (!opt_semantic_index) {
+    opt_semantic_index = 0;
+  }
+  this.semantic = opt_semantic;
+  this.opt_semantic_index = opt_semantic_index;
+};
+o3d.inherit('EffectStreamInfo', 'NamedObject');
+
+
+/**
+ * The semantic of the stream.
+ * @type {!o3d.Stream.Semantic}
+ */
+o3d.EffectStreamInfo.prototype.semantic = o3d.Stream.UNKNOWN_SEMANTIC;
+
+
+
+/**
+ * The semantic index of the stream.
+ * @type {number}
+ */
+o3d.EffectStreamInfo.prototype.semanticIndex = 0;
+
+
+/**
+ * An Effect contains a vertex and pixel shader.
+ * @constructor
+ */
+o3d.Effect = function() {
+  o3d.ParamObject.call(this);
+  this.program_ = null;
+  this.uniforms_ = {};
+  this.attributes_ = {};
+};
+o3d.inherit('Effect', 'ParamObject');
+
+o3d.Effect.HELPER_CONSTANT_NAME = 'dx_clipping';
+
+
+/**
+ * An object mapping the names of uniform variables to objects containing
+ * information about the variable.
+ * @type {Object}
+ * @private
+ */
+o3d.Effect.prototype.uniforms_ = {};
+
+
+/**
+ * An object mapping the names of attributes to objects containing
+ * information about the attribute.
+ * @type {Object}
+ * @private
+ */
+o3d.Effect.prototype.attributes_ = {};
+
+
+/**
+ * Indicates whether the vertex shader has been loaded, so we can
+ * postpone linking until both shaders are in.
+ *
+ * @type {boolean}
+ */
+o3d.Effect.prototype.vertexShaderLoaded_ = false;
+
+
+/**
+ * Indicates whether the fragment shader has been loaded, so we can
+ * postpone linking until both shaders are in.
+ *
+ * @type {boolean}
+ */
+o3d.Effect.prototype.fragmentShaderLoaded_ = false;
+
+
+/**
+ * Binds standard attribute locations for the shader.
+ */
+o3d.Effect.prototype.bindAttributesAndLinkIfReady = function() {
+  if (this.vertexShaderLoaded_ && this.fragmentShaderLoaded_) {
+    var semanticMap = o3d.Effect.semanticMap_;
+    for (var name in semanticMap) {
+      this.gl.bindAttribLocation(
+          this.program_, semanticMap[name].gl_index, name);
+    }
+    this.gl.linkProgram(this.program_);
+    if (!this.gl.getProgramParameter(this.program_, this.gl.LINK_STATUS)) {
+      var log = this.gl.getShaderInfoLog(this.program_);
+      this.gl.client.error_callback(
+          'Program link failed with error log:\n' + log);
+    }
+    this.getUniforms_();
+    this.getAttributes_();
+  }
+};
+
+
+/**
+ * Helper function for loadVertexShaderFromString and
+ * loadPixelShaderFromString that takes the type as an argument.
+ * @param {string} shaderString The shader code.
+ * @param {number} type The type of the shader: either
+ *    VERTEX_SHADER or FRAGMENT_SHADER.
+ * @return {bool} Success.
+ */
+o3d.Effect.prototype.loadShaderFromString = function(shaderString, type) {
+  if (!this.program_) {
+    this.program_ = this.gl.createProgram();
+  }
+
+  var success = true;
+
+  var shader = this.gl.createShader(type);
+  this.gl.shaderSource(
+      shader, "#ifdef GL_ES\nprecision highp float;\n#endif\n" + shaderString);
+  this.gl.compileShader(shader);
+  if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+    success = false;
+    var log = this.gl.getShaderInfoLog(shader);
+    this.gl.client.error_callback(
+        'Shader compile failed with error log:\n' + log);
+  }
+
+  this.gl.attachShader(this.program_, shader);
+
+  return success;
+};
+
+
+/**
+ * Loads a glsl vertex shader for this effect from a string.
+ * @param {string} shaderString The string.
+ * @return {bool} Success.
+ */
+o3d.Effect.prototype.loadVertexShaderFromString =
+    function(shaderString) {
+  var success =
+      this.loadShaderFromString(shaderString, this.gl.VERTEX_SHADER);
+  this.vertexShaderLoaded_ = success;
+  o3d.Effect.prototype.bindAttributesAndLinkIfReady();
+  return success;
+};
+
+
+/**
+ * Loads a glsl vertex shader for this effect from a string.
+ * @param {string} shaderString The string.
+ * @return {bool} Success.
+ */
+o3d.Effect.prototype.loadPixelShaderFromString =
+    function(shaderString) {
+  var success =
+      this.loadShaderFromString(shaderString, this.gl.FRAGMENT_SHADER);
+  this.fragmentShaderLoaded_ = success;
+  this.bindAttributesAndLinkIfReady();
+  return success;
+};
+
+
+/**
+ * Loads a glsl vertex shader and pixel shader from one string.
+ * Assumes the vertex shader and pixel shader are separated by
+ * the text '// #o3d SplitMarker'.
+ * @param {string} shaderString The string.
+ * @return {bool} Success.
+ */
+o3d.Effect.prototype.loadFromFXString =
+    function(shaderString) {
+  var splitIndex = shaderString.indexOf('// #o3d SplitMarker');
+  return this.loadVertexShaderFromString(shaderString.substr(0, splitIndex)) &&
+      this.loadPixelShaderFromString(shaderString.substr(splitIndex));
+};
+
+
+/**
+ * Generates an array of indexed strings. For example, given 'arr' and a size
+ * of 10, generates 'arr[0]', 'arr[1]', 'arr[2]' up to 'arr[9]'.
+ *
+ * @param {string} base The name of the array.
+ * @param {number} size The number of elements in the array.
+ * @return {!Array.<string>}
+ * @private
+ */
+o3d.Effect.prototype.getParamArrayNames_ = function(base, size) {
+  var names = [];
+  for (var i = 0; i < size; i++) {
+    names[i] = base + '[' + i + ']';
+  }
+  return names;
+}
+
+
+/**
+ * Iterates through the active uniforms of the program and gets the
+ * location of each one and stores them by name in the uniforms
+ * object.
+ * @private
+ */
+o3d.Effect.prototype.getUniforms_ =
+    function() {
+  this.uniforms_ = {};
+  var numUniforms = this.gl.getProgramParameter(
+      this.program_, this.gl.ACTIVE_UNIFORMS);
+  for (var i = 0; i < numUniforms; ++i) {
+    var info = this.gl.getActiveUniform(this.program_, i);
+    var name = info.name;
+    if (name.indexOf('[') != -1) {
+      // This is an array param and we need to individually query each item in
+      // the array to get its location.
+      var baseName = info.name.substring(0, info.name.indexOf('['));
+      var names = this.getParamArrayNames_(baseName, info.size);
+      var locations = [];
+      for (var j = 0; j < names.length; j++) {
+        locations[j] = this.gl.getUniformLocation(this.program_, names[j]);
+      }
+      this.uniforms_[baseName] = {
+          info: {name: baseName, size: info.size, type: info.type},
+          kind: o3d.Effect.ARRAY,
+          locations: locations /* mind the s */
+      };
+    } else {
+      // Not an array param.
+      this.uniforms_[name] = {
+          info: info,
+          kind: o3d.Effect.ELEMENT,
+          location: this.gl.getUniformLocation(this.program_, name)
+      };
+    }
+  }
+};
+
+
+/**
+ * Iterates through the active attributes of the program and gets the
+ * location of each one and stores them by name in the attributes
+ * object.
+ * @private
+ */
+o3d.Effect.prototype.getAttributes_ =
+    function() {
+  this.attributes_ = {};
+  var numAttributes = this.gl.getProgramParameter(
+      this.program_, this.gl.ACTIVE_ATTRIBUTES);
+  for (var i = 0; i < numAttributes; ++i) {
+    var info = this.gl.getActiveAttrib(this.program_, i);
+    this.attributes_[info.name] = {info:info,
+        location:this.gl.getAttribLocation(this.program_, info.name)};
+  }
+};
+
+
+/**
+ * A map linking the WebGL type of a uniform to the appropriate param type.
+ * This gets memoized in the function createUniformParameters.
+ * @private
+ */
+o3d.Effect.paramTypes_ = null;
+
+/**
+ * Accesses the paramTypes map, builds it if it isn't already built.
+ * @private;
+ */
+o3d.Effect.getParamTypes_ = function(gl)  {
+  // Even though these constants should be the same for different webgl
+  // contexts, we can't create this table until the context is loaded, so
+  // we initialize it here rather than when the file loads.
+  if (!o3d.Effect.paramTypes_) {
+    o3d.Effect.paramTypes_ = {};
+    o3d.Effect.paramTypes_[gl.FLOAT] = 'ParamFloat';
+    o3d.Effect.paramTypes_[gl.FLOAT_VEC2] = 'ParamFloat2';
+    o3d.Effect.paramTypes_[gl.FLOAT_VEC3] = 'ParamFloat3';
+    o3d.Effect.paramTypes_[gl.FLOAT_VEC4] = 'ParamFloat4';
+    o3d.Effect.paramTypes_[gl.INT] = 'ParamInteger';
+    o3d.Effect.paramTypes_[gl.BOOL] = 'ParamBoolean';
+    o3d.Effect.paramTypes_[gl.FLOAT_MAT4] = 'ParamMatrix4';
+    o3d.Effect.paramTypes_[gl.SAMPLER_2D] = 'ParamSampler';
+    o3d.Effect.paramTypes_[gl.SAMPLER_CUBE] = 'ParamSampler';
+  }
+
+  return o3d.Effect.paramTypes_;
+}
+
+
+/**
+ * A map linking names of certain attributes in the shader to the corresponding
+ * semantic and semantic index.
+ * @private
+ */
+o3d.Effect.semanticMap_ = {
+  'position': {semantic: o3d.Stream.POSITION, index: 0, gl_index: 0},
+  'normal': {semantic: o3d.Stream.NORMAL, index: 0, gl_index: 1},
+  'tangent': {semantic: o3d.Stream.TANGENT, index: 0, gl_index: 2},
+  'binormal': {semantic: o3d.Stream.BINORMAL, index: 0, gl_index: 3},
+  'color': {semantic: o3d.Stream.COLOR, index: 0, gl_index: 4},
+  'texCoord0': {semantic: o3d.Stream.TEXCOORD, index: 0, gl_index: 5},
+  'texCoord1': {semantic: o3d.Stream.TEXCOORD, index: 1, gl_index: 6},
+  'texCoord2': {semantic: o3d.Stream.TEXCOORD, index: 2, gl_index: 7},
+  'texCoord3': {semantic: o3d.Stream.TEXCOORD, index: 3, gl_index: 8},
+  'texCoord4': {semantic: o3d.Stream.TEXCOORD, index: 4, gl_index: 9},
+  'texCoord5': {semantic: o3d.Stream.TEXCOORD, index: 5, gl_index: 10},
+  'texCoord6': {semantic: o3d.Stream.TEXCOORD, index: 6, gl_index: 11},
+  'texCoord7': {semantic: o3d.Stream.TEXCOORD, index: 7, gl_index: 12},
+  'influenceWeights': {semantic: o3d.Stream.INFLUENCE_WEIGHTS, index: 0,
+                       gl_index: 13},
+  'influenceIndices': {semantic: o3d.Stream.INFLUENCE_INDICES, index: 0,
+                       gl_index: 14}
+};
+
+o3d.Effect.reverseSemanticMap_ = [];
+(function(){
+  var revmap = o3d.Effect.reverseSemanticMap_;
+  for (var key in o3d.Effect.semanticMap_) {
+    var value = o3d.Effect.semanticMap_[key];
+    revmap[value.semantic] = revmap[value.semantic] || [];
+    revmap[value.semantic][value.index] = value.gl_index;
+  }
+})();
+
+
+/**
+ * For each of the effect's uniform parameters, creates corresponding
+ * parameters on the given ParamObject. Skips SAS Parameters.
+ *
+ * If a Param with the same name but the wrong type already exists on the
+ * given ParamObject createUniformParameters will attempt to replace it with
+ * one of the correct type.
+ *
+ * Note: The most common thing to pass to this function is a Material but
+ * depending on your application it may be more appropriate to pass in a
+ * Transform, Effect, Element or DrawElement.
+ *
+ * @param {!o3d.ParamObject} param_object The param object on which the
+ *     new paramters will be created.
+ */
+o3d.Effect.prototype.createUniformParameters =
+    function(param_object) {
+  var sasTypes = o3d.Param.sasTypes_;
+  var paramTypes = o3d.Effect.getParamTypes_(this.gl);
+  for (var name in this.uniforms_) {
+    var uniformData = this.uniforms_[name];
+    if (!sasTypes[name]) {
+      switch (uniformData.kind) {
+        case o3d.Effect.ARRAY:
+          var param = param_object.createParam(name, 'ParamParamArray');
+          var array = new o3d.ParamArray;
+          array.gl = this.gl;
+          array.resize(uniformData.info.size,
+              paramTypes[uniformData.info.type]);
+          param.value = array;
+          break;
+        case o3d.Effect.STRUCT:
+          o3d.notImplemented();
+          break;
+        case o3d.Effect.ELEMENT:
+        default:
+          param_object.createParam(name, paramTypes[uniformData.info.type]);
+          break;
+      }
+    }
+  }
+};
+
+
+/**
+ * For each of the effect's uniform parameters, if it is a SAS parameter
+ * creates corresponding StandardParamMatrix4 parameters on the given
+ * ParamObject.  Note that SAS parameters are handled automatically by the
+ * rendering system. so except in some rare cases there is no reason to call
+ * this function.  Also be aware that the StandardParamMatrix4 Paramters like
+ * WorldViewProjectionParamMatrix4, etc.. are only valid during rendering.
+ * At all other times they will not return valid values.
+ *
+ * If a Param with the same name but the wrong type already exists on the
+ * given ParamObject CreateSASParameters will attempt to replace it with
+ * one of the correct type.
+ *
+ * @param {!o3d.ParamObject} param_object The param object on which the new
+ *     paramters will be created.
+ */
+o3d.Effect.prototype.createSASParameters =
+    function(param_object) {
+  var sasTypes = o3d.Param.sasTypes_;
+  for (var name in this.uniforms_) {
+    var info = this.uniforms_[name].info;
+    var sasType = sasTypes[name];
+    if (sasType) {
+      param_object.createParam(info.name, sasType);
+    }
+  }
+};
+
+
+/**
+ * Gets info about the parameters this effect needs.
+ * @return {!Array.<!o3d.EffectParameterInfo>} an array of
+ *     EffectParameterInfo objects.
+ */
+o3d.Effect.prototype.getParameterInfo = function() {
+  var infoArray = [];
+  var sasTypes = o3d.Param.sasTypes_;
+  var semanticMap = o3d.Effect.semanticMap_;
+  var paramTypes = o3d.Effect.getParamTypes_(this.gl);
+
+  for (var name in this.uniforms_) {
+    var uniformData = this.uniforms_[name];
+    var sasClassName = sasTypes[name] || '';
+    var dataType = paramTypes[uniformData.info.type] || '';
+    var numElements = (uniformData.kind == o3d.Effect.ARRAY) ?
+        uniformData.info.size : 0; // 0 if a non-array type.
+    var semantic = semanticMap[name] ? name : '';
+    infoArray.push(new o3d.EffectParameterInfo(
+      name, dataType, numElements, semantic.toUpperCase(), sasClassName));
+  }
+
+  return infoArray;
+};
+
+
+/**
+ * Gets info about the streams this effect needs.
+ * @return {!Array.<!o3d.EffectStreamInfo>} an array of
+ *     EffectStreamInfo objects.
+ */
+o3d.Effect.prototype.getStreamInfo = function() {
+  var infoList = [];
+
+  for (var name in this.attributes_) {
+    var semantic_index_pair = o3d.Effect.semanticMap_[name];
+    infoList.push(new o3d.EffectStreamInfo(
+        semantic_index_pair.semantic, semantic_index_pair.index));
+  }
+  return infoList;
+};
+
+
+/**
+ * Searches the objects in the given list for parameters to apply to the
+ * uniforms defined on this effects program, and applies them, favoring
+ * the objects nearer the beginning of the list.
+ *
+ * @param {!Array.<!o3d.ParamObject>} object_list The param objects to search.
+ * @private
+ */
+o3d.Effect.prototype.searchForParams_ = function(object_list) {
+  var unfilledMap = {};
+  for (var uniformName in this.uniforms_) {
+    unfilledMap[uniformName] = true;
+  }
+  this.gl.useProgram(this.program_);
+  o3d.Param.texture_index_ = 0;
+  var object_list_length = object_list.length;
+  for (var i = 0; i < object_list_length; ++i) {
+    var obj = object_list[i];
+    for (var name in this.uniforms_) {
+      if (unfilledMap[name]) {
+        var uniformInfo = this.uniforms_[name];
+        var param = obj.getParam(name);
+        if (param) {
+          if (uniformInfo.kind == o3d.Effect.ARRAY) {
+            param.applyToLocations(this.gl, uniformInfo.locations);
+          } else {
+            param.applyToLocation(this.gl, uniformInfo.location);
+          }
+          delete unfilledMap[name];
+        }
+      }
+    }
+  }
+
+  this.updateHelperConstants_(this.gl.displayInfo.width,
+                              this.gl.displayInfo.height);
+  delete unfilledMap[o3d.Effect.HELPER_CONSTANT_NAME];
+  for (var name in unfilledMap) {
+    if (this.uniforms_[name].info.type == this.gl.SAMPLER_2D) {
+      if (this.gl.client.reportErrors_()) {
+        this.gl.client.error_callback("Missing ParamSampler");
+      }
+      var defaultParamSampler = o3d.ParamSampler.defaultParamSampler_;
+      defaultParamSampler.gl = this.gl;
+      defaultParamSampler.applyToLocation(this.gl,
+          this.uniforms_[name].location);
+    } else {
+      throw ('Uniform param not filled: "'+ name + '"');
+    }
+  }
+};
+
+
+/**
+ * Updates certain parameters used to make the GLSL shaders have the
+ * same clipping semantics as D3D's.
+ * @param {number} width width of the viewport in pixels
+ * @param {number} height height of the viewport in pixels
+ * @private
+ */
+o3d.Effect.prototype.updateHelperConstants_ = function(width, height) {
+  var uniformInfo = this.uniforms_[o3d.Effect.HELPER_CONSTANT_NAME];
+  var dx_clipping = [ 0.0, 0.0, 0.0, 0.0 ];
+  if (uniformInfo) {
+    // currentRenderSurfaceSet is set in render_surface_set.js.
+    dx_clipping[0] = 1.0 / width;
+    dx_clipping[1] = -1.0 / height;
+    dx_clipping[2] = 2.0;
+    if (this.gl.currentRenderSurfaceSet) {
+      dx_clipping[3] = -1.0;
+    } else {
+      dx_clipping[3] = 1.0;
+    }
+
+    this.gl.uniform4f(uniformInfo.location,
+                      dx_clipping[0], dx_clipping[1],
+                      dx_clipping[2], dx_clipping[3]);
+  }
+};
+
+/**
+ * @type {number}
+ */
+o3d.Effect.MatrixLoadOrder = goog.typedef;
+
+/**
+ *  MatrixLoadOrder,
+ *  ROW_MAJOR,  Matrix parameters are loaded in row-major order (DX-style).
+ *  COLUMN_MAJOR,   Matrix parameters are loaded in column-major order
+ *     (OpenGL-style).
+ */
+o3d.Effect.ROW_MAJOR = 0;
+o3d.Effect.COLUMN_MAJOR = 1;
+
+
+/**
+ * UniformType,
+ * ELEMENT,   the param is a single gl.* element
+ * ARRAY,   the param is an array of same-typed elements
+ * STRUCT,   not implemented
+ */
+o3d.Effect.ELEMENT = 0;
+o3d.Effect.ARRAY = 1;
+o3d.Effect.STRUCT = 2;
+
+
+/**
+ * The order in which matrix data is loaded to the GPU.
+ * @type {o3d.Effect.MatrixLoadOrder}
+ */
+o3d.Effect.prototype.matrix_load_order_ = o3d.Effect.ROW_MAJOR;
+
+
+/**
+ * The source for the shaders on this Effect.
+ * @type {string}
+ */
+o3d.Effect.prototype.source_ = '';
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A Material holds the various uniform parameters an Effect needs to render.
+ * For example a Lambert effect might need "diffuse", "ambient", "emissive".
+ * The parameters needed on a Material will vary depending its Effect.
+ * Note that a material MUST have its drawList set in order for objects using it
+ * to render.
+ *
+ * @param {!o3d.State} opt_state The State used by this material.
+ * @param {!o3d.Effect} opt_effect The Effect used by this material.
+ * @param {!o3d.DrawList} opt_draw_list The the DrawList used by this material.
+ * @constructor
+ */
+o3d.Material = function(opt_state, opt_effect, opt_draw_list) {
+  o3d.ParamObject.call(this);
+  /**
+   * The State for this material.
+   * @type {o3d.State}
+   */
+  this.state = opt_state || null;
+
+  /**
+   * The Effect for this material.
+   * @type {o3d.Effect}
+   */
+  this.effect = opt_effect || null;
+
+  /**
+   * The DrawList this material will render on.
+   * @type {o3d.DrawList}
+   */
+  this.drawList = opt_draw_list || null;
+};
+o3d.inherit('Material', 'ParamObject');
+
+o3d.ParamObject.setUpO3DParam_(o3d.Material, 'effect', 'ParamEffect');
+o3d.ParamObject.setUpO3DParam_(o3d.Material, 'state', 'ParamState');
+o3d.ParamObject.setUpO3DParam_(o3d.Material, 'drawList', 'ParamDrawList');
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+// TODO(kbr): figure out how we can reuse the o3djs.io package from
+// within here.
+// o3djs.require('o3djs.io');
+
+// TODO(kbr): factor this out into e.g. o3djs.json and require
+// o3djs.json here.
+if(!this.JSON){this.JSON={};}
+(function(){function f(n){return n<10?'0'+n:n;}
+if(typeof Date.prototype.toJSON!=='function'){Date.prototype.toJSON=function(key){return isFinite(this.valueOf())?this.getUTCFullYear()+'-'+
+f(this.getUTCMonth()+1)+'-'+
+f(this.getUTCDate())+'T'+
+f(this.getUTCHours())+':'+
+f(this.getUTCMinutes())+':'+
+f(this.getUTCSeconds())+'Z':null;};String.prototype.toJSON=Number.prototype.toJSON=Boolean.prototype.toJSON=function(key){return this.valueOf();};}
+var cx=/[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,escapable=/[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,gap,indent,meta={'\b':'\\b','\t':'\\t','\n':'\\n','\f':'\\f','\r':'\\r','"':'\\"','\\':'\\\\'},rep;function quote(string){escapable.lastIndex=0;return escapable.test(string)?'"'+string.replace(escapable,function(a){var c=meta[a];return typeof c==='string'?c:'\\u'+('0000'+a.charCodeAt(0).toString(16)).slice(-4);})+'"':'"'+string+'"';}
+function str(key,holder){var i,k,v,length,mind=gap,partial,value=holder[key];if(value&&typeof value==='object'&&typeof value.toJSON==='function'){value=value.toJSON(key);}
+if(typeof rep==='function'){value=rep.call(holder,key,value);}
+switch(typeof value){case'string':return quote(value);case'number':return isFinite(value)?String(value):'null';case'boolean':case'null':return String(value);case'object':if(!value){return'null';}
+gap+=indent;partial=[];if(Object.prototype.toString.apply(value)==='[object Array]'){length=value.length;for(i=0;i<length;i+=1){partial[i]=str(i,value)||'null';}
+v=partial.length===0?'[]':gap?'[\n'+gap+
+partial.join(',\n'+gap)+'\n'+
+mind+']':'['+partial.join(',')+']';gap=mind;return v;}
+if(rep&&typeof rep==='object'){length=rep.length;for(i=0;i<length;i+=1){k=rep[i];if(typeof k==='string'){v=str(k,value);if(v){partial.push(quote(k)+(gap?': ':':')+v);}}}}else{for(k in value){if(Object.hasOwnProperty.call(value,k)){v=str(k,value);if(v){partial.push(quote(k)+(gap?': ':':')+v);}}}}
+v=partial.length===0?'{}':gap?'{\n'+gap+partial.join(',\n'+gap)+'\n'+
+mind+'}':'{'+partial.join(',')+'}';gap=mind;return v;}}
+if(typeof JSON.stringify!=='function'){JSON.stringify=function(value,replacer,space){var i;gap='';indent='';if(typeof space==='number'){for(i=0;i<space;i+=1){indent+=' ';}}else if(typeof space==='string'){indent=space;}
+rep=replacer;if(replacer&&typeof replacer!=='function'&&(typeof replacer!=='object'||typeof replacer.length!=='number')){throw new Error('JSON.stringify');}
+return str('',{'':value});};}
+if(typeof JSON.parse!=='function'){JSON.parse=function(text,reviver){var j;function walk(holder,key){var k,v,value=holder[key];if(value&&typeof value==='object'){for(k in value){if(Object.hasOwnProperty.call(value,k)){v=walk(value,k);if(v!==undefined){value[k]=v;}else{delete value[k];}}}}
+return reviver.call(holder,key,value);}
+text=String(text);cx.lastIndex=0;if(cx.test(text)){text=text.replace(cx,function(a){return'\\u'+
+('0000'+a.charCodeAt(0).toString(16)).slice(-4);});}
+if(/^[\],:{}\s]*$/.test(text.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g,'@').replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g,']').replace(/(?:^|:|,)(?:\s*\[)+/g,''))){j=eval('('+text+')');return typeof reviver==='function'?walk({'':j},''):j;}
+throw new SyntaxError('JSON.parse');};}}());
+
+
+/**
+  An ArchiveRequest object is used to carry out an asynchronous request for a
+  compressed archive (containing multiple files).
+
+  Note: The archive must have as its first file a file named 'aaaaaaaa.o3d'
+  who's contents is 'o3d'. This is to prevent O3D being used to open
+  archive files that were not meant for it.
+
+  \code
+  var request = pack.createArchiveRequest();
+  request.open("GET", url);
+
+  request.onfileavailable = myFileAvailableCallback;
+  request.onreadystatechange = myReadyStateChangeCallback;
+  request.send();
+
+  function myFileAvailableCallback(rawData) {
+    dump("uri: " + rawData.uri + "\n");
+    dump("content: " + rawData.stringValue + "\n");
+
+    // You can pass a RawData to various creation functions. Note: rawData
+    // is only valid until you remove the request.
+    // Examples:
+    if (rawData.uri == 'mytexture.jpg')
+      pack.createTexture2d(rawData, makeMips);
+    if (rawData.uri == 'myvertices.bin')
+      vertexBuffer.set(rawData);
+    if (rawData.uri == 'myAudio.mp3')
+      audioSystem.createSound(rawData);
+  }
+
+  function myReadyStateChangeCallback() {
+    if (request.done) {
+      if (request.success) {
+        // there were no errors trying to read the archive
+      } else {
+        dump(request.error);
+      }
+    }
+  }
+
+  // When you are done with the RawDatas loaded by the request, remove
+  // the request from the pack to free them.
+  pack.removeObject(request);
+*/
+
+o3d.ArchiveRequest = function() {
+  o3d.ObjectBase.call(this);
+  this.method_ = null;
+};
+o3d.inherit('ArchiveRequest', 'ObjectBase');
+
+/**
+ * The URI this request is for.
+ * @type {string}
+ */
+o3d.ArchiveRequest.prototype.uri = '';
+
+/**
+ * Set up several of the request fields.
+ * @param {string} method "GET" is the only supported method at this time
+ * @param {string} uri the location of the file to fetch
+ * @param {boolean} async true is the only legal value at this time.
+ */
+o3d.ArchiveRequest.prototype.open =
+    function(method, uri) {
+  this.uri = uri;
+
+  // Compute the parent directory of this URI.
+  var parentURI = uri;
+  var lastSlash = uri.lastIndexOf('/');
+  if (lastSlash != -1) {
+    parentURI = parentURI.substring(0, lastSlash + 1);
+  }
+
+  this.parentURI_ = parentURI;
+};
+
+/**
+ * Sends the request.  In this implementation, this function sets up a callback
+ * which searches the json it loads for more files to load.  It then sends
+ * requests for each of those files.  When the last of those files has loaded,
+ * the onreadystatechange callback will get called.  Unlike XMLHttpRequest the
+ * onreadystatechange callback will be called no matter what, with success or
+ * failure.
+ */
+o3d.ArchiveRequest.prototype.send = function() {
+  var that = this;
+  this.done = false;
+  this.success = true;
+  this.error = null;
+  var callback = function(sourceJSON, exc) {
+    // Don't send down the original scene.json because 'eval' is used
+    // elsewhere to reconstitute it, which is risky.
+    var filteredJSON = JSON.stringify(JSON.parse(sourceJSON));
+
+    var rawData = new o3d.RawData();
+    rawData.uri = 'scene.json';
+    rawData.stringValue = filteredJSON;
+
+    // In o3d-webgl, the "archive" is really just the top-level
+    // scene.json. We run a regexp on it to find URIs for certain
+    // well-known file types (.fx, .png, .jpg) and issue file requests
+    // for them.
+    var uriRegex = /\"([^\"]*\.(fx|png|jpg))\"/g;
+    var matchArray;
+    var uris = [];
+    while ((matchArray = uriRegex.exec(sourceJSON)) != null) {
+      uris.push(matchArray[1]);
+    }
+
+    // Plus one for the current request.
+    that.pendingRequests_ = uris.length + 1;
+
+    // Issue requests for each of these URIs.
+    for (var ii = 0; ii < uris.length; ++ii) {
+      if (that.stringEndsWith_(uris[ii], ".fx")) {
+        var func = function(uri) {
+          var completion = function(value, exc) {
+            var rawData = null;
+            if (exc == null) {
+              rawData = new o3d.RawData();
+              rawData.uri = uri;
+              rawData.stringValue = value;
+            }
+            that.resolvePendingRequest_(rawData, exc);
+          };
+          o3djs.io.loadTextFile(that.relativeToAbsoluteURI_(uri),
+                                completion);
+        };
+        func(uris[ii]);
+      } else if (that.stringEndsWith_(uris[ii], ".png") ||
+                 that.stringEndsWith_(uris[ii], ".jpg")) {
+        var func = function(uri) {
+          var image = new Image();
+          image.onload = function() {
+            var rawData = new o3d.RawData();
+            rawData.uri = uri;
+            rawData.image_ = image;
+            that.resolvePendingRequest_(rawData, exc);
+          };
+          image.onerror = function() {
+            that.resolvePendingRequest_(null, exc);
+          }
+          image.src = that.relativeToAbsoluteURI_(uri);
+        };
+        func(uris[ii]);
+      }
+    }
+
+    that.resolvePendingRequest_(rawData);
+  };
+
+  o3djs.io.loadTextFile(this.uri, callback);
+};
+
+/**
+ * A callback to call whenever the ready state of the request changes.
+ * @type {function(): void}
+ */
+o3d.ArchiveRequest.prototype.onreadystatechange = null;
+
+/**
+ * A callback to call when each file comes in.
+ * @type {function(!o3d.RawData): void}
+ */
+o3d.ArchiveRequest.prototype.onfileavailable = null;
+
+/**
+ * Converts a local URI to an absolute URI.
+ * @private
+ */
+o3d.ArchiveRequest.prototype.relativeToAbsoluteURI_ = function(relativeURI) {
+  return this.parentURI_ + relativeURI;
+};
+
+/**
+ * Indicates whether one string ends with another.
+ * @private
+ */
+o3d.ArchiveRequest.prototype.stringEndsWith_ = function(string, suffix) {
+  return string.substring(string.length - suffix.length) == suffix;
+};
+
+/**
+ * Decrements the number of pending requests.  Calls onfileavailable callback
+ * if one is provided, calls onreadystatechange if this is the last of the
+ * requests.
+ * @param {o3d.RawData} rawData The current raw data object.
+ * @param {Object} opt_exc An optional exception.
+ * @private
+ */
+o3d.ArchiveRequest.prototype.resolvePendingRequest_ =
+    function(rawData, opt_exc) {
+  this.success = this.success && rawData && (!opt_exc);
+  if (opt_exc != null) {
+    this.error = "" + opt_exc;
+  }
+  if (rawData && this.onfileavailable) {
+    this.onfileavailable(rawData);
+  }
+  if (--this.pendingRequests_ == 0) {
+    this.done = true;
+    if (this.onreadystatechange) {
+      this.onreadystatechange();
+    }
+  }
+};
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * Acts like ParamFloat, but has an unsettable value which always calls
+ * this.owner_.updateOutputs to find the updated output value.
+ * @constructor
+ * @extends {o3d.ParamFloat}
+ */
+o3d.ParamFloatOutput = function() {
+  o3d.ParamFloat.call(this);
+};
+o3d.inherit('ParamFloatOutput', 'ParamFloat');
+o3d.ParamFloatOutput.prototype.__defineGetter__("value",
+    function() {
+      return this.owner_.updateOutputs();
+    }
+);
+o3d.ParamFloatOutput.prototype.__defineSetter__("value",
+    function(value) {}
+);
+
+/**
+ * Acts like ParamFloat2, but has an unsettable value which always calls
+ * this.owner_.updateOutputs to find the updated output value.
+ * @constructor
+ * @extends {o3d.ParamFloat2}
+ */
+o3d.ParamFloat2Output = function() {
+  o3d.ParamFloat2.call(this);
+};
+o3d.inherit('ParamFloat2Output', 'ParamFloat2');
+o3d.ParamFloat2Output.prototype.__defineGetter__("value",
+    function() {
+      return this.owner_.updateOutputs();
+    }
+);
+o3d.ParamFloat2Output.prototype.__defineSetter__("value",
+    function(value) {}
+);
+
+/**
+ * Acts like ParamFloat3, but has an unsettable value which always calls
+ * this.owner_.updateOutputs to find the updated output value.
+ * @constructor
+ * @extends {o3d.ParamFloat3}
+ */
+o3d.ParamFloat3Output = function() {
+  o3d.ParamFloat3.call(this);
+};
+o3d.inherit('ParamFloat3Output', 'ParamFloat3');
+o3d.ParamFloat3Output.prototype.__defineGetter__("value",
+    function() {
+      return this.owner_.updateOutputs();
+    }
+);
+o3d.ParamFloat3Output.prototype.__defineSetter__("value",
+    function(value) {}
+);
+
+/**
+ * Acts like ParamFloat4, but has an unsettable value which always calls
+ * this.owner_.updateOutputs to find the updated output value.
+ * @constructor
+ * @extends {o3d.ParamFloat4}
+ */
+o3d.ParamFloat4Output = function() {
+  o3d.ParamFloat4.call(this);
+};
+o3d.inherit('ParamFloat4Output', 'ParamFloat4');
+o3d.ParamFloat4Output.prototype.__defineGetter__("value",
+    function() {
+      return this.owner_.updateOutputs();
+    }
+);
+o3d.ParamFloat4Output.prototype.__defineSetter__("value",
+    function(value) {}
+);
+
+/**
+ * Acts like ParamMatrix4, but has an unsettable value which always calls
+ * this.owner_.updateOutputs to find the updated output value.
+ * @constructor
+ * @extends {o3d.ParamMatrix4}
+ */
+o3d.ParamMatrix4Output = function() {
+  o3d.ParamMatrix4.call(this);
+};
+o3d.inherit('ParamMatrix4Output', 'ParamMatrix4');
+o3d.ParamMatrix4Output.prototype.__defineGetter__("value",
+    function() {
+      return this.owner_.updateOutputs();
+    }
+);
+o3d.ParamMatrix4Output.prototype.__defineSetter__("value",
+    function(value) {}
+);
+
+/**
+ * A Param operation that takes 2 floats to produce a float2.
+ * @constructor
+ * @extends {o3d.ParamObject}
+ */
+o3d.ParamOp2FloatsToFloat2 = function() {
+  o3d.ParamObject.call(this);
+  this.last_output_value_ = [0, 0];
+};
+o3d.inherit('ParamOp2FloatsToFloat2', 'ParamObject');
+
+(function(){
+  for (var i = 0; i < 2; i++) {
+    o3d.ParamObject.setUpO3DParam_(
+        o3d.ParamOp2FloatsToFloat2, "input"+i, "ParamFloat");
+  }
+  o3d.ParamObject.setUpO3DParam_(
+      o3d.ParamOp2FloatsToFloat2, "output", "ParamMatrix4Output");
+})();
+
+/**
+ * Called by o3d.Param*Output whenever its value gets read.
+ * @return {!Array.<number>} 2-element array equal to [input0,input1]
+ */
+o3d.ParamOp2FloatsToFloat2.prototype.updateOutputs = function() {
+  this.last_output_value_[0] = this.getParam("input0").value;
+  this.last_output_value_[1] = this.getParam("input1").value;
+  return this.last_output_value_;
+};
+
+/**
+ * A Param operation that takes 3 floats to produce a float3.
+ * @constructor
+ * @extends {o3d.ParamObject}
+ */
+o3d.ParamOp3FloatsToFloat3 = function() {
+  o3d.ParamObject.call(this);
+  this.last_output_value_ = [0, 0, 0];
+};
+o3d.inherit('ParamOp3FloatsToFloat3', 'ParamObject');
+
+(function(){
+  for (var i = 0; i < 3; i++) {
+    o3d.ParamObject.setUpO3DParam_(
+        o3d.ParamOp3FloatsToFloat3, "input"+i, "ParamFloat");
+  }
+  o3d.ParamObject.setUpO3DParam_(
+      o3d.ParamOp3FloatsToFloat3, "output", "ParamMatrix4Output");
+})();
+
+/**
+ * Called by o3d.Param*Output whenever its value gets read.
+ * @return {!Array.<number>} 3-element array equal to [input0,input1,input2]
+ */
+o3d.ParamOp3FloatsToFloat3.prototype.updateOutputs = function() {
+  this.last_output_value_[0] = this.getParam("input0").value;
+  this.last_output_value_[1] = this.getParam("input1").value;
+  this.last_output_value_[2] = this.getParam("input2").value;
+  return this.last_output_value_;
+};
+
+/**
+ * A Param operation that takes 4 floats to produce a float4.
+ * @constructor
+ * @extends {o3d.ParamObject}
+ */
+o3d.ParamOp4FloatsToFloat4 = function() {
+  o3d.ParamObject.call(this);
+  this.last_output_value_ = [0, 0, 0, 0];
+};
+o3d.inherit('ParamOp4FloatsToFloat4', 'ParamObject');
+
+(function(){
+  for (var i = 0; i < 4; i++) {
+    o3d.ParamObject.setUpO3DParam_(
+        o3d.ParamOp4FloatsToFloat4, "input"+i, "ParamFloat");
+  }
+  o3d.ParamObject.setUpO3DParam_(
+      o3d.ParamOp4FloatsToFloat4, "output", "ParamMatrix4Output");
+})();
+
+/**
+ * Called by o3d.Param*Output whenever its value gets read.
+ * @return {!Array.<number>} 4-element array equal to
+ *     [input0,input1,input2,input3]
+ */
+o3d.ParamOp4FloatsToFloat4.prototype.updateOutputs = function() {
+  this.last_output_value_[0] = this.getParam("input0").value;
+  this.last_output_value_[1] = this.getParam("input1").value;
+  this.last_output_value_[2] = this.getParam("input2").value;
+  this.last_output_value_[3] = this.getParam("input3").value;
+  return this.last_output_value_;
+};
+
+/**
+ * A Param operation that takes 16 floats to produce a 4-by-4 matrix.
+ * @constructor
+ * @extends {o3d.ParamObject}
+ */
+o3d.ParamOp16FloatsToMatrix4 = function() {
+  o3d.ParamObject.call(this);
+  this.last_output_value_ =
+      [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+};
+o3d.inherit('ParamOp16FloatsToMatrix4', 'ParamObject');
+
+(function(){
+  for (var i = 0; i < 16; i++) {
+    o3d.ParamObject.setUpO3DParam_(
+        o3d.ParamOp16FloatsToMatrix4, "input"+i, "ParamFloat");
+  }
+  o3d.ParamObject.setUpO3DParam_(
+      o3d.ParamOp16FloatsToMatrix4, "output", "ParamMatrix4Output");
+})();
+
+/**
+ * Called by o3d.Param*Output whenever its value gets read.
+ * @return {!Array.<!Array.<number>>} 4x4 array equal to
+ *     [[i0,i1,i2,i3],[i4,i5,i6,i7],[i8,i9,i10,i11],[i12,i13,i14,i15]]
+ */
+o3d.ParamOp16FloatsToMatrix4.prototype.updateOutputs = function() {
+  for (var i = 0; i < 16; i++) {
+    this.last_output_value_[Math.floor(i/4)][i%4] =
+        this.getParam("input"+i).value;
+  }
+  return this.last_output_value_;
+};
+
+/**
+ * A Param operation that takes 9 floats to produce a 4-by-4 matrix.
+ * The 9 floats encode a translation vector, angles of rotation around
+ * the x, y, and z axes, and three scaling factors. The resulting
+ * transformation scales first, then then rotates around the z-axis,
+ * then the y-axis, then the x-axis, then translates.
+ * @param {string} name Tne name of the parameter.
+ * @param {string} className The param class name.
+ * @param {number} numElements The number of Elements if the param is an array.
+ * @param {string} sasClassName The sas class name if the param is an sas type.
+ * @param {string} semantic The relevant semantic.
+ * @constructor
+ * @extends {o3d.ParamObject}
+ */
+o3d.TRSToMatrix4 = function() {
+  o3d.ParamObject.call(this);
+
+  this.rotateX = 0;
+  this.rotateY = 0;
+  this.rotateZ = 0;
+
+  this.translateX = 0;
+  this.translateY = 0;
+  this.translateZ = 0;
+
+  this.scaleX = 1;
+  this.scaleY = 1;
+  this.scaleZ = 1;
+
+  this.last_output_value_ =
+      [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+};
+o3d.inherit('TRSToMatrix4', 'ParamObject');
+
+(function(){
+  var proplist = ["rotateX", "rotateY", "rotateZ",
+                  "translateX", "translateY", "translateZ",
+                  "scaleX", "scaleY", "scaleZ"];
+  for (var i = 0; i < proplist.length; i++) {
+    o3d.ParamObject.setUpO3DParam_(o3d.TRSToMatrix4, proplist[i], "ParamFloat");
+  }
+  o3d.ParamObject.setUpO3DParam_(
+      o3d.TRSToMatrix4, "output", "ParamMatrix4Output");
+})();
+
+/**
+ * Called by o3d.Param*Output whenever its value gets read.
+ * @return {!Array.<!Array.<number>>} Matrix4 equal to applying the operations
+ *     in the order Translate * Rotate * Scale.
+ */
+o3d.TRSToMatrix4.prototype.updateOutputs = function () {
+  var ret = this.last_output_value_;
+  var rX = this.rotateX;
+  var rY = this.rotateY;
+  var rZ = this.rotateZ;
+  var sX = this.scaleX;
+  var sY = this.scaleY;
+  var sZ = this.scaleZ;
+  var sinX = Math.sin(rX);
+  var cosX = Math.cos(rX);
+  var sinY = Math.sin(rY);
+  var cosY = Math.cos(rY);
+  var sinZ = Math.sin(rZ);
+  var cosZ = Math.cos(rZ);
+  var cosZSinY = cosZ * sinY;
+  var sinZSinY = sinZ * sinY;
+
+  ret[0].splice(0, 4, cosZ * cosY * sX,
+                      sinZ * cosY * sX,
+                      -sinY * sX,
+                      0);
+  ret[1].splice(0, 4, (cosZSinY * sinX - sinZ * cosX) * sY,
+                      (sinZSinY * sinX + cosZ * cosX) * sY,
+                      cosY * sinX * sY,
+                      0);
+  ret[2].splice(0, 4, (cosZSinY * cosX + sinZ * sinX) * sZ,
+                      (sinZSinY * cosX - cosZ * sinX) * sZ,
+                      cosY * cosX * sZ,
+                      0);
+  ret[3].splice(0, 4, this.translateX,
+                      this.translateY,
+                      this.translateZ,
+                      1);
+  return ret;
+};
+
+/**
+ * A Param operation that takes an input matrix and a local matrix
+ * to produce an output matrix.
+ * @constructor
+ * @extends {o3d.ParamObject}
+ */
+o3d.Matrix4Composition = function() {
+  o3d.ParamObject.call(this);
+  this.last_output_value_ =
+      [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+};
+o3d.inherit('Matrix4Composition', 'ParamObject');
+
+o3d.ParamObject.setUpO3DParam_(
+    o3d.Matrix4Composition, "inputMatrix", "ParamMatrix4");
+
+o3d.ParamObject.setUpO3DParam_(
+    o3d.Matrix4Composition, "localMatrix", "ParamMatrix4");
+
+o3d.ParamObject.setUpO3DParam_(
+    o3d.Matrix4Composition, "outputMatrix", "ParamMatrix4Output");
+
+/**
+ * Called by o3d.Param*Output whenever its value gets read.
+ * @return {!Array.<!Array.<number>>} 4x4 array equal to
+ *     inputMatrix * localMatrix
+ */
+o3d.Matrix4Composition.prototype.updateOutputs = function() {
+  var input = this.getParam("inputMatrix").value;
+  var local = this.getParam("localMatrix").value;
+  o3d.Transform.compose(input, local, this.last_output_value_);
+  return this.last_output_value_;
+};
+
+
+/**
+ * A Param operation that takes an input matrix, a float3 axis and an angle
+ * to produce an output matrix.
+ * @constructor
+ * @extends {o3d.ParamObject}
+ */
+o3d.Matrix4AxisRotation = function() {
+  o3d.ParamObject.call(this);
+  this.last_output_value_ =
+      [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+};
+o3d.inherit('Matrix4AxisRotation', 'ParamObject');
+
+o3d.ParamObject.setUpO3DParam_(
+    o3d.Matrix4AxisRotation, "inputMatrix", "ParamMatrix4");
+
+o3d.ParamObject.setUpO3DParam_(
+    o3d.Matrix4AxisRotation, "axis", "ParamFloat3");
+
+o3d.ParamObject.setUpO3DParam_(
+    o3d.Matrix4AxisRotation, "angle", "ParamFloat");
+
+o3d.ParamObject.setUpO3DParam_(
+    o3d.Matrix4AxisRotation, "outputMatrix", "ParamMatrix4Output");
+
+/**
+ * Called by o3d.Param*Output whenever its value gets read.
+ * @return {!Array.<!Array.<number>>} 4x4 array from rotating inputMatrix around
+ *     axis by angle.
+ */
+o3d.Matrix4AxisRotation.prototype.updateOutputs = function() {
+  var input = this.getParam("inputMatrix").value;
+  var axis = this.getParam("axis").value;
+  var angle = this.getParam("angle").value;
+  o3d.Transform.axisRotateMatrix(input, axis, angle, this.last_output_value_);
+  return this.last_output_value_;
+};
+
+
+/**
+ * A Param operation that takes an input matrix and a float3 scale
+ * to produce an output matrix.
+ * @constructor
+ * @extends {o3d.ParamObject}
+ */
+o3d.Matrix4Scale = function() {
+  o3d.ParamObject.call(this);
+  this.last_output_value_ =
+      [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+};
+o3d.inherit('Matrix4Scale', 'ParamObject');
+
+o3d.ParamObject.setUpO3DParam_(
+    o3d.Matrix4Scale, "inputMatrix", "ParamMatrix4");
+
+o3d.ParamObject.setUpO3DParam_(
+    o3d.Matrix4Scale, "scale", "ParamFloat3");
+
+o3d.ParamObject.setUpO3DParam_(
+    o3d.Matrix4Scale, "outputMatrix", "ParamMatrix4Output");
+
+/**
+ * Called by o3d.Param*Output whenever its value gets read.
+ * @return {!Array.<!Array.<number>>} 4x4 array from scaling inputMatrix by
+ *      scale.
+ */
+o3d.Matrix4Scale.prototype.updateOutputs = function() {
+  var m = this.getParam("inputMatrix").value;
+  var ret = this.last_output_value_;
+  var v = this.getParam("scale").value;
+
+  var v0 = v[0];
+  var v1 = v[1];
+  var v2 = v[2];
+
+  var m0 = m[0];
+  var m1 = m[1];
+  var m2 = m[2];
+  var m3 = m[3];
+
+  ret[0].splice(0, 4, v0 * m0[0], v0 * m0[1], v0 * m0[2], v0 * m0[3]);
+  ret[1].splice(0, 4, v1 * m1[0], v1 * m1[1], v1 * m1[2], v1 * m1[3]);
+  ret[2].splice(0, 4, v2 * m2[0], v2 * m2[1], v2 * m2[2], v2 * m2[3]);
+  ret[3] = m3.slice(0);
+  return ret;
+};
+
+
+/**
+ * A Param operation that takes an input matrix, and a translation
+ * to produce an output matrix.
+ * @constructor
+ * @extends {o3d.ParamObject}
+ */
+o3d.Matrix4Translation = function() {
+  o3d.ParamObject.call(this);
+  this.last_output_value_ =
+      [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+};
+o3d.inherit('Matrix4Translation', 'ParamObject');
+
+o3d.ParamObject.setUpO3DParam_(
+    o3d.Matrix4Translation, "inputMatrix", "ParamMatrix4");
+
+o3d.ParamObject.setUpO3DParam_(
+    o3d.Matrix4Translation, "translation", "ParamFloat3");
+
+o3d.ParamObject.setUpO3DParam_(
+    o3d.Matrix4Translation, "outputMatrix", "ParamMatrix4Output");
+
+/**
+ * Called by o3d.Param*Output whenever its value gets read.
+ * @return {!Array.<!Array.<number>>} 4x4 array from translating inputMatrix
+ *     by translation.
+ */
+o3d.Matrix4Translation.prototype.updateOutputs = function() {
+  var m = this.getParam("inputMatrix").value;
+  var ret = this.last_output_value_;
+  var v = this.getParam("translation").value;
+
+  var v0 = v[0];
+  var v1 = v[1];
+  var v2 = v[2];
+
+  var m0 = m[0];
+  var m1 = m[1];
+  var m2 = m[2];
+  var m3 = m[3];
+
+  ret[0] = m0.slice(0);
+  ret[1] = m1.slice(0);
+  ret[2] = m2.slice(0);
+  ret[3].splice(0, 4, m0[0] * v0 + m1[0] * v1 + m2[0] * v2 + m3[0],
+                      m0[1] * v0 + m1[1] * v1 + m2[1] * v2 + m3[1],
+                      m0[2] * v0 + m1[2] * v1 + m2[2] * v2 + m3[2],
+                      m0[3] * v0 + m1[3] * v1 + m2[3] * v2 + m3[3]);
+  return ret;
+};
+
+
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+ * A Function is a class that has an Evaluate method.
+ * Evaluate takes 1 input and returns 1 output.
+ * @param {function(number)=} opt_func  evaluate function to use (unless this
+ *     class is extended
+ * @constructor
+ * @extends {o3d.NamedObject}
+ */
+o3d.Function = function(opt_func) {
+    o3d.NamedObject.call(this);
+    this.func_ = opt_func;
+};
+o3d.inherit('Function', 'NamedObject');
+
+/**
+ * Gets an output for this function for the given input.
+ * @param {number} input Input to get output at.
+ * @param {object=} opt_context Cached state from the previous evaluate call.
+ * @return {number} The output for the given input.
+ */
+o3d.Function.prototype.evaluate = function(input, opt_context) {
+    this.func_.call(this, input, opt_context);
+};
+
+/**
+ * A FunctionEval evaluates a Function through parameters.
+ * @constructor
+ * @extends {o3d.ParamObject}
+ */
+o3d.FunctionEval = function() {
+  o3d.ParamObject.call(this);
+
+  /**
+   * Read/write input value to the function.
+   * @private
+   * @type {o3d.ParamFloat}
+   */
+  this.input_param_ = this.getParam("input");
+
+  /**
+   * ParamFunction whose value is a o3d.Function or subclass.
+   * @private
+   * @type {o3d.ParamFunction}
+   */
+  this.func_param_ = this.getParam("functionObject");
+
+  /**
+   * Read-only output value. Value is cached if input does not change.
+   * @private
+   * @type {o3d.ParamFloatOutput}
+   */
+  this.output_param_ = this.getParam("output");
+
+  /**
+   * Context value to allow faster evaluation for adjacent input values.
+   * Used by the o3d.Function itself, but stored here to allow multiple
+   * FunctionEval objects to share the same Function object.
+   * @private
+   * @type {object}
+   */
+  this.func_context_ = {};
+
+  /**
+   * Last input value to check if cache needs to be invalidated.
+   * @private
+   * @type {number}
+   */
+  this.last_input_value_ = null;
+
+  /**
+   * Cache of the last output value.
+   * @private
+   * @type {number}
+   */
+  this.last_output_value_ = null;
+};
+o3d.inherit('FunctionEval', 'ParamObject');
+
+/**
+ * Read-only output value. Value is cached if input does not change.
+ * @type {number}
+ */
+o3d.ParamObject.setUpO3DParam_(o3d.FunctionEval, "output", "ParamFloatOutput");
+
+/**
+ * Read/write input value to the function.
+ * @type {number}
+ */
+o3d.ParamObject.setUpO3DParam_(o3d.FunctionEval, "input", "ParamFloat");
+
+/**
+ * o3d.Function object (or subclass) with evaluate function.
+ * @type {o3d.Function}
+ */
+o3d.ParamObject.setUpO3DParam_(o3d.FunctionEval, "functionObject",
+    "ParamFunction");
+
+/**
+ * Called by o3d.Param*Output whenever its value gets read.
+ * This function should be responsible for caching the last value if necessary.
+ * @return {number} The result of evaluating the function.
+ */
+o3d.FunctionEval.prototype.updateOutputs = function() {
+  var new_input_value = this.input_param_.value;
+  if (this.last_input_value_ != new_input_value) {
+    this.last_output_value_ =
+        this.func_param_.value.evaluate(this.last_input_value_,
+                                        this.func_context_);
+    this.last_input_value_ = new_input_value;
+  }
+  return this.last_output_value_;
+};
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+ * Per-client list of counters/timers.
+ * @constructor
+ */
+o3d.CounterManager = function() {
+  /**
+   * Map from counter type to list of counters in this client.
+   * @private
+   * @type {!Object}
+   */
+  this.counterMap_ = {};
+};
+
+/**
+ * Contains the time of the last call to tick, so we know the amount to pass
+ * into advanceCounters_
+ * lastUpdated is initialized on the first call to tick().
+ * @type {Date}
+ */
+o3d.CounterManager.prototype.lastUpdated = null;
+
+/**
+ * @param {string} type Which counter_type_ to advance.
+ * @param {number} amount Amount to advance counters.
+ */
+o3d.CounterManager.prototype.advanceCounters = function(type, amount) {
+  var counterArrayRef = this.counterMap_[type];
+  if (!counterArrayRef)
+    return;
+  var length = counterArrayRef.length;
+  var counterArray = [];
+  for (var i = 0; i < length; i++) {
+    counterArray[i] = counterArrayRef[i];
+  }
+  for (var i = 0; i < length; ++i) {
+    if (counterArray[i].running) {
+      counterArray[i].advance(amount);
+    }
+  }
+};
+
+/**
+ * Static method to increments all global counters. RenderFrameCounter should
+ * not get updated here.
+ */
+o3d.CounterManager.prototype.tick = function() {
+  this.advanceCounters("TickCounter", 1.0);
+  var now = new Date();
+  var deltaSeconds = 0;
+  if (this.lastUpdated != null) {
+    deltaSeconds = (now - this.lastUpdated) / 1000.0;
+  }
+  this.lastUpdated = now;
+  this.advanceCounters("SecondCounter", deltaSeconds);
+};
+
+/**
+ * Updates RenderFrameCounter objects by 1.0, similarly to TickCounter.
+ * As opposed to tick(), this should only be when the canvas is rendered, so
+ * any canvases which are not automatically rendererd may not advance this.
+ */
+o3d.CounterManager.prototype.advanceRenderFrameCounters = function() {
+  this.advanceCounters("RenderFrameCounter", 1.0);
+};
+
+/**
+ * Register a counter, using its className to decide which type of counter.
+ * @param {!o3d.Counter} counter Instance of some sub-type of o3d.Counter
+ */
+o3d.CounterManager.prototype.registerCounter = function(counter) {
+  var type = counter.counter_type_;
+  var arr = this.counterMap_[type];
+  if (!arr) {
+    arr = this.counterMap_[type] = [];
+  }
+  arr.push(counter);
+};
+
+/**
+ * Unregister a counter previously registered by registerCounter.
+ * @param {!o3d.Counter} counter Instance of some sub-type of o3d.Counter
+ */
+o3d.CounterManager.prototype.unregisterCounter = function(counter) {
+  var type = counter.counter_type_;
+  var arr = this.counterMap_[type];
+  if (arr) {
+    o3d.removeFromArray(arr, counter);
+  }
+};
+
+/**
+ * A Counter counts seconds, ticks or render frames depending on the type of
+ * counter. You can set where it starts counting from and where it stops
+ * counting at, whether or not it is running or paused and how it loops or does
+ * not loop. You can also give it callbacks to call at specific count values.
+ * @constructor
+ * @extends {o3d.ParamObject}
+ */
+o3d.Counter = function() {
+  o3d.ParamObject.call(this);
+
+  /**
+   * Last called callback in the forward direction (start_count > end_count)
+   * @type {number}
+   * @private
+   */
+  this.next_callback_ = -1;
+
+  /**
+   * Last called callback in the backward direction (start_count < end_count)
+   * @type {number}
+   * @private
+   */
+  this.prev_callback_ = -1;
+
+  /**
+   * Keeps track of last count in case this.count_ is bound to another param.
+   * @type {number}
+   * @private
+   */
+  this.old_count_ = 0;
+
+  /**
+   * Keeps track of last end_count to prevent double-firing of callbacks if
+   * start_count is the same.
+   * @type {number}
+   * @private
+   */
+  this.last_call_callbacks_end_count_ = 0;
+
+  /**
+   * List of callbacks for this counter, in sorted order.
+   * There can only be one callback per timer value.
+   * @type {Array.<o3d.Counter.CallbackInfo>}
+   * @private
+   */
+  this.callbacks_ = [];
+
+  /**
+   * Pointer to CounterManager which owns this counter, so it can be added
+   * to the list of counters by setting this.running = true.
+   * @type {o3d.CounterManager}
+   */
+  this.counter_manager_ = null;
+
+  /**
+   * Cached copy of this.getParam('running')
+   * @type {o3d.ParamBoolean}
+   * @private
+   */
+  this.running_param_ = this.createParam("running", "ParamBoolean");
+
+  /**
+   * Cached copy of this.getParam('count')
+   * @type {o3d.ParamFloat}
+   * @private
+   */
+  this.count_param_ = this.createParam("count", "ParamFloat");
+
+  this.multiplier = 1.0;
+
+  this.forward = true;
+
+  this.countMode = o3d.Counter.CONTINUOUS;
+
+  // this.running must be set in the sub class due to how o3d.inherit works.
+};
+o3d.inherit('Counter', 'ParamObject');
+
+/**
+ * Controls the direction of the counter. If false, Counter.callCallbacks_
+ * will be called with start_count > end_count.
+ * @default true
+ * @type {boolean}
+ */
+o3d.ParamObject.setUpO3DParam_(o3d.Counter, "forward", "ParamBoolean");
+
+/**
+ * The start value for this counter.
+ * @default 0
+ * @type {number}
+ */
+o3d.ParamObject.setUpO3DParam_(o3d.Counter, "start", "ParamFloat");
+
+/**
+ * The end value for this counter.
+ * @default 0
+ * @type {number}
+ */
+o3d.ParamObject.setUpO3DParam_(o3d.Counter, "end", "ParamFloat");
+
+/**
+ * Can be used to switch the direction of the counter or control what happens
+ * when end_count is reached.
+ * @see o3d.Counter.CONTINUOUS
+ * @see o3d.Counter.ONCE
+ * @see o3d.Counter.CYCLE
+ * @see o3d.Counter.OSCILLATE
+ * @default o3d.Counter.CONTINUOUS
+ * @type {o3d.Counter.CountMode}
+ */
+o3d.ParamObject.setUpO3DParam_(o3d.Counter, "countMode", "ParamInteger");
+
+/**
+ * The time multiplier for this counter.
+ * @default 1
+ * @type {number}
+ */
+o3d.ParamObject.setUpO3DParam_(o3d.Counter, "multiplier", "ParamFloat");
+
+/**
+ * Whether or not this counter is running.
+ * Special setter to allow destroying a stopped Counter without leaking mem.
+ * Defaults to true in SecondCounter, TickCounter and RenderFrameCounter.
+ * @default false
+ * @type {boolean}
+ */
+o3d.Counter.prototype.__defineSetter__("running",
+    function(newRunning) {
+      var oldRunning = this.running_param_.value;
+      if (this.counter_manager_ && oldRunning != newRunning) {
+        if (newRunning == false) {
+          this.counter_manager_.unregisterCounter(this);
+        } else {
+          this.counter_manager_.registerCounter(this);
+        }
+      }
+      this.running_param_.value = newRunning;
+    }
+);
+o3d.Counter.prototype.__defineGetter__("running",
+    function() {
+      return this.running_param_.value;
+    }
+);
+
+/**
+ * The current count for this counter. The setter is equivalent to calling
+ * setCount(value)
+ * @default 0
+ * @type {number}
+ */
+o3d.Counter.prototype.__defineSetter__("count",
+    function(value) {
+      this.setCount(value);
+    }
+);
+o3d.Counter.prototype.__defineGetter__("count",
+    function() {
+      return this.count_param_.value;
+    }
+);
+
+o3d.Counter.prototype.__defineSetter__("gl",
+    function(new_gl) {
+      var old_running = this.running;
+      this.running = false;
+      this.gl_ = new_gl;
+      if (this.gl_ && this.gl_.client) {
+        this.counter_manager_ = this.gl_.client.counter_manager_;
+      }
+      this.running = old_running;
+    }
+);
+
+o3d.Counter.prototype.__defineGetter__("gl",
+    function() {
+      return this.gl_;
+    }
+);
+
+/**
+ * @type {number}
+ */
+o3d.Counter.CountMode = goog.typedef;
+
+/**
+ * Continiuously goes up, ignoring the value of end_count. This is the default.
+ * @type {o3d.Counter.CountMode}
+ */
+o3d.Counter.CONTINUOUS = 0;
+/**
+ * Sets running=false when end is reached and stops.
+ * @type {o3d.Counter.CountMode}
+ */
+o3d.Counter.ONCE = 1;
+/**
+ * Resets count to start_count whenever end is reached.
+ * @type {o3d.Counter.CountMode}
+ */
+o3d.Counter.CYCLE = 2;
+/**
+ * Switches direction whenever end or start is reached.
+ * @type {o3d.Counter.CountMode}
+ * @see direction
+ */
+o3d.Counter.OSCILLATE = 3;
+
+/**
+ * The counter type is used by o3d.CounterManager to decide which array to
+ * put the counter in, and how much to call advanceAmount by during each call
+ * to o3d.CounterManager.tick() or advanceRenderFrameCounters().
+ * "Counter" means that it will only be advanced manually.
+ * @type {string}
+ */
+o3d.Counter.prototype.counter_type_ = "Counter";
+
+/**
+ * Resets the counter back to the start or end time depending on the forward
+ * setting and also resets the Callback state.
+ * Note: Reset does not change the running state of the counter.
+ */
+o3d.Counter.prototype.reset = function() {
+  this.setCount(this.forward ? this.start : this.end);
+};
+
+/**
+ * Sets the current count value for this counter as well as the resetting the
+ * state of the callbacks.
+ * @param {number} count The current value of the counter
+ */
+o3d.Counter.prototype.setCount = function(value) {
+  this.count_param_.value = value;
+  this.old_count_ = value;
+  this.next_callback_ = -1;
+  this.prev_callback_ = -1;
+};
+
+
+/**
+ * Advances the counter the given amount. The actual amount advanced depends on
+ * the forward and multiplier settings. The formula is
+ * new_count = count + advance_amount * multiplier * (forward ? 1.0 : -1.0);
+ *
+ * Any callbacks that fall in the range between the counter's current count and
+ * the amount advanced will be called. This function is normally called
+ * automatically by the client if the counter is set to running = true. but you
+ * can call it manually.
+ *
+ * @param {number} advance_amount Amount to advance count.
+ */
+o3d.Counter.prototype.advance = function(advance_amount) {
+  var queue = [];
+  var old_count = this.count_param_.value;
+
+  // Update the count.
+  if (this.count_param_.inputConnection) {
+    this.callCallbacks_(this.old_count_, old_count, queue);
+  } else {
+    var direction = this.forward;
+    var start_count = this.start;
+    var end_count = this.end;
+    var multiplier = this.multiplier;
+    var delta = (direction ? advance_amount : -advance_amount) * multiplier;
+    var period = end_count - start_count;
+
+    var mode = this.countMode;
+    if (period >= 0.0) {
+      // end > start
+      var new_count = old_count + delta;
+      if (delta >= 0.0) {
+        switch (mode) {
+          case o3d.Counter.ONCE: {
+            if (new_count >= end_count) {
+              new_count = end_count;
+              this.running = false;
+            }
+            break;
+          }
+          case o3d.Counter.CYCLE: {
+            while (new_count >= end_count) {
+              this.callCallbacks_(old_count, end_count, queue);
+              if (period == 0.0) {
+                break;
+              }
+              old_count = start_count;
+              new_count -= period;
+            }
+            break;
+          }
+          case o3d.Counter.OSCILLATE: {
+            while (delta > 0.0) {
+              new_count = old_count + delta;
+              if (new_count < end_count) {
+                break;
+              }
+              this.callCallbacks_(old_count, end_count, queue);
+              direction = !direction;
+              var amount = end_count - old_count;
+              delta -= amount;
+              old_count = end_count;
+              new_count = end_count;
+              if (delta <= 0.0 || period == 0.0) {
+                break;
+              }
+              new_count -= delta;
+              if (new_count > start_count) {
+                break;
+              }
+              this.callCallbacks_(old_count, start_count, queue);
+              direction = !direction;
+              amount = old_count - start_count;
+              delta -= amount;
+              old_count = start_count;
+              new_count = start_count;
+            }
+            this.forward = direction;
+            break;
+          }
+          case o3d.Counter.CONTINUOUS:
+          default:
+            break;
+        }
+        this.callCallbacks_(old_count, new_count, queue);
+        this.count_param_.value = new_count;
+      } else if (delta < 0.0) {
+        switch (mode) {
+          case o3d.Counter.ONCE: {
+            if (new_count <= start_count) {
+              new_count = start_count;
+              this.running = false ;
+            }
+            break;
+          }
+          case o3d.Counter.CYCLE: {
+            while (new_count <= start_count) {
+              this.callCallbacks_(old_count, start_count, queue);
+              if (period == 0.0) {
+                break;
+              }
+              old_count = end_count;
+              new_count += period;
+            }
+            break;
+          }
+          case o3d.Counter.OSCILLATE: {
+            while (delta < 0.0) {
+              new_count = old_count + delta;
+              if (new_count > start_count) {
+                break;
+              }
+              this.callCallbacks_(old_count, start_count, queue);
+              direction = !direction;
+              var amount = old_count - start_count;
+              delta += amount;
+              old_count = start_count;
+              new_count = start_count;
+              if (delta >= 0.0 || period == 0.0) {
+                break;
+              }
+              new_count -= delta;
+              if (new_count < end_count) {
+                break;
+              }
+              this.callCallbacks_(old_count, end_count, queue);
+              direction = !direction;
+              amount = end_count - old_count;
+              delta += amount;
+              old_count = end_count;
+              new_count = end_count;
+            }
+            this.forward = direction;
+            break;
+          }
+          case o3d.Counter.CONTINUOUS:
+          default:
+            break;
+        }
+        this.callCallbacks_(old_count, new_count, queue);
+        this.count_param_.value = new_count;
+      }
+    } else if (period < 0.0) {
+      // start > end
+      period = -period;
+      var new_count = old_count - delta;
+      if (delta > 0.0) {
+        switch (mode) {
+          case o3d.Counter.ONCE: {
+            if (new_count <= end_count) {
+              new_count = end_count;
+              this.running = false;
+            }
+            break;
+          }
+          case o3d.Counter.CYCLE: {
+            while (new_count <= end_count) {
+              this.callCallbacks_(old_count, end_count, queue);
+              old_count = start_count;
+              new_count += period;
+            }
+            break;
+          }
+          case o3d.Counter.OSCILLATE: {
+            while (delta > 0.0) {
+              new_count = old_count - delta;
+              if (new_count > end_count) {
+                break;
+              }
+              this.callCallbacks_(old_count, end_count, queue);
+              direction = !direction;
+              var amount = old_count - end_count;
+              delta -= amount;
+              old_count = end_count;
+              new_count = end_count;
+              if (delta <= 0.0) {
+                break;
+              }
+              new_count += delta;
+              if (new_count < start_count) {
+                break;
+              }
+              this.callCallbacks_(old_count, start_count, queue);
+              direction = !direction;
+              amount = start_count - old_count;
+              delta -= amount;
+              old_count = start_count;
+              new_count = start_count;
+            }
+            this.forward = direction;
+            break;
+          }
+          case o3d.Counter.CONTINUOUS:
+          default:
+            break;
+        }
+        this.callCallbacks_(old_count, new_count, queue);
+        this.count_param_.value = new_count;
+      } else if (delta < 0.0) {
+        switch (mode) {
+          case o3d.Counter.ONCE: {
+            if (new_count >= start_count) {
+              new_count = start_count;
+              this.running = false;
+            }
+            break;
+          }
+          case o3d.Counter.CYCLE: {
+            while (new_count >= start_count) {
+              this.callCallbacks_(old_count, start_count, queue);
+              old_count = end_count;
+              new_count -= period;
+            }
+            break;
+          }
+          case o3d.Counter.OSCILLATE: {
+            while (delta < 0.0) {
+              new_count = old_count - delta;
+              if (new_count < start_count) {
+                break;
+              }
+              this.callCallbacks_(old_count, start_count, queue);
+              direction = !direction;
+              var amount = start_count - old_count;
+              delta += amount;
+              old_count = start_count;
+              new_count = start_count;
+              if (delta >= 0.0) {
+                break;
+              }
+              new_count += delta;
+              if (new_count > end_count) {
+                break;
+              }
+              this.callCallbacks_(old_count, end_count, queue);
+              direction = !direction;
+              amount = old_count - end_count;
+              delta += amount;
+              old_count = end_count;
+              new_count = end_count;
+            }
+            this.forward = direction;
+            break;
+          }
+          case o3d.Counter.CONTINUOUS:
+          default:
+            break;
+        }
+        this.callCallbacks_(old_count, new_count, queue);
+        this.count_param_.value = new_count;
+      }
+    }
+  }
+  this.old_count_ = old_count;
+  for (var i = 0; i < queue.length; i++) {
+    queue[i]();
+  }
+};
+
+/**
+ * @param {number} start_count  Starts exactly at this count.
+ * @param {number} end_count  Calls callbacks up to but not including this.
+ * @private
+ */
+o3d.Counter.prototype.callCallbacks_ = function(start_count, end_count, queue) {
+  if (end_count > start_count) {
+    // Going forward.
+    // If next_callback is not valid, find the first possible callback.
+    if (this.next_callback_ < 0 ||
+        start_count != this.last_call_callbacks_end_count_) {
+      this.next_callback_ = 0;
+      while (this.next_callback_ != this.callbacks_.length &&
+             this.callbacks_[this.next_callback_].count < start_count) {
+        ++this.next_callback_;
+      }
+    }
+
+    // add callbacks until we get to some callback past end_count.
+    while (this.next_callback_ < this.callbacks_.length) {
+      if (this.callbacks_[this.next_callback_].count > end_count) {
+        break;
+      }
+      queue.push(this.callbacks_[this.next_callback_].callback);
+      ++this.next_callback_;
+    }
+    this.prev_callback_ = -1;
+    this.last_call_callbacks_end_count_ = end_count;
+  } else if (end_count < start_count) {
+    // Going backward.
+    // If prev_callback is not valid, find the first possible callback.
+    if (this.prev_callback_ < 0 ||
+        start_count != this.last_call_callbacks_end_count_) {
+      this.prev_callback_ = this.callbacks_.length - 1;
+      while (this.prev_callback_ >= 0 &&
+             this.callbacks_[this.prev_callback_].count > start_count) {
+        --this.prev_callback_;
+      }
+    }
+
+    // add callbacks until we get to some callback past end_count.
+    while (this.prev_callback_ >= 0) {
+      if (this.callbacks_[this.prev_callback_].count < end_count) {
+        break;
+      }
+      queue.push(this.callbacks_[this.prev_callback_].callback);
+      --this.prev_callback_;
+    }
+
+    this.next_callback_ = -1;
+    this.last_call_callbacks_end_count_ = end_count;
+  }
+};
+
+/**
+ * Adds a callback for a given count value. Only one callback can be added to a
+ * specific count value. If another callback is added with the same count value
+ * the previous callback for that value will be replaced. Note: A callback at
+ * start will only get called when counting backward, a callback at end will
+ * only get called counting forward.
+ * @param {number} count Count at which to call callback.
+ * @param {function()} callback Callback to call at given count.
+ */
+o3d.Counter.prototype.addCallback = function(count, callback) {
+  this.next_callback_ = -1;
+  this.prev_callback_ = -1;
+  var end = this.callbacks_.length;
+  var iter = 0;
+  while (iter != end) {
+    var current = this.callbacks_[iter];
+    if (current.count == count) {
+      // Did the o3d plugin overwrite existing callbacks here?
+      current.callback = callback;
+      return;
+    } else if (current.count > count) {
+      break;
+    }
+    ++iter;
+  }
+  var rest = this.callbacks_.splice(iter, this.callbacks_.length - iter);
+  this.callbacks_.push(new o3d.Counter.CallbackInfo(count, callback));
+  this.callbacks_.push.apply(this.callbacks_, rest);
+};
+
+/**
+ * Removes a callback for a given count value.
+ * @param {number} count Count to remove callback for.
+ * @return {boolean} true if there was a callback for that count, false if
+ *     there was not a callback for that count.
+ */
+o3d.Counter.prototype.removeCallback = function(count) {
+  var end = this.callbacks_.length;
+  for (var iter = 0; iter != end; ++iter) {
+    if (this.callbacks_[iter].count == count) {
+      this.next_callback_ = -1;
+      this.prev_callback_ = -1;
+      this.callbacks_.splice(iter, 1);
+      return true;
+    }
+  }
+  return false;
+};
+
+/**
+ * Removes all the callbacks on this counter.
+ * Does not affect running state: set running=false to allow this counter to be
+ * garbage collected.
+ */
+o3d.Counter.prototype.removeAllCallbacks = function() {
+  this.callbacks_ = [];
+  this.next_callback_ = -1;
+  this.prev_callback_ = -1;
+};
+
+/**
+ * Class to hold onto the state of a callback function at a specific count.
+ * @constructor
+ * @param {number} count  Count at which this callback will get called.
+ * @param {function()} callback  Function to call when count is reached.
+ */
+o3d.Counter.CallbackInfo = function(count, callback) {
+  /**
+   * Count at which this callback will get called.
+   * @type {number}
+   */
+  this.count = count;
+
+  /**
+   * Function to call when count is reached.
+   * @type {function()}
+   */
+  this.callback = callback;
+
+  /**
+   * Prevents recursion of the same callback, in case it decides to advance
+   * the counter.
+   * @type {boolean}
+   * @private
+   */
+  this.called_ = false;
+};
+
+/**
+ * Run this callback without the possibility for recursion.
+ */
+o3d.Counter.CallbackInfo.prototype.run = function() {
+  if (!this.called_) {
+    this.called_ = true;
+    this.callback();
+    this.called_ = false;
+  }
+};
+
+/**
+ * Counter to count seconds. Logic is implemented in CounterManager.tick()
+ * @constructor
+ * @extends {o3d.Counter}
+ */
+o3d.SecondCounter = function() {
+  o3d.Counter.call(this);
+  this.running = true;
+};
+
+o3d.inherit("SecondCounter", "Counter");
+
+o3d.SecondCounter.prototype.counter_type_ = "SecondCounter";
+
+/**
+ * Counter to count frames. Logic is implemented in
+ * CounterManager.advanceRenderFrameCounters()
+ * @constructor
+ * @extends {o3d.Counter}
+ */
+o3d.RenderFrameCounter = function() {
+  o3d.Counter.call(this);
+  this.running = true;
+};
+
+o3d.inherit("RenderFrameCounter", "Counter");
+
+o3d.RenderFrameCounter.prototype.counter_type_ = "RenderFrameCounter";
+
+/**
+ * Counter to count ticks. Logic is implemented in CounterManager.tick()
+ * @constructor
+ * @extends {o3d.Counter}
+ */
+o3d.TickCounter = function() {
+  o3d.Counter.call(this);
+  this.running = true;
+};
+
+o3d.inherit("TickCounter", "Counter");
+
+o3d.TickCounter.prototype.counter_type_ = "TickCounter";
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+ * A CurveKey prepresents a key on an Curve.
+ *
+ * @constructor
+ * @extends {o3d.ObjectBase}
+ */
+o3d.CurveKey = function(owner) {
+  o3d.ObjectBase.call(this);
+  /**
+   * The only owner of this CurveKey (cannot be shared).
+   * @private
+   * @type {!o3d.Curve}
+   */
+  this.owner_ = owner;
+
+  /**
+   * See input setter.
+   * @private
+   * @type {number}
+   */
+  this.input_ = 0;
+
+  /**
+   * See input setter.
+   * @private
+   * @type {number}
+   */
+  this.output_ = 0;
+};
+o3d.inherit('CurveKey', 'ObjectBase');
+
+/**
+ * Destroys this key, removing it from its owner.
+ *
+ */
+o3d.CurveKey.prototype.destroy = function() {
+  o3d.removeFromArray(this.owner_.keys, this);
+  this.owner_.invalidateCache_();
+};
+
+/**
+ * Computes the value within the range from this.input to next_key.input.
+ * Defaults to the LinearCurveKey implementation which is continuous.
+ * @param {number} offset  Offset within the key (function input - this.input)
+ * @param {o3d.CurveKey} next_key The next key in the set, can not be null.
+ * @return {number} return
+ */
+o3d.CurveKey.prototype.getOutputAtOffset = function(offset, next_key) {
+  var input_span = next_key.input - this.input;
+  var output_span = next_key.output - this.output;
+  return this.output + offset / input_span * output_span;
+};
+
+/**
+ * Input for this key. This curve key will apply until the next key's input.
+ * @type {number}
+ */
+o3d.CurveKey.prototype.__defineGetter__("input", function() {
+  return this.input_;
+});
+o3d.CurveKey.prototype.__defineSetter__("input", function(new_input) {
+  if (new_input != this.input_) {
+    this.input_ = new_input;
+    this.owner_.invalidateCache_();
+  }
+});
+
+/**
+ * Output corresponding to input.
+ * @type {number}
+ */
+o3d.CurveKey.prototype.__defineGetter__("output", function() {
+  return this.output_;
+});
+o3d.CurveKey.prototype.__defineSetter__("output", function(new_output) {
+  if (new_output != this.output_) {
+    this.output_ = new_output;
+    this.owner_.invalidateCache_();
+  }
+});
+
+/**
+ * An CurveKey that holds its output (is not interpolated between this key
+ * and the next.)
+ *
+ * Other discontinuous CurveKey classes must be derived from StepCurveKey.
+ *
+ * @constructor
+ * @extends {o3d.CurveKey}
+ */
+o3d.StepCurveKey = function(owner) {
+  o3d.CurveKey.call(this, owner);
+  owner.num_step_keys_++;
+};
+o3d.inherit('StepCurveKey', 'CurveKey');
+
+/**
+ * Simple discontinuous implementation.
+ * @param {number} offset  Ignored: constant output within a StepCurveKey
+ * @param {o3d.CurveKey} next_key Ignored: discontinuous
+ * @return {number} output
+ */
+o3d.StepCurveKey.prototype.getOutputAtOffset = function(offset, next_key) {
+  return this.output;
+};
+
+/**
+ * Specialized destroy method to update the num_step_keys_ of the owner_.
+ */
+o3d.StepCurveKey.prototype.destroy = function() {
+  o3d.CurveKey.prototype.destroy.call(this);
+  this.owner_.num_step_keys_--;
+};
+
+/**
+ * An CurveKey that linearly interpolates between this key and the next key.
+ *
+ * @constructor
+ * @extends {o3d.CurveKey}
+ */
+o3d.LinearCurveKey = function(owner) {
+  o3d.CurveKey.call(this, owner);
+};
+o3d.inherit('LinearCurveKey', 'CurveKey');
+
+/**
+ * An CurveKey that uses a bezier curve for interpolation between this key
+ * and the next.
+ *
+ * @constructor
+ * @extends {o3d.CurveKey}
+ */
+o3d.BezierCurveKey = function(owner) {
+  o3d.CurveKey.call(this, owner);
+
+  /**
+   * See input setter.
+   * @private
+   * @type {Array.<number>}
+   */
+  this.in_tangent_ = [0, 0];
+
+  /**
+   * See input setter.
+   * @private
+   * @type {Array.<number>}
+   */
+  this.out_tangent_ = [0, 0];
+};
+o3d.inherit('BezierCurveKey', 'CurveKey');
+
+/**
+ * Tangent for values approaching this key. Do not set elements in the array
+ * directly as that will prevent calling invalidateCache_.
+ * @type {Array.<number>}
+ */
+o3d.BezierCurveKey.prototype.__defineGetter__("inTangent", function() {
+  return this.in_tangent_;
+});
+o3d.BezierCurveKey.prototype.__defineSetter__("inTangent", function(new_t) {
+  if (new_t != this.in_tangent_) {
+    this.in_tangent_ = new_t;
+    this.owner_.invalidateCache_();
+  }
+});
+
+/**
+ * Tangent for values approaching the next key. Do not set elements in the array
+ * directly as that will prevent calling invalidateCache_.
+ * @type {Array.<number>}
+ */
+o3d.BezierCurveKey.prototype.__defineGetter__("outTangent", function() {
+  return this.out_tangent_;
+});
+o3d.BezierCurveKey.prototype.__defineSetter__("outTangent", function(new_t) {
+  if (new_t != this.out_tangent_) {
+    this.out_tangent_ = new_t;
+    this.owner_.invalidateCache_();
+  }
+});
+
+/**
+ * Uses iterative method to accurately pin-point the 't' of the Bezier
+ * equation that corresponds to the current time.
+ * @param {number} control_point_0_x  this.input
+ * @param {number} control_point_1_x  this.outTangent
+ * @param {number} control_point_2_x  next.inTangent
+ * @param {number} control_point_3_x  next.input
+ * @param {number} input Absolute input value relative to span
+ * @param {number} initial_guess Starting point assuming mostly linear.
+ * @private
+ */
+o3d.BezierCurveKey.findT_ = function(control_point_0_x,
+                                    control_point_1_x,
+                                    control_point_2_x,
+                                    control_point_3_x,
+                                    input,
+                                    initial_guess) {
+  var local_tolerance = 0.001;
+  var high_t = 1.0;
+  var low_t = 0.0;
+
+  // TODO: Optimize here, start with a more intuitive value than 0.5
+  //     (comment left over from original code)
+  var mid_t = 0.5;
+  if (initial_guess <= 0.1) {
+    mid_t = 0.1;  // clamp to 10% or 90%, because if miss, the cost is
+                   // too high.
+  } else if (initial_guess >= 0.9) {
+    mid_t = 0.9;
+  } else {
+    mid_t = initial_guess;
+  }
+  var once = true;
+  while ((high_t-low_t) > local_tolerance) {
+    if (once) {
+      once = false;
+    } else {
+      mid_t = (high_t - low_t) / 2.0 + low_t;
+    }
+    var ti = 1.0 - mid_t;  // (1 - t)
+    var calculated_time = control_point_0_x * ti * ti * ti +
+                            3 * control_point_1_x * mid_t * ti * ti +
+                            3 * control_point_2_x * mid_t * mid_t * ti +
+                            control_point_3_x * mid_t * mid_t * mid_t;
+    if (Math.abs(calculated_time - input) <= local_tolerance) {
+      break;  // If we 'fall' very close, we like it and break.
+    }
+    if (calculated_time > input) {
+      high_t = mid_t;
+    } else {
+      low_t = mid_t;
+    }
+  }
+  return mid_t;
+};
+
+/**
+ * Computes the value of the Bezier curve within the range from this.input
+ * to next_key.input.
+ * @param {number} offset  Offset within the key (function input - this.input)
+ * @param {o3d.CurveKey} next_key The next key in the set, can not be null.
+ * @return {number} return
+ */
+o3d.BezierCurveKey.prototype.getOutputAtOffset = function(offset, next_key) {
+  var input_span = next_key.input - this.input;
+  var output_span = next_key.output - this.output;
+  var in_tangent;
+
+  // We check bezier first because it's the most likely match for another
+  // bezier key.
+  if (next_key.inTangent) {
+    in_tangent = next_key.inTangent;
+  } else {
+    in_tangent = [next_key.input - input_span / 3.0,
+                  next_key.output - output_span / 3.0];
+  }
+
+  // Do a bezier calculation.
+  var t = offset / input_span;
+  t = o3d.BezierCurveKey.findT_(this.input,
+                               this.outTangent[0],
+                               in_tangent[0],
+                               next_key.input,
+                               this.input + offset,
+                               t);
+  var b = this.outTangent[1];
+  var c = in_tangent[1];
+  var ti = 1.0 - t;
+  var br = 3.0;
+  var cr = 3.0;
+  return this.output * ti * ti * ti + br * b * ti * ti * t +
+      cr * c * ti * t * t + next_key.output * t * t * t;
+};
+
+/**
+ * A Curve stores a bunch of CurveKeys and given a value
+ * representing an input point on a curve returns the output of the curve for
+ * that input. Curve is data only. It is used by 1 or more
+ * FunctionEval objects or by direct use from javascript.
+ *
+ * @constructor
+ * @extends {o3d.Function}
+ */
+o3d.Curve = function() {
+  o3d.Function.call(this, this.evaluate);
+
+  /**
+   * The behavior of the curve before the first key.
+   * @see o3d.Curve.CONSTANT
+   * @see o3d.Curve.LINEAR
+   * @see o3d.Curve.CYCLE
+   * @see o3d.Curve.CYCLE_RELATIVE
+   * @see o3d.Curve.OSCILLATE
+   * @type {o3d.Curve.Infinity}
+   * @default CONSTANT
+   */
+  this.preInfinity = o3d.Curve.CONSTANT;
+
+  /**
+   * The behavior of the curve before the first key.
+   * @see o3d.Curve.CONSTANT
+   * @see o3d.Curve.LINEAR
+   * @see o3d.Curve.CYCLE
+   * @see o3d.Curve.CYCLE_RELATIVE
+   * @see o3d.Curve.OSCILLATE
+   * @type {o3d.Curve.Infinity}
+   * @default CONSTANT
+   */
+  this.postInfinity = o3d.Curve.CONSTANT;
+
+  /**
+   * Whether or not a cache is used to speed up evaluation of this Curve.
+   */
+  this.useCache = true;
+
+  /**
+   * Data for sampleRate setter.
+   * @type {number}
+   * @private
+   */
+  this.sample_rate_ = o3d.Curve.kDefaultSampleRate;
+
+  /**
+   * The keys for this curve.
+   *
+   * This property is read-only.
+   * @type {!Array.<!o3d.CurveKey>}
+   */
+  this.keys = [];
+
+  /**
+   * Keep track if a new key has been added which hasn't been sorted.
+   * @type {boolean}
+   * @private
+   */
+  this.sorted_ = true;
+
+  /**
+   * True if the curve needs to checks for discontinuity errors before the next
+   * evauluation.
+   * @see updateCurveInfo_
+   * @type {boolean}
+   * @private
+   */
+  this.check_discontinuity_ = false;
+
+  /**
+   * Keep track if any discontinuous (steps or gaps) keys are in the mix.
+   * Call isDiscontinuous to access this value, which updates it if necessary.
+   * @type {boolean}
+   * @private
+   */
+  this.discontinuous_= false;
+
+  /**
+   * @type {number} Number of step keys--used to speed up updateCurveInfo_
+   *     discontinuity check if it's non-zero.
+   * @private
+   */
+  this.num_step_keys_ = 0;
+
+};
+
+o3d.inherit('Curve', 'Function');
+
+/**
+ * Constant representing the fastest possible sample period. More samples take
+ * more computation initially and more memroy.
+ */
+o3d.Curve.kMinimumSampleRate = 1.0 / 240.0;
+
+/**
+ * By default, sample 30 times per curve key.
+ */
+o3d.Curve.kDefaultSampleRate = 1.0 / 30.0;
+
+/**
+ * Gets the sample rate for the cache.  By default Animation data is
+ * cached so that using the animation is fast. To do this the keys that
+ * represent the animation are sampled. The higher the frequency of the
+ * samples the closer the cache will match the actual keys.
+ * The default is 1/30 (30hz). You can set it anywhere from 1/240th (240hz) to
+ * any larger value. Note: Setting the sample rate has the side effect of
+ * invalidating the cache thereby causing it to get rebuilt.
+ * Must be 1/240 or greater. Default = 1/30.
+ *
+ * @type {number}
+ */
+o3d.Curve.prototype.__defineGetter__("sampleRate", function() {
+  return this.sample_rate_;
+});
+
+o3d.Curve.prototype.__defineSetter__("sampleRate", function(rate) {
+  if (rate < o3d.Curve.kMinimumSampleRate) {
+    rate = o3d.Curve.kMinimumSampleRate;
+    this.gl.client.error_callback(
+        "attempt to set sample rate to " + rate +
+        " which is lower than the minimum of " + o3d.Curve.kMinimumSampleRate);
+  } else if (rate != this.sample_rate_) {
+    this.sample_rate_ = rate;
+    this.invalidateCache_();
+  }
+});
+
+/**
+ * @type {number}
+ */
+o3d.Curve.Infinity = goog.typedef;
+
+/**
+ * Uses the output value of the first or last animation key.
+ * @type {o3d.Curve.Infinity}
+ */
+o3d.Curve.CONSTANT = 0;
+
+/**
+ * Takes the distance between the closest animation key input value and the
+ * evaluation time. Multiplies this distance against the instant slope at the
+ * closest animation key and offsets the result with the closest animation key
+ * output value.
+ * @type {o3d.Curve.Infinity}
+ */
+o3d.Curve.LINEAR = 1;
+
+/**
+ * Cycles over the first and last keys using:
+ *       input = (input - first) % (last - first) + first;
+ * Note that in CYCLE mode you can never get the end output because a cycle
+ * goes from start to end exclusive of end.
+ * @type {o3d.Curve.Infinity}
+ */
+o3d.Curve.CYCLE = 2;
+
+/**
+ * Same as cycle except the offset of the entire cycle is added to each
+ * consecutive cycle.
+ * @type {o3d.Curve.Infinity}
+ */
+o3d.Curve.CYCLE_RELATIVE = 3;
+
+/**
+ * Ping Pongs between the first and last keys.
+ * @type {o3d.Curve.Infinity}
+ */
+o3d.Curve.OSCILLATE = 4;
+
+/**
+ * Deserializes from the curve data given a RawData object.
+ *
+ * @param {!o3d.RawData} rawData contains curve data
+ * @param {number} opt_offset is a byte offset from the start of raw_data
+ * @param {number} opt_length is the byte length of the data to set
+ * @return {boolean} True if operation was successful.
+ *
+ */
+o3d.Curve.prototype.set = function(rawData, opt_offset, opt_length) {
+  o3d.notImplemented();
+};
+
+/**
+ * Creates a new key for this curve.
+ * @param {string} keyType name of key class to create. Valid type names are:
+ *     <li> 'StepCurveKey',
+ *     <li> 'LinearCurveKey',
+ *     <li> 'BezierCurveKey',
+ * @return {!o3d.CurveKey} The created key.
+ *
+ */
+o3d.Curve.prototype.createKey = function(keyType) {
+  var newKey = new (o3d[keyType]) (this);
+  this.keys.push(newKey);
+  return newKey;
+};
+
+/**
+ * Adds 1 or more LinearKeys to this Curve.
+ *
+ * Example:
+ * <pre>
+ * // Creates 2 keys.
+ * // 1 key at 0 with an output of 10
+ * // 1 key at 20 with an output of 30
+ * curve.addLinearKeys([0,10,20,30]);
+ * </pre>.
+ *
+ * @param {!Array.<number>} values Array of input, output pairs.
+ *     Length must be a multiple of 2
+ */
+o3d.Curve.prototype.addLinearKeys = function(values) {
+  var kNumLinearKeyValues = 2;
+  if (values.length % kNumLinearKeyValues != 0) {
+    this.gl.client.error_callback(
+        "addLinearKeys: expected multiple of 2 values got "+values.size());
+    return;
+  }
+  for (var i = 0; i < values.length; i += kNumLinearKeyValues) {
+    var newKey = this.createKey("LinearCurveKey");
+    newKey.input = values[i];
+    newKey.output = values[i+1];
+  }
+  this.sorted_ = false;
+};
+
+/**
+ * Adds 1 or more StepKeys to this Curve.
+ *
+ * Example:
+ * <pre>
+ * // Creates 2 keys.
+ * // 1 key at 0 with an output of 10
+ * // 1 key at 20 with an output of 30
+ * curve.addStepKeys([0,10,20,30]);
+ * </pre>.
+ *
+ * @param {!Array.<number>} values Array of input, output pairs.
+ *     Length must be a multiple of 2
+ */
+o3d.Curve.prototype.addStepKeys = function(values) {
+  var kNumStepKeyValues = 2;
+  if (values.length % kNumStepKeyValues != 0) {
+    this.gl.client.error_callback(
+        "addStepKeys: expected multiple of 2 values got "+values.size());
+    return;
+  }
+  for (var i = 0; i < values.length; i += kNumStepKeyValues) {
+    var newKey = this.createKey("StepCurveKey");
+    newKey.input = values[i];
+    newKey.output = values[i+1];
+  }
+  this.sorted_ = false;
+};
+
+/**
+ * Adds 1 or more BezierKeys to this Curve.
+ *
+ * Example:
+ * <pre>
+ * // Creates 2 keys.
+ * // 1 key at 0 with an output of 10, in tangent of 1,9, out tangent 9,0.5
+ * // 1 key at 20 with an output of 30, in tangent of 30, 3, out tangent 4, 28
+ * curve.addBezierKeys([0,10,1,9,9,0.5,2,30,3,4,28]);
+ * </pre>.
+ *
+ * @param {!Array.<number>} values Array of tuples of the form (input, output,
+ *     inTangent[0], inTangent[1], outTangent[0], outTangent[1]).
+ *     Length must be a multiple of 6.
+ */
+o3d.Curve.prototype.addBezierKeys = function(values) {
+  var kNumBezierKeyValues = 6;
+  if (values.length % kNumBezierKeyValues != 0) {
+    this.gl.client.error_callback(
+        "addBezierKeys: expected multiple of 6 values got "+values.size());
+    return;
+  }
+  for (var i = 0; i < values.length; i += kNumBezierKeyValues) {
+    var newKey = this.createKey("BezierCurveKey");
+    newKey.input = values[i];
+    newKey.output = values[i+1];
+    newKey.inTangent[0] = values[i+2];
+    newKey.inTangent[1] = values[i+3];
+    newKey.outTangent[0] = values[i+4];
+    newKey.outTangent[1] = values[i+5];
+  }
+  this.sorted_ = false;
+};
+
+/**
+ * Force updating the cache or checking discontinuity.
+ * @private
+ */
+o3d.Curve.prototype.invalidateCache_ = function() {
+  this.check_valid_ = false;
+  this.check_discontinuity_ = true;
+};
+
+/**
+ * Returns whether or not the curve is discontinuous. A discontinuous curve
+ * takes more time to evaluate.
+ * @return {boolean} True if the curve is discontinuous.
+ */
+o3d.Curve.prototype.isDiscontinuous = function() {
+  this.updateCurveInfo_();
+  return this.discontinuous_;
+};
+
+/**
+ * Comparator to allow sorting by keys by their input value.
+ * @param {o3d.CurveKey} a First input to compare.
+ * @param {o3d.CurveKey} b Second input to compare.
+ * @return {number} positive, zero, or negative (see Array.sort)
+ */
+o3d.Curve.compareInputs_ = function(a, b) {
+  return a.input - b.input;
+};
+
+/**
+ * Sorts keys (if sorted_ is false) and updates discontinuous_
+ * (if check_discontinuity_ is true).
+ * Called automatically when necessary in evaluate and isDiscontinuous.
+ * @private
+ */
+o3d.Curve.prototype.updateCurveInfo_ = function() {
+  if (!this.sorted_) {
+    // resort keys
+    this.keys.sort(o3d.Curve.compareInputs_);
+    this.sorted_ = true;
+    this.invalidateCache_();
+  }
+  if (this.check_discontinuity_) {
+    // Mark the curve as discontinuous if any 2 keys share the same input and
+    // if their outputs are different.
+    this.check_discontinuity_ = false;
+    var keys_size = this.keys.length;
+    this.discontinuous_ = (this.num_step_keys_ > 0 &&
+                           this.num_step_keys_ != keys_size);
+    if (!this.discontinuous_ && keys_size > 1) {
+      for (var ii = 0; ii < keys_size - 1; ++ii) {
+        if (this.keys[ii].input == this.keys[ii + 1].input &&
+            this.keys[ii].output != this.keys[ii + 1].output) {
+          this.discontinuous_ = true;
+          break;
+        }
+      }
+    }
+  }
+};
+
+/**
+ * @param {number} input  Guaranteed to be between the first and last key.
+ * @param {object} context  Generic cache to speed up adjacent computations.
+ * @return {number} Final output value
+ * @private
+ */
+o3d.Curve.prototype.getOutputInSpan_ = function(input, context) {
+  var keys = this.keys;
+  var keys_size = keys.length;
+  if (input < keys[0].input) {
+    this.gl.client.error_callback(
+      "Curve.getOutputInSpan_: input is lower than any key");
+    return 0;
+  }
+
+  if (input >= keys[keys_size-1].input) {
+    return keys[keys_size-1].output;
+  }
+
+  // use the keys directly.
+  var start = 0;
+  var end = keys_size;
+  var key_index;
+  var found = false;
+
+  var kKeysToSearch = 3;
+
+  // See if the context already has a index to the correct key.
+  if (context) {
+    key_index = context.curve_last_key_index_;
+    // is that index in range.
+    if (key_index < end - 1) {
+      // Are we between these keys.
+      if (keys[key_index].input <= input &&
+          keys[key_index + 1].input > input) {
+        // Yes!
+        found = true;
+      } else {
+        // No, so check which way we need to go.
+        if (input > keys[key_index].input) {
+          // search forward a few keys. If it's not within a few keys give up.
+          var check_end = key_index + kKeysToSearch;
+          if (check_end > end) {
+            check_end = end;
+          }
+          for (++key_index; key_index < check_end; ++key_index) {
+            if (keys[key_index].input <= input &&
+                keys[key_index + 1].input > input) {
+              // Yes!
+              found = true;
+              break;
+            }
+          }
+        } else if (key_index > 0) {
+          // search backward a few keys. If it's not within a few keys give up.
+          var check_end = key_index - kKeysToSearch;
+          if (check_end < 0) {
+            check_end = 0;
+          }
+          for (--key_index; key_index >= check_end; --key_index) {
+            if (keys[key_index].input <= input &&
+                keys[key_index + 1].input > input) {
+              // Yes!
+              found = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (!found) {
+    // TODO: If we assume the most common case is sampled keys and
+    // constant intervals we can make a quick guess where that key is.
+
+    // Find the current the keys that cover our input.
+    while (start <= end) {
+      var mid = Math.floor((start + end)/2);
+      if (input > keys[mid].input) {
+        start = mid + 1;
+      } else {
+        if (mid == 0) {
+          break;
+        }
+        end = mid - 1;
+      }
+    }
+
+    end = keys_size;
+    while (start < end) {
+      if (keys[start].input > input) {
+        break;
+      }
+      ++start;
+    }
+    if (start <= 0 || start >= end) {
+          this.gl.client.error_callback(
+            "Curve.getOutputInSpan_: start is outside range.");
+    }
+
+    key_index = start - 1;
+  }
+
+  var key = keys[key_index];
+  if (context) {
+    context.curve_last_key_index_ = key_index;
+  }
+  if (key_index+1 >= keys_size || !keys[key_index+1]) {
+    this.gl.client.error_callback(
+        "Curve.getOutputInSpan_: next key is null: index is "+key_index+
+        "; size is "+keys_size);
+    return key.output;
+  } else {
+    return key.getOutputAtOffset(input - key.input, keys[key_index+1]);
+  }
+};
+
+/**
+ * Evaluates a point on this bezier curve corresponding to input.
+ *
+ * @param {number} input Input value to evaluate.
+ * @param {number} context Context of the last evaluation.
+ * @return {number} output value
+ */
+o3d.Curve.prototype.evaluate = function(input, context) {
+  var keys = this.keys;
+  var keys_size = keys.length;
+
+  if (keys_size == 0) {
+    return 0.0;
+  }
+
+  if (keys_size == 1) {
+    return keys[0].output;
+  }
+
+  this.updateCurveInfo_();
+
+  var start_input = keys[0].input;
+  var end_input = keys[keys_size-1].input;
+  var input_span = end_input - start_input;
+  var start_output = keys[0].output;
+  var end_output = keys[keys_size-1].output;
+  var output_delta = end_output - start_output;
+
+  var kEpsilon = 0.00001;
+
+  var output_offset = 0.0;
+  // check for pre-infinity
+  if (input < start_input) {
+    if (input_span <= 0.0) {
+      return start_output;
+    }
+    var pre_infinity_offset = start_input - input;
+    switch (this.preInfinity) {
+      case o3d.Curve.CONSTANT:
+        return start_output;
+      case o3d.Curve.LINEAR: {
+        var second_key = keys[1];
+        var input_delta = second_key.input - start_input;
+        if (input_delta > kEpsilon) {
+          return start_output - pre_infinity_offset *
+              (second_key.output - start_output) / input_delta;
+        } else {
+          return start_output;
+        }
+      }
+      case o3d.Curve.CYCLE: {
+        var cycle_count = Math.ceil(pre_infinity_offset / input_span);
+        input += cycle_count * input_span;
+        input = start_input + (input - start_input) % input_span;
+        break;
+      }
+      case o3d.Curve.CYCLE_RELATIVE: {
+        var cycle_count = Math.ceil(pre_infinity_offset / input_span);
+        input += cycle_count * input_span;
+        input = start_input + (input - start_input) % input_span;
+        output_offset -= cycle_count * output_delta;
+        break;
+      }
+      case o3d.Curve.OSCILLATE: {
+        var cycle_count = Math.ceil(pre_infinity_offset / (2.0 * input_span));
+        input += cycle_count * 2.0 * input_span;
+        input = end_input - Math.abs(input - end_input);
+        break;
+      }
+      default:
+        this.gl.client.error_callback(
+            "Curve: invalid value "+this.preInfinity+"for pre-infinity");
+        return start_output;
+    }
+  } else if (input >= end_input) {
+    // check for post-infinity
+    if (input_span <= 0.0) {
+      return end_output;
+    }
+    var post_infinity_offset = input - end_input;
+    switch (this.postInfinity) {
+      case o3d.Curve.CONSTANT:
+        return end_output;
+      case o3d.Curve.LINEAR: {
+        var next_to_last_key = keys[keys_size - 2];
+        var input_delta = end_input - next_to_last_key.input;
+        if (input_delta > kEpsilon) {
+          return end_output + post_infinity_offset *
+              (end_output - next_to_last_key.output) /
+              input_delta;
+        } else {
+          return end_output;
+        }
+      }
+      case o3d.Curve.CYCLE: {
+        var cycle_count = Math.ceil(post_infinity_offset / input_span);
+        input -= cycle_count * input_span;
+        input = start_input + (input - start_input) % input_span;
+        break;
+      }
+      case o3d.Curve.CYCLE_RELATIVE: {
+        var cycle_count = Math.floor((input - start_input) / input_span);
+        input -= cycle_count * input_span;
+        input = start_input + (input - start_input) % input_span;
+        output_offset += cycle_count * output_delta;
+        break;
+      }
+      case o3d.Curve.OSCILLATE: {
+        var cycle_count = Math.ceil(post_infinity_offset / (2.0 *
+                                                          input_span));
+        input -= cycle_count * 2.0 * input_span;
+        input = start_input + Math.abs(input - start_input);
+        break;
+      }
+      default:
+        this.gl.client.error_callback(
+            "Curve.invalid value "+this.postInfinity+"for post-infinity");
+        return end_output;
+    }
+  }
+
+  // At this point input should be between start_input and end_input
+  // inclusive.
+
+  // If we are at end_input then just return end_output since we can't
+  // interpolate end_input to anything past it.
+  if (input >= end_input) {
+    return end_output + output_offset;
+  }
+
+  // TODO(pathorn): Implement curve cache in javascript.
+  // See 'void Curve::CreateCache' in o3d/core/cross/curve.cc
+
+  return this.getOutputInSpan_(input, context) + output_offset;
+};
+/*
+ * Copyright 2010, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+/**
+ * A Skin holds an array of matrix indices and influences for vertices in a
+ * skin. A Skin is data only and can be used by one or more SkinEvals to
+ * implement skinning.
+ *
+ * @constructor
+ * @extends {o3d.NamedObject}
+ */
+o3d.Skin = function() {
+  o3d.NamedObject.call(this);
+
+  /**
+   * Set of influences contained in this skin.
+   * @type {!Array<!Array<number>>}
+   */
+  this.influences = [];
+
+  /**
+   * The array of inverse bone matrices (Array<matrix4>)
+   *
+   * @type {!Array<!Array<!Array<number>>>}
+   */
+  this.inverseBindPoseMatrices = [];
+
+  /**
+   * Whether the getHighestMatrixIndex and getHighestInfluences are up-to-date.
+   *
+   * @type {boolean}
+   * @private
+   */
+  this.info_valid_ = false;
+
+  /**
+   * Cache of getHighestMatrixIndex().
+   *
+   * @type {number}
+   * @private
+   */
+  this.highest_matrix_index_ = 0;
+
+  /**
+   * Cache of getHighestInfluences().
+   *
+   * @type {number}
+   * @private
+   */
+  this.highest_influences_ = 0;
+
+  /**
+   * True if the list of weights and matrix index streams could be downloaded.
+   *
+   * @type {boolean}
+   * @private
+   */
+  this.supports_vertex_shader_ = false;
+
+  /**
+   * Whether the WEIGHTS and MATRIX_INDICES buffers are up-to-date.
+   *
+   * @type {boolean}
+   * @private
+   */
+  this.buffers_valid_ = false;
+
+  /**
+   * Vertex buffer containing indices and weights for this skin.
+   *
+   * @type {VertexBuffer}
+   */
+  this.vertex_buffer_ = null;
+
+  /**
+   * Buffer in which to store vertex weights.
+   * weights_field_ will be passed into the WEIGHTS stream.
+   *
+   * @type {o3d.Field}
+   * @private
+   */
+  this.weights_field_ = null;
+
+  /**
+   * Buffer in which to store list of matrix_indices per vertex.
+   * matrix_indices_field_ will be passed into the MATRIX_INDICES stream.
+   *
+   * @type {o3d.Field}
+   * @private
+   */
+  this.matrix_indices_field_ = null;
+};
+o3d.inherit('Skin', 'NamedObject');
+
+/**
+ * Updates the weights and indices vertex buffers attached to this skin, only
+ * if they have been invalidated by some param change.
+ * Also checks if we can support skinning based on the number of bones we need
+ * in this skin.
+ * @private
+ * @return {boolean} true if our mesh is small enough to enable skin shader.
+ */
+o3d.Skin.prototype.updateVertexShader = function() {
+  if (!this.buffers_valid_) {
+    var numcomp = 4;
+    var numvert = this.influences.length;
+    if (!this.weights_field_ && !this.matrix_indices_field_) {
+      var vertex_buffer = new o3d.VertexBuffer;
+      vertex_buffer.gl = this.gl;
+      this.weights_field_ =
+          vertex_buffer.createField("FloatField", numcomp);
+      this.matrix_indices_field_ =
+          vertex_buffer.createField("FloatField", numcomp);
+      vertex_buffer.allocateElements(numvert);
+    }
+    var ii, jj;
+    var weights_field = this.weights_field_;
+    var indices_field = this.matrix_indices_field_;
+    var highest_influences = this.getHighestInfluences();
+
+    this.buffers_valid_ = true;
+    weights_field.buffer.lock();
+    indices_field.buffer.lock();
+    var max_num_bones = o3d.SkinEval.getMaxNumBones(this);
+    this.supports_vertex_shader_ = (highest_influences <= numcomp) &&
+        (this.inverseBindPoseMatrices.length <= max_num_bones);
+    if (this.supports_vertex_shader_) {
+      // NOTE: If you make these Array's instead, you must initialize to 0.
+      var weights_arr = new Float32Array(numvert * numcomp);
+      var indices_arr = new Float32Array(numvert * numcomp);
+      // Float32rray is initialized to 0 by default.
+      for (ii = 0; ii < numvert; ++ii) {
+        var influence = this.influences[ii];
+        for (jj = 0; jj < influence.length && jj < numcomp * 2; jj += 2) {
+          indices_arr[ii * numcomp + jj / 2] = influence[jj];
+          weights_arr[ii * numcomp + jj / 2] = influence[jj + 1];
+        }
+      }
+      weights_field.setAt(0, weights_arr);
+      indices_field.setAt(0, indices_arr);
+    }
+    // Otherwise, weights will be filled with 0's by default.
+    weights_field.buffer.unlock();
+    indices_field.buffer.unlock();
+  }
+  return this.supports_vertex_shader_;
+};
+
+/**
+ * Sets the influences for an individual vertex.
+ *
+ * @param {number} vertex_index The index of the vertex to set influences for.
+ * @param {!Array<number>} influences An array of pairs of numbers where
+ *     the first number is the index of the matrix to influence the vertex
+ *     and the second number is the amount of influence where:
+ *     0 = no influence and 1 = 100% influence.
+ */
+o3d.Skin.prototype.setVertexInfluences = function(
+    vertex_index, influences) {
+  if (influences.length % 2 != 0) {
+    this.gl.client.error_callback("odd number of values passed into" +
+        "SetVertexInfluence. Even number required as they are pairs.");
+    return;
+  }
+  this.influences[vertex_index] = influences;
+  this.info_valid_ = false;
+  this.buffers_valid_ = false;
+};
+
+/**
+ * Gets the influences for an individual vertex.
+ *
+ * @param {number} vertex_index The index of the vertex to get influences from.
+ * @return {!Array<number>} An array of pairs of numbers where the first number
+ *     of each pair is the index of the matrix that influence this vertex and
+ *     the second number is the amount of influence where:
+ *     0 = no influence and 1 = 100% influence.
+ */
+o3d.Skin.prototype.getVertexInfluences = function(vertex_index) {
+  return this.influences[vertex_index] || [];
+};
+
+/**
+ * Update the highest influences and highest matrix index.
+ * @private
+ */
+o3d.Skin.prototype.updateInfo_ = function() {
+  if (!this.info_valid_) {
+    this.info_valid_ = true;
+    this.highest_matrix_index_ = 0;
+    this.highest_influences_ = 0;
+    for (var ii = 0; ii < this.influences.length; ++ii) {
+      var influences = this.influences[ii];
+      var len = influences.length;
+      if (len > this.highest_influences_) {
+        this.highest_influences_ = len;
+      }
+      // Influences array is in pairs: even are vertices, odd are weights
+      for (var jj = 0; jj < influences.length; jj += 2) {
+        if (influences[jj] > this.highest_matrix_index_) {
+          this.highest_matrix_index_ = influences[jj];
+        }
+      }
+    }
+    // this.highest_influences_ should be the number of pairs.
+    if (this.highest_influences_ % 2) {
+      this.gl.client.error_callback(
+          "Skin.updateInfo: Influences should not have odd length ");
+    }
+    this.highest_influences_ = Math.floor(this.highest_influences_/2);
+  }
+};
+
+/**
+ * Gets the highest matrix index referenced by the influences.
+ *
+ * @return {number} The highest matrix index referenced by the influences.
+ * @private
+ */
+o3d.Skin.prototype.getHighestMatrixIndex = function() {
+  this.updateInfo_();
+  return this.highest_matrix_index_;
+};
+
+/**
+ * Gets the highest number of influences on any vertex.
+ *
+ * @return {number} The highest number of influences on any vertex.
+ * @private
+ */
+o3d.Skin.prototype.getHighestInfluences = function() {
+  this.updateInfo_();
+  return this.highest_influences_;
+};
+
+/**
+ * Sets the inverse bind pose matrix for a particular joint/bone/transform.
+ *
+ * @param {number} index Index of bone/joint/transform.
+ * @param {!Array<!Array<number>>} matrix Inverse bind pose matrix for this
+ *     joint.
+ */
+o3d.Skin.prototype.setInverseBindPoseMatrix = function(index, matrix) {
+  this.inverseBindPoseMatrices[index] = matrix;
+};
+
+/**
+ * Deserializes from the skin data given a RawData object.
+ *
+ * @param {!o3d.RawData} rawData contains skin data
+ * @param {number} opt_offset is a byte offset from the start of raw_data
+ * @param {number} opt_length is the byte length of the data to set
+ * @return {boolean} True if operation was successful.
+ *
+ */
+o3d.Skin.prototype.set = function(rawData, opt_offset, opt_length) {
+  o3d.notImplemented();
+};
+
+
+
+/**
+ * A SkinEval is a VertexSource that takes its Streams, a ParamArray of 4-by-4
+ * matrices and a Skin and skins the vertices in its streams storing the results
+ * in bound output streams.
+ *
+ * Note: Extends StreamBank, which keeps track of storing vertexStreams objects.
+ * The C++ Plugin had this inherit from VertexSource, but reading through the
+ * code, I can't find any good reason why.
+ *
+ * @constructor
+ * @extends {o3d.StreamBank}
+ */
+o3d.SkinEval = function() {
+  o3d.StreamBank.call(this);
+
+  /**
+   * The base matrix to subtract from the matrices before skinning.
+   * @type {!Array<!Array<number>>}
+   */
+  this.base = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+
+  /**
+   * Temporary storage for matrix ops.
+   * @type {!Array<!Array<number>>}
+   * @private
+   */
+  this.temp_matrix_ = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+
+  /**
+   * Array of matrices representing each bone.
+   * @type {!Array<!Array<!Array<number>>>}
+   * @private
+   */
+  this.bones_ = [];
+
+  /**
+   * Float32 array containing all matrices in 3x4 format.
+   * @type {Float32Array}
+   * @private
+   */
+  this.bone_array_ = null;
+
+  /**
+   * Cache of StreamInfo objects for input values. Saved to avoid reallocating.
+   * @type {!Array<o3d.SkinEval.StreamInfo>}
+   * @private
+   */
+  this.input_stream_infos_ = [];
+
+  /**
+   * Cache of StreamInfo objects for output values. Saved to avoid reallocating.
+   * @type {!Array<o3d.SkinEval.StreamInfo>}
+   * @private
+   */
+  this.output_stream_infos_ = [];
+
+  /**
+   * The base matrix to subtract from the matrices before skinning.
+   *
+   * @type {ParamArray}
+   * @private
+   */
+  this.createParam("boneToWorld3x4", "ParamParamArrayOutput");
+
+  this.usingSkinShader = 0.0;
+};
+o3d.inherit('SkinEval', 'StreamBank');
+
+/**
+ * The base matrix to subtract from the matrices before skinning.
+ *
+ * @type {!Array<!Array<number>>}
+ */
+o3d.ParamObject.setUpO3DParam_(o3d.SkinEval, "base", "ParamMatrix4");
+
+/**
+ * Non-zero if we are using a shader for skinning.
+ *
+ * Holds state of whether the boneToWorld3x4 uniform is being used. If its
+ * value has been read, copy over the original vertex buffers, else we
+ * assume the shader does not support skinning.
+ *
+ * Do not write to this value. Set disableShader to true instead.
+ *
+ * @type {number}
+ * @see disableShader
+ */
+o3d.ParamObject.setUpO3DParam_(o3d.SkinEval, "usingSkinShader", "ParamFloat");
+
+/**
+ * Set this value to true to force skin not to use a shader.
+ *
+ * @type {boolean}
+ * @default false
+ */
+o3d.ParamObject.setUpO3DParam_(o3d.SkinEval, "disableShader", "ParamBoolean");
+
+/**
+ * The Skin to use for skinning.
+ * @type {Skin}
+ */
+o3d.ParamObject.setUpO3DParam_(o3d.SkinEval, "skin", "ParamSkin");
+
+/**
+ * The array of matrices to use for skinning.
+ * @type {ParamArray}
+ */
+o3d.ParamObject.setUpO3DParam_(o3d.SkinEval, "matrices", "ParamArray");
+
+/**
+ * Skins use 3 vec4's per matrix, since the last row is redundant.
+ * If we don't know, 32 is safe minimum value required by standard = (128-32)/3.
+ * @param {!o3d.NamedObject} obj Some object with access to gl.
+ * @return {number} Maximum number of bones allowed for shader-based skinning.
+ */
+o3d.SkinEval.getMaxNumBones = function(obj) {
+  // Quote from spec:
+  // GL_MAX_VERTEX_UNIFORM_VECTORS
+  // params returns one value, the maximum number of four-element
+  // floating-point, integer, or boolean vectors that can be held in
+  // uniform variable storage for a vertex shader.
+  // The value must be at least 128. See glUniform.
+  var gl = obj.gl;
+  var maxVertexUniformVectors = gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS);
+  return Math.floor((maxVertexUniformVectors - 32) / 3);
+};
+
+/**
+ * Someone bound a stream to this SkinEval. Enable the shader on the primitive,
+ * and bind any additional weights or indices streams if necessary.
+ *
+ * @param {o3d.VertexSource} dest VertexSource that bound to this VertexSource.
+ * @param {o3d.ParamVertexBufferStream} dest_param Other param which was bound.
+ * @override
+ */
+o3d.SkinEval.prototype.streamWasBound_ = function(
+    dest, semantic, semantic_index) {
+  this.skin.updateVertexShader();
+
+  if (this.skin.weights_field_ && this.skin.matrix_indices_field_) {
+    var weights_stream = dest.getVertexStream(o3d.Stream.INFLUENCE_WEIGHTS, 0);
+    var indices_stream = dest.getVertexStream(o3d.Stream.INFLUENCE_INDICES, 0);
+    if (!weights_stream || !indices_stream ||
+        weights_stream.field != this.skin.weights_field_ ||
+        indices_stream.field != this.skin.matrix_indices_field_) {
+      dest.setVertexStream(o3d.Stream.INFLUENCE_WEIGHTS, 0,
+          this.skin.weights_field_, 0);
+      dest.setVertexStream(o3d.Stream.INFLUENCE_INDICES, 0,
+          this.skin.matrix_indices_field_, 0);
+    }
+
+    var destParam = dest.getParam("boneToWorld3x4");
+    if (!destParam) {
+      destParam = dest.createParam("boneToWorld3x4", "ParamParamArray");
+    }
+    destParam.bind(this.getParam("boneToWorld3x4"));
+
+    destParam = dest.getParam("usingSkinShader");
+    if (!destParam) {
+      destParam = dest.createParam("usingSkinShader", "ParamFloat");
+    }
+    destParam.bind(this.getParam("usingSkinShader"));
+  }
+};
+
+/**
+ * Multiplies input by weight, and adds with and returns into output.
+ *
+ * @param {!Array<!Array<number>>} input Input matrix4 to weight.
+ * @param {number} weight Amount to weight input matrix by.
+ * @param {!Array<!Array<number>>} output The result of computing
+ *     output += (input * weight)
+ * @private
+ */
+o3d.SkinEval.prototype.multiplyAdd_ = function(input, weight, output) {
+  var a0 = input[0];
+  var a1 = input[1];
+  var a2 = input[2];
+  var a3 = input[3];
+  var b0 = output[0];
+  var b1 = output[1];
+  var b2 = output[2];
+  var b3 = output[3];
+  b0[0] += a0[0] * weight;
+  b0[1] += a0[1] * weight;
+  b0[2] += a0[2] * weight;
+  b0[3] += a0[3] * weight;
+  b1[0] += a1[0] * weight;
+  b1[1] += a1[1] * weight;
+  b1[2] += a1[2] * weight;
+  b1[3] += a1[3] * weight;
+  b2[0] += a2[0] * weight;
+  b2[1] += a2[1] * weight;
+  b2[2] += a2[2] * weight;
+  b2[3] += a2[3] * weight;
+  b3[0] += a3[0] * weight;
+  b3[1] += a3[1] * weight;
+  b3[2] += a3[2] * weight;
+  b3[3] += a3[3] * weight;
+};
+
+/**
+ * Initializes all the input and output streams for this mesh, but does no
+ * copying yet. You should follow with uninitStreams_ when you are done.
+ *
+ * @param {o3d.Skin} skin The skin.
+ * @private
+ */
+o3d.SkinEval.prototype.initStreams_ = function(skin) {
+  var ii, jj, ll, num_streams;
+
+  var num_vertices = this.skin.influences.length;
+  // Update our inputs, lock all the inputs and outputs and check that we have
+  // the same number of vertices as vertex influences.
+  for (ii = 0, num_streams = 0; ii < this.vertex_streams_.length; ++ii) {
+    var array = this.vertex_streams_[ii];
+    if (array) {
+      for (jj = 0; jj < array.length; ++jj, ++num_streams) {
+        var source_param = array[jj];
+
+        // Make sure our upstream streams are ready
+        var input = source_param.inputConnection;
+        if (input && input.isAClassName("ParamVertexBufferStream")) {
+          input.owner_.updateStreams();  // will automatically mark us as valid.
+        } else {
+          // Mark source_param as valid so we don't evaluate a second time.
+          // TODO(pathorn): Caching previous computed values.
+        }
+
+        var source_stream = source_param.stream;
+        if (source_stream.getMaxVertices_() != num_vertices) {
+          // TODO: Change semantic below to semantic_name.
+          this.gl.client.error_callback("SkinEval.doSkinning_: "
+              + "stream " + source_stream.semantic + " index "
+              + source_stream.semanticIndex + " in SkinEval '" + this.name
+              + " does not have the same number of vertices as Skin '"
+              + skin.name + "'");
+          return;
+        }
+
+        // Lock this input.
+        if (!this.input_stream_infos_[num_streams]) {
+          this.input_stream_infos_[num_streams] = new o3d.SkinEval.StreamInfo;
+        }
+        if (!this.input_stream_infos_[num_streams].init(source_stream, false)) {
+          var buffer_name;
+          if (source_stream.field.buffer) {
+            buffer_name = source_stream.field.buffer.name;
+          }
+          this.gl.client.error_callback("SkinEval.doSkinning_: "
+              + "unable to lock buffer '" + buffer_name
+              + " used by stream " + source_stream.semantic + " index "
+              + source_stream.semanticIndex + " in SkinEval '" + this.name
+              + "'");
+          return;
+        }
+
+        // Lock the outputs to this input.
+        var outputs = source_param.outputConnections; //ParamVector
+        if (!this.output_stream_infos_[num_streams]) {
+          this.output_stream_infos_[num_streams] = [];
+        }
+        var output_stream_info = this.output_stream_infos_[num_streams];
+        output_stream_info.length = outputs.length;
+
+        for (ll = 0; ll < outputs.length; ++ll) {
+          var destination_param = outputs[ll];
+          if (destination_param.isAClassName('ParamVertexBufferStream')) {
+            // Mark destination_param valid so we don't evaluate a second time.
+            // TODO(pathorn): Caching previous computed values.
+          } else {
+            this.gl.client.error_callback("SkinEval.doSkinning: "
+                + destination_param.className + " not ParamVertexBufferStream");
+          }
+          var destination_stream = destination_param.stream;
+          if (destination_stream.getMaxVertices_() != num_vertices) {
+            this.gl.client.error_callback("SkinEval.doSkinning_: "
+                + "stream " + destination_stream.semantic + " index "
+                + destination_stream.semanticIndex + " targeted by SkinEval '"
+                + this.name + " does not have the same number of vertices as "
+                + "Skin '" + skin.name + "'");
+            return;
+          }
+
+          if (!output_stream_info[ll]) {
+            output_stream_info[ll] = new o3d.SkinEval.StreamInfo;
+          }
+          if (!output_stream_info[ll].init(destination_stream,true)) {
+            var buffer_name;
+            if (destination_stream.field.buffer) {
+              buffer_name = destination_stream.field.buffer.name;
+            }
+            this.gl.client.error_callback("SkinEval.doSkinning_: "
+                + "unable to lock buffer '" + buffer_name
+                + " used by stream " + destination_stream.semantic + " index "
+                + destination_stream.semanticIndex + " targeted by SkinEval '"
+                + this.name + "'");
+            return;
+          }
+        }
+      }
+    }
+  }
+
+  this.input_stream_infos_.length = num_streams;
+  this.output_stream_infos_.length = num_streams;
+};
+
+/**
+ * Saves the result of the skinning operation in the graphics hardware.
+ *
+ * @private
+ */
+o3d.SkinEval.prototype.uninitStreams_ = function() {
+  // Unlock any buffers that were locked during skinning
+  for (ii = 0; ii < this.input_stream_infos_.length; ++ii) {
+    this.input_stream_infos_[ii].uninit();
+  }
+  for (ii = 0; ii < this.output_stream_infos_.length; ++ii) {
+    var output_streams = this.output_stream_infos_[ii];
+    for (var jj = 0; jj < output_streams.length; ++jj) {
+      output_streams[jj].uninit();
+    }
+  }
+};
+
+/**
+ * Does skinning in software. Performs the actual matrix-point mulitplications
+ * and saves the result in all the output streams.
+ *
+ * @private
+ */
+o3d.SkinEval.prototype.doSkinning_ = function() {
+  this.initStreams_();
+
+  var ii, jj, ll;
+  var influences_array = this.skin.influences;
+  var num_vertices = influences_array.length;
+
+  for (ii = 0; ii < num_vertices; ++ii) {
+    var influences = influences_array[ii];
+    if (influences.length) {
+      // Even are vertices, odd are weights
+      var this_matrix_index = influences[0];
+      // Get the first matrix.
+      var this_weight = influences[1];
+
+      // combine the matrixes for this vertex.
+      var accumulated_matrix =
+          [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      this.multiplyAdd_(this.bones_[this_matrix_index],
+          this_weight, accumulated_matrix);
+      var num_influences = influences.length;
+      for (jj = 2; jj < num_influences; jj+=2) {
+        var influence_matrix_index = influences[jj];
+        var influence_weight = influences[jj + 1];
+        this.multiplyAdd_(this.bones_[influence_matrix_index],
+            influence_weight, accumulated_matrix);
+      }
+
+      // for each source, compute and copy to destination.
+      for (jj = 0; jj < this.input_stream_infos_.length; ++jj) {
+        var input_stream_info = this.input_stream_infos_[jj];
+        input_stream_info.compute_function_(accumulated_matrix);
+        var output_streams = this.output_stream_infos_[jj];
+        var num_output_streams = output_streams.length;
+        for (ll = 0; ll < num_output_streams; ++ll) {
+          output_streams[ll].copy_function_(input_stream_info);
+        }
+      }
+    }
+  }
+
+  this.uninitStreams_();
+};
+
+/**
+ * Updates the bones from this.matrices.
+ *
+ * @private
+ */
+o3d.SkinEval.prototype.updateBones_ = function() {
+  // Get our matrices.
+  var param_array = this.matrices;
+  if (!param_array) {
+    this.gl.client.error_callback("SkinEval.updateBones_: "
+        + "no matrices for SkinEval '" + this.name + "'");
+    return;
+  }
+
+  var the_skin = this.skin;
+  if (!the_skin) {
+    this.gl.client.error_callback("SkinEval.updateBones_: "
+        + "no skin specified in SkinEval '" + this.name + "'");
+    return;
+  }
+
+  // Make sure the bone indices are in range.
+  if (the_skin.getHighestMatrixIndex() >= param_array.length) {
+    this.gl.client.error_callback("SkinEval.updateBones_: "
+        + "skin '" + the_skin.name + " specified in SkinEval '"
+        + this.name
+        + "' references matrices outside the valid range in ParamArray '"
+        + param_array.name + "'");
+    return;
+  }
+
+  // Make sure the bind pose array size matches the matrices
+  var inverse_bind_pose_array = the_skin.inverseBindPoseMatrices;
+  if (inverse_bind_pose_array.length != param_array.length) {
+    this.gl.client.error_callback("SkinEval.updateBones_: "
+        + "skin '" + the_skin.name + " specified in SkinEval '"
+        + this.name + "' and the ParamArray '"
+        + param_array.name + "' do not have the same number of matrices.");
+    return;
+  }
+
+  // Get the inverse of our base to remove from the bones.
+  var inverse_base = this.temp_matrix_;
+  o3d.Transform.inverse(this.base, inverse_base);
+
+  for (var ii = 0; ii < param_array.length; ++ii) {
+    var param = param_array.getParam(ii); // ParamMatrix4
+    if (!param) {
+      this.gl.client.error_callback("SkinEval.updateBones_: "
+          + "In SkinEval '" + this.name + "' param at index " + ii
+          + " in ParamArray '" + param_array.name
+          + " is not a ParamMatrix4");
+      return;
+    }
+    this.bones_[ii] = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+    o3d.Transform.compose(param.value, inverse_bind_pose_array[ii],
+                          this.bones_[ii]);
+    o3d.Transform.compose(inverse_base, this.bones_[ii], this.bones_[ii]);
+  }
+};
+
+/**
+ * Updates the VertexBuffers bound to streams on this VertexSource.
+ */
+o3d.SkinEval.prototype.updateStreams = function() {
+  if (this.disableShader || !this.usingSkinShader ||
+      !this.skin.updateVertexShader()) {
+    this.updateBones_();
+    this.doSkinning_(this.skin);
+    this.usingSkinShader = 0.0;
+  }
+};
+
+/**
+ * Should be called on boneToWorld3x4's get value.
+ * Updates ParamArray for bones uniform sent to vertex shader.
+ *
+ * @param {ParamParamArrayOutput} param The array uniform parameter to update.
+ * @return {ParamArray} The array containing all of the float4 params.
+ */
+o3d.SkinEval.prototype.updateOutputs = function(param) {
+  this.updateBones_();
+  if (!this.bone_array_) {
+    this.bone_array_ = new o3d.ParamArray;
+    this.bone_array_.gl = this.gl;
+    var max_num_bones = o3d.SkinEval.getMaxNumBones(this);
+    this.bone_array_.resize(max_num_bones * 3, "ParamFloat4");
+    param.value = this.bone_array_;
+  }
+  var boneArray = this.bone_array_;
+  var ii, jj;
+  if (!this.disableShader && this.skin.updateVertexShader()) {
+    // Is this the first time the param has been read?
+    if (!this.usingSkinShader) {
+      // If so, we disable skinning in software.
+      this.usingSkinShader = 1.0;
+      // Copy the default positions of all vertex buffers.
+      this.initStreams_();
+      var num_vertices = this.skin.influences.length;
+      for (ii = 0; ii < this.input_stream_infos_.length; ++ii) {
+        var input_stream_info = this.input_stream_infos_[ii];
+        var output_streams = this.output_stream_infos_[ii];
+        for (jj = 0; jj < output_streams.length; ++jj) {
+          var values = input_stream_info.field_.getAt(0, num_vertices);
+          output_streams[jj].field_.setAt(0, values);
+        }
+      }
+      this.uninitStreams_();
+    }
+    var row;
+    for (ii = 0; ii < this.bones_.length; ++ii) {
+      var bone = this.bones_[ii];
+      row = boneArray.getParam(ii*3);
+      row.value[0] = bone[0][0];
+      row.value[1] = bone[1][0];
+      row.value[2] = bone[2][0];
+      row.value[3] = bone[3][0];
+      row = boneArray.getParam(ii*3 + 1);
+      row.value[0] = bone[0][1];
+      row.value[1] = bone[1][1];
+      row.value[2] = bone[2][1];
+      row.value[3] = bone[3][1];
+      row = boneArray.getParam(ii*3 + 2);
+      row.value[0] = bone[0][2];
+      row.value[1] = bone[1][2];
+      row.value[2] = bone[2][2];
+      row.value[3] = bone[3][2];
+    }
+  }
+  return boneArray;
+};
+
+/**
+ * This class helps manage each stream. Because allocating memory is slow we
+ * keep these around across calls and reuse them in place by calling init.
+ *
+ * @param {o3d.Stream} stream
+ * @param {o3d.Buffer.AccessMode} access_mode
+ * @constructor
+ * @private
+ */
+o3d.SkinEval.StreamInfo = function() {
+  this.compute_function_ = null;
+  this.copy_function_ = null;
+  this.result_ = null;
+  this.field_ = null;
+  this.values_ = null;
+  this.buffer_ = null;
+  this.index_ = 0;
+  this.writable_ = false;
+};
+
+
+/**
+ * Initialize this StreamInfo object from the given Stream.
+ *
+ * @param {o3d.Stream} stream Stream to lock.
+ * @param {boolean} access_mode true if writable, false otherwise.
+ * @return {boolean} True if the buffer lock was successful, false if error.
+ */
+o3d.SkinEval.StreamInfo.prototype.init = function(stream, access_mode) {
+  if (this.values_ || this.buffer_) {
+    return false;
+  }
+  var field = stream.field;
+  var buffer = field.buffer;
+  // field must be a FloatField, but in o3d-webgl, Field is the same type so
+  // we can't check isAClassName.
+  if (!buffer) {
+    return false;
+  }
+  switch (field.numComponents) {
+    case 3:
+      this.copy_function_ = this.copyFloat3;
+      this.compute_function_ = (stream.semantic == o3d.Stream.POSITION) ?
+          this.computeFloat3AsPoint3 : this.computeFloat3AsVector3;
+      break;
+    case 4:
+      this.compute_function_ = this.computeFloat4AsVector4;
+      this.copy_function_ = this.copyFloat4;
+      break;
+    default:
+      return false;
+  }
+
+  buffer.lock();
+  this.field_ = field;
+  this.buffer_ = buffer;
+  this.values_ = buffer.array_;
+  this.index_ = this.field_.offset_;
+  this.writable_ = access_mode;
+  this.stride_ = buffer.totalComponents;
+  return true;
+};
+
+/**
+ * Uninitialize this StreamInfo object, and unlock the stream.
+ * Can be reused for another init() call.
+ */
+o3d.SkinEval.StreamInfo.prototype.uninit = function() {
+  if (this.buffer_) {
+    if (this.writable_) {
+      this.buffer_.unlock();
+    }
+    this.buffer_ = null;
+    this.field_ = null;
+    this.values_ = null;
+  }
+};
+
+/**
+ * Consumes the next 3 values from this.values_.
+ * Multiplies the current value by the matrix and stores it in result_ and
+ * advances to the next value.
+ *
+ * @param {!Array<!Array<number>>} matrix matrix4 to apply to the vector3.
+ */
+o3d.SkinEval.StreamInfo.prototype.computeFloat3AsVector3 = function(matrix) {
+  var ii = this.index_;
+  var vec = [this.values_[ii], this.values_[ii + 1], this.values_[ii + 2], 0];
+  this.result_ = o3d.Transform.multiplyVector(matrix, vec);
+  this.index_ = ii + this.stride_;
+};
+
+/**
+ * Consumes the next 3 values from this.values_.
+ * Multiplies the current value by the matrix and stores it in result_ and
+ * advances to the next value.
+ *
+ * @param {!Array<!Array<number>>} matrix matrix4 to apply to the vector3.
+ */
+o3d.SkinEval.StreamInfo.prototype.computeFloat3AsPoint3 = function(matrix) {
+  var ii = this.index_;
+  // TODO: The C++ code just dropped element 3 of the return Vector4, while
+  // o3d.Transform.transformPoint divides by the last value to make it 1.
+  // Which is the right one to use?
+  var point = [this.values_[ii], this.values_[ii + 1], this.values_[ii + 2], 1];
+  this.result_ = o3d.Transform.multiplyVector(matrix, point);
+  this.index_ = ii + this.stride_;
+};
+
+/**
+ * Consumes the next 4 this.values_.
+ * Multiplies the current value by the matrix and stores it in result_ and
+ * advances to the next value.
+ *
+ * @param {!Array<!Array<number>>} matrix matrix4 to apply to the vector4.
+ */
+o3d.SkinEval.StreamInfo.prototype.computeFloat4AsVector4 = function(matrix) {
+  var ii = this.index_;
+  var vec = [this.values_[ii], this.values_[ii + 1], this.values_[ii + 2],
+             this.values_[ii + 3]];
+  this.result_ = o3d.Transform.multiplyVector(matrix, vec);
+  this.index_ = ii + this.stride_;
+};
+
+/**
+ * Copies the Float3 result_ from source and advances to the next value.
+ *
+ * @param {!o3d.SkinEval.StreamInfo} source Source StreamInfo to copy from.
+ */
+o3d.SkinEval.StreamInfo.prototype.copyFloat3 = function(source) {
+  var ii = this.index_;
+  this.values_[ii] = source.result_[0];
+  this.values_[ii+1] = source.result_[1];
+  this.values_[ii+2] = source.result_[2];
+  this.index_ = ii + this.stride_;
+};
+
+/**
+ * Copies the Float4 result_ from source and advances to the next value.
+ *
+ * @param {!o3d.SkinEval.StreamInfo} source Source StreamInfo to copy from.
+ */
+o3d.SkinEval.StreamInfo.prototype.copyFloat4 = function(source) {
+  var ii = this.index_;
+  this.values_[ii] = source.result_[0];
+  this.values_[ii+1] = source.result_[1];
+  this.values_[ii+2] = source.result_[2];
+  this.values_[ii+3] = source.result_[3];
+  this.index_ = ii + this.stride_;
+};
+
 
 function trimAll(sString) 
 { 
