@@ -95,18 +95,18 @@ o3djs.provided_ = [];
  */
 o3djs.provide = function(name) {
   // Ensure that the same namespace isn't provided twice.
-  if (o3djs.getObjectByName(name) &&
-      !o3djs.implicitNamespaces_[name]) {
-    throw 'Namespace "' + name + '" already declared.';
-  }
+//  if (o3djs.getObjectByName(name) &&
+//      !o3djs.implicitNamespaces_[name]) {
+//    throw 'Namespace "' + name + '" already declared.';
+//  }
 
-  var namespace = name;
-  while ((namespace = namespace.substring(0, namespace.lastIndexOf('.')))) {
-    o3djs.implicitNamespaces_[namespace] = true;
-  }
+//  var namespace = name;
+//  while ((namespace = namespace.substring(0, namespace.lastIndexOf('.')))) {
+//    o3djs.implicitNamespaces_[namespace] = true;
+//  }
 
-  o3djs.exportPath_(name);
-  o3djs.provided_.push(name);
+//  o3djs.exportPath_(name);
+//  o3djs.provided_.push(name);
 };
 
 
@@ -197,16 +197,16 @@ o3djs.require = function(rule) {
   var dummy = document.getElementsByTagName('script').length;
 
   // if the object already exists we do not need do do anything
-  if (o3djs.getObjectByName(rule)) {
-    return;
-  }
-  var path = o3djs.getPathFromRule_(rule);
-  if (path) {
-    o3djs.included_[path] = true;
-    o3djs.writeScripts_();
-  } else {
-    throw new Error('o3djs.require could not find: ' + rule);
-  }
+//  if (o3djs.getObjectByName(rule)) {
+//    return;
+//  }
+//  var path = o3djs.getPathFromRule_(rule);
+// if (path) {
+//    o3djs.included_[path] = true;
+//    o3djs.writeScripts_();
+//  } else {
+//    throw new Error('o3djs.require could not find: ' + rule);
+//  }
 };
 
 
