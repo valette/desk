@@ -218,7 +218,7 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip){
 	}
 }
 
-function createFromFile(file,pack,color, opt_flip) {
+function createFromFile(transform, file,pack,color, opt_flip) {
 //  state.getStateParam('o3d.CullMode') = o3djs.base.o3d.State.CULL_CCW; 
 
 	var material=createDefaultMaterial(pack, g_viewInfo, color);
@@ -299,5 +299,6 @@ function createFromFile(file,pack,color, opt_flip) {
 		var normal=normalStream.getElementVector(i);
 		normalStream.setElementVector(i,o3djs.math.normalize(normal));
 	}
-	return vertexInfo.createShape(pack, material);
+	var shape=vertexInfo.createShape(pack, material);
+	transform.addShape(shape);
 }

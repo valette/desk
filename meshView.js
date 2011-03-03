@@ -72,7 +72,7 @@ function AddMeshes(xmlFile, transform)
 				color[j]=parseFloat(colors[j]);
 		}
 		if (Label!="0")
-			transform.addShape(createFromFile(path+"/"+file,g_pack,color,flip));
+			createFromFile(transform, path+"/"+file,g_pack,color,flip);
 	}
 }
 /**
@@ -169,8 +169,8 @@ function initStep2(clientElements) {
 	AddMeshes("http://www.creatis.insa-lyon.fr/~valette/meshView/coeurThorax/coeurthorax.xml", Transform);
 //	AddMeshes("data/output.xml", Transform);
 //	AddMeshes("data/coeur.xml", Transform);
-//	Transform.addShape(createFromFile("data/heart.vtk",g_pack,[1,1,1,0.6]));
-//	Transform.addShape(createFromFile("data/skull.xml",g_pack,[1,1,1,0.6]));
+//	createFromFile(Transform,"data/heart.vtk",g_pack,[1,1,1,0.6]);
+//	createFromFile(Transform,"data/skull.xml",g_pack,[1,1,1,0.6]));
 
 	Transform.parent = g_client.root;
 
