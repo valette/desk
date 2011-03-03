@@ -219,6 +219,22 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip){
 }
 
 function createFromFile(transform, file,pack,color, opt_flip) {
+	if (window.XMLHttpRequest)
+	{// code for IE7+, Firefox, Chrome, Opera, Safari
+		var xmlhttp=new XMLHttpRequest();
+	}
+	else
+	{// code for IE6, IE5
+		var xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+	}
+	xmlhttp.open("GET",file,false);
+	xmlhttp.send();
+	createFromFile2(xmlhttp, transform, file,pack,color, opt_flip);
+}
+
+function createFromFile2(xmlhttp, transform, file,pack,color, opt_flip) {
+
+
 //  state.getStateParam('o3d.CullMode') = o3djs.base.o3d.State.CULL_CCW; 
 
 	var material=createDefaultMaterial(pack, g_viewInfo, color);
@@ -233,19 +249,6 @@ function createFromFile(transform, file,pack,color, opt_flip) {
 		3, o3djs.base.o3d.Stream.POSITION);
 	var normalStream = vertexInfo.addStream(
 		3, o3djs.base.o3d.Stream.NORMAL);
-
-	if (window.XMLHttpRequest)
-	{// code for IE7+, Firefox, Chrome, Opera, Safari
-		var xmlhttp=new XMLHttpRequest();
-	}
-	else
-	{// code for IE6, IE5
-		var xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
-	}
-	xmlhttp.open("GET",file,false);
-	xmlhttp.send();
-
-
 
 	var filename=file.split(".");
 	var extension=filename[filename.length-1].toLowerCase();
