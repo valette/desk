@@ -239,7 +239,7 @@ function createFromFile(transform, file,pack,color, opt_flip) {
 
 			if (g_numberOfFiles==0)
 			{
-				var t=setTimeout("g_client.render()",50);
+				var t=setTimeout("g_client.render()",500);
 			}
 		}
 	}
