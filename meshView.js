@@ -28,6 +28,8 @@ var g_o3dHeight = -1;
 var g_viewInfo;
 var g_cameracontroller;
 
+var g_numberOfFiles;
+
 function updateClient() {
   if (g_client.renderMode == g_o3d.Client.RENDERMODE_ON_DEMAND) {
     g_client.render();
@@ -54,6 +56,7 @@ function AddMeshes(xmlFile, transform)
 	var path="";
 	if (slashIndex>0)
 		path=xmlFile.substring(0,slashIndex);
+	g_numberOfFiles=0;
 
 	var flip=0;
 	for (var i=0;i<meshes.length;i++)
@@ -72,7 +75,10 @@ function AddMeshes(xmlFile, transform)
 				color[j]=parseFloat(colors[j]);
 		}
 		if (Label!="0")
+		{
+			g_numberOfFiles++;
 			createFromFile(transform, path+"/"+file,g_pack,color,flip);
+		}
 	}
 }
 /**
@@ -185,7 +191,7 @@ function initStep2(clientElements) {
 
 
 	setClientSize();
-	g_client.render();
+//	g_client.render();
 
 //	g_cameracontroller.viewAll(o3djs.util.getBoundingBoxOfTree(g_client.root),1);
 	g_client.root.localMatrix=g_cameracontroller.calculateViewMatrix();
@@ -195,7 +201,7 @@ function initStep2(clientElements) {
 	o3djs.event.addEventListener(o3dElement, 'mouseup', stopDragging);
 	o3djs.event.addEventListener(o3dElement, 'wheel', scrollMe); 
 
-	g_client.render();
+//	g_client.render();
 	// Set our render callback for animation.
 	// This sets a function to be executed every time a frame is rendered.
 	g_client.setRenderCallback(renderCallback);

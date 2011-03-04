@@ -228,11 +228,20 @@ function createFromFile(transform, file,pack,color, opt_flip) {
 		var xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
 	}
 
-	xmlhttp.open("GET",file,false);
+	xmlhttp.open("GET",file,true);
 
 	function handler()
 	{
-		createFromFile2(xmlhttp, transform, file,pack,color, opt_flip);
+		if(xmlhttp.readyState == 4)
+		{
+			createFromFile2(xmlhttp, transform, file,pack,color, opt_flip);
+			g_numberOfFiles--;
+
+			if (g_numberOfFiles==0)
+			{
+				var t=setTimeout("g_client.render()",50);
+			}
+		}
 	}
 
 	xmlhttp.onreadystatechange=handler;
