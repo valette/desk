@@ -227,9 +227,17 @@ function createFromFile(transform, file,pack,color, opt_flip) {
 	{// code for IE6, IE5
 		var xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
 	}
+
 	xmlhttp.open("GET",file,false);
+
+	function handler()
+	{
+		createFromFile2(xmlhttp, transform, file,pack,color, opt_flip);
+	}
+
+	xmlhttp.onreadystatechange=handler;
+
 	xmlhttp.send();
-	createFromFile2(xmlhttp, transform, file,pack,color, opt_flip);
 }
 
 function createFromFile2(xmlhttp, transform, file,pack,color, opt_flip) {

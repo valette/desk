@@ -172,6 +172,7 @@ function initStep2(clientElements) {
 //	createFromFile(Transform,"data/heart.vtk",g_pack,[1,1,1,0.6]);
 //	createFromFile(Transform,"data/skull.xml",g_pack,[1,1,1,0.6]));
 
+//	alert("OK!");
 	Transform.parent = g_client.root;
 
 	g_cameracontroller=o3djs.cameracontroller.createCameraController(
