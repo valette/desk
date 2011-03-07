@@ -116,7 +116,12 @@ function startDragging(e) {
 	if ((e.shiftKey)||(e.button==1))
 		g_cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.MOVE_CENTER_IN_VIEW_PLANE,e.x,e.y);
 	else
-		g_cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.SPIN_ABOUT_CENTER,e.x,e.y);
+	{
+		if ((e.ctrlKey)||(e.button==1))
+			g_cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.ROTATE_AROUND_Z,e.x,e.y);
+		else
+			g_cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.SPIN_ABOUT_CENTER,e.x,e.y);
+	}
 }
 
 function drag(e) {

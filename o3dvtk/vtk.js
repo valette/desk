@@ -228,7 +228,8 @@ function createFromFile(transform, file,pack,color, opt_flip) {
 		var xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
 	}
 
-	xmlhttp.open("GET",file,true);
+//	xmlhttp.open("GET",file,true);
+	xmlhttp.open("GET",file+"?nocache=" + Math.random(),true);
 
 	function handler()
 	{
