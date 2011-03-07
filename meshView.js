@@ -172,6 +172,8 @@ function initStep2(clientElements) {
 	var Transform = g_pack.createObject('Transform');
 	// Create the Shape for the mesh
 
+	Transform.parent = g_client.root;
+
 	AddMeshes("http://www.creatis.insa-lyon.fr/~valette/meshView/coeurThorax/coeurthorax.xml", Transform);
 //	AddMeshes("data/output.xml", Transform);
 //	AddMeshes("data/coeur.xml", Transform);
@@ -179,7 +181,6 @@ function initStep2(clientElements) {
 //	createFromFile(Transform,"data/skull.xml",g_pack,[1,1,1,0.6]));
 
 //	alert("OK!");
-	Transform.parent = g_client.root;
 
 	g_cameracontroller=o3djs.cameracontroller.createCameraController(
 	[150,150,150],//centerPos,
@@ -191,7 +192,8 @@ function initStep2(clientElements) {
 
 
 	setClientSize();
-//	g_client.render();
+//	var t=setTimeout("g_client.render()",500);
+	g_client.render();
 
 //	g_cameracontroller.viewAll(o3djs.util.getBoundingBoxOfTree(g_client.root),1);
 	g_client.root.localMatrix=g_cameracontroller.calculateViewMatrix();

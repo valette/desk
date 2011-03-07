@@ -236,6 +236,7 @@ function createFromFile(transform, file,pack,color, opt_flip) {
 		{
 			createFromFile2(xmlhttp, transform, file,pack,color, opt_flip);
 			g_numberOfFiles--;
+			g_client.render();
 
 			if (g_numberOfFiles==0)
 			{
