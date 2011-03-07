@@ -82,7 +82,11 @@ o3djs.cameracontroller.DragMode = {
    * Dragging moves the centerPos around the plane perpendicular to
    * the camera view direction.
    */
-  MOVE_CENTER_IN_VIEW_PLANE: 5
+  MOVE_CENTER_IN_VIEW_PLANE: 5,
+  /**
+   * Dragging rotates the object around the z-axis
+   */
+  ROTATE_AROUND_Z: 6
 };
 
 /**
@@ -420,6 +424,27 @@ o3djs.cameracontroller.CameraController.prototype.mouseMoved = function(x, y) {
     translationVector = matrix4.transformDirection(
         inverseViewMatrix, translationVector);
     this.centerPos = o3djs.math.addVector(this.centerPos, translationVector);
+  }
+  if (this.dragMode_ ==
+      o3djs.cameracontroller.DragMode.ROTATE_AROUND_Z) {
+    var p1=[0,0];
+    p1[0]=x-0.5*this.areaWidth_;
+    p1[1]=y-0.5*this.areaHeight_;
+    var p2=[0,0];
+    p2[0]=p1[0]+deltaX*this.pixelsPerUnit;
+    p2[1]=p1[1]+deltaY*this.pixelsPerUnit;
+    var n1=o3djs.math.length(p1);
+    var n2=o3djs.math.length(p2);
+    var n12=n1*n2;
+    if (n12>0)
+    {
+      var cosTheta=o3djs.math.dot(p1,p2)/n12;
+      var sinTheta=p2[1]*p1[0]-p2[0]*p1[1];
+      var theta=Math.acos(cosTheta);
+      if (sinTheta>0)
+        theta=-theta;
+      this.thisRot_ = o3djs.math.matrix4.mul(this.thisRot_, o3djs.math.matrix4.rotationZ(theta));
+    }
   }
 
   if (this.onChange != null &&
