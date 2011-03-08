@@ -235,6 +235,11 @@ function createFromFile(transform, file,pack,color, opt_flip) {
 	{
 		if(xmlhttp.readyState == 4)
 		{
+			if (xmlhttp.status!=200)
+			{
+				alert("Could not read file "+file+": error"+xmlhttp.status);
+				return;
+			}
 			createFromFile2(xmlhttp, transform, file,pack,color, opt_flip);
 			g_numberOfFiles--;
 			g_client.render();

@@ -45,11 +45,16 @@ function renderCallback(renderEvent) {
 function AddMeshes(xmlFile, transform)
 {
 	var xmlhttp=new XMLHttpRequest();
-	xmlhttp.open("GET",xmlFile+"?nocache=" + Math.random(),false);
+//	xmlhttp.open("GET",xmlFile+"?nocache=" + Math.random(),false);
+	xmlhttp.open("GET",xmlFile,false);
 	xmlhttp.send();
 	var readString=xmlhttp.responseXML;
 
 	var meshes=readString.getElementsByTagName("mesh");
+	var globalFlipSwitch=readString.getElementsByTagName("flip");
+	var globalFlip=false;
+	if (globalFlipSwitch.length!=0)
+		globalFlip=true;
 
 	var slashIndex=xmlFile.lastIndexOf("/");
 
@@ -58,14 +63,14 @@ function AddMeshes(xmlFile, transform)
 		path=xmlFile.substring(0,slashIndex);
 	g_numberOfFiles=0;
 
-	var flip=0;
 	for (var i=0;i<meshes.length;i++)
 	{
+		var flip=0;
 		var mesh=meshes[i];
 		var file=mesh.getAttribute("Mesh");
 		var Label=mesh.getAttribute("Label");
 		var color=[1.0,1.0,1.0,1.0];
-		if (mesh.hasAttribute("flip"))
+		if (mesh.hasAttribute("flip")||globalFlip)
 			flip=1;
 		if (mesh.hasAttribute("color"))
 		{
@@ -179,8 +184,9 @@ function initStep2(clientElements) {
 
 	Transform.parent = g_client.root;
 
-	AddMeshes("http://www.creatis.insa-lyon.fr/~valette/meshView/coeurThorax/coeurthorax.xml", Transform);
+//	AddMeshes("http://www.creatis.insa-lyon.fr/~valette/meshView/coeurThorax/coeurthorax.xml", Transform);
 //	AddMeshes("data/output.xml", Transform);
+	AddMeshes("test/output.xml", Transform);
 //	AddMeshes("data/coeur.xml", Transform);
 //	createFromFile(Transform,"data/heart.vtk",g_pack,[1,1,1,0.6]);
 //	createFromFile(Transform,"data/skull.xml",g_pack,[1,1,1,0.6]));
@@ -207,6 +213,15 @@ function initStep2(clientElements) {
 	o3djs.event.addEventListener(o3dElement, 'mousemove', drag);
 	o3djs.event.addEventListener(o3dElement, 'mouseup', stopDragging);
 	o3djs.event.addEventListener(o3dElement, 'wheel', scrollMe); 
+
+
+	function setBoundingBox()
+	{
+		var primitives;
+		var primitives=g_pack.getObjectsByClassName('Primitive');
+//		alert(primitives.length);
+	};
+//	var t=setTimeout(setBoundingBox,5000);
 
 //	g_client.render();
 	// Set our render callback for animation.
