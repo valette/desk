@@ -1,7 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
 	<Tmesh Label="10" Mesh="thoraxInt.vtk" color="1 1 1 1"/>
-	<mesh Label="50" Mesh="colonne.vtk" flip="1" color="1 1 1 1"/>
+	<flip dummy="0"/>
+	<mesh Label="50" Mesh="colonne.vtk" color="1 1 1 1"/>
 	<mesh Label="160" Mesh="moelle.vtk" color="1 1 1 1"/>
 	<mesh Label="181" Mesh="poumonGauche.vtk" color="0.9 0.9 0.9 1"/>
 	<mesh Label="182" Mesh="poumonDroit.vtk" color="0.9 0.9 0.9 1"/>
@@ -11,7 +12,7 @@
 	<mesh Label="252" Mesh="oreilletteDroite.vtk"/>
 	<mesh Label="253" Mesh="ventriculeGauche.vtk" color="1 0 0 1"/>
 	<mesh Label="254" Mesh="ventriculeDroit.vtk" color="0 0 1 1"/>
-	<tmesh Label="10" Mesh="thoraxExt.vtk" flip="1" color="1 1 1 0.2"/>
+	<tmesh Label="10" Mesh="thoraxExt.vtk" color="1 1 1 0.2"/>
 
 </root>
 

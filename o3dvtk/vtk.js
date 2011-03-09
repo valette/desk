@@ -21,9 +21,6 @@ if ((color[3]<0.99)&&(color[3]>0))
 var material=o3djs.material.createBasicMaterial(pack, viewInfo, color, transparency);
 // change lighting parameters
 //color = emissive + lightColor * (ambient * diffuse + diffuse * lighting + specular * lightingSpecular * specularFactor) 
-//  lightPositionParam.value = [1000, 2000, 3000];
-
-//	material.getParam('lightWorldPos').value=[-2000,-2000,-10000];
 	material.getParam('lightWorldPos').value=[2000,2000,10000];
 	material.getParam('emissive').value = [0.1, 0.1, 0.1 , 0.08];
 	material.getParam('ambient').value = [0.1, 0.1, 0.1, 0.005];
@@ -218,18 +215,11 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip){
 	}
 }
 
-function createFromFile(transform, file,pack,color, opt_flip) {
-	if (window.XMLHttpRequest)
-	{// code for IE7+, Firefox, Chrome, Opera, Safari
-		var xmlhttp=new XMLHttpRequest();
-	}
-	else
-	{// code for IE6, IE5
-		var xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
-	}
+function createFromFile(transform, file,pack,color, opt_flip, opt_callback) {
 
-//	xmlhttp.open("GET",file,true);
-	xmlhttp.open("GET",file+"?nocache=" + Math.random(),true);
+	var xmlhttp=new XMLHttpRequest();
+	xmlhttp.open("GET",file,true);
+//	xmlhttp.open("GET",file+"?nocache=" + Math.random(),true);
 
 	function handler()
 	{
@@ -241,26 +231,17 @@ function createFromFile(transform, file,pack,color, opt_flip) {
 				return;
 			}
 			createFromFile2(xmlhttp, transform, file,pack,color, opt_flip);
-			g_numberOfFiles--;
-			g_client.render();
-
-			if (g_numberOfFiles==0)
-			{
-				var t=setTimeout("g_client.render()",500);
-			}
+			if (opt_callback)
+				opt_callback();
+			return;
 		}
 	}
 
 	xmlhttp.onreadystatechange=handler;
-
 	xmlhttp.send();
 }
 
 function createFromFile2(xmlhttp, transform, file,pack,color, opt_flip) {
-
-
-//  state.getStateParam('o3d.CullMode') = o3djs.base.o3d.State.CULL_CCW; 
-
 	var material=createDefaultMaterial(pack, g_viewInfo, color);
 	if (color[3]<0)
 	{

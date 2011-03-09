@@ -28,25 +28,15 @@ var g_o3dHeight = -1;
 var g_viewInfo;
 var g_cameracontroller;
 
-var g_numberOfFiles;
-
 function updateClient() {
-  if (g_client.renderMode == g_o3d.Client.RENDERMODE_ON_DEMAND) {
     g_client.render();
-  }
 }
-
-function renderCallback(renderEvent) {
- setClientSize();
-    g_client.renderMode = g_o3d.Client.RENDERMODE_ON_DEMAND;
-}
-
 
 function AddMeshes(xmlFile, transform)
 {
 	var xmlhttp=new XMLHttpRequest();
-//	xmlhttp.open("GET",xmlFile+"?nocache=" + Math.random(),false);
-	xmlhttp.open("GET",xmlFile,false);
+	xmlhttp.open("GET",xmlFile+"?nocache=" + Math.random(),false);
+//	xmlhttp.open("GET",xmlFile,false);
 	xmlhttp.send();
 	var readString=xmlhttp.responseXML;
 
@@ -63,10 +53,20 @@ function AddMeshes(xmlFile, transform)
 		path=xmlFile.substring(0,slashIndex);
 	g_numberOfFiles=0;
 
-	for (var i=0;i<meshes.length;i++)
+	var meshIndex=0;
+	var numberOfMeshes=meshes.length;
+
+	function loadOneMoreMesh()
 	{
+		if (meshIndex==numberOfMeshes)
+		{
+			updateClient();
+	//		alert("Done");
+			return;
+		}
+
 		var flip=0;
-		var mesh=meshes[i];
+		var mesh=meshes[meshIndex];
 		var file=mesh.getAttribute("Mesh");
 		var Label=mesh.getAttribute("Label");
 		var color=[1.0,1.0,1.0,1.0];
@@ -79,12 +79,19 @@ function AddMeshes(xmlFile, transform)
 			for (var j=0;j<4;j++)
 				color[j]=parseFloat(colors[j]);
 		}
+
+		meshIndex++
 		if (Label!="0")
 		{
-			g_numberOfFiles++;
-			createFromFile(transform, path+"/"+file,g_pack,color,flip);
+			createFromFile(transform, path+"/"+file,g_pack,color,flip,loadOneMoreMesh);
 		}
+		else
+			loadOneMoreMesh();
 	}
+
+	var numberOfParallelRequests=4;
+	for (var n=0;n<numberOfParallelRequests;n++)
+		loadOneMoreMesh();
 }
 /**
  * Creates the client area.
@@ -111,6 +118,7 @@ function setClientSize() {
     //o3djs.dump.dump("areaWidth: " + g_o3dWidth + "\n");
     //o3djs.dump.dump("areaHeight: " + g_o3dHeight + "\n");
   }
+  g_client.render();
 }
 
 var g_dragging = false;
@@ -176,22 +184,9 @@ function initStep2(clientElements) {
 	  g_client.renderGraphRoot,
 	  [1, 1, 1, 1]); //background color
 
-//	g_viewInfo.performanceState.getStateParam('CullMode').value=g_o3d.State.CULL_NONE; 
-
 	// Create a new transform and parent the Shape under it.
 	var Transform = g_pack.createObject('Transform');
-	// Create the Shape for the mesh
-
 	Transform.parent = g_client.root;
-
-//	AddMeshes("http://www.creatis.insa-lyon.fr/~valette/meshView/coeurThorax/coeurthorax.xml", Transform);
-//	AddMeshes("data/output.xml", Transform);
-	AddMeshes("test/output.xml", Transform);
-//	AddMeshes("data/coeur.xml", Transform);
-//	createFromFile(Transform,"data/heart.vtk",g_pack,[1,1,1,0.6]);
-//	createFromFile(Transform,"data/skull.xml",g_pack,[1,1,1,0.6]));
-
-//	alert("OK!");
 
 	g_cameracontroller=o3djs.cameracontroller.createCameraController(
 	[150,150,150],//centerPos,
@@ -201,12 +196,7 @@ function initStep2(clientElements) {
    0.8//fieldOfViewAngle,
    )//opt_onChange)
 
-
-	setClientSize();
-//	var t=setTimeout("g_client.render()",500);
-	g_client.render();
-
-//	g_cameracontroller.viewAll(o3djs.util.getBoundingBoxOfTree(g_client.root),1);
+    g_client.renderMode = g_o3d.Client.RENDERMODE_ON_DEMAND;
 	g_client.root.localMatrix=g_cameracontroller.calculateViewMatrix();
 
 	o3djs.event.addEventListener(o3dElement, 'mousedown', startDragging);
@@ -214,20 +204,23 @@ function initStep2(clientElements) {
 	o3djs.event.addEventListener(o3dElement, 'mouseup', stopDragging);
 	o3djs.event.addEventListener(o3dElement, 'wheel', scrollMe); 
 
+   	setClientSize();
 
-	function setBoundingBox()
-	{
-		var primitives;
-		var primitives=g_pack.getObjectsByClassName('Primitive');
+//	function setBoundingBox()
+//	{
+//		var primitives;
+//		var primitives=g_pack.getObjectsByClassName('Primitive');
 //		alert(primitives.length);
-	};
+//	};
 //	var t=setTimeout(setBoundingBox,5000);
 
-//	g_client.render();
-	// Set our render callback for animation.
-	// This sets a function to be executed every time a frame is rendered.
-	g_client.setRenderCallback(renderCallback);
-	window.onresize = updateClient;
+	window.onresize = setClientSize;
+	AddMeshes("http://www.creatis.insa-lyon.fr/~valette/meshView/coeurThorax/coeurthorax.xml", Transform);
+//	AddMeshes("data/output.xml", Transform);
+//	AddMeshes("test/output.xml", Transform);
+//	AddMeshes("data/coeur.xml", Transform);
+//	createFromFile(Transform,"data/heart.vtk",g_pack,[1,1,1,0.6]);
+//	createFromFile(Transform,"data/skull.xml",g_pack,[1,1,1,0.6]));
 }
 
 /**
