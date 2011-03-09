@@ -293,12 +293,16 @@ function createFromFile2(xmlhttp, transform, file,pack,color, opt_flip) {
 		var v1 = o3djs.math.normalize(o3djs.math.subVector(positions[2],positions[1]));
 		var normal=o3djs.math.normalize(o3djs.math.cross(v0, v1));
 //		var normal=o3djs.math.normalize(o3djs.math.cross(v1, v0));
-		for (var iii=0;iii<3;iii++)
+		var norm=normal[0]*normal[0]+normal[1]*normal[1]+normal[2]*normal[2];
+		if ((norm>0.98)&&(norm<1.01))
 		{
-			var currentPoint=triangle[iii];
-			var normal2=normalStream.getElementVector(currentPoint);
-			normalStream.setElementVector(currentPoint,
-				o3djs.math.addVector(normal,normal2));
+			for (var iii=0;iii<3;iii++)
+			{
+				var currentPoint=triangle[iii];
+				var normal2=normalStream.getElementVector(currentPoint);
+				normalStream.setElementVector(currentPoint,
+					o3djs.math.addVector(normal,normal2));
+			}
 		}
 	}
 
