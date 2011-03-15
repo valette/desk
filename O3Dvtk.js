@@ -1,26 +1,12 @@
 
-function trimAll(sString) 
-{ 
-	while (sString.substring(0,1) == ' ') 
-	{ 
-	sString = sString.substring(1, sString.length); 
-	} 
-	while (sString.substring(sString.length-1, sString.length) == ' ') 
-	{ 
-	sString = sString.substring(0,sString.length-1); 
-	} 
-return sString; 
-}
-
 function createDefaultMaterial(pack, viewInfo, color) {
 
-var transparency=0;
-if ((color[3]<0.99)&&(color[3]>0))
-	transparency=1;
-	
-var material=o3djs.material.createBasicMaterial(pack, viewInfo, color, transparency);
-// change lighting parameters
-//color = emissive + lightColor * (ambient * diffuse + diffuse * lighting + specular * lightingSpecular * specularFactor) 
+	var transparency=0;
+	if ((color[3]<0.99)&&(color[3]>0))
+		transparency=1;
+
+	var material=o3djs.material.createBasicMaterial(pack, viewInfo, color, transparency);
+
 	material.getParam('lightWorldPos').value=[2000,2000,10000];
 	material.getParam('emissive').value = [0.1, 0.1, 0.1 , 0.08];
 	material.getParam('ambient').value = [0.1, 0.1, 0.1, 0.005];
@@ -28,107 +14,7 @@ var material=o3djs.material.createBasicMaterial(pack, viewInfo, color, transpare
 	material.getParam('shininess').value=0.02;
 	material.getParam('specularFactor').value = 0.1;
 	material.getParam('lightColor').value = [0.8, 0.8, 0.8, 0.5];
-
 	return material;
-}
-
-function readXMLFile(xmlDoc,vertexInfo ,positionStream ){
-
-// get points
-	var piece=xmlDoc.getElementsByTagName("Piece")[0];
-	var numberOfPoints=parseInt(piece.getAttribute("NumberOfPoints"));
-	var numberOfPolys=parseInt(piece.getAttribute("NumberOfPolys"));
-	var points=piece.getElementsByTagName("Points")[0];
-
-	for (var i=0;i<points.childNodes.length;i++)
-	{
-		var child=points.childNodes[i];
-		if ((child.tagName == "DataArray") && (child.getAttribute("Name")=="Points"))
-		{
-			var numberOfComponents=parseInt(child.getAttribute("NumberOfComponents"));
-			var pointsData;
-			// IE supports the text property
-			if (window.ActiveXObject) {
-				pointsData = child.text;
-			}
-			// Other browsers use textContent
-			else {
-				pointsData = child.textContent;
-			}
-			var reg=new RegExp("[ ,;]+", "g");
-			var pointsDataArray=trimAll(pointsData).split(reg)
-
-			var j=0;
-			var index=0;
-			var index2=0;
-			var Coord=[0,0,0];
-			for (j=0;j<pointsDataArray.length;j++)
-			{
-				var value=parseFloat(pointsDataArray[j]);
-				if (!isNaN(value))
-				{
-					Coord[index2]=value;
-					index++;
-					index2++;
-					if (index2==3)
-					{
-						index2=0;
-						positionStream.addElement(Coord[0],Coord[1],Coord[2]);
-					}
-					
-				}
-			}
-			var wantedSize=numberOfComponents*numberOfPoints;
-			if (index!=wantedSize)
-			  alert ("Error reading "+file+" : \n Number of read coordinates : "+index+
-			  "\n Number of wanted coordinates : "+ wantedSize);
-		}
-	}
-
-//get triangles
-	var polys=piece.getElementsByTagName("Polys")[0];
-	for (var i=0;i<polys.childNodes.length;i++)
-	{
-		var child=polys.childNodes[i];
-		if ((child.tagName == "DataArray") && (child.getAttribute("Name")=="connectivity"))
-		{
-			var connectivityData
-			// IE supports the text property
-			if (window.ActiveXObject) {
-				connectivityData = child.text
-			}
-			// Other browsers use textContent
-			else {
-				connectivityData = child.textContent;
-			}
-
-			var reg=new RegExp("[ ,;]+", "g");
-			var connectivityDataArray=trimAll(connectivityData).split(reg)
-
-			var index=0;
-			var index2=0;
-			var connect=[0,0,0];
-			for (var j=0;j<connectivityDataArray.length;j++)
-			{
-				var value=parseInt(connectivityDataArray[j]);
-				if (!isNaN(value))
-				{
-					connect[index2]=value;
-					index++;
-					index2++;
-					if (index2==3)
-					{
-						index2=0;
-						vertexInfo.addTriangle(connect[0],connect[1],connect[2]);						
-					}
-				}
-			}
-			var wantedSize=3*numberOfPolys;
-			if (index!=wantedSize)
-			  alert ("Error reading "+file+" : \n Number of read indices : "+index+
-			  "\n Number of wanted connectivities : "+ wantedSize);
-		}
-	}
 }
 
 function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip){
@@ -221,6 +107,9 @@ function createFromFile(transform, file,pack,color, opt_flip, opt_callback) {
 	xmlhttp.open("GET",file,true);
 //	xmlhttp.open("GET",file+"?nocache=" + Math.random(),true);
 
+	xmlhttp.onreadystatechange=handler;
+	xmlhttp.send();
+
 	function handler()
 	{
 		if(xmlhttp.readyState == 4)
@@ -237,8 +126,6 @@ function createFromFile(transform, file,pack,color, opt_flip, opt_callback) {
 		}
 	}
 
-	xmlhttp.onreadystatechange=handler;
-	xmlhttp.send();
 }
 
 function createFromFile2(xmlhttp, transform, file,pack,color, opt_flip) {
@@ -260,10 +147,6 @@ function createFromFile2(xmlhttp, transform, file,pack,color, opt_flip) {
 
 	switch (extension)
 	{
-		case "xml":
-			var readString=xmlhttp.responseXML;
-			readXMLFile(readString,vertexInfo ,positionStream );
-			break;
 		case "vtk":
 			var readString=xmlhttp.responseText;
 			readVTKFile(readString,vertexInfo ,positionStream ,opt_flip);
@@ -292,7 +175,6 @@ function createFromFile2(xmlhttp, transform, file,pack,color, opt_flip) {
 		var v0 = o3djs.math.normalize(o3djs.math.subVector(positions[1],positions[0]));
 		var v1 = o3djs.math.normalize(o3djs.math.subVector(positions[2],positions[1]));
 		var normal=o3djs.math.normalize(o3djs.math.cross(v0, v1));
-//		var normal=o3djs.math.normalize(o3djs.math.cross(v1, v0));
 		var norm=normal[0]*normal[0]+normal[1]*normal[1]+normal[2]*normal[2];
 		if ((norm>0.98)&&(norm<1.01))
 		{
