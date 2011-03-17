@@ -259,14 +259,14 @@ o3djs.cameracontroller.CameraController = function(centerPos,
    * @private
    * @type {o3djs.math.Matrix4}
    */
-  this.thisRot_=g_math.matrix4.identity();
+  this.thisRot_=o3djs.math.matrix4.identity();
 
 /**
    * The last rotation matrix
    * @private
    * @type {o3djs.math.Matrix4}
    */
-  this.lastRot_=g_math.matrix4.identity();
+  this.lastRot_=o3djs.math.matrix4.identity();
 };
 
 /**
@@ -393,8 +393,8 @@ o3djs.cameracontroller.CameraController.prototype.mouseMoved = function(x, y) {
     var heightAngle = deltaY * this.radiansPerUnit;
 
      var matrix4 = o3djs.math.matrix4;
-     this.thisRot_ = g_math.matrix4.mul(this.thisRot_, matrix4.rotationX(heightAngle));
-     this.thisRot_ = g_math.matrix4.mul(this.thisRot_, matrix4.rotationY(rotationAngle));
+     this.thisRot_ = matrix4.mul(this.thisRot_, matrix4.rotationX(heightAngle));
+     this.thisRot_ = matrix4.mul(this.thisRot_, matrix4.rotationY(rotationAngle));
   }
   if (this.dragMode_ == o3djs.cameracontroller.DragMode.DOLLY_IN_OUT) {
     this.backpedal += deltaY * this.distancePerUnit;
