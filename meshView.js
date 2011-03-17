@@ -13,88 +13,17 @@ o3djs.require('o3djs.primitives');
 // Events
 // Run the init() function once the page has finished loading.
 // Run the uninit() function when the page has is unloaded.
-window.onload = init;
-window.onunload = uninit;
+//window.onload = init;
+//window.onunload = uninit;
 
 // global variables
-var g_o3d;
-var g_math;
-var g_pack;
-var g_client;
 
-var g_o3dWidth = -1;
-var g_o3dHeight = -1;
-
-var g_viewInfo;
-var g_cameracontroller;
+var g_scene;
 
 function updateClient() {
-    g_client.render();
+    g_scene.client.render();
 }
 
-function AddMeshes(xmlFile, transform)
-{
-	var xmlhttp=new XMLHttpRequest();
-	xmlhttp.open("GET",xmlFile+"?nocache=" + Math.random(),false);
-//	xmlhttp.open("GET",xmlFile,false);
-	xmlhttp.send();
-	var readString=xmlhttp.responseXML;
-
-	var meshes=readString.getElementsByTagName("mesh");
-	var globalFlipSwitch=readString.getElementsByTagName("flip");
-	var globalFlip=false;
-	if (globalFlipSwitch.length!=0)
-		globalFlip=true;
-
-	var slashIndex=xmlFile.lastIndexOf("/");
-
-	var path="";
-	if (slashIndex>0)
-		path=xmlFile.substring(0,slashIndex);
-	g_numberOfFiles=0;
-
-	var meshIndex=0;
-	var numberOfMeshes=meshes.length;
-
-	function loadOneMoreMesh()
-	{
-		if (meshIndex==numberOfMeshes)
-		{
-			updateClient();
-			return;
-		}
-
-		var flip=0;
-		var mesh=meshes[meshIndex];
-		var file=mesh.getAttribute("Mesh");
-		var Label=mesh.getAttribute("Label");
-		var color=[1.0,1.0,1.0,1.0];
-		if (mesh.hasAttribute("flip")||globalFlip)
-			flip=1;
-		if (mesh.hasAttribute("color"))
-		{
-			var colorstring=mesh.getAttribute("color");
-			var colors=colorstring.split(" ");
-			for (var j=0;j<4;j++)
-				color[j]=parseFloat(colors[j]);
-		}
-
-		if ((meshIndex==Math.floor(numberOfMeshes/4))||(meshIndex==Math.floor(numberOfMeshes/2))
-		||(meshIndex==Math.floor(numberOfMeshes*3/4)))
-				updateClient();
-		meshIndex++
-		if (Label!="0")
-		{
-			createFromFile(transform, path+"/"+file,g_pack,color,flip,loadOneMoreMesh);
-		}
-		else
-			loadOneMoreMesh();
-	}
-
-	var numberOfParallelRequests=2;
-	for (var n=0;n<numberOfParallelRequests;n++)
-		loadOneMoreMesh();
-}
 /**
  * Creates the client area.
  */
@@ -103,60 +32,61 @@ function init() {
 }
 
 function setClientSize() {
-  var newWidth  = g_client.width;
-  var newHeight = g_client.height;
+  var newWidth  = g_scene.client.width;
+  var newHeight = g_scene.client.height;
 
-  if (newWidth != g_o3dWidth || newHeight != g_o3dHeight) {
-    g_o3dWidth = newWidth;
-    g_o3dHeight = newHeight;
+  if (newWidth != g_scene.o3dWidth || newHeight != g_scene.o3dHeight) {
+    g_scene.o3dWidth = newWidth;
+    g_scene.o3dHeight = newHeight;
 
     // Set the perspective projection matrix
-    g_viewInfo.drawContext.projection = g_math.matrix4.perspective(
-      g_math.degToRad(45), g_o3dWidth / g_o3dHeight, 0.1, 10000);
+    g_scene.viewInfo.drawContext.projection = o3djs.math.matrix4.perspective(
+      o3djs.math.degToRad(45), g_scene.o3dWidth / g_scene.o3dHeight, 0.1, 10000);
 
     // Sets a new area size for arcball.
-    g_cameracontroller.setAreaSize(g_o3dWidth, g_o3dHeight);
+    g_scene.cameracontroller.setAreaSize(g_scene.o3dWidth, g_scene.o3dHeight);
 
     //o3djs.dump.dump("areaWidth: " + g_o3dWidth + "\n");
     //o3djs.dump.dump("areaHeight: " + g_o3dHeight + "\n");
   }
-  g_client.render();
+  g_scene.client.render();
 }
 
 var g_dragging = false;
 
 function startDragging(e) {
 	g_dragging = true;
+	var cameracontroller=g_scene.cameracontroller
 
 	if ((e.shiftKey)||(e.button==1))
-		g_cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.MOVE_CENTER_IN_VIEW_PLANE,e.x,e.y);
+		cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.MOVE_CENTER_IN_VIEW_PLANE,e.x,e.y);
 	else
 	{
 		if ((e.ctrlKey)||(e.button==1))
-			g_cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.ROTATE_AROUND_Z,e.x,e.y);
+			cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.ROTATE_AROUND_Z,e.x,e.y);
 		else
-			g_cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.SPIN_ABOUT_CENTER,e.x,e.y);
+			cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.SPIN_ABOUT_CENTER,e.x,e.y);
 	}
 }
 
 function drag(e) {
 	if (g_dragging) {
-		g_cameracontroller.mouseMoved(e.x,e.y);
-		var matrix=g_cameracontroller.calculateViewMatrix();
-		g_client.root.localMatrix=matrix;
+		g_scene.cameracontroller.mouseMoved(e.x,e.y);
+		var matrix=g_scene.cameracontroller.calculateViewMatrix();
+		g_scene.client.root.localMatrix=matrix;
 		updateClient();
 	}
 }
 
 function stopDragging(e) {
 	g_dragging = false;
-	g_cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.NONE);
+	g_scene.cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.NONE);
 }
 
 function scrollMe(e) {
   if (e.deltaY) {
-	g_cameracontroller.backpedal*=(e.deltaY < 0 ? 14 : 10)/12;
-	g_client.root.localMatrix=g_cameracontroller.calculateViewMatrix();
+	g_scene.cameracontroller.backpedal*=(e.deltaY < 0 ? 14 : 10)/12;
+	g_scene.client.root.localMatrix=g_scene.cameracontroller.calculateViewMatrix();
 	updateClient();
   }
 }
@@ -167,47 +97,8 @@ function scrollMe(e) {
  * @param {Array} clientElements Array of o3d object elements.
  */
 function initStep2(clientElements) {
-	// Initializes global variables and libraries.
-	var o3dElement = clientElements[0];
-	g_client = o3dElement.client;
-	g_o3d = o3dElement.o3d;
-	g_math = o3djs.math;
 
-	g_lastRot = g_math.matrix4.identity();
-	g_thisRot = g_math.matrix4.identity();
-
-	// Create a pack to manage the objects created.
-	g_pack = g_client.createPack();
-
-	// Create the render graph for a view.
-	g_viewInfo = o3djs.rendergraph.createBasicView(
-	  g_pack,
-	  g_client.root,
-	  g_client.renderGraphRoot,
-	  [1, 1, 1, 1]); //background color
-
-	// Create a new transform and parent the Shape under it.
-	var Transform = g_pack.createObject('Transform');
-	Transform.parent = g_client.root;
-
-	g_cameracontroller=o3djs.cameracontroller.createCameraController(
-	[150,150,150],//centerPos,
-	500,//backpedal,
-	100,//heightAngle,
-	100,//rotationAngle,
-   0.8//fieldOfViewAngle,
-   )//opt_onChange)
-
-    g_client.renderMode = g_o3d.Client.RENDERMODE_ON_DEMAND;
-	g_client.root.localMatrix=g_cameracontroller.calculateViewMatrix();
-
-	o3djs.event.addEventListener(o3dElement, 'mousedown', startDragging);
-	o3djs.event.addEventListener(o3dElement, 'mousemove', drag);
-	o3djs.event.addEventListener(o3dElement, 'mouseup', stopDragging);
-	o3djs.event.addEventListener(o3dElement, 'wheel', scrollMe); 
-
-   	setClientSize();
-
+	g_scene=o3djs.renderscene.createRenderScene(clientElements[0]);
 //	function setBoundingBox()
 //	{
 //		var primitives;
@@ -216,21 +107,23 @@ function initStep2(clientElements) {
 //	};
 //	var t=setTimeout(setBoundingBox,5000);
 
+   	setClientSize();
 	window.onresize = setClientSize;
-	AddMeshes("http://www.creatis.insa-lyon.fr/~valette/meshView/coeurThorax/coeurthorax.xml", Transform);
+//	g_scene.addMeshes("http://www.creatis.insa-lyon.fr/~valette/meshView/coeurThorax/coeurthorax.xml");
 //	AddMeshes("data/output.xml", Transform);
-//	AddMeshes("test/output_full.xml", Transform);
+	g_scene.addMeshes("test/output_full.xml");
 //	AddMeshes("data/coeur.xml", Transform);
-//	createFromFile(Transform,"data/heart.vtk",g_pack,[1,1,1,0.6]);
-//	createFromFile(Transform,"data/skull.xml",g_pack,[1,1,1,0.6]));
+//	createFromFile(g_scene,"data/heart.vtk",[1,1,1,0.6]);
+//	createFromFile(g_scene,"data/skull.vtk",[1,1,1,0.6]);
+//	createFromFile(g_scene,"coeurThorax/poumonDroit.vtk",[1,1,1,1]);
 }
 
 /**
  * Removes any callbacks so they don't get called after the page has unloaded.
  */
 function uninit() {
-  if (g_client) {
-    g_client.cleanup();
+  if (g_scene.client) {
+    g_scene.client.cleanup();
   }
 }
 

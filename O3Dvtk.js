@@ -1,4 +1,125 @@
 
+
+o3djs.provide('o3djs.renderscene');
+
+/**
+ * A Module for user control of the camera / view matrix.
+ * @namespace
+ */
+o3djs.renderscene = o3djs.renderScene || {};
+
+o3djs.renderscene.createRenderScene = function(clientElement) {
+  return new o3djs.renderscene.RenderScene(clientElement);
+};
+
+o3djs.renderscene.RenderScene = function(clientElement)
+{
+	this.o3dElement=clientElement;
+	this.client = this.o3dElement.client;
+
+	// Create a pack to manage the objects created.
+	this.pack = this.client.createPack();
+
+	// Create the render graph for a view.
+	this.viewInfo = o3djs.rendergraph.createBasicView(
+	  this.pack,
+	  this.client.root,
+	  this.client.renderGraphRoot,
+	  [1, 1, 1, 1]); //background color
+
+	// Create a new transform and parent the Shape under it.
+	this.transform = this.pack.createObject('Transform');
+	this.transform.parent = this.client.root;
+
+	this.cameracontroller=o3djs.cameracontroller.createCameraController(
+	[150,150,150],//centerPos,
+	500,//backpedal,
+	100,//heightAngle,
+	100,//rotationAngle,
+   0.8//fieldOfViewAngle,
+   )//opt_onChange)
+
+    this.client.renderMode = this.o3dElement.o3d.Client.RENDERMODE_ON_DEMAND;
+	this.client.root.localMatrix=this.cameracontroller.calculateViewMatrix();
+
+	o3djs.event.addEventListener(this.o3dElement, 'mousedown', startDragging);
+	o3djs.event.addEventListener(this.o3dElement, 'mousemove', drag);
+	o3djs.event.addEventListener(this.o3dElement, 'mouseup', stopDragging);
+	o3djs.event.addEventListener(this.o3dElement, 'wheel', scrollMe); 
+
+	this.o3dWidth = -1;
+	this.o3dHeight = -1;
+};
+
+o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile) 
+{
+	var xmlhttp=new XMLHttpRequest();
+	xmlhttp.open("GET",xmlFile+"?nocache=" + Math.random(),false);
+//	xmlhttp.open("GET",xmlFile,false);
+	xmlhttp.send();
+	var readString=xmlhttp.responseXML;
+
+	var meshes=readString.getElementsByTagName("mesh");
+	var globalFlipSwitch=readString.getElementsByTagName("flip");
+	var globalFlip=false;
+	if (globalFlipSwitch.length!=0)
+		globalFlip=true;
+
+	var slashIndex=xmlFile.lastIndexOf("/");
+
+	var path="";
+	if (slashIndex>0)
+		path=xmlFile.substring(0,slashIndex);
+
+	var meshIndex=0;
+	var numberOfMeshes=meshes.length;
+	var scene=this;
+
+	function loadOneMoreMesh()
+	{
+		if (meshIndex==numberOfMeshes)
+		{
+			meshIndex++;
+			scene.client.render();
+			return;
+		}
+		if (meshIndex>numberOfMeshes)
+		{
+			return;
+		}
+
+		var flip=0;
+		var mesh=meshes[meshIndex];
+		var file=mesh.getAttribute("Mesh");
+		var Label=mesh.getAttribute("Label");
+		var color=[1.0,1.0,1.0,1.0];
+		if (mesh.hasAttribute("flip")||globalFlip)
+			flip=1;
+		if (mesh.hasAttribute("color"))
+		{
+			var colorstring=mesh.getAttribute("color");
+			var colors=colorstring.split(" ");
+			for (var j=0;j<4;j++)
+				color[j]=parseFloat(colors[j]);
+		}
+
+		if ((meshIndex==Math.floor(numberOfMeshes/4))||(meshIndex==Math.floor(numberOfMeshes/2))
+		||(meshIndex==Math.floor(numberOfMeshes*3/4)))
+				updateClient();
+		meshIndex++
+		if (Label!="0")
+		{
+			createFromFile(scene, path+"/"+file,color,flip,loadOneMoreMesh);
+		}
+		else
+			loadOneMoreMesh();
+	}
+
+	var numberOfParallelRequests=4;
+	for (var n=0;n<numberOfParallelRequests;n++)
+		loadOneMoreMesh();
+};
+
 function createDefaultMaterial(pack, viewInfo, color) {
 
 	var transparency=0;
@@ -101,7 +222,7 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip){
 	}
 }
 
-function createFromFile(transform, file,pack,color, opt_flip, opt_callback) {
+function createFromFile(scene, file,color, opt_flip, opt_callback) {
 
 	var xmlhttp=new XMLHttpRequest();
 	xmlhttp.open("GET",file,true);
@@ -119,7 +240,7 @@ function createFromFile(transform, file,pack,color, opt_flip, opt_callback) {
 				alert("Could not read file "+file+": error"+xmlhttp.status);
 				return;
 			}
-			createFromFile2(xmlhttp, transform, file,pack,color, opt_flip);
+			createFromFile2(xmlhttp, scene, file,color, opt_flip);
 			if (opt_callback)
 				opt_callback();
 			return;
@@ -128,13 +249,13 @@ function createFromFile(transform, file,pack,color, opt_flip, opt_callback) {
 
 }
 
-function createFromFile2(xmlhttp, transform, file,pack,color, opt_flip) {
-	var material=createDefaultMaterial(pack, g_viewInfo, color);
+function createFromFile2(xmlhttp, scene, file,color, opt_flip) {
+	var material=createDefaultMaterial(scene.pack, scene.viewInfo, color);
 	if (color[3]<0)
 	{
 		var state = pack.createObject('State'); 
 		material.state = state; 
-		state.getStateParam('FillMode').value = g_o3d.State.WIREFRAME; 
+		state.getStateParam('FillMode').value = o3dElement.o3d.State.WIREFRAME; 
 	}
 	var vertexInfo = o3djs.primitives.createVertexInfo();
 	var positionStream = vertexInfo.addStream(
@@ -193,6 +314,6 @@ function createFromFile2(xmlhttp, transform, file,pack,color, opt_flip) {
 		var normal=normalStream.getElementVector(i);
 		normalStream.setElementVector(i,o3djs.math.normalize(normal));
 	}
-	var shape=vertexInfo.createShape(pack, material);
-	transform.addShape(shape);
+	var shape=vertexInfo.createShape(scene.pack, material);
+	scene.transform.addShape(shape);
 }
