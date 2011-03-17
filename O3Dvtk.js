@@ -42,6 +42,46 @@ o3djs.renderscene.RenderScene = function(clientElement)
     this.client.renderMode = this.o3dElement.o3d.Client.RENDERMODE_ON_DEMAND;
 	this.client.root.localMatrix=this.cameracontroller.calculateViewMatrix();
 
+	var scene=this;
+	var g_dragging = false;
+
+	function startDragging(e) {
+		g_dragging = true;
+		var cameracontroller=scene.cameracontroller
+
+		if ((e.shiftKey)||(e.button==1))
+			cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.MOVE_CENTER_IN_VIEW_PLANE,e.x,e.y);
+		else
+		{
+			if ((e.ctrlKey)||(e.button==1))
+				cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.ROTATE_AROUND_Z,e.x,e.y);
+			else
+				cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.SPIN_ABOUT_CENTER,e.x,e.y);
+		}
+	}
+
+	function drag(e) {
+		if (g_dragging) {
+			scene.cameracontroller.mouseMoved(e.x,e.y);
+			var matrix=scene.cameracontroller.calculateViewMatrix();
+			scene.client.root.localMatrix=matrix;
+			updateClient();
+		}
+	}
+
+	function stopDragging(e) {
+		g_dragging = false;
+		scene.cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.NONE);
+	}
+
+	function scrollMe(e) {
+	  if (e.deltaY) {
+		scene.cameracontroller.backpedal*=(e.deltaY < 0 ? 14 : 10)/12;
+		scene.client.root.localMatrix=scene.cameracontroller.calculateViewMatrix();
+		updateClient();
+	  }
+	}
+
 	o3djs.event.addEventListener(this.o3dElement, 'mousedown', startDragging);
 	o3djs.event.addEventListener(this.o3dElement, 'mousemove', drag);
 	o3djs.event.addEventListener(this.o3dElement, 'mouseup', stopDragging);
@@ -119,6 +159,28 @@ o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile)
 	for (var n=0;n<numberOfParallelRequests;n++)
 		loadOneMoreMesh();
 };
+
+o3djs.renderscene.RenderScene.prototype.render = function() 
+{
+  var newWidth  = this.client.width;
+  var newHeight = this.client.height;
+
+  if (newWidth != this.o3dWidth || newHeight != this.o3dHeight) {
+	this.o3dWidth = newWidth;
+	this.o3dHeight = newHeight;
+
+	// Set the perspective projection matrix
+	this.viewInfo.drawContext.projection = o3djs.math.matrix4.perspective(
+	  o3djs.math.degToRad(45), this.o3dWidth / this.o3dHeight, 0.1, 10000);
+
+	// Sets a new area size for arcball.
+	this.cameracontroller.setAreaSize(this.o3dWidth, this.o3dHeight);
+
+	//o3djs.dump.dump("areaWidth: " + g_o3dWidth + "\n");
+	//o3djs.dump.dump("areaHeight: " + g_o3dHeight + "\n");
+  }
+  this.client.render();
+}
 
 function createDefaultMaterial(pack, viewInfo, color) {
 
