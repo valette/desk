@@ -1,14 +1,5 @@
 
 o3djs.base.o3d = o3d;
-o3djs.require('o3djs.webgl');
-o3djs.require('o3djs.math');
-o3djs.require('o3djs.quaternions');
-o3djs.require('o3djs.rendergraph');
-o3djs.require('o3djs.pack');
-o3djs.require('o3djs.arcball');
-o3djs.require('o3djs.event');
-o3djs.require('o3djs.cameracontroller');
-o3djs.require('o3djs.primitives');
 
 // Events
 // Run the init() function once the page has finished loading.
@@ -49,9 +40,7 @@ function initStep2(clientElements) {
    	g_scene.render();
 	window.onresize = updateClient;
 	g_scene.addMeshes("http://www.creatis.insa-lyon.fr/~valette/meshView/coeurThorax/coeurthorax.xml");
-//	AddMeshes("data/output.xml", Transform);
 //	g_scene.addMeshes("test/output_full.xml");
-//	AddMeshes("data/coeur.xml", Transform);
 //	createFromFile(g_scene,"data/heart.vtk",[1,1,1,0.6]);
 //	createFromFile(g_scene,"data/skull.vtk",[1,1,1,0.6]);
 //	createFromFile(g_scene,"coeurThorax/poumonDroit.vtk",[1,1,1,1]);
