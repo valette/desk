@@ -1,11 +1,7 @@
-
+o3djs.base.o3d = o3d;
 
 o3djs.provide('o3djs.renderscene');
 
-/**
- * A Module for user control of the camera / view matrix.
- * @namespace
- */
 o3djs.renderscene = o3djs.renderScene || {};
 
 o3djs.renderscene.createRenderScene = function(clientElement) {
@@ -32,21 +28,21 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	this.transform.parent = this.client.root;
 
 	this.cameracontroller=o3djs.cameracontroller.createCameraController(
-	[150,150,150],//centerPos,
-	500,//backpedal,
-	100,//heightAngle,
-	100,//rotationAngle,
-   0.8//fieldOfViewAngle,
-   )//opt_onChange)
+		[150,150,150],//centerPos,
+		500,//backpedal,
+		100,//heightAngle,
+		100,//rotationAngle,
+		0.8//fieldOfViewAngle,
+		)//opt_onChange)
 
     this.client.renderMode = this.o3dElement.o3d.Client.RENDERMODE_ON_DEMAND;
 	this.client.root.localMatrix=this.cameracontroller.calculateViewMatrix();
 
 	var scene=this;
-	var g_dragging = false;
+	this.dragging = false;
 
 	function startDragging(e) {
-		g_dragging = true;
+		dragging = true;
 		var cameracontroller=scene.cameracontroller
 
 		if ((e.shiftKey)||(e.button==1))
@@ -61,16 +57,16 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	}
 
 	function drag(e) {
-		if (g_dragging) {
+		if (dragging) {
 			scene.cameracontroller.mouseMoved(e.x,e.y);
 			var matrix=scene.cameracontroller.calculateViewMatrix();
 			scene.client.root.localMatrix=matrix;
-			updateClient();
+			scene.render();
 		}
 	}
 
 	function stopDragging(e) {
-		g_dragging = false;
+		dragging = false;
 		scene.cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.NONE);
 	}
 
@@ -78,7 +74,7 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	  if (e.deltaY) {
 		scene.cameracontroller.backpedal*=(e.deltaY < 0 ? 14 : 10)/12;
 		scene.client.root.localMatrix=scene.cameracontroller.calculateViewMatrix();
-		updateClient();
+		scene.render();
 	  }
 	}
 
@@ -89,6 +85,7 @@ o3djs.renderscene.RenderScene = function(clientElement)
 
 	this.o3dWidth = -1;
 	this.o3dHeight = -1;
+	this.resize();
 };
 
 o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile) 
@@ -115,16 +112,23 @@ o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile)
 	var numberOfMeshes=meshes.length;
 	var scene=this;
 
+	function render()
+	{
+		scene.render();
+	}
+
 	function loadOneMoreMesh()
 	{
-		if (meshIndex==numberOfMeshes)
+		if (meshIndex==numberOfMeshes+numberOfParallelRequests-1)
 		{
 			meshIndex++;
+			var t=setTimeout(render,500);
 			scene.client.render();
 			return;
 		}
-		if (meshIndex>numberOfMeshes)
+		if (meshIndex>=numberOfMeshes)
 		{
+			meshIndex++;
 			return;
 		}
 
@@ -145,7 +149,7 @@ o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile)
 
 		if ((meshIndex==Math.floor(numberOfMeshes/4))||(meshIndex==Math.floor(numberOfMeshes/2))
 		||(meshIndex==Math.floor(numberOfMeshes*3/4)))
-				updateClient();
+				render();
 		meshIndex++
 		if (Label!="0")
 		{
@@ -155,31 +159,36 @@ o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile)
 			loadOneMoreMesh();
 	}
 
-	var numberOfParallelRequests=4;
+	var numberOfParallelRequests=2;
 	for (var n=0;n<numberOfParallelRequests;n++)
 		loadOneMoreMesh();
 };
 
-o3djs.renderscene.RenderScene.prototype.render = function() 
+o3djs.renderscene.RenderScene.prototype.resize = function() 
 {
-  var newWidth  = this.client.width;
-  var newHeight = this.client.height;
+	var newWidth  = this.client.width;
+	var newHeight = this.client.height;
 
-  if (newWidth != this.o3dWidth || newHeight != this.o3dHeight) {
-	this.o3dWidth = newWidth;
-	this.o3dHeight = newHeight;
+	if (newWidth != this.o3dWidth || newHeight != this.o3dHeight)
+	{
+		this.o3dWidth = newWidth;
+		this.o3dHeight = newHeight;
 
-	// Set the perspective projection matrix
-	this.viewInfo.drawContext.projection = o3djs.math.matrix4.perspective(
-	  o3djs.math.degToRad(45), this.o3dWidth / this.o3dHeight, 0.1, 10000);
+		// Set the perspective projection matrix
+		this.viewInfo.drawContext.projection = o3djs.math.matrix4.perspective(
+		o3djs.math.degToRad(45), this.o3dWidth / this.o3dHeight, 0.1, 10000);
 
-	// Sets a new area size for arcball.
-	this.cameracontroller.setAreaSize(this.o3dWidth, this.o3dHeight);
+		this.cameracontroller.setAreaSize(this.o3dWidth, this.o3dHeight);
 
-	//o3djs.dump.dump("areaWidth: " + g_o3dWidth + "\n");
-	//o3djs.dump.dump("areaHeight: " + g_o3dHeight + "\n");
-  }
-  this.client.render();
+		//o3djs.dump.dump("areaWidth: " + g_o3dWidth + "\n");
+		//o3djs.dump.dump("areaHeight: " + g_o3dHeight + "\n");
+	}
+	this.client.render();
+}
+
+o3djs.renderscene.RenderScene.prototype.render = function()
+{
+	this.client.render();
 }
 
 function createDefaultMaterial(pack, viewInfo, color) {
@@ -308,7 +317,6 @@ function createFromFile(scene, file,color, opt_flip, opt_callback) {
 			return;
 		}
 	}
-
 }
 
 function createFromFile2(xmlhttp, scene, file,color, opt_flip) {

@@ -7,12 +7,65 @@
 VTK Mesh display
 </title>
 <script type="text/javascript" src="O3Djs.js"></script>
-<script type="text/javascript" src="O3Dvtk.js"></script>
-<script type="text/javascript" src="meshView.js"></script>
 <script type="text/javascript" id="myscript"> 
 
 window.onload = init;
 window.onunload = uninit;
+
+// global variables
+
+var g_scene;
+
+function resizeClient() {
+    g_scene.resize();
+    g_scene.render();
+    
+    function workaround_render()
+    {
+    	g_scene.render();
+    }
+    var t=setTimeout(workaround_render,500);
+}
+
+/**
+ * Creates the client area.
+ */
+function init() {
+  o3djs.webgl.makeClients(initStep2);
+}
+/**
+ * Initializes O3D, creates the object and sets up the transform and
+ * render graphs.
+ * @param {Array} clientElements Array of o3d object elements.
+ */
+function initStep2(clientElements) {
+
+	g_scene=o3djs.renderscene.createRenderScene(clientElements[0]);
+//	function setBoundingBox()
+//	{
+//		var primitives;
+//		var primitives=g_pack.getObjectsByClassName('Primitive');
+//		alert(primitives.length);
+//	};
+//	var t=setTimeout(setBoundingBox,5000);
+
+   	g_scene.render();
+	window.onresize = resizeClient;
+	g_scene.addMeshes("http://www.creatis.insa-lyon.fr/~valette/meshView/coeurThorax/coeurthorax.xml");
+//	g_scene.addMeshes("test/output_full.xml");
+//	createFromFile(g_scene,"data/heart.vtk",[1,1,1,0.6]);
+//	createFromFile(g_scene,"data/skull.vtk",[1,1,1,0.6]);
+//	createFromFile(g_scene,"coeurThorax/poumonDroit.vtk",[1,1,1,1]);
+}
+
+/**
+ * Removes any callbacks so they don't get called after the page has unloaded.
+ */
+function uninit() {
+  if (g_scene.client) {
+    g_scene.client.cleanup();
+  }
+}
 
 </script>
 </head>
