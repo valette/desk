@@ -42,7 +42,7 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	this.dragging = false;
 
 	function startDragging(e) {
-		dragging = true;
+		this.dragging = true;
 		var cameracontroller=scene.cameracontroller
 
 		if ((e.shiftKey)||(e.button==1))
@@ -57,7 +57,7 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	}
 
 	function drag(e) {
-		if (dragging) {
+		if (this.dragging) {
 			scene.cameracontroller.mouseMoved(e.x,e.y);
 			var matrix=scene.cameracontroller.calculateViewMatrix();
 			scene.client.root.localMatrix=matrix;
@@ -66,8 +66,7 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	}
 
 	function stopDragging(e) {
-		dragging = false;
-		scene.cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.NONE);
+		scene.stopDragging();
 	}
 
 	function scrollMe(e) {
@@ -87,6 +86,12 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	this.o3dHeight = -1;
 	this.resize();
 };
+
+o3djs.renderscene.RenderScene.prototype.stopDragging = function() 
+{
+	this.dragging = false;
+	this.cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.NONE);
+}
 
 o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile) 
 {
