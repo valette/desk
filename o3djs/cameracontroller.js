@@ -259,7 +259,8 @@ o3djs.cameracontroller.CameraController = function(centerPos,
    * @private
    * @type {o3djs.math.Matrix4}
    */
-  this.thisRot_=o3djs.math.matrix4.identity();
+//  this.thisRot_=o3djs.math.matrix4.identity();
+  this.thisRot_ = o3djs.math.matrix4.rotationX(-1.570);
 
 /**
    * The last rotation matrix

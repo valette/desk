@@ -122,21 +122,8 @@ o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile)
 		scene.render();
 	}
 
-	function loadOneMoreMesh()
+	for (var n=0;n<numberOfMeshes;n++)
 	{
-		if (meshIndex==numberOfMeshes+numberOfParallelRequests-1)
-		{
-			meshIndex++;
-			var t=setTimeout(render,500);
-			scene.client.render();
-			return;
-		}
-		if (meshIndex>=numberOfMeshes)
-		{
-			meshIndex++;
-			return;
-		}
-
 		var flip=0;
 		var mesh=meshes[meshIndex];
 		var file=mesh.getAttribute("Mesh");
@@ -152,21 +139,14 @@ o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile)
 				color[j]=parseFloat(colors[j]);
 		}
 
-		if ((meshIndex==Math.floor(numberOfMeshes/4))||(meshIndex==Math.floor(numberOfMeshes/2))
-		||(meshIndex==Math.floor(numberOfMeshes*3/4)))
+		if ((n==Math.floor(numberOfMeshes/4))||(n==Math.floor(numberOfMeshes/2))
+		||(n==Math.floor(numberOfMeshes*3/4))||(n==numberOfMeshes-1))
 				render();
-		meshIndex++
 		if (Label!="0")
-		{
-			createFromFile(scene, path+"/"+file,color,flip,loadOneMoreMesh);
-		}
-		else
-			loadOneMoreMesh();
+			createFromFile(scene, path+"/"+file,color,flip);
 	}
 
 	var numberOfParallelRequests=2;
-	for (var n=0;n<numberOfParallelRequests;n++)
-		loadOneMoreMesh();
 };
 
 o3djs.renderscene.RenderScene.prototype.resize = function() 
