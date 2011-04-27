@@ -119,13 +119,17 @@ o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile)
 
 	function render()
 	{
-		scene.render();
+	   function workaround_render()
+	    {
+	    	scene.render();
+	    }
+	    var t=setTimeout(workaround_render,500);
 	}
 
 	for (var n=0;n<numberOfMeshes;n++)
 	{
 		var flip=0;
-		var mesh=meshes[meshIndex];
+		var mesh=meshes[n];
 		var file=mesh.getAttribute("Mesh");
 		var Label=mesh.getAttribute("Label");
 		var color=[1.0,1.0,1.0,1.0];
@@ -139,11 +143,14 @@ o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile)
 				color[j]=parseFloat(colors[j]);
 		}
 
-		if ((n==Math.floor(numberOfMeshes/4))||(n==Math.floor(numberOfMeshes/2))
-		||(n==Math.floor(numberOfMeshes*3/4))||(n==numberOfMeshes-1))
-				render();
 		if (Label!="0")
-			createFromFile(scene, path+"/"+file,color,flip);
+		{
+			if ((n==Math.floor(numberOfMeshes/4))||(n==Math.floor(numberOfMeshes/2))
+			||(n==Math.floor(numberOfMeshes*3/4))||(n==numberOfMeshes-1))
+				createFromFile(scene, path+"/"+file,color,flip, render);
+			else
+				createFromFile(scene, path+"/"+file,color,flip);
+		}
 	}
 
 	var numberOfParallelRequests=2;
