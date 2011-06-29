@@ -19,11 +19,8 @@
  */
 qx.Class.define("desk.Application",
 {
- // extend : qx.application.Standalone,
-  extend : qx.application.Inline,
-
-
-
+  extend : qx.application.Standalone,
+  //extend : qx.application.Inline,
 
   /*
   *****************************************************************************
@@ -73,11 +70,7 @@ qx.Class.define("desk.Application",
 
 	function getNodeURL(node)
 	{
-		return (node.getParent().getUserData("parent_directory")+
-			"\/"+
-			node.getParent().getLabel()+
-			"\/"+
-			node.getLabel());
+		return ("http://vip.creatis.insa-lyon.fr:8080/visu/"+getNodePath(node));
 	}
 
 	function getNodePath(node)
@@ -99,8 +92,7 @@ qx.Class.define("desk.Application",
 	}
 
 	function fileClicked(node) {
-		var file="empty"; //getNodeURL(node);
-		alert (file);	
+		var file=getNodeURL(node);
 		var extension=file.substring(file.length-4, file.length);
 		if ((extension==".vtk")||(extension==".xml"))
 			displayMesh(file);
@@ -113,7 +105,7 @@ qx.Class.define("desk.Application",
 
 		var layout = new qx.ui.layout.VBox();
 		win.setLayout(layout);
-		win.setAllowClose(false);
+		win.setAllowClose(true);
 		win.setAllowMinimize(false);
 		win.setResizable(true,true,true,true);
 		win.setContentPadding(0);
@@ -178,7 +170,7 @@ qx.Class.define("desk.Application",
 			        		            expandDirectoryListing(this);
        							     },root);
 
-	displayMesh("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/ADAM/adam.xml");
+//	displayMesh("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/ADAM/adam.xml");
     }
   }
 });
