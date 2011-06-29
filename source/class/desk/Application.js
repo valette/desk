@@ -65,9 +65,10 @@ qx.Class.define("desk.Application",
 
       var tree = new qx.ui.tree.Tree().set({width : 400, height : 400 });
 
-      var root = new qx.ui.tree.TreeFolder("root");
+      var root = new qx.ui.tree.TreeFolder("data");
       root.setOpen(true);
       tree.setRoot(root);
+      root.setUserData("parent_directory","");
       win.add(tree);
 
 	function getNodeURL(node)
@@ -79,8 +80,26 @@ qx.Class.define("desk.Application",
 			node.getLabel());
 	}
 
+	function getNodePath(node)
+	{
+		if (node.getLabel()=="data")
+			return ("data");
+		else
+		{
+			var parent=node.getParent().getUserData("parent_directory");
+			if (parent=="")
+				return (node.getParent().getLabel()+"\/"+node.getLabel());
+			else			
+				return (node.getParent().getUserData("parent_directory")+
+					"\/"+
+					node.getParent().getLabel()+
+					"\/"+
+					node.getLabel());
+		}
+	}
+
 	function fileClicked(node) {
-		var file=getNodeURL(node);
+		var file="empty"; //getNodeURL(node);
 		alert (file);	
 		var extension=file.substring(file.length-4, file.length);
 		if ((extension==".vtk")||(extension==".xml"))
@@ -112,7 +131,7 @@ qx.Class.define("desk.Application",
 		doc.add(win);
 		}
 
-	function expandDirectoryListing(directory, node) {
+	function expandDirectoryListing(node) {
 	node.removeAll();
 	 var ajax = new XMLHttpRequest();
 		ajax.onreadystatechange = function()
@@ -137,16 +156,12 @@ qx.Class.define("desk.Application",
 								{
 									var directorynode=new qx.ui.tree.TreeFolder(splitfile[0]);
 									node.add(directorynode);
-									directorynode.setUserData("parent_directory", directory)
-									directorynode.addListener("click", function(event){
-							//		alert(this.getUserData("parent_directory")+"\/"+this.getLabel());
-			        		            expandDirectoryListing(this.getUserData("parent_directory")+"\/"+this.getLabel(),this);
-       							     },directorynode);
+									directorynode.setUserData("parent_directory", getNodePath(node));
+									directorynode.addListener("click", function(event){expandDirectoryListing(this);},
+											directorynode);
 								}
-
 							}
 						}
-						
 				}
 				else if (this.readyState == 4 && this.status != 200)
 				{
@@ -155,12 +170,12 @@ qx.Class.define("desk.Application",
 				}
 		};
 		ajax.open("POST", "/visu/listdir.php", false);
-		ajax.send(directory);
+		ajax.send(getNodePath(node));
 	 }
 
-     expandDirectoryListing("data",root);
+     expandDirectoryListing(root);
      root.addListener("click", function(event){
-			        		            expandDirectoryListing("data",this);
+			        		            expandDirectoryListing(this);
        							     },root);
 
 	displayMesh("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/ADAM/adam.xml");
