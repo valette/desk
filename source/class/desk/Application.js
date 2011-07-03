@@ -171,6 +171,9 @@ qx.Class.define("desk.Application",
        							     },root);
 
 //	displayMesh("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/ADAM/adam.xml");
+	var meshView=new desk.meshView();
+	meshView.open();
+	doc.add(meshView);
     }
   }
 });
