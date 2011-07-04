@@ -95,33 +95,11 @@ qx.Class.define("desk.Application",
 		var file=getNodeURL(node);
 		var extension=file.substring(file.length-4, file.length);
 		if ((extension==".vtk")||(extension==".xml"))
-			displayMesh(file);
-	}
-
-	function displayMesh(file) {
-	//	var doc=this.getRoot();
-
-		var win = new qx.ui.window.Window(file);
-
-		var layout = new qx.ui.layout.VBox();
-		win.setLayout(layout);
-		win.setAllowClose(true);
-		win.setAllowMinimize(false);
-		win.setResizable(true,true,true,true);
-		win.setContentPadding(0);
-		win.open();
-
-		var iframe = new qx.ui.embed.Iframe().set({
-			width: 400,
-			height: 300,
-			minWidth: 200,
-			minHeight: 150,
-			source: "http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?"+file,
-			decorator : null
-			});
-		win.add(iframe, {flex: 1});
-		doc.add(win);
+		{
+			var meshView=new desk.meshView(file);
+			doc.add(meshView);
 		}
+	}
 
 	function expandDirectoryListing(node) {
 	node.removeAll();
@@ -171,9 +149,6 @@ qx.Class.define("desk.Application",
        							     },root);
 
 //	displayMesh("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/ADAM/adam.xml");
-	var meshView=new desk.meshView("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/ADAM/adam.xml");
-//	meshView.open();
-	doc.add(meshView);
     }
   }
 });

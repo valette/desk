@@ -6,39 +6,29 @@ qx.Class.define("desk.meshView",
 	{
 		this.base(arguments);
 
-		var win = new qx.ui.window.Window(file);
-
 		var layout = new qx.ui.layout.VBox();
-		win.setLayout(layout);
-		win.setAllowClose(true);
-		win.setAllowMinimize(false);
-		win.setResizable(true,true,true,true);
-		win.setContentPadding(0);
-		win.open();
+		this.setLayout(layout);
+		this.setAllowClose(true);
+		this.setAllowMinimize(false);
+		this.setResizable(true,true,true,true);
+		this.setContentPadding(2);
+		this.open();
 
-		var iframe = new qx.ui.embed.Iframe().set({
+		this.__iframe = new qx.ui.embed.Iframe().set({
 			width: 400,
-			height: 300,
-			minWidth: 200,
-			minHeight: 150,
-			source: "http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?"+file,
-			decorator : null
+			height: 400,
+			decorator:null,
+			source: "http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?"+file
 			});
-		win.add(iframe, {flex: 1});
+		this.add(this.__iframe,{flex: 1});
+		this.addListener("mouseout", function(event) {this.__iframe.getWindow().g_scene.stopDragging();},this);
 	},
 
-  	members : {
-    __list : null,
-    __textarea : null,
+	members : {
+		__iframe : null,
 
-    
-    getList : function() {
-      return this.__list;
-    },
-    
-    
-    clearPostMessage : function() {
-      this.__textarea.setValue(null);
-    }
-  }
+		getScene : function() {
+			return this.__iframe.getWindow().g_scene;
+		}
+	}
 });
