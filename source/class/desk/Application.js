@@ -56,7 +56,7 @@ qx.Class.define("desk.Application",
 				if ((extension==".vtk")||(extension==".xml"))
 				{
 				var meshView=new desk.meshView(file);
-				//this.getRoot().add(meshView);
+				qx.core.Init.getApplication().add(meshView);
 				}
 			}
 
