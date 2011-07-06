@@ -1,0 +1,108 @@
+qx.Class.define("desk.fileBrowser", 
+{
+  extend : qx.ui.window.Window,
+
+	construct : function()
+	{
+		this.base(arguments);
+
+		this.setLayout(new qx.ui.layout.VBox());
+		this.setShowClose(false);
+		this.setShowMinimize(false);
+		this.setCaption("files");
+		this.open();
+
+		var tree = new qx.ui.tree.Tree().set({width : 400, height : 400 });
+		tree.setUserData("fileBrowser", this);
+
+		var root = new qx.ui.tree.TreeFolder("data");
+		root.setOpen(true);
+		tree.setRoot(root);
+		root.setUserData("parent_directory","");
+		this.add(tree);
+
+		function expandDirectoryListing(node) {
+			var fileBrowser=node.getTree().getUserData("fileBrowser");
+			node.removeAll();
+			var ajax = new XMLHttpRequest();
+			ajax.onreadystatechange = function()
+			{
+				if(this.readyState == 4 && this.status == 200)
+				{
+					//	alert("ajax.responseText : " + ajax.responseText);
+					var files=ajax.responseText.split("\n");
+					//	alert (files.length+" files");
+					for (var i=0;i<files.length;i++)
+					{
+						var splitfile=files[i].split(" ");
+						if (splitfile[0]!="")
+						{
+							if (splitfile[1]=="file")
+							{
+								var filenode=new qx.ui.tree.TreeFile(splitfile[0]);
+								node.add(filenode);
+								filenode.addListener("click", function(event){
+									if (fileBrowser.__fileHandler!=null)
+										fileBrowser.__fileHandler(fileBrowser.getNodeURL(this));},filenode);
+							}
+							else
+							{
+								var directorynode=new qx.ui.tree.TreeFolder(splitfile[0]);
+								node.add(directorynode);
+								directorynode.setUserData("parent_directory", fileBrowser.getNodePath(node));
+								directorynode.addListener("click", function(event){
+									expandDirectoryListing(this);},
+								directorynode);
+							}
+						}
+					}
+				}
+				else if (this.readyState == 4 && this.status != 200)
+				{
+					// fetched the wrong page or network error...
+					alert('"Fetched the wrong page" OR "Network error"');
+				}
+			};
+			ajax.open("POST", "/visu/listdir.php", false);
+			ajax.send(fileBrowser.getNodePath(node));
+		}
+
+		expandDirectoryListing(root);
+		root.addListener("click", function(event){
+			expandDirectoryListing(this);
+			},root);
+		return (this);
+	},
+
+	members : {
+		__fileHandler : null,
+
+		setFileHandler : function (callback) {
+			this.__fileHandler=callback;
+		},
+
+		getNodeURL : function (node)
+		{
+			var fileBrowser=node.getTree().getUserData("fileBrowser");
+			return ("http://vip.creatis.insa-lyon.fr:8080/visu/"+fileBrowser.getNodePath(node));
+		},
+
+		getNodePath : function (node)
+		{
+			if (node.getLabel()=="data")
+				return ("data");
+			else
+			{
+				var parent=node.getParent().getUserData("parent_directory");
+				if (parent=="")
+					return (node.getParent().getLabel()+"\/"+node.getLabel());
+				else			
+					return (node.getParent().getUserData("parent_directory")+
+					"\/"+
+					node.getParent().getLabel()+
+					"\/"+
+					node.getLabel());
+			}
+		}
+	}
+});
