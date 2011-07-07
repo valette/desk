@@ -12,8 +12,6 @@ qx.Class.define("desk.imageView",
 		this.setResizable(true,true,true,true);
 		this.setUseResizeFrame(true);
 		this.setUseMoveFrame(true);
-		this.setWidth(400);
-		this.setHeight(400);
 		this.setCaption(file);
 
 		if (timestamp!=null)
@@ -23,10 +21,6 @@ qx.Class.define("desk.imageView",
 
 		this.__image.setScale(true);
 		this.add(this.__image,{flex : 1});
-
-//		var html1 = "<img src=\""+file+"\"><\/img>"
-//		var embed1 = new qx.ui.embed.Html(html1);
-//		this.add(embed1,{flex:1});
 
 		this.open();
 		return (this);

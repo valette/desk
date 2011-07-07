@@ -59,6 +59,8 @@ qx.Class.define("desk.Application",
 				{
 					var meshView=new desk.meshView(file);
 					qx.core.Init.getApplication().getRoot().add(meshView);
+					var volView=new desk.volView(file);
+					qx.core.Init.getApplication().getRoot().add(volView);
 				}
 				if ((extension==".png")||(extension==".jpg")||(extension==".bmp"))
 				{
