@@ -34,6 +34,7 @@ qx.Class.define("desk.fileBrowser",
 					var files=ajax.responseText.split("\n");
 					var filesArray=new Array();
 					var directoriesArray=new Array();
+					var modificationTimes=new Array();
 					for (var i=0;i<files.length;i++)
 					{
 						var splitfile=files[i].split(" ");
@@ -44,6 +45,7 @@ qx.Class.define("desk.fileBrowser",
 								filesArray.push(fileName);
 							else
 								directoriesArray.push(fileName);
+							modificationTimes[fileName]=parseInt(splitfile[2]);
 						}
 					}
 					directoriesArray.sort();
@@ -54,18 +56,21 @@ qx.Class.define("desk.fileBrowser",
 						var directorynode=new qx.ui.tree.TreeFolder(directoriesArray[i]);
 						node.add(directorynode);
 						directorynode.setUserData("parent_directory", fileBrowser.getNodePath(node));
+						directorynode.setUserData("modificationTime", modificationTimes[directoriesArray[i]]);
 						directorynode.addListener("click", function(event){
-							expandDirectoryListing(this);},
+							expandDirectoryListing(this);
+							this.setOpen(true);},
 							directorynode);
 					}
 
 					for (var i=0;i<filesArray.length;i++)
 					{
 						var filenode=new qx.ui.tree.TreeFile(filesArray[i]);
+						filenode.setUserData("modificationTime", modificationTimes[filesArray[i]]);
 						node.add(filenode);
 						filenode.addListener("click", function(event){
 							if (fileBrowser.__fileHandler!=null)
-							fileBrowser.__fileHandler(fileBrowser.getNodeURL(this));},filenode);
+							fileBrowser.__fileHandler(this);},filenode);
 					}
 				}
 				else if (this.readyState == 4 && this.status != 200)
@@ -94,10 +99,14 @@ qx.Class.define("desk.fileBrowser",
 			this.__fileHandler=callback;
 		},
 
+		getNodeMTime : function (node)
+		{
+			return (node.getUserData("modificationTime"));
+		},
+
 		getNodeURL : function (node)
 		{
-			var fileBrowser=node.getTree().getUserData("fileBrowser");
-			return (this.__baseURL+fileBrowser.getNodePath(node));
+			return (this.__baseURL+this.getNodePath(node));
 		},
 
 		getNodePath : function (node)

@@ -51,12 +51,19 @@ qx.Class.define("desk.Application",
 				qx.log.appender.Console;
 			}
 
-			function fileClicked(file) {
+			function fileClicked(node) {
+				var modificationTime=myBrowser.getNodeMTime(node);
+				var file=myBrowser.getNodeURL(node);
 				var extension=file.substring(file.length-4, file.length);
 				if ((extension==".vtk")||(extension==".xml"))
 				{
 					var meshView=new desk.meshView(file);
 					qx.core.Init.getApplication().getRoot().add(meshView);
+				}
+				if ((extension==".png")||(extension==".jpg")||(extension==".bmp"))
+				{
+					var imageView=new desk.imageView(file,modificationTime);
+					qx.core.Init.getApplication().getRoot().add(imageView);
 				}
 			}
 
