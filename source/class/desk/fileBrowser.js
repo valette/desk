@@ -9,17 +9,18 @@ qx.Class.define("desk.fileBrowser",
 		this.setLayout(new qx.ui.layout.VBox());
 		this.setShowClose(false);
 		this.setShowMinimize(false);
+		this.setUseMoveFrame(true);
 		this.setCaption("files");
 		this.open();
 
-		var tree = new qx.ui.tree.Tree().set({width : 400, height : 400 });
+		var tree = new qx.ui.tree.Tree().set({width : 300, height : 400 });
 		tree.setUserData("fileBrowser", this);
 
 		var root = new qx.ui.tree.TreeFolder(this.__baseDir);
 		root.setOpen(true);
 		tree.setRoot(root);
 		root.setUserData("parent_directory","");
-		this.add(tree);
+		this.add(tree,{flex: 1});
 
 		function expandDirectoryListing(node) {
 			var fileBrowser=node.getTree().getUserData("fileBrowser");
