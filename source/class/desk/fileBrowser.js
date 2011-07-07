@@ -31,7 +31,7 @@ qx.Class.define("desk.fileBrowser",
 				{
 					//	alert("ajax.responseText : " + ajax.responseText);
 					var files=ajax.responseText.split("\n");
-	/*				var filesArray=new Array();
+					var filesArray=new Array();
 					var directoriesArray=new Array();
 					for (var i=0;i<files.length;i++)
 					{
@@ -44,32 +44,27 @@ qx.Class.define("desk.fileBrowser",
 							else
 								directoriesArray.push(fileName);
 						}
-					}*/
+					}
+					directoriesArray.sort();
+					filesArray.sort();
 
-					//	alert (files.length+" files");
-					for (var i=0;i<files.length;i++)
+					for (var i=0;i<directoriesArray.length;i++)
 					{
-						var splitfile=files[i].split(" ");
-						if (splitfile[0]!="")
-						{
-							if (splitfile[1]=="file")
-							{
-								var filenode=new qx.ui.tree.TreeFile(splitfile[0]);
-								node.add(filenode);
-								filenode.addListener("click", function(event){
-									if (fileBrowser.__fileHandler!=null)
-										fileBrowser.__fileHandler(fileBrowser.getNodeURL(this));},filenode);
-							}
-							else
-							{
-								var directorynode=new qx.ui.tree.TreeFolder(splitfile[0]);
-								node.add(directorynode);
-								directorynode.setUserData("parent_directory", fileBrowser.getNodePath(node));
-								directorynode.addListener("click", function(event){
-									expandDirectoryListing(this);},
-								directorynode);
-							}
-						}
+						var directorynode=new qx.ui.tree.TreeFolder(directoriesArray[i]);
+						node.add(directorynode);
+						directorynode.setUserData("parent_directory", fileBrowser.getNodePath(node));
+						directorynode.addListener("click", function(event){
+							expandDirectoryListing(this);},
+							directorynode);
+					}
+
+					for (var i=0;i<filesArray.length;i++)
+					{
+						var filenode=new qx.ui.tree.TreeFile(filesArray[i]);
+						node.add(filenode);
+						filenode.addListener("click", function(event){
+							if (fileBrowser.__fileHandler!=null)
+							fileBrowser.__fileHandler(fileBrowser.getNodeURL(this));},filenode);
 					}
 				}
 				else if (this.readyState == 4 && this.status != 200)
