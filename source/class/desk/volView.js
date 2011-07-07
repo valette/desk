@@ -2,7 +2,7 @@ qx.Class.define("desk.volView",
 {
   extend : qx.ui.window.Window,
 
-	construct : function(file)
+	construct : function(file,alreadyloaded)
 	{
 		this.base(arguments);
 
@@ -14,10 +14,16 @@ qx.Class.define("desk.volView",
 		this.setUseMoveFrame(true);
 		this.setCaption(file);
 
-		var xmlhttp=new XMLHttpRequest();
-		xmlhttp.open("GET",file+"?nocache=" + Math.random(),false);
-		xmlhttp.send();
-		var xmlDoc=xmlhttp.responseXML;
+		var xmlDoc;
+		if (alreadyloaded==true)
+			xmlDoc=file;
+		else
+		{
+			var xmlhttp=new XMLHttpRequest();
+			xmlhttp.open("GET",file+"?nocache=" + Math.random(),false);
+			xmlhttp.send();
+			xmlDoc=xmlhttp.responseXML;
+		}
 
 		var volume=xmlDoc.getElementsByTagName("volume")[0];
 		if (volume==null)
