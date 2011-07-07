@@ -55,15 +55,14 @@ qx.Class.define("desk.Application",
 				var extension=file.substring(file.length-4, file.length);
 				if ((extension==".vtk")||(extension==".xml"))
 				{
-				var meshView=new desk.meshView(file);
-				qx.core.Init.getApplication().add(meshView);
+					var meshView=new desk.meshView(file);
+					qx.core.Init.getApplication().getRoot().add(meshView);
 				}
 			}
 
 			var myBrowser=new desk.fileBrowser();
 			myBrowser.setFileHandler(fileClicked);
 			this.getRoot().add(myBrowser);
-
 		}
 	}
 });

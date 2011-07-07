@@ -15,7 +15,7 @@ qx.Class.define("desk.fileBrowser",
 		var tree = new qx.ui.tree.Tree().set({width : 400, height : 400 });
 		tree.setUserData("fileBrowser", this);
 
-		var root = new qx.ui.tree.TreeFolder("data");
+		var root = new qx.ui.tree.TreeFolder(this.__baseDir);
 		root.setOpen(true);
 		tree.setRoot(root);
 		root.setUserData("parent_directory","");
@@ -31,6 +31,21 @@ qx.Class.define("desk.fileBrowser",
 				{
 					//	alert("ajax.responseText : " + ajax.responseText);
 					var files=ajax.responseText.split("\n");
+	/*				var filesArray=new Array();
+					var directoriesArray=new Array();
+					for (var i=0;i<files.length;i++)
+					{
+						var splitfile=files[i].split(" ");
+						var fileName=splitfile[0];
+						if (fileName!="")
+						{
+							if (splitfile[1]=="file")
+								filesArray.push(fileName);
+							else
+								directoriesArray.push(fileName);
+						}
+					}*/
+
 					//	alert (files.length+" files");
 					for (var i=0;i<files.length;i++)
 					{
@@ -76,6 +91,8 @@ qx.Class.define("desk.fileBrowser",
 
 	members : {
 		__fileHandler : null,
+		__baseURL : "http://vip.creatis.insa-lyon.fr:8080/visu/",
+		__baseDir : "data",
 
 		setFileHandler : function (callback) {
 			this.__fileHandler=callback;
@@ -84,13 +101,13 @@ qx.Class.define("desk.fileBrowser",
 		getNodeURL : function (node)
 		{
 			var fileBrowser=node.getTree().getUserData("fileBrowser");
-			return ("http://vip.creatis.insa-lyon.fr:8080/visu/"+fileBrowser.getNodePath(node));
+			return (this.__baseURL+fileBrowser.getNodePath(node));
 		},
 
 		getNodePath : function (node)
 		{
-			if (node.getLabel()=="data")
-				return ("data");
+			if (node.getLabel()==this.__baseDir)
+				return (this.__baseDir);
 			else
 			{
 				var parent=node.getParent().getUserData("parent_directory");
