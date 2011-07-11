@@ -71,6 +71,7 @@ qx.Class.define("desk.fileBrowser",
 						filenode.addListener("click", function(event){
 							if (fileBrowser.__fileHandler!=null)
 							fileBrowser.__fileHandler(this);},filenode);
+						filenode.setContextMenu(fileBrowser.getContextMenu(filenode));
 					}
 				}
 				else if (this.readyState == 4 && this.status != 200)
@@ -125,6 +126,27 @@ qx.Class.define("desk.fileBrowser",
 					"\/"+
 					node.getLabel());
 			}
+		},
+
+		extractMeshes : function () {
+			var file=this.getLabel();
+			var extension=file.substring(file.length-4, file.length);
+			if (extension!=".mhd")
+				alert ("Error ! extension "+extension+" not supported!");
+			else
+			{
+				var meshView=new desk.meshView(this);
+				qx.core.Init.getApplication().getRoot().add(meshView);
+			}
+		},
+
+		getContextMenu : function(node)
+		{
+			var menu = new qx.ui.menu.Menu;
+			var meshButton = new qx.ui.menu.Button("Extract surfaces");
+			meshButton.addListener("execute", this.extractMeshes, node);
+			menu.add(meshButton);
+			return menu;
 		}
 	}
 });

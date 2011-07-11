@@ -6,7 +6,7 @@ qx.Class.define("desk.volView",
 	{
 		this.base(arguments);
 
-		this.setLayout(new qx.ui.layout.HBox());
+		this.setLayout(new qx.ui.layout.HBox(5));
 		this.setShowClose(true);
 		this.setShowMinimize(false);
 		this.setResizable(true,true,true,true);
