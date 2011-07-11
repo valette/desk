@@ -55,18 +55,46 @@ qx.Class.define("desk.Application",
 				var modificationTime=myBrowser.getNodeMTime(node);
 				var file=myBrowser.getNodeURL(node);
 				var extension=file.substring(file.length-4, file.length);
-				if ((extension==".vtk")||(extension==".xml"))
+				if (extension==".vtk")
 				{
 					var meshView=new desk.meshView(file);
 					qx.core.Init.getApplication().getRoot().add(meshView);
-					var volView=new desk.volView(file);
-					qx.core.Init.getApplication().getRoot().add(volView);
 				}
-				if ((extension==".png")||(extension==".jpg")||(extension==".bmp"))
+				else if ((extension==".png")||(extension==".jpg")||(extension==".bmp"))
 				{
 					var imageView=new desk.imageView(file,modificationTime);
 					qx.core.Init.getApplication().getRoot().add(imageView);
 				}
+				else if (extension==".xml")
+				{
+					var xmlhttp=new XMLHttpRequest();
+					xmlhttp.open("GET",file+"?nocache=" + myBrowser.getNodeMTime(node),false);
+					xmlhttp.send();
+					var xmlDoc=xmlhttp.responseXML;
+					
+					if (xmlDoc.getElementsByTagName("mesh").length!=0)
+					{
+						var meshView=new desk.meshView(file);
+						qx.core.Init.getApplication().getRoot().add(meshView);
+					}
+					else if (xmlDoc.getElementsByTagName("volume").length!=0)
+					{
+						var volView=new desk.volView(file);
+						qx.core.Init.getApplication().getRoot().add(volView);
+					}
+					else
+						alert ("xml file of unknown type!");
+				}
+				else if (extension==".mhd")
+				{
+					var volView=new desk.volView(node);
+					qx.core.Init.getApplication().getRoot().add(volView);
+//					var meshView=new desk.meshView(node);
+//					qx.core.Init.getApplication().getRoot().add(meshView);
+				}
+				else
+					alert("extension "+extension+" not supported!");
+				
 			}
 
 			var myBrowser=new desk.fileBrowser();

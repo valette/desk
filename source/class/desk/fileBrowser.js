@@ -54,13 +54,13 @@ qx.Class.define("desk.fileBrowser",
 					for (var i=0;i<directoriesArray.length;i++)
 					{
 						var directorynode=new qx.ui.tree.TreeFolder(directoriesArray[i]);
-						node.add(directorynode);
 						directorynode.setUserData("parent_directory", fileBrowser.getNodePath(node));
 						directorynode.setUserData("modificationTime", modificationTimes[directoriesArray[i]]);
 						directorynode.addListener("click", function(event){
 							expandDirectoryListing(this);
 							this.setOpen(true);},
 							directorynode);
+						node.add(directorynode);
 					}
 
 					for (var i=0;i<filesArray.length;i++)
