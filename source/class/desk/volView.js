@@ -52,6 +52,10 @@ qx.Class.define("desk.volView",
 		return (this);		
 	},
 
+	statics : {
+		LINKEDWINDOW : null
+	},
+
 	members : {
 		__path : null,
 		__offset : null,
@@ -120,6 +124,17 @@ qx.Class.define("desk.volView",
 			this.add(this.__image);
 			this.updateImage();
 
+			this.addListener("keypress",
+				function(event) {if (event.getKeyIdentifier()=="S") 
+					desk.volView.LINKEDWINDOW=this;},this);
+			this.addListener("click",
+				function(event) {
+					if ((desk.volView.LINKEDWINDOW!=null)&&(desk.volView.LINKEDWINDOW!=this))
+					{
+						this.__slider.bind("value", desk.volView.LINKEDWINDOW.__slider, "value");
+						desk.volView.LINKEDWINDOW.__slider.bind("value", this.__slider, "value");
+						desk.volView.LINKEDWINDOW=null;
+					}},this);				
 		},
 
 		updateImage : function() {
