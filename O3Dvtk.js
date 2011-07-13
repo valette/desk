@@ -15,6 +15,9 @@ o3djs.renderscene.RenderScene = function(clientElement)
 
 	// Create a pack to manage the objects created.
 	this.pack = this.client.createPack();
+	this.meshesBoundingBox=new o3d.BoundingBox();
+	this.meshesBoundingBox.minExtent=[10000,10000,10000];
+	this.meshesBoundingBox.maxExtent=[-10000,-10000,-10000];
 
 	// Create the render graph for a view.
 	this.viewInfo = o3djs.rendergraph.createBasicView(
@@ -22,6 +25,9 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	  this.client.root,
 	  this.client.renderGraphRoot,
 	  [1, 1, 1, 1]); //background color
+	this.viewInfo.performanceState.getStateParam('CullMode').value = 
+              o3d.State.CULL_NONE;
+
 
 	// Create a new transform and parent the Shape under it.
 	this.transform = this.pack.createObject('Transform');
@@ -32,7 +38,7 @@ o3djs.renderscene.RenderScene = function(clientElement)
 		500,//backpedal,
 		100,//heightAngle,
 		100,//rotationAngle,
-		0.8//fieldOfViewAngle,
+		0.3//fieldOfViewAngle,
 		)//opt_onChange)
 
     this.client.renderMode = this.o3dElement.o3d.Client.RENDERMODE_ON_DEMAND;
@@ -73,6 +79,8 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	  if (e.deltaY) {
 		scene.cameracontroller.backpedal*=(e.deltaY < 0 ? 14 : 10)/12;
 		scene.client.root.localMatrix=scene.cameracontroller.calculateViewMatrix();
+		if (scene.cameracontroller.onChange!=null)
+			scene.cameracontroller.onChange();
 		scene.render();
 	  }
 	}
@@ -86,6 +94,33 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	this.o3dHeight = -1;
 	this.resize();
 };
+
+o3djs.renderscene.RenderScene.prototype.bind = function(scene) 
+{
+	var myScene=this;
+	var controller=scene.cameracontroller;
+	var myController=myScene.cameracontroller;
+	
+	function onChange ()
+	{
+		myController.thisRot_=controller.thisRot_;
+		myController.centerPos=controller.centerPos;
+		myController.backpedal=controller.backpedal;
+		myController.fieldOfViewAngle=controller.fieldOfViewAngle;
+		myScene.client.root.localMatrix=myScene.cameracontroller.calculateViewMatrix();
+		myScene.render();
+	}
+	scene.cameracontroller.onChange=onChange;
+}
+
+o3djs.renderscene.RenderScene.prototype.resetCamera = function() 
+{
+	this.cameracontroller.viewAll(g_scene.meshesBoundingBox,1);
+	this.cameracontroller.thisRot_=o3djs.math.matrix4.identity();
+	this.client.root.localMatrix=this.cameracontroller.calculateViewMatrix();
+	if (this.cameracontroller.onChange!=null)
+		this.cameracontroller.onChange();
+}
 
 o3djs.renderscene.RenderScene.prototype.stopDragging = function() 
 {
@@ -126,6 +161,17 @@ o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile)
 	    var t=setTimeout(workaround_render,500);
 	}
 
+	function adjustViewpointAndRender()
+	{
+	   function workaround_render()
+	    {
+		    scene.cameracontroller.viewAll(scene.meshesBoundingBox,1);
+    		scene.client.root.localMatrix=scene.cameracontroller.calculateViewMatrix();
+	    	render();
+	    }
+	    var t=setTimeout(workaround_render,500);
+	}
+
 	for (var n=0;n<numberOfMeshes;n++)
 	{
 		var flip=0;
@@ -147,19 +193,30 @@ o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile)
 		{
 			if ((n==Math.floor(numberOfMeshes/4))||(n==Math.floor(numberOfMeshes/2))
 			||(n==Math.floor(numberOfMeshes*3/4))||(n==numberOfMeshes-1))
-				createFromFile(scene, path+"/"+file,color,flip, render);
+				createFromFile(scene, path+"/"+file,color,flip, adjustViewpointAndRender);
 			else
 				createFromFile(scene, path+"/"+file,color,flip);
 		}
 	}
-
-	var numberOfParallelRequests=2;
 };
 
-o3djs.renderscene.RenderScene.prototype.resize = function() 
+o3djs.renderscene.RenderScene.prototype.resize = function(opt_width,opt_height) 
 {
-	var newWidth  = this.client.width;
-	var newHeight = this.client.height;
+
+	var newWidth;
+	var newHeight;
+	
+	if ((opt_width!=null)&&(opt_height!=null))
+	{
+		newWidth  = opt_width;
+		newHeight = opt_height;
+	}
+	else
+	{
+		newWidth  = this.client.width;
+		newHeight = this.client.height;
+	}
+	//alert("size= "+newWidth+" "+newHeight);
 
 	if (newWidth != this.o3dWidth || newHeight != this.o3dHeight)
 	{
@@ -201,7 +258,7 @@ function createDefaultMaterial(pack, viewInfo, color) {
 	return material;
 }
 
-function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip){
+function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingBox){
 	var reg2=new RegExp("[ \n]+", "gm");
 	var data=filestring.split(reg2);
 	
@@ -231,6 +288,8 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip){
 		{
 			index2=0;
 			positionStream.addElement(coord[0],coord[1],coord[2]);
+			boundingBox.addPoint(coord);
+
 			numberOfPoints--;
 			if (numberOfPoints==0)
 			{
@@ -332,7 +391,7 @@ function createFromFile2(xmlhttp, scene, file,color, opt_flip) {
 	{
 		case "vtk":
 			var readString=xmlhttp.responseText;
-			readVTKFile(readString,vertexInfo ,positionStream ,opt_flip);
+			readVTKFile(readString,vertexInfo ,positionStream ,opt_flip, scene.meshesBoundingBox);
 			break;
 		default:
 		alert (extension+" file format not supported yet!");

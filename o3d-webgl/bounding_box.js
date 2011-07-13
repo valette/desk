@@ -95,6 +95,23 @@ o3d.BoundingBox.fitBoxToPoints_ = function(points, opt_targetBox) {
   return target;
 };
 
+/**
+ * Computes the smallest bounding box containing all the points in the given
+ * list, and either modifies the optional box passed in to match, or returns
+ * that box as a new box.
+ * @param {!Array<numbers>} points A non-empty list of points.
+ *     returning a new box.
+ * @private
+ */
+o3d.BoundingBox.prototype.addPoint = function(point) {
+	for (var index = 0; index < 3; ++index) {
+		this.minExtent[index] = Math.min(this.minExtent[index], point[index]);
+		this.maxExtent[index] = Math.max(this.maxExtent[index], point[index]);
+	}
+	this.valid = true;
+};
+
+
 
 /**
  * True if this boundingbox has been initialized.

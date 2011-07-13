@@ -17,6 +17,11 @@ window.onunload = uninit;
 var g_scene;
 
 function resizeClient() {
+
+//	var frame = document.getElementById("o3d"); 
+//	var htmlheight = document.body.parentNode.scrollHeight; 
+//	frame.style.height = htmlheight + "px";
+
     g_scene.resize();
     g_scene.render();
     
@@ -24,7 +29,7 @@ function resizeClient() {
     {
     	g_scene.render();
     }
-    var t=setTimeout(workaround_render,500);
+ //   var t=setTimeout(workaround_render,500);
 }
 
 /**
@@ -40,6 +45,7 @@ function init() {
  */
 function initStep2(clientElements) {
 
+	canvaselement=clientElements[0];
 	g_scene=o3djs.renderscene.createRenderScene(clientElements[0]);
 //	function setBoundingBox()
 //	{
@@ -63,9 +69,10 @@ function initStep2(clientElements) {
 		{
 			function render()
 			{
-		   	g_scene.render();
+			    g_scene.resetCamera();
+			   	g_scene.render();
 			};
-			createFromFile(g_scene,input,[1,1,1,0.6],false,render);
+			createFromFile(g_scene,input,[1,1,1,1],false,render);
 		}
 		if (extension==".xml")
 			g_scene.addMeshes(input);
@@ -92,9 +99,48 @@ function uninit() {
   }
 }
 
+var canvaselement=0;
+
+function keyPressedEvent(e)
+{
+	keyPressed(e.which);
+}
+function keyPressed(code)
+{
+	var pressedKey=String.fromCharCode(code);
+//	alert (pressedKey);
+	if (pressedKey=='c')
+	{
+//		var myCanvas=document.getElementsByTagName('canvas')[0];
+//		alert(document.getElementsByTagName('canvas').length);
+//		//alert(myCanvas);
+        var context = canvaselement.getContext('2d');
+//        context.fillStyle = "rgb(200,0,0)";
+//	context.fillRect (10, 10, 55, 50);
+//	context.fillStyle = "rgba(0, 0, 200, 0.5)";
+//	context.fillRect (30, 30, 55, 50);
+
+
+		var strData = canvaselement.toDataURL("image/png");
+//		var strData = client.toDataURL("image/png");
+		var saveData=strData.replace("image/png", "image/octet-stream");
+		document.location.href = saveData;
+	}
+	if ((pressedKey=="r")||(pressedKey=="R"))
+	{
+		g_scene.resetCamera();
+//		alert("Reset Camera");
+		g_scene.render();
+	}
+	if ((pressedKey=="b")||(pressedKey=="B"))
+	{
+		alert ("Bounding Box :\n"+g_scene.meshesBoundingBox.minExtent+"\n"+g_scene.meshesBoundingBox.maxExtent);
+	}
+}
+
 </script>
 </head>
-<body>
+<body onkeypress="keyPressedEvent(event)">
 
 <!-- Start of O3D plugin -->
 <div id="o3d" style="width: 100%; height: 100%;"></div>

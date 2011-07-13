@@ -418,7 +418,7 @@ o3djs.cameracontroller.CameraController.prototype.mouseMoved = function(x, y) {
   if (this.dragMode_ ==
       o3djs.cameracontroller.DragMode.MOVE_CENTER_IN_VIEW_PLANE) {
     var matrix4 = o3djs.math.matrix4;
-    var factor=this.distancePerUnit*this.backpedal/50.0;
+    var factor=this.distancePerUnit*this.backpedal/700.0;
     var translationVector = [-deltaX * factor,
                               deltaY * factor, 0];
     var inverseViewMatrix = matrix4.inverse(this.calculateViewMatrix());
