@@ -52,6 +52,10 @@ qx.Class.define("desk.meshView",
 		return (this);
 	},
 
+	statics : {
+		LINKEDWINDOW : null
+	},
+
 	members : {
 		__iframe : null,
 
@@ -72,7 +76,24 @@ qx.Class.define("desk.meshView",
 				function(event) {this.__iframe.getWindow().g_scene.stopDragging();},this);
 			this.addListener("keypress", 
 				function(event) {this.__iframe.getWindow().keyPressed(event.getKeyCode());},this);
-
+			this.addListener("keypress",
+				function(event) { if (event.getKeyIdentifier()=="S")
+				{
+					desk.meshView.LINKEDWINDOW=this;
+				//	alert ("S pressed"+desk.meshView.LINKEDWINDOW);
+					}
+					},this);
+			this.addListener("click",
+				function(event) {
+				var window=desk.meshView.LINKEDWINDOW;
+					if ((window!=null)&&(window!=this))
+					{
+				//		alert ("Windows linked!");
+						this.__iframe.getWindow().g_scene.bind(window.__iframe.getWindow().g_scene);
+						window.__iframe.getWindow().g_scene.bind(this.__iframe.getWindow().g_scene);
+						this.__iframe.getWindow().g_scene.cameracontroller.onChange();
+						desk.meshView.LINKEDWINDOW=null;
+					}},this);
 			},
 
 		getScene : function() {

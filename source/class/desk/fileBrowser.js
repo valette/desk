@@ -21,7 +21,24 @@ qx.Class.define("desk.fileBrowser",
 		tree.setRoot(root);
 		root.setUserData("parent_directory","");
 		this.add(tree,{flex: 1});
+///////////////////////////
+		var form, upload;
 
+		form = new desk.UploadForm("upload", "http://vip.creatis.insa-lyon.fr:8080/visu/upload/uploadtest.pl");
+		form.setLayout(new qx.ui.layout.HBox());
+		form.addListener("completed", function(e) 
+		{ 
+		  alert("complete");
+		});
+
+		upload = new desk.UploadButton("file", "Upload");
+		upload.addListener("changeFileName", function(e)
+		{
+		  if (e.getData() != "") form.send();
+		});
+		form.add(upload);
+		this.add(form);
+//////////////////////////
 		function expandDirectoryListing(node) {
 			var fileBrowser=node.getTree().getUserData("fileBrowser");
 			node.removeAll();
