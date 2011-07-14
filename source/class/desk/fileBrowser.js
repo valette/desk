@@ -39,71 +39,10 @@ qx.Class.define("desk.fileBrowser",
 		form.add(upload);
 		this.add(form);
 //////////////////////////
-		function expandDirectoryListing(node) {
-			var fileBrowser=node.getTree().getUserData("fileBrowser");
-			node.removeAll();
-			var ajax = new XMLHttpRequest();
-			ajax.onreadystatechange = function()
-			{
-				if(this.readyState == 4 && this.status == 200)
-				{
-					//	alert("ajax.responseText : " + ajax.responseText);
-					var files=ajax.responseText.split("\n");
-					var filesArray=new Array();
-					var directoriesArray=new Array();
-					var modificationTimes=new Array();
-					for (var i=0;i<files.length;i++)
-					{
-						var splitfile=files[i].split(" ");
-						var fileName=splitfile[0];
-						if (fileName!="")
-						{
-							if (splitfile[1]=="file")
-								filesArray.push(fileName);
-							else
-								directoriesArray.push(fileName);
-							modificationTimes[fileName]=parseInt(splitfile[2]);
-						}
-					}
-					directoriesArray.sort();
-					filesArray.sort();
 
-					for (var i=0;i<directoriesArray.length;i++)
-					{
-						var directorynode=new qx.ui.tree.TreeFolder(directoriesArray[i]);
-						directorynode.setUserData("parent_directory", fileBrowser.getNodePath(node));
-						directorynode.setUserData("modificationTime", modificationTimes[directoriesArray[i]]);
-						directorynode.addListener("click", function(event){
-							expandDirectoryListing(this);
-							this.setOpen(true);},
-							directorynode);
-						node.add(directorynode);
-					}
-
-					for (var i=0;i<filesArray.length;i++)
-					{
-						var filenode=new qx.ui.tree.TreeFile(filesArray[i]);
-						filenode.setUserData("modificationTime", modificationTimes[filesArray[i]]);
-						node.add(filenode);
-						filenode.addListener("click", function(event){
-							if (fileBrowser.__fileHandler!=null)
-							fileBrowser.__fileHandler(this);},filenode);
-						filenode.setContextMenu(fileBrowser.getContextMenu(filenode));
-					}
-				}
-				else if (this.readyState == 4 && this.status != 200)
-				{
-					// fetched the wrong page or network error...
-					alert('"Fetched the wrong page" OR "Network error"');
-				}
-			};
-			ajax.open("POST", "/visu/listdir.php", false);
-			ajax.send(fileBrowser.getNodePath(node));
-		}
-
-		expandDirectoryListing(root);
+		this.expandDirectoryListing(root);
 		root.addListener("click", function(event){
-			expandDirectoryListing(this);
+			this.expandDirectoryListing(this);
 			},root);
 		return (this);
 	},
@@ -164,6 +103,68 @@ qx.Class.define("desk.fileBrowser",
 			meshButton.addListener("execute", this.extractMeshes, node);
 			menu.add(meshButton);
 			return menu;
+		},
+
+		expandDirectoryListing : function(node) {
+			var fileBrowser=node.getTree().getUserData("fileBrowser");
+			node.removeAll();
+			var ajax = new XMLHttpRequest();
+			ajax.onreadystatechange = function()
+			{
+				if(this.readyState == 4 && this.status == 200)
+				{
+					//	alert("ajax.responseText : " + ajax.responseText);
+					var files=ajax.responseText.split("\n");
+					var filesArray=new Array();
+					var directoriesArray=new Array();
+					var modificationTimes=new Array();
+					for (var i=0;i<files.length;i++)
+					{
+						var splitfile=files[i].split(" ");
+						var fileName=splitfile[0];
+						if (fileName!="")
+						{
+							if (splitfile[1]=="file")
+								filesArray.push(fileName);
+							else
+								directoriesArray.push(fileName);
+							modificationTimes[fileName]=parseInt(splitfile[2]);
+						}
+					}
+					directoriesArray.sort();
+					filesArray.sort();
+
+					for (var i=0;i<directoriesArray.length;i++)
+					{
+						var directorynode=new qx.ui.tree.TreeFolder(directoriesArray[i]);
+						directorynode.setUserData("parent_directory", fileBrowser.getNodePath(node));
+						directorynode.setUserData("modificationTime", modificationTimes[directoriesArray[i]]);
+						directorynode.addListener("click", function(event){
+							fileBrowser.expandDirectoryListing(this);
+							this.setOpen(true);},
+							directorynode);
+						node.add(directorynode);
+					}
+
+					for (var i=0;i<filesArray.length;i++)
+					{
+						var filenode=new qx.ui.tree.TreeFile(filesArray[i]);
+						filenode.setUserData("modificationTime", modificationTimes[filesArray[i]]);
+						node.add(filenode);
+						filenode.addListener("click", function(event){
+							if (fileBrowser.__fileHandler!=null)
+							fileBrowser.__fileHandler(this);},filenode);
+						filenode.setContextMenu(fileBrowser.getContextMenu(filenode));
+					}
+				}
+				else if (this.readyState == 4 && this.status != 200)
+				{
+					// fetched the wrong page or network error...
+					alert('"Fetched the wrong page" OR "Network error"');
+				}
+			};
+			ajax.open("POST", "/visu/listdir.php", true);
+			ajax.send(fileBrowser.getNodePath(node));
 		}
 	}
 });
