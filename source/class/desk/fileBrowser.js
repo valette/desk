@@ -13,16 +13,41 @@ qx.Class.define("desk.fileBrowser",
 		this.setCaption("files");
 		this.open();
 
-		var tree = new qx.ui.tree.Tree().set({width : 300, height : 400 });
-		tree.setUserData("fileBrowser", this);
+		qx.Class.include(qx.ui.treevirtual.TreeVirtual,
+			qx.ui.treevirtual.MNode);
 
-		var root = new qx.ui.tree.TreeFolder(this.__baseDir);
-		root.setOpen(true);
-		tree.setRoot(root);
-		root.setUserData("parent_directory","");
-		this.add(tree,{flex: 1});
+		var virtualTree = new qx.ui.treevirtual.TreeVirtual("Tree");
+		virtualTree.set({
+		width  : 400,
+		rowHeight: 22
+		});
+		virtualTree.setColumnWidth(0, 400);
+		virtualTree.setAlwaysShowOpenCloseSymbol(true);
+		this.add(virtualTree,{flex: 1});
+		var dataModel = virtualTree.getDataModel();
+		var dataRootId = dataModel.addBranch(null, this.__baseDir, true);
+
+		this.__virtualTree=virtualTree;
+
+		this.expandDirectoryListing(dataRootId);
+		var fileBrowser=this;
+		virtualTree.addListener("changeSelection",
+			function(e)
+			{
+				var text = "Selected labels:";
+				var selectedNodes = e.getData();
+				var node=selectedNodes[0];
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+				{
+					if (fileBrowser.__fileHandler!=null)
+						fileBrowser.__fileHandler(node);
+				}
+				else
+					fileBrowser.expandDirectoryListing(node.nodeId);
+		});
+
 ///////////////////////////
-		var form, upload;
+/*		var form, upload;
 
 		form = new desk.UploadForm("upload", "http://vip.creatis.insa-lyon.fr:8080/visu/upload/uploadtest.pl");
 		form.setLayout(new qx.ui.layout.HBox());
@@ -37,13 +62,12 @@ qx.Class.define("desk.fileBrowser",
 		  if (e.getData() != "") form.send();
 		});
 		form.add(upload);
-		this.add(form);
+		this.add(form);*/
 //////////////////////////
 
-		this.expandDirectoryListing(root);
-		root.addListener("click", function(event){
-			this.expandDirectoryListing(this);
-			},root);
+//		root.addListener("click", function(event){
+//			this.expandDirectoryListing(this);
+//			},root);
 		return (this);
 	},
 
@@ -51,6 +75,7 @@ qx.Class.define("desk.fileBrowser",
 		__fileHandler : null,
 		__baseURL : "http://vip.creatis.insa-lyon.fr:8080/visu/",
 		__baseDir : "data",
+		__virtualTree : null,
 
 		setFileHandler : function (callback) {
 			this.__fileHandler=callback;
@@ -58,6 +83,7 @@ qx.Class.define("desk.fileBrowser",
 
 		getNodeMTime : function (node)
 		{
+			return (Math.random());
 			return (node.getUserData("modificationTime"));
 		},
 
@@ -68,20 +94,15 @@ qx.Class.define("desk.fileBrowser",
 
 		getNodePath : function (node)
 		{
-			if (node.getLabel()==this.__baseDir)
-				return (this.__baseDir);
-			else
+			var hierarchy=this.__virtualTree.getHierarchy(node);
+			var nodePath="";
+			for (var i=0;i<hierarchy.length;i++)
 			{
-				var parent=node.getParent().getUserData("parent_directory");
-				if (parent=="")
-					return (node.getParent().getLabel()+"\/"+node.getLabel());
-				else			
-					return (node.getParent().getUserData("parent_directory")+
-					"\/"+
-					node.getParent().getLabel()+
-					"\/"+
-					node.getLabel());
+				nodePath+=hierarchy[i];
+				if (i<hierarchy.length-1)
+					nodePath+="\/";
 			}
+			return (nodePath);
 		},
 
 		extractMeshes : function () {
@@ -106,8 +127,9 @@ qx.Class.define("desk.fileBrowser",
 		},
 
 		expandDirectoryListing : function(node) {
-			var fileBrowser=node.getTree().getUserData("fileBrowser");
-			node.removeAll();
+			var dataModel=this.__virtualTree.getDataModel();
+			dataModel.prune(node,false);
+
 			var ajax = new XMLHttpRequest();
 			ajax.onreadystatechange = function()
 			{
@@ -133,29 +155,24 @@ qx.Class.define("desk.fileBrowser",
 					}
 					directoriesArray.sort();
 					filesArray.sort();
+//					alert(directoriesArray);
 
 					for (var i=0;i<directoriesArray.length;i++)
-					{
-						var directorynode=new qx.ui.tree.TreeFolder(directoriesArray[i]);
-						directorynode.setUserData("parent_directory", fileBrowser.getNodePath(node));
-						directorynode.setUserData("modificationTime", modificationTimes[directoriesArray[i]]);
-						directorynode.addListener("click", function(event){
-							fileBrowser.expandDirectoryListing(this);
-							this.setOpen(true);},
-							directorynode);
-						node.add(directorynode);
-					}
+						dataModel.addBranch(node	, directoriesArray[i]);
 
 					for (var i=0;i<filesArray.length;i++)
 					{
-						var filenode=new qx.ui.tree.TreeFile(filesArray[i]);
-						filenode.setUserData("modificationTime", modificationTimes[filesArray[i]]);
-						node.add(filenode);
-						filenode.addListener("click", function(event){
-							if (fileBrowser.__fileHandler!=null)
-							fileBrowser.__fileHandler(this);},filenode);
-						filenode.setContextMenu(fileBrowser.getContextMenu(filenode));
+						dataModel.addLeaf(node, filesArray[i]);
+//						var filenode=new qx.ui.tree.TreeFile(filesArray[i]);
+//						filenode.setUserData("modificationTime", modificationTimes[filesArray[i]]);
+//						node.add(filenode);
+//						filenode.addListener("click", function(event){
+//							if (fileBrowser.__fileHandler!=null)
+//							fileBrowser.__fileHandler(this);},filenode);
+//						filenode.setContextMenu(fileBrowser.getContextMenu(filenode));
 					}
+					dataModel.setData();
+		//			qx.ui.treevirtual.MNode.nodeSetOpened(node,true);
 				}
 				else if (this.readyState == 4 && this.status != 200)
 				{
@@ -164,7 +181,9 @@ qx.Class.define("desk.fileBrowser",
 				}
 			};
 			ajax.open("POST", "/visu/listdir.php", true);
-			ajax.send(fileBrowser.getNodePath(node));
+			ajax.send(this.getNodePath(node));
+//			alert (this.getNodePath(node));
+//			ajax.send("data");
 		}
 	}
 });

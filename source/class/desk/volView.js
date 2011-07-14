@@ -2,7 +2,7 @@ qx.Class.define("desk.volView",
 {
   extend : qx.ui.window.Window,
 
-	construct : function(file)
+	construct : function(file, fileBrowser)
 	{
 		this.base(arguments);
 
@@ -14,12 +14,11 @@ qx.Class.define("desk.volView",
 		this.setUseMoveFrame(true);
 
 		var volView=this;
-		if (file.getTree!=null)
+		if (fileBrowser!=null)
 		{
 			//file is a tree node...
 			var node=file;
-			this.setCaption(node.getLabel());
-			var fileBrowser=node.getTree().getUserData("fileBrowser");
+			this.setCaption(node.label);
 			var ajax = new XMLHttpRequest();
 			ajax.onreadystatechange = function()
 			{

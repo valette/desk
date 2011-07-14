@@ -62,7 +62,7 @@ qx.Class.define("desk.Application",
 				}
 				else if ((extension==".png")||(extension==".jpg")||(extension==".bmp"))
 				{
-					var imageView=new desk.imageView(file,modificationTime);
+					var imageView=new desk.imageView(file);
 					qx.core.Init.getApplication().getRoot().add(imageView);
 				}
 				else if (extension==".xml")
@@ -87,10 +87,8 @@ qx.Class.define("desk.Application",
 				}
 				else if (extension==".mhd")
 				{
-					var volView=new desk.volView(node);
+					var volView=new desk.volView(node, myBrowser);
 					qx.core.Init.getApplication().getRoot().add(volView);
-//					var meshView=new desk.meshView(node);
-//					qx.core.Init.getApplication().getRoot().add(meshView);
 				}
 				else
 					alert("extension "+extension+" not supported!");
