@@ -16,15 +16,15 @@ qx.Class.define("desk.fileBrowser",
 		qx.Class.include(qx.ui.treevirtual.TreeVirtual,
 			qx.ui.treevirtual.MNode);
 
-		var virtualTree = new qx.ui.treevirtual.TreeVirtual(["Tree","mTime"]);
+		var virtualTree = new qx.ui.treevirtual.TreeVirtual(["Tree","mTime"],
+			{initiallyHiddenColumns : [1]});
+
 		virtualTree.set({
-		width  : 400,
-		rowHeight: 22
-//		ColumnVisibilityButtonVisible : false,
-//		initiallyHiddenColumns : [1]
-		});
-		virtualTree.setColumnWidth(0, 400);
-		virtualTree.setAlwaysShowOpenCloseSymbol(true);
+			width  : 400,
+			rowHeight: 22,
+			alwaysShowOpenCloseSymbol : true,
+			columnVisibilityButtonVisible : false});
+
 		this.add(virtualTree,{flex: 1});
 		var dataModel = virtualTree.getDataModel();
 		var dataRootId = dataModel.addBranch(null, this.__baseDir, true);
@@ -33,9 +33,14 @@ qx.Class.define("desk.fileBrowser",
 
 		this.expandDirectoryListing(dataRootId);
 		var fileBrowser=this;
-		virtualTree.addListener("changeSelection",
-			function(e)
-			{
+
+		function myCallbackForFolders(e)
+		{
+			fileBrowser.expandDirectoryListing(e.getData().nodeId);
+		}
+
+		function myCallbackForFiles(e)
+		{
 				var selectedNodes = e.getData();
 				var node=selectedNodes[0];
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
@@ -45,7 +50,22 @@ qx.Class.define("desk.fileBrowser",
 				}
 				else
 					fileBrowser.expandDirectoryListing(node.nodeId);
-		});
+		}
+
+		var logCellEvent = function(e) {
+	//	alert (e+"**"+e.getRow());
+			var node=this.__virtualTree.getDataModel().getRowData(e.getRow());
+			alert ("node : "+node+"**"+node.nodeId);//+"** handler : "+this.__fileHandler);
+			if ((this.__fileHandler!=null)
+					&&(node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF))
+					this.__fileHandler(node);
+//        alert (e.getType()+"**"+e.nodeId);
+      };
+		virtualTree.addListener("changeSelection",myCallbackForFiles);
+//		virtualTree.addListener("cellClick", logCellEvent, this);
+
+		virtualTree.addListener("treeOpenWhileEmpty",myCallbackForFolders);
+		virtualTree.addListener("treeOpenWithContent",myCallbackForFolders);
 
 ///////////////////////////
 /*		var form, upload;
