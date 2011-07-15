@@ -25,8 +25,8 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	  this.client.root,
 	  this.client.renderGraphRoot,
 	  [1, 1, 1, 1]); //background color
-	this.viewInfo.performanceState.getStateParam('CullMode').value = 
-              o3d.State.CULL_NONE;
+//	this.viewInfo.performanceState.getStateParam('CullMode').value = 
+//             o3d.State.CULL_NONE;
 
 
 	// Create a new transform and parent the Shape under it.
