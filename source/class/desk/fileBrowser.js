@@ -16,10 +16,12 @@ qx.Class.define("desk.fileBrowser",
 		qx.Class.include(qx.ui.treevirtual.TreeVirtual,
 			qx.ui.treevirtual.MNode);
 
-		var virtualTree = new qx.ui.treevirtual.TreeVirtual("Tree");
+		var virtualTree = new qx.ui.treevirtual.TreeVirtual(["Tree","mTime"]);
 		virtualTree.set({
 		width  : 400,
 		rowHeight: 22
+//		ColumnVisibilityButtonVisible : false,
+//		initiallyHiddenColumns : [1]
 		});
 		virtualTree.setColumnWidth(0, 400);
 		virtualTree.setAlwaysShowOpenCloseSymbol(true);
@@ -34,7 +36,6 @@ qx.Class.define("desk.fileBrowser",
 		virtualTree.addListener("changeSelection",
 			function(e)
 			{
-				var text = "Selected labels:";
 				var selectedNodes = e.getData();
 				var node=selectedNodes[0];
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
@@ -83,8 +84,7 @@ qx.Class.define("desk.fileBrowser",
 
 		getNodeMTime : function (node)
 		{
-			return (Math.random());
-			return (node.getUserData("modificationTime"));
+			return (this.__virtualTree.getDataModel().getColumnData(node.nodeId, 1));
 		},
 
 		getNodeURL : function (node)
@@ -155,24 +155,20 @@ qx.Class.define("desk.fileBrowser",
 					}
 					directoriesArray.sort();
 					filesArray.sort();
-//					alert(directoriesArray);
 
 					for (var i=0;i<directoriesArray.length;i++)
 						dataModel.addBranch(node	, directoriesArray[i]);
 
 					for (var i=0;i<filesArray.length;i++)
 					{
-						dataModel.addLeaf(node, filesArray[i]);
-//						var filenode=new qx.ui.tree.TreeFile(filesArray[i]);
-//						filenode.setUserData("modificationTime", modificationTimes[filesArray[i]]);
-//						node.add(filenode);
+						var newNode=dataModel.addLeaf(node, filesArray[i]);
+						dataModel.setColumnData(newNode, 1, modificationTimes[filesArray[i]]);
 //						filenode.addListener("click", function(event){
 //							if (fileBrowser.__fileHandler!=null)
 //							fileBrowser.__fileHandler(this);},filenode);
 //						filenode.setContextMenu(fileBrowser.getContextMenu(filenode));
 					}
 					dataModel.setData();
-		//			qx.ui.treevirtual.MNode.nodeSetOpened(node,true);
 				}
 				else if (this.readyState == 4 && this.status != 200)
 				{
@@ -182,8 +178,6 @@ qx.Class.define("desk.fileBrowser",
 			};
 			ajax.open("POST", "/visu/listdir.php", true);
 			ajax.send(this.getNodePath(node));
-//			alert (this.getNodePath(node));
-//			ajax.send("data");
 		}
 	}
 });
