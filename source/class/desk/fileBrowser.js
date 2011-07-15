@@ -127,9 +127,13 @@ qx.Class.define("desk.fileBrowser",
 
 
 		openNode : function (node) {
-		if ((this.__fileHandler!=null)
-				&&(node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF))
-				this.__fileHandler(node);
+			if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+			{
+				if (this.__fileHandler!=null)
+						this.__fileHandler(node);
+			}
+			else
+				this.__virtualTree.getDataModel().setState(node.nodeId,{bOpened : true});
 		},
 
 		extractMeshes : function () {
