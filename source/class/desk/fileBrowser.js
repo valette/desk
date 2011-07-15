@@ -13,9 +13,6 @@ qx.Class.define("desk.fileBrowser",
 		this.setCaption("files");
 		this.open();
 
-		qx.Class.include(qx.ui.treevirtual.TreeVirtual,
-			qx.ui.treevirtual.MNode);
-
 		var virtualTree = new qx.ui.treevirtual.TreeVirtual(["Tree","mTime"],
 			{initiallyHiddenColumns : [1]});
 
@@ -24,13 +21,31 @@ qx.Class.define("desk.fileBrowser",
 			rowHeight: 22,
 			alwaysShowOpenCloseSymbol : true,
 			columnVisibilityButtonVisible : false});
+		var dataModel = virtualTree.getDataModel();
+
+		var textField = new qx.ui.form.TextField();
+		textField.setValue("");
+		textField.addListener("input", function() {
+			dataModel.setData();
+			},this);
+		this.add(textField);
+
+		// Set the filter
+		var filter = qx.lang.Function.bind(function(node)
+			{
+				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+					var label = node.label;
+					return label.indexOf(textField.getValue()) != -1;
+				}
+				return true;
+			}, this);
+		dataModel.setFilter(filter);
+
 
 		this.add(virtualTree,{flex: 1});
-		var dataModel = virtualTree.getDataModel();
 		var dataRootId = dataModel.addBranch(null, this.__baseDir, true);
 
 		this.__virtualTree=virtualTree;
-
 		this.expandDirectoryListing(dataRootId);
 		var fileBrowser=this;
 
@@ -53,16 +68,13 @@ qx.Class.define("desk.fileBrowser",
 		}
 
 		var logCellEvent = function(e) {
-	//	alert (e+"**"+e.getRow());
-			var node=this.__virtualTree.getDataModel().getRowData(e.getRow());
-			alert ("node : "+node+"**"+node.nodeId);//+"** handler : "+this.__fileHandler);
+			var node=this.__virtualTree.getDataModel().getNodeFromRow(e.getRow());
 			if ((this.__fileHandler!=null)
 					&&(node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF))
 					this.__fileHandler(node);
-//        alert (e.getType()+"**"+e.nodeId);
-      };
-		virtualTree.addListener("changeSelection",myCallbackForFiles);
-//		virtualTree.addListener("cellClick", logCellEvent, this);
+		};
+
+		virtualTree.addListener("cellContextmenu", logCellEvent, this);
 
 		virtualTree.addListener("treeOpenWhileEmpty",myCallbackForFolders);
 		virtualTree.addListener("treeOpenWithContent",myCallbackForFolders);
@@ -183,9 +195,8 @@ qx.Class.define("desk.fileBrowser",
 					{
 						var newNode=dataModel.addLeaf(node, filesArray[i]);
 						dataModel.setColumnData(newNode, 1, modificationTimes[filesArray[i]]);
-//						filenode.addListener("click", function(event){
-//							if (fileBrowser.__fileHandler!=null)
-//							fileBrowser.__fileHandler(this);},filenode);
+						if (filesArray[i]=="seeds.mhd")
+							alert ("seeds.mhd : "+newNode);
 //						filenode.setContextMenu(fileBrowser.getContextMenu(filenode));
 					}
 					dataModel.setData();
