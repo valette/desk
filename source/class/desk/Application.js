@@ -95,8 +95,23 @@ qx.Class.define("desk.Application",
 				
 			}
 
+			function extractMeshes (node)
+			{
+				var file=node.label;
+
+				var extension=file.substring(file.length-4, file.length);
+				if (extension!=".mhd")
+					alert ("Error ! extension "+extension+" not supported!");
+				else
+				{
+					var meshView=new desk.meshView(node, myBrowser);
+					qx.core.Init.getApplication().getRoot().add(meshView);
+				}
+			}
+
 			var myBrowser=new desk.fileBrowser();
 			myBrowser.setFileHandler(fileClicked);
+			myBrowser.addAction("extract meshes",extractMeshes);
 			this.getRoot().add(myBrowser);
 		}
 	}

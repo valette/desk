@@ -11,9 +11,10 @@ qx.Class.define("desk.fileBrowser",
 		this.setShowMinimize(false);
 		this.setUseMoveFrame(true);
 		this.setCaption("files");
+		this.setHeight(400);
 		this.open();
 
-		var virtualTree = new qx.ui.treevirtual.TreeVirtual(["Tree","mTime"],
+		var virtualTree = new qx.ui.treevirtual.TreeVirtual(["files","mTime","size"],
 			{initiallyHiddenColumns : [1]});
 
 		virtualTree.set({
@@ -47,29 +48,22 @@ qx.Class.define("desk.fileBrowser",
 
 		this.__virtualTree=virtualTree;
 		this.expandDirectoryListing(dataRootId);
-		var fileBrowser=this;
 
-		function myCallbackForFolders(e)
-		{
-			fileBrowser.expandDirectoryListing(e.getData().nodeId);
-		}
+		// events handling
 
-		var rightClickOnNode = function(e) {
-			this.__rightClickedNode=this.getEventNode(e);
-		};
+		this.updateContextMenu();
 
+		virtualTree.addListener("cellContextmenu", function(e) {
+			this.__rightClickedNode=this.getEventNode(e);}, this);
 
-		var dblClickOnNode = function(e) {
+		virtualTree.addListener("cellDblclick", function (e) {
 			var node=this.getEventNode(e);
-			this.openNode(node);
-		};
+			this.openNode(node);}, this);
 
-		virtualTree.setContextMenuFromDataCellsOnly(true);
-		virtualTree.setContextMenu(fileBrowser.getContextMenu());
-		virtualTree.addListener("cellContextmenu", rightClickOnNode, this);
-		virtualTree.addListener("cellDblclick", dblClickOnNode, this);
-		virtualTree.addListener("treeOpenWhileEmpty",myCallbackForFolders);
-		virtualTree.addListener("treeOpenWithContent",myCallbackForFolders);
+		virtualTree.addListener("treeOpenWhileEmpty",function (e) {
+			this.expandDirectoryListing(e.getData().nodeId);}, this);
+		virtualTree.addListener("treeOpenWithContent",function (e) {
+			this.expandDirectoryListing(e.getData().nodeId);}, this);
 
 ///////////////////////////
 /*		var form, upload;
@@ -100,6 +94,23 @@ qx.Class.define("desk.fileBrowser",
 		__virtualTree : null,
 		__rightClickedNode : null,
 
+		__actionNames : [],
+		__actionCallbacks : [],
+
+		addAction : function (actionName, callback)
+		{
+			var location=this.__actionNames.indexOf(actionName);
+			if (location==-1)
+			{
+				this.__actionNames.push(actionName);
+			}
+			else
+				alert ("Warning : action "+actionName+" already exists, is overwritten!");
+
+			this.__actionCallbacks[actionName]=callback;
+			this.updateContextMenu();
+		},
+
 		setFileHandler : function (callback) {
 			this.__fileHandler=callback;
 		},
@@ -125,7 +136,6 @@ qx.Class.define("desk.fileBrowser",
 			return (hierarchy.join("\/"));
 		},
 
-
 		openNode : function (node) {
 			if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 			{
@@ -136,36 +146,38 @@ qx.Class.define("desk.fileBrowser",
 				this.__virtualTree.getDataModel().setState(node.nodeId,{bOpened : true});
 		},
 
-		extractMeshes : function () {
-			var node=this.__rightClickedNode;
-			var file=node.label;
-			this.__rightClickedNode=null;
-
-			var extension=file.substring(file.length-4, file.length);
-			if (extension!=".mhd")
-				alert ("Error ! extension "+extension+" not supported!");
-			else
-			{
-				var meshView=new desk.meshView(node, this);
-				qx.core.Init.getApplication().getRoot().add(meshView);
-			}
-		},
-
-		getContextMenu : function()
+		updateContextMenu : function()
 		{
+			this.__virtualTree.setContextMenuFromDataCellsOnly(true);
+
 			var menu = new qx.ui.menu.Menu;
 
+			// the default "open" button
 			var openButton = new qx.ui.menu.Button("Open");
 			openButton.addListener("execute", function (){
-				this.openNode (this.__rightClickedNode);
+				var node=this.__rightClickedNode;
+				this.openNode (node);
 				this.__rightClickedNode=null;}, this);
 			menu.add(openButton);
 
-			var meshButton = new qx.ui.menu.Button("Extract surfaces");
-			meshButton.addListener("execute", this.extractMeshes, this);
-			menu.add(meshButton);
+			// other actions buttons
+			for (var i=0;i<this.__actionNames.length;i++)
+			{
+				var actionName=this.__actionNames[i];
+				var button = new qx.ui.menu.Button(actionName);
+				button.setUserData("fileBrowser",this);
+				button.setUserData("actionName",actionName);
 
-			return menu;
+				button.addListener("execute", function () {
+					var buttonFileBrowser=this.getUserData("fileBrowser");
+					var buttonActionName=this.getUserData("actionName");
+					var node=buttonFileBrowser.__rightClickedNode;
+					buttonFileBrowser.__rightClickedNode=null;
+					buttonFileBrowser.__actionCallbacks[buttonActionName](node);
+					}, button);
+				menu.add(button);
+			}
+			this.__virtualTree.setContextMenu(menu);
 		},
 
 		expandDirectoryListing : function(node) {
@@ -182,6 +194,7 @@ qx.Class.define("desk.fileBrowser",
 					var filesArray=new Array();
 					var directoriesArray=new Array();
 					var modificationTimes=new Array();
+					var sizes=new Array();
 					for (var i=0;i<files.length;i++)
 					{
 						var splitfile=files[i].split(" ");
@@ -189,9 +202,13 @@ qx.Class.define("desk.fileBrowser",
 						if (fileName!="")
 						{
 							if (splitfile[1]=="file")
+							{
 								filesArray.push(fileName);
+								sizes[fileName]=parseInt(splitfile[3]);
+							}
 							else
 								directoriesArray.push(fileName);
+
 							modificationTimes[fileName]=parseInt(splitfile[2]);
 						}
 					}
@@ -205,6 +222,7 @@ qx.Class.define("desk.fileBrowser",
 					{
 						var newNode=dataModel.addLeaf(node, filesArray[i]);
 						dataModel.setColumnData(newNode, 1, modificationTimes[filesArray[i]]);
+						dataModel.setColumnData(newNode, 2, sizes[filesArray[i]]);
 					}
 					dataModel.setData();
 				}

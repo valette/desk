@@ -69,6 +69,7 @@ qx.Class.define("desk.meshView",
 				decorator:null});
 		
 			this.__iframe.setFrameName('o3dframe');
+//			this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/three.js/examples/webgl_geometry_colors.html");
 			this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?"+file);
 			this.add(this.__iframe,{flex: 1});
 			this.addListener("mouseout", 
