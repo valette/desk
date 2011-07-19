@@ -42,12 +42,13 @@ qx.Class.define("desk.fileBrowser",
 			}, this);
 		dataModel.setFilter(filter);
 
-
 		this.add(virtualTree,{flex: 1});
+
+		// add root directory
 		var dataRootId = dataModel.addBranch(null, this.__baseDir, true);
+		this.expandDirectoryListing(dataRootId);
 
 		this.__virtualTree=virtualTree;
-		this.expandDirectoryListing(dataRootId);
 
 		// events handling
 
@@ -184,56 +185,54 @@ qx.Class.define("desk.fileBrowser",
 			var dataModel=this.__virtualTree.getDataModel();
 			dataModel.prune(node,false);
 
-			var ajax = new XMLHttpRequest();
-			ajax.onreadystatechange = function()
+			// Instantiate request
+			var req = new qx.io.request.Xhr();
+			req.setUrl("/visu/listDir.php");
+			req.setMethod("POST");
+			req.setAsync(true);
+			req.setRequestData({"dir" : this.getNodePath(node)});
+			req.addListener("success", readFileList, this);
+			req.send();
+
+			function readFileList(e)
 			{
-				if(this.readyState == 4 && this.status == 200)
+				var req = e.getTarget();
+				var files=req.getResponseText().split("\n");
+				var filesArray=new Array();
+				var directoriesArray=new Array();
+				var modificationTimes=new Array();
+				var sizes=new Array();
+				for (var i=0;i<files.length;i++)
 				{
-					//	alert("ajax.responseText : " + ajax.responseText);
-					var files=ajax.responseText.split("\n");
-					var filesArray=new Array();
-					var directoriesArray=new Array();
-					var modificationTimes=new Array();
-					var sizes=new Array();
-					for (var i=0;i<files.length;i++)
+					var splitfile=files[i].split(" ");
+					var fileName=splitfile[0];
+					if (fileName!="")
 					{
-						var splitfile=files[i].split(" ");
-						var fileName=splitfile[0];
-						if (fileName!="")
+						if (splitfile[1]=="file")
 						{
-							if (splitfile[1]=="file")
-							{
-								filesArray.push(fileName);
-								sizes[fileName]=parseInt(splitfile[3]);
-							}
-							else
-								directoriesArray.push(fileName);
-
-							modificationTimes[fileName]=parseInt(splitfile[2]);
+							filesArray.push(fileName);
+							sizes[fileName]=parseInt(splitfile[3]);
 						}
-					}
-					directoriesArray.sort();
-					filesArray.sort();
+						else
+							directoriesArray.push(fileName);
 
-					for (var i=0;i<directoriesArray.length;i++)
-						dataModel.addBranch(node	, directoriesArray[i]);
-
-					for (var i=0;i<filesArray.length;i++)
-					{
-						var newNode=dataModel.addLeaf(node, filesArray[i]);
-						dataModel.setColumnData(newNode, 1, modificationTimes[filesArray[i]]);
-						dataModel.setColumnData(newNode, 2, sizes[filesArray[i]]);
+						modificationTimes[fileName]=parseInt(splitfile[2]);
 					}
-					dataModel.setData();
 				}
-				else if (this.readyState == 4 && this.status != 200)
+				directoriesArray.sort();
+				filesArray.sort();
+
+				for (var i=0;i<directoriesArray.length;i++)
+					dataModel.addBranch(node	, directoriesArray[i]);
+
+				for (var i=0;i<filesArray.length;i++)
 				{
-					// fetched the wrong page or network error...
-					alert('"Fetched the wrong page" OR "Network error"');
+					var newNode=dataModel.addLeaf(node, filesArray[i]);
+					dataModel.setColumnData(newNode, 1, modificationTimes[filesArray[i]]);
+					dataModel.setColumnData(newNode, 2, sizes[filesArray[i]]);
 				}
-			};
-			ajax.open("POST", "/visu/listdir.php", true);
-			ajax.send(this.getNodePath(node));
+				dataModel.setData();
+			}
 		}
 	}
 });
