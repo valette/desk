@@ -12,15 +12,31 @@ VTK Mesh display
 window.onload = init;
 window.onunload = uninit;
 
+function getParameter( parameterName )
+{
+  parameterName = parameterName.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  var regexS = "[\\?&]"+parameterName+"=([^&#]*)";
+  var regex = new RegExp( regexS );
+  var results = regex.exec( window.location.href );
+  if( results == null )
+    return null;
+  else
+    return results[1];
+}
+
 // global variables
 
 var g_scene;
 
-function resizeClient() {
+function resizeClient(width,height) {
 
-//	var frame = document.getElementById("o3d"); 
-//	var htmlheight = document.body.parentNode.scrollHeight; 
-//	frame.style.height = htmlheight + "px";
+	if ((width!=null)&&(height!=null))
+	{
+		var parent=document.getElementById("o3d");
+		parent.style.width=width+"px";
+		parent.style.height=height+"px";
+	}
+
 
     g_scene.resize();
     g_scene.render();
@@ -36,6 +52,14 @@ function resizeClient() {
  * Creates the client area.
  */
 function init() {
+	var parent=document.getElementById("o3d");
+	var height=getParameter("height")
+	if (height!=null)
+		parent.style.height=height+"px";
+	var width=getParameter("width")
+	if (width!=null)
+		parent.style.width=width+"px";
+
   o3djs.webgl.makeClients(initStep2);
 }
 /**
@@ -47,24 +71,13 @@ function initStep2(clientElements) {
 
 	canvaselement=clientElements[0];
 	g_scene=o3djs.renderscene.createRenderScene(clientElements[0]);
-//	function setBoundingBox()
-//	{
-//		var primitives;
-//		var primitives=g_pack.getObjectsByClassName('Primitive');
-//		alert(primitives.length);
-//	};
-//	var t=setTimeout(setBoundingBox,5000);
-
    	g_scene.render();
 	window.onresize = resizeClient;
-	
 
-	var htmladress= window.location.href;
-	var start=htmladress.indexOf("?");
-	if (start!=-1)
+	var mesh=getParameter("mesh")
+	if (mesh!=null)
 	{
-		var input=htmladress.substring(start+1, htmladress.length);
-		var extension=input.substring(input.length-4, input.length);
+		var extension=mesh.substring(mesh.length-4, mesh.length);
 		if (extension==".vtk")
 		{
 			function render()
@@ -72,10 +85,10 @@ function initStep2(clientElements) {
 			    g_scene.resetCamera();
 			   	g_scene.render();
 			};
-			createFromFile(g_scene,input,[1,1,1,1],false,render);
+			createFromFile(g_scene,mesh,[1,1,1,1],false,render);
 		}
 		if (extension==".xml")
-			g_scene.addMeshes(input);
+			g_scene.addMeshes(mesh);
 	}
 	else
 	{
