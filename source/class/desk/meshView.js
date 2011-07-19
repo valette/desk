@@ -69,32 +69,45 @@ qx.Class.define("desk.meshView",
 				decorator:null});
 		
 			this.__iframe.setFrameName('o3dframe');
-//			this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/three.js/examples/webgl_geometry_colors.html");
-			this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?"+file);
+
+			if (qx.core.Environment.get("browser.name")=="firefox")
+			{
+			// quirk for firefox which oes not handle iframes correctly
+				this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?mesh="+file+
+					"&width=400&height=400");
+				this.__iframe.addListenerOnce("load", function(e) { 
+				    this.addListener("resize", 
+					function(event) {this.__iframe.getWindow().resizeClient(this.getWidth()-7,this.getHeight()-32);},this);
+				    }, this);
+			}
+			else
+			{
+				this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?mesh="+file);
+			}
+
 			this.add(this.__iframe,{flex: 1});
+
 			this.addListener("mouseout", 
 				function(event) {this.__iframe.getWindow().g_scene.stopDragging();},this);
+
 			this.addListener("keypress", 
 				function(event) {this.__iframe.getWindow().keyPressed(event.getKeyCode());},this);
-			this.addListener("keypress",
-				function(event) { if (event.getKeyIdentifier()=="S")
-				{
+
+			this.addListener("keypress", function(event) {
+				if (event.getKeyIdentifier()=="S")
 					desk.meshView.LINKEDWINDOW=this;
-				//	alert ("S pressed"+desk.meshView.LINKEDWINDOW);
-					}
-					},this);
-			this.addListener("click",
-				function(event) {
+				},this);
+
+			this.addListener("click", function(event) {
 				var window=desk.meshView.LINKEDWINDOW;
-					if ((window!=null)&&(window!=this))
-					{
-				//		alert ("Windows linked!");
-						this.__iframe.getWindow().g_scene.bind(window.__iframe.getWindow().g_scene);
-						window.__iframe.getWindow().g_scene.bind(this.__iframe.getWindow().g_scene);
-						this.__iframe.getWindow().g_scene.cameracontroller.onChange();
-						desk.meshView.LINKEDWINDOW=null;
-					}},this);
-			},
+				if ((window!=null)&&(window!=this))
+				{
+					this.__iframe.getWindow().g_scene.bind(window.__iframe.getWindow().g_scene);
+					window.__iframe.getWindow().g_scene.bind(this.__iframe.getWindow().g_scene);
+					this.__iframe.getWindow().g_scene.cameracontroller.onChange();
+					desk.meshView.LINKEDWINDOW=null;
+				}},this);
+		},
 
 		getScene : function() {
 				return this.__iframe.getWindow().g_scene;
