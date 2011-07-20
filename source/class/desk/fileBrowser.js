@@ -64,24 +64,7 @@ qx.Class.define("desk.fileBrowser",
 		virtualTree.addListener("treeOpenWithContent",function (e) {
 			this.expandDirectoryListing(e.getData().nodeId);}, this);
 
-///////////////////////////
-/*		var form, upload;
-
-		form = new desk.UploadForm("upload", "http://vip.creatis.insa-lyon.fr:8080/visu/upload/uploadtest.pl");
-		form.setLayout(new qx.ui.layout.HBox());
-		form.addListener("completed", function(e) 
-		{ 
-		  alert("complete");
-		});
-
-		upload = new desk.UploadButton("file", "Upload");
-		upload.addListener("changeFileName", function(e)
-		{
-		  if (e.getData() != "") form.send();
-		});
-		form.add(upload);
-		this.add(form);*/
-//////////////////////////
+		this.add(new desk.actions());
 		return (this);
 	},
 
