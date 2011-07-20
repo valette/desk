@@ -16,6 +16,7 @@ qx.Class.define("desk.fileBrowser",
 
 		var virtualTree = new qx.ui.treevirtual.TreeVirtual(["files","mTime","size"],
 			{initiallyHiddenColumns : [1]});
+		this.__virtualTree=virtualTree;
 
 		virtualTree.set({
 			width  : 400,
@@ -48,10 +49,7 @@ qx.Class.define("desk.fileBrowser",
 		var dataRootId = dataModel.addBranch(null, this.__baseDir, true);
 		this.expandDirectoryListing(dataRootId);
 
-		this.__virtualTree=virtualTree;
-
 		// events handling
-
 		this.updateContextMenu();
 
 		virtualTree.addListener("cellContextmenu", function(e) {
@@ -84,7 +82,6 @@ qx.Class.define("desk.fileBrowser",
 		form.add(upload);
 		this.add(form);*/
 //////////////////////////
-
 		return (this);
 	},
 
