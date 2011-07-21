@@ -45,7 +45,6 @@ qx.Class.define("desk.actions",
 			var actionMenu=this;
 			function executeButton(e)
 			{
-//				alert(this.getLabel());
 				actionMenu.createActionWindow(this.getLabel());
 			}
 
@@ -138,6 +137,13 @@ qx.Class.define("desk.actions",
 					manager.add(parameterForm, floatValidator, parameter);
 					break;
 				case "file":
+					parameterForm.setDroppable(true);
+					parameterForm.addListener("drop", function(e) {
+						var virtualtree=e.getRelatedTarget();
+						var fileBrowser=virtualtree.getUserData("fileBrowser");
+ 							this.setValue(fileBrowser.getNodePath(virtualtree.getSelectedNodes()[0]));
+						}, parameterForm);
+
 					manager.add(parameterForm, stringValidator, parameter);
 					break;
 				default :
