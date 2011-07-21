@@ -25,8 +25,6 @@ qx.Class.define("desk.fileBrowser",
 			columnVisibilityButtonVisible : false,
 			draggable : true});
 
-		virtualTree.setUserData("fileBrowser",this);
-
 		var dataModel = virtualTree.getDataModel();
 
 		var textField = new qx.ui.form.TextField();
@@ -71,20 +69,13 @@ qx.Class.define("desk.fileBrowser",
 		// drag and drop support
 		virtualTree.addListener("dragstart", function(e) {
 			e.addAction("move");
-//			e.addType("fileNode");
-//			e.addType("fileBrowser");
-//			this.e.getData().nodeId;
+			e.addType("text");
 			});
-
-/*		virtualTree.addListener("droprequest", function(e)
-			{
+		virtualTree.addListener("droprequest", function(e) {
 			var type = e.getCurrentType();
-
-			if (type == "fileNode")
-				e.addData(type, e.getData().nodeId);
-			else if (type == "fileBrowser")
-				e.addData(type, this.__clickedNode);
-			});*/
+			if (type == "text")
+				e.addData(type, this.getNodePath(this.__virtualTree.getSelectedNodes()[0]));
+			}, this);
 
 		this.add(new desk.actions());
 		return (this);
