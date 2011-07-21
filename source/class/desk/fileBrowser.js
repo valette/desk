@@ -84,11 +84,11 @@ qx.Class.define("desk.fileBrowser",
 		virtualTree.addListener("droprequest", function(e) {
 			var type = e.getCurrentType();
 			if (type == "text")
-				e.addData(type, this.getNodePath(this.__virtualTree.getSelectedNodes()[0]));
+				e.addData(type, this.getNodePath(this.getSelectedNode()));
 			if (type == "fileBrowser")
 				e.addData(type, this);
 			if (type == "fileNode")
-				e.addData(type, this.__virtualTree.getSelectedNodes()[0]);
+				e.addData(type, this.getSelectedNode());
 			}, this);
 
 		return (this);
@@ -119,6 +119,11 @@ qx.Class.define("desk.fileBrowser",
 
 		setFileHandler : function (callback) {
 			this.__fileHandler=callback;
+		},
+
+		getSelectedNode : function (e)
+		{
+			return (this.__virtualTree.getSelectedNodes()[0]);
 		},
 
 		getEventNode : function (e)
@@ -161,11 +166,11 @@ qx.Class.define("desk.fileBrowser",
 			// the default "open" button
 			var openButton = new qx.ui.menu.Button("Open");
 			openButton.addListener("execute", function (){
-				this.openNode (this.__virtualTree.getSelectedNodes()[0]);}, this);
+				this.openNode (this.getSelectedNode());}, this);
 			menu.add(openButton);
 
 			menu.addSeparator();
-			var rpcActions=new desk.actions();
+			var rpcActions=new desk.actions(this);
 				menu.add(rpcActions.getButton());
 			menu.addSeparator();
 			// other actions buttons
@@ -179,7 +184,7 @@ qx.Class.define("desk.fileBrowser",
 				button.addListener("execute", function () {
 					var buttonFileBrowser=this.getUserData("fileBrowser");
 					var buttonActionName=this.getUserData("actionName");
-					var node=buttonFileBrowser.__virtualTree.getSelectedNodes()[0];
+					var node=buttonFileBrowser.getSelectedNode();
 					buttonFileBrowser.__actionCallbacks[buttonActionName](node);
 					}, button);
 				menu.add(button);

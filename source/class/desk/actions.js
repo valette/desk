@@ -2,12 +2,16 @@ qx.Class.define("desk.actions",
 {
 	extend : qx.core.Object,
 
-	construct : function()
+	construct : function(fileBrowser)
 	{
 		this.base(arguments);
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.populateActionMenu();
 		this.__menuButton=new qx.ui.menu.Button("Actions", null , null, this.__actionMenu);
+
+		if (fileBrowser!=null)
+			this.__fileBrowser=fileBrowser;
+
 		return this;
 	},
 
@@ -16,6 +20,7 @@ qx.Class.define("desk.actions",
 		__actionMenu : null,
 		__actions : null,
 		__menuButton : null,
+		__fileBrowser : null,
 
 		getButton : function()
 		{
@@ -104,7 +109,7 @@ qx.Class.define("desk.actions",
 				return (true);
 				};
 
-
+			var fileAlreadyPickedFromBrowser=false;
 			var parameters=action.getElementsByTagName("parameter");
 			for (var i=0;i<parameters.length;i++)
 			{
@@ -125,6 +130,12 @@ qx.Class.define("desk.actions",
 					manager.add(parameterForm, floatValidator, parameter);
 					break;
 				case "file":
+					if ((!fileAlreadyPickedFromBrowser)&& (this.__fileBrowser!=null))
+					{
+						fileAlreadyPickedFromBrowser=true;
+						parameterForm.setValue(this.__fileBrowser.getNodePath(
+							this.__fileBrowser.getSelectedNode()));
+					}
 					parameterForm.setDroppable(true);
 					parameterForm.addListener("drop", function(e) {
 							var fileBrowser=e.getData("fileBrowser");
