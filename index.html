@@ -67,6 +67,7 @@ function init() {
  * render graphs.
  * @param {Array} clientElements Array of o3d object elements.
  */
+
 function initStep2(clientElements) {
 
 	canvaselement=clientElements[0];
@@ -76,24 +77,10 @@ function initStep2(clientElements) {
 
 	var mesh=getParameter("mesh")
 	if (mesh!=null)
-	{
-		var extension=mesh.substring(mesh.length-4, mesh.length);
-		if (extension==".vtk")
-		{
-			function render()
-			{
-			    g_scene.resetCamera();
-			   	g_scene.render();
-			};
-			createFromFile(g_scene,mesh,[1,1,1,1],false,render);
-		}
-		if (extension==".xml")
-			g_scene.addMeshes(mesh);
-	}
+		g_scene.loadMesh (mesh);
 	else
-	{
-		g_scene.addMeshes("ADAM/adam.xml");
-	}
+		g_scene.loadMesh ("ADAM/adam.xml");
+
 //	g_scene.addMeshes("http://www.creatis.insa-lyon.fr/~valette/meshView/stream/output.xml");
 //	g_scene.addMeshes("http://www.creatis.insa-lyon.fr/~valette/meshView/bones/output.xml");
 //	g_scene.addMeshes("http://www.creatis.insa-lyon.fr/~valette/meshView/coeurThoraxVoxels/output.xml");

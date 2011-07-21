@@ -95,6 +95,29 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	this.resize();
 };
 
+o3djs.renderscene.RenderScene.prototype.loadMesh = function(file) 
+{
+	var extension=file.substring(file.length-4, file.length);
+	var scene=this;
+	function render()
+	{
+	    scene.resetCamera();
+	   	scene.render();
+	};
+
+	switch (extension)
+	{
+		case ".vtk":
+			createFromFile(this,file,[1,1,1,1],false,render);
+			break;
+		case ".xml":
+			this.addMeshes(file);
+			break;
+		default : 
+			alert ("extension "+extension+" not supported!");
+	}
+}
+
 o3djs.renderscene.RenderScene.prototype.bind = function(scene) 
 {
 	var myScene=this;
