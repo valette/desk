@@ -114,7 +114,7 @@ qx.Class.define("desk.Application",
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 				{
 					var oIFrm = document.getElementById('myIFrm');
-					oIFrm.src = "/visu/download.php?fileName="+myBrowser.getNodeURL(node);
+					oIFrm.src = "/visu/download.php?fileName="+myBrowser.getNodePath(node);
 				} 
 				else
 					alert("Cannot download a directory!");
