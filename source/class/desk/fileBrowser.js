@@ -65,9 +65,6 @@ qx.Class.define("desk.fileBrowser",
 		// events handling
 		this.updateContextMenu();
 
-		virtualTree.addListener("cellContextmenu", function(e) {
-			this.__rightClickedNode=this.getEventNode(e);}, this);
-
 		virtualTree.addListener("cellDblclick", function (e) {
 			var node=this.getEventNode(e);
 			this.openNode(node);}, this);
@@ -102,7 +99,6 @@ qx.Class.define("desk.fileBrowser",
 		__baseURL : "http://vip.creatis.insa-lyon.fr:8080/visu/",
 		__baseDir : "data",
 		__virtualTree : null,
-		__rightClickedNode : null,
 
 		__actionNames : [],
 		__actionCallbacks : [],
@@ -165,9 +161,7 @@ qx.Class.define("desk.fileBrowser",
 			// the default "open" button
 			var openButton = new qx.ui.menu.Button("Open");
 			openButton.addListener("execute", function (){
-				var node=this.__rightClickedNode;
-				this.openNode (node);
-				this.__rightClickedNode=null;}, this);
+				this.openNode (this.__virtualTree.getSelectedNodes()[0]);}, this);
 			menu.add(openButton);
 
 			menu.addSeparator();
@@ -185,8 +179,7 @@ qx.Class.define("desk.fileBrowser",
 				button.addListener("execute", function () {
 					var buttonFileBrowser=this.getUserData("fileBrowser");
 					var buttonActionName=this.getUserData("actionName");
-					var node=buttonFileBrowser.__rightClickedNode;
-					buttonFileBrowser.__rightClickedNode=null;
+					var node=buttonFileBrowser.__virtualTree.getSelectedNodes()[0];
 					buttonFileBrowser.__actionCallbacks[buttonActionName](node);
 					}, button);
 				menu.add(button);
