@@ -14,6 +14,17 @@ qx.Class.define("desk.fileBrowser",
 		this.setHeight(400);
 		this.open();
 
+		//create menu
+		var menu=new qx.ui.menu.Menu;
+		var uploadButton = new qx.ui.menu.Button("Upload");
+		uploadButton.addListener("execute", function (e){alert ("Not implemented!");}, this);
+		menu.add(uploadButton);
+		menu.addSeparator();
+		var actions=new desk.actions();
+		menu.add(actions.getButton());
+		var actionsButton = new qx.ui.form.MenuButton("Actions", null, menu);
+		this.add(actionsButton);
+
 		var virtualTree = new qx.ui.treevirtual.TreeVirtual(["files","mTime","size"],
 			{initiallyHiddenColumns : [1]});
 		this.__virtualTree=virtualTree;
@@ -27,6 +38,7 @@ qx.Class.define("desk.fileBrowser",
 
 		var dataModel = virtualTree.getDataModel();
 
+		// create the filter form
 		var textField = new qx.ui.form.TextField();
 		textField.setValue("");
 		textField.addListener("input", function() {
@@ -34,7 +46,6 @@ qx.Class.define("desk.fileBrowser",
 			},this);
 		this.add(textField);
 
-		// Set the filter
 		var filter = qx.lang.Function.bind(function(node)
 			{
 				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
@@ -83,7 +94,6 @@ qx.Class.define("desk.fileBrowser",
 				e.addData(type, this.__virtualTree.getSelectedNodes()[0]);
 			}, this);
 
-		this.add(new desk.actions());
 		return (this);
 	},
 
@@ -160,6 +170,10 @@ qx.Class.define("desk.fileBrowser",
 				this.__rightClickedNode=null;}, this);
 			menu.add(openButton);
 
+			menu.addSeparator();
+			var rpcActions=new desk.actions();
+				menu.add(rpcActions.getButton());
+			menu.addSeparator();
 			// other actions buttons
 			for (var i=0;i<this.__actionNames.length;i++)
 			{

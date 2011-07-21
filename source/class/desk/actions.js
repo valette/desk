@@ -5,36 +5,24 @@ qx.Class.define("desk.actions",
 	construct : function()
 	{
 		this.base(arguments);
-
-		// create actions menu
-
 		this.__actionMenu = new qx.ui.menu.Menu;
-		this.populateActionsMenu();
-
-		// create main menu and buttons
-		var menu = new qx.ui.menu.Menu();
-
-		var uploadButton = new qx.ui.menu.Button("Upload", null , this.__uploadCommand);
-		uploadButton.addListener("execute", function (e){alert ("Not implemented!");}, this);
-
-		var actionsButton = new qx.ui.menu.Button("Actions", null, null, this.__actionMenu);
-
-		// add buttons to menu
-		menu.add(uploadButton);
-		menu.addSeparator();
-		menu.add(actionsButton);
-
-		// Create opener button
-		var button = new qx.ui.form.MenuButton("Actions",null, menu);
-		return button;
+		this.populateActionMenu();
+		this.__menuButton=new qx.ui.menu.Button("Actions", null , null, this.__actionMenu);
+		return this;
 	},
 
 	members : {
 		__actionsFile : "/visu/desk/actions.xml",
 		__actionMenu : null,
 		__actions : null,
+		__menuButton : null,
 
-		populateActionsMenu : function()
+		getButton : function()
+		{
+			return (this.__menuButton);
+		},
+
+		populateActionMenu : function()
 		{
 			var xmlhttp=new XMLHttpRequest();
 			xmlhttp.open("GET",this.__actionsFile+"?nocache=" + Math.random(),false);
