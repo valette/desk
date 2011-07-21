@@ -69,12 +69,18 @@ qx.Class.define("desk.fileBrowser",
 		// drag and drop support
 		virtualTree.addListener("dragstart", function(e) {
 			e.addAction("move");
+			e.addType("fileBrowser");
+			e.addType("fileNode");
 			e.addType("text");
 			});
 		virtualTree.addListener("droprequest", function(e) {
 			var type = e.getCurrentType();
 			if (type == "text")
 				e.addData(type, this.getNodePath(this.__virtualTree.getSelectedNodes()[0]));
+			if (type == "fileBrowser")
+				e.addData(type, this);
+			if (type == "fileNode")
+				e.addData(type, this.__virtualTree.getSelectedNodes()[0]);
 			}, this);
 
 		this.add(new desk.actions());

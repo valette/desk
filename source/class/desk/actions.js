@@ -139,7 +139,9 @@ qx.Class.define("desk.actions",
 				case "file":
 					parameterForm.setDroppable(true);
 					parameterForm.addListener("drop", function(e) {
- 							this.setValue(e.getData("text"));
+							var fileBrowser=e.getData("fileBrowser");
+							var fileNode=e.getData("fileNode");
+ 							this.setValue(fileBrowser.getNodePath(fileNode));
 						}, parameterForm);
 
 					manager.add(parameterForm, stringValidator, parameter);
