@@ -109,9 +109,21 @@ qx.Class.define("desk.Application",
 				}
 			}
 
+			function downloadNode (node)
+			{
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+				{
+					var oIFrm = document.getElementById('myIFrm');
+					oIFrm.src = "/visu/download.php?fileName="+myBrowser.getNodeURL(node);
+				} 
+				else
+					alert("Cannot download a directory!");
+			}
+
 			var myBrowser=new desk.fileBrowser();
 			myBrowser.setFileHandler(fileClicked);
-			myBrowser.addAction("extract meshes",extractMeshes);
+//			myBrowser.addAction("extract meshes",extractMeshes);
+			myBrowser.addAction("download",downloadNode);
 			this.getRoot().add(myBrowser);
 		}
 	}
