@@ -107,6 +107,14 @@ qx.Class.define("desk.meshView",
 					this.__iframe.getWindow().g_scene.cameracontroller.onChange();
 					desk.meshView.LINKEDWINDOW=null;
 				}},this);
+
+			this.setDroppable(true);
+			this.addListener("drop", function(e) {
+					var fileBrowser=e.getData("fileBrowser");
+					var fileNode=e.getData("fileNode");
+					var fileName=fileBrowser.getNodeURL(fileNode);
+					this.getScene().loadMesh(fileName);
+				}, this);
 		},
 
 		getScene : function() {
