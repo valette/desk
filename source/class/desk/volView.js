@@ -20,13 +20,6 @@ qx.Class.define("desk.volView",
 
     ////Global variables
 		
-        imgMap = {
-                left : 40,
-                top : 4,
-                width : 0,
-                height : 0
-        };
-		
         var htmlCanvasLabels = null;
         var htmlContextLabels = null;
 		
@@ -168,11 +161,18 @@ qx.Class.define("desk.volView",
 		__winXP : true,
 
 		__winMap : {
-                left : 16,
-                top : 8,
-                width : 400,
-                height : 444
-        },
+			left : 16,
+			top : 8,
+			width : 400,
+			height : 444
+		},
+
+		__imgMap : {
+			left : 40,
+			top : 4,
+			width : 0,
+			height : 0
+		},
 		
 		__path : null,
 		// __offset : null,
@@ -279,7 +279,7 @@ qx.Class.define("desk.volView",
                 {
 						getPosition(event,false);
 						var tempMargin = 4;
-						if(!((tempMargin<=mouseData.xPos)&&(mouseData.xPos<=imgMap.width-tempMargin)&&(tempMargin<=mouseData.yPos)&&(mouseData.yPos<=imgMap.height-tempMargin)))
+						if(!((tempMargin<=mouseData.xPos)&&(mouseData.xPos<=volView.__imgMap.width-tempMargin)&&(tempMargin<=mouseData.yPos)&&(mouseData.yPos<=volView.__imgMap.height-tempMargin)))
 						{
 								htmlContextLabels.beginPath();
 								mouseData.mouseLeftDownFlag = false;
@@ -314,8 +314,8 @@ qx.Class.define("desk.volView",
 							if(this.responseXML!=null)
 							{
 									var response = this.responseXML;
-									imgMap.width = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("x"));
-									imgMap.height = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("y"));
+									volView.__imgMap.width = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("x"));
+									volView.__imgMap.height = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("y"));
 									numberOfSlices = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("z"));
 									slicesNameOffset = parseInt(response.getElementsByTagName("slicesprefix")[0].getAttribute("offset"));
 									slicesNamePrefix = response.getElementsByTagName("slicesprefix")[0].firstChild.nodeValue;
@@ -367,9 +367,9 @@ qx.Class.define("desk.volView",
 			
 			var penLabel = new qx.ui.basic.Label("Brush : ");
 			
-			this.add(penLabel, {left: imgMap.width + 60, top: 8});
+			this.add(penLabel, {left: volView.__imgMap.width + 60, top: 8});
 			
-			this.add(penSize, {left: imgMap.width + penLabel.getSizeHint().width+4 + 60, top: 4});
+			this.add(penSize, {left: volView.__imgMap.width + penLabel.getSizeHint().width+4 + 60, top: 4});
 			
 			
 			
@@ -413,7 +413,7 @@ qx.Class.define("desk.volView",
 					getPosition(event,false);	// No scaling so coordinates are compatible with placeEraser function
                     var tempMargin = 4/drawingCanvasParams.curCtxtZoom;
 				////Hide eraser if out of drawing zone
-                    if(!((tempMargin<=mouseData.xPos)&&(mouseData.xPos<=imgMap.width/drawingCanvasParams.curCtxtZoom-tempMargin)&&(tempMargin<=mouseData.yPos)&&(mouseData.yPos<=imgMap.height/drawingCanvasParams.curCtxtZoom-tempMargin)))
+                    if(!((tempMargin<=mouseData.xPos)&&(mouseData.xPos<=volView.__imgMap.width/drawingCanvasParams.curCtxtZoom-tempMargin)&&(tempMargin<=mouseData.yPos)&&(mouseData.yPos<=volView.__imgMap.height/drawingCanvasParams.curCtxtZoom-tempMargin)))
                     {
                             if(eraserCursor.getVisibility()=="visible")
 							{
@@ -421,8 +421,8 @@ qx.Class.define("desk.volView",
 							}
                     }
 				////Move eraser to mouse position
-                    eraserCursor.set({marginLeft: Math.round((mouseData.xPos-eraserCoeff*htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+imgMap.left),
-                                        marginTop: Math.round((mouseData.yPos-eraserCoeff*htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+imgMap.top)});
+                    eraserCursor.set({marginLeft: Math.round((mouseData.xPos-eraserCoeff*htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
+                                        marginTop: Math.round((mouseData.yPos-eraserCoeff*htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
 					mouseData.xPos = mouseData.decaleZoomX/drawingCanvasParams.curCtxtZoom + mouseData.xPos;
                     mouseData.yPos = mouseData.decaleZoomY/drawingCanvasParams.curCtxtZoom + mouseData.yPos;
 					if(mouseData.mouseLeftDownFlag)
@@ -497,9 +497,9 @@ qx.Class.define("desk.volView",
             },this);
 			
             if(this.__winXP)
-                this.add(eraserButton, {left: imgMap.width + 56, top: 40});
+                this.add(eraserButton, {left: volView.__imgMap.width + 56, top: 40});
             else
-                this.add(eraserButton, {left: imgMap.width + 56, top: 36});
+                this.add(eraserButton, {left: volView.__imgMap.width + 56, top: 36});
 			
 			
 			
@@ -510,8 +510,8 @@ qx.Class.define("desk.volView",
 			
 			clearButton.addListener("execute", function(event)
 			{
-                    drawingCanvasParams.drawingContext.clearRect(-16, -16, imgMap.width+32, imgMap.height+32);
-                    htmlContextLabels.clearRect(-16, -16, imgMap.width+32, imgMap.height+32);
+                    drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+                    htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 					htmlContextLabels.beginPath();
                     mouseData.mouseLeftDownFlag = false;
                     clearButton.set({opacity: 0.5, enabled : false});
@@ -528,9 +528,9 @@ qx.Class.define("desk.volView",
             },this);
 			
 			if(this.__winXP)
-                this.add(clearButton, {left: imgMap.width + eraserButton.getSizeHint().width+8 + 67, top: 40});
+                this.add(clearButton, {left: volView.__imgMap.width + eraserButton.getSizeHint().width+8 + 67, top: 40});
             else
-                this.add(clearButton, {left: imgMap.width + eraserButton.getSizeHint().width+8 + 74, top: 36});
+                this.add(clearButton, {left: volView.__imgMap.width + eraserButton.getSizeHint().width+8 + 74, top: 36});
 			
 			
 			
@@ -549,7 +549,7 @@ qx.Class.define("desk.volView",
                     mouseData.mouseLeftDownFlag = false;
             },this);
 
-            this.add(colorsTabView, {left: imgMap.width + 50, top: 73+4});
+            this.add(colorsTabView, {left: volView.__imgMap.width + 50, top: 73+4});
 			
 		////Function creates one label box
 			var unfocusedBorder = new qx.ui.decoration.Single(2, "solid", "black");
@@ -702,9 +702,9 @@ qx.Class.define("desk.volView",
             });
 			
 			if(this.__winXP)
-                this.add(brghtnssCntrstButton, {left: imgMap.width + colorsTabView.getSizeHint().width - 4, top: 40});
+                this.add(brghtnssCntrstButton, {left: volView.__imgMap.width + colorsTabView.getSizeHint().width - 4, top: 40});
             else
-                this.add(brghtnssCntrstButton, {left: imgMap.width + colorsTabView.getSizeHint().width - 4, top: 36});
+                this.add(brghtnssCntrstButton, {left: volView.__imgMap.width + colorsTabView.getSizeHint().width - 4, top: 36});
 			
 			
 			
@@ -725,9 +725,9 @@ qx.Class.define("desk.volView",
 			this.add(resetBrCrButton);
 
             if(this.__winXP)
-                resetBrCrButton.setUserBounds(imgMap.width + colorsTabView.getSizeHint().width + 39, 41, 50, 32);
+                resetBrCrButton.setUserBounds(volView.__imgMap.width + colorsTabView.getSizeHint().width + 39, 41, 50, 32);
             else
-                resetBrCrButton.setUserBounds(imgMap.width + colorsTabView.getSizeHint().width + 39, 36, 50, 32);
+                resetBrCrButton.setUserBounds(volView.__imgMap.width + colorsTabView.getSizeHint().width + 39, 36, 50, 32);
 			
 			
 			
@@ -735,7 +735,7 @@ qx.Class.define("desk.volView",
 			
 		////Create slider
             var slider = new qx.ui.form.Slider();
-            slider.setHeight(imgMap.height - 18);  ////  set below to match image height
+            slider.setHeight(volView.__imgMap.height - 18);  ////  set below to match image height
             slider.setWidth(30);
             slider.setMaximum(numberOfSlices-1);
             slider.setMinimum(0);
@@ -754,7 +754,7 @@ qx.Class.define("desk.volView",
             slider.bind("maximum", spinner, "maximum");
             spinner.bind("minimum", slider, "minimum");
             slider.bind("minimum", spinner, "minimum");
-            this.add(spinner, {left: 0, top: imgMap.height + 8});
+            this.add(spinner, {left: 0, top: volView.__imgMap.height + 8});
 			
 			
 			
@@ -783,7 +783,7 @@ qx.Class.define("desk.volView",
                     mouseData.mouseLeftDownFlag = false;
             },this);
 
-            this.add(slicesTabView, {left: imgMap.width + 50, top: colorsTabView.getLayoutProperties().top + colorsTabView.getSizeHint().height+8 + 61});
+            this.add(slicesTabView, {left: volView.__imgMap.width + 50, top: colorsTabView.getLayoutProperties().top + colorsTabView.getSizeHint().height+8 + 61});
 			
 			var modifSlicesList = new qx.ui.form.List(true);
 			modifSlicesList.set({ height: 64, width: colorsTabView.getSizeHint().width, selectionMode : "one" , spacing : 8});
@@ -955,8 +955,8 @@ qx.Class.define("desk.volView",
                     mouseData.mouseLeftDownFlag = false;
             },this);
 			
-            this.add(startButton, {left: imgMap.width - 4, top: imgMap.height + 7});
-			// this.add(selectBox, {left: imgMap.width - selectBox.getSizeHint().width+8 - startButton.getSizeHint().width+8 + 26, top: imgMap.height + 7});
+            this.add(startButton, {left: volView.__imgMap.width - 4, top: volView.__imgMap.height + 7});
+			// this.add(selectBox, {left: volView.__imgMap.width - selectBox.getSizeHint().width+8 - startButton.getSizeHint().width+8 + 26, top: volView.__imgMap.height + 7});
 			
 			
 			
@@ -1039,8 +1039,8 @@ qx.Class.define("desk.volView",
 			
 			
 			var externalWindow = new qx.ui.window.Window("Segmented image").set({
-                    width: imgMap.width + 10 + 10,
-                    height: imgMap.height + 35 + 10,
+                    width: volView.__imgMap.width + 10 + 10,
+                    height: volView.__imgMap.height + 35 + 10,
                     showMinimize: false,
                     showMaximize: false,
                     showClose: true,
@@ -1071,7 +1071,7 @@ qx.Class.define("desk.volView",
 					}
 			},this);
 			extWinCheckBox.set({opacity: 0.5, enabled : false});
-			this.add(extWinCheckBox, {left: imgMap.width - extWinCheckBox.getSizeHint().width+4 + 73, top: drawingDrwngOpacityLabel.getLayoutProperties().top - 4});
+			this.add(extWinCheckBox, {left: volView.__imgMap.width - extWinCheckBox.getSizeHint().width+4 + 73, top: drawingDrwngOpacityLabel.getLayoutProperties().top - 4});
 			externalWindow.addListener("close", function(event)
 			{
 					extWinCheckBox.setValue(false);
@@ -1100,7 +1100,7 @@ qx.Class.define("desk.volView",
 			
 			
 			var extWinSegImgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true, zIndex: 7});
-            extWinSegImgCanvas.setUserBounds(0, 0, imgMap.width, imgMap.height);
+            extWinSegImgCanvas.setUserBounds(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 			extWinSegImgCanvas.addListener("redraw", function(event)
 			{
                     var data = event.getData();
@@ -1115,7 +1115,7 @@ qx.Class.define("desk.volView",
             externalWindow.add(extWinSegImgCanvas, {left: 0, top: 0});
 
 			var extWinSeedsCanvas = new qx.ui.embed.Canvas().set({syncDimension: true, zIndex: 3, opacity: 0});
-            extWinSeedsCanvas.setUserBounds(0, 0, imgMap.width, imgMap.height);
+            extWinSeedsCanvas.setUserBounds(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 			extWinSeedsCanvas.addListener("redraw", function(event)
 			{
                     var data = event.getData();
@@ -1162,7 +1162,7 @@ qx.Class.define("desk.volView",
 				////Update image
                     if(!((mouseData.brCrFixingFlag)&&(mouseData.mouseLeftDownFlag)))
 					{
-							drawingCanvasParams.drawingContext.clearRect(-16, -16, imgMap.width+32, imgMap.height+32);
+							drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 							drawZoomedCanvas(drawingCanvasParams.curCtxtZoom,false);
                     }
 					getPosition(event,true);
@@ -1230,14 +1230,14 @@ qx.Class.define("desk.volView",
 							if((1<=zoomFactor)&&(zoomFactor<=MaxZoom))	////Only zoom no shrinking and not more than Max zoom
 							{
 									volView.debug(" zoom = x" + zoomFactor);
-									mouseData.xPos = event.getDocumentLeft()-volView.__winMap.left-10-imgMap.left;
-									mouseData.yPos = event.getDocumentTop()-volView.__winMap.top-35-imgMap.top;
+									mouseData.xPos = event.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left;
+									mouseData.yPos = event.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top;
 									////volView.debug(event.getType() + "(" + mouseData.xPos + "," + mouseData.yPos + ")");
 									var onImageX = mouseData.decaleZoomX + mouseData.xPos;
 									var onImageY = mouseData.decaleZoomY + mouseData.yPos;
 									////volView.debug("on image : (" + onImageX + "," + onImageY + ")");
-									imgCanvasParams.imgContext.clearRect(-16,-16,imgMap.width+32, imgMap.height+32);
-									drawingCanvasParams.drawingContext.clearRect(-16,-16,imgMap.width+32, imgMap.height+32);
+									imgCanvasParams.imgContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
+									drawingCanvasParams.drawingContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
 								////Zoom in
 									if(zoomFactor!=1)
 									{
@@ -1249,11 +1249,11 @@ qx.Class.define("desk.volView",
 											{
 													mouseData.decaleZoomX = 0;
 											}
-											if(imgMap.width-imgMap.width/zoomFactor<tempDecaleX)
+											if(volView.__imgMap.width-volView.__imgMap.width/zoomFactor<tempDecaleX)
 											{
-													mouseData.decaleZoomX = imgMap.width-imgMap.width/zoomFactor;
+													mouseData.decaleZoomX = volView.__imgMap.width-volView.__imgMap.width/zoomFactor;
 											}
-											if((0<=tempDecaleX)&&(tempDecaleX<=imgMap.width-imgMap.width/zoomFactor))
+											if((0<=tempDecaleX)&&(tempDecaleX<=volView.__imgMap.width-volView.__imgMap.width/zoomFactor))
 											{
 													mouseData.decaleZoomX = tempDecaleX;
 											}
@@ -1261,11 +1261,11 @@ qx.Class.define("desk.volView",
 											{
 													mouseData.decaleZoomY = 0;
 											}
-											if(imgMap.height-imgMap.height/zoomFactor<tempDecaleY)
+											if(volView.__imgMap.height-volView.__imgMap.height/zoomFactor<tempDecaleY)
 											{
-													mouseData.decaleZoomY = imgMap.height-imgMap.height/zoomFactor;
+													mouseData.decaleZoomY = volView.__imgMap.height-volView.__imgMap.height/zoomFactor;
 											}
-											if((0<=tempDecaleY)&&(tempDecaleY<=imgMap.height-imgMap.height/zoomFactor))
+											if((0<=tempDecaleY)&&(tempDecaleY<=volView.__imgMap.height-volView.__imgMap.height/zoomFactor))
 											{
 													mouseData.decaleZoomY = tempDecaleY;
 											}
@@ -1292,8 +1292,8 @@ qx.Class.define("desk.volView",
 								////Place the center of the eraser at mouse position
 									if(drawingCanvasParams.eraseFlag)
 									{
-											eraserCursor.set({marginLeft: Math.round((mouseData.xPos/zoomFactor-eraserCursor.getBounds().width/(2*zoomFactor))*zoomFactor+imgMap.left),
-																marginTop: Math.round((mouseData.yPos/zoomFactor-eraserCursor.getBounds().height/(2*zoomFactor))*zoomFactor+imgMap.top)});
+											eraserCursor.set({marginLeft: Math.round((mouseData.xPos/zoomFactor-eraserCursor.getBounds().width/(2*zoomFactor))*zoomFactor+volView.__imgMap.left),
+																marginTop: Math.round((mouseData.yPos/zoomFactor-eraserCursor.getBounds().height/(2*zoomFactor))*zoomFactor+volView.__imgMap.top)});
 									}
 									wheelScale = tempScale;
 									drawingCanvasParams.curCtxtZoom = zoomFactor;
@@ -1311,10 +1311,10 @@ qx.Class.define("desk.volView",
 				////Set eraser cursor position
 					if(drawingCanvasParams.eraseFlag)
                     {
-							var tempX = (event.getDocumentLeft()-volView.__winMap.left-10-imgMap.left)/drawingCanvasParams.curCtxtZoom;
-							var tempY = (event.getDocumentTop()-volView.__winMap.top-35-imgMap.top)/drawingCanvasParams.curCtxtZoom;
-							eraserCursor.set({marginLeft: Math.round((tempX-eraserCoeff*htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+imgMap.left),
-												marginTop: Math.round((tempY-eraserCoeff*htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+imgMap.top)});
+							var tempX = (event.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/drawingCanvasParams.curCtxtZoom;
+							var tempY = (event.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/drawingCanvasParams.curCtxtZoom;
+							eraserCursor.set({marginLeft: Math.round((tempX-eraserCoeff*htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
+												marginTop: Math.round((tempY-eraserCoeff*htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
                             if(eraserCursor.getVisibility()=="excluded")
 							{
                                     eraserCursor.show();
@@ -1339,8 +1339,8 @@ qx.Class.define("desk.volView",
 						////Use mouse mouvement to set brightness/contrast
                             if(drawingCanvasParams.brCrFixingFlag)
                             {
-                                    var tempBrightness = imgCanvasParams.brightness + (mouseData.yPos-mouseData.recentY)*150/imgMap.height;
-                                    var tempContrast = imgCanvasParams.contrast + (mouseData.xPos-mouseData.recentX)*5/imgMap.width;
+                                    var tempBrightness = imgCanvasParams.brightness + (mouseData.yPos-mouseData.recentY)*150/volView.__imgMap.height;
+                                    var tempContrast = imgCanvasParams.contrast + (mouseData.xPos-mouseData.recentX)*5/volView.__imgMap.width;
                                     if((0<tempBrightness+150)&&(tempBrightness<150))
                                             imgCanvasParams.brightness = tempBrightness;
                                     if((0<tempContrast+1)&&(tempContrast<5))
@@ -1386,8 +1386,8 @@ qx.Class.define("desk.volView",
 			
 			var segmentedImgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true, zIndex: drawingCanvasZ-1});
 			segmentedImgCanvas.set({opacity: 0});
-            this.add(segmentedImgCanvas, {left: imgMap.left, top: imgMap.top});
-            segmentedImgCanvas.setUserBounds(imgMap.left, imgMap.top, imgMap.width, imgMap.height);
+            this.add(segmentedImgCanvas, {left: volView.__imgMap.left, top: volView.__imgMap.top});
+            segmentedImgCanvas.setUserBounds(volView.__imgMap.left, volView.__imgMap.top, volView.__imgMap.width, volView.__imgMap.height);
 			segmentedImgCanvas.addListener("redraw", function(event)
 			{
                     var data = event.getData();
@@ -1430,9 +1430,9 @@ qx.Class.define("desk.volView",
 			
 			var imgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true, zIndex: imageZ});
 			
-            this.add(imgCanvas, {left: imgMap.left, top: imgMap.top});
+            this.add(imgCanvas, {left: volView.__imgMap.left, top: volView.__imgMap.top});
 			
-            imgCanvas.setUserBounds(imgMap.left, imgMap.top, imgMap.width, imgMap.height);
+            imgCanvas.setUserBounds(volView.__imgMap.left, volView.__imgMap.top, volView.__imgMap.width, volView.__imgMap.height);
 			
 			imgCanvas.addListener("redraw", function(event)
 			{
@@ -1474,7 +1474,7 @@ qx.Class.define("desk.volView",
 						if(drawingCanvasParams.drawingContext!=null)
 						{
 								canvasImage = horizSlices.sliceImages[drawingCanvasParams.sliceNumber].srcImage;
-								drawingCanvasParams.drawingContext.clearRect(-16, -16, imgMap.width+32, imgMap.height+32);
+								drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 								drawZoomedCanvas(drawingCanvasParams.curCtxtZoom,true);
 						}
 				};
@@ -1507,69 +1507,69 @@ qx.Class.define("desk.volView",
 			drawingCanvas.addListener("keydown", keyDownHandler, this);
 			drawingCanvas.addListener("keyup", keyUpHandler, this);
 			
-            this.add(drawingCanvas, {left: imgMap.left, top: imgMap.top});
+            this.add(drawingCanvas, {left: volView.__imgMap.left, top: volView.__imgMap.top});
 
-            drawingCanvas.setUserBounds(imgMap.left, imgMap.top, imgMap.width, imgMap.height);
+            drawingCanvas.setUserBounds(volView.__imgMap.left, volView.__imgMap.top, volView.__imgMap.width, volView.__imgMap.height);
 			
 			
 			
             // HTML embed for background image
-            var embedHtmlCodeImage = '<canvas id="htmlTagCanvasImage" width="' + imgMap.width + '" height="' + imgMap.height + '" ></canvas>';
+            var embedHtmlCodeImage = '<canvas id="htmlTagCanvasImage" width="' + volView.__imgMap.width + '" height="' + volView.__imgMap.height + '" ></canvas>';
             var embedObjectImage = new qx.ui.embed.Html(embedHtmlCodeImage);
             embedObjectImage.setDecorator("main");
-            embedObjectImage.setWidth(imgMap.width);
-            embedObjectImage.setHeight(imgMap.height);
+            embedObjectImage.setWidth(volView.__imgMap.width);
+            embedObjectImage.setHeight(volView.__imgMap.height);
 			
             var containerLayoutImage = new qx.ui.layout.VBox();
             var containerHtmlImage = new qx.ui.container.Composite(containerLayoutImage);
             containerHtmlImage.add(embedObjectImage);
 			
-            this.add(containerHtmlImage, {left: imgMap.left/*  + 500 */, top: imgMap.top/*  + 260 */});
+            this.add(containerHtmlImage, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
 			
 			
 			
             // HTML embed for drawn labels
-            var embedHtmlCodeLabels = '<canvas id="htmlTagCanvasLabels" width="' + imgMap.width + '" height="' + imgMap.height + '" ></canvas>';
+            var embedHtmlCodeLabels = '<canvas id="htmlTagCanvasLabels" width="' + volView.__imgMap.width + '" height="' + volView.__imgMap.height + '" ></canvas>';
             var embedObjectLabels = new qx.ui.embed.Html(embedHtmlCodeLabels);
             embedObjectLabels.setDecorator("main");
-            embedObjectLabels.setWidth(imgMap.width);
-            embedObjectLabels.setHeight(imgMap.height);
+            embedObjectLabels.setWidth(volView.__imgMap.width);
+            embedObjectLabels.setHeight(volView.__imgMap.height);
 			
             var containerLayoutLabels = new qx.ui.layout.VBox();
             var containerHtmlLabels = new qx.ui.container.Composite(containerLayoutLabels);
             containerHtmlLabels.add(embedObjectLabels);
 			
-            this.add(containerHtmlLabels, {left: imgMap.left/*  + 500 */, top: imgMap.top/*  + 260 */});
+            this.add(containerHtmlLabels, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
 			
 			
 			
             // HTML embed for segmented image
-            var embedHtmlCodeSegImg = '<canvas id="htmlTagCanvasSegImg" width="' + imgMap.width + '" height="' + imgMap.height + '" ></canvas>';
+            var embedHtmlCodeSegImg = '<canvas id="htmlTagCanvasSegImg" width="' + volView.__imgMap.width + '" height="' + volView.__imgMap.height + '" ></canvas>';
             var embedObjectSegImg = new qx.ui.embed.Html(embedHtmlCodeSegImg);
             embedObjectSegImg.setDecorator("main");
-            embedObjectSegImg.setWidth(imgMap.width);
-            embedObjectSegImg.setHeight(imgMap.height);
+            embedObjectSegImg.setWidth(volView.__imgMap.width);
+            embedObjectSegImg.setHeight(volView.__imgMap.height);
 			
             var containerLayoutSegImg = new qx.ui.layout.VBox();
             var containerHtmlSegImg = new qx.ui.container.Composite(containerLayoutSegImg);
             containerHtmlSegImg.add(embedObjectSegImg);
 			
-            this.add(containerHtmlSegImg, {left: imgMap.left/*  + 500 */, top: imgMap.top/*  + 260 */});
+            this.add(containerHtmlSegImg, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
 			
 			
 			
             // HTML embed for seeds used for segmentation
-            var embedHtmlCodeUsedSeeds = '<canvas id="htmlTagCanvasUsedSeeds" width="' + imgMap.width + '" height="' + imgMap.height + '" ></canvas>';
+            var embedHtmlCodeUsedSeeds = '<canvas id="htmlTagCanvasUsedSeeds" width="' + volView.__imgMap.width + '" height="' + volView.__imgMap.height + '" ></canvas>';
             var embedObjectUsedSeeds = new qx.ui.embed.Html(embedHtmlCodeUsedSeeds);
             embedObjectUsedSeeds.setDecorator("main");
-            embedObjectUsedSeeds.setWidth(imgMap.width);
-            embedObjectUsedSeeds.setHeight(imgMap.height);
+            embedObjectUsedSeeds.setWidth(volView.__imgMap.width);
+            embedObjectUsedSeeds.setHeight(volView.__imgMap.height);
 			
             var containerLayoutUsedSeeds = new qx.ui.layout.VBox();
             var containerHtmlUsedSeeds = new qx.ui.container.Composite(containerLayoutUsedSeeds);
             containerHtmlUsedSeeds.add(embedObjectUsedSeeds);
 			
-            this.add(containerHtmlUsedSeeds, {left: imgMap.left/*  + 500 */, top: imgMap.top/*  + 260 */});
+            this.add(containerHtmlUsedSeeds, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
 			
 			
 			
@@ -1614,7 +1614,7 @@ qx.Class.define("desk.volView",
 					htmlContextLabels.beginPath();
 					mouseData.mouseLeftDownFlag = false;
 				////Save current image
-					horizSlices.sliceLabels[drawingCanvasParams.sliceNumber] = htmlContextLabels.getImageData(0, 0, imgMap.width, imgMap.height);
+					horizSlices.sliceLabels[drawingCanvasParams.sliceNumber] = htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 					tempNum = drawingCanvasParams.sliceNumber;
 					horizSlices.inProgData[tempNum].curTagged = !pngCanvasFctn();	//  pngCanvasFctn() returns true if image is all black
 					drawingCanvasParams.sliceNumber = event.getData();
@@ -1629,7 +1629,7 @@ qx.Class.define("desk.volView",
 							if(typeof horizSlices.usedSliceSeeds[drawingCanvasParams.sliceNumber][index] != "undefined")
 									htmlContextUsedSeeds.putImageData(horizSlices.usedSliceSeeds[drawingCanvasParams.sliceNumber][index], 0, 0);
 							else
-									htmlContextUsedSeeds.clearRect(-16, -16, imgMap.width+32, imgMap.height+32);
+									htmlContextUsedSeeds.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 					}
 				////Update lists
 					if(horizSlices.inProgData[tempNum].curTagged)	////CURRENT slice has seeds
@@ -1774,7 +1774,7 @@ qx.Class.define("desk.volView",
 					else	////NEXT slice has NO seeds
 					{
 							clearButton.execute();
-							htmlContextLabels.clearRect(-16, -16, imgMap.width+32, imgMap.height+32);
+							htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 							startButton.set({opacity: 0.5, enabled : false});
 							if(listMembers.length<1)
 							{
@@ -1836,7 +1836,7 @@ qx.Class.define("desk.volView",
 					{
 						////Slice has previously been accessed. Load image by copying image into "canvasImage" global variable
 							canvasImage = horizSlices.sliceImages[drawingCanvasParams.sliceNumber].srcImage;
-							drawingCanvasParams.drawingContext.clearRect(-16, -16, imgMap.width+32, imgMap.height+32);
+							drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 							drawZoomedCanvas(drawingCanvasParams.curCtxtZoom,true);
 					};
 				////Clear "undo" stack
@@ -1849,7 +1849,7 @@ qx.Class.define("desk.volView",
                     mouseData.mouseLeftDownFlag = false;
             },this);
 			
-            slider.setHeight(imgMap.height);    //	set to match image height
+            slider.setHeight(volView.__imgMap.height);    //	set to match image height
 			slider.setValue(0);
 			
             spinner.addListener("mouseup", function(event)
@@ -1886,8 +1886,8 @@ qx.Class.define("desk.volView",
 		////If(scaling) applies zoom factor for relative coordinates (on zoomed window)
 			var getPosition = function(mouseEvent,scaling)
             {
-					mouseData.xPos = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-imgMap.left)/drawingCanvasParams.curCtxtZoom;
-					mouseData.yPos = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-imgMap.top)/drawingCanvasParams.curCtxtZoom;
+					mouseData.xPos = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/drawingCanvasParams.curCtxtZoom;
+					mouseData.yPos = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/drawingCanvasParams.curCtxtZoom;
 					////volView.debug(mouseEvent.getType() + "(" + mouseData.xPos + "," + mouseData.yPos + ")");
 					if(scaling)
 					{
@@ -1934,24 +1934,24 @@ qx.Class.define("desk.volView",
             {
                     var sx = mouseData.decaleZoomX/zoomFactor;
                     var sy = mouseData.decaleZoomY/zoomFactor;
-                    var sdw = imgMap.width/zoomFactor;
-                    var sdh = imgMap.height/zoomFactor;
+                    var sdw = volView.__imgMap.width/zoomFactor;
+                    var sdh = volView.__imgMap.height/zoomFactor;
 				////Make sure values are integers and complemantary
 					if(sx<0)
 					{
 							sx = 0;
 					}
-					if(imgMap.width<sx+sdw)
+					if(volView.__imgMap.width<sx+sdw)
 					{
-							sx = Math.abs(imgMap.width-sdw);
+							sx = Math.abs(volView.__imgMap.width-sdw);
 					}
 					if(sy<0)
 					{
 							sy = 0;
 					}
-					if(imgMap.height<sy+sdh)
+					if(volView.__imgMap.height<sy+sdh)
 					{
-							sy = Math.abs(imgMap.height-sdh);
+							sy = Math.abs(volView.__imgMap.height-sdh);
 					}
 					drawingCanvasParams.drawingContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
 					imgCanvasParams.imgContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
@@ -1978,17 +1978,17 @@ qx.Class.define("desk.volView",
 						}
 						else
 						{
-								htmlContextImage.clearRect(-16, -16, imgMap.width+32, imgMap.height+32);
+								htmlContextImage.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 								htmlContextImage.font = 'bold 21px sans-serif';
 								htmlContextImage.textBaseLine = 'bottom';
-								htmlContextImage.fillText('Image not yet loaded', (imgMap.width-imgMap.height)/2, imgMap.height/2);
-								imgCanvasParams.imgContext.clearRect(-16, -16, imgMap.width+32, imgMap.height+32);
+								htmlContextImage.fillText('Image not yet loaded', (volView.__imgMap.width-volView.__imgMap.height)/2, volView.__imgMap.height/2);
+								imgCanvasParams.imgContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 						}
 					}
 				////Refresh drawing canevas while only moving cursor
 					if(!((mouseData.brCrFixingFlag)&&(mouseData.mouseLeftDownFlag)&&(drawingCanvasParams.eraseFlag)))
 					{
-							drawingCanvasParams.drawingContext.clearRect(-16, -16, imgMap.width+32, imgMap.height+32);
+							drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 							drawingCanvasParams.drawingContext.drawImage(htmlCanvasLabels,
                                                                         sx,
                                                                         sy,
@@ -1998,7 +1998,7 @@ qx.Class.define("desk.volView",
                                                                         0,
                                                                         sdw,
                                                                         sdh);
-							segmentedImgCanvas.segImgContext.clearRect(-16, -16, imgMap.width+32, imgMap.height+32);
+							segmentedImgCanvas.segImgContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 							segmentedImgCanvas.segImgContext.drawImage(htmlCanvasSegImg,
                                                                         sx,
                                                                         sy,
@@ -2008,7 +2008,7 @@ qx.Class.define("desk.volView",
                                                                         0,
                                                                         sdw,
                                                                         sdh);
-							extWinSeedsCanvas.extWinSeedsContext.clearRect(-16, -16, imgMap.width+32, imgMap.height+32);
+							extWinSeedsCanvas.extWinSeedsContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 							extWinSeedsCanvas.extWinSeedsContext.drawImage(htmlCanvasUsedSeeds,
                                                                         sx,
                                                                         sy,
@@ -2018,7 +2018,7 @@ qx.Class.define("desk.volView",
                                                                         0,
                                                                         sdw,
                                                                         sdh);
-							extWinSegImgCanvas.extWinSegImgContext.clearRect(-16, -16, imgMap.width+32, imgMap.height+32);
+							extWinSegImgCanvas.extWinSegImgContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 							extWinSegImgCanvas.extWinSegImgContext.drawImage(htmlCanvasSegImg,
                                                                         sx,
                                                                         sy,
@@ -2039,10 +2039,10 @@ qx.Class.define("desk.volView",
 		////The labels image is not modified
 			var drawBrush = function(mouseEvent,scale)
             {
-                    var tempX = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-imgMap.left)/scale;
-                    var tempY = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-imgMap.top)/scale;
+                    var tempX = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/scale;
+                    var tempY = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/scale;
                     var tempMargin = 4/scale;
-                    if((tempMargin<tempX)&&(tempX<imgMap.width/scale-tempMargin)&&(tempMargin<tempY)&&(tempY<imgMap.height/scale-tempMargin))
+                    if((tempMargin<tempX)&&(tempX<volView.__imgMap.width/scale-tempMargin)&&(tempMargin<tempY)&&(tempY<volView.__imgMap.height/scale-tempMargin))
                     {
                             drawingCanvasParams.drawingContext.strokeStyle = drawingCanvasParams.currentColor;
                             drawingCanvasParams.drawingContext.fillStyle = drawingCanvasParams.currentColor;
@@ -2063,10 +2063,10 @@ qx.Class.define("desk.volView",
 		////Draw cross in the results window at copied mouse position
 			var drawPointer = function(mouseEvent,scale)
             {
-                    var tempX = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-imgMap.left)/scale;
-                    var tempY = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-imgMap.top)/scale;
+                    var tempX = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/scale;
+                    var tempY = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/scale;
                     var tempMargin = 4/scale;
-                    if((tempMargin<tempX)&&(tempX<imgMap.width/scale-tempMargin)&&(tempMargin<tempY)&&(tempY<imgMap.height/scale-tempMargin))
+                    if((tempMargin<tempX)&&(tempX<volView.__imgMap.width/scale-tempMargin)&&(tempMargin<tempY)&&(tempY<volView.__imgMap.height/scale-tempMargin))
                     {
 						////Set line width
 							extWinSegImgCanvas.extWinSegImgContext.lineWidth = 5/scale;
@@ -2113,7 +2113,7 @@ qx.Class.define("desk.volView",
 							var tempData = [];
 							if(ctrlZData.length==0)
 							{
-									tempData[0] = htmlContextLabels.getImageData(0, 0, imgMap.width, imgMap.height);
+									tempData[0] = htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 							}
 							else
 							{
@@ -2123,7 +2123,7 @@ qx.Class.define("desk.volView",
 											{
 													tempData[ctrlZData.length-i] = ctrlZData[ctrlZData.length-i-1];
 											}
-											tempData[0] = htmlContextLabels.getImageData(0, 0, imgMap.width, imgMap.height);
+											tempData[0] = htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 									}
 									else
 									{
@@ -2133,7 +2133,7 @@ qx.Class.define("desk.volView",
 													{
 															tempData[ctrlZData.length-i] = ctrlZData[ctrlZData.length-i-1];
 													}
-													tempData[0] = htmlContextLabels.getImageData(0, 0, imgMap.width, imgMap.height);
+													tempData[0] = htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 											}
 									}
 							}
@@ -2177,11 +2177,11 @@ qx.Class.define("desk.volView",
 					{
 							mouseData.decaleZoomX = 0;
 					}
-					if(imgMap.width-imgMap.width/drawingCanvasParams.curCtxtZoom<tempDecaleX)
+					if(volView.__imgMap.width-volView.__imgMap.width/drawingCanvasParams.curCtxtZoom<tempDecaleX)
 					{
-							mouseData.decaleZoomX = imgMap.width-imgMap.width/drawingCanvasParams.curCtxtZoom;
+							mouseData.decaleZoomX = volView.__imgMap.width-volView.__imgMap.width/drawingCanvasParams.curCtxtZoom;
 					}
-					if((0<=tempDecaleX)&&(tempDecaleX<=imgMap.width-imgMap.width/drawingCanvasParams.curCtxtZoom))
+					if((0<=tempDecaleX)&&(tempDecaleX<=volView.__imgMap.width-volView.__imgMap.width/drawingCanvasParams.curCtxtZoom))
 					{
 							mouseData.decaleZoomX = tempDecaleX;
 					}
@@ -2189,11 +2189,11 @@ qx.Class.define("desk.volView",
 					{
 							mouseData.decaleZoomY = 0;
 					}
-					if(imgMap.height-imgMap.height/drawingCanvasParams.curCtxtZoom<tempDecaleY)
+					if(volView.__imgMap.height-volView.__imgMap.height/drawingCanvasParams.curCtxtZoom<tempDecaleY)
 					{
-							mouseData.decaleZoomY = imgMap.height-imgMap.height/drawingCanvasParams.curCtxtZoom;
+							mouseData.decaleZoomY = volView.__imgMap.height-volView.__imgMap.height/drawingCanvasParams.curCtxtZoom;
 					}
-					if((0<=tempDecaleY)&&(tempDecaleY<=imgMap.height-imgMap.height/drawingCanvasParams.curCtxtZoom))
+					if((0<=tempDecaleY)&&(tempDecaleY<=volView.__imgMap.height-volView.__imgMap.height/drawingCanvasParams.curCtxtZoom))
 					{
 							mouseData.decaleZoomY = tempDecaleY;
 					}
@@ -2249,11 +2249,11 @@ qx.Class.define("desk.volView",
 					htmlContextImage.putImageData(outImg, 0, 0);
 					imgCanvasParams.imgContext.drawImage(htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);
 					drawingCanvasParams.drawingContext.setTransform(1,0,0,1,0,0);
-					extWinSegImgCanvas.extWinSegImgContext.clearRect(-16,-16,imgMap.width+32, imgMap.height+32);
+					extWinSegImgCanvas.extWinSegImgContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
 					drawingCanvasParams.drawingContext.drawImage(htmlCanvasLabels,0,0);
 					extWinSegImgCanvas.extWinSegImgContext.setTransform(1,0,0,1,0,0);
 					extWinSegImgCanvas.extWinSegImgContext.drawImage(htmlCanvasSegImg,0,0);
-					extWinSeedsCanvas.extWinSeedsContext.clearRect(-16,-16,imgMap.width+32, imgMap.height+32);
+					extWinSeedsCanvas.extWinSeedsContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
 					extWinSeedsCanvas.extWinSeedsContext.setTransform(1,0,0,1,0,0);
 					extWinSeedsCanvas.extWinSeedsContext.drawImage(htmlCanvasUsedSeeds,0,0);
 					mouseData.decaleZoomX = 0;
@@ -2270,7 +2270,7 @@ qx.Class.define("desk.volView",
 		//// to return true value if image is all black (if canvas is empty)
             var pngCanvasFctn = function()
             {
-                    var sliceData = htmlContextImage.getImageData(0, 0, imgMap.width, imgMap.height);
+                    var sliceData = htmlContextImage.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
                     var pixels = sliceData.data;
                     var seeds = horizSlices.sliceLabels[drawingCanvasParams.sliceNumber].data;
                     var isAllBlack = true;
