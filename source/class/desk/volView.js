@@ -19,19 +19,7 @@ qx.Class.define("desk.volView",
         };
 
     ////Global variables
-		
-        mouseData = {
-                xPos : 0,
-                yPos : 0,
-                recentX : 0,
-                recentY : 0,
-                decaleZoomX : 0,
-                decaleZoomY : 0,
-                mouseLeftDownFlag : 0,
-                mouseMiddleDownFlag : 0,
-                mouseRightDownFlag : 0
-        };
-		
+
         labelColors = [];
 		
         imageZ = 1;
@@ -169,6 +157,18 @@ qx.Class.define("desk.volView",
 
 		__undoLimit : 10,
 
+		__mouseData : {
+		xPos : 0,
+		yPos : 0,
+		recentX : 0,
+		recentY : 0,
+		decaleZoomX : 0,
+		decaleZoomY : 0,
+		mouseLeftDownFlag : 0,
+		mouseMiddleDownFlag : 0,
+		mouseRightDownFlag : 0
+		},
+
 		__path : null,
 		// __offset : null,
 		// __prefix : null,
@@ -261,8 +261,8 @@ qx.Class.define("desk.volView",
                 if(((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.brCrFixingFlag))&&(!volView.__drawingCanvasParams.eraseFlag))
                 {
 						volView.__htmlContextLabels.beginPath();
-						mouseData.mouseLeftDownFlag = false;
-						mouseData.mouseMiddleDownFlag = false;
+						volView.__mouseData.mouseLeftDownFlag = false;
+						volView.__mouseData.mouseMiddleDownFlag = false;
 						eraserCursor.set({cursor: "default"});
 						drawingCanvas.set({cursor: "default"});
                 }
@@ -274,11 +274,11 @@ qx.Class.define("desk.volView",
                 {
 						getPosition(event,false);
 						var tempMargin = 4;
-						if(!((tempMargin<=mouseData.xPos)&&(mouseData.xPos<=volView.__imgMap.width-tempMargin)&&(tempMargin<=mouseData.yPos)&&(mouseData.yPos<=volView.__imgMap.height-tempMargin)))
+						if(!((tempMargin<=volView.__mouseData.xPos)&&(volView.__mouseData.xPos<=volView.__imgMap.width-tempMargin)&&(tempMargin<=volView.__mouseData.yPos)&&(volView.__mouseData.yPos<=volView.__imgMap.height-tempMargin)))
 						{
 								volView.__htmlContextLabels.beginPath();
-								mouseData.mouseLeftDownFlag = false;
-								mouseData.mouseMiddleDownFlag = false;
+								volView.__mouseData.mouseLeftDownFlag = false;
+								volView.__mouseData.mouseMiddleDownFlag = false;
 								eraserCursor.set({cursor: "default"});
 								drawingCanvas.set({cursor: "default"});
 						}
@@ -389,15 +389,15 @@ qx.Class.define("desk.volView",
 							getPosition(event,true);
 							save2undoStack(event);
 							eraseFnct();
-                            mouseData.mouseLeftDownFlag = true;	// Activate erasing while moving
+                            volView.__mouseData.mouseLeftDownFlag = true;	// Activate erasing while moving
                     }
 				////Activate moving
                     if(event.isMiddlePressed())
                     {
 							eraserCursor.set({cursor: "move"});
-                            mouseData.mouseMiddleDownFlag = true;
-							mouseData.recentX = mouseData.xPos;
-							mouseData.recentY = mouseData.yPos;
+                            volView.__mouseData.mouseMiddleDownFlag = true;
+							volView.__mouseData.recentX = volView.__mouseData.xPos;
+							volView.__mouseData.recentY = volView.__mouseData.yPos;
                     }
 				////"Undo" (draw previous canvas)
 					undoFnct(event);
@@ -408,7 +408,7 @@ qx.Class.define("desk.volView",
 					getPosition(event,false);	// No scaling so coordinates are compatible with placeEraser function
                     var tempMargin = 4/volView.__drawingCanvasParams.curCtxtZoom;
 				////Hide eraser if out of drawing zone
-                    if(!((tempMargin<=mouseData.xPos)&&(mouseData.xPos<=volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom-tempMargin)&&(tempMargin<=mouseData.yPos)&&(mouseData.yPos<=volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom-tempMargin)))
+                    if(!((tempMargin<=volView.__mouseData.xPos)&&(volView.__mouseData.xPos<=volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom-tempMargin)&&(tempMargin<=volView.__mouseData.yPos)&&(volView.__mouseData.yPos<=volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom-tempMargin)))
                     {
                             if(eraserCursor.getVisibility()=="visible")
 							{
@@ -416,13 +416,13 @@ qx.Class.define("desk.volView",
 							}
                     }
 				////Move eraser to mouse position
-                    eraserCursor.set({marginLeft: Math.round((mouseData.xPos-eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
-                                        marginTop: Math.round((mouseData.yPos-eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
-					mouseData.xPos = mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + mouseData.xPos;
-                    mouseData.yPos = mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + mouseData.yPos;
-					if(mouseData.mouseLeftDownFlag)
+                    eraserCursor.set({marginLeft: Math.round((volView.__mouseData.xPos-eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
+                                        marginTop: Math.round((volView.__mouseData.yPos-eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
+					volView.__mouseData.xPos = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.xPos;
+                    volView.__mouseData.yPos = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.yPos;
+					if(volView.__mouseData.mouseLeftDownFlag)
 							eraseFnct(true);
-                    if(mouseData.mouseMiddleDownFlag)
+                    if(volView.__mouseData.mouseMiddleDownFlag)
                     {
 							moveCanvas();
                     }
@@ -430,8 +430,8 @@ qx.Class.define("desk.volView",
 			
             eraserCursor.addListener("mouseup", function(event)
 			{
-                    mouseData.mouseMiddleDownFlag = false;
-                    mouseData.mouseLeftDownFlag = false;
+                    volView.__mouseData.mouseMiddleDownFlag = false;
+                    volView.__mouseData.mouseLeftDownFlag = false;
 					eraserCursor.set({cursor: "default"});
             },this);
 
@@ -488,7 +488,7 @@ qx.Class.define("desk.volView",
             eraserButton.addListener("mouseup", function(event)
 			{
                     volView.__htmlContextLabels.beginPath();
-                    mouseData.mouseLeftDownFlag = false;
+                    volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 			
             if(this.__winXP)
@@ -508,7 +508,7 @@ qx.Class.define("desk.volView",
                     volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
                     volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 					volView.__htmlContextLabels.beginPath();
-                    mouseData.mouseLeftDownFlag = false;
+                    volView.__mouseData.mouseLeftDownFlag = false;
                     clearButton.set({opacity: 0.5, enabled : false});
                     eraserButton.set({opacity: 0.5, enabled : false});
                     eraserButton.setValue(false);
@@ -519,7 +519,7 @@ qx.Class.define("desk.volView",
             clearButton.addListener("mouseup", function(event)
 			{
                     volView.__htmlContextLabels.beginPath();
-                    mouseData.mouseLeftDownFlag = false;
+                    volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 			
 			if(this.__winXP)
@@ -541,7 +541,7 @@ qx.Class.define("desk.volView",
             colorsTabView.addListener("mouseup", function(event)
 			{
                     volView.__htmlContextLabels.beginPath();
-                    mouseData.mouseLeftDownFlag = false;
+                    volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 
             this.add(colorsTabView, {left: volView.__imgMap.width + 50, top: 73+4});
@@ -775,7 +775,7 @@ qx.Class.define("desk.volView",
             slicesTabView.addListener("mouseup", function(event)
 			{
                     volView.__htmlContextLabels.beginPath();
-                    mouseData.mouseLeftDownFlag = false;
+                    volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 
             this.add(slicesTabView, {left: volView.__imgMap.width + 50, top: colorsTabView.getLayoutProperties().top + colorsTabView.getSizeHint().height+8 + 61});
@@ -947,7 +947,7 @@ qx.Class.define("desk.volView",
             startButton.addListener("mouseup", function(event)
 			{
                     volView.__htmlContextLabels.beginPath();
-                    mouseData.mouseLeftDownFlag = false;
+                    volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 			
             this.add(startButton, {left: volView.__imgMap.width - 4, top: volView.__imgMap.height + 7});
@@ -1155,7 +1155,7 @@ qx.Class.define("desk.volView",
 			var mouseDownHandler = function(event)
             {
 				////Update image
-                    if(!((mouseData.brCrFixingFlag)&&(mouseData.mouseLeftDownFlag)))
+                    if(!((volView.__mouseData.brCrFixingFlag)&&(volView.__mouseData.mouseLeftDownFlag)))
 					{
 							volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 							drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
@@ -1173,8 +1173,8 @@ qx.Class.define("desk.volView",
                                     volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
                                     volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
                                     volView.__htmlContextLabels.beginPath();
-                                    volView.__htmlContextLabels.arc(mouseData.xPos,
-															mouseData.yPos,
+                                    volView.__htmlContextLabels.arc(volView.__mouseData.xPos,
+															volView.__mouseData.yPos,
 																	volView.__htmlContextLabels.lineWidth/2,
                                                                     0, Math.PI*2, false);
                                     volView.__htmlContextLabels.closePath();
@@ -1186,20 +1186,20 @@ qx.Class.define("desk.volView",
                             if(volView.__drawingCanvasParams.brCrFixingFlag)
                             {
                                     drawingCanvas.set({cursor: "crosshair"});
-                                    mouseData.recentX = mouseData.xPos;
-                                    mouseData.recentY = mouseData.yPos;
+                                    volView.__mouseData.recentX = volView.__mouseData.xPos;
+                                    volView.__mouseData.recentY = volView.__mouseData.yPos;
                             };
-							mouseData.mouseLeftDownFlag = true;
+							volView.__mouseData.mouseLeftDownFlag = true;
                             volView.__htmlContextLabels.beginPath();
                     }
 				////Activate moving
                     if((event.isMiddlePressed())&&(1<volView.__drawingCanvasParams.curCtxtZoom))
                     {
 							drawingCanvas.set({cursor: "move"});
-                            mouseData.mouseMiddleDownFlag = true;
+                            volView.__mouseData.mouseMiddleDownFlag = true;
                     }
-					mouseData.recentX = mouseData.xPos;
-                    mouseData.recentY = mouseData.yPos;
+					volView.__mouseData.recentX = volView.__mouseData.xPos;
+                    volView.__mouseData.recentY = volView.__mouseData.yPos;
 				////"Undo" (draw previous canvas)
 					undoFnct(event);
 				////Draw cursor
@@ -1225,11 +1225,11 @@ qx.Class.define("desk.volView",
 							if((1<=zoomFactor)&&(zoomFactor<=MaxZoom))	////Only zoom no shrinking and not more than Max zoom
 							{
 									volView.debug(" zoom = x" + zoomFactor);
-									mouseData.xPos = event.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left;
-									mouseData.yPos = event.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top;
-									////volView.debug(event.getType() + "(" + mouseData.xPos + "," + mouseData.yPos + ")");
-									var onImageX = mouseData.decaleZoomX + mouseData.xPos;
-									var onImageY = mouseData.decaleZoomY + mouseData.yPos;
+									volView.__mouseData.xPos = event.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left;
+									volView.__mouseData.yPos = event.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top;
+									////volView.debug(event.getType() + "(" + volView.__mouseData.xPos + "," + volView.__mouseData.yPos + ")");
+									var onImageX = volView.__mouseData.decaleZoomX + volView.__mouseData.xPos;
+									var onImageY = volView.__mouseData.decaleZoomY + volView.__mouseData.yPos;
 									////volView.debug("on image : (" + onImageX + "," + onImageY + ")");
 									volView.__imgCanvasParams.imgContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
 									volView.__drawingCanvasParams.drawingContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
@@ -1238,37 +1238,37 @@ qx.Class.define("desk.volView",
 									{
 											volView.__drawingCanvasParams.drawingContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
 											volView.__imgCanvasParams.imgContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
-											var tempDecaleX = (onImageX*zoomFactor/curentZoom-mouseData.xPos)/zoomFactor;
-											var tempDecaleY = (onImageY*zoomFactor/curentZoom-mouseData.yPos)/zoomFactor;
+											var tempDecaleX = (onImageX*zoomFactor/curentZoom-volView.__mouseData.xPos)/zoomFactor;
+											var tempDecaleY = (onImageY*zoomFactor/curentZoom-volView.__mouseData.yPos)/zoomFactor;
 											if(tempDecaleX<0)
 											{
-													mouseData.decaleZoomX = 0;
+													volView.__mouseData.decaleZoomX = 0;
 											}
 											if(volView.__imgMap.width-volView.__imgMap.width/zoomFactor<tempDecaleX)
 											{
-													mouseData.decaleZoomX = volView.__imgMap.width-volView.__imgMap.width/zoomFactor;
+													volView.__mouseData.decaleZoomX = volView.__imgMap.width-volView.__imgMap.width/zoomFactor;
 											}
 											if((0<=tempDecaleX)&&(tempDecaleX<=volView.__imgMap.width-volView.__imgMap.width/zoomFactor))
 											{
-													mouseData.decaleZoomX = tempDecaleX;
+													volView.__mouseData.decaleZoomX = tempDecaleX;
 											}
 											if(tempDecaleY<0)
 											{
-													mouseData.decaleZoomY = 0;
+													volView.__mouseData.decaleZoomY = 0;
 											}
 											if(volView.__imgMap.height-volView.__imgMap.height/zoomFactor<tempDecaleY)
 											{
-													mouseData.decaleZoomY = volView.__imgMap.height-volView.__imgMap.height/zoomFactor;
+													volView.__mouseData.decaleZoomY = volView.__imgMap.height-volView.__imgMap.height/zoomFactor;
 											}
 											if((0<=tempDecaleY)&&(tempDecaleY<=volView.__imgMap.height-volView.__imgMap.height/zoomFactor))
 											{
-													mouseData.decaleZoomY = tempDecaleY;
+													volView.__mouseData.decaleZoomY = tempDecaleY;
 											}
-											mouseData.decaleZoomX = mouseData.decaleZoomX*zoomFactor;
-											mouseData.decaleZoomY = mouseData.decaleZoomY*zoomFactor;
-											var newCoor = changeInto05Coordinates(mouseData.decaleZoomX,mouseData.decaleZoomY);
-											mouseData.decaleZoomX = newCoor.newX;
-											mouseData.decaleZoomY = newCoor.newY;
+											volView.__mouseData.decaleZoomX = volView.__mouseData.decaleZoomX*zoomFactor;
+											volView.__mouseData.decaleZoomY = volView.__mouseData.decaleZoomY*zoomFactor;
+											var newCoor = changeInto05Coordinates(volView.__mouseData.decaleZoomX,volView.__mouseData.decaleZoomY);
+											volView.__mouseData.decaleZoomX = newCoor.newX;
+											volView.__mouseData.decaleZoomY = newCoor.newY;
 											drawZoomedCanvas(zoomFactor,true);
 									}
 								////Reset image and drawing canvas
@@ -1287,8 +1287,8 @@ qx.Class.define("desk.volView",
 								////Place the center of the eraser at mouse position
 									if(volView.__drawingCanvasParams.eraseFlag)
 									{
-											eraserCursor.set({marginLeft: Math.round((mouseData.xPos/zoomFactor-eraserCursor.getBounds().width/(2*zoomFactor))*zoomFactor+volView.__imgMap.left),
-																marginTop: Math.round((mouseData.yPos/zoomFactor-eraserCursor.getBounds().height/(2*zoomFactor))*zoomFactor+volView.__imgMap.top)});
+											eraserCursor.set({marginLeft: Math.round((volView.__mouseData.xPos/zoomFactor-eraserCursor.getBounds().width/(2*zoomFactor))*zoomFactor+volView.__imgMap.left),
+																marginTop: Math.round((volView.__mouseData.yPos/zoomFactor-eraserCursor.getBounds().height/(2*zoomFactor))*zoomFactor+volView.__imgMap.top)});
 									}
 									wheelScale = tempScale;
 									volView.__drawingCanvasParams.curCtxtZoom = zoomFactor;
@@ -1298,7 +1298,7 @@ qx.Class.define("desk.volView",
 			
 			var mouseMoveHandler = function(event)
             {
-					if(!((volView.__drawingCanvasParams.brCrFixingFlag)&&(mouseData.mouseLeftDownFlag)))
+					if(!((volView.__drawingCanvasParams.brCrFixingFlag)&&(volView.__mouseData.mouseLeftDownFlag)))
 					{
 							drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
                     }
@@ -1315,14 +1315,14 @@ qx.Class.define("desk.volView",
                                     eraserCursor.show();
 							}
                     }
-                    if(mouseData.mouseLeftDownFlag)
+                    if(volView.__mouseData.mouseLeftDownFlag)
                     {
 						////Draw to mouse position
                             if((volView.__drawingCanvasParams.paintFlag)&&(!volView.__drawingCanvasParams.eraseFlag)&&(!volView.__drawingCanvasParams.brCrFixingFlag))
                             {
                                     volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
                                     volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
-                                    volView.__htmlContextLabels.lineTo(mouseData.xPos,mouseData.yPos);
+                                    volView.__htmlContextLabels.lineTo(volView.__mouseData.xPos,volView.__mouseData.yPos);
                                     volView.__htmlContextLabels.stroke();
                                     clearButton.set({opacity: 1, enabled : true});
                                     if(!eraserButton.isEnabled())
@@ -1334,19 +1334,19 @@ qx.Class.define("desk.volView",
 						////Use mouse mouvement to set brightness/contrast
                             if(volView.__drawingCanvasParams.brCrFixingFlag)
                             {
-                                    var tempBrightness = volView.__imgCanvasParams.brightness + (mouseData.yPos-mouseData.recentY)*150/volView.__imgMap.height;
-                                    var tempContrast = volView.__imgCanvasParams.contrast + (mouseData.xPos-mouseData.recentX)*5/volView.__imgMap.width;
+                                    var tempBrightness = volView.__imgCanvasParams.brightness + (volView.__mouseData.yPos-volView.__mouseData.recentY)*150/volView.__imgMap.height;
+                                    var tempContrast = volView.__imgCanvasParams.contrast + (volView.__mouseData.xPos-volView.__mouseData.recentX)*5/volView.__imgMap.width;
                                     if((0<tempBrightness+150)&&(tempBrightness<150))
                                             volView.__imgCanvasParams.brightness = tempBrightness;
                                     if((0<tempContrast+1)&&(tempContrast<5))
                                             volView.__imgCanvasParams.contrast = tempContrast;
 									drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
                                     resetBrCrButton.set({opacity: 1, enabled : true});
-                                    mouseData.recentX = mouseData.xPos;
-                                    mouseData.recentY = mouseData.yPos;
+                                    volView.__mouseData.recentX = volView.__mouseData.xPos;
+                                    volView.__mouseData.recentY = volView.__mouseData.yPos;
                             }
                     }
-                    if(mouseData.mouseMiddleDownFlag)
+                    if(volView.__mouseData.mouseMiddleDownFlag)
                     {
 							moveCanvas();
 					}
@@ -1357,7 +1357,7 @@ qx.Class.define("desk.volView",
                     }
 					drawPointer(event,volView.__drawingCanvasParams.curCtxtZoom);
 				////Update image
-					if((volView.__drawingCanvasParams.brCrFixingFlag)&&(mouseData.mouseLeftDownFlag))
+					if((volView.__drawingCanvasParams.brCrFixingFlag)&&(volView.__mouseData.mouseLeftDownFlag))
 					{
 							drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
                     }
@@ -1365,8 +1365,8 @@ qx.Class.define("desk.volView",
 			
 			var mouseUpHandler = function(event)
             {
-                    mouseData.mouseLeftDownFlag = false;
-					mouseData.mouseMiddleDownFlag = false;
+                    volView.__mouseData.mouseLeftDownFlag = false;
+					volView.__mouseData.mouseMiddleDownFlag = false;
                     drawingCanvas.set({cursor: "default"});
             };
 			
@@ -1607,7 +1607,7 @@ qx.Class.define("desk.volView",
 			slider.addListener("changeValue", function(event)
 			{
 					volView.__htmlContextLabels.beginPath();
-					mouseData.mouseLeftDownFlag = false;
+					volView.__mouseData.mouseLeftDownFlag = false;
 				////Save current image
 					volView.__horizSlices.sliceLabels[volView.__drawingCanvasParams.sliceNumber] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 					tempNum = volView.__drawingCanvasParams.sliceNumber;
@@ -1841,7 +1841,7 @@ qx.Class.define("desk.volView",
             slider.addListener("mouseup", function(event)
 			{
                     volView.__htmlContextLabels.beginPath();
-                    mouseData.mouseLeftDownFlag = false;
+                    volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 			
             slider.setHeight(volView.__imgMap.height);    //	set to match image height
@@ -1850,7 +1850,7 @@ qx.Class.define("desk.volView",
             spinner.addListener("mouseup", function(event)
 			{
                     volView.__htmlContextLabels.beginPath();
-                    mouseData.mouseLeftDownFlag = false;
+                    volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 			
 			
@@ -1881,18 +1881,18 @@ qx.Class.define("desk.volView",
 		////If(scaling) applies zoom factor for relative coordinates (on zoomed window)
 			var getPosition = function(mouseEvent,scaling)
             {
-					mouseData.xPos = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/volView.__drawingCanvasParams.curCtxtZoom;
-					mouseData.yPos = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/volView.__drawingCanvasParams.curCtxtZoom;
-					////volView.debug(mouseEvent.getType() + "(" + mouseData.xPos + "," + mouseData.yPos + ")");
+					volView.__mouseData.xPos = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/volView.__drawingCanvasParams.curCtxtZoom;
+					volView.__mouseData.yPos = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/volView.__drawingCanvasParams.curCtxtZoom;
+					////volView.debug(mouseEvent.getType() + "(" + volView.__mouseData.xPos + "," + volView.__mouseData.yPos + ")");
 					if(scaling)
 					{
-							mouseData.xPos = mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + mouseData.xPos;
-							mouseData.yPos = mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + mouseData.yPos;
-							////volView.debug(mouseEvent.getType() + "(" + mouseData.xPos + "," + mouseData.yPos + ")");
+							volView.__mouseData.xPos = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.xPos;
+							volView.__mouseData.yPos = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.yPos;
+							////volView.debug(mouseEvent.getType() + "(" + volView.__mouseData.xPos + "," + volView.__mouseData.yPos + ")");
 					}
-					var newCoor = changeInto05Coordinates(mouseData.xPos,mouseData.yPos);
-					mouseData.xPos = newCoor.newX;
-					mouseData.yPos = newCoor.newY;
+					var newCoor = changeInto05Coordinates(volView.__mouseData.xPos,volView.__mouseData.yPos);
+					volView.__mouseData.xPos = newCoor.newX;
+					volView.__mouseData.yPos = newCoor.newY;
 			};
 			
 			
@@ -1927,8 +1927,8 @@ qx.Class.define("desk.volView",
 		////Function applies zoom to image and drawing cavas
 			var drawZoomedCanvas = function(zoomFactor,zooming)
             {
-                    var sx = mouseData.decaleZoomX/zoomFactor;
-                    var sy = mouseData.decaleZoomY/zoomFactor;
+                    var sx = volView.__mouseData.decaleZoomX/zoomFactor;
+                    var sy = volView.__mouseData.decaleZoomY/zoomFactor;
                     var sdw = volView.__imgMap.width/zoomFactor;
                     var sdh = volView.__imgMap.height/zoomFactor;
 				////Make sure values are integers and complemantary
@@ -1981,7 +1981,7 @@ qx.Class.define("desk.volView",
 						}
 					}
 				////Refresh drawing canevas while only moving cursor
-					if(!((mouseData.brCrFixingFlag)&&(mouseData.mouseLeftDownFlag)&&(volView.__drawingCanvasParams.eraseFlag)))
+					if(!((volView.__mouseData.brCrFixingFlag)&&(volView.__mouseData.mouseLeftDownFlag)&&(volView.__drawingCanvasParams.eraseFlag)))
 					{
 							volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 							volView.__drawingCanvasParams.drawingContext.drawImage(volView.__htmlCanvasLabels,
@@ -2166,34 +2166,34 @@ qx.Class.define("desk.volView",
 		////Redraw image and drawing canvas when translation
             var moveCanvas = function()
             {
-					var tempDecaleX = mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + mouseData.recentX-mouseData.xPos;
-					var tempDecaleY = mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + mouseData.recentY-mouseData.yPos;
+					var tempDecaleX = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.recentX-volView.__mouseData.xPos;
+					var tempDecaleY = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.recentY-volView.__mouseData.yPos;
 					if(tempDecaleX<0)
 					{
-							mouseData.decaleZoomX = 0;
+							volView.__mouseData.decaleZoomX = 0;
 					}
 					if(volView.__imgMap.width-volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom<tempDecaleX)
 					{
-							mouseData.decaleZoomX = volView.__imgMap.width-volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom;
+							volView.__mouseData.decaleZoomX = volView.__imgMap.width-volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom;
 					}
 					if((0<=tempDecaleX)&&(tempDecaleX<=volView.__imgMap.width-volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom))
 					{
-							mouseData.decaleZoomX = tempDecaleX;
+							volView.__mouseData.decaleZoomX = tempDecaleX;
 					}
 					if(tempDecaleY<0)
 					{
-							mouseData.decaleZoomY = 0;
+							volView.__mouseData.decaleZoomY = 0;
 					}
 					if(volView.__imgMap.height-volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom<tempDecaleY)
 					{
-							mouseData.decaleZoomY = volView.__imgMap.height-volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom;
+							volView.__mouseData.decaleZoomY = volView.__imgMap.height-volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom;
 					}
 					if((0<=tempDecaleY)&&(tempDecaleY<=volView.__imgMap.height-volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom))
 					{
-							mouseData.decaleZoomY = tempDecaleY;
+							volView.__mouseData.decaleZoomY = tempDecaleY;
 					}
-					mouseData.decaleZoomX = mouseData.decaleZoomX*volView.__drawingCanvasParams.curCtxtZoom;
-					mouseData.decaleZoomY = mouseData.decaleZoomY*volView.__drawingCanvasParams.curCtxtZoom;
+					volView.__mouseData.decaleZoomX = volView.__mouseData.decaleZoomX*volView.__drawingCanvasParams.curCtxtZoom;
+					volView.__mouseData.decaleZoomY = volView.__mouseData.decaleZoomY*volView.__drawingCanvasParams.curCtxtZoom;
 					drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
 			};
 			
@@ -2207,8 +2207,8 @@ qx.Class.define("desk.volView",
 					var tempX, tempY;
 					if(autoComplete)
 					{
-							tempX = (mouseData.recentX+mouseData.xPos)/2-eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
-							tempY = (mouseData.recentY+mouseData.yPos)/2-eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
+							tempX = (volView.__mouseData.recentX+volView.__mouseData.xPos)/2-eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
+							tempY = (volView.__mouseData.recentY+volView.__mouseData.yPos)/2-eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
 							var newCoor = changeInto05Coordinates(tempX,tempY);
 							tempX = newCoor.newX;
 							tempY = newCoor.newY;
@@ -2217,8 +2217,8 @@ qx.Class.define("desk.volView",
                                                             eraserCoeff*volView.__htmlContextLabels.lineWidth,
                                                             eraserCoeff*volView.__htmlContextLabels.lineWidth);
 					}
-					tempX = mouseData.xPos-eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
-					tempY = mouseData.yPos-eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
+					tempX = volView.__mouseData.xPos-eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
+					tempY = volView.__mouseData.yPos-eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
 					var newCoor = changeInto05Coordinates(tempX,tempY);
 					tempX = newCoor.newX;
 					tempY = newCoor.newY;
@@ -2227,8 +2227,8 @@ qx.Class.define("desk.volView",
 													eraserCoeff*volView.__htmlContextLabels.lineWidth,
 													eraserCoeff*volView.__htmlContextLabels.lineWidth);
                     drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
-                    mouseData.recentX = mouseData.xPos;
-                    mouseData.recentY = mouseData.yPos;
+                    volView.__mouseData.recentX = volView.__mouseData.xPos;
+                    volView.__mouseData.recentY = volView.__mouseData.yPos;
 			};
 			
 			
@@ -2251,8 +2251,8 @@ qx.Class.define("desk.volView",
 					extWinSeedsCanvas.extWinSeedsContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
 					extWinSeedsCanvas.extWinSeedsContext.setTransform(1,0,0,1,0,0);
 					extWinSeedsCanvas.extWinSeedsContext.drawImage(htmlCanvasUsedSeeds,0,0);
-					mouseData.decaleZoomX = 0;
-					mouseData.decaleZoomY = 0;
+					volView.__mouseData.decaleZoomX = 0;
+					volView.__mouseData.decaleZoomY = 0;
 					wheelScale = 0;
 					volView.__drawingCanvasParams.curCtxtZoom = 1;
 			};
