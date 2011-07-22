@@ -173,6 +173,14 @@ qx.Class.define("desk.volView",
 
 		__htmlContextUsedSeeds : null,
 
+		__htmlContextSegImg : null,
+
+		__htmlCanvasUsedSeeds : null,
+
+		__htmlCanvasSegImg : null,
+
+		__htmlCanvasImage : null,
+
 		__path : null,
 		// __offset : null,
 		// __prefix : null,
@@ -923,7 +931,7 @@ qx.Class.define("desk.volView",
 											volView.__horizSlices.sliceResults[volView.__drawingCanvasParams.sliceNumber][tempMax].src = tempSrc + "?nocache=" + (new Date()).getTime();
 											volView.__horizSlices.sliceResults[volView.__drawingCanvasParams.sliceNumber][tempMax].onload = function()
 											{
-													htmlContextSegImg.drawImage(this, 0, 0, this.width, this.height);
+													volView.__htmlContextSegImg.drawImage(this, 0, 0, this.width, this.height);
 											};
 											whileShowingDrwngOpacityLabel.set({opacity: 1, enabled : true});
 											whileShowingDrwngOpacitySlider.set({opacity: 1, enabled : true});
@@ -1119,8 +1127,8 @@ qx.Class.define("desk.volView",
 			{
                     var data = event.getData();
                     extWinSeedsCanvas.extWinSeedsContext = data.context;
-					htmlCanvasUsedSeeds = document.getElementById("htmlTagCanvasUsedSeeds");
-                    volView.__htmlContextUsedSeeds = htmlCanvasUsedSeeds.getContext("2d");
+					volView.__htmlCanvasUsedSeeds = document.getElementById("htmlTagCanvasUsedSeeds");
+                    volView.__htmlContextUsedSeeds = volView.__htmlCanvasUsedSeeds.getContext("2d");
             }, this);
             externalWindow.add(extWinSeedsCanvas, {left: 0, top: 0});
 			
@@ -1391,8 +1399,8 @@ qx.Class.define("desk.volView",
 			{
                     var data = event.getData();
                     segmentedImgCanvas.segImgContext = data.context;
-					htmlCanvasSegImg = document.getElementById("htmlTagCanvasSegImg");
-                    htmlContextSegImg = htmlCanvasSegImg.getContext("2d");
+					volView.__htmlCanvasSegImg = document.getElementById("htmlTagCanvasSegImg");
+                    volView.__htmlContextSegImg = volView.__htmlCanvasSegImg.getContext("2d");
             }, this);
 			segmentedImgCanvas.addListener("mousemove", function(event)
 			{
@@ -1437,10 +1445,10 @@ qx.Class.define("desk.volView",
 			{
                     var data = event.getData();
                     volView.__imgCanvasParams.imgContext = data.context;
-					htmlCanvasImage = document.getElementById("htmlTagCanvasImage");
-                    htmlContextImage = htmlCanvasImage.getContext("2d");
+					volView.__htmlCanvasImage = document.getElementById("htmlTagCanvasImage");
+                    htmlContextImage = volView.__htmlCanvasImage.getContext("2d");
 					htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);	// here for unbuild version
-					volView.__imgCanvasParams.imgContext.drawImage(htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);	// here for unbuild version
+					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);	// here for unbuild version
             }, this);
 			
 			
@@ -1487,7 +1495,7 @@ qx.Class.define("desk.volView",
 					if((volView.__drawingCanvasParams.sliceNumber==0)&&(typeof htmlContextImage!="undefined")&&(typeof volView.__imgCanvasParams.imgContext!="undefined"))
 					{
 							htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
-							volView.__imgCanvasParams.imgContext.drawImage(htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);
+							volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);
 					}
 			};
 			
@@ -1620,7 +1628,7 @@ qx.Class.define("desk.volView",
 					if(segmentationDone)
 					{
 							var index = 0;
-							htmlContextSegImg.drawImage(volView.__horizSlices.sliceResults[volView.__drawingCanvasParams.sliceNumber][index],
+							volView.__htmlContextSegImg.drawImage(volView.__horizSlices.sliceResults[volView.__drawingCanvasParams.sliceNumber][index],
 														0,
 														0,
 														volView.__horizSlices.sliceResults[volView.__drawingCanvasParams.sliceNumber][index].width,
@@ -1965,7 +1973,7 @@ qx.Class.define("desk.volView",
 							htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
 							var outImg = processBrCr(volView.__imgCanvasParams.brightness, volView.__imgCanvasParams.contrast, true);
 							htmlContextImage.putImageData(outImg, 0, 0);
-							volView.__imgCanvasParams.imgContext.drawImage(htmlCanvasImage,
+							volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage,
 																	sx,
 																	sy,
 																	sdw,
@@ -1998,7 +2006,7 @@ qx.Class.define("desk.volView",
                                                                         sdw,
                                                                         sdh);
 							segmentedImgCanvas.segImgContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-							segmentedImgCanvas.segImgContext.drawImage(htmlCanvasSegImg,
+							segmentedImgCanvas.segImgContext.drawImage(volView.__htmlCanvasSegImg,
                                                                         sx,
                                                                         sy,
                                                                         sdw,
@@ -2008,7 +2016,7 @@ qx.Class.define("desk.volView",
                                                                         sdw,
                                                                         sdh);
 							extWinSeedsCanvas.extWinSeedsContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-							extWinSeedsCanvas.extWinSeedsContext.drawImage(htmlCanvasUsedSeeds,
+							extWinSeedsCanvas.extWinSeedsContext.drawImage(volView.__htmlCanvasUsedSeeds,
                                                                         sx,
                                                                         sy,
                                                                         sdw,
@@ -2018,7 +2026,7 @@ qx.Class.define("desk.volView",
                                                                         sdw,
                                                                         sdh);
 							extWinSegImgCanvas.extWinSegImgContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-							extWinSegImgCanvas.extWinSegImgContext.drawImage(htmlCanvasSegImg,
+							extWinSegImgCanvas.extWinSegImgContext.drawImage(volView.__htmlCanvasSegImg,
                                                                         sx,
                                                                         sy,
                                                                         sdw,
@@ -2246,15 +2254,15 @@ qx.Class.define("desk.volView",
 					htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
 					var outImg = processBrCr(volView.__imgCanvasParams.brightness, volView.__imgCanvasParams.contrast, true);
 					htmlContextImage.putImageData(outImg, 0, 0);
-					volView.__imgCanvasParams.imgContext.drawImage(htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);
+					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);
 					volView.__drawingCanvasParams.drawingContext.setTransform(1,0,0,1,0,0);
 					extWinSegImgCanvas.extWinSegImgContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
 					volView.__drawingCanvasParams.drawingContext.drawImage(volView.__htmlCanvasLabels,0,0);
 					extWinSegImgCanvas.extWinSegImgContext.setTransform(1,0,0,1,0,0);
-					extWinSegImgCanvas.extWinSegImgContext.drawImage(htmlCanvasSegImg,0,0);
+					extWinSegImgCanvas.extWinSegImgContext.drawImage(volView.__htmlCanvasSegImg,0,0);
 					extWinSeedsCanvas.extWinSeedsContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
 					extWinSeedsCanvas.extWinSeedsContext.setTransform(1,0,0,1,0,0);
-					extWinSeedsCanvas.extWinSeedsContext.drawImage(htmlCanvasUsedSeeds,0,0);
+					extWinSeedsCanvas.extWinSeedsContext.drawImage(volView.__htmlCanvasUsedSeeds,0,0);
 					volView.__mouseData.decaleZoomX = 0;
 					volView.__mouseData.decaleZoomY = 0;
 					wheelScale = 0;
