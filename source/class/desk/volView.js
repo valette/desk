@@ -20,20 +20,7 @@ qx.Class.define("desk.volView",
 
     ////Global variables
 
-        labelColors = [];
-		
-        imageZ = 1;
-		tempNum = 0;
-		MaxZoom = 4;
-		timestamp = 0;
-		eraserCoeff = 2;
-		numberOfSlices = 0;
-		slicesNameOffset = 0;     
-		eraserCursorZ = 65535;
-        drawingCanvasZ = 1023;
-		slicesNamePrefix = "";
-		segImgSKeyOpacity = 0.5;
-		drawingSKeyOpacity = 0;
+ 
 		
 		
 		
@@ -126,17 +113,17 @@ qx.Class.define("desk.volView",
 		__htmlContextLabels : null,
 
 		__drawingCanvasParams : {
-		sliceNumber : 0,
-		drawingContext : null,
-		paintFlag : false,
-		eraseFlag : false,
-		brCrFixingFlag : false,
-		currentColor : '#101010',
-		curCtxtZoom : 1,
-		myLineWidth : 4,
-		myLineCap : "round",
-		myLineJoin : "bevel",
-		myMiterLimit : 1
+			sliceNumber : 0,
+			drawingContext : null,
+			paintFlag : false,
+			eraseFlag : false,
+			brCrFixingFlag : false,
+			currentColor : '#101010',
+			curCtxtZoom : 1,
+			myLineWidth : 4,
+			myLineCap : "round",
+			myLineJoin : "bevel",
+			myMiterLimit : 1
 		},
 
 		__imgCanvasParams : {
@@ -158,16 +145,31 @@ qx.Class.define("desk.volView",
 		__undoLimit : 10,
 
 		__mouseData : {
-		xPos : 0,
-		yPos : 0,
-		recentX : 0,
-		recentY : 0,
-		decaleZoomX : 0,
-		decaleZoomY : 0,
-		mouseLeftDownFlag : 0,
-		mouseMiddleDownFlag : 0,
-		mouseRightDownFlag : 0
+			xPos : 0,
+			yPos : 0,
+			recentX : 0,
+			recentY : 0,
+			decaleZoomX : 0,
+			decaleZoomY : 0,
+			mouseLeftDownFlag : 0,
+			mouseMiddleDownFlag : 0,
+			mouseRightDownFlag : 0
 		},
+
+		__labelColors : [],
+
+		__imageZ : 1,
+		__tempNum : 0,
+		__MaxZoom : 4,
+		__timestamp : 0,
+		__eraserCoeff : 2,
+		__numberOfSlices : 0,
+		__slicesNameOffset : 0,
+		__eraserCursorZ : 65535,
+		__drawingCanvasZ : 1023,
+		__slicesNamePrefix : "",
+		__segImgSKeyOpacity : 0.5,
+		__drawingSKeyOpacity : 0,
 
 		__path : null,
 		// __offset : null,
@@ -175,7 +177,7 @@ qx.Class.define("desk.volView",
 		// __image : null,
 		// __maxZ : null,
 		// __slider : null,
-		// __timestamp : null,
+		// __volView.__timestamp : null,
 		// __fileFormatBox : null,
 		
 		openFile : function (file,volView) {
@@ -198,9 +200,9 @@ qx.Class.define("desk.volView",
 
 			// var slices=volume.getElementsByTagName("slicesprefix")[0];
 			// this.__offset=parseInt(slices.getAttribute("offset"));
-			// this.__timestamp=slices.getAttribute("timestamp");
-			// if (this.__timestamp==null)
-				// this.__timestamp=Math.random();
+			// this.__volView.__timestamp=slices.getAttribute("volView.__timestamp");
+			// if (this.__volView.__timestamp==null)
+				// this.__volView.__timestamp=Math.random();
 			// this.__prefix=slices.childNodes[0].nodeValue;
 
 			// var slashIndex=file.lastIndexOf("/");
@@ -311,12 +313,12 @@ qx.Class.define("desk.volView",
 									var response = this.responseXML;
 									volView.__imgMap.width = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("x"));
 									volView.__imgMap.height = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("y"));
-									numberOfSlices = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("z"));
-									slicesNameOffset = parseInt(response.getElementsByTagName("slicesprefix")[0].getAttribute("offset"));
-									slicesNamePrefix = response.getElementsByTagName("slicesprefix")[0].firstChild.nodeValue;
-									timestamp = response.getElementsByTagName("slicesprefix")[0].getAttribute("timestamp");
-									if (timestamp==null)
-										timestamp = (new Date()).getTime();
+									volView.__numberOfSlices = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("z"));
+									volView.__slicesNameOffset = parseInt(response.getElementsByTagName("slicesprefix")[0].getAttribute("offset"));
+									volView.__slicesNamePrefix = response.getElementsByTagName("slicesprefix")[0].firstChild.nodeValue;
+									volView.__timestamp = response.getElementsByTagName("slicesprefix")[0].getAttribute("volView.__timestamp");
+									if (volView.__timestamp==null)
+										volView.__timestamp = (new Date()).getTime();
 							}
 							else
 							{
@@ -356,8 +358,8 @@ qx.Class.define("desk.volView",
             penSize.addListener("changeValue", function(event)
 			{
                     volView.__htmlContextLabels.lineWidth = event.getData();
-                    eraserCursor.set({width: Math.ceil(eraserCoeff*volView.__htmlContextLabels.lineWidth*volView.__drawingCanvasParams.curCtxtZoom),
-                                        height: Math.ceil(eraserCoeff*volView.__htmlContextLabels.lineWidth*volView.__drawingCanvasParams.curCtxtZoom)});
+                    eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*volView.__drawingCanvasParams.curCtxtZoom),
+                                        height: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*volView.__drawingCanvasParams.curCtxtZoom)});
             });
 			
 			var penLabel = new qx.ui.basic.Label("Brush : ");
@@ -376,9 +378,9 @@ qx.Class.define("desk.volView",
             var eraserCursor = new qx.ui.core.Widget().set({
 										backgroundColor: "white",
 										decorator: eraserBorder,
-										width: eraserCoeff*volView.__drawingCanvasParams.myLineWidth*volView.__drawingCanvasParams.curCtxtZoom,
-										height : eraserCoeff*volView.__drawingCanvasParams.myLineWidth*volView.__drawingCanvasParams.curCtxtZoom,
-										zIndex : eraserCursorZ
+										width: volView.__eraserCoeff*volView.__drawingCanvasParams.myLineWidth*volView.__drawingCanvasParams.curCtxtZoom,
+										height : volView.__eraserCoeff*volView.__drawingCanvasParams.myLineWidth*volView.__drawingCanvasParams.curCtxtZoom,
+										zIndex : volView.__eraserCursorZ
 								});
 			
             eraserCursor.addListener("mousedown", function(event)
@@ -416,8 +418,8 @@ qx.Class.define("desk.volView",
 							}
                     }
 				////Move eraser to mouse position
-                    eraserCursor.set({marginLeft: Math.round((volView.__mouseData.xPos-eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
-                                        marginTop: Math.round((volView.__mouseData.yPos-eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
+                    eraserCursor.set({marginLeft: Math.round((volView.__mouseData.xPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
+                                        marginTop: Math.round((volView.__mouseData.yPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
 					volView.__mouseData.xPos = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.xPos;
                     volView.__mouseData.yPos = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.yPos;
 					if(volView.__mouseData.mouseLeftDownFlag)
@@ -444,8 +446,8 @@ qx.Class.define("desk.volView",
 						////Load reults canvas
 						drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
 						////Change opacity of results canvas and drawing canvas
-						drawingCanvas.set({opacity: drawingSKeyOpacity});
-						segmentedImgCanvas.set({opacity: segImgSKeyOpacity, zIndex: drawingCanvasZ+1});
+						drawingCanvas.set({opacity: volView.__drawingSKeyOpacity});
+						segmentedImgCanvas.set({opacity: volView.__segImgSKeyOpacity, zIndex: volView.__drawingCanvasZ+1});
 					}
 			},this);
 			
@@ -454,7 +456,7 @@ qx.Class.define("desk.volView",
 					if(event.getKeyIdentifier()=="S")
 					{
 						////Change opacity of results canvas and drawing canvas
-						segmentedImgCanvas.set({opacity: 0, zIndex: drawingCanvasZ-1});
+						segmentedImgCanvas.set({opacity: 0, zIndex: volView.__drawingCanvasZ-1});
 						drawingCanvas.set({opacity: whileDrawingDrwngOpacitySlider.getValue()});
 					}
 			},this);
@@ -645,7 +647,7 @@ qx.Class.define("desk.volView",
 									nbLabels = response.getElementsByTagName("color").length;
 									for(var i=0; i<nbLabels; i++)
 									{
-											labelColors[i] = {
+											volView.__labelColors[i] = {
 													red : response.getElementsByTagName("color")[i].getAttribute("red"),
 													green : response.getElementsByTagName("color")[i].getAttribute("green"),
 													blue : response.getElementsByTagName("color")[i].getAttribute("blue")
@@ -653,7 +655,7 @@ qx.Class.define("desk.volView",
 											var newLabel = {
 													id : parseInt(response.getElementsByTagName("color")[i].getAttribute("label")),
 													name : response.getElementsByTagName("color")[i].getAttribute("name"),
-													color : "rgb(" + labelColors[i].red + "," + labelColors[i].green + "," + labelColors[i].blue + ")"
+													color : "rgb(" + volView.__labelColors[i].red + "," + volView.__labelColors[i].green + "," + volView.__labelColors[i].blue + ")"
 											};
 											newLabel.name = newLabel.name.replace(newLabel.name.charAt(0), newLabel.name.charAt(0).toUpperCase());
 											createToolBox(newLabel);
@@ -732,7 +734,7 @@ qx.Class.define("desk.volView",
             var slider = new qx.ui.form.Slider();
             slider.setHeight(volView.__imgMap.height - 18);  ////  set below to match image height
             slider.setWidth(30);
-            slider.setMaximum(numberOfSlices-1);
+            slider.setMaximum(volView.__numberOfSlices-1);
             slider.setMinimum(0);
             slider.setOrientation("vertical");
             this.add(slider, {left: 0, top: 4});
@@ -741,7 +743,7 @@ qx.Class.define("desk.volView",
 			
 		////Create spinner and sync it with the slider
             var spinner = new qx.ui.form.Spinner();
-            spinner.setMaximum(numberOfSlices-1);
+            spinner.setMaximum(volView.__numberOfSlices-1);
             spinner.setMinimum(0);
             spinner.bind("value", slider, "value");
             slider.bind("value", spinner, "value");
@@ -791,7 +793,7 @@ qx.Class.define("desk.volView",
 							var tempChildren = modifSlicesList.getChildren();
 							var tempPos = findInArray(tempChildren, selectedChild[0]);
 						////Erase image on the server
-							eraseFile(slicesNamePrefix + (slicesNameOffset + listMembers[tempPos]) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + timestamp);
+							eraseFile(volView.__slicesNamePrefix + (volView.__slicesNameOffset + listMembers[tempPos]) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp);
 						////Update members list
 							updateList(tempPos);
 						////Clear drawing canvas
@@ -910,12 +912,12 @@ qx.Class.define("desk.volView",
 										////Add image into current results array
 											var base = "/visu/data/results/png/slice";
 											var tempMax = volView.__horizSlices.sliceResults[0].length;
-											for(var i=0; i<numberOfSlices; i++)
+											for(var i=0; i<volView.__numberOfSlices; i++)
 											{
 													volView.__horizSlices.sliceResults[i][tempMax] = new Image();
-													volView.__horizSlices.sliceResults[i][tempMax].src = base + (slicesNameOffset + i) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + (new Date()).getTime();
+													volView.__horizSlices.sliceResults[i][tempMax].src = base + (volView.__slicesNameOffset + i) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + (new Date()).getTime();
 											};
-											var tempSrc = base + (slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel();
+											var tempSrc = base + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel();
 											volView.__horizSlices.sliceResults[volView.__drawingCanvasParams.sliceNumber][tempMax].src = tempSrc + "?nocache=" + (new Date()).getTime();
 											volView.__horizSlices.sliceResults[volView.__drawingCanvasParams.sliceNumber][tempMax].onload = function()
 											{
@@ -938,7 +940,7 @@ qx.Class.define("desk.volView",
 									}
 							};
 							startRequest.open("POST", "/visu/cvtGcMultiseg.php", false);
-							startRequest.send("/home/visu/data/gc/image/" + "slice" + (slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + timestamp);
+							startRequest.send("/home/visu/data/gc/image/" + "slice" + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp);
 							startButton.setValue(false);
 							segSemahpore = true;
 					}
@@ -983,7 +985,7 @@ qx.Class.define("desk.volView",
 			whileShowingDrwngOpacitySlider.set({width:128, maximum:100, minimum:0, value:0});
 			whileShowingDrwngOpacitySlider.addListener("changeValue", function(event)
 			{
-					drawingSKeyOpacity = event.getData()/100;
+					volView.__drawingSKeyOpacity = event.getData()/100;
 			},this);
 			whileShowingDrwngOpacitySlider.set({opacity: 0.5, enabled : false});
             this.add(whileShowingDrwngOpacitySlider, {left: 137, top: whileShowingDrwngOpacityLabel.getLayoutProperties().top});
@@ -1023,7 +1025,7 @@ qx.Class.define("desk.volView",
 			whileShowingSegImgOpacitySlider.addListener("changeValue", function(event)
 			{
 					segmentedImgCanvas.set({opacity: event.getData()/100});
-					segImgSKeyOpacity = event.getData()/100;
+					volView.__segImgSKeyOpacity = event.getData()/100;
 					segmentedImgCanvas.set({opacity: 0});
 			},this);
 			whileShowingSegImgOpacitySlider.set({opacity: 0.5, enabled : false});
@@ -1222,7 +1224,7 @@ qx.Class.define("desk.volView",
 							var curentZoom = volView.__drawingCanvasParams.curCtxtZoom;
 							var zoomFactor = Math.pow(2,tempScale);
 						////Apply zoom
-							if((1<=zoomFactor)&&(zoomFactor<=MaxZoom))	////Only zoom no shrinking and not more than Max zoom
+							if((1<=zoomFactor)&&(zoomFactor<=volView.__MaxZoom))	////Only zoom no shrinking and not more than Max zoom
 							{
 									volView.debug(" zoom = x" + zoomFactor);
 									volView.__mouseData.xPos = event.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left;
@@ -1282,8 +1284,8 @@ qx.Class.define("desk.volView",
 											drawBrush(event,zoomFactor);
 									}
 									drawPointer(event,zoomFactor);
-									eraserCursor.set({width: Math.ceil(eraserCoeff*volView.__htmlContextLabels.lineWidth*zoomFactor)+1,
-														height: Math.ceil(eraserCoeff*volView.__htmlContextLabels.lineWidth*zoomFactor)+1});
+									eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*zoomFactor)+1,
+														height: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*zoomFactor)+1});
 								////Place the center of the eraser at mouse position
 									if(volView.__drawingCanvasParams.eraseFlag)
 									{
@@ -1308,8 +1310,8 @@ qx.Class.define("desk.volView",
                     {
 							var tempX = (event.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/volView.__drawingCanvasParams.curCtxtZoom;
 							var tempY = (event.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/volView.__drawingCanvasParams.curCtxtZoom;
-							eraserCursor.set({marginLeft: Math.round((tempX-eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
-												marginTop: Math.round((tempY-eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
+							eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
+												marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
                             if(eraserCursor.getVisibility()=="excluded")
 							{
                                     eraserCursor.show();
@@ -1373,13 +1375,13 @@ qx.Class.define("desk.volView",
 			
 			
 		////Create results array for each slice image
-            for(var i=0; i<numberOfSlices; i++)
+            for(var i=0; i<volView.__numberOfSlices; i++)
             {
                 volView.__horizSlices.sliceResults[i] = [];
 				volView.__horizSlices.usedSliceSeeds[i] = [];
             };
 			
-			var segmentedImgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true, zIndex: drawingCanvasZ-1});
+			var segmentedImgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true, zIndex: volView.__drawingCanvasZ-1});
 			segmentedImgCanvas.set({opacity: 0});
             this.add(segmentedImgCanvas, {left: volView.__imgMap.left, top: volView.__imgMap.top});
             segmentedImgCanvas.setUserBounds(volView.__imgMap.left, volView.__imgMap.top, volView.__imgMap.width, volView.__imgMap.height);
@@ -1393,7 +1395,7 @@ qx.Class.define("desk.volView",
 			segmentedImgCanvas.addListener("mousemove", function(event)
 			{
 				////Change opacity of results canvas and drawing canvas
-					segmentedImgCanvas.set({opacity: whileDrawingSegImgOpacitySlider.getValue(), zIndex: drawingCanvasZ-1});
+					segmentedImgCanvas.set({opacity: whileDrawingSegImgOpacitySlider.getValue(), zIndex: volView.__drawingCanvasZ-1});
 					drawingCanvas.set({opacity: whileDrawingDrwngOpacitySlider.getValue()});
 			}, this);
 			
@@ -1404,8 +1406,8 @@ qx.Class.define("desk.volView",
 						////Load reults canvas
 							drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
 						////Change opacity of results canvas and drawing canvas
-							drawingCanvas.set({opacity: drawingSKeyOpacity});
-							segmentedImgCanvas.set({opacity: segImgSKeyOpacity, zIndex: drawingCanvasZ+1});
+							drawingCanvas.set({opacity: volView.__drawingSKeyOpacity});
+							segmentedImgCanvas.set({opacity: volView.__segImgSKeyOpacity, zIndex: volView.__drawingCanvasZ+1});
 					}
 			};
 			
@@ -1414,7 +1416,7 @@ qx.Class.define("desk.volView",
 					if(event.getKeyIdentifier()=="S")
 					{
 						////Change opacity of results canvas and drawing canvas
-						segmentedImgCanvas.set({opacity: whileDrawingSegImgOpacitySlider.getValue(), zIndex: drawingCanvasZ-1});
+						segmentedImgCanvas.set({opacity: whileDrawingSegImgOpacitySlider.getValue(), zIndex: volView.__drawingCanvasZ-1});
 						drawingCanvas.set({opacity: whileDrawingDrwngOpacitySlider.getValue()});
 					}
 			};
@@ -1423,7 +1425,7 @@ qx.Class.define("desk.volView",
 			
 			
 			
-			var imgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true, zIndex: imageZ});
+			var imgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true, zIndex: volView.__imageZ});
 			
             this.add(imgCanvas, {left: volView.__imgMap.left, top: volView.__imgMap.top});
 			
@@ -1459,10 +1461,10 @@ qx.Class.define("desk.volView",
                     return imgObj;
             };
 		////Set url for each source image
-            for(var i=0; i<numberOfSlices; i++)
+            for(var i=0; i<volView.__numberOfSlices; i++)
             {
                 volView.__horizSlices.sliceImages[i] = new sliceImg();
-                volView.__horizSlices.sliceImages[i].url = this.__path + "slice" + (slicesNameOffset+i) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + timestamp;
+                volView.__horizSlices.sliceImages[i].url = this.__path + "slice" + (volView.__slicesNameOffset+i) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp;
 				volView.__horizSlices.sliceImages[i].srcImage.onload = function()
 				{
 						//volView.debug(" <!>   Image  No." + volView.__drawingCanvasParams.sliceNumber + "  loaded");
@@ -1491,7 +1493,7 @@ qx.Class.define("desk.volView",
 			
 			
 			
-            var drawingCanvas = new qx.ui.embed.Canvas().set({syncDimension: true, zIndex: drawingCanvasZ});
+            var drawingCanvas = new qx.ui.embed.Canvas().set({syncDimension: true, zIndex: volView.__drawingCanvasZ});
 			
             drawingCanvas.addListener("redraw", updateContext, this);
             drawingCanvas.addListener("mousedown", mouseDownHandler, this);
@@ -1586,7 +1588,7 @@ qx.Class.define("desk.volView",
 			var listMembers = [];
 			var listSemahpore = false;
 			var slicesListSemaphore = false;
-			for(var i=0; i<numberOfSlices; i++)
+			for(var i=0; i<volView.__numberOfSlices; i++)
 			{
 					volView.__horizSlices.inProgData[i] = new sliceFlags();
 			};
@@ -1594,7 +1596,7 @@ qx.Class.define("desk.volView",
 		////Initialize list
 			modifSlicesList.addAt(new qx.ui.form.ListItem("Slice No." + 0), 0);
 			listMembers[0] = 0;
-			for(var i=0; i<numberOfSlices; i++)
+			for(var i=0; i<volView.__numberOfSlices; i++)
 			{
 					if(i!=0)
 							volView.__horizSlices.inProgData[i].inList = volView.__horizSlices.inProgData[i].inList;
@@ -1610,8 +1612,8 @@ qx.Class.define("desk.volView",
 					volView.__mouseData.mouseLeftDownFlag = false;
 				////Save current image
 					volView.__horizSlices.sliceLabels[volView.__drawingCanvasParams.sliceNumber] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
-					tempNum = volView.__drawingCanvasParams.sliceNumber;
-					volView.__horizSlices.inProgData[tempNum].curTagged = !pngCanvasFctn();	//  pngCanvasFctn() returns true if image is all black
+					volView.__tempNum = volView.__drawingCanvasParams.sliceNumber;
+					volView.__horizSlices.inProgData[volView.__tempNum].curTagged = !pngCanvasFctn();	//  pngCanvasFctn() returns true if image is all black
 					volView.__drawingCanvasParams.sliceNumber = event.getData();
 					if(segmentationDone)
 					{
@@ -1627,16 +1629,16 @@ qx.Class.define("desk.volView",
 									htmlContextUsedSeeds.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 					}
 				////Update lists
-					if(volView.__horizSlices.inProgData[tempNum].curTagged)	////CURRENT slice has seeds
+					if(volView.__horizSlices.inProgData[volView.__tempNum].curTagged)	////CURRENT slice has seeds
 					{
-							if(!volView.__horizSlices.inProgData[tempNum].inList)
+							if(!volView.__horizSlices.inProgData[volView.__tempNum].inList)
 							{
 								// Add slice to list
-									var sliceItem = new qx.ui.form.ListItem("Slice No." + tempNum);
+									var sliceItem = new qx.ui.form.ListItem("Slice No." + volView.__tempNum);
 									var tempPos = 0;
-									for(var i=0; i<=tempNum; i++)
+									for(var i=0; i<=volView.__tempNum; i++)
 									{
-											if(listMembers[i]<tempNum)
+											if(listMembers[i]<volView.__tempNum)
 													tempPos++;
 									}
 									slicesListSemaphore = false;
@@ -1653,16 +1655,16 @@ qx.Class.define("desk.volView",
 											}
 											if(j==tempPos)
 											{
-													tempMembers[j] = tempNum;
+													tempMembers[j] = volView.__tempNum;
 													i--;	// do "i--;" so when doing "i++;" i index doesn't actually change
 											}
 											j++;
 									}
 									listMembers = tempMembers;
 									listSemahpore = false;
-									for(var i=0; i<numberOfSlices; i++)
+									for(var i=0; i<volView.__numberOfSlices; i++)
 									{
-											if(i!=tempNum)
+											if(i!=volView.__tempNum)
 													volView.__horizSlices.inProgData[i].inList = volView.__horizSlices.inProgData[i].inList;
 											else
 													volView.__horizSlices.inProgData[i].inList = true;
@@ -1676,12 +1678,12 @@ qx.Class.define("desk.volView",
 					}
 					else	////CURRENT slice has NO seeds
 					{
-							if(volView.__horizSlices.inProgData[tempNum].inList)
+							if(volView.__horizSlices.inProgData[volView.__tempNum].inList)
 							{
 								////Erase image on the server
-									eraseFile(slicesNamePrefix + (slicesNameOffset + tempNum) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + timestamp);
+									eraseFile(volView.__slicesNamePrefix + (volView.__slicesNameOffset + volView.__tempNum) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp);
 								////Update members list
-									var tempPos = findInArray(listMembers, tempNum);
+									var tempPos = findInArray(listMembers, volView.__tempNum);
 									updateList(tempPos);
 									slicesListSemaphore = true;
 									modifSlicesList.remove(modifSlicesList.getChildren()[tempPos]);
@@ -1702,7 +1704,7 @@ qx.Class.define("desk.volView",
 											startButton.set({opacity: 0.5, enabled : false});
 									}
 							}
-					}	////End if(volView.__horizSlices.inProgData[tempNum].curTagged)
+					}	////End if(volView.__horizSlices.inProgData[volView.__tempNum].curTagged)
 				////Set canvas, buttons, list
 					if(volView.__horizSlices.inProgData[volView.__drawingCanvasParams.sliceNumber].curTagged)	////NEXT slice HAS seeds
 					{
@@ -1754,7 +1756,7 @@ qx.Class.define("desk.volView",
 									}
 									listMembers = tempMembers;
 									listSemahpore = false;
-									for(var i=0; i<numberOfSlices; i++)
+									for(var i=0; i<volView.__numberOfSlices; i++)
 									{
 											if(i!=volView.__drawingCanvasParams.sliceNumber)
 													volView.__horizSlices.inProgData[i].inList = volView.__horizSlices.inProgData[i].inList;
@@ -1789,7 +1791,7 @@ qx.Class.define("desk.volView",
 									slicesListSemaphore = false;
 									modifSlicesList.addAt(sliceItem, tempPos);
 									// slicesListSemaphore = false;
-									for(var i=0; i<numberOfSlices; i++)
+									for(var i=0; i<volView.__numberOfSlices; i++)
 									{
 											if(i!=volView.__drawingCanvasParams.sliceNumber)
 													volView.__horizSlices.inProgData[i].inList = volView.__horizSlices.inProgData[i].inList;
@@ -2207,25 +2209,25 @@ qx.Class.define("desk.volView",
 					var tempX, tempY;
 					if(autoComplete)
 					{
-							tempX = (volView.__mouseData.recentX+volView.__mouseData.xPos)/2-eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
-							tempY = (volView.__mouseData.recentY+volView.__mouseData.yPos)/2-eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
+							tempX = (volView.__mouseData.recentX+volView.__mouseData.xPos)/2-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
+							tempY = (volView.__mouseData.recentY+volView.__mouseData.yPos)/2-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
 							var newCoor = changeInto05Coordinates(tempX,tempY);
 							tempX = newCoor.newX;
 							tempY = newCoor.newY;
                             volView.__htmlContextLabels.clearRect(tempX,
                                                         tempY,
-                                                            eraserCoeff*volView.__htmlContextLabels.lineWidth,
-                                                            eraserCoeff*volView.__htmlContextLabels.lineWidth);
+                                                            volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth,
+                                                            volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth);
 					}
-					tempX = volView.__mouseData.xPos-eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
-					tempY = volView.__mouseData.yPos-eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
+					tempX = volView.__mouseData.xPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
+					tempY = volView.__mouseData.yPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
 					var newCoor = changeInto05Coordinates(tempX,tempY);
 					tempX = newCoor.newX;
 					tempY = newCoor.newY;
                     volView.__htmlContextLabels.clearRect(tempX,
 												tempY,
-													eraserCoeff*volView.__htmlContextLabels.lineWidth,
-													eraserCoeff*volView.__htmlContextLabels.lineWidth);
+													volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth,
+													volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth);
                     drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
                     volView.__mouseData.recentX = volView.__mouseData.xPos;
                     volView.__mouseData.recentY = volView.__mouseData.yPos;
@@ -2278,11 +2280,11 @@ qx.Class.define("desk.volView",
 									var blue = 0;
 									var distance = 500;
 									var rightColorIndex = 0;
-									for(var j=0; j<labelColors.length; j++)
+									for(var j=0; j<volView.__labelColors.length; j++)
 									{
-											red = labelColors[j].red;
-											green = labelColors[j].green;
-											blue = labelColors[j].blue;
+											red = volView.__labelColors[j].red;
+											green = volView.__labelColors[j].green;
+											blue = volView.__labelColors[j].blue;
 											var testD = Math.sqrt(Math.pow(red-seeds[i],2)+Math.pow(green-seeds[i+1],2)+Math.pow(blue-seeds[i+2],2));
 											if(testD<distance)
 											{
@@ -2290,9 +2292,9 @@ qx.Class.define("desk.volView",
 													rightColorIndex = j;
 											}
 									}
-									pixels[i] = labelColors[rightColorIndex].red;
-									pixels[i+1] = labelColors[rightColorIndex].green;
-									pixels[i+2] = labelColors[rightColorIndex].blue;
+									pixels[i] = volView.__labelColors[rightColorIndex].red;
+									pixels[i+1] = volView.__labelColors[rightColorIndex].green;
+									pixels[i+2] = volView.__labelColors[rightColorIndex].blue;
 									pixels[i+3] = 255;
                                     isAllBlack = false;
                             }
@@ -2318,8 +2320,8 @@ qx.Class.define("desk.volView",
 							var pngRequest = new XMLHttpRequest();
 							pngRequest.open("POST",'/visu/saveFile.php',true);
 							pngRequest.setRequestHeader('Content-Type', 'application/upload');
-							volView.debug("Writing  data/seeds/" + slicesNamePrefix + (slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel());
-							pngRequest.send("data/seeds/" + slicesNamePrefix + (slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel() + "!" + pngImg);
+							volView.debug("Writing  data/seeds/" + volView.__slicesNamePrefix + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel());
+							pngRequest.send("data/seeds/" + volView.__slicesNamePrefix + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel() + "!" + pngImg);
                     }
                     return isAllBlack;
             };
@@ -2416,7 +2418,7 @@ qx.Class.define("desk.volView",
 					for(var i=0; i<listMembers.length; i++)
 					{
 							sliceID = {slice: listMembers[i] + ""};
-							xmlContent += '     ' + element('seed', slicesNamePrefix + (slicesNameOffset + listMembers[i]) + "." + selectBox.getSelection()[0].getLabel(), sliceID) + '\n';
+							xmlContent += '     ' + element('seed', volView.__slicesNamePrefix + (volView.__slicesNameOffset + listMembers[i]) + "." + selectBox.getSelection()[0].getLabel(), sliceID) + '\n';
 					}
 					var xmlUpdateRequest = new XMLHttpRequest();
 					xmlUpdateRequest.open("POST",'/visu/createXML.php',true);
@@ -2555,7 +2557,7 @@ qx.Class.define("desk.volView",
 		// updateImage : function() {
 			// this.__image.setSource(
 				// this.__path+this.__prefix+(this.__offset+this.__maxZ-this.__slider.getValue())+"."+
-					// this.__fileFormatBox.getSelection()[0].getLabel()+"?nocache="+this.__timestamp);
+					// this.__fileFormatBox.getSelection()[0].getLabel()+"?nocache="+this.__volView.__timestamp);
 		// }
 	}
 });
