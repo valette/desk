@@ -51,7 +51,7 @@ qx.Class.define("desk.fileBrowser",
 			{
 				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 					var label = node.label;
-					return label.indexOf(textField.getValue()) != -1;
+					return label.toLowerCase().indexOf(textField.getValue().toLowerCase()) != -1;
 				}
 				return true;
 			}, this);

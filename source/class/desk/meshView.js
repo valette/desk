@@ -112,11 +112,17 @@ qx.Class.define("desk.meshView",
 			this.addListener("drop", function(e) {
 					var fileBrowser=e.getData("fileBrowser");
 					var nodes=fileBrowser.getSelectedNodes();
+					var scene=this.getScene();
+					var numberOfMeshes=nodes.length;
+
 					for (var i=0;i<nodes.length;i++)
 					{
 						var fileNode=nodes[i];
 						var fileName=fileBrowser.getNodeURL(fileNode);
-						this.getScene().loadMesh(fileName);
+						scene.loadMesh(fileName, function (){
+							numberOfMeshes--;
+							if (numberOfMeshes==0)
+								scene.render();});
 					}					
 				}, this);
 		},
