@@ -19,8 +19,6 @@ qx.Class.define("desk.volView",
         };
 
     ////Global variables
-
-		undoLimit = 10;
 		
         mouseData = {
                 xPos : 0,
@@ -168,6 +166,8 @@ qx.Class.define("desk.volView",
 		},
 
 		__ctrlZData : [],
+
+		__undoLimit : 10,
 
 		__path : null,
 		// __offset : null,
@@ -2112,7 +2112,7 @@ qx.Class.define("desk.volView",
 							}
 							else
 							{
-									if(volView.__ctrlZData.length<undoLimit)
+									if(volView.__ctrlZData.length<volView.__undoLimit)
 									{
 											for(var i=0; i<volView.__ctrlZData.length; i++)
 											{
@@ -2122,7 +2122,7 @@ qx.Class.define("desk.volView",
 									}
 									else
 									{
-											if(volView.__ctrlZData.length==undoLimit)
+											if(volView.__ctrlZData.length==volView.__undoLimit)
 											{
 													for(var i=1; i<volView.__ctrlZData.length; i++)
 													{
