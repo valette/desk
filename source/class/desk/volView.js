@@ -20,15 +20,6 @@ qx.Class.define("desk.volView",
 
     ////Global variables
 		
-        winXP = true;
-		
-        winMap = {
-                left : 16,
-                top : 8,
-                width : 400,
-                height : 444
-        };
-		
         imgMap = {
                 left : 40,
                 top : 4,
@@ -104,8 +95,8 @@ qx.Class.define("desk.volView",
 		var volView = this;
 		
         volView.set({
-                width: winMap.width,
-                height: winMap.height,
+                width: volView.__winMap.width,
+                height: volView.__winMap.height,
                 showMinimize: false,
                 showMaximize: false,
                 showClose: false,
@@ -174,8 +165,14 @@ qx.Class.define("desk.volView",
 	
 	members :
 	{
-		
-		
+		__winXP : true,
+
+		__winMap : {
+                left : 16,
+                top : 8,
+                width : 400,
+                height : 444
+        },
 		
 		__path : null,
 		// __offset : null,
@@ -294,8 +291,8 @@ qx.Class.define("desk.volView",
         },this);
         volView.addListener("click", function(event)
 		{
-                winMap.left = volView.getBounds().left;
-                winMap.top = volView.getBounds().top;
+                volView.__winMap.left = volView.getBounds().left;
+                volView.__winMap.top = volView.getBounds().top;
         },this);
 		
 		
@@ -499,7 +496,7 @@ qx.Class.define("desk.volView",
                     mouseData.mouseLeftDownFlag = false;
             },this);
 			
-            if(winXP)
+            if(this.__winXP)
                 this.add(eraserButton, {left: imgMap.width + 56, top: 40});
             else
                 this.add(eraserButton, {left: imgMap.width + 56, top: 36});
@@ -530,7 +527,7 @@ qx.Class.define("desk.volView",
                     mouseData.mouseLeftDownFlag = false;
             },this);
 			
-			if(winXP)
+			if(this.__winXP)
                 this.add(clearButton, {left: imgMap.width + eraserButton.getSizeHint().width+8 + 67, top: 40});
             else
                 this.add(clearButton, {left: imgMap.width + eraserButton.getSizeHint().width+8 + 74, top: 36});
@@ -704,7 +701,7 @@ qx.Class.define("desk.volView",
                     }
             });
 			
-			if(winXP)
+			if(this.__winXP)
                 this.add(brghtnssCntrstButton, {left: imgMap.width + colorsTabView.getSizeHint().width - 4, top: 40});
             else
                 this.add(brghtnssCntrstButton, {left: imgMap.width + colorsTabView.getSizeHint().width - 4, top: 36});
@@ -727,7 +724,7 @@ qx.Class.define("desk.volView",
 			
 			this.add(resetBrCrButton);
 
-            if(winXP)
+            if(this.__winXP)
                 resetBrCrButton.setUserBounds(imgMap.width + colorsTabView.getSizeHint().width + 39, 41, 50, 32);
             else
                 resetBrCrButton.setUserBounds(imgMap.width + colorsTabView.getSizeHint().width + 39, 36, 50, 32);
@@ -1233,8 +1230,8 @@ qx.Class.define("desk.volView",
 							if((1<=zoomFactor)&&(zoomFactor<=MaxZoom))	////Only zoom no shrinking and not more than Max zoom
 							{
 									volView.debug(" zoom = x" + zoomFactor);
-									mouseData.xPos = event.getDocumentLeft()-winMap.left-10-imgMap.left;
-									mouseData.yPos = event.getDocumentTop()-winMap.top-35-imgMap.top;
+									mouseData.xPos = event.getDocumentLeft()-volView.__winMap.left-10-imgMap.left;
+									mouseData.yPos = event.getDocumentTop()-volView.__winMap.top-35-imgMap.top;
 									////volView.debug(event.getType() + "(" + mouseData.xPos + "," + mouseData.yPos + ")");
 									var onImageX = mouseData.decaleZoomX + mouseData.xPos;
 									var onImageY = mouseData.decaleZoomY + mouseData.yPos;
@@ -1314,8 +1311,8 @@ qx.Class.define("desk.volView",
 				////Set eraser cursor position
 					if(drawingCanvasParams.eraseFlag)
                     {
-							var tempX = (event.getDocumentLeft()-winMap.left-10-imgMap.left)/drawingCanvasParams.curCtxtZoom;
-							var tempY = (event.getDocumentTop()-winMap.top-35-imgMap.top)/drawingCanvasParams.curCtxtZoom;
+							var tempX = (event.getDocumentLeft()-volView.__winMap.left-10-imgMap.left)/drawingCanvasParams.curCtxtZoom;
+							var tempY = (event.getDocumentTop()-volView.__winMap.top-35-imgMap.top)/drawingCanvasParams.curCtxtZoom;
 							eraserCursor.set({marginLeft: Math.round((tempX-eraserCoeff*htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+imgMap.left),
 												marginTop: Math.round((tempY-eraserCoeff*htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+imgMap.top)});
                             if(eraserCursor.getVisibility()=="excluded")
@@ -1889,8 +1886,8 @@ qx.Class.define("desk.volView",
 		////If(scaling) applies zoom factor for relative coordinates (on zoomed window)
 			var getPosition = function(mouseEvent,scaling)
             {
-					mouseData.xPos = (mouseEvent.getDocumentLeft()-winMap.left-10-imgMap.left)/drawingCanvasParams.curCtxtZoom;
-					mouseData.yPos = (mouseEvent.getDocumentTop()-winMap.top-35-imgMap.top)/drawingCanvasParams.curCtxtZoom;
+					mouseData.xPos = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-imgMap.left)/drawingCanvasParams.curCtxtZoom;
+					mouseData.yPos = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-imgMap.top)/drawingCanvasParams.curCtxtZoom;
 					////volView.debug(mouseEvent.getType() + "(" + mouseData.xPos + "," + mouseData.yPos + ")");
 					if(scaling)
 					{
@@ -2042,8 +2039,8 @@ qx.Class.define("desk.volView",
 		////The labels image is not modified
 			var drawBrush = function(mouseEvent,scale)
             {
-                    var tempX = (mouseEvent.getDocumentLeft()-winMap.left-10-imgMap.left)/scale;
-                    var tempY = (mouseEvent.getDocumentTop()-winMap.top-35-imgMap.top)/scale;
+                    var tempX = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-imgMap.left)/scale;
+                    var tempY = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-imgMap.top)/scale;
                     var tempMargin = 4/scale;
                     if((tempMargin<tempX)&&(tempX<imgMap.width/scale-tempMargin)&&(tempMargin<tempY)&&(tempY<imgMap.height/scale-tempMargin))
                     {
@@ -2066,8 +2063,8 @@ qx.Class.define("desk.volView",
 		////Draw cross in the results window at copied mouse position
 			var drawPointer = function(mouseEvent,scale)
             {
-                    var tempX = (mouseEvent.getDocumentLeft()-winMap.left-10-imgMap.left)/scale;
-                    var tempY = (mouseEvent.getDocumentTop()-winMap.top-35-imgMap.top)/scale;
+                    var tempX = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-imgMap.left)/scale;
+                    var tempY = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-imgMap.top)/scale;
                     var tempMargin = 4/scale;
                     if((tempMargin<tempX)&&(tempX<imgMap.width/scale-tempMargin)&&(tempMargin<tempY)&&(tempY<imgMap.height/scale-tempMargin))
                     {
