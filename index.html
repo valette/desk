@@ -37,15 +37,35 @@ function resizeClient(width,height) {
 		parent.style.height=height+"px";
 	}
 
-
     g_scene.resize();
     g_scene.render();
-    
+
     function workaround_render()
     {
     	g_scene.render();
     }
  //   var t=setTimeout(workaround_render,500);
+}
+
+function render()
+{
+	function workaround_render()
+	{
+		g_scene.render();
+	}
+	var t=setTimeout(workaround_render,500);
+}
+
+function adjustViewpointAndRender()
+{
+	g_scene.cameracontroller.viewAll(g_scene.meshesBoundingBox,1);
+	g_scene.client.root.localMatrix=g_scene.cameracontroller.calculateViewMatrix();
+g_scene.render();/*
+	function workaround_render()
+	{
+		g_scene.render();
+	}
+	var t=setTimeout(workaround_render,500);*/
 }
 
 /**
@@ -77,17 +97,9 @@ function initStep2(clientElements) {
 
 	var mesh=getParameter("mesh")
 	if (mesh!=null)
-		g_scene.loadMesh (mesh);
+		g_scene.loadMesh (mesh, adjustViewpointAndRender);
 	else
-		g_scene.loadMesh ("ADAM/adam.xml");
-
-//	g_scene.addMeshes("http://www.creatis.insa-lyon.fr/~valette/meshView/stream/output.xml");
-//	g_scene.addMeshes("http://www.creatis.insa-lyon.fr/~valette/meshView/bones/output.xml");
-//	g_scene.addMeshes("http://www.creatis.insa-lyon.fr/~valette/meshView/coeurThoraxVoxels/output.xml");
-//	g_scene.addMeshes("test/output_full.xml");
-//	createFromFile(g_scene,"data/heart.vtk",[1,1,1,0.6]);
-//	createFromFile(g_scene,"data/skull.vtk",[1,1,1,0.6]);
-//	createFromFile(g_scene,"coeurThorax/poumonDroit.vtk",[1,1,1,1]);
+		g_scene.loadMesh ("ADAM/adam.xml", adjustViewpointAndRender);
 }
 
 /**

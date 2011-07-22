@@ -95,23 +95,18 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	this.resize();
 };
 
-o3djs.renderscene.RenderScene.prototype.loadMesh = function(file) 
+o3djs.renderscene.RenderScene.prototype.loadMesh = function(file, callback) 
 {
 	var extension=file.substring(file.length-4, file.length);
 	var scene=this;
-	function render()
-	{
-	    scene.resetCamera();
-	   	scene.render();
-	};
 
 	switch (extension)
 	{
 		case ".vtk":
-			createFromFile(this,file,[1,1,1,1],false,render);
+			createFromFile(this,file,[1,1,1,1],false,callback);
 			break;
 		case ".xml":
-			this.addMeshes(file);
+			this.addMeshes(file, callback);
 			break;
 		default : 
 			alert ("extension "+extension+" not supported!");
@@ -151,7 +146,7 @@ o3djs.renderscene.RenderScene.prototype.stopDragging = function()
 	this.cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.NONE);
 }
 
-o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile) 
+o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile, callback) 
 {
 	var xmlhttp=new XMLHttpRequest();
 	xmlhttp.open("GET",xmlFile+"?nocache=" + Math.random(),false);
@@ -174,26 +169,7 @@ o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile)
 	var meshIndex=0;
 	var numberOfMeshes=meshes.length;
 	var scene=this;
-
-	function render()
-	{
-	   function workaround_render()
-	    {
-	    	scene.render();
-	    }
-	    var t=setTimeout(workaround_render,500);
-	}
-
-	function adjustViewpointAndRender()
-	{
-	   function workaround_render()
-	    {
-		    scene.cameracontroller.viewAll(scene.meshesBoundingBox,1);
-    		scene.client.root.localMatrix=scene.cameracontroller.calculateViewMatrix();
-	    	render();
-	    }
-	    var t=setTimeout(workaround_render,500);
-	}
+	var numberOfRemainingMeshes=numberOfMeshes;
 
 	for (var n=0;n<numberOfMeshes;n++)
 	{
@@ -211,14 +187,30 @@ o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile)
 			for (var j=0;j<4;j++)
 				color[j]=parseFloat(colors[j]);
 		}
+		
+		function afterLoading()
+		{
+			numberOfRemainingMeshes--;
+			switch (numberOfRemainingMeshes)
+			{
+				case Math.floor(numberOfMeshes/4):
+				case Math.floor(numberOfMeshes/2):
+				case Math.floor(numberOfMeshes*3/4):
+				case 0:
+					if (callback)
+						callback();
+					break;
+				default:
+			}
+		}
 
 		if (Label!="0")
 		{
-			if ((n==Math.floor(numberOfMeshes/4))||(n==Math.floor(numberOfMeshes/2))
-			||(n==Math.floor(numberOfMeshes*3/4))||(n==numberOfMeshes-1))
-				createFromFile(scene, path+"/"+file,color,flip, adjustViewpointAndRender);
-			else
-				createFromFile(scene, path+"/"+file,color,flip);
+			createFromFile(scene, path+"/"+file,color,flip, afterLoading);
+		}
+		else
+		{
+			afterLoading();
 		}
 	}
 };
