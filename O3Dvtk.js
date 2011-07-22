@@ -48,7 +48,7 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	this.dragging = false;
 
 	function startDragging(e) {
-		this.dragging = true;
+		scene.dragging = true;
 		var cameracontroller=scene.cameracontroller
 
 		if ((e.shiftKey)||(e.button==1))
@@ -63,7 +63,7 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	}
 
 	function drag(e) {
-		if (this.dragging) {
+		if (scene.dragging==true) {
 			scene.cameracontroller.mouseMoved(e.x,e.y);
 			var matrix=scene.cameracontroller.calculateViewMatrix();
 			scene.client.root.localMatrix=matrix;
