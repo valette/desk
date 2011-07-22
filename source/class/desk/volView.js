@@ -19,8 +19,7 @@ qx.Class.define("desk.volView",
         };
 
     ////Global variables
-		
-		ctrlZData = [];
+
 		undoLimit = 10;
 		
         mouseData = {
@@ -107,9 +106,6 @@ qx.Class.define("desk.volView",
 		volView.open();
 		
 		return (volView);
-		
-		
-		
 	},
 	
 	
@@ -170,6 +166,8 @@ qx.Class.define("desk.volView",
 			usedSliceSeeds : [],
 			sliceResults : []
 		},
+
+		__ctrlZData : [],
 
 		__path : null,
 		// __offset : null,
@@ -1837,7 +1835,7 @@ qx.Class.define("desk.volView",
 							drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
 					};
 				////Clear "undo" stack
-					ctrlZData = [];
+					volView.__ctrlZData = [];
 			}, this);
 
             slider.addListener("mouseup", function(event)
@@ -2108,33 +2106,33 @@ qx.Class.define("desk.volView",
 					if(!mouseEvent.isRightPressed())
 					{
 							var tempData = [];
-							if(ctrlZData.length==0)
+							if(volView.__ctrlZData.length==0)
 							{
 									tempData[0] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 							}
 							else
 							{
-									if(ctrlZData.length<undoLimit)
+									if(volView.__ctrlZData.length<undoLimit)
 									{
-											for(var i=0; i<ctrlZData.length; i++)
+											for(var i=0; i<volView.__ctrlZData.length; i++)
 											{
-													tempData[ctrlZData.length-i] = ctrlZData[ctrlZData.length-i-1];
+													tempData[volView.__ctrlZData.length-i] = volView.__ctrlZData[volView.__ctrlZData.length-i-1];
 											}
 											tempData[0] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 									}
 									else
 									{
-											if(ctrlZData.length==undoLimit)
+											if(volView.__ctrlZData.length==undoLimit)
 											{
-													for(var i=1; i<ctrlZData.length; i++)
+													for(var i=1; i<volView.__ctrlZData.length; i++)
 													{
-															tempData[ctrlZData.length-i] = ctrlZData[ctrlZData.length-i-1];
+															tempData[volView.__ctrlZData.length-i] = volView.__ctrlZData[volView.__ctrlZData.length-i-1];
 													}
 													tempData[0] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 											}
 									}
 							}
-							ctrlZData = tempData;
+							volView.__ctrlZData = tempData;
 					}
 			};
 			
@@ -2147,17 +2145,17 @@ qx.Class.define("desk.volView",
             {
 					if(mouseEvent.isRightPressed())
 					{
-							if(0<ctrlZData.length)
+							if(0<volView.__ctrlZData.length)
 							{
-									volView.__htmlContextLabels.putImageData(ctrlZData[0], 0, 0);
+									volView.__htmlContextLabels.putImageData(volView.__ctrlZData[0], 0, 0);
 									drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
 							}
 							var tempData = [];
-							for(var i=1; i<ctrlZData.length; i++)
+							for(var i=1; i<volView.__ctrlZData.length; i++)
 							{
-									tempData[i-1] = ctrlZData[i];
+									tempData[i-1] = volView.__ctrlZData[i];
 							}
-							ctrlZData = tempData;
+							volView.__ctrlZData = tempData;
 					}
 			};
 			
