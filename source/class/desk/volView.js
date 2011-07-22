@@ -181,6 +181,8 @@ qx.Class.define("desk.volView",
 
 		__htmlCanvasImage : null,
 
+		__htmlContextImage : null,
+
 		__path : null,
 		// __offset : null,
 		// __prefix : null,
@@ -1446,8 +1448,8 @@ qx.Class.define("desk.volView",
                     var data = event.getData();
                     volView.__imgCanvasParams.imgContext = data.context;
 					volView.__htmlCanvasImage = document.getElementById("htmlTagCanvasImage");
-                    htmlContextImage = volView.__htmlCanvasImage.getContext("2d");
-					htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);	// here for unbuild version
+                    volView.__htmlContextImage = volView.__htmlCanvasImage.getContext("2d");
+					volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);	// here for unbuild version
 					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);	// here for unbuild version
             }, this);
 			
@@ -1492,9 +1494,9 @@ qx.Class.define("desk.volView",
 			
 			canvasImage.onload = function()	// here for build version
 			{
-					if((volView.__drawingCanvasParams.sliceNumber==0)&&(typeof htmlContextImage!="undefined")&&(typeof volView.__imgCanvasParams.imgContext!="undefined"))
+					if((volView.__drawingCanvasParams.sliceNumber==0)&&(typeof volView.__htmlContextImage!="undefined")&&(typeof volView.__imgCanvasParams.imgContext!="undefined"))
 					{
-							htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
+							volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
 							volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);
 					}
 			};
@@ -1970,9 +1972,9 @@ qx.Class.define("desk.volView",
 					{
 						if(canvasImage.complete)
 						{
-							htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
+							volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
 							var outImg = processBrCr(volView.__imgCanvasParams.brightness, volView.__imgCanvasParams.contrast, true);
-							htmlContextImage.putImageData(outImg, 0, 0);
+							volView.__htmlContextImage.putImageData(outImg, 0, 0);
 							volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage,
 																	sx,
 																	sy,
@@ -1985,10 +1987,10 @@ qx.Class.define("desk.volView",
 						}
 						else
 						{
-								htmlContextImage.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-								htmlContextImage.font = 'bold 21px sans-serif';
-								htmlContextImage.textBaseLine = 'bottom';
-								htmlContextImage.fillText('Image not yet loaded', (volView.__imgMap.width-volView.__imgMap.height)/2, volView.__imgMap.height/2);
+								volView.__htmlContextImage.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+								volView.__htmlContextImage.font = 'bold 21px sans-serif';
+								volView.__htmlContextImage.textBaseLine = 'bottom';
+								volView.__htmlContextImage.fillText('Image not yet loaded', (volView.__imgMap.width-volView.__imgMap.height)/2, volView.__imgMap.height/2);
 								volView.__imgCanvasParams.imgContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 						}
 					}
@@ -2251,9 +2253,9 @@ qx.Class.define("desk.volView",
             var resetZoom = function(autoComplete)
             {
 					volView.__imgCanvasParams.imgContext.setTransform(1,0,0,1,0,0);
-					htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
+					volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
 					var outImg = processBrCr(volView.__imgCanvasParams.brightness, volView.__imgCanvasParams.contrast, true);
-					htmlContextImage.putImageData(outImg, 0, 0);
+					volView.__htmlContextImage.putImageData(outImg, 0, 0);
 					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);
 					volView.__drawingCanvasParams.drawingContext.setTransform(1,0,0,1,0,0);
 					extWinSegImgCanvas.extWinSegImgContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
@@ -2277,7 +2279,7 @@ qx.Class.define("desk.volView",
 		//// to return true value if image is all black (if canvas is empty)
             var pngCanvasFctn = function()
             {
-                    var sliceData = htmlContextImage.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
+                    var sliceData = volView.__htmlContextImage.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
                     var pixels = sliceData.data;
                     var seeds = volView.__horizSlices.sliceLabels[volView.__drawingCanvasParams.sliceNumber].data;
                     var isAllBlack = true;
@@ -2352,9 +2354,9 @@ qx.Class.define("desk.volView",
                         var brightMul = 1 + Math.min(150,Math.max(-150,brightness)) / 150;
                     }
                     contrast = Math.max(0,contrast+1);
-                    if (typeof htmlContextImage.getImageData == "function")
+                    if (typeof volView.__htmlContextImage.getImageData == "function")
                     {
-                        var dataDesc = htmlContextImage.getImageData(0, 0, canvasImage.width, canvasImage.height);
+                        var dataDesc = volView.__htmlContextImage.getImageData(0, 0, canvasImage.width, canvasImage.height);
                         var data = dataDesc.data;
                         var p = canvasImage.width * canvasImage.height;
                         var pix = p*4, pix1, pix2;
@@ -2489,7 +2491,8 @@ qx.Class.define("desk.volView",
 			
 			
 			// XML writer with attributes and smart attribute quote escaping 
-			var APOS = "'"; QUOTE = '"'
+			var APOS = "'";
+			var QUOTE = '"'
 			var ESCAPED_QUOTE = {  }
 			ESCAPED_QUOTE[QUOTE] = '&quot;'
 			ESCAPED_QUOTE[APOS] = '&apos;'
