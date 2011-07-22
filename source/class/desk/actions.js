@@ -139,7 +139,7 @@ qx.Class.define("desk.actions",
 					parameterForm.setDroppable(true);
 					parameterForm.addListener("drop", function(e) {
 							var fileBrowser=e.getData("fileBrowser");
-							var fileNode=e.getData("fileNode");
+							var fileNode=fileBrowser.getSelectedNode();
  							this.setValue(fileBrowser.getNodePath(fileNode));
 						}, parameterForm);
 

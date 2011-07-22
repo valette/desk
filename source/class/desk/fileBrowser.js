@@ -28,6 +28,7 @@ qx.Class.define("desk.fileBrowser",
 		var virtualTree = new qx.ui.treevirtual.TreeVirtual(["files","mTime","size"],
 			{initiallyHiddenColumns : [1]});
 		this.__virtualTree=virtualTree;
+		virtualTree.setSelectionMode(qx.ui.treevirtual.TreeVirtual.SelectionMode.MULTIPLE_INTERVAL);
 
 		virtualTree.set({
 			width  : 400,
@@ -78,7 +79,7 @@ qx.Class.define("desk.fileBrowser",
 		virtualTree.addListener("dragstart", function(e) {
 			e.addAction("move");
 			e.addType("fileBrowser");
-			e.addType("fileNode");
+//			e.addType("fileNode");
 			e.addType("text");
 			});
 		virtualTree.addListener("droprequest", function(e) {
@@ -124,6 +125,11 @@ qx.Class.define("desk.fileBrowser",
 		getSelectedNode : function (e)
 		{
 			return (this.__virtualTree.getSelectedNodes()[0]);
+		},
+
+		getSelectedNodes : function (e)
+		{
+			return (this.__virtualTree.getSelectedNodes());
 		},
 
 		getEventNode : function (e)

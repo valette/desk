@@ -111,9 +111,13 @@ qx.Class.define("desk.meshView",
 			this.setDroppable(true);
 			this.addListener("drop", function(e) {
 					var fileBrowser=e.getData("fileBrowser");
-					var fileNode=e.getData("fileNode");
-					var fileName=fileBrowser.getNodeURL(fileNode);
-					this.getScene().loadMesh(fileName);
+					var nodes=fileBrowser.getSelectedNodes();
+					for (var i=0;i<nodes.length;i++)
+					{
+						var fileNode=nodes[i];
+						var fileName=fileBrowser.getNodeURL(fileNode);
+						this.getScene().loadMesh(fileName);
+					}					
 				}, this);
 		},
 
