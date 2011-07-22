@@ -171,6 +171,8 @@ qx.Class.define("desk.volView",
 		__segImgSKeyOpacity : 0.5,
 		__drawingSKeyOpacity : 0,
 
+		__htmlContextUsedSeeds : null,
+
 		__path : null,
 		// __offset : null,
 		// __prefix : null,
@@ -885,7 +887,7 @@ qx.Class.define("desk.volView",
 							{
 									volView.__horizSlices.usedSliceSeeds[listMembers[i]][tempMax] = volView.__horizSlices.sliceLabels[listMembers[i]];
 							}
-							htmlContextUsedSeeds.putImageData(volView.__horizSlices.usedSliceSeeds[volView.__drawingCanvasParams.sliceNumber][tempMax], 0, 0);
+							volView.__htmlContextUsedSeeds.putImageData(volView.__horizSlices.usedSliceSeeds[volView.__drawingCanvasParams.sliceNumber][tempMax], 0, 0);
 							segSemahpore = true;
 							while(this.getEnabled())
 									segSemahpore = true;
@@ -1118,7 +1120,7 @@ qx.Class.define("desk.volView",
                     var data = event.getData();
                     extWinSeedsCanvas.extWinSeedsContext = data.context;
 					htmlCanvasUsedSeeds = document.getElementById("htmlTagCanvasUsedSeeds");
-                    htmlContextUsedSeeds = htmlCanvasUsedSeeds.getContext("2d");
+                    volView.__htmlContextUsedSeeds = htmlCanvasUsedSeeds.getContext("2d");
             }, this);
             externalWindow.add(extWinSeedsCanvas, {left: 0, top: 0});
 			
@@ -1624,9 +1626,9 @@ qx.Class.define("desk.volView",
 														volView.__horizSlices.sliceResults[volView.__drawingCanvasParams.sliceNumber][index].width,
 														volView.__horizSlices.sliceResults[volView.__drawingCanvasParams.sliceNumber][index].height);
 							if(typeof volView.__horizSlices.usedSliceSeeds[volView.__drawingCanvasParams.sliceNumber][index] != "undefined")
-									htmlContextUsedSeeds.putImageData(volView.__horizSlices.usedSliceSeeds[volView.__drawingCanvasParams.sliceNumber][index], 0, 0);
+									volView.__htmlContextUsedSeeds.putImageData(volView.__horizSlices.usedSliceSeeds[volView.__drawingCanvasParams.sliceNumber][index], 0, 0);
 							else
-									htmlContextUsedSeeds.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+									volView.__htmlContextUsedSeeds.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 					}
 				////Update lists
 					if(volView.__horizSlices.inProgData[volView.__tempNum].curTagged)	////CURRENT slice has seeds
