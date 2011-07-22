@@ -20,7 +20,7 @@ qx.Class.define("desk.volView",
 
     ////Global variables
 		
-        var htmlCanvasLabels = null;
+
         var htmlContextLabels = null;
 		
         drawingCanvasParams = {
@@ -173,7 +173,9 @@ qx.Class.define("desk.volView",
 			width : 0,
 			height : 0
 		},
-		
+
+		__htmlCanvasLabels : null,
+
 		__path : null,
 		// __offset : null,
 		// __prefix : null,
@@ -1145,8 +1147,8 @@ qx.Class.define("desk.volView",
 					// volView.debug("drawingCanvasParams.drawingContext : " + drawingCanvasParams.drawingContext);
                     drawingCanvasParams.drawingContext.setTransform(drawingCanvasParams.curCtxtZoom,0,0,drawingCanvasParams.curCtxtZoom,0,0);
 					drawingCanvasParams.drawingContext.mozImageSmoothingEnabled = false;
-					htmlCanvasLabels = document.getElementById("htmlTagCanvasLabels");
-                    htmlContextLabels = htmlCanvasLabels.getContext("2d");
+					volView.__htmlCanvasLabels = document.getElementById("htmlTagCanvasLabels");
+                    htmlContextLabels = volView.__htmlCanvasLabels.getContext("2d");
 					htmlContextLabels.strokeStyle = drawingCanvasParams.currentColor;
                     htmlContextLabels.fillStyle = drawingCanvasParams.currentColor;
                     htmlContextLabels.lineWidth = drawingCanvasParams.myLineWidth*drawingCanvasParams.curCtxtZoom;
@@ -1989,7 +1991,7 @@ qx.Class.define("desk.volView",
 					if(!((mouseData.brCrFixingFlag)&&(mouseData.mouseLeftDownFlag)&&(drawingCanvasParams.eraseFlag)))
 					{
 							drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-							drawingCanvasParams.drawingContext.drawImage(htmlCanvasLabels,
+							drawingCanvasParams.drawingContext.drawImage(volView.__htmlCanvasLabels,
                                                                         sx,
                                                                         sy,
                                                                         sdw,
@@ -2250,7 +2252,7 @@ qx.Class.define("desk.volView",
 					imgCanvasParams.imgContext.drawImage(htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);
 					drawingCanvasParams.drawingContext.setTransform(1,0,0,1,0,0);
 					extWinSegImgCanvas.extWinSegImgContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
-					drawingCanvasParams.drawingContext.drawImage(htmlCanvasLabels,0,0);
+					drawingCanvasParams.drawingContext.drawImage(volView.__htmlCanvasLabels,0,0);
 					extWinSegImgCanvas.extWinSegImgContext.setTransform(1,0,0,1,0,0);
 					extWinSegImgCanvas.extWinSegImgContext.drawImage(htmlCanvasSegImg,0,0);
 					extWinSeedsCanvas.extWinSeedsContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
@@ -2315,9 +2317,9 @@ qx.Class.define("desk.volView",
 							sliceData.data = pixels;
 							htmlContextLabels.putImageData(sliceData, 0, 0);
 							if(selectBox.getSelection()[0].getLabel()=="png")
-									var pngImg = htmlCanvasLabels.toDataURL("image/png");
+									var pngImg = volView.__htmlCanvasLabels.toDataURL("image/png");
 							if(selectBox.getSelection()[0].getLabel()=="jpg")
-									var pngImg = htmlCanvasLabels.toDataURL("image/jpeg",1);
+									var pngImg = volView.__htmlCanvasLabels.toDataURL("image/jpeg",1);
                             //volView.debug("pngImg : " + pngImg);
 						////Send png image to server
 							var pngRequest = new XMLHttpRequest();
