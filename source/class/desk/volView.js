@@ -20,9 +20,6 @@ qx.Class.define("desk.volView",
 
     ////Global variables
 		
-
-        var htmlContextLabels = null;
-		
         drawingCanvasParams = {
                 sliceNumber : 0,
                 drawingContext : null,
@@ -151,11 +148,7 @@ qx.Class.define("desk.volView",
 	{
 		// LINKEDWINDOW : null
 	},
-	
-	
-	
-	
-	
+
 	members :
 	{
 		__winXP : true,
@@ -175,6 +168,8 @@ qx.Class.define("desk.volView",
 		},
 
 		__htmlCanvasLabels : null,
+
+		__htmlContextLabels : null,
 
 		__path : null,
 		// __offset : null,
@@ -267,7 +262,7 @@ qx.Class.define("desk.volView",
 		{
                 if(((drawingCanvasParams.paintFlag)||(drawingCanvasParams.brCrFixingFlag))&&(!drawingCanvasParams.eraseFlag))
                 {
-						htmlContextLabels.beginPath();
+						volView.__htmlContextLabels.beginPath();
 						mouseData.mouseLeftDownFlag = false;
 						mouseData.mouseMiddleDownFlag = false;
 						eraserCursor.set({cursor: "default"});
@@ -283,7 +278,7 @@ qx.Class.define("desk.volView",
 						var tempMargin = 4;
 						if(!((tempMargin<=mouseData.xPos)&&(mouseData.xPos<=volView.__imgMap.width-tempMargin)&&(tempMargin<=mouseData.yPos)&&(mouseData.yPos<=volView.__imgMap.height-tempMargin)))
 						{
-								htmlContextLabels.beginPath();
+								volView.__htmlContextLabels.beginPath();
 								mouseData.mouseLeftDownFlag = false;
 								mouseData.mouseMiddleDownFlag = false;
 								eraserCursor.set({cursor: "default"});
@@ -362,9 +357,9 @@ qx.Class.define("desk.volView",
 			
             penSize.addListener("changeValue", function(event)
 			{
-                    htmlContextLabels.lineWidth = event.getData();
-                    eraserCursor.set({width: Math.ceil(eraserCoeff*htmlContextLabels.lineWidth*drawingCanvasParams.curCtxtZoom),
-                                        height: Math.ceil(eraserCoeff*htmlContextLabels.lineWidth*drawingCanvasParams.curCtxtZoom)});
+                    volView.__htmlContextLabels.lineWidth = event.getData();
+                    eraserCursor.set({width: Math.ceil(eraserCoeff*volView.__htmlContextLabels.lineWidth*drawingCanvasParams.curCtxtZoom),
+                                        height: Math.ceil(eraserCoeff*volView.__htmlContextLabels.lineWidth*drawingCanvasParams.curCtxtZoom)});
             });
 			
 			var penLabel = new qx.ui.basic.Label("Brush : ");
@@ -423,8 +418,8 @@ qx.Class.define("desk.volView",
 							}
                     }
 				////Move eraser to mouse position
-                    eraserCursor.set({marginLeft: Math.round((mouseData.xPos-eraserCoeff*htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
-                                        marginTop: Math.round((mouseData.yPos-eraserCoeff*htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
+                    eraserCursor.set({marginLeft: Math.round((mouseData.xPos-eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
+                                        marginTop: Math.round((mouseData.yPos-eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
 					mouseData.xPos = mouseData.decaleZoomX/drawingCanvasParams.curCtxtZoom + mouseData.xPos;
                     mouseData.yPos = mouseData.decaleZoomY/drawingCanvasParams.curCtxtZoom + mouseData.yPos;
 					if(mouseData.mouseLeftDownFlag)
@@ -494,7 +489,7 @@ qx.Class.define("desk.volView",
 
             eraserButton.addListener("mouseup", function(event)
 			{
-                    htmlContextLabels.beginPath();
+                    volView.__htmlContextLabels.beginPath();
                     mouseData.mouseLeftDownFlag = false;
             },this);
 			
@@ -513,8 +508,8 @@ qx.Class.define("desk.volView",
 			clearButton.addListener("execute", function(event)
 			{
                     drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-                    htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-					htmlContextLabels.beginPath();
+                    volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+					volView.__htmlContextLabels.beginPath();
                     mouseData.mouseLeftDownFlag = false;
                     clearButton.set({opacity: 0.5, enabled : false});
                     eraserButton.set({opacity: 0.5, enabled : false});
@@ -525,7 +520,7 @@ qx.Class.define("desk.volView",
 
             clearButton.addListener("mouseup", function(event)
 			{
-                    htmlContextLabels.beginPath();
+                    volView.__htmlContextLabels.beginPath();
                     mouseData.mouseLeftDownFlag = false;
             },this);
 			
@@ -547,7 +542,7 @@ qx.Class.define("desk.volView",
 
             colorsTabView.addListener("mouseup", function(event)
 			{
-                    htmlContextLabels.beginPath();
+                    volView.__htmlContextLabels.beginPath();
                     mouseData.mouseLeftDownFlag = false;
             },this);
 
@@ -781,7 +776,7 @@ qx.Class.define("desk.volView",
 
             slicesTabView.addListener("mouseup", function(event)
 			{
-                    htmlContextLabels.beginPath();
+                    volView.__htmlContextLabels.beginPath();
                     mouseData.mouseLeftDownFlag = false;
             },this);
 
@@ -953,7 +948,7 @@ qx.Class.define("desk.volView",
 
             startButton.addListener("mouseup", function(event)
 			{
-                    htmlContextLabels.beginPath();
+                    volView.__htmlContextLabels.beginPath();
                     mouseData.mouseLeftDownFlag = false;
             },this);
 			
@@ -1148,15 +1143,15 @@ qx.Class.define("desk.volView",
                     drawingCanvasParams.drawingContext.setTransform(drawingCanvasParams.curCtxtZoom,0,0,drawingCanvasParams.curCtxtZoom,0,0);
 					drawingCanvasParams.drawingContext.mozImageSmoothingEnabled = false;
 					volView.__htmlCanvasLabels = document.getElementById("htmlTagCanvasLabels");
-                    htmlContextLabels = volView.__htmlCanvasLabels.getContext("2d");
-					htmlContextLabels.strokeStyle = drawingCanvasParams.currentColor;
-                    htmlContextLabels.fillStyle = drawingCanvasParams.currentColor;
-                    htmlContextLabels.lineWidth = drawingCanvasParams.myLineWidth*drawingCanvasParams.curCtxtZoom;
-                    htmlContextLabels.lineCap = drawingCanvasParams.myLineCap;
-                    htmlContextLabels.lineJoin = drawingCanvasParams.myLineJoin;
-                    htmlContextLabels.miterLimit = drawingCanvasParams.myMiterLimit;
-                    htmlContextLabels.setTransform(drawingCanvasParams.curCtxtZoom,0,0,drawingCanvasParams.curCtxtZoom,0,0);
-					htmlContextLabels.mozImageSmoothingEnabled = false;
+                    volView.__htmlContextLabels = volView.__htmlCanvasLabels.getContext("2d");
+					volView.__htmlContextLabels.strokeStyle = drawingCanvasParams.currentColor;
+                    volView.__htmlContextLabels.fillStyle = drawingCanvasParams.currentColor;
+                    volView.__htmlContextLabels.lineWidth = drawingCanvasParams.myLineWidth*drawingCanvasParams.curCtxtZoom;
+                    volView.__htmlContextLabels.lineCap = drawingCanvasParams.myLineCap;
+                    volView.__htmlContextLabels.lineJoin = drawingCanvasParams.myLineJoin;
+                    volView.__htmlContextLabels.miterLimit = drawingCanvasParams.myMiterLimit;
+                    volView.__htmlContextLabels.setTransform(drawingCanvasParams.curCtxtZoom,0,0,drawingCanvasParams.curCtxtZoom,0,0);
+					volView.__htmlContextLabels.mozImageSmoothingEnabled = false;
             };
 			
 			var mouseDownHandler = function(event)
@@ -1177,15 +1172,15 @@ qx.Class.define("desk.volView",
 							}
                             if((drawingCanvasParams.paintFlag)&&(!drawingCanvasParams.eraseFlag)&&(!drawingCanvasParams.brCrFixingFlag))
                             {
-                                    htmlContextLabels.strokeStyle = drawingCanvasParams.currentColor;
-                                    htmlContextLabels.fillStyle = drawingCanvasParams.currentColor;
-                                    htmlContextLabels.beginPath();
-                                    htmlContextLabels.arc(mouseData.xPos,
+                                    volView.__htmlContextLabels.strokeStyle = drawingCanvasParams.currentColor;
+                                    volView.__htmlContextLabels.fillStyle = drawingCanvasParams.currentColor;
+                                    volView.__htmlContextLabels.beginPath();
+                                    volView.__htmlContextLabels.arc(mouseData.xPos,
 															mouseData.yPos,
-																	htmlContextLabels.lineWidth/2,
+																	volView.__htmlContextLabels.lineWidth/2,
                                                                     0, Math.PI*2, false);
-                                    htmlContextLabels.closePath();
-                                    htmlContextLabels.fill();
+                                    volView.__htmlContextLabels.closePath();
+                                    volView.__htmlContextLabels.fill();
                                     clearButton.set({opacity: 1, enabled : true});
                                     if(!eraserButton.isEnabled())
                                             eraserButton.set({opacity: 1, enabled : true});
@@ -1197,7 +1192,7 @@ qx.Class.define("desk.volView",
                                     mouseData.recentY = mouseData.yPos;
                             };
 							mouseData.mouseLeftDownFlag = true;
-                            htmlContextLabels.beginPath();
+                            volView.__htmlContextLabels.beginPath();
                     }
 				////Activate moving
                     if((event.isMiddlePressed())&&(1<drawingCanvasParams.curCtxtZoom))
@@ -1289,8 +1284,8 @@ qx.Class.define("desk.volView",
 											drawBrush(event,zoomFactor);
 									}
 									drawPointer(event,zoomFactor);
-									eraserCursor.set({width: Math.ceil(eraserCoeff*htmlContextLabels.lineWidth*zoomFactor)+1,
-														height: Math.ceil(eraserCoeff*htmlContextLabels.lineWidth*zoomFactor)+1});
+									eraserCursor.set({width: Math.ceil(eraserCoeff*volView.__htmlContextLabels.lineWidth*zoomFactor)+1,
+														height: Math.ceil(eraserCoeff*volView.__htmlContextLabels.lineWidth*zoomFactor)+1});
 								////Place the center of the eraser at mouse position
 									if(drawingCanvasParams.eraseFlag)
 									{
@@ -1315,8 +1310,8 @@ qx.Class.define("desk.volView",
                     {
 							var tempX = (event.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/drawingCanvasParams.curCtxtZoom;
 							var tempY = (event.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/drawingCanvasParams.curCtxtZoom;
-							eraserCursor.set({marginLeft: Math.round((tempX-eraserCoeff*htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
-												marginTop: Math.round((tempY-eraserCoeff*htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
+							eraserCursor.set({marginLeft: Math.round((tempX-eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
+												marginTop: Math.round((tempY-eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
                             if(eraserCursor.getVisibility()=="excluded")
 							{
                                     eraserCursor.show();
@@ -1327,10 +1322,10 @@ qx.Class.define("desk.volView",
 						////Draw to mouse position
                             if((drawingCanvasParams.paintFlag)&&(!drawingCanvasParams.eraseFlag)&&(!drawingCanvasParams.brCrFixingFlag))
                             {
-                                    htmlContextLabels.strokeStyle = drawingCanvasParams.currentColor;
-                                    htmlContextLabels.fillStyle = drawingCanvasParams.currentColor;
-                                    htmlContextLabels.lineTo(mouseData.xPos,mouseData.yPos);
-                                    htmlContextLabels.stroke();
+                                    volView.__htmlContextLabels.strokeStyle = drawingCanvasParams.currentColor;
+                                    volView.__htmlContextLabels.fillStyle = drawingCanvasParams.currentColor;
+                                    volView.__htmlContextLabels.lineTo(mouseData.xPos,mouseData.yPos);
+                                    volView.__htmlContextLabels.stroke();
                                     clearButton.set({opacity: 1, enabled : true});
                                     if(!eraserButton.isEnabled())
                                             eraserButton.set({opacity: 1, enabled : true});
@@ -1613,10 +1608,10 @@ qx.Class.define("desk.volView",
 			
 			slider.addListener("changeValue", function(event)
 			{
-					htmlContextLabels.beginPath();
+					volView.__htmlContextLabels.beginPath();
 					mouseData.mouseLeftDownFlag = false;
 				////Save current image
-					horizSlices.sliceLabels[drawingCanvasParams.sliceNumber] = htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
+					horizSlices.sliceLabels[drawingCanvasParams.sliceNumber] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 					tempNum = drawingCanvasParams.sliceNumber;
 					horizSlices.inProgData[tempNum].curTagged = !pngCanvasFctn();	//  pngCanvasFctn() returns true if image is all black
 					drawingCanvasParams.sliceNumber = event.getData();
@@ -1713,7 +1708,7 @@ qx.Class.define("desk.volView",
 				////Set canvas, buttons, list
 					if(horizSlices.inProgData[drawingCanvasParams.sliceNumber].curTagged)	////NEXT slice HAS seeds
 					{
-							htmlContextLabels.putImageData(horizSlices.sliceLabels[drawingCanvasParams.sliceNumber], 0, 0);
+							volView.__htmlContextLabels.putImageData(horizSlices.sliceLabels[drawingCanvasParams.sliceNumber], 0, 0);
 							clearButton.set({opacity: 1, enabled : true});
 							eraserButton.set({opacity: 1, enabled : true});
                             startButton.set({opacity: 1, enabled : true});
@@ -1776,7 +1771,7 @@ qx.Class.define("desk.volView",
 					else	////NEXT slice has NO seeds
 					{
 							clearButton.execute();
-							htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+							volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 							startButton.set({opacity: 0.5, enabled : false});
 							if(listMembers.length<1)
 							{
@@ -1847,7 +1842,7 @@ qx.Class.define("desk.volView",
 
             slider.addListener("mouseup", function(event)
 			{
-                    htmlContextLabels.beginPath();
+                    volView.__htmlContextLabels.beginPath();
                     mouseData.mouseLeftDownFlag = false;
             },this);
 			
@@ -1856,7 +1851,7 @@ qx.Class.define("desk.volView",
 			
             spinner.addListener("mouseup", function(event)
 			{
-                    htmlContextLabels.beginPath();
+                    volView.__htmlContextLabels.beginPath();
                     mouseData.mouseLeftDownFlag = false;
             },this);
 			
@@ -2051,7 +2046,7 @@ qx.Class.define("desk.volView",
                             drawingCanvasParams.drawingContext.beginPath();
                             drawingCanvasParams.drawingContext.arc(tempX,
                                                                     tempY,
-																			Math.ceil(htmlContextLabels.lineWidth/2),
+																			Math.ceil(volView.__htmlContextLabels.lineWidth/2),
                                                                             0, Math.PI * 2, false);
                             drawingCanvasParams.drawingContext.closePath();
                             drawingCanvasParams.drawingContext.fill();
@@ -2115,7 +2110,7 @@ qx.Class.define("desk.volView",
 							var tempData = [];
 							if(ctrlZData.length==0)
 							{
-									tempData[0] = htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
+									tempData[0] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 							}
 							else
 							{
@@ -2125,7 +2120,7 @@ qx.Class.define("desk.volView",
 											{
 													tempData[ctrlZData.length-i] = ctrlZData[ctrlZData.length-i-1];
 											}
-											tempData[0] = htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
+											tempData[0] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 									}
 									else
 									{
@@ -2135,7 +2130,7 @@ qx.Class.define("desk.volView",
 													{
 															tempData[ctrlZData.length-i] = ctrlZData[ctrlZData.length-i-1];
 													}
-													tempData[0] = htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
+													tempData[0] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 											}
 									}
 							}
@@ -2154,7 +2149,7 @@ qx.Class.define("desk.volView",
 					{
 							if(0<ctrlZData.length)
 							{
-									htmlContextLabels.putImageData(ctrlZData[0], 0, 0);
+									volView.__htmlContextLabels.putImageData(ctrlZData[0], 0, 0);
 									drawZoomedCanvas(drawingCanvasParams.curCtxtZoom,false);
 							}
 							var tempData = [];
@@ -2214,25 +2209,25 @@ qx.Class.define("desk.volView",
 					var tempX, tempY;
 					if(autoComplete)
 					{
-							tempX = (mouseData.recentX+mouseData.xPos)/2-eraserCoeff*htmlContextLabels.lineWidth/2;
-							tempY = (mouseData.recentY+mouseData.yPos)/2-eraserCoeff*htmlContextLabels.lineWidth/2;
+							tempX = (mouseData.recentX+mouseData.xPos)/2-eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
+							tempY = (mouseData.recentY+mouseData.yPos)/2-eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
 							var newCoor = changeInto05Coordinates(tempX,tempY);
 							tempX = newCoor.newX;
 							tempY = newCoor.newY;
-                            htmlContextLabels.clearRect(tempX,
+                            volView.__htmlContextLabels.clearRect(tempX,
                                                         tempY,
-                                                            eraserCoeff*htmlContextLabels.lineWidth,
-                                                            eraserCoeff*htmlContextLabels.lineWidth);
+                                                            eraserCoeff*volView.__htmlContextLabels.lineWidth,
+                                                            eraserCoeff*volView.__htmlContextLabels.lineWidth);
 					}
-					tempX = mouseData.xPos-eraserCoeff*htmlContextLabels.lineWidth/2;
-					tempY = mouseData.yPos-eraserCoeff*htmlContextLabels.lineWidth/2;
+					tempX = mouseData.xPos-eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
+					tempY = mouseData.yPos-eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
 					var newCoor = changeInto05Coordinates(tempX,tempY);
 					tempX = newCoor.newX;
 					tempY = newCoor.newY;
-                    htmlContextLabels.clearRect(tempX,
+                    volView.__htmlContextLabels.clearRect(tempX,
 												tempY,
-													eraserCoeff*htmlContextLabels.lineWidth,
-													eraserCoeff*htmlContextLabels.lineWidth);
+													eraserCoeff*volView.__htmlContextLabels.lineWidth,
+													eraserCoeff*volView.__htmlContextLabels.lineWidth);
                     drawZoomedCanvas(drawingCanvasParams.curCtxtZoom,false);
                     mouseData.recentX = mouseData.xPos;
                     mouseData.recentY = mouseData.yPos;
@@ -2315,7 +2310,7 @@ qx.Class.define("desk.volView",
 					if(!isAllBlack)
                     {
 							sliceData.data = pixels;
-							htmlContextLabels.putImageData(sliceData, 0, 0);
+							volView.__htmlContextLabels.putImageData(sliceData, 0, 0);
 							if(selectBox.getSelection()[0].getLabel()=="png")
 									var pngImg = volView.__htmlCanvasLabels.toDataURL("image/png");
 							if(selectBox.getSelection()[0].getLabel()=="jpg")
