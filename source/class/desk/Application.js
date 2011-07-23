@@ -120,9 +120,20 @@ qx.Class.define("desk.Application",
 					alert("Cannot download a directory!");
 			}
 
+			function gcSegmentation (node)
+			{
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+				{
+					var volView=new desk.gcSegmentation(node, myBrowser);
+				} 
+				else
+					alert("Cannot segment a directory!");
+			}
+
 			var myBrowser=new desk.fileBrowser();
 			myBrowser.setFileHandler(fileClicked);
 //			myBrowser.addAction("extract meshes",extractMeshes);
+			myBrowser.addAction("segment",gcSegmentation);
 			myBrowser.addAction("download",downloadNode);
 			this.getRoot().add(myBrowser);
 		}

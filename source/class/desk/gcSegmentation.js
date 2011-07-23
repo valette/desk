@@ -33,7 +33,7 @@ qx.Class.define("desk.gcSegmentation",
                 height: volView.__winMap.height,
                 showMinimize: false,
                 showMaximize: false,
-                showClose: false,
+                showClose: true,
                 resizable: true,
                 movable : true
         });
