@@ -7,7 +7,7 @@
 	 
 	    // Save file.  This example uses a hard coded filename for testing,
 	    // but a real application can specify filename in POST variable
-	    $fp = fopen( 'data/seeds/seeds.xml', 'wb' );
+	    $fp = fopen( 'data/seeds/seedsXML.xml', 'wb' );
 		fwrite( $fp, $xmlData);
 	    fclose( $fp );
 	}
