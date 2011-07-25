@@ -123,7 +123,10 @@ qx.Class.define("desk.meshView",
 							numberOfMeshes--;
 							if (numberOfMeshes==0)
 								scene.render();});
-					}					
+					}
+					// activate the window
+					var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
+					windowManager.bringToFront(this);
 				}, this);
 		},
 
