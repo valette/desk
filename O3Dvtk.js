@@ -389,9 +389,17 @@ function createFromFile2(xmlhttp, scene, file,color, opt_flip) {
 	var material=createDefaultMaterial(scene.pack, scene.viewInfo, color);
 	if (color[3]<0)
 	{
-		var state = pack.createObject('State'); 
+		var state = scene.pack.createObject('State'); 
 		material.state = state; 
-		state.getStateParam('FillMode').value = o3dElement.o3d.State.WIREFRAME; 
+		state.getStateParam('FillMode').value = scene.o3dElement.o3d.State.WIREFRAME;
+	}
+	else
+	{
+		// add polygonoffset to z coordinate to make edges display cleaner
+		var state = scene.pack.createObject('State'); 
+		material.state = state; 
+		state.getStateParam('PolygonOffset1').value = 1;
+		state.getStateParam('PolygonOffset2').value = 1;
 	}
 	var vertexInfo = o3djs.primitives.createVertexInfo();
 	var positionStream = vertexInfo.addStream(
