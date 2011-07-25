@@ -6,6 +6,9 @@ qx.Class.define("desk.fileBrowser",
 	{
 		this.base(arguments);
 
+		qx.Class.include(qx.ui.treevirtual.TreeVirtual,
+			qx.ui.treevirtual.MNode);
+
 		this.setLayout(new qx.ui.layout.VBox());
 		this.setShowClose(false);
 		this.setShowMinimize(false);
@@ -160,7 +163,7 @@ qx.Class.define("desk.fileBrowser",
 						this.__fileHandler(node);
 			}
 			else
-				this.__virtualTree.getDataModel().setState(node.nodeId,{bOpened : true});
+				this.__virtualTree.nodeToggleOpened(node);
 		},
 
 		updateContextMenu : function()

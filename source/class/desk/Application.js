@@ -109,32 +109,34 @@ qx.Class.define("desk.Application",
 				}
 			}
 
-			function downloadNode (node)
-			{
+			var myBrowser=new desk.fileBrowser();
+			myBrowser.setFileHandler(fileClicked);
+//			myBrowser.addAction("extract meshes",extractMeshes);
+			myBrowser.addAction("segment", function (node) {
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+					var volView=new desk.gcSegmentation(node, myBrowser);
+				else
+					alert("Cannot segment a directory!");});
+
+			myBrowser.addAction("download",function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 				{
 					var oIFrm = document.getElementById('myIFrm');
 					oIFrm.src = "/visu/download.php?fileName="+myBrowser.getNodePath(node);
 				} 
 				else
-					alert("Cannot download a directory!");
-			}
+					alert("Cannot download a directory!");});
 
-			function gcSegmentation (node)
-			{
+			myBrowser.addAction("info",function (node) {
+				alert ("file name : "+myBrowser.getNodePath(node)
+					+"\n file URL : "+myBrowser.getNodeURL(node));});
+
+			myBrowser.addAction("update",function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-				{
-					var volView=new desk.gcSegmentation(node, myBrowser);
-				} 
+					myBrowser.expandDirectoryListing(node.parentNodeId);
 				else
-					alert("Cannot segment a directory!");
-			}
+					myBrowser.expandDirectoryListing(node.nodeId);});
 
-			var myBrowser=new desk.fileBrowser();
-			myBrowser.setFileHandler(fileClicked);
-//			myBrowser.addAction("extract meshes",extractMeshes);
-			myBrowser.addAction("segment",gcSegmentation);
-			myBrowser.addAction("download",downloadNode);
 			this.getRoot().add(myBrowser);
 		}
 	}
