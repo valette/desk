@@ -67,12 +67,15 @@ qx.Class.define("desk.actions",
 
 			var intValidator = function(value, item) {
 				var parameterName=this.getAttribute("name");
-				if (value==null)
+				if (value==null) 
 				{
-					item.setInvalidMessage("\""+parameterName+"\" is empty");
-					return (false);
+					if (this.getAttribute("required")=="true")
+					{
+						item.setInvalidMessage("\""+parameterName+"\" is empty");
+						return (false);
+					}
 				}
-				if ( (parseInt(value)!=parseFloat(value))||
+				else if ( (parseInt(value)!=parseFloat(value))||
 						 isNaN(value)){
 					item.setInvalidMessage("\""+parameterName+"\" should be an integer");
 					return (false);
@@ -82,12 +85,15 @@ qx.Class.define("desk.actions",
 
 			var floatValidator = function(value, item) {
 				var parameterName=this.getAttribute("name");
-				if ((value==null)&& item.isRequired())
+				if (value==null)
 				{
-					item.setInvalidMessage("\""+parameterName+"\" is empty");
-					return (false);
+					if (this.getAttribute("required")=="true")
+					{
+						item.setInvalidMessage("\""+parameterName+"\" is empty");
+						return (false);
+					}
 				}
-				if (isNaN(value)){
+				else if (isNaN(value)){
 					item.setInvalidMessage("\""+parameterName+"\" should be a number");
 					return (false);
 				}
@@ -96,12 +102,15 @@ qx.Class.define("desk.actions",
 
 			var stringValidator = function(value, item) {
 				var parameterName=this.getAttribute("name");
-				if ((value==null)&& item.isRequired())
+				if (value==null)
 				{
-					item.setInvalidMessage("\""+parameterName+"\" is empty");
-					return (false);
+					if (this.getAttribute("required")=="true")
+					{
+						item.setInvalidMessage("\""+parameterName+"\" is empty");
+						return (false);
+					}
 				}
-				if (value.split(" ").length!=1){
+				else if (value.split(" ").length!=1){
 					item.setInvalidMessage("\""+parameterName+"\" should contain no space characters");
 					return (false);
 				}
@@ -131,7 +140,7 @@ qx.Class.define("desk.actions",
 				parameterForm.setPlaceholder(parameterName);
 				actionWindow.add(parameterForm);
 				var parameterType=parameter.getAttribute("type");
-				
+
 				switch (parameterType)
 				{
 				case "int":
@@ -188,11 +197,6 @@ qx.Class.define("desk.actions",
 						alert("no validator implemented for type : "+parameterType);
 				}
 
-				if (parameter.getAttribute("required")=="true")
-				{
-					parameterForm.setRequired(true);
-				}
-
 				parameterForm.addListener("input", function(e) 
 					{this.setInvalidMessage(null);},parameterForm);
 			}
@@ -221,7 +225,9 @@ qx.Class.define("desk.actions",
 					for (var i=0;i<items.length;i++)
 					{
 						var currentItem=items[i];
-						parameterMap[currentItem.getPlaceholder()]=currentItem.getValue();
+						var value=currentItem.getValue();
+						if (value!=null)
+							parameterMap[currentItem.getPlaceholder()]=value;
 //						alert(currentItem.getPlaceholder()+" : "+currentItem.getValue());
 					}
 //					alert (parameterMap);

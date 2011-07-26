@@ -52,82 +52,86 @@ foreach ($actions->children() as $action)
 					$parameterName=$parameter["name"];
 //					echo $parameterName,"\n";
 					$parameterType=$parameter["type"];
-					if ($parameter["required"]=="true")
+
+					$try=$_POST[''.$parameterName];
+					$parameterValue=mysql_real_escape_string($try);
+					if (($parameter["required"]=="true") && ($parameterValue==null))
 					{
-						$try=$_POST[''.$parameterName];
-						$parameterValue=mysql_real_escape_string($try)
-							or die ("parameter $parameterName is required for the server\n".
+						die ("parameter $parameterName is required for the server\n".
 							$try);
 					}
 
-					switch ($parameterType)
+					if ($parameterValue!=null) 
 					{
-						case "string":
-							if (strpos($parameterValue," ")
-								||strpos($parameterValue,"/"))
-								die ("$parameterName : string \"$parameterValue\" should contain no special characters!");
-							break;
-						case "file":
-							validatePath($parameterValue);
-							if (!is_file($parameterValue))
-								die ("$parameterName : file \"$parameterValue\" does not exist");
-							$parameterValue="$DIR_TO_PHP$parameterValue";
-							break;
-						case "directory":
-							validatePath($parameterValue);
-							if (!is_dir($parameterValue))
-								die ("$parameterName : directory \"$parameterValue\" does not exist");
-							$parameterValue="$DIR_TO_PHP$parameterValue";
-							break;
-						case "int":
-							if (!ctype_digit("$parameterValue"))
-								die ("$parameterName : value \"$parameterValue\" is not an integer value");
-							$value=floatVal($parameterValue);
-							$min=$parameter["min"];
-							if ($min!="")
-							{
-								$min=floatVal($min);
-								if ($min>$value)
-									die ("$parameterName : value $parameterValue should be bigger than $min");
-							}
-							$max=$parameter["max"];
-							if ($max!="")
-							{
-								$max=floatVal($max);
-								if ($max<$value)
-									die ("$parameterName : value $parameterValue should be smaller than $max");
-							}
-							break;
-						case "float":
-							if (!is_numeric($parameterValue))
-								die ("$parameterName : value \"$parameterValue\" is not a number");
-							$value=floatVal($parameterValue);
-							$min=$parameter["min"];
-							if ($min!="")
-							{
-								$min=floatVal($min);
-								if ($min>$value)
-									die ("$parameterName : value $parameterValue should be bigger than $min");
-							}
-							$max=$parameter["max"];
-							if ($max!="")
-							{
-								$max=floatVal($max);
-								if ($max<$value)
-									die ("$parameterName : value $parameterValue should be smaller than $max");
-							}
-							break;
-						default :
-							die ("no handler for type $parameterType");
-					}
-					$prefix=$parameter["prefix"];
-					if ($prefix!="")
-						$command.=" ".$prefix;
+						switch ($parameterType)
+						{
+							case "string":
+								if (strpos($parameterValue," ")
+									||strpos($parameterValue,"/"))
+									die ("$parameterName : string \"$parameterValue\" should contain no special characters!");
+								break;
+							case "file":
+								validatePath($parameterValue);
+								if (!is_file($parameterValue))
+									die ("$parameterName : file \"$parameterValue\" does not exist");
+								$parameterValue="$DIR_TO_PHP$parameterValue";
+								break;
+							case "directory":
+								validatePath($parameterValue);
+								if (!is_dir($parameterValue))
+									die ("$parameterName : directory \"$parameterValue\" does not exist");
+								$parameterValue="$DIR_TO_PHP$parameterValue";
+								break;
+							case "int":
+								if (!ctype_digit("$parameterValue"))
+									die ("$parameterName : value \"$parameterValue\" is not an integer value");
+								$value=floatVal($parameterValue);
+								$min=$parameter["min"];
+								if ($min!="")
+								{
+									$min=floatVal($min);
+									if ($min>$value)
+										die ("$parameterName : value $parameterValue should be bigger than $min");
+								}
+								$max=$parameter["max"];
+								if ($max!="")
+								{
+									$max=floatVal($max);
+									if ($max<$value)
+										die ("$parameterName : value $parameterValue should be smaller than $max");
+								}
+								break;
+							case "float":
+								if (!is_numeric($parameterValue))
+									die ("$parameterName : value \"$parameterValue\" is not a number");
+								$value=floatVal($parameterValue);
+								$min=$parameter["min"];
+								if ($min!="")
+								{
+									$min=floatVal($min);
+									if ($min>$value)
+										die ("$parameterName : value $parameterValue should be bigger than $min");
+								}
+								$max=$parameter["max"];
+								if ($max!="")
+								{
+									$max=floatVal($max);
+									if ($max<$value)
+										die ("$parameterName : value $parameterValue should be smaller than $max");
+								}
+								break;
+							default :
+								die ("no handler for type $parameterType");
+						}
+						$prefix=$parameter["prefix"];
+						if ($prefix!="")
+							$command.=" ".$prefix;
 
-					if ($parameterName=="output_directory")
-						$outputDirectory=$parameterValue;
-					else
-						$command.=" ".$parameterValue;
+						if ($parameterName=="output_directory")
+							$outputDirectory=$parameterValue;
+						else
+							$command.=" ".$parameterValue;
+					}
 				}
 				else
 				{
