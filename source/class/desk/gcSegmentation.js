@@ -67,7 +67,7 @@ qx.Class.define("desk.gcSegmentation",
 				font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
 				});
 			volView.add(label);
-			ajax.open("POST", "/visu/volumeSlice.php", true);
+			ajax.open("POST", "/visu/desk/php/volumeSlice.php", true);
 			ajax.send(fileBrowser.getNodePath(node));
 		}
 		else
