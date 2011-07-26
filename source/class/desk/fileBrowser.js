@@ -111,7 +111,8 @@ qx.Class.define("desk.fileBrowser",
 
 	members : {
 		__fileHandler : null,
-		__baseURL : "http://vip.creatis.insa-lyon.fr:8080/visu/",
+//		__baseURL : "http://vip.creatis.insa-lyon.fr:8080/visu/",
+		__baseURL : "/visu/desk/php/",
 		__baseDir : "data",
 		__virtualTree : null,
 
@@ -223,7 +224,7 @@ qx.Class.define("desk.fileBrowser",
 
 			// Instantiate request
 			var req = new qx.io.request.Xhr();
-			req.setUrl("/visu/listDir.php");
+			req.setUrl("/visu/desk/php/listDir.php");
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData({"dir" : this.getNodePath(node)});

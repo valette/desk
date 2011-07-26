@@ -136,7 +136,7 @@ foreach ($actions->children() as $action)
 			echo "chdir :$outputDirectory\n";
 			chdir ($outputDirectory);
 			echo "command : $command\n";
-//			system("$command");
+			system("$command");
 		}
 	}
 }
