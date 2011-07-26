@@ -37,7 +37,7 @@ qx.Class.define("desk.volView",
 				font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
 				});
 			this.add(label, {flex : 1});
-			ajax.open("POST", "/visu/volumeSlice.php", true);
+			ajax.open("POST", "/visu/desk/php/volumeSlice.php", true);
 			ajax.send(fileBrowser.getNodePath(node));
 		}
 		else
