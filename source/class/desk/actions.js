@@ -137,6 +137,9 @@ qx.Class.define("desk.actions",
 				case "int":
 					manager.add(parameterForm, intValidator, parameter);
 					break;
+				case "string":
+					manager.add(parameterForm, stringValidator, parameter);
+					break;
 				case "float":
 					manager.add(parameterForm, floatValidator, parameter);
 					break;

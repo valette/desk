@@ -62,6 +62,11 @@ foreach ($actions->children() as $action)
 
 					switch ($parameterType)
 					{
+						case "string":
+							if (strpos($parameterValue," ")
+								||strpos($parameterValue,"/"))
+								die ("$parameterName : string \"$parameterValue\" should contain no special characters!");
+							break;
 						case "file":
 							validatePath($parameterValue);
 							if (!is_file($parameterValue))
