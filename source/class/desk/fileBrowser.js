@@ -63,7 +63,11 @@ qx.Class.define("desk.fileBrowser",
 				return true;
 			}, this);
 		var resetButton=new qx.ui.form.Button("Reset filter");
-		resetButton.addListener("execute",function(e){filterField.setValue(null);});
+		resetButton.setAllowGrowY(false);
+		resetButton.addListener("execute",function(e){
+			filterField.setValue("");
+			dataModel.setData();
+			});
 		filterBox.add(resetButton);
 		dataModel.setFilter(filter);
 
