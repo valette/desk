@@ -1,7 +1,7 @@
 <?php
 
 $DATA_ROOT_FROM_PHP="data/";
-$DIR_TO_PHP="/var/www/html/visu/";
+$DIR_TO_PHP="/var/www/html/visu/desk/php/";
 
 
 function myErrorHandler($errno, $errstr, $errfile, $errline) {
@@ -17,7 +17,7 @@ function validatePath($file) {
 				"must begin with \"$DATA_ROOT_FROM_PHP\"");
 }
 
-$actions = simplexml_load_file("desk/actions.xml")
+$actions = simplexml_load_file("../actions.xml")
 	or die("Fichier introuvable. L'analyse a ete suspendue");
 
 $actionToPerform=mysql_real_escape_string($_POST["action"])

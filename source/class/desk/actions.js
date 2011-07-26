@@ -214,7 +214,7 @@ qx.Class.define("desk.actions",
 					}
 //					alert (parameterMap);
 					var req = new qx.io.request.Xhr();
-					req.setUrl("/visu/action.php");
+					req.setUrl("/visu/desk/php/actions.php");
 					req.setMethod("POST");
 					req.setAsync(true);
 					req.setRequestData(parameterMap);

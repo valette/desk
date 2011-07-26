@@ -46,7 +46,7 @@ qx.Class.define("desk.fileBrowser",
 		var filterBox = new qx.ui.container.Composite;
 		filterBox.setLayout(new qx.ui.layout.HBox(10));
 		this.add(filterBox, {flex:1});
-
+		filterBox.add(new qx.ui.basic.Label("Filter files :"));
 		var filterField = new qx.ui.form.TextField();
 		filterField.setValue("");
 		filterField.addListener("input", function() {
