@@ -1,0 +1,22 @@
+<actions>
+<action name="ACVD" executable="/home/visu/src/vtkSurfaceBuild/bin/ACVD">
+<description>generates a simplification of the input mesh</description>
+<parameter name="input_file" type="file" required="true"/>
+<parameter name="number_of_desired_vertices" type="int" min="0" required="true" />
+<parameter name="gradation" type="float" required="true" min="0" max="30"/>
+<anchor text="-d 0"/>
+</action>
+
+<action name="ACVDQ" executable="/home/visu/src/vtkSurfaceBuild/bin/ACVDQ">
+<description>generates a simplification of the input mesh</description>
+<parameter name="input_file" type="file" required="true"/>
+<parameter name="number_of_desired_vertices" type="int" min="0" required="true" />
+<parameter name="gradation" type="float" required="true" min="0" max="30" />
+</action>
+
+
+<action name="mkdir" executable="mkdir">
+<description>create a directory</description>
+<parameter name="directory_name" type="string" required="true"/>
+</action>
+</actions>
