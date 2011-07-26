@@ -127,6 +127,10 @@ qx.Class.define("desk.Application",
 				else
 					alert("Cannot download a directory!");});
 
+			myBrowser.addAction("view/edit text", function (node) {
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+					var volView=new desk.textEditor(node, myBrowser);});
+
 			myBrowser.addAction("info",function (node) {
 				alert ("file name : "+myBrowser.getNodePath(node)
 					+"\n file URL : "+myBrowser.getNodeURL(node));});
