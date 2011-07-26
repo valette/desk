@@ -42,22 +42,29 @@ qx.Class.define("desk.fileBrowser",
 
 		var dataModel = virtualTree.getDataModel();
 
-		// create the filter form
-		var textField = new qx.ui.form.TextField();
-		textField.setValue("");
-		textField.addListener("input", function() {
+		// create the filter bar
+		var filterBox = new qx.ui.container.Composite;
+		filterBox.setLayout(new qx.ui.layout.HBox(10));
+		this.add(filterBox, {flex:1});
+
+		var filterField = new qx.ui.form.TextField();
+		filterField.setValue("");
+		filterField.addListener("input", function() {
 			dataModel.setData();
 			},this);
-		this.add(textField);
+		filterBox.add(filterField, {flex:1});
 
 		var filter = qx.lang.Function.bind(function(node)
 			{
 				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 					var label = node.label;
-					return label.toLowerCase().indexOf(textField.getValue().toLowerCase()) != -1;
+					return label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1;
 				}
 				return true;
 			}, this);
+		var resetButton=new qx.ui.form.Button("Reset filter");
+		resetButton.addListener("execute",function(e){filterField.setValue(null);});
+		filterBox.add(resetButton);
 		dataModel.setFilter(filter);
 
 		this.add(virtualTree,{flex: 1});
