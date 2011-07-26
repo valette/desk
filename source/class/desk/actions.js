@@ -159,9 +159,18 @@ qx.Class.define("desk.actions",
 				case "directory":
 					if (this.__fileBrowser!=null)
 					{
-						var parentNode=this.__fileBrowser.getTree().nodeGet(
-							this.__fileBrowser.getSelectedNode().parentNodeId);
-						parameterForm.setValue(this.__fileBrowser.getNodePath(parentNode));
+						var fileNode=this.__fileBrowser.getSelectedNode();
+						if (fileNode.type==
+							qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+						{					
+							var parentNode=this.__fileBrowser.getTree().nodeGet(
+								fileNode.parentNodeId);
+							parameterForm.setValue(this.__fileBrowser.getNodePath(parentNode));
+						}
+						else
+						{
+							parameterForm.setValue(this.__fileBrowser.getNodePath(fileNode))
+						}
 					}
 					parameterForm.setDroppable(true);
 					parameterForm.addListener("drop", function(e) {
