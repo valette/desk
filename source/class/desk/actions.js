@@ -34,7 +34,6 @@ qx.Class.define("desk.actions",
 			xmlhttp.send();
 			this.__actions=xmlhttp.responseXML;
 			var actions=this.__actions.getElementsByTagName("action");
-
 			var actionMenu=this;
 			function executeButton(e)
 			{
@@ -67,7 +66,7 @@ qx.Class.define("desk.actions",
 			actionWindow.open();
 
 			var intValidator = function(value, item) {
-				var parameterName=this.childNodes[0].nodeValue;
+				var parameterName=this.getAttribute("name");
 				if (value==null)
 				{
 					item.setInvalidMessage("\""+parameterName+"\" is empty");
@@ -82,7 +81,7 @@ qx.Class.define("desk.actions",
 				};
 
 			var floatValidator = function(value, item) {
-				var parameterName=this.childNodes[0].nodeValue;
+				var parameterName=this.getAttribute("name");
 				if ((value==null)&& item.isRequired())
 				{
 					item.setInvalidMessage("\""+parameterName+"\" is empty");
@@ -96,7 +95,7 @@ qx.Class.define("desk.actions",
 				};
 
 			var stringValidator = function(value, item) {
-				var parameterName=this.childNodes[0].nodeValue;
+				var parameterName=this.getAttribute("name");
 				if ((value==null)&& item.isRequired())
 				{
 					item.setInvalidMessage("\""+parameterName+"\" is empty");
@@ -110,11 +109,23 @@ qx.Class.define("desk.actions",
 				};
 
 			var fileAlreadyPickedFromBrowser=false;
+
 			var parameters=action.getElementsByTagName("parameter");
-			for (var i=0;i<parameters.length;i++)
+			for (var i=0;i<(parameters.length+1);i++)
 			{
-				var parameter=parameters[i];
-				var parameterName=parameter.childNodes[0].nodeValue;
+				var parameter;
+				if (i==parameters.length)
+				{
+					// insert output directory parameter by default
+					parameter=document.createElement("parameter");
+					parameter.setAttribute('name',"output_directory");
+					parameter.setAttribute('type',"directory");
+					parameter.setAttribute('required',"true");
+				}
+				else
+					parameter=parameters[i];
+
+				var parameterName=parameter.getAttribute("name");
 				actionWindow.add(new qx.ui.basic.Label(parameterName));
 				var parameterForm=new qx.ui.form.TextField();
 				parameterForm.setPlaceholder(parameterName);
@@ -145,8 +156,24 @@ qx.Class.define("desk.actions",
 
 					manager.add(parameterForm, stringValidator, parameter);
 					break;
+				case "directory":
+					if (this.__fileBrowser!=null)
+					{
+						var parentNode=this.__fileBrowser.getTree().nodeGet(
+							this.__fileBrowser.getSelectedNode().parentNodeId);
+						parameterForm.setValue(this.__fileBrowser.getNodePath(parentNode));
+					}
+					parameterForm.setDroppable(true);
+					parameterForm.addListener("drop", function(e) {
+							var fileBrowser=e.getData("fileBrowser");
+							var fileNode=fileBrowser.getSelectedNode();
+ 							this.setValue(fileBrowser.getNodePath(fileNode));
+						}, parameterForm);
+
+					manager.add(parameterForm, stringValidator, parameter);
+					break;
 				default :
-						this.debug("no validator implemented for type : "+parameterType);
+						alert("no validator implemented for type : "+parameterType);
 				}
 
 				if (parameter.getAttribute("required")=="true")
@@ -156,7 +183,6 @@ qx.Class.define("desk.actions",
 
 				parameterForm.addListener("input", function(e) 
 					{this.setInvalidMessage(null);},parameterForm);
-
 			}
 
 			var send = new qx.ui.form.Button("Send");

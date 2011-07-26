@@ -125,6 +125,11 @@ qx.Class.define("desk.fileBrowser",
 			this.__fileHandler=callback;
 		},
 
+		getTree : function ()
+		{
+			return (this.__virtualTree);
+		},
+
 		getSelectedNode : function (e)
 		{
 			return (this.__virtualTree.getSelectedNodes()[0]);
