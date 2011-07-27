@@ -40,6 +40,8 @@ $ACTIONS_ROOT_FROM_PHP="action/";
 	}
 }
 
+$parametersList=array();
+
 $actions = simplexml_load_file("../actions.xml")
 	or die("Fichier introuvable. L'analyse a ete suspendue");
 
@@ -57,6 +59,7 @@ foreach ($actions->children() as $action)
 
 		if ($actionToPerform==$currentActionName)
 		{
+			$parametersList["action"]="$actionToPerform";
 			$command=$action["executable"]
 				or die("no executable provided for action \"$actionToPerform\"");
 			// action was found in xml file, let's parse the parameters
@@ -87,6 +90,7 @@ foreach ($actions->children() as $action)
 
 					if ($parameterValue!=null) 
 					{
+						$prependPHP_DIR=false;
 						switch ($parameterType)
 						{
 							case "string":
@@ -100,7 +104,7 @@ foreach ($actions->children() as $action)
 									die ("$parameterName : file \"$parameterValue\" does not exist");
 								if ($parameterName=="input_file")
 									$inputFile=$parameterValue;
-								$parameterValue="$DIR_TO_PHP$parameterValue";
+								$prependPHP_DIR=true;
 								break;
 							case "directory":
 								validatePath($parameterValue);
@@ -108,7 +112,7 @@ foreach ($actions->children() as $action)
 									die ("$parameterName : directory \"$parameterValue\" does not exist");
 								if ($parameterName=="output_directory")
 									$outputDirectory=$parameterValue;
-								$parameterValue="$DIR_TO_PHP$parameterValue";
+								$prependPHP_DIR=true;
 								break;
 							case "int":
 								if (!ctype_digit("$parameterValue"))
@@ -155,6 +159,11 @@ foreach ($actions->children() as $action)
 						if ($prefix!="")
 							$command.=" ".$prefix;
 
+						$parametersList[''.$parameterName] = "$parameterValue";
+
+						if ($prependPHP_DIR)
+							$parameterValue="$DIR_TO_PHP$parameterValue";
+
 						if ($parameterName!="output_directory")
 							$command.=" ".$parameterValue;
 					}
@@ -187,8 +196,18 @@ foreach ($actions->children() as $action)
 					break;
 				default:
 			}
+			$parametersList["output_directory"]=$outputDirectory;
+
 			echo "$outputDirectory\n";
 			chdir ($outputDirectory);
+			$fp = fopen("parameters.txt", 'w+') or die("I could not open parameters.txt."); 
+
+			$parametersList2=array();
+			foreach ($parametersList as $parameter => $value)
+				$parametersList2[]="$parameter=$value";
+
+			fwrite($fp, implode("\n", $parametersList2));
+			fclose($fp);
 			echo "command : $command\n";
 			system("$command");
 		}
