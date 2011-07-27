@@ -201,12 +201,12 @@ qx.Class.define("desk.actions",
 					{this.setInvalidMessage(null);},parameterForm);
 			}
 
-			var send = new qx.ui.form.Button("Send");
+			var send = new qx.ui.form.Button("Process");
 			actionWindow.add(send, {left: 20, top: 215});
 			send.addListener("execute", function() {
 				// configure the send button
 				send.setEnabled(false);
-				send.setLabel("Validating...");
+				send.setLabel("Processing...");
 				// return type can not be used because of async validation
 				manager.validate()
 				}, this);
@@ -214,9 +214,6 @@ qx.Class.define("desk.actions",
 
 			// add a listener to the form manager for the validation complete
 			manager.addListener("complete", function() {
-				// configure the send button
-				send.setEnabled(true);
-				send.setLabel("Send");
 				// check the validation status
 				if (manager.getValid()) {
 					var parameterMap={"action" : actionName};
@@ -240,6 +237,10 @@ qx.Class.define("desk.actions",
 					req.send();
 					function getAnswer(e)
 					{
+				// configure the send button
+						send.setEnabled(true);
+						send.setLabel("Update");
+
 						var req = e.getTarget();
 						alert(req.getResponseText());
 					}
