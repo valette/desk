@@ -74,7 +74,7 @@ qx.Class.define("desk.actions",
 			
 			var actionWindow=new qx.ui.window.Window();
 			actionWindow.setLayout(new qx.ui.layout.VBox());
-			actionWindow.setHeight(300);
+//			actionWindow.setHeight(300);
 			actionWindow.setWidth(300);
 			actionWindow.setShowClose(true);
 			actionWindow.setShowMinimize(false);
@@ -229,11 +229,25 @@ qx.Class.define("desk.actions",
 			}
 
 			var send = new qx.ui.form.Button("Process");
-			actionWindow.add(send, {left: 20, top: 215});
+			actionWindow.add(send);//, {left: 20, top: 215});
 			send.addListener("execute", function() {
 				// return type can not be used because of async validation
 				manager.validate()
 				}, this);
+
+			var displayOutputOnOff = new qx.ui.form.CheckBox("Show log");
+			displayOutputOnOff.setVisibility("excluded");
+			actionWindow.add(displayOutputOnOff);
+			displayOutputOnOff.setValue(false);
+
+			var phpOutputTextArea = new qx.ui.form.TextArea();
+			phpOutputTextArea.setVisibility("excluded");
+			actionWindow.add(phpOutputTextArea, {flex : 1});
+			displayOutputOnOff.addListener("changeValue", function (e) {
+					if (displayOutputOnOff.getValue()==true)
+						phpOutputTextArea.setVisibility("visible");
+					else
+						phpOutputTextArea.setVisibility("excluded");});
 
 
 			// add a listener to the form manager for the validation complete
@@ -269,7 +283,9 @@ qx.Class.define("desk.actions",
 						send.setLabel("Update");
 
 						var req = e.getTarget();
-						alert(req.getResponseText());
+						var response=req.getResponseText();
+						displayOutputOnOff.setVisibility("visible");
+						phpOutputTextArea.setValue(response);
 					}
 				} else {
 					alert(manager.getInvalidMessages().join("\n"));
