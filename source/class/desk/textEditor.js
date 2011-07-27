@@ -5,8 +5,9 @@ qx.Class.define("desk.textEditor",
 	construct : function(file, fileBrowser)
 	{
 		this.base(arguments);
-
 		this.setLayout(new qx.ui.layout.VBox());
+		this.setHeight(400);
+		this.setWidth(400);
 		this.setShowClose(true);
 		this.setShowMinimize(false);
 		this.setResizable(true,true,true,true);

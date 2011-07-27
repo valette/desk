@@ -50,12 +50,32 @@ qx.Class.define("desk.actions",
 			}
 		},
 
-		createActionWindow : function (actionName)
+		createActionWindowFromURL : function (fileURL)
+		{
+			var req = new qx.io.request.Xhr(fileURL);
+			req.addListener("success", function(e) {
+				var req = e.getTarget();
+				var parametersText=req.getResponseText();
+				var parameters=[];
+				var splitParameters=parametersText.split("\n");
+				for (var i=0 ; i!=splitParameters.length;i++)
+				{
+					var splitString=splitParameters[i].split("=");
+					parameters[splitString[0]]=splitString[1];
+				}
+				this.createActionWindow(parameters["action"],parameters);
+			}, this);
+			req.send();
+		},
+
+		createActionWindow : function (actionName, providedParameters)
 		{
 			var action=this.__actions.getElementsByName(actionName)[0];
 			
 			var actionWindow=new qx.ui.window.Window();
 			actionWindow.setLayout(new qx.ui.layout.VBox());
+			actionWindow.setHeight(300);
+			actionWindow.setWidth(300);
 			actionWindow.setShowClose(true);
 			actionWindow.setShowMinimize(false);
 			actionWindow.setUseMoveFrame(true);
@@ -67,7 +87,7 @@ qx.Class.define("desk.actions",
 
 			var intValidator = function(value, item) {
 				var parameterName=this.getAttribute("name");
-				if (value==null) 
+				if ((value==null) || (value==""))
 				{
 					if (this.getAttribute("required")=="true")
 					{
@@ -85,7 +105,7 @@ qx.Class.define("desk.actions",
 
 			var floatValidator = function(value, item) {
 				var parameterName=this.getAttribute("name");
-				if (value==null)
+				if ((value==null) || (value==""))
 				{
 					if (this.getAttribute("required")=="true")
 					{
@@ -102,7 +122,7 @@ qx.Class.define("desk.actions",
 
 			var stringValidator = function(value, item) {
 				var parameterName=this.getAttribute("name");
-				if (value==null)
+				if ((value==null) || (value==""))
 				{
 					if (this.getAttribute("required")=="true")
 					{
@@ -197,6 +217,13 @@ qx.Class.define("desk.actions",
 						alert("no validator implemented for type : "+parameterType);
 				}
 
+				if (providedParameters!=null)
+				{
+					var providedParameterValue=providedParameters[parameterName];
+					if (providedParameterValue!=null)
+						parameterForm.setValue(providedParameterValue);
+				}
+
 				parameterForm.addListener("input", function(e) 
 					{this.setInvalidMessage(null);},parameterForm);
 			}
@@ -204,9 +231,6 @@ qx.Class.define("desk.actions",
 			var send = new qx.ui.form.Button("Process");
 			actionWindow.add(send, {left: 20, top: 215});
 			send.addListener("execute", function() {
-				// configure the send button
-				send.setEnabled(false);
-				send.setLabel("Processing...");
 				// return type can not be used because of async validation
 				manager.validate()
 				}, this);
@@ -216,6 +240,9 @@ qx.Class.define("desk.actions",
 			manager.addListener("complete", function() {
 				// check the validation status
 				if (manager.getValid()) {
+					// configure the send button
+					send.setEnabled(false);
+					send.setLabel("Processing...");
 					var parameterMap={"action" : actionName};
 					var items=manager.getItems();
 //					alert (items.length+" items");

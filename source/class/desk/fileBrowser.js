@@ -24,9 +24,12 @@ qx.Class.define("desk.fileBrowser",
 		menu.add(uploadButton);
 		menu.addSeparator();
 		var actions=new desk.actions();
+		this.__actionsHandler=actions;
 		menu.add(actions.getButton());
 		var actionsButton = new qx.ui.form.MenuButton("Actions", null, menu);
 		this.add(actionsButton);
+
+//		this.createDefaultStaticActions();
 
 		var virtualTree = new qx.ui.treevirtual.TreeVirtual(["files","mTime","size"],
 			{initiallyHiddenColumns : [1]});
@@ -78,7 +81,8 @@ qx.Class.define("desk.fileBrowser",
 		this.expandDirectoryListing(dataRootId);
 
 		// events handling
-		this.updateContextMenu();
+		this.createDefaultStaticActions();
+//		this.updateContextMenu();
 
 		virtualTree.addListener("cellDblclick", function (e) {
 			var node=this.getEventNode(e);
@@ -118,6 +122,95 @@ qx.Class.define("desk.fileBrowser",
 
 		__actionNames : [],
 		__actionCallbacks : [],
+		__actionsHandler : null,
+
+		createDefaultStaticActions : function ()
+		{
+			var myBrowser=this;
+
+			function fileClicked(node) {
+				var modificationTime=myBrowser.getNodeMTime(node);
+				var file=myBrowser.getNodeURL(node);
+				var extension=file.substring(file.length-4, file.length);
+				if (extension==".vtk")
+				{
+					var meshView=new desk.meshView(file);
+					qx.core.Init.getApplication().getRoot().add(meshView);
+				}
+				else if ((extension==".png")||(extension==".jpg")||(extension==".bmp"))
+				{
+					var imageView=new desk.imageView(file);
+					qx.core.Init.getApplication().getRoot().add(imageView);
+				}
+				else if (extension==".xml")
+				{
+					var xmlhttp=new XMLHttpRequest();
+					xmlhttp.open("GET",file+"?nocache=" + myBrowser.getNodeMTime(node),false);
+					xmlhttp.send();
+					var xmlDoc=xmlhttp.responseXML;
+					
+					if (xmlDoc.getElementsByTagName("mesh").length!=0)
+					{
+						var meshView=new desk.meshView(file);
+						qx.core.Init.getApplication().getRoot().add(meshView);
+					}
+					else if (xmlDoc.getElementsByTagName("volume").length!=0)
+					{
+						var volView=new desk.volView(file);
+						qx.core.Init.getApplication().getRoot().add(volView);
+					}
+					else
+						alert ("xml file of unknown type!");
+				}
+				else if (extension==".mhd")
+				{
+					var volView=new desk.volView(node, myBrowser);
+					qx.core.Init.getApplication().getRoot().add(volView);
+				}
+				else
+					alert("extension "+extension+" not supported!");
+				
+			}
+
+			myBrowser.setFileHandler(fileClicked);
+
+			myBrowser.addAction("redo action", function (node) {
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+					myBrowser.__actionsHandler.createActionWindowFromURL(
+						myBrowser.getNodeURL(node));
+				else
+					myBrowser.__actionsHandler.createActionWindowFromURL(
+						myBrowser.getNodeURL(node)+"\/parameters.txt");});
+
+			myBrowser.addAction("segment", function (node) {
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+					var volView=new desk.gcSegmentation(node, myBrowser);
+				else
+					alert("Cannot segment a directory!");});
+
+			myBrowser.addAction("download",function (node) {
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+				{
+					var oIFrm = document.getElementById('myIFrm');
+					oIFrm.src = "/visu/desk/php/download.php?fileName="+myBrowser.getNodePath(node);
+				} 
+				else
+					alert("Cannot download a directory!");});
+
+			myBrowser.addAction("view/edit text", function (node) {
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+					var volView=new desk.textEditor(node, myBrowser);});
+
+			myBrowser.addAction("info",function (node) {
+				alert ("file name : "+myBrowser.getNodePath(node)
+					+"\n file URL : "+myBrowser.getNodeURL(node));});
+
+			myBrowser.addAction("update",function (node) {
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+					myBrowser.expandDirectoryListing(node.parentNodeId);
+				else
+					myBrowser.expandDirectoryListing(node.nodeId);});
+		},
 
 		addAction : function (actionName, callback)
 		{
