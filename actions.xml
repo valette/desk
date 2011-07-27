@@ -22,6 +22,12 @@
 
 <action name="Create_directory" executable="mkdir">
 <description>create a directory</description>
-<parameter name="directory_name" type="string" required="true"/>
+<parameter name="directory_name" type="directory" required="true"/>
 </action>
+
+<action name="Slice_Volume" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeSlice">
+<description>Slice a volume image into 2D images</description>
+<parameter name="input_file" type="file" required="true"/>
+</action>
+
 </actions>

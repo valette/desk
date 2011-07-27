@@ -1,6 +1,9 @@
 <?php
 
 $DATA_ROOT_FROM_PHP="data/";
+$CACHE_ROOT_FROM_PHP="cache/";
+$ACTIONS_ROOT_FROM_PHP="action/";
+
 $DIR_TO_PHP="/var/www/html/visu/desk/php/";
 
 
@@ -10,11 +13,31 @@ function myErrorHandler($errno, $errstr, $errfile, $errline) {
 //set_error_handler("myErrorHandler");
 
 function validatePath($file) {
+$DATA_ROOT_FROM_PHP="data/";
+$CACHE_ROOT_FROM_PHP="cache/";
+$ACTIONS_ROOT_FROM_PHP="action/";
+
 	$begining=substr($file, 0, strlen($DATA_ROOT_FROM_PHP));
-	if ($begining!=$DATA_ROOT_FROM_PHP)
-		die ("bad directory : $file\n".
+	if ($begining==$DATA_ROOT_FROM_PHP)
+		return("data");
+	else
+	{
+		$begining=substr($file, 0, strlen($CACHE_ROOT_FROM_PHP));
+		if ($begining==$CACHE_ROOT_FROM_PHP)
+			return("cache");
+		else
+		{
+			$begining=substr($file, 0, strlen($ACTIONS_ROOT_FROM_PHP));
+			if ($begining==$ACTIONS_ROOT_FROM_PHP)
+				return("action");
+			else
+			{
+				die ("bad directory : $file\n".
 				"begins with \"$begining\"\n".
 				"must begin with \"$DATA_ROOT_FROM_PHP\"");
+			}
+		}
+	}
 }
 
 $actions = simplexml_load_file("../actions.xml")
@@ -44,6 +67,7 @@ foreach ($actions->children() as $action)
 			$outputPirectoryParameter->addAttribute('type', "directory");
 			$outputPirectoryParameter->addAttribute('required', "true");
 			$outputDirectory="";
+			$inputFile="";
 
 			foreach ($action->children() as $parameter)
 			{
@@ -74,12 +98,16 @@ foreach ($actions->children() as $action)
 								validatePath($parameterValue);
 								if (!is_file($parameterValue))
 									die ("$parameterName : file \"$parameterValue\" does not exist");
+								if ($parameterName=="input_file")
+									$inputFile=$parameterValue;
 								$parameterValue="$DIR_TO_PHP$parameterValue";
 								break;
 							case "directory":
 								validatePath($parameterValue);
 								if (!is_dir($parameterValue))
 									die ("$parameterName : directory \"$parameterValue\" does not exist");
+								if ($parameterName=="output_directory")
+									$outputDirectory=$parameterValue;
 								$parameterValue="$DIR_TO_PHP$parameterValue";
 								break;
 							case "int":
@@ -127,9 +155,7 @@ foreach ($actions->children() as $action)
 						if ($prefix!="")
 							$command.=" ".$prefix;
 
-						if ($parameterName=="output_directory")
-							$outputDirectory=$parameterValue;
-						else
+						if ($parameterName!="output_directory")
 							$command.=" ".$parameterValue;
 					}
 				}
@@ -142,7 +168,26 @@ foreach ($actions->children() as $action)
 				}
 			}
 
-			echo "chdir :$outputDirectory\n";
+			switch (validatePath($outputDirectory))
+			{
+				case "cache":
+					$outputDirectory="$CACHE_ROOT_FROM_PHP".sha1($command);
+					if (!is_dir($outputDirectory))
+						system("mkdir $outputDirectory");
+					else
+					{
+						$filemtime=filemtime ( "$inputFile" );
+						$outputmtime=filemtime ( "$outputDirectory" );
+						if ($outputmtime>$filemtime)
+						{
+							echo "$outputDirectory\n";
+							return;
+						}
+					}
+					break;
+				default:
+			}
+			echo "$outputDirectory\n";
 			chdir ($outputDirectory);
 			echo "command : $command\n";
 			system("$command");
