@@ -12,13 +12,17 @@ qx.Class.define("desk.actions",
 		if (fileBrowser!=null)
 			this.__fileBrowser=fileBrowser;
 
-/*		var ongoingActions = new qx.ui.form.List().set({
+		var ongoingActions = new qx.ui.form.List().set({
 			width: 200
 	//		height: 400
 		});
+		this.__ongoingActions=ongoingActions;
 		qx.core.Init.getApplication().getRoot().add(ongoingActions, { right : 0, top : 0});
-		this.__onGoingActions=ongoingActions;*/
 		return this;
+	},
+
+	events : {
+		"loadedmenu" : "qx.event.type.Event"
 	},
 
 	members : {
@@ -38,15 +42,21 @@ qx.Class.define("desk.actions",
 
 		launchAction : function (actionParameters, successCallback, context)
 		{
-//			var actionNotification=new qx.ui.basic.Label("action");//actionParameters["action"]);
-//			this.__ongoingActions.add(actionNotification);
+			var actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
+			this.__ongoingActions.add(actionNotification);
 			var req = new qx.io.request.Xhr();
 			req.setUrl("/visu/desk/php/actions.php");
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData(actionParameters);
-			req.addListener("success", successCallback, context);
+			req.addListener("success", onSuccess, this);
 			req.send();
+			
+			function onSuccess (e){
+				this.__ongoingActions.remove(actionNotification);
+				successCallback.call(context,e);
+			}
+
 		},
 
 		populateActionMenu : function()
@@ -57,19 +67,18 @@ qx.Class.define("desk.actions",
 			this.__actions=xmlhttp.responseXML;
 			var actions=this.__actions.getElementsByTagName("action");
 			var actionMenu=this;
-			function executeButton(e)
-			{
-				actionMenu.createActionWindow(this.getLabel());
-			}
 
 			for (var n=0;n<actions.length;n++)
 			{
 				var action=actions[n];
 				var actionName=action.getAttribute("name");
 				var button=new qx.ui.menu.Button(actionName);
-				button.addListener("click", executeButton);
+				button.addListener("click", function (e){
+					actionMenu.createActionWindow(this.getLabel());});
 				this.__actionMenu.add(button);
 			}
+			this.fireEvent("loadedmenu");
+			console.log("fired");
 		},
 
 		createActionWindowFromURL : function (fileURL)

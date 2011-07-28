@@ -23,9 +23,10 @@ qx.Class.define("desk.fileBrowser",
 		uploadButton.addListener("execute", function (e){alert ("Not implemented!");}, this);
 		menu.add(uploadButton);
 		menu.addSeparator();
-		var actions=new desk.actions();
-		this.__actionsHandler=actions;
-		menu.add(actions.getButton());
+
+		this.__actionsHandler=new desk.actions(this);
+		this.__actionsHandler.addListener("loadedmenu", function (e)
+			{console.log("loaded..."); menu.add(this.__actionsHandler.getButton());}, this);
 		var actionsButton = new qx.ui.form.MenuButton("Actions", null, menu);
 		this.add(actionsButton);
 
@@ -304,8 +305,7 @@ qx.Class.define("desk.fileBrowser",
 			menu.add(openButton);
 
 			menu.addSeparator();
-			var rpcActions=new desk.actions(this);
-				menu.add(rpcActions.getButton());
+			menu.add(this.__actionsHandler.getButton());
 			menu.addSeparator();
 			// other actions buttons
 			for (var i=0;i<this.__actionNames.length;i++)
