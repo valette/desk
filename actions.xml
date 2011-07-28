@@ -20,18 +20,24 @@
 <parameter name="simlification_method" type="int" min="0" max="1" prefix="-s "/>
 </action>
 
-<action name="Create_directory" executable="mkdir">
+<action name="Create_directory" executable="mkdir" void="true">
 <description>create a directory</description>
 <parameter name="directory_name" type="directory" required="true"/>
 </action>
 
-<action name="delete" executable="rm">
+<action name="delete" executable="rm" void="true">
 <description>delete a file or directory</description>
 <parameter name="input_file" type="file" required="true"/>
 </action>
 
 <action name="mesh2vtk" executable="/home/visu/src/vtkSurfaceBuild/bin/mesh2vtk">
 <description>converts a mesh to .vtk format</description>
+<parameter name="input_file" type="file" required="true"/>
+</action>
+
+<action name="compress_to_zip" executable="zip">
+<description>compress a file or directory to .zip archive</description>
+<anchor text="-r backup.zip"/>
 <parameter name="input_file" type="file" required="true"/>
 </action>
 

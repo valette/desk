@@ -13,9 +13,9 @@ function myErrorHandler($errno, $errstr, $errfile, $errline) {
 //set_error_handler("myErrorHandler");
 
 function validatePath($file) {
-$DATA_ROOT_FROM_PHP="data/";
-$CACHE_ROOT_FROM_PHP="cache/";
-$ACTIONS_ROOT_FROM_PHP="action/";
+$DATA_ROOT_FROM_PHP="data";
+$CACHE_ROOT_FROM_PHP="cache";
+$ACTIONS_ROOT_FROM_PHP="action";
 
 	$begining=substr($file, 0, strlen($DATA_ROOT_FROM_PHP));
 	if ($begining==$DATA_ROOT_FROM_PHP)
@@ -57,6 +57,8 @@ foreach ($actions->children() as $action)
 		$currentActionName=$action["name"]
 			or die ("no name given for one action in xml file");
 
+		$voidAction=false;
+
 		if ($actionToPerform==$currentActionName)
 		{
 			$parametersList["action"]="$actionToPerform";
@@ -73,6 +75,10 @@ foreach ($actions->children() as $action)
 				$outputPirectoryParameter->addAttribute('required', "true");
 				$outputDirectory="";
 				$inputFile="";
+			}
+			else
+			{
+				$voidAction=true;
 			}
 
 			foreach ($action->children() as $parameter)
@@ -180,29 +186,35 @@ foreach ($actions->children() as $action)
 				}
 			}
 
-			switch (validatePath($outputDirectory))
-			{
-				case "cache":
-					$outputDirectory="$CACHE_ROOT_FROM_PHP".sha1($command);
-					if (!is_dir($outputDirectory))
-						system("mkdir $outputDirectory");
-					else
-					{
-						$filemtime=filemtime ( "$inputFile" );
-						$outputmtime=filemtime ( "$outputDirectory" );
-						if ($outputmtime>$filemtime)
-						{
-							echo "$outputDirectory\n";
-							return;
-						}
-					}
-					break;
-				default:
-			}
-			$parametersList["output_directory"]=$outputDirectory;
+			$flog = fopen("actions.log", 'a');
 
+			if ($voidAction==false)
+			{
+				switch (validatePath($outputDirectory))
+				{
+					case "cache":
+						$outputDirectory="$CACHE_ROOT_FROM_PHP".sha1($command);
+						if (!is_dir($outputDirectory))
+							system("mkdir $outputDirectory");
+						else
+						{
+							$filemtime=filemtime ( "$inputFile" );
+							$outputmtime=filemtime ( "$outputDirectory" );
+							if ($outputmtime>$filemtime)
+							{
+								echo "$outputDirectory\n";
+								return;
+							}
+						}
+						break;
+					default:
+				}
+				$parametersList["output_directory"]=$outputDirectory;
 			echo "$outputDirectory\n";
 			chdir ($outputDirectory);
+			fwrite($flog, "cd $outputDirectory\n");
+			}
+
 			$fp = fopen("$actionToPerform.par", 'w+') or die("I could not open parameters.txt."); 
 
 			$parametersList2=array();
@@ -210,7 +222,9 @@ foreach ($actions->children() as $action)
 				$parametersList2[]="$parameter=$value";
 
 			fwrite($fp, implode("\n", $parametersList2));
+			fwrite($flog, "$command\n");
 			fclose($fp);
+			fclose($flog);
 			echo "command : $command\n";
 			system("$command");
 		}

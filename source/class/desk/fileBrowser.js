@@ -137,18 +137,26 @@ qx.Class.define("desk.fileBrowser",
 				var modificationTime=myBrowser.getNodeMTime(node);
 				var file=myBrowser.getNodeURL(node);
 				var extension=file.substring(file.length-4, file.length);
-				if (extension==".vtk")
+				switch (extension)
 				{
+				case ".vtk":
 					var meshView=new desk.meshView(file);
 					qx.core.Init.getApplication().getRoot().add(meshView);
-				}
-				else if ((extension==".png")||(extension==".jpg")||(extension==".bmp"))
-				{
+					break;
+				case ".ply":
+				case ".obj":
+				case ".stl":
+								alert ("converting");
+					var meshView=new desk.meshView(file,myBrowser);
+					qx.core.Init.getApplication().getRoot().add(meshView);
+					break;
+				case ".png":
+				case ".jpg":
+				case ".bmp":
 					var imageView=new desk.imageView(file);
 					qx.core.Init.getApplication().getRoot().add(imageView);
-				}
-				else if (extension==".xml")
-				{
+					break;
+				case ".xml":
 					var xmlhttp=new XMLHttpRequest();
 					xmlhttp.open("GET",file+"?nocache=" + myBrowser.getNodeMTime(node),false);
 					xmlhttp.send();
@@ -166,16 +174,17 @@ qx.Class.define("desk.fileBrowser",
 					}
 					else
 						alert ("xml file of unknown type!");
-				}
-				else if (extension==".mhd")
-				{
+					break;
+				case ".mhd":
 					var volView=new desk.volView(node, myBrowser);
 					qx.core.Init.getApplication().getRoot().add(volView);
-				}
-				else if (extension==".par")
+					break;
+				case ".par":
 					myBrowser.getActions().createActionWindowFromURL(myBrowser.getNodeURL(node));
-				else
-					alert("extension "+extension+" not supported!");
+					break;
+				default:
+					alert("no file handler exists for extension "+extension);
+				}
 				
 			}
 

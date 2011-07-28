@@ -21,27 +21,52 @@ qx.Class.define("desk.meshView",
 		{
 			//file is a tree node...
 			var node=file;
-			this.setCaption(node.label);
-			var ajax = new XMLHttpRequest();
-			ajax.onreadystatechange = function()
+			var file=node.label;
+			var extension=file.substring(file.length-4, file.length);
+			switch (extension)
 			{
-				if(this.readyState == 4 && this.status == 200)
+			case ".xml":
+				this.setCaption(node.label);
+				var ajax = new XMLHttpRequest();
+				ajax.onreadystatechange = function()
 				{
-					var sha1=ajax.responseText.split("\n")[0];
-					meshView.openFile("\/visu\/visu_cache\/"+sha1+"\/"+"meshes.xml");
-				}
-				else if (this.readyState == 4 && this.status != 200)
+					if(this.readyState == 4 && this.status == 200)
+					{
+						var sha1=ajax.responseText.split("\n")[0];
+						meshView.openFile("\/visu\/visu_cache\/"+sha1+"\/"+"meshes.xml");
+					}
+					else if (this.readyState == 4 && this.status != 200)
+					{
+						// fetched the wrong page or network error...
+						alert('"Fetched the wrong page" OR "Network error"');
+					}
+				};
+				var label = new qx.ui.basic.Label("Extracting meshes, wait...").set({
+					font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
+					});
+				this.add(label, {flex : 1});
+				ajax.open("POST", "/visu/volumeAnalysis.php", true);
+				ajax.send(fileBrowser.getNodePath(node));
+				break;
+			case ".ply":
+			case ".obj":
+			case ".stl":
+				var parameterMap={
+					"action" : "mesh2vtk",
+					"input_file" : fileBrowser.getNodePath(node),
+					"output_directory" : "cache\/"};
+				fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
+
+				function getAnswer(e)
 				{
-					// fetched the wrong page or network error...
-					alert('"Fetched the wrong page" OR "Network error"');
+					var req = e.getTarget();
+					var sha1=req.getResponseText().split("\n")[0];
+					meshView.openFile("\/visu\/visu_cache\/"+sha1+"\/"+"mesh.vtk");
 				}
-			};
-			var label = new qx.ui.basic.Label("Extracting meshes, wait...").set({
-				font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
-				});
-			this.add(label, {flex : 1});
-			ajax.open("POST", "/visu/volumeAnalysis.php", true);
-			ajax.send(fileBrowser.getNodePath(node));
+				break;
+			default	:
+				alert ("extension "+extension+" not supported for mesh viewer");
+			}
 		}
 		else
 		{
