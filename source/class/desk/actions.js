@@ -12,12 +12,12 @@ qx.Class.define("desk.actions",
 		if (fileBrowser!=null)
 			this.__fileBrowser=fileBrowser;
 
-/*		var scroll = new qx.ui.container.Scroll()
-		var runningActions = new qx.ui.form.List().set({
+/*		var ongoingActions = new qx.ui.form.List().set({
 			width: 200
 	//		height: 400
-		});;
-		qx.core.Init.getApplication().getRoot().add(runningActions, { right : 0, top : 0});*/
+		});
+		qx.core.Init.getApplication().getRoot().add(ongoingActions, { right : 0, top : 0});
+		this.__onGoingActions=ongoingActions;*/
 		return this;
 	},
 
@@ -27,6 +27,7 @@ qx.Class.define("desk.actions",
 		__actions : null,
 		__menuButton : null,
 		__fileBrowser : null,
+		__ongoingActions : null,
 
 		__actionsList : null,
 
@@ -37,6 +38,8 @@ qx.Class.define("desk.actions",
 
 		launchAction : function (actionParameters, successCallback, context)
 		{
+//			var actionNotification=new qx.ui.basic.Label("action");//actionParameters["action"]);
+//			this.__ongoingActions.add(actionNotification);
 			var req = new qx.io.request.Xhr();
 			req.setUrl("/visu/desk/php/actions.php");
 			req.setMethod("POST");
@@ -278,24 +281,14 @@ qx.Class.define("desk.actions",
 					send.setLabel("Processing...");
 					var parameterMap={"action" : actionName};
 					var items=manager.getItems();
-//					alert (items.length+" items");
 					for (var i=0;i<items.length;i++)
 					{
 						var currentItem=items[i];
 						var value=currentItem.getValue();
 						if (value!=null)
 							parameterMap[currentItem.getPlaceholder()]=value;
-//						alert(currentItem.getPlaceholder()+" : "+currentItem.getValue());
 					}
-//					alert (parameterMap);
-/*
-					var req = new qx.io.request.Xhr();
-					req.setUrl("/visu/desk/php/actions.php");
-					req.setMethod("POST");
-					req.setAsync(true);
-					req.setRequestData(parameterMap);
-					req.addListener("success", getAnswer, this);
-					req.send();*/
+
 					this.launchAction (parameterMap, getAnswer, this)
 					function getAnswer(e)
 					{

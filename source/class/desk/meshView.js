@@ -19,9 +19,10 @@ qx.Class.define("desk.meshView",
 		var meshView=this;
 		if (fileBrowser!=null)
 		{
+			this.setCaption(fileBrowser.getNodeURL(file));
 			//file is a tree node...
 			var node=file;
-			var file=node.label;
+			var file=fileBrowser.getNodePath(node);
 			var extension=file.substring(file.length-4, file.length);
 			switch (extension)
 			{
@@ -45,15 +46,15 @@ qx.Class.define("desk.meshView",
 					font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
 					});
 				this.add(label, {flex : 1});
-				ajax.open("POST", "/visu/volumeAnalysis.php", true);
-				ajax.send(fileBrowser.getNodePath(node));
+				ajax.open("POST", "\/visu\/desk\/php\/volumeAnalysis.php", true);
+				ajax.send(file);
 				break;
 			case ".ply":
 			case ".obj":
 			case ".stl":
 				var parameterMap={
 					"action" : "mesh2vtk",
-					"input_file" : fileBrowser.getNodePath(node),
+					"input_file" : file,
 					"output_directory" : "cache\/"};
 				fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 
@@ -61,7 +62,7 @@ qx.Class.define("desk.meshView",
 				{
 					var req = e.getTarget();
 					var sha1=req.getResponseText().split("\n")[0];
-					meshView.openFile("\/visu\/visu_cache\/"+sha1+"\/"+"mesh.vtk");
+					meshView.openFile("\/visu\/desk\/php\/"+sha1+"\/"+"mesh.vtk");
 				}
 				break;
 			default	:
