@@ -48,7 +48,7 @@ qx.Class.define("desk.fileBrowser",
 		// create the filter bar
 		var filterBox = new qx.ui.container.Composite;
 		filterBox.setLayout(new qx.ui.layout.HBox(10));
-		this.add(filterBox, {flex:1});
+		this.add(filterBox);//, {flex:1});
 		filterBox.add(new qx.ui.basic.Label("Filter files :"));
 		var filterField = new qx.ui.form.TextField();
 		filterField.setValue("");
@@ -124,6 +124,11 @@ qx.Class.define("desk.fileBrowser",
 		__actionCallbacks : [],
 		__actionsHandler : null,
 
+		getActions : function ()
+		{
+			return this.__actionsHandler;
+		},
+
 		createDefaultStaticActions : function ()
 		{
 			var myBrowser=this;
@@ -167,6 +172,8 @@ qx.Class.define("desk.fileBrowser",
 					var volView=new desk.volView(node, myBrowser);
 					qx.core.Init.getApplication().getRoot().add(volView);
 				}
+				else if (extension==".par")
+					myBrowser.getActions().createActionWindowFromURL(myBrowser.getNodeURL(node));
 				else
 					alert("extension "+extension+" not supported!");
 				

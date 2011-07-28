@@ -12,6 +12,12 @@ qx.Class.define("desk.actions",
 		if (fileBrowser!=null)
 			this.__fileBrowser=fileBrowser;
 
+/*		var scroll = new qx.ui.container.Scroll()
+		var runningActions = new qx.ui.form.List().set({
+			width: 200
+	//		height: 400
+		});;
+		qx.core.Init.getApplication().getRoot().add(runningActions, { right : 0, top : 0});*/
 		return this;
 	},
 
@@ -22,9 +28,22 @@ qx.Class.define("desk.actions",
 		__menuButton : null,
 		__fileBrowser : null,
 
+		__actionsList : null,
+
 		getButton : function()
 		{
 			return (this.__menuButton);
+		},
+
+		launchAction : function (actionParameters, successCallback, context)
+		{
+			var req = new qx.io.request.Xhr();
+			req.setUrl("/visu/desk/php/actions.php");
+			req.setMethod("POST");
+			req.setAsync(true);
+			req.setRequestData(actionParameters);
+			req.addListener("success", successCallback, context);
+			req.send();
 		},
 
 		populateActionMenu : function()
@@ -269,13 +288,15 @@ qx.Class.define("desk.actions",
 //						alert(currentItem.getPlaceholder()+" : "+currentItem.getValue());
 					}
 //					alert (parameterMap);
+/*
 					var req = new qx.io.request.Xhr();
 					req.setUrl("/visu/desk/php/actions.php");
 					req.setMethod("POST");
 					req.setAsync(true);
 					req.setRequestData(parameterMap);
 					req.addListener("success", getAnswer, this);
-					req.send();
+					req.send();*/
+					this.launchAction (parameterMap, getAnswer, this)
 					function getAnswer(e)
 					{
 				// configure the send button

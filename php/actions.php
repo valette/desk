@@ -64,13 +64,16 @@ foreach ($actions->children() as $action)
 				or die("no executable provided for action \"$actionToPerform\"");
 			// action was found in xml file, let's parse the parameters
 
-			// first add mandatory output directory parameter
-			$outputPirectoryParameter = $action->addChild('parameter');
-			$outputPirectoryParameter->addAttribute('name', "output_directory");
-			$outputPirectoryParameter->addAttribute('type', "directory");
-			$outputPirectoryParameter->addAttribute('required', "true");
-			$outputDirectory="";
-			$inputFile="";
+			// first add mandatory output directory parameter if the action is not void
+			if ($action["void"]!="true")
+			{
+				$outputPirectoryParameter = $action->addChild('parameter');
+				$outputPirectoryParameter->addAttribute('name', "output_directory");
+				$outputPirectoryParameter->addAttribute('type', "directory");
+				$outputPirectoryParameter->addAttribute('required', "true");
+				$outputDirectory="";
+				$inputFile="";
+			}
 
 			foreach ($action->children() as $parameter)
 			{
@@ -200,7 +203,7 @@ foreach ($actions->children() as $action)
 
 			echo "$outputDirectory\n";
 			chdir ($outputDirectory);
-			$fp = fopen("parameters.txt", 'w+') or die("I could not open parameters.txt."); 
+			$fp = fopen("$actionToPerform.par", 'w+') or die("I could not open parameters.txt."); 
 
 			$parametersList2=array();
 			foreach ($parametersList as $parameter => $value)

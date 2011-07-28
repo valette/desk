@@ -23,14 +23,8 @@ qx.Class.define("desk.volView",
 				"action" : "Slice_Volume",
 				"input_file" : fileBrowser.getNodePath(node),
 				"output_directory" : "cache\/"};
+			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 
-			var req = new qx.io.request.Xhr();
-			req.setUrl("/visu/desk/php/actions.php");
-			req.setMethod("POST");
-			req.setAsync(true);
-			req.setRequestData(parameterMap);
-			req.addListener("success", getAnswer, this);
-			req.send();
 			function getAnswer(e)
 			{
 				var req = e.getTarget();
