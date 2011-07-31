@@ -2,7 +2,7 @@ qx.Class.define("desk.fileBrowser",
 {
   extend : qx.ui.window.Window,
 
-	construct : function()
+	construct : function(actionsHandler)
 	{
 		this.base(arguments);
 
@@ -24,9 +24,17 @@ qx.Class.define("desk.fileBrowser",
 		menu.add(uploadButton);
 		menu.addSeparator();
 
-		this.__actionsHandler=new desk.actions(this);
-		this.__actionsHandler.addListener("loadedmenu", function (e)
-			{console.log("loaded..."); menu.add(this.__actionsHandler.getButton());}, this);
+//		if (actionsHandler==null)
+//		{
+			this.__actionsHandler=new desk.actions(this);
+			this.__actionsHandler.addListener("loadedmenu", function (e)
+				{console.log("loaded..."); menu.add(this.__actionsHandler.getButton());}, this);
+//		}
+//		else
+//		{
+//			this.__actionsHandler=actionsHandler;
+//			menu.add(this.__actionsHandler.getButton());
+//		}
 		var actionsButton = new qx.ui.form.MenuButton("Actions", null, menu);
 		this.add(actionsButton);
 
@@ -85,6 +93,10 @@ qx.Class.define("desk.fileBrowser",
 		this.createDefaultStaticActions();
 //		this.updateContextMenu();
 
+		// this listener allows to easily know which file browser is clicked
+		virtualTree.addListener("click", function (e) {
+			desk.fileBrowser.ACTIVEFILEBROWSER=this;}, this);
+
 		virtualTree.addListener("cellDblclick", function (e) {
 			var node=this.getEventNode(e);
 			this.openNode(node);}, this);
@@ -112,6 +124,10 @@ qx.Class.define("desk.fileBrowser",
 			}, this);
 
 		return (this);
+	},
+
+	statics : {
+		ACTIVEFILEBROWSER : null
 	},
 
 	members : {

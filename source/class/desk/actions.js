@@ -11,6 +11,8 @@ qx.Class.define("desk.actions",
 
 		if (fileBrowser!=null)
 			this.__fileBrowser=fileBrowser;
+		else
+			this.__fileBrowser=new desk.fileBrowser(this);
 
 		var ongoingActions = new qx.ui.form.List().set({
 			width: 200
@@ -74,7 +76,8 @@ qx.Class.define("desk.actions",
 				var actionName=action.getAttribute("name");
 				var button=new qx.ui.menu.Button(actionName);
 				button.addListener("click", function (e){
-					actionMenu.createActionWindow(this.getLabel());});
+				console.log(desk.fileBrowser.ACTIVEFILEBROWSER);
+					actionMenu.createActionWindow(this.getLabel(), null, desk.fileBrowser.ACTIVEFILEBROWSER);});
 				this.__actionMenu.add(button);
 			}
 			this.fireEvent("loadedmenu");
@@ -99,7 +102,7 @@ qx.Class.define("desk.actions",
 			req.send();
 		},
 
-		createActionWindow : function (actionName, providedParameters)
+		createActionWindow : function (actionName, providedParameters, fileBrowser)
 		{
 			var action=this.__actions.getElementsByName(actionName)[0];
 			
@@ -204,11 +207,11 @@ qx.Class.define("desk.actions",
 					manager.add(parameterForm, floatValidator, parameter);
 					break;
 				case "file":
-					if ((!fileAlreadyPickedFromBrowser)&& (this.__fileBrowser!=null))
+					if ((!fileAlreadyPickedFromBrowser) && (fileBrowser!=null))
 					{
 						fileAlreadyPickedFromBrowser=true;
-						parameterForm.setValue(this.__fileBrowser.getNodePath(
-							this.__fileBrowser.getSelectedNode()));
+						parameterForm.setValue(fileBrowser.getNodePath(
+							fileBrowser.getSelectedNode()));
 					}
 					parameterForm.setDroppable(true);
 					parameterForm.addListener("drop", function(e) {
@@ -220,19 +223,19 @@ qx.Class.define("desk.actions",
 					manager.add(parameterForm, stringValidator, parameter);
 					break;
 				case "directory":
-					if (this.__fileBrowser!=null)
+					if (fileBrowser!=null)
 					{
-						var fileNode=this.__fileBrowser.getSelectedNode();
+						var fileNode=fileBrowser.getSelectedNode();
 						if (fileNode.type==
 							qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 						{					
-							var parentNode=this.__fileBrowser.getTree().nodeGet(
+							var parentNode=fileBrowser.getTree().nodeGet(
 								fileNode.parentNodeId);
-							parameterForm.setValue(this.__fileBrowser.getNodePath(parentNode));
+							parameterForm.setValue(fileBrowser.getNodePath(parentNode));
 						}
 						else
 						{
-							parameterForm.setValue(this.__fileBrowser.getNodePath(fileNode))
+							parameterForm.setValue(fileBrowser.getNodePath(fileNode))
 						}
 					}
 					parameterForm.setDroppable(true);
