@@ -24,17 +24,17 @@ qx.Class.define("desk.fileBrowser",
 		menu.add(uploadButton);
 		menu.addSeparator();
 
-//		if (actionsHandler==null)
-//		{
+		if (actionsHandler==null)
+		{
 			this.__actionsHandler=new desk.actions(this);
 			this.__actionsHandler.addListener("loadedmenu", function (e)
 				{console.log("loaded..."); menu.add(this.__actionsHandler.getButton());}, this);
-//		}
-//		else
-//		{
-//			this.__actionsHandler=actionsHandler;
-//			menu.add(this.__actionsHandler.getButton());
-//		}
+		}
+		else
+		{
+			this.__actionsHandler=actionsHandler;
+			menu.add(this.__actionsHandler.getButton());
+		}
 		var actionsButton = new qx.ui.form.MenuButton("Actions", null, menu);
 		this.add(actionsButton);
 
