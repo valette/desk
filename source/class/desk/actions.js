@@ -5,6 +5,7 @@ qx.Class.define("desk.actions",
 	construct : function(fileBrowser)
 	{
 		this.base(arguments);
+		desk.actions.ACTIONSHANDLER=this;
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.populateActionMenu();
 		this.__menuButton=new qx.ui.menu.Button("Actions", null , null, this.__actionMenu);
@@ -12,7 +13,7 @@ qx.Class.define("desk.actions",
 		if (fileBrowser!=null)
 			this.__fileBrowser=fileBrowser;
 		else
-			this.__fileBrowser=new desk.fileBrowser(this);
+			this.__fileBrowser=new desk.fileBrowser();
 
 		var ongoingActions = new qx.ui.form.List().set({
 			width: 200
@@ -25,6 +26,10 @@ qx.Class.define("desk.actions",
 
 	events : {
 		"loadedmenu" : "qx.event.type.Event"
+	},
+
+	statics : {
+		ACTIONHANDLER : null
 	},
 
 	members : {
@@ -76,7 +81,7 @@ qx.Class.define("desk.actions",
 				var actionName=action.getAttribute("name");
 				var button=new qx.ui.menu.Button(actionName);
 				button.addListener("click", function (e){
-				console.log(desk.fileBrowser.ACTIVEFILEBROWSER);
+			//	console.log(desk.fileBrowser.ACTIVEFILEBROWSER);
 					actionMenu.createActionWindow(this.getLabel(), null, desk.fileBrowser.ACTIVEFILEBROWSER);});
 				this.__actionMenu.add(button);
 			}
@@ -274,6 +279,8 @@ qx.Class.define("desk.actions",
 			actionWindow.add(displayOutputOnOff);
 			displayOutputOnOff.setValue(false);
 
+			var embededFileBrowser=null;
+
 			var phpOutputTextArea = new qx.ui.form.TextArea();
 			phpOutputTextArea.setVisibility("excluded");
 			actionWindow.add(phpOutputTextArea, {flex : 1});
@@ -312,6 +319,12 @@ qx.Class.define("desk.actions",
 						var response=req.getResponseText();
 						displayOutputOnOff.setVisibility("visible");
 						phpOutputTextArea.setValue(response);
+
+						if (embededFileBrowser==null)
+						{
+							//display the results directory
+					//		embededFileBrowser=new desk.fileBrowser(actionWindow);
+						}
 					}
 				} else {
 					alert(manager.getInvalidMessages().join("\n"));

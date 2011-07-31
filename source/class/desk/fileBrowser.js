@@ -2,7 +2,7 @@ qx.Class.define("desk.fileBrowser",
 {
   extend : qx.ui.window.Window,
 
-	construct : function(actionsHandler)
+	construct : function(container)
 	{
 		this.base(arguments);
 
@@ -15,7 +15,11 @@ qx.Class.define("desk.fileBrowser",
 		this.setUseMoveFrame(true);
 		this.setCaption("files");
 		this.setHeight(400);
-		this.open();
+		if (container==null)
+			this.open();
+
+		this.__actionCallbacks=[];
+		this.__actionNames=[];
 
 		//create menu
 		var menu=new qx.ui.menu.Menu;
@@ -24,17 +28,9 @@ qx.Class.define("desk.fileBrowser",
 		menu.add(uploadButton);
 		menu.addSeparator();
 
-		if (actionsHandler==null)
-		{
-			this.__actionsHandler=new desk.actions(this);
-			this.__actionsHandler.addListener("loadedmenu", function (e)
-				{console.log("loaded..."); menu.add(this.__actionsHandler.getButton());}, this);
-		}
-		else
-		{
-			this.__actionsHandler=actionsHandler;
-			menu.add(this.__actionsHandler.getButton());
-		}
+		this.__actionsHandler=desk.actions.ACTIONSHANDLER;
+		menu.add(this.__actionsHandler.getButton());
+
 		var actionsButton = new qx.ui.form.MenuButton("Actions", null, menu);
 		this.add(actionsButton);
 
@@ -83,7 +79,10 @@ qx.Class.define("desk.fileBrowser",
 		filterBox.add(resetButton);
 		dataModel.setFilter(filter);
 
-		this.add(virtualTree,{flex: 1});
+		if (container==null)
+			this.add(virtualTree,{flex: 1});
+		else
+			container.add(virtualTree, {flex : 1});
 
 		// add root directory
 		var dataRootId = dataModel.addBranch(null, this.__baseDir, true);
@@ -137,8 +136,8 @@ qx.Class.define("desk.fileBrowser",
 		__baseDir : "data",
 		__virtualTree : null,
 
-		__actionNames : [],
-		__actionCallbacks : [],
+		__actionNames : null,
+		__actionCallbacks : null,
 		__actionsHandler : null,
 
 		getActions : function ()
@@ -149,7 +148,7 @@ qx.Class.define("desk.fileBrowser",
 		createDefaultStaticActions : function ()
 		{
 			var myBrowser=this;
-
+			console.log(myBrowser);
 			function fileClicked(node) {
 				var modificationTime=myBrowser.getNodeMTime(node);
 				var file=myBrowser.getNodeURL(node);
@@ -252,7 +251,9 @@ qx.Class.define("desk.fileBrowser",
 				this.__actionNames.push(actionName);
 			}
 			else
-				alert ("Warning : action "+actionName+" already exists, is overwritten!");
+			{
+				console.log ("Warning : action \""+actionName+"\" already exists, is overwritten!");
+			}
 
 			this.__actionCallbacks[actionName]=callback;
 			this.updateContextMenu();

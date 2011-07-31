@@ -46,4 +46,10 @@
 <parameter name="input_file" type="file" required="true"/>
 </action>
 
+<action name="sleep" executable="sleep">
+<description>just sleep (usefull for debug)</description>
+<parameter name="time_in_seconds" type="int" required="true"/>
+</action>
+
+
 </actions>
