@@ -2,9 +2,11 @@ qx.Class.define("desk.fileBrowser",
 {
   extend : qx.ui.window.Window,
 
-	construct : function(container)
+	construct : function(container, baseDir)
 	{
 		this.base(arguments);
+		if (baseDir!=null)
+			this.__baseDir=baseDir;
 
 		qx.Class.include(qx.ui.treevirtual.TreeVirtual,
 			qx.ui.treevirtual.MNode);
@@ -37,7 +39,7 @@ qx.Class.define("desk.fileBrowser",
 //		this.createDefaultStaticActions();
 
 		var virtualTree = new qx.ui.treevirtual.TreeVirtual(["files","mTime","size"],
-			{initiallyHiddenColumns : [1]});
+			{initiallyHiddenColumns : [1, 2]});
 		this.__virtualTree=virtualTree;
 		virtualTree.setSelectionMode(qx.ui.treevirtual.TreeVirtual.SelectionMode.MULTIPLE_INTERVAL);
 

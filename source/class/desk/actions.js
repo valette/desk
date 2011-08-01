@@ -112,13 +112,21 @@ qx.Class.define("desk.actions",
 			var action=this.__actions.getElementsByName(actionName)[0];
 			
 			var actionWindow=new qx.ui.window.Window();
-			actionWindow.setLayout(new qx.ui.layout.VBox());
+			actionWindow.setLayout(new qx.ui.layout.HBox());
+			var pane = new qx.ui.splitpane.Pane("horizontal");
+			var outputDirectory=null;
+
 //			actionWindow.setHeight(300);
 			actionWindow.setWidth(300);
 			actionWindow.setShowClose(true);
 			actionWindow.setShowMinimize(false);
 			actionWindow.setUseMoveFrame(true);
 			actionWindow.setCaption(action.getAttribute("name"));
+
+			var parametersBox = new qx.ui.container.Composite;
+			parametersBox.setLayout(new qx.ui.layout.VBox());
+			pane.add(parametersBox);
+			actionWindow.add(pane, {flex : 1});
 
 			// create the form manager
 			var manager = new qx.ui.form.validation.Manager();
@@ -161,6 +169,8 @@ qx.Class.define("desk.actions",
 
 			var stringValidator = function(value, item) {
 				var parameterName=this.getAttribute("name");
+				if (parameterName=="output_directory")
+					outputDirectory=value;
 				if ((value==null) || (value==""))
 				{
 					if (this.getAttribute("required")=="true")
@@ -194,10 +204,10 @@ qx.Class.define("desk.actions",
 					parameter=parameters[i];
 
 				var parameterName=parameter.getAttribute("name");
-				actionWindow.add(new qx.ui.basic.Label(parameterName));
+				parametersBox.add(new qx.ui.basic.Label(parameterName));
 				var parameterForm=new qx.ui.form.TextField();
 				parameterForm.setPlaceholder(parameterName);
-				actionWindow.add(parameterForm);
+				parametersBox.add(parameterForm);
 				var parameterType=parameter.getAttribute("type");
 
 				switch (parameterType)
@@ -268,7 +278,7 @@ qx.Class.define("desk.actions",
 			}
 
 			var send = new qx.ui.form.Button("Process");
-			actionWindow.add(send);//, {left: 20, top: 215});
+			parametersBox.add(send);//, {left: 20, top: 215});
 			send.addListener("execute", function() {
 				// return type can not be used because of async validation
 				manager.validate()
@@ -276,14 +286,14 @@ qx.Class.define("desk.actions",
 
 			var displayOutputOnOff = new qx.ui.form.CheckBox("Show log");
 			displayOutputOnOff.setVisibility("excluded");
-			actionWindow.add(displayOutputOnOff);
+			parametersBox.add(displayOutputOnOff);
 			displayOutputOnOff.setValue(false);
 
 			var embededFileBrowser=null;
 
 			var phpOutputTextArea = new qx.ui.form.TextArea();
 			phpOutputTextArea.setVisibility("excluded");
-			actionWindow.add(phpOutputTextArea, {flex : 1});
+			parametersBox.add(phpOutputTextArea, {flex : 1});
 			displayOutputOnOff.addListener("changeValue", function (e) {
 					if (displayOutputOnOff.getValue()==true)
 						phpOutputTextArea.setVisibility("visible");
@@ -323,7 +333,7 @@ qx.Class.define("desk.actions",
 						if (embededFileBrowser==null)
 						{
 							//display the results directory
-					//		embededFileBrowser=new desk.fileBrowser(actionWindow);
+				//			embededFileBrowser=new desk.fileBrowser(pane, outputDirectory);
 						}
 					}
 				} else {
