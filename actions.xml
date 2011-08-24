@@ -3,7 +3,7 @@
 <description>generates a simplification of the input mesh</description>
 <parameter name="input_file" type="file" required="true"/>
 <parameter name="number_of_desired_vertices" type="int" min="0" required="true" />
-<parameter name="gradation" type="float" required="true" min="0" max="30"/>
+<parameter name="gradation" type="float" required="true" min="0" max="30" default="0"/>
 <anchor text="-d 0"/>
 </action>
 
@@ -11,13 +11,13 @@
 <description>generates a simplification of the input mesh</description>
 <parameter name="input_file" type="file" required="true"/>
 <parameter name="number_of_desired_vertices" type="int" min="0" required="true" />
-<parameter name="gradation" type="float" required="true" min="0" max="30" />
+<parameter name="gradation" type="float" required="true" min="0" max="30" default="0" />
 </action>
 
 <action name="Extract_meshes" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeAnalysis">
 <description>extract meshes from labeled volume data</description>
 <parameter name="input_file" type="file" required="true"/>
-<parameter name="simlification_method" type="int" min="0" max="1" prefix="-s "/>
+<parameter name="simlification_method" type="int" min="0" max="1" default="0" prefix="-s "/>
 </action>
 
 <action name="Create_directory" executable="mkdir" void="true">
@@ -35,11 +35,11 @@
 <parameter name="input_file" type="file" required="true"/>
 </action>
 
-<action name="compress_to_zip" executable="zip">
+<SSSaction name="compress_to_zip" executable="zip">
 <description>compress a file or directory to .zip archive</description>
 <anchor text="-r backup.zip"/>
 <parameter name="input_file" type="file" required="true"/>
-</action>
+</SSSaction>
 
 <action name="Slice_Volume" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeSlice">
 <description>Slice a volume image into 2D images</description>
@@ -48,7 +48,7 @@
 
 <action name="sleep" executable="sleep">
 <description>just sleep (usefull for debug)</description>
-<parameter name="time_in_seconds" type="int" required="true"/>
+<parameter name="time_in_seconds" type="int" default="2" required="true"/>
 </action>
 
 

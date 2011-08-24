@@ -275,14 +275,32 @@ qx.Class.define("desk.actions",
 
 				parameterForm.addListener("input", function(e) 
 					{this.setInvalidMessage(null);},parameterForm);
+
+
+				//use default value if provided
+				var defaultValue=parameter.getAttribute("default");
+				if (defaultValue)
+					parameterForm.setValue(defaultValue);
 			}
 
+			var executeBox = new qx.ui.container.Composite;
+			executeBox.setLayout(new qx.ui.layout.HBox(10));
+			parametersBox.add(executeBox);//, {flex:1});
+
 			var send = new qx.ui.form.Button("Process");
-			parametersBox.add(send);//, {left: 20, top: 215});
+			executeBox.add(send);//, {left: 20, top: 215});
 			send.addListener("execute", function() {
 				// return type can not be used because of async validation
 				manager.validate()
 				}, this);
+
+			var forceUpdateCheckBox = new qx.ui.form.CheckBox("force");
+//			var executionStatus=new qx.ui.basic.Label();
+			var executionStatus=new qx.ui.form.TextField().set({
+				readOnly: true});
+
+			executeBox.add(forceUpdateCheckBox);
+			executeBox.add(executionStatus);
 
 			var displayOutputOnOff = new qx.ui.form.CheckBox("Show log");
 			displayOutputOnOff.setVisibility("excluded");
@@ -310,6 +328,7 @@ qx.Class.define("desk.actions",
 					send.setLabel("Processing...");
 					var parameterMap={"action" : actionName};
 					var items=manager.getItems();
+					// add all parameters
 					for (var i=0;i<items.length;i++)
 					{
 						var currentItem=items[i];
@@ -317,6 +336,8 @@ qx.Class.define("desk.actions",
 						if (value!=null)
 							parameterMap[currentItem.getPlaceholder()]=value;
 					}
+					// add the value of the "force update" checkbox
+					parameterMap["force_update"]=forceUpdateCheckBox.getValue();
 
 					this.launchAction (parameterMap, getAnswer, this)
 					function getAnswer(e)
@@ -329,11 +350,13 @@ qx.Class.define("desk.actions",
 						var response=req.getResponseText();
 						displayOutputOnOff.setVisibility("visible");
 						phpOutputTextArea.setValue(response);
+						var splitResponse=response.split("\n");
+						executionStatus.setValue(splitResponse[splitResponse.length-2]);
 
 						if (embededFileBrowser==null)
 						{
 							//display the results directory
-				//			embededFileBrowser=new desk.fileBrowser(pane, outputDirectory);
+							embededFileBrowser=new desk.fileBrowser(pane, outputDirectory);
 						}
 					}
 				} else {

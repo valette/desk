@@ -187,7 +187,8 @@ foreach ($actions->children() as $action)
 			}
 
 			$flog = fopen("actions.log", 'a');
-
+			$logHeader=$_SERVER[REMOTE_ADDR]." ".date("D M j G:i:s");
+			
 			if ($voidAction==false)
 			{
 				switch (validatePath($outputDirectory))
@@ -210,9 +211,9 @@ foreach ($actions->children() as $action)
 					default:
 				}
 				$parametersList["output_directory"]=$outputDirectory;
-			echo "$outputDirectory\n";
-			chdir ($outputDirectory);
-			fwrite($flog, "cd $outputDirectory\n");
+				echo "$outputDirectory\n";
+				chdir ($outputDirectory);
+				fwrite($flog, "$logHeader : cd $outputDirectory\n");
 			}
 
 			$fp = fopen("$actionToPerform.par", 'w+') or die("I could not open parameters.txt."); 
@@ -222,11 +223,12 @@ foreach ($actions->children() as $action)
 				$parametersList2[]="$parameter=$value";
 
 			fwrite($fp, implode("\n", $parametersList2));
-			fwrite($flog, "$command\n");
+			fwrite($flog, "$logHeader : $command\n");
 			fclose($fp);
 			fclose($flog);
 			echo "command : $command\n";
 			system("$command");
+			echo "\nOK";
 		}
 	}
 }
