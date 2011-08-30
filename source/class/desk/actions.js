@@ -108,6 +108,10 @@ qx.Class.define("desk.actions",
 		createActionWindow : function (actionName, providedParameters, fileBrowser)
 		{
 			var action=this.__actions.getElementsByName(actionName)[0];
+
+			var outputDirectory=null;
+			if (providedParameters)
+				outputDirectory=providedParameters["output_directory"];
 			
 			var actionWindow=new qx.ui.window.Window();
 			actionWindow.setLayout(new qx.ui.layout.HBox());
@@ -184,7 +188,7 @@ qx.Class.define("desk.actions",
 			var fileAlreadyPickedFromBrowser=false;
 
 			var parameters=action.getElementsByTagName("parameter");
-			for (var i=0;i<(parameters.length+1);i++)
+			for (var i=0;i<(parameters.length);i++)
 			{
 				var parameter;
 				if (i==parameters.length)
@@ -316,13 +320,18 @@ qx.Class.define("desk.actions",
 						if (value!=null)
 							parameterMap[currentItem.getPlaceholder()]=value;
 					}
+
+					// add output directory if provided
+					if (outputDirectory!=null)
+						parameterMap["output_directory"]=outputDirectory;
+
 					// add the value of the "force update" checkbox
 					parameterMap["force_update"]=forceUpdateCheckBox.getValue();
 
 					this.launchAction (parameterMap, getAnswer, this)
 					function getAnswer(e)
 					{
-				// configure the send button
+						// configure the send button
 						send.setEnabled(true);
 						send.setLabel("Update");
 
@@ -331,12 +340,12 @@ qx.Class.define("desk.actions",
 						displayOutputOnOff.setVisibility("visible");
 						phpOutputTextArea.setValue(response);
 						var splitResponse=response.split("\n");
-						
+						outputDirectory=splitResponse[0]
 						executionStatus.setValue(splitResponse[splitResponse.length-2]);
 						if (embededFileBrowser==null)
 						{
 							//display the results directory
-							embededFileBrowser=new desk.fileBrowser(pane, splitResponse[0]);
+							embededFileBrowser=new desk.fileBrowser(pane,outputDirectory);
 						}
 					}
 				} else {

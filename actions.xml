@@ -35,11 +35,11 @@
 <parameter name="input_file" type="file" required="true"/>
 </action>
 
-<SSSaction name="compress_to_zip" executable="zip">
+<action name="compress_to_zip" executable="zip">
 <description>compress a file or directory to .zip archive</description>
 <anchor text="-r backup.zip"/>
 <parameter name="input_file" type="file" required="true"/>
-</SSSaction>
+</action>
 
 <action name="Slice_Volume" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeSlice">
 <description>Slice a volume image into 2D images</description>
@@ -48,7 +48,7 @@
 
 <action name="sleep" executable="sleep">
 <description>just sleep (usefull for debug)</description>
-<parameter name="time_in_seconds" type="int" default="2" required="true"/>
+<parameter name="time_in_seconds" type="int" default="2" void="true" required="true"/>
 </action>
 
 

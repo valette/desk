@@ -6,6 +6,7 @@ $ACTIONS_ROOT_FROM_PHP="actions/";
 
 $DIR_TO_PHP="/var/www/html/visu/desk/php/";
 
+$startTime=time();
 
 function myErrorHandler($errno, $errstr, $errfile, $errline) {
 	die ("\n error while processing\n");
@@ -67,7 +68,9 @@ foreach ($actions->children() as $action)
 			// action was found in xml file, let's parse the parameters
 
 			// first add mandatory output directory parameter if the action is not void
-			if ($action["void"]!="true")
+			if ($action["void"]=="true")
+				$voidAction=true;
+			else
 			{
 
 				$try=$_POST['output_directory'];
@@ -115,10 +118,6 @@ foreach ($actions->children() as $action)
 					fclose($fp);
 					
 				}
-			}
-			else
-			{
-				$voidAction=true;
 			}
 
 			foreach ($action->children() as $parameter)
@@ -268,7 +267,10 @@ foreach ($actions->children() as $action)
 			fclose($flog);
 			echo "command : $command\n";
 			system("$command");
-			echo "\nOK";
+			$duration=time()-$startTime;
+			echo "\nOK ($duration s.)";
+			if ($voidAction==false)
+				touch ($outputDirectory);
 		}
 	}
 }
