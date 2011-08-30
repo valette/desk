@@ -2,7 +2,7 @@
 
 $DATA_ROOT_FROM_PHP="data/";
 $CACHE_ROOT_FROM_PHP="cache/";
-$ACTIONS_ROOT_FROM_PHP="action/";
+$ACTIONS_ROOT_FROM_PHP="actions/";
 
 $DIR_TO_PHP="/var/www/html/visu/desk/php/";
 
@@ -69,12 +69,52 @@ foreach ($actions->children() as $action)
 			// first add mandatory output directory parameter if the action is not void
 			if ($action["void"]!="true")
 			{
-				$outputPirectoryParameter = $action->addChild('parameter');
-				$outputPirectoryParameter->addAttribute('name', "output_directory");
-				$outputPirectoryParameter->addAttribute('type', "directory");
-				$outputPirectoryParameter->addAttribute('required', "true");
-				$outputDirectory="";
-				$inputFile="";
+
+				$try=$_POST['output_directory'];
+				if ($try)
+				{
+					// output directory is provided
+					$outputDirectory=mysql_real_escape_string($try);
+				}
+				else
+				{
+					// read actions counter if it exists
+					$actionsCountFile = $ACTIONS_ROOT_FROM_PHP."counter.txt";
+					$actionId=0;
+					if (is_file ( $actionsCountFile ))
+					{
+						$filehandle = fopen($actionsCountFile, "r");
+						$content = fread($filehandle, filesize($actionsCountFile));
+						fclose($handle);
+						$actionId=intval($content);
+					}
+
+					$failsafecounter=0;
+					while (1)
+					{
+						$actionId++;
+						// generate new output directory
+				//		$outputDirectory="$ACTIONS_ROOT_FROM_PHP".str_pad((string) $actionId,8,"0",STR_PAD_LEFT);
+						$outputDirectory="$ACTIONS_ROOT_FROM_PHP".$actionId;
+						if (is_dir($outputDirectory))
+						{
+							echo ("Output directory $outputDirectory already exists. Check counter.txt");
+						}
+						else
+						{
+							mkdir ($outputDirectory);
+							break;
+						}
+						$failsafecounter++;
+						if ($failsafecounter==1000)
+							die ("too many errors!");
+					}
+					// write actions counts to counter.txt
+					$fp = fopen($actionsCountFile, 'w');
+					fwrite($fp,$actionId );
+					fclose($fp);
+					
+				}
 			}
 			else
 			{
@@ -119,8 +159,8 @@ foreach ($actions->children() as $action)
 								validatePath($parameterValue);
 								if (!is_dir($parameterValue))
 									die ("$parameterName : directory \"$parameterValue\" does not exist");
-								if ($parameterName=="output_directory")
-									$outputDirectory=$parameterValue;
+//								if ($parameterName=="output_directory")
+//									$outputDirectory=$parameterValue;
 								$prependPHP_DIR=true;
 								break;
 							case "int":

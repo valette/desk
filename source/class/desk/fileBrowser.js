@@ -31,7 +31,8 @@ qx.Class.define("desk.fileBrowser",
 		menu.addSeparator();
 
 		this.__actionsHandler=desk.actions.ACTIONSHANDLER;
-		menu.add(this.__actionsHandler.getButton());
+		this.__actionsMenuButton=new qx.ui.menu.Button("Actions", null , null);
+		menu.add(this.__actionsMenuButton);
 
 		var actionsButton = new qx.ui.form.MenuButton("Actions", null, menu);
 		this.add(actionsButton);
@@ -142,6 +143,7 @@ qx.Class.define("desk.fileBrowser",
 		__actionNames : null,
 		__actionCallbacks : null,
 		__actionsHandler : null,
+		__actionsMenuButton : null,
 
 		getActions : function ()
 		{
@@ -325,7 +327,15 @@ qx.Class.define("desk.fileBrowser",
 			menu.add(openButton);
 
 			menu.addSeparator();
-			menu.add(this.__actionsHandler.getButton());
+//			menu.add(this.__actionsHandler.getButton());
+			var actionsButton=new qx.ui.menu.Button("Actions");
+			menu.add(actionsButton);
+			actionsButton.addListener("click", function (e) {
+				this.__actionsHandler.openActionsMenu(e, this);
+					}, this);
+
+//			menu.add(this.__actionsMenuButton);
+
 			menu.addSeparator();
 			// other actions buttons
 			for (var i=0;i<this.__actionNames.length;i++)

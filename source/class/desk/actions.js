@@ -8,7 +8,7 @@ qx.Class.define("desk.actions",
 		desk.actions.ACTIONSHANDLER=this;
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.populateActionMenu();
-		this.__menuButton=new qx.ui.menu.Button("Actions", null , null, this.__actionMenu);
+//		this.__menuButton=new qx.ui.menu.Button("Actions", null , null, this.__actionMenu);
 
 		if (fileBrowser!=null)
 			this.__fileBrowser=fileBrowser;
@@ -24,10 +24,6 @@ qx.Class.define("desk.actions",
 		return this;
 	},
 
-	events : {
-		"loadedmenu" : "qx.event.type.Event"
-	},
-
 	statics : {
 		ACTIONHANDLER : null
 	},
@@ -36,15 +32,20 @@ qx.Class.define("desk.actions",
 		__actionsFile : "/visu/desk/actions.xml",
 		__actionMenu : null,
 		__actions : null,
-		__menuButton : null,
 		__fileBrowser : null,
 		__ongoingActions : null,
 
 		__actionsList : null,
 
-		getButton : function()
+		_currentFileBrowser : null,
+
+		openActionsMenu : function(e, fileBrowser)
 		{
-			return (this.__menuButton);
+			this.__currentFileBrowser=fileBrowser;
+			this.__actionMenu.open();
+			console.log(this.__actionMenu);
+			this.__actionMenu.placeToMouse(e);
+			this.__actionMenu.show();
 		},
 
 		launchAction : function (actionParameters, successCallback, context)
@@ -81,12 +82,9 @@ qx.Class.define("desk.actions",
 				var actionName=action.getAttribute("name");
 				var button=new qx.ui.menu.Button(actionName);
 				button.addListener("click", function (e){
-			//	console.log(desk.fileBrowser.ACTIVEFILEBROWSER);
-					actionMenu.createActionWindow(this.getLabel(), null, desk.fileBrowser.ACTIVEFILEBROWSER);});
+					actionMenu.createActionWindow(this.getLabel(), null, actionMenu.__currentFileBrowser);});
 				this.__actionMenu.add(button);
 			}
-			this.fireEvent("loadedmenu");
-			console.log("fired");
 		},
 
 		createActionWindowFromURL : function (fileURL)
@@ -114,7 +112,6 @@ qx.Class.define("desk.actions",
 			var actionWindow=new qx.ui.window.Window();
 			actionWindow.setLayout(new qx.ui.layout.HBox());
 			var pane = new qx.ui.splitpane.Pane("horizontal");
-			var outputDirectory=null;
 
 //			actionWindow.setHeight(300);
 			actionWindow.setWidth(300);
@@ -169,8 +166,6 @@ qx.Class.define("desk.actions",
 
 			var stringValidator = function(value, item) {
 				var parameterName=this.getAttribute("name");
-				if (parameterName=="output_directory")
-					outputDirectory=value;
 				if ((value==null) || (value==""))
 				{
 					if (this.getAttribute("required")=="true")
@@ -198,7 +193,7 @@ qx.Class.define("desk.actions",
 					parameter=document.createElement("parameter");
 					parameter.setAttribute('name',"output_directory");
 					parameter.setAttribute('type',"directory");
-					parameter.setAttribute('required',"true");
+		//			parameter.setAttribute('required',"true");
 				}
 				else
 					parameter=parameters[i];
@@ -238,21 +233,6 @@ qx.Class.define("desk.actions",
 					manager.add(parameterForm, stringValidator, parameter);
 					break;
 				case "directory":
-					if (fileBrowser!=null)
-					{
-						var fileNode=fileBrowser.getSelectedNode();
-						if (fileNode.type==
-							qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-						{					
-							var parentNode=fileBrowser.getTree().nodeGet(
-								fileNode.parentNodeId);
-							parameterForm.setValue(fileBrowser.getNodePath(parentNode));
-						}
-						else
-						{
-							parameterForm.setValue(fileBrowser.getNodePath(fileNode))
-						}
-					}
 					parameterForm.setDroppable(true);
 					parameterForm.addListener("drop", function(e) {
 							var fileBrowser=e.getData("fileBrowser");
@@ -351,12 +331,12 @@ qx.Class.define("desk.actions",
 						displayOutputOnOff.setVisibility("visible");
 						phpOutputTextArea.setValue(response);
 						var splitResponse=response.split("\n");
+						
 						executionStatus.setValue(splitResponse[splitResponse.length-2]);
-
 						if (embededFileBrowser==null)
 						{
 							//display the results directory
-							embededFileBrowser=new desk.fileBrowser(pane, outputDirectory);
+							embededFileBrowser=new desk.fileBrowser(pane, splitResponse[0]);
 						}
 					}
 				} else {
