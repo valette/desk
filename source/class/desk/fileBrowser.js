@@ -11,7 +11,6 @@ qx.Class.define("desk.fileBrowser",
 		qx.Class.include(qx.ui.treevirtual.TreeVirtual,
 			qx.ui.treevirtual.MNode);
 
-
 		this.__actionCallbacks=[];
 		this.__actionNames=[];
 
@@ -90,8 +89,8 @@ qx.Class.define("desk.fileBrowser",
 			container.add(virtualTree, {flex : 1});
 
 		// add root directory
-		var dataRootId = dataModel.addBranch(null, this.__baseDir, true);
-		this.expandDirectoryListing(dataRootId);
+		this.__rootId = dataModel.addBranch(null, this.__baseDir, true);
+		this.updateRoot();
 
 		// events handling
 		this.createDefaultStaticActions();
@@ -138,11 +137,19 @@ qx.Class.define("desk.fileBrowser",
 		__baseURL : "/visu/desk/php/",
 		__baseDir : "data",
 		__virtualTree : null,
+		__rootId : null,
 
 		__actionNames : null,
 		__actionCallbacks : null,
 		__actionsHandler : null,
 		__actionsMenuButton : null,
+
+		__updateDirectoryInProgress : null,
+
+		updateRoot : function ()
+		{
+			this.expandDirectoryListing(this.__rootId);
+		},
 
 		getActions : function ()
 		{
@@ -152,7 +159,6 @@ qx.Class.define("desk.fileBrowser",
 		createDefaultStaticActions : function ()
 		{
 			var myBrowser=this;
-			console.log(myBrowser);
 			function fileClicked(node) {
 				var modificationTime=myBrowser.getNodeMTime(node);
 				var file=myBrowser.getNodeURL(node);
@@ -356,6 +362,13 @@ qx.Class.define("desk.fileBrowser",
 		},
 
 		expandDirectoryListing : function(node) {
+			if (this.__updateDirectoryInProgress==true)
+			{
+				console.log("tried to update directory while update is already in progress");
+				return;
+			}
+			this.__updateDirectoryInProgress=true;
+
 			var dataModel=this.__virtualTree.getDataModel();
 			dataModel.prune(node,false);
 
@@ -406,6 +419,7 @@ qx.Class.define("desk.fileBrowser",
 					dataModel.setColumnData(newNode, 2, sizes[filesArray[i]]);
 				}
 				dataModel.setData();
+				this.__updateDirectoryInProgress=false;
 			}
 		}
 	}

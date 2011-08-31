@@ -3,17 +3,27 @@
 $DATA_ROOT_FROM_PHP="data/";
 $CACHE_ROOT_FROM_PHP="cache/";
 $ACTIONS_ROOT_FROM_PHP="actions/";
-
 $DIR_TO_PHP="/var/www/html/visu/desk/php/";
+
+$parametersFileName="action.par";
 
 $startTime=time();
 
 $inputFilesLastMtime=0;
 
-function myErrorHandler($errno, $errstr, $errfile, $errline) {
-	die ("\n error while processing\n");
+function readParameters($file) {
+	$parameters=array();
+	$filehandle = fopen($file, "r");
+	$content = fread($filehandle, filesize($file));
+	fclose($filehandle);
+	$parametersLines=explode("\n",$content);
+	foreach ($parametersLines as $line)
+	{
+		$parameter=explode("=",$line);
+		$parameters[''.$parameter[0]]=$parameter[1];
+	}
+	return ($parameters);
 }
-//set_error_handler("myErrorHandler");
 
 function validatePath($file) {
 $DATA_ROOT_FROM_PHP="data";
@@ -261,29 +271,38 @@ foreach ($actions->children() as $action)
 				chdir ($outputDirectory);
 				fwrite($flog, "$logHeader : cd $outputDirectory\n");
 
-				if (($newAction==false)&&($inputFilesLastMtime<= filemtime('.')))
-					$cached=true;
+				$commandHash=sha1($command);
+				if ($newAction==false)
+				{
+					$oldParameters=readParameters($parametersFileName);
+					if (($inputFilesLastMtime<= filemtime('.'))&&
+							($oldParameters['hash']==$commandHash))
+						$cached=true;
+				}
+				$parametersList['hash']=$commandHash;
 			}
 
-			$fp = fopen("$actionToPerform.par", 'w+') or die("I could not open parameters.txt."); 
-
-			$parametersList2=array();
-			foreach ($parametersList as $parameter => $value)
-				$parametersList2[]="$parameter=$value";
-
-			fwrite($fp, implode("\n", $parametersList2));
 			fwrite($flog, "$logHeader : $command\n");
-			fclose($fp);
 			fclose($flog);
+
 			echo "command : $command\n";
 
-			if ($cached==false)
+			if (($cached==false)||($_POST['force_update']=='true'))
 			{
 				system("$command");
 				$duration=time()-$startTime;
 				echo "\nOK ($duration s.)";
 				if ($voidAction==false)
+				{
 					touch ('.');
+					$fp = fopen($parametersFileName, 'w+') or die("Could not open $parametersFileName");
+					$parametersList2=array();
+					foreach ($parametersList as $parameter => $value)
+						$parametersList2[]="$parameter=$value";
+
+					fwrite($fp, implode("\n", $parametersList2));
+					fclose($fp);
+				}
 			}
 			else
 			{

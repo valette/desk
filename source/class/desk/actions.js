@@ -43,7 +43,6 @@ qx.Class.define("desk.actions",
 		{
 			this.__currentFileBrowser=fileBrowser;
 			this.__actionMenu.open();
-			console.log(this.__actionMenu);
 			this.__actionMenu.placeToMouse(e);
 			this.__actionMenu.show();
 		},
@@ -293,11 +292,11 @@ qx.Class.define("desk.actions",
 			phpOutputTextArea.setVisibility("excluded");
 			parametersBox.add(phpOutputTextArea, {flex : 1});
 			displayOutputOnOff.addListener("changeValue", function (e) {
-					if (displayOutputOnOff.getValue()==true)
-						phpOutputTextArea.setVisibility("visible");
-					else
-						phpOutputTextArea.setVisibility("excluded");});
-
+				if (displayOutputOnOff.getValue()==true)
+					phpOutputTextArea.setVisibility("visible");
+				else
+					phpOutputTextArea.setVisibility("excluded");
+				});
 
 			// add a listener to the form manager for the validation complete
 			manager.addListener("complete", function() {
@@ -342,7 +341,9 @@ qx.Class.define("desk.actions",
 						{
 							//display the results directory
 							embededFileBrowser=new desk.fileBrowser(pane,outputDirectory);
+							actionWindow.setWidth(600);
 						}
+						embededFileBrowser.updateRoot();
 					}
 				} else {
 					alert(manager.getInvalidMessages().join("\n"));
