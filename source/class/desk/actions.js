@@ -131,7 +131,10 @@ qx.Class.define("desk.actions",
 			{
 				outputDirectory=providedParameters["output_directory"];
 				if (outputDirectory)
-					embededFileBrowser=new desk.fileBrowser(pane,outputDirectory)
+				{
+					embededFileBrowser=new desk.fileBrowser(pane,outputDirectory);
+					actionWindow.setWidth(600);
+				}
 			}
 			
 			// create the form manager

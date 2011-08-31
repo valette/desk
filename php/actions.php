@@ -8,6 +8,8 @@ $DIR_TO_PHP="/var/www/html/visu/desk/php/";
 
 $startTime=time();
 
+$inputFilesLastMtime=0;
+
 function myErrorHandler($errno, $errstr, $errfile, $errline) {
 	die ("\n error while processing\n");
 }
@@ -39,6 +41,9 @@ $ACTIONS_ROOT_FROM_PHP="action";
 			}
 		}
 	}
+	$fileMTime=filemtime($file);
+	if ($GLOBALS["inputFilesLastMtime"]<$fileMTime)
+		$GLOBALS["inputFilesLastMtime"]=$fileMTime;
 }
 
 $parametersList=array();
@@ -59,6 +64,7 @@ foreach ($actions->children() as $action)
 			or die ("no name given for one action in xml file");
 
 		$voidAction=false;
+		$newAction=false;
 
 		if ($actionToPerform==$currentActionName)
 		{
@@ -88,7 +94,7 @@ foreach ($actions->children() as $action)
 					{
 						$filehandle = fopen($actionsCountFile, "r");
 						$content = fread($filehandle, filesize($actionsCountFile));
-						fclose($handle);
+						fclose($filehandle);
 						$actionId=intval($content);
 					}
 
@@ -113,6 +119,7 @@ foreach ($actions->children() as $action)
 							die ("too many errors!");
 					}
 					// write actions counts to counter.txt
+					$newAction=true;
 					$fp = fopen($actionsCountFile, 'w');
 					fwrite($fp,$actionId );
 					fclose($fp);
@@ -226,8 +233,8 @@ foreach ($actions->children() as $action)
 			}
 
 			$flog = fopen("actions.log", 'a');
-			$logHeader=$_SERVER[REMOTE_ADDR]." ".date("D M j G:i:s");
-			
+			$logHeader=$_SERVER['REMOTE_ADDR']." ".date("D M j G:i:s");
+			$cached=false;			
 			if ($voidAction==false)
 			{
 				switch (validatePath($outputDirectory))
@@ -253,6 +260,9 @@ foreach ($actions->children() as $action)
 				echo "$outputDirectory\n";
 				chdir ($outputDirectory);
 				fwrite($flog, "$logHeader : cd $outputDirectory\n");
+
+				if (($newAction==false)&&($inputFilesLastMtime<= filemtime('.')))
+					$cached=true;
 			}
 
 			$fp = fopen("$actionToPerform.par", 'w+') or die("I could not open parameters.txt."); 
@@ -266,11 +276,19 @@ foreach ($actions->children() as $action)
 			fclose($fp);
 			fclose($flog);
 			echo "command : $command\n";
-			system("$command");
-			$duration=time()-$startTime;
-			echo "\nOK ($duration s.)";
-			if ($voidAction==false)
-				touch ($outputDirectory);
+
+			if ($cached==false)
+			{
+				system("$command");
+				$duration=time()-$startTime;
+				echo "\nOK ($duration s.)";
+				if ($voidAction==false)
+					touch ('.');
+			}
+			else
+			{
+				echo "\nCACHED";
+			}
 		}
 	}
 }
