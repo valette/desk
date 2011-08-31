@@ -109,13 +109,10 @@ qx.Class.define("desk.actions",
 		{
 			var action=this.__actions.getElementsByName(actionName)[0];
 
-			var outputDirectory=null;
-			if (providedParameters)
-				outputDirectory=providedParameters["output_directory"];
-			
 			var actionWindow=new qx.ui.window.Window();
 			actionWindow.setLayout(new qx.ui.layout.HBox());
 			var pane = new qx.ui.splitpane.Pane("horizontal");
+			var embededFileBrowser=null;
 
 //			actionWindow.setHeight(300);
 			actionWindow.setWidth(300);
@@ -129,6 +126,14 @@ qx.Class.define("desk.actions",
 			pane.add(parametersBox);
 			actionWindow.add(pane, {flex : 1});
 
+			var outputDirectory=null;
+			if (providedParameters)
+			{
+				outputDirectory=providedParameters["output_directory"];
+				if (outputDirectory)
+					embededFileBrowser=new desk.fileBrowser(pane,outputDirectory)
+			}
+			
 			// create the form manager
 			var manager = new qx.ui.form.validation.Manager();
 			actionWindow.open();
@@ -290,8 +295,6 @@ qx.Class.define("desk.actions",
 			displayOutputOnOff.setVisibility("excluded");
 			parametersBox.add(displayOutputOnOff);
 			displayOutputOnOff.setValue(false);
-
-			var embededFileBrowser=null;
 
 			var phpOutputTextArea = new qx.ui.form.TextArea();
 			phpOutputTextArea.setVisibility("excluded");
