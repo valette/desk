@@ -196,20 +196,10 @@ qx.Class.define("desk.actions",
 			var fileAlreadyPickedFromBrowser=false;
 
 			var parameters=action.getElementsByTagName("parameter");
+			actionWindow.setHeight(100+50*parameters.length);
 			for (var i=0;i<(parameters.length);i++)
 			{
-				var parameter;
-				if (i==parameters.length)
-				{
-					// insert output directory parameter by default
-					parameter=document.createElement("parameter");
-					parameter.setAttribute('name',"output_directory");
-					parameter.setAttribute('type',"directory");
-		//			parameter.setAttribute('required',"true");
-				}
-				else
-					parameter=parameters[i];
-
+				var parameter=parameters[i];
 				var parameterName=parameter.getAttribute("name");
 				parametersBox.add(new qx.ui.basic.Label(parameterName));
 				var parameterForm=new qx.ui.form.TextField();
