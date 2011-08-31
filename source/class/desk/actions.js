@@ -5,12 +5,15 @@ qx.Class.define("desk.actions",
 	construct : function(fileBrowser)
 	{
 		this.base(arguments);
+		desk.actions.ACTIONSHANDLER=this;
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.populateActionMenu();
-		this.__menuButton=new qx.ui.menu.Button("Actions", null , null, this.__actionMenu);
+//		this.__menuButton=new qx.ui.menu.Button("Actions", null , null, this.__actionMenu);
 
 		if (fileBrowser!=null)
 			this.__fileBrowser=fileBrowser;
+		else
+			this.__fileBrowser=new desk.fileBrowser();
 
 		var ongoingActions = new qx.ui.form.List().set({
 			width: 200
@@ -21,23 +24,28 @@ qx.Class.define("desk.actions",
 		return this;
 	},
 
-	events : {
-		"loadedmenu" : "qx.event.type.Event"
+	statics : {
+		ACTIONHANDLER : null
 	},
 
 	members : {
 		__actionsFile : "/visu/desk/actions.xml",
 		__actionMenu : null,
 		__actions : null,
-		__menuButton : null,
 		__fileBrowser : null,
 		__ongoingActions : null,
 
 		__actionsList : null,
 
-		getButton : function()
+		_currentFileBrowser : null,
+
+		openActionsMenu : function(e, fileBrowser)
 		{
-			return (this.__menuButton);
+			this.__currentFileBrowser=fileBrowser;
+			this.__actionMenu.open();
+			console.log(this.__actionMenu);
+			this.__actionMenu.placeToMouse(e);
+			this.__actionMenu.show();
 		},
 
 		launchAction : function (actionParameters, successCallback, context)
@@ -74,11 +82,9 @@ qx.Class.define("desk.actions",
 				var actionName=action.getAttribute("name");
 				var button=new qx.ui.menu.Button(actionName);
 				button.addListener("click", function (e){
-					actionMenu.createActionWindow(this.getLabel());});
+					actionMenu.createActionWindow(this.getLabel(), null, actionMenu.__currentFileBrowser);});
 				this.__actionMenu.add(button);
 			}
-			this.fireEvent("loadedmenu");
-			console.log("fired");
 		},
 
 		createActionWindowFromURL : function (fileURL)
@@ -99,12 +105,15 @@ qx.Class.define("desk.actions",
 			req.send();
 		},
 
-		createActionWindow : function (actionName, providedParameters)
+		createActionWindow : function (actionName, providedParameters, fileBrowser)
 		{
 			var action=this.__actions.getElementsByName(actionName)[0];
-			
+
 			var actionWindow=new qx.ui.window.Window();
-			actionWindow.setLayout(new qx.ui.layout.VBox());
+			actionWindow.setLayout(new qx.ui.layout.HBox());
+			var pane = new qx.ui.splitpane.Pane("horizontal");
+			var embededFileBrowser=null;
+
 //			actionWindow.setHeight(300);
 			actionWindow.setWidth(300);
 			actionWindow.setShowClose(true);
@@ -112,6 +121,22 @@ qx.Class.define("desk.actions",
 			actionWindow.setUseMoveFrame(true);
 			actionWindow.setCaption(action.getAttribute("name"));
 
+			var parametersBox = new qx.ui.container.Composite;
+			parametersBox.setLayout(new qx.ui.layout.VBox());
+			pane.add(parametersBox);
+			actionWindow.add(pane, {flex : 1});
+
+			var outputDirectory=null;
+			if (providedParameters)
+			{
+				outputDirectory=providedParameters["output_directory"];
+				if (outputDirectory)
+				{
+					embededFileBrowser=new desk.fileBrowser(pane,outputDirectory);
+					actionWindow.setWidth(600);
+				}
+			}
+			
 			// create the form manager
 			var manager = new qx.ui.form.validation.Manager();
 			actionWindow.open();
@@ -171,7 +196,7 @@ qx.Class.define("desk.actions",
 			var fileAlreadyPickedFromBrowser=false;
 
 			var parameters=action.getElementsByTagName("parameter");
-			for (var i=0;i<(parameters.length+1);i++)
+			for (var i=0;i<(parameters.length);i++)
 			{
 				var parameter;
 				if (i==parameters.length)
@@ -180,16 +205,16 @@ qx.Class.define("desk.actions",
 					parameter=document.createElement("parameter");
 					parameter.setAttribute('name',"output_directory");
 					parameter.setAttribute('type',"directory");
-					parameter.setAttribute('required',"true");
+		//			parameter.setAttribute('required',"true");
 				}
 				else
 					parameter=parameters[i];
 
 				var parameterName=parameter.getAttribute("name");
-				actionWindow.add(new qx.ui.basic.Label(parameterName));
+				parametersBox.add(new qx.ui.basic.Label(parameterName));
 				var parameterForm=new qx.ui.form.TextField();
 				parameterForm.setPlaceholder(parameterName);
-				actionWindow.add(parameterForm);
+				parametersBox.add(parameterForm);
 				var parameterType=parameter.getAttribute("type");
 
 				switch (parameterType)
@@ -204,11 +229,11 @@ qx.Class.define("desk.actions",
 					manager.add(parameterForm, floatValidator, parameter);
 					break;
 				case "file":
-					if ((!fileAlreadyPickedFromBrowser)&& (this.__fileBrowser!=null))
+					if ((!fileAlreadyPickedFromBrowser) && (fileBrowser!=null))
 					{
 						fileAlreadyPickedFromBrowser=true;
-						parameterForm.setValue(this.__fileBrowser.getNodePath(
-							this.__fileBrowser.getSelectedNode()));
+						parameterForm.setValue(fileBrowser.getNodePath(
+							fileBrowser.getSelectedNode()));
 					}
 					parameterForm.setDroppable(true);
 					parameterForm.addListener("drop", function(e) {
@@ -220,21 +245,6 @@ qx.Class.define("desk.actions",
 					manager.add(parameterForm, stringValidator, parameter);
 					break;
 				case "directory":
-					if (this.__fileBrowser!=null)
-					{
-						var fileNode=this.__fileBrowser.getSelectedNode();
-						if (fileNode.type==
-							qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-						{					
-							var parentNode=this.__fileBrowser.getTree().nodeGet(
-								fileNode.parentNodeId);
-							parameterForm.setValue(this.__fileBrowser.getNodePath(parentNode));
-						}
-						else
-						{
-							parameterForm.setValue(this.__fileBrowser.getNodePath(fileNode))
-						}
-					}
 					parameterForm.setDroppable(true);
 					parameterForm.addListener("drop", function(e) {
 							var fileBrowser=e.getData("fileBrowser");
@@ -257,23 +267,41 @@ qx.Class.define("desk.actions",
 
 				parameterForm.addListener("input", function(e) 
 					{this.setInvalidMessage(null);},parameterForm);
+
+
+				//use default value if provided
+				var defaultValue=parameter.getAttribute("default");
+				if (defaultValue)
+					parameterForm.setValue(defaultValue);
 			}
 
+			var executeBox = new qx.ui.container.Composite;
+			executeBox.setLayout(new qx.ui.layout.HBox(10));
+			parametersBox.add(executeBox);//, {flex:1});
+
 			var send = new qx.ui.form.Button("Process");
-			actionWindow.add(send);//, {left: 20, top: 215});
+			executeBox.add(send);//, {left: 20, top: 215});
 			send.addListener("execute", function() {
 				// return type can not be used because of async validation
 				manager.validate()
 				}, this);
 
+			var forceUpdateCheckBox = new qx.ui.form.CheckBox("force");
+//			var executionStatus=new qx.ui.basic.Label();
+			var executionStatus=new qx.ui.form.TextField().set({
+				readOnly: true});
+
+			executeBox.add(forceUpdateCheckBox);
+			executeBox.add(executionStatus);
+
 			var displayOutputOnOff = new qx.ui.form.CheckBox("Show log");
 			displayOutputOnOff.setVisibility("excluded");
-			actionWindow.add(displayOutputOnOff);
+			parametersBox.add(displayOutputOnOff);
 			displayOutputOnOff.setValue(false);
 
 			var phpOutputTextArea = new qx.ui.form.TextArea();
 			phpOutputTextArea.setVisibility("excluded");
-			actionWindow.add(phpOutputTextArea, {flex : 1});
+			parametersBox.add(phpOutputTextArea, {flex : 1});
 			displayOutputOnOff.addListener("changeValue", function (e) {
 					if (displayOutputOnOff.getValue()==true)
 						phpOutputTextArea.setVisibility("visible");
@@ -290,6 +318,7 @@ qx.Class.define("desk.actions",
 					send.setLabel("Processing...");
 					var parameterMap={"action" : actionName};
 					var items=manager.getItems();
+					// add all parameters
 					for (var i=0;i<items.length;i++)
 					{
 						var currentItem=items[i];
@@ -298,10 +327,17 @@ qx.Class.define("desk.actions",
 							parameterMap[currentItem.getPlaceholder()]=value;
 					}
 
+					// add output directory if provided
+					if (outputDirectory!=null)
+						parameterMap["output_directory"]=outputDirectory;
+
+					// add the value of the "force update" checkbox
+					parameterMap["force_update"]=forceUpdateCheckBox.getValue();
+
 					this.launchAction (parameterMap, getAnswer, this)
 					function getAnswer(e)
 					{
-				// configure the send button
+						// configure the send button
 						send.setEnabled(true);
 						send.setLabel("Update");
 
@@ -309,6 +345,14 @@ qx.Class.define("desk.actions",
 						var response=req.getResponseText();
 						displayOutputOnOff.setVisibility("visible");
 						phpOutputTextArea.setValue(response);
+						var splitResponse=response.split("\n");
+						outputDirectory=splitResponse[0]
+						executionStatus.setValue(splitResponse[splitResponse.length-2]);
+						if (embededFileBrowser==null)
+						{
+							//display the results directory
+							embededFileBrowser=new desk.fileBrowser(pane,outputDirectory);
+						}
 					}
 				} else {
 					alert(manager.getInvalidMessages().join("\n"));

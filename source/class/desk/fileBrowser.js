@@ -2,38 +2,21 @@ qx.Class.define("desk.fileBrowser",
 {
   extend : qx.ui.window.Window,
 
-	construct : function()
+	construct : function(container, baseDir)
 	{
 		this.base(arguments);
+		if (baseDir!=null)
+			this.__baseDir=baseDir;
 
 		qx.Class.include(qx.ui.treevirtual.TreeVirtual,
 			qx.ui.treevirtual.MNode);
 
-		this.setLayout(new qx.ui.layout.VBox());
-		this.setShowClose(false);
-		this.setShowMinimize(false);
-		this.setUseMoveFrame(true);
-		this.setCaption("files");
-		this.setHeight(400);
-		this.open();
 
-		//create menu
-		var menu=new qx.ui.menu.Menu;
-		var uploadButton = new qx.ui.menu.Button("Upload");
-		uploadButton.addListener("execute", function (e){alert ("Not implemented!");}, this);
-		menu.add(uploadButton);
-		menu.addSeparator();
-
-		this.__actionsHandler=new desk.actions(this);
-		this.__actionsHandler.addListener("loadedmenu", function (e)
-			{console.log("loaded..."); menu.add(this.__actionsHandler.getButton());}, this);
-		var actionsButton = new qx.ui.form.MenuButton("Actions", null, menu);
-		this.add(actionsButton);
-
-//		this.createDefaultStaticActions();
+		this.__actionCallbacks=[];
+		this.__actionNames=[];
 
 		var virtualTree = new qx.ui.treevirtual.TreeVirtual(["files","mTime","size"],
-			{initiallyHiddenColumns : [1]});
+			{initiallyHiddenColumns : [1, 2]});
 		this.__virtualTree=virtualTree;
 		virtualTree.setSelectionMode(qx.ui.treevirtual.TreeVirtual.SelectionMode.MULTIPLE_INTERVAL);
 
@@ -41,41 +24,70 @@ qx.Class.define("desk.fileBrowser",
 			width  : 400,
 			rowHeight: 22,
 			alwaysShowOpenCloseSymbol : true,
-			columnVisibilityButtonVisible : false,
+			columnVisibilityButtonVisible : true,
 			draggable : true});
 
 		var dataModel = virtualTree.getDataModel();
 
-		// create the filter bar
-		var filterBox = new qx.ui.container.Composite;
-		filterBox.setLayout(new qx.ui.layout.HBox(10));
-		this.add(filterBox);//, {flex:1});
-		filterBox.add(new qx.ui.basic.Label("Filter files :"));
-		var filterField = new qx.ui.form.TextField();
-		filterField.setValue("");
-		filterField.addListener("input", function() {
-			dataModel.setData();
-			},this);
-		filterBox.add(filterField, {flex:1});
+		this.__actionsHandler=desk.actions.ACTIONSHANDLER;
 
-		var filter = qx.lang.Function.bind(function(node)
-			{
-				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-					var label = node.label;
-					return label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1;
-				}
-				return true;
-			}, this);
-		var resetButton=new qx.ui.form.Button("Reset filter");
-		resetButton.setAllowGrowY(false);
-		resetButton.addListener("execute",function(e){
+		if (container==null)
+		{
+			this.setLayout(new qx.ui.layout.VBox());
+			this.setShowClose(false);
+			this.setShowMinimize(false);
+			this.setUseMoveFrame(true);
+			this.setCaption("files");
+			this.setHeight(400);
+
+			//create menu
+			var menu=new qx.ui.menu.Menu;
+			var uploadButton = new qx.ui.menu.Button("Upload");
+			uploadButton.addListener("execute", function (e){alert ("Not implemented!");}, this);
+			menu.add(uploadButton);
+			menu.addSeparator();
+
+			this.__actionsMenuButton=new qx.ui.menu.Button("Actions", null , null);
+			menu.add(this.__actionsMenuButton);
+
+			var actionsButton = new qx.ui.form.MenuButton("Actions", null, menu);
+			this.add(actionsButton);
+
+			// create the filter bar
+			var filterBox = new qx.ui.container.Composite;
+			filterBox.setLayout(new qx.ui.layout.HBox(10));
+			this.add(filterBox);//, {flex:1});
+			var filterText=new qx.ui.basic.Label("Filter files :");
+			filterBox.add(filterText);
+			var filterField = new qx.ui.form.TextField();
 			filterField.setValue("");
-			dataModel.setData();
-			});
-		filterBox.add(resetButton);
-		dataModel.setFilter(filter);
+			filterField.addListener("input", function() {
+				dataModel.setData();
+				},this);
+			filterBox.add(filterField, {flex:1});
 
-		this.add(virtualTree,{flex: 1});
+			var filter = qx.lang.Function.bind(function(node)
+				{
+					if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+						var label = node.label;
+						return label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1;
+					}
+					return true;
+				}, this);
+			var resetButton=new qx.ui.form.Button("Reset filter");
+			resetButton.setAllowGrowY(false);
+			resetButton.addListener("execute",function(e){
+				filterField.setValue("");
+				dataModel.setData();
+				});
+			filterBox.add(resetButton);
+			dataModel.setFilter(filter);
+
+			this.add(virtualTree,{flex: 1});
+			this.open();
+		}
+		else
+			container.add(virtualTree, {flex : 1});
 
 		// add root directory
 		var dataRootId = dataModel.addBranch(null, this.__baseDir, true);
@@ -83,7 +95,6 @@ qx.Class.define("desk.fileBrowser",
 
 		// events handling
 		this.createDefaultStaticActions();
-//		this.updateContextMenu();
 
 		virtualTree.addListener("cellDblclick", function (e) {
 			var node=this.getEventNode(e);
@@ -98,17 +109,25 @@ qx.Class.define("desk.fileBrowser",
 		virtualTree.addListener("dragstart", function(e) {
 			e.addAction("move");
 			e.addType("fileBrowser");
-//			e.addType("fileNode");
 			e.addType("text");
 			});
+
 		virtualTree.addListener("droprequest", function(e) {
-			var type = e.getCurrentType();
-			if (type == "text")
-				e.addData(type, this.getNodePath(this.getSelectedNode()));
-			if (type == "fileBrowser")
-				e.addData(type, this);
-			if (type == "fileNode")
-				e.addData(type, this.getSelectedNode());
+				var type = e.getCurrentType();
+				switch (type)
+				{
+				case "text":
+					e.addData(type, this.getNodePath(this.getSelectedNode()));
+					break;
+				case "fileBrowser":
+					e.addData(type, this);
+					break;
+				case "fileNode":
+					e.addData(type, this.getSelectedNode());
+					break;
+				default :
+					alert ("type "+type+"not supported for drag and drop");
+				}
 			}, this);
 
 		return (this);
@@ -116,14 +135,14 @@ qx.Class.define("desk.fileBrowser",
 
 	members : {
 		__fileHandler : null,
-//		__baseURL : "http://vip.creatis.insa-lyon.fr:8080/visu/",
 		__baseURL : "/visu/desk/php/",
 		__baseDir : "data",
 		__virtualTree : null,
 
-		__actionNames : [],
-		__actionCallbacks : [],
+		__actionNames : null,
+		__actionCallbacks : null,
 		__actionsHandler : null,
+		__actionsMenuButton : null,
 
 		getActions : function ()
 		{
@@ -133,7 +152,7 @@ qx.Class.define("desk.fileBrowser",
 		createDefaultStaticActions : function ()
 		{
 			var myBrowser=this;
-
+			console.log(myBrowser);
 			function fileClicked(node) {
 				var modificationTime=myBrowser.getNodeMTime(node);
 				var file=myBrowser.getNodeURL(node);
@@ -236,7 +255,9 @@ qx.Class.define("desk.fileBrowser",
 				this.__actionNames.push(actionName);
 			}
 			else
-				alert ("Warning : action "+actionName+" already exists, is overwritten!");
+			{
+				console.log ("Warning : action \""+actionName+"\" already exists, is overwritten!");
+			}
 
 			this.__actionCallbacks[actionName]=callback;
 			this.updateContextMenu();
@@ -305,7 +326,15 @@ qx.Class.define("desk.fileBrowser",
 			menu.add(openButton);
 
 			menu.addSeparator();
-			menu.add(this.__actionsHandler.getButton());
+//			menu.add(this.__actionsHandler.getButton());
+			var actionsButton=new qx.ui.menu.Button("Actions");
+			menu.add(actionsButton);
+			actionsButton.addListener("click", function (e) {
+				this.__actionsHandler.openActionsMenu(e, this);
+					}, this);
+
+//			menu.add(this.__actionsMenuButton);
+
 			menu.addSeparator();
 			// other actions buttons
 			for (var i=0;i<this.__actionNames.length;i++)

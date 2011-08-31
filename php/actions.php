@@ -2,10 +2,13 @@
 
 $DATA_ROOT_FROM_PHP="data/";
 $CACHE_ROOT_FROM_PHP="cache/";
-$ACTIONS_ROOT_FROM_PHP="action/";
+$ACTIONS_ROOT_FROM_PHP="actions/";
 
 $DIR_TO_PHP="/var/www/html/visu/desk/php/";
 
+$startTime=time();
+
+$inputFilesLastMtime=0;
 
 function myErrorHandler($errno, $errstr, $errfile, $errline) {
 	die ("\n error while processing\n");
@@ -38,6 +41,9 @@ $ACTIONS_ROOT_FROM_PHP="action";
 			}
 		}
 	}
+	$fileMTime=filemtime($file);
+	if ($GLOBALS["inputFilesLastMtime"]<$fileMTime)
+		$GLOBALS["inputFilesLastMtime"]=$fileMTime;
 }
 
 $parametersList=array();
@@ -58,6 +64,7 @@ foreach ($actions->children() as $action)
 			or die ("no name given for one action in xml file");
 
 		$voidAction=false;
+		$newAction=false;
 
 		if ($actionToPerform==$currentActionName)
 		{
@@ -67,18 +74,57 @@ foreach ($actions->children() as $action)
 			// action was found in xml file, let's parse the parameters
 
 			// first add mandatory output directory parameter if the action is not void
-			if ($action["void"]!="true")
-			{
-				$outputPirectoryParameter = $action->addChild('parameter');
-				$outputPirectoryParameter->addAttribute('name', "output_directory");
-				$outputPirectoryParameter->addAttribute('type', "directory");
-				$outputPirectoryParameter->addAttribute('required', "true");
-				$outputDirectory="";
-				$inputFile="";
-			}
+			if ($action["void"]=="true")
+				$voidAction=true;
 			else
 			{
-				$voidAction=true;
+
+				$try=$_POST['output_directory'];
+				if ($try)
+				{
+					// output directory is provided
+					$outputDirectory=mysql_real_escape_string($try);
+				}
+				else
+				{
+					// read actions counter if it exists
+					$actionsCountFile = $ACTIONS_ROOT_FROM_PHP."counter.txt";
+					$actionId=0;
+					if (is_file ( $actionsCountFile ))
+					{
+						$filehandle = fopen($actionsCountFile, "r");
+						$content = fread($filehandle, filesize($actionsCountFile));
+						fclose($filehandle);
+						$actionId=intval($content);
+					}
+
+					$failsafecounter=0;
+					while (1)
+					{
+						$actionId++;
+						// generate new output directory
+				//		$outputDirectory="$ACTIONS_ROOT_FROM_PHP".str_pad((string) $actionId,8,"0",STR_PAD_LEFT);
+						$outputDirectory="$ACTIONS_ROOT_FROM_PHP".$actionId;
+						if (is_dir($outputDirectory))
+						{
+							echo ("Output directory $outputDirectory already exists. Check counter.txt");
+						}
+						else
+						{
+							mkdir ($outputDirectory);
+							break;
+						}
+						$failsafecounter++;
+						if ($failsafecounter==1000)
+							die ("too many errors!");
+					}
+					// write actions counts to counter.txt
+					$newAction=true;
+					$fp = fopen($actionsCountFile, 'w');
+					fwrite($fp,$actionId );
+					fclose($fp);
+					
+				}
 			}
 
 			foreach ($action->children() as $parameter)
@@ -119,8 +165,8 @@ foreach ($actions->children() as $action)
 								validatePath($parameterValue);
 								if (!is_dir($parameterValue))
 									die ("$parameterName : directory \"$parameterValue\" does not exist");
-								if ($parameterName=="output_directory")
-									$outputDirectory=$parameterValue;
+//								if ($parameterName=="output_directory")
+//									$outputDirectory=$parameterValue;
 								$prependPHP_DIR=true;
 								break;
 							case "int":
@@ -187,7 +233,8 @@ foreach ($actions->children() as $action)
 			}
 
 			$flog = fopen("actions.log", 'a');
-
+			$logHeader=$_SERVER['REMOTE_ADDR']." ".date("D M j G:i:s");
+			$cached=false;			
 			if ($voidAction==false)
 			{
 				switch (validatePath($outputDirectory))
@@ -210,9 +257,12 @@ foreach ($actions->children() as $action)
 					default:
 				}
 				$parametersList["output_directory"]=$outputDirectory;
-			echo "$outputDirectory\n";
-			chdir ($outputDirectory);
-			fwrite($flog, "cd $outputDirectory\n");
+				echo "$outputDirectory\n";
+				chdir ($outputDirectory);
+				fwrite($flog, "$logHeader : cd $outputDirectory\n");
+
+				if (($newAction==false)&&($inputFilesLastMtime<= filemtime('.')))
+					$cached=true;
 			}
 
 			$fp = fopen("$actionToPerform.par", 'w+') or die("I could not open parameters.txt."); 
@@ -222,11 +272,23 @@ foreach ($actions->children() as $action)
 				$parametersList2[]="$parameter=$value";
 
 			fwrite($fp, implode("\n", $parametersList2));
-			fwrite($flog, "$command\n");
+			fwrite($flog, "$logHeader : $command\n");
 			fclose($fp);
 			fclose($flog);
 			echo "command : $command\n";
-			system("$command");
+
+			if ($cached==false)
+			{
+				system("$command");
+				$duration=time()-$startTime;
+				echo "\nOK ($duration s.)";
+				if ($voidAction==false)
+					touch ('.');
+			}
+			else
+			{
+				echo "\nCACHED";
+			}
 		}
 	}
 }

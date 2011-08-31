@@ -51,8 +51,9 @@ qx.Class.define("desk.Application",
 				qx.log.appender.Console;
 			}
 
-			var myBrowser=new desk.fileBrowser();
-			this.getRoot().add(myBrowser);
+//			var myBrowser=new desk.fileBrowser();
+			var actions=new desk.actions();
+//			this.getRoot().add(myBrowser);
 		}
 	}
 });
