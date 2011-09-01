@@ -274,7 +274,7 @@ foreach ($actions->children() as $action)
 				$commandHash=sha1($command);
 				if ($newAction==false)
 				{
-					$oldParameters=readParameters($parametersFileName);
+					$oldParameters=readParameters("$parametersFileName");
 					if (($inputFilesLastMtime<= filemtime('.'))&&
 							($oldParameters['hash']==$commandHash))
 						$cached=true;

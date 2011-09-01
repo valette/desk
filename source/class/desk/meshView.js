@@ -62,6 +62,7 @@ qx.Class.define("desk.meshView",
 				{
 					var req = e.getTarget();
 					var sha1=req.getResponseText().split("\n")[0];
+					console.log(req.getResponseText());
 					meshView.openFile("\/visu\/desk\/php\/"+sha1+"\/"+"mesh.vtk");
 				}
 				break;
