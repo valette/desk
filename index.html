@@ -95,11 +95,13 @@ function initStep2(clientElements) {
    	g_scene.render();
 	window.onresize = resizeClient;
 
-	var mesh=getParameter("mesh")
+	var mesh=getParameter("mesh");
+	var mtime=getParameter("mtime");
+//	console.log("mtime : "+mtime);
 	if (mesh!=null)
-		g_scene.loadMesh (mesh, adjustViewpointAndRender);
+		g_scene.loadMesh (mesh, adjustViewpointAndRender,mtime);
 	else
-		g_scene.loadMesh ("ADAM/adam.xml", adjustViewpointAndRender);
+		g_scene.loadMesh ("ADAM/adam.xml", adjustViewpointAndRender,mtime);
 }
 
 /**

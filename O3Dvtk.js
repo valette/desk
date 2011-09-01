@@ -95,7 +95,7 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	this.resize();
 };
 
-o3djs.renderscene.RenderScene.prototype.loadMesh = function(file, callback) 
+o3djs.renderscene.RenderScene.prototype.loadMesh = function(file, callback, mtime) 
 {
 	var extension=file.substring(file.length-4, file.length);
 	var scene=this;
@@ -103,7 +103,7 @@ o3djs.renderscene.RenderScene.prototype.loadMesh = function(file, callback)
 	switch (extension)
 	{
 		case ".vtk":
-			createFromFile(this,file,[1,1,1,1],false,callback);
+			createFromFile(this,file,[1,1,1,1],false,callback, mtime);
 			break;
 		case ".xml":
 			this.addMeshes(file, callback);
@@ -240,7 +240,7 @@ o3djs.renderscene.RenderScene.prototype.resize = function(opt_width,opt_height)
 
 		// Set the perspective projection matrix
 		this.viewInfo.drawContext.projection = o3djs.math.matrix4.perspective(
-		o3djs.math.degToRad(45), this.o3dWidth / this.o3dHeight, 0.1, 10000);
+		o3djs.math.degToRad(45), this.o3dWidth / this.o3dHeight, 0.1, 100000);
 
 		this.cameracontroller.setAreaSize(this.o3dWidth, this.o3dHeight);
 
@@ -274,6 +274,7 @@ function createDefaultMaterial(pack, viewInfo, color) {
 }
 
 function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingBox){
+	var doubleSidedPolygons=true;
 	var reg2=new RegExp("[ \n]+", "gm");
 	var data=filestring.split(reg2);
 	
@@ -303,6 +304,8 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingB
 		{
 			index2=0;
 			positionStream.addElement(coord[0],coord[1],coord[2]);
+			if (doubleSidedPolygons)
+				positionStream.addElement(coord[0],coord[1],coord[2]);
 			boundingBox.addPoint(coord);
 
 			numberOfPoints--;
@@ -318,6 +321,7 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingB
 	}
 	index++
 	var connectivity=[0,0,0,0];
+	var triangle=[0,0,0];
 	var numberOfPolygons=data[index];
 	index++;
 	index++;
@@ -337,19 +341,29 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingB
 		if (index2==connectivity[0]+1)
 		{
 			index2=0;
-			if (!opt_flip)
+			var numberOfTrianglesInCell=connectivity[0]-2;
+			triangle[0]=connectivity[1];
+			for (var i=0;i<numberOfTrianglesInCell;i++)
 			{
-				vertexInfo.addTriangle(connectivity[1],connectivity[2],connectivity[3]);
-				if (connectivity[0]==4)
-					vertexInfo.addTriangle(connectivity[1],connectivity[3],connectivity[4]);
-			}
-			else
-			{
-				vertexInfo.addTriangle(connectivity[1],connectivity[3],connectivity[2]);
-				if (connectivity[0]==4)
-					vertexInfo.addTriangle(connectivity[1],connectivity[4],connectivity[3]);
-			}
+				triangle[1]=connectivity[i+2];
+				triangle[2]=connectivity[i+3];
 
+				if (opt_flip)
+				{
+					var temp=triangle[0];
+					triangle[0]=triangle[1];
+					triangle[1]=temp;
+				}
+
+				if (doubleSidedPolygons)
+				{
+					vertexInfo.addTriangle(triangle[0]*2,triangle[1]*2,triangle[2]*2);
+					vertexInfo.addTriangle(triangle[0]*2+1,triangle[2]*2+1,triangle[1]*2+1);
+				}
+				else
+					vertexInfo.addTriangle(triangle[0],triangle[1],triangle[2]);
+			}
+			
 			numberOfPolygons--;
 			if (numberOfPolygons==0)
 			{
@@ -359,11 +373,13 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingB
 	}
 }
 
-function createFromFile(scene, file,color, opt_flip, opt_callback) {
+function createFromFile(scene, file,color, opt_flip, opt_callback, opt_mtime) {
 
 	var xmlhttp=new XMLHttpRequest();
-	xmlhttp.open("GET",file,true);
-//	xmlhttp.open("GET",file+"?nocache=" + Math.random(),true);
+	if (opt_mtime==null)
+		xmlhttp.open("GET",file,true);
+	else
+		xmlhttp.open("GET",file+"?nocache=" + opt_mtime,true);
 
 	xmlhttp.onreadystatechange=handler;
 	xmlhttp.send();
