@@ -335,7 +335,7 @@ qx.Class.define("desk.actions",
 						displayOutputOnOff.setVisibility("visible");
 						phpOutputTextArea.setValue(response);
 						var splitResponse=response.split("\n");
-						outputDirectory=splitResponse[0]
+						outputDirectory=splitResponse[0];
 						executionStatus.setValue(splitResponse[splitResponse.length-2]);
 						if (embededFileBrowser==null)
 						{

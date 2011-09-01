@@ -7,15 +7,15 @@ $DIR_TO_PHP="/var/www/html/visu/desk/php/";
 
 $parametersFileName="action.par";
 
+$flog = fopen("actions.log", 'a');
+$logHeader=$_SERVER['REMOTE_ADDR']." ".date("D M j G:i:s");
 $startTime=time();
 
 $inputFilesLastMtime=0;
 
 function readParameters($file) {
 	$parameters=array();
-	$filehandle = fopen($file, "r");
-	$content = fread($filehandle, filesize($file));
-	fclose($filehandle);
+	$content = file_get_contents($file);
 	$parametersLines=explode("\n",$content);
 	foreach ($parametersLines as $line)
 	{
@@ -29,6 +29,15 @@ function validatePath($file) {
 $DATA_ROOT_FROM_PHP="data";
 $CACHE_ROOT_FROM_PHP="cache";
 $ACTIONS_ROOT_FROM_PHP="action";
+
+	if ($file!="cache/")
+	{
+		$fileMTime=filemtime($file);
+		fwrite($GLOBALS["flog"], "$file : mtime=$fileMTime\n");
+
+		if ($GLOBALS["inputFilesLastMtime"]<$fileMTime)
+			$GLOBALS["inputFilesLastMtime"]=$fileMTime;
+	}
 
 	$begining=substr($file, 0, strlen($DATA_ROOT_FROM_PHP));
 	if ($begining==$DATA_ROOT_FROM_PHP)
@@ -51,9 +60,7 @@ $ACTIONS_ROOT_FROM_PHP="action";
 			}
 		}
 	}
-	$fileMTime=filemtime($file);
-	if ($GLOBALS["inputFilesLastMtime"]<$fileMTime)
-		$GLOBALS["inputFilesLastMtime"]=$fileMTime;
+
 }
 
 $parametersList=array();
@@ -73,70 +80,12 @@ foreach ($actions->children() as $action)
 		$currentActionName=$action["name"]
 			or die ("no name given for one action in xml file");
 
-		$voidAction=false;
-		$newAction=false;
-
 		if ($actionToPerform==$currentActionName)
 		{
 			$parametersList["action"]="$actionToPerform";
 			$command=$action["executable"]
 				or die("no executable provided for action \"$actionToPerform\"");
 			// action was found in xml file, let's parse the parameters
-
-			// first add mandatory output directory parameter if the action is not void
-			if ($action["void"]=="true")
-				$voidAction=true;
-			else
-			{
-
-				$try=$_POST['output_directory'];
-				if ($try)
-				{
-					// output directory is provided
-					$outputDirectory=mysql_real_escape_string($try);
-				}
-				else
-				{
-					// read actions counter if it exists
-					$actionsCountFile = $ACTIONS_ROOT_FROM_PHP."counter.txt";
-					$actionId=0;
-					if (is_file ( $actionsCountFile ))
-					{
-						$filehandle = fopen($actionsCountFile, "r");
-						$content = fread($filehandle, filesize($actionsCountFile));
-						fclose($filehandle);
-						$actionId=intval($content);
-					}
-
-					$failsafecounter=0;
-					while (1)
-					{
-						$actionId++;
-						// generate new output directory
-				//		$outputDirectory="$ACTIONS_ROOT_FROM_PHP".str_pad((string) $actionId,8,"0",STR_PAD_LEFT);
-						$outputDirectory="$ACTIONS_ROOT_FROM_PHP".$actionId;
-						if (is_dir($outputDirectory))
-						{
-							echo ("Output directory $outputDirectory already exists. Check counter.txt");
-						}
-						else
-						{
-							mkdir ($outputDirectory);
-							break;
-						}
-						$failsafecounter++;
-						if ($failsafecounter==1000)
-							die ("too many errors!");
-					}
-					// write actions counts to counter.txt
-					$newAction=true;
-					$fp = fopen($actionsCountFile, 'w');
-					fwrite($fp,$actionId );
-					fclose($fp);
-					
-				}
-			}
-
 			foreach ($action->children() as $parameter)
 			{
 				if ($parameter->getName()=="parameter")
@@ -167,16 +116,12 @@ foreach ($actions->children() as $action)
 								validatePath($parameterValue);
 								if (!is_file($parameterValue))
 									die ("$parameterName : file \"$parameterValue\" does not exist");
-								if ($parameterName=="input_file")
-									$inputFile=$parameterValue;
 								$prependPHP_DIR=true;
 								break;
 							case "directory":
 								validatePath($parameterValue);
 								if (!is_dir($parameterValue))
 									die ("$parameterName : directory \"$parameterValue\" does not exist");
-//								if ($parameterName=="output_directory")
-//									$outputDirectory=$parameterValue;
 								$prependPHP_DIR=true;
 								break;
 							case "int":
@@ -229,7 +174,7 @@ foreach ($actions->children() as $action)
 						if ($prependPHP_DIR)
 							$parameterValue="$DIR_TO_PHP$parameterValue";
 
-						if ($parameterName!="output_directory")
+//						if ($parameterName!="output_directory")
 							$command.=" ".$parameterValue;
 					}
 				}
@@ -241,10 +186,60 @@ foreach ($actions->children() as $action)
 					}
 				}
 			}
+			$cached=false;
+			$voidAction=false;
+			$newAction=false;
 
-			$flog = fopen("actions.log", 'a');
-			$logHeader=$_SERVER['REMOTE_ADDR']." ".date("D M j G:i:s");
-			$cached=false;			
+			if ($action["void"]=="true")
+				$voidAction=true;
+			else
+			{
+				$try=$_POST['output_directory'];
+				if ($try)
+				{
+					// output directory is provided
+					$outputDirectory=mysql_real_escape_string($try);
+				}
+				else
+				{
+					// read actions counter if it exists
+					$actionsCountFile = $ACTIONS_ROOT_FROM_PHP."counter.txt";
+					$actionId=0;
+					if (is_file ( $actionsCountFile ))
+					{
+						$content = file_get_contents($actionsCountFile);
+						$actionId=intval($content);
+					}
+
+					$failsafecounter=0;
+					while (1)
+					{
+						$actionId++;
+						// generate new output directory
+				//		$outputDirectory="$ACTIONS_ROOT_FROM_PHP".str_pad((string) $actionId,8,"0",STR_PAD_LEFT);
+						$outputDirectory="$ACTIONS_ROOT_FROM_PHP".$actionId;
+						if (is_dir($outputDirectory))
+						{
+							echo ("Output directory $outputDirectory already exists. Check counter.txt");
+						}
+						else
+						{
+							mkdir ($outputDirectory);
+							break;
+						}
+						$failsafecounter++;
+						if ($failsafecounter==1000)
+							die ("too many errors!");
+					}
+					// write actions counts to counter.txt
+					$newAction=true;
+					$fp = fopen($actionsCountFile, 'w');
+					fwrite($fp,$actionId );
+					fclose($fp);
+					
+				}
+			}
+
 			if ($voidAction==false)
 			{
 				switch (validatePath($outputDirectory))
@@ -252,16 +247,9 @@ foreach ($actions->children() as $action)
 					case "cache":
 						$outputDirectory="$CACHE_ROOT_FROM_PHP".sha1($command);
 						if (!is_dir($outputDirectory))
-							system("mkdir $outputDirectory");
-						else
 						{
-							$filemtime=filemtime ( "$inputFile" );
-							$outputmtime=filemtime ( "$outputDirectory" );
-							if ($outputmtime>$filemtime)
-							{
-								echo "$outputDirectory\n";
-								return;
-							}
+							system("mkdir $outputDirectory");
+							$newAction=true;
 						}
 						break;
 					default:
@@ -272,29 +260,35 @@ foreach ($actions->children() as $action)
 				fwrite($flog, "$logHeader : cd $outputDirectory\n");
 
 				$commandHash=sha1($command);
-				if ($newAction==false)
+				if (($newAction==false)&&($_POST['force_update']!='true'))
 				{
 					$oldParameters=readParameters("$parametersFileName");
-					if (($inputFilesLastMtime<= filemtime('.'))&&
+					$outputMtime=filemtime('.');
+					if (($inputFilesLastMtime<= $outputMtime)&&
 							($oldParameters['hash']==$commandHash))
+					{
 						$cached=true;
+						fwrite($flog, "$logHeader : cached because input files were not modified\n");
+						fwrite($flog, "$logHeader : directoryMtime : $outputMtime, inputFilesLastMtime : $inputFilesLastMtime\n");
+					}
 				}
 				$parametersList['hash']=$commandHash;
 			}
-
 			fwrite($flog, "$logHeader : $command\n");
-			fclose($flog);
 
 			echo "command : $command\n";
 
-			if (($cached==false)||($_POST['force_update']=='true'))
+			if ($cached==false)
 			{
-				system("$command");
+				echo ("Output : \n");
+				system("$command | tee action.log");
 				$duration=time()-$startTime;
-				echo "\nOK ($duration s.)";
 				if ($voidAction==false)
 				{
 					touch ('.');
+					clearstatcache();
+					$omtime=filemtime('.');
+					fwrite($flog, "$logHeader : output directory mtime : $omtime\n");
 					$fp = fopen($parametersFileName, 'w+') or die("Could not open $parametersFileName");
 					$parametersList2=array();
 					foreach ($parametersList as $parameter => $value)
@@ -302,13 +296,21 @@ foreach ($actions->children() as $action)
 
 					fwrite($fp, implode("\n", $parametersList2));
 					fclose($fp);
+					echo "\n".$omtime;
 				}
+				echo "\nOK ($duration s.)";
 			}
 			else
 			{
+				echo ("Cached output : \n");
+				readfile ("action.log");
+				clearstatcache();
+				$omtime=filemtime('.');
+				echo "\n".$omtime;
 				echo "\nCACHED";
 			}
-		}
+			fwrite($flog, "******************************************************\n");
+			fclose($flog);		}
 	}
 }
 ?>

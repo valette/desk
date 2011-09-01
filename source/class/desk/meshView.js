@@ -61,9 +61,11 @@ qx.Class.define("desk.meshView",
 				function getAnswer(e)
 				{
 					var req = e.getTarget();
-					var sha1=req.getResponseText().split("\n")[0];
+					var splitResponse=req.getResponseText().split("\n");
+					var outputDir=splitResponse[0];
 					console.log(req.getResponseText());
-					meshView.openFile("\/visu\/desk\/php\/"+sha1+"\/"+"mesh.vtk");
+					var mtime=splitResponse[splitResponse.length-3];
+					meshView.openFile("\/visu\/desk\/php\/"+outputDir+"\/"+"mesh.vtk",mtime);
 				}
 				break;
 			default	:
@@ -85,7 +87,7 @@ qx.Class.define("desk.meshView",
 	members : {
 		__iframe : null,
 
-		openFile : function (file) {
+		openFile : function (file, mtime) {
 			this.removeAll();
 
 			this.__iframe = new qx.ui.embed.Iframe().set({
@@ -100,8 +102,13 @@ qx.Class.define("desk.meshView",
 			if (qx.core.Environment.get("browser.name")=="firefox")
 			{
 			// quirk for firefox which oes not handle iframes correctly
+				if (mtime!=null)
 				this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?mesh="+file+
-					"&width=400&height=400");
+					"&width=400&height=400&mtime="+mtime);
+				else
+				this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?mesh="+file+
+					"&width=400&height=400&mtime="+mtime);
+				
 				this.__iframe.addListenerOnce("load", function(e) { 
 				    this.addListener("resize", 
 					function(event) {this.__iframe.getWindow().resizeClient(this.getWidth()-7,this.getHeight()-32);},this);
@@ -109,7 +116,10 @@ qx.Class.define("desk.meshView",
 			}
 			else
 			{
-				this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?mesh="+file);
+				if (mtime!=null)
+					this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?mesh="+file+"&mtime="+mtime);
+				else
+					this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?mesh="+file);
 			}
 
 			this.add(this.__iframe,{flex: 1});
