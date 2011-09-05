@@ -43,7 +43,6 @@ qx.Class.define("desk.actions",
 		{
 			this.__currentFileBrowser=fileBrowser;
 			this.__actionMenu.open();
-			console.log(this.__actionMenu);
 			this.__actionMenu.placeToMouse(e);
 			this.__actionMenu.show();
 		},
@@ -89,7 +88,7 @@ qx.Class.define("desk.actions",
 
 		createActionWindowFromURL : function (fileURL)
 		{
-			var req = new qx.io.request.Xhr(fileURL);
+			var req = new qx.io.request.Xhr(fileURL+"?nocache=" + Math.random());
 			req.addListener("success", function(e) {
 				var req = e.getTarget();
 				var parametersText=req.getResponseText();
@@ -248,6 +247,11 @@ qx.Class.define("desk.actions",
 						alert("no validator implemented for type : "+parameterType);
 				}
 
+				//use default value if provided
+				var defaultValue=parameter.getAttribute("default");
+				if (defaultValue)
+					parameterForm.setValue(defaultValue);
+
 				if (providedParameters!=null)
 				{
 					var providedParameterValue=providedParameters[parameterName];
@@ -257,12 +261,6 @@ qx.Class.define("desk.actions",
 
 				parameterForm.addListener("input", function(e) 
 					{this.setInvalidMessage(null);},parameterForm);
-
-
-				//use default value if provided
-				var defaultValue=parameter.getAttribute("default");
-				if (defaultValue)
-					parameterForm.setValue(defaultValue);
 			}
 
 			var executeBox = new qx.ui.container.Composite;
@@ -293,11 +291,11 @@ qx.Class.define("desk.actions",
 			phpOutputTextArea.setVisibility("excluded");
 			parametersBox.add(phpOutputTextArea, {flex : 1});
 			displayOutputOnOff.addListener("changeValue", function (e) {
-					if (displayOutputOnOff.getValue()==true)
-						phpOutputTextArea.setVisibility("visible");
-					else
-						phpOutputTextArea.setVisibility("excluded");});
-
+				if (displayOutputOnOff.getValue()==true)
+					phpOutputTextArea.setVisibility("visible");
+				else
+					phpOutputTextArea.setVisibility("excluded");
+				});
 
 			// add a listener to the form manager for the validation complete
 			manager.addListener("complete", function() {
@@ -336,13 +334,15 @@ qx.Class.define("desk.actions",
 						displayOutputOnOff.setVisibility("visible");
 						phpOutputTextArea.setValue(response);
 						var splitResponse=response.split("\n");
-						outputDirectory=splitResponse[0]
+						outputDirectory=splitResponse[0];
 						executionStatus.setValue(splitResponse[splitResponse.length-2]);
 						if (embededFileBrowser==null)
 						{
 							//display the results directory
 							embededFileBrowser=new desk.fileBrowser(pane,outputDirectory);
+							actionWindow.setWidth(600);
 						}
+						embededFileBrowser.updateRoot();
 					}
 				} else {
 					alert(manager.getInvalidMessages().join("\n"));

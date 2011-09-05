@@ -2,7 +2,10 @@
 $file=mysql_real_escape_string($_GET['fileName']);
 
 if (substr_compare($file,"data/",0,5)!=0)
-	die();
+{
+	if (substr_compare($file,"actions/",0,6)!=0)
+		die();
+}
 
 //set the value of the fields in Opened dailog box
 

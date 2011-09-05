@@ -14,10 +14,17 @@
 <parameter name="gradation" type="float" required="true" min="0" max="30" default="0" />
 </action>
 
+<action name="rgb2gray" executable="/home/visu/src/gcBuild/rgb2gray">
+<description>generates a simplification of the input mesh</description>
+<parameter name="input_file" type="file" required="true"/>
+</action>
+
 <action name="Extract_meshes" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeAnalysis">
 <description>extract meshes from labeled volume data</description>
 <parameter name="input_file" type="file" required="true"/>
+<parameter name="max_number_of_vertices" type="int" min="0" default="30000" prefix="-n "/>
 <parameter name="simlification_method" type="int" min="0" max="1" default="0" prefix="-s "/>
+<parameter name="number_of_smoothing_steps" type="int" min="0" default="0" prefix="-sm "/>
 </action>
 
 <action name="Create_directory" executable="mkdir" void="true">
