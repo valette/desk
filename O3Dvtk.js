@@ -134,6 +134,8 @@ o3djs.renderscene.RenderScene.prototype.bind = function(scene)
 o3djs.renderscene.RenderScene.prototype.resetCamera = function() 
 {
 	this.cameracontroller.viewAll(g_scene.meshesBoundingBox,1);
+//	this.cameracontroller.viewAll(this.transform.boundingBox,1);
+//	console.log(this.transform.boundingBox);
 	this.cameracontroller.thisRot_=o3djs.math.matrix4.identity();
 	this.client.root.localMatrix=this.cameracontroller.calculateViewMatrix();
 	if (this.cameracontroller.onChange!=null)
@@ -277,15 +279,23 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingB
 	var doubleSidedPolygons=true;
 	var reg2=new RegExp("[ \n]+", "gm");
 	var data=filestring.split(reg2);
+	var fileLength=data.length;
 	
 	// read point data
 	var index=0;
 	while (data[index]!="POINTS")
 	{
 		index++;
+		if (index>fileLength)
+			return (false);
+
 	}
 	index++;
 	var numberOfPoints=data[index];
+	if (numberOfPoints>60000)
+	{
+		return ("mesh is too big : "+numberOfPoints+" vertices");
+	}
 	index++
 	var coord=[0,0,0];
 	var index2=0;
@@ -295,11 +305,17 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingB
 		while (isNaN(number))
 		{
 			index++;
+			if (index>fileLength)
+				return (false);
+
 			number=parseFloat(data[index]);
 		}
 		coord[index2]=number;
 		index2++;
 		index++;
+		if (index>fileLength)
+			return (false);
+
 		if (index2==3)
 		{
 			index2=0;
@@ -318,6 +334,9 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingB
 	while (data[index]!="POLYGONS")
 	{
 		index++;
+		if (index>fileLength)
+			return (false);
+
 	}
 	index++
 	var connectivity=[0,0,0,0];
@@ -332,12 +351,18 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingB
 		while (isNaN(number))
 		{
 			index++;
+			if (index>fileLength)
+				return (false);
+
 			number=parseInt(data[index]);
 		}
 
 		connectivity[index2]=number;
 		index2++;
 		index++;
+		if (index>fileLength)
+			return (false);
+
 		if (index2==connectivity[0]+1)
 		{
 			index2=0;
@@ -367,7 +392,7 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingB
 			numberOfPolygons--;
 			if (numberOfPolygons==0)
 			{
-				break;
+				return;
 			}
 		}
 	}
@@ -430,7 +455,12 @@ function createFromFile2(xmlhttp, scene, file,color, opt_flip) {
 	{
 		case "vtk":
 			var readString=xmlhttp.responseText;
-			readVTKFile(readString,vertexInfo ,positionStream ,opt_flip, scene.meshesBoundingBox);
+			var returnValue=readVTKFile(readString,vertexInfo ,positionStream ,opt_flip, scene.meshesBoundingBox);
+			if (returnValue!=null)
+			{
+				alert ("error while reading "+file+" : \n"+returnValue);
+				return;
+			}
 			break;
 		default:
 		alert (extension+" file format not supported yet!");
@@ -474,6 +504,19 @@ function createFromFile2(xmlhttp, scene, file,color, opt_flip) {
 		var normal=normalStream.getElementVector(i);
 		normalStream.setElementVector(i,o3djs.math.normalize(normal));
 	}
+
 	var shape=vertexInfo.createShape(scene.pack, material);
+//	o3djs.shape.setBoundingBoxesAndZSortPoints(shape); // Maybe usefull to replace bounding box computing by hand
+//	var shape2=o3djs.shape.duplicateShape(scene.pack, shape);
+
 	scene.transform.addShape(shape);
+
+/*	var normalStream2 = vertexInfo.addStream(3, o3djs.base.o3d.Stream.NORMAL);
+	for (var i=0;i<numberOfPoints;i++)
+	{
+		var normal=normalStream.getElementVector(i);
+		normalStream2.addElementVector(o3djs.math.negativeVector(normal));
+	}
+	var shape2=vertexInfo.createShape(scene.pack, material);
+	scene.transform.addShape(shape2);*/
 }
