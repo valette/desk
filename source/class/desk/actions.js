@@ -88,7 +88,7 @@ qx.Class.define("desk.actions",
 
 		createActionWindowFromURL : function (fileURL)
 		{
-			var req = new qx.io.request.Xhr(fileURL);
+			var req = new qx.io.request.Xhr(fileURL+"?nocache=" + Math.random());
 			req.addListener("success", function(e) {
 				var req = e.getTarget();
 				var parametersText=req.getResponseText();
@@ -247,6 +247,11 @@ qx.Class.define("desk.actions",
 						alert("no validator implemented for type : "+parameterType);
 				}
 
+				//use default value if provided
+				var defaultValue=parameter.getAttribute("default");
+				if (defaultValue)
+					parameterForm.setValue(defaultValue);
+
 				if (providedParameters!=null)
 				{
 					var providedParameterValue=providedParameters[parameterName];
@@ -256,12 +261,6 @@ qx.Class.define("desk.actions",
 
 				parameterForm.addListener("input", function(e) 
 					{this.setInvalidMessage(null);},parameterForm);
-
-
-				//use default value if provided
-				var defaultValue=parameter.getAttribute("default");
-				if (defaultValue)
-					parameterForm.setValue(defaultValue);
 			}
 
 			var executeBox = new qx.ui.container.Composite;

@@ -37,11 +37,12 @@ qx.Class.define("desk.fileBrowser",
 			this.setShowMinimize(false);
 			this.setUseMoveFrame(true);
 			this.setCaption("files");
-			this.setHeight(400);
+			this.setHeight(700);
 
 			//create menu
 			var menu=new qx.ui.menu.Menu;
-			var uploadButton = new qx.ui.menu.Button("Upload");
+
+/*			var uploadButton = new qx.ui.menu.Button("Upload");
 			uploadButton.addListener("execute", function (e){alert ("Not implemented!");}, this);
 			menu.add(uploadButton);
 			menu.addSeparator();
@@ -50,7 +51,7 @@ qx.Class.define("desk.fileBrowser",
 			menu.add(this.__actionsMenuButton);
 
 			var actionsButton = new qx.ui.form.MenuButton("Actions", null, menu);
-			this.add(actionsButton);
+			this.add(actionsButton);*/
 
 			// create the filter bar
 			var filterBox = new qx.ui.container.Composite;
@@ -332,14 +333,12 @@ qx.Class.define("desk.fileBrowser",
 			menu.add(openButton);
 
 			menu.addSeparator();
-//			menu.add(this.__actionsHandler.getButton());
+
 			var actionsButton=new qx.ui.menu.Button("Actions");
 			menu.add(actionsButton);
 			actionsButton.addListener("click", function (e) {
 				this.__actionsHandler.openActionsMenu(e, this);
 					}, this);
-
-//			menu.add(this.__actionsMenuButton);
 
 			menu.addSeparator();
 			// other actions buttons
@@ -414,7 +413,23 @@ qx.Class.define("desk.fileBrowser",
 
 				for (var i=0;i<filesArray.length;i++)
 				{
-					var newNode=dataModel.addLeaf(node, filesArray[i]);
+					var newNode;
+					switch (filesArray[i].substring(filesArray[i].length-4, filesArray[i].length))
+					{
+					case ".vtk":
+					case ".ply":
+					case ".obj":
+					case ".stl":
+						newNode=dataModel.addLeaf(node, filesArray[i],"desk/tris.png");
+						break;
+					case ".mhd":
+					case ".jpg":
+					case ".png":
+						newNode=dataModel.addLeaf(node, filesArray[i],"desk/img.png");
+						break;
+					default:
+						newNode=dataModel.addLeaf(node, filesArray[i]);
+					}
 					dataModel.setColumnData(newNode, 1, modificationTimes[filesArray[i]]);
 					dataModel.setColumnData(newNode, 2, sizes[filesArray[i]]);
 				}
