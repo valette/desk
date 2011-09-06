@@ -276,7 +276,6 @@ function createDefaultMaterial(pack, viewInfo, color) {
 }
 
 function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingBox){
-	var doubleSidedPolygons=true;
 	var reg2=new RegExp("[ \n]+", "gm");
 	var data=filestring.split(reg2);
 	var fileLength=data.length;
@@ -292,7 +291,7 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingB
 	}
 	index++;
 	var numberOfPoints=data[index];
-	if (numberOfPoints>60000)
+	if (numberOfPoints>65000)
 	{
 		return ("mesh is too big : "+numberOfPoints+" vertices");
 	}
@@ -320,8 +319,6 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingB
 		{
 			index2=0;
 			positionStream.addElement(coord[0],coord[1],coord[2]);
-			if (doubleSidedPolygons)
-				positionStream.addElement(coord[0],coord[1],coord[2]);
 			boundingBox.addPoint(coord);
 
 			numberOfPoints--;
@@ -370,23 +367,17 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingB
 			triangle[0]=connectivity[1];
 			for (var i=0;i<numberOfTrianglesInCell;i++)
 			{
-				triangle[1]=connectivity[i+2];
-				triangle[2]=connectivity[i+3];
-
 				if (opt_flip)
 				{
-					var temp=triangle[0];
-					triangle[0]=triangle[1];
-					triangle[1]=temp;
-				}
-
-				if (doubleSidedPolygons)
-				{
-					vertexInfo.addTriangle(triangle[0]*2,triangle[1]*2,triangle[2]*2);
-					vertexInfo.addTriangle(triangle[0]*2+1,triangle[2]*2+1,triangle[1]*2+1);
+					triangle[2]=connectivity[i+2];
+					triangle[1]=connectivity[i+3];
 				}
 				else
-					vertexInfo.addTriangle(triangle[0],triangle[1],triangle[2]);
+				{
+					triangle[1]=connectivity[i+2];
+					triangle[2]=connectivity[i+3];
+				}
+				vertexInfo.addTriangle(triangle[0],triangle[1],triangle[2]);
 			}
 			
 			numberOfPolygons--;
@@ -418,7 +409,8 @@ function createFromFile(scene, file,color, opt_flip, opt_callback, opt_mtime) {
 				alert("Could not read file "+file+": error"+xmlhttp.status);
 				return;
 			}
-			createFromFile2(xmlhttp, scene, file,color, opt_flip);
+			createFromFile2(xmlhttp, scene, file,color);
+			createFromFile2(xmlhttp, scene, file,color, true);
 			if (opt_callback)
 				opt_callback();
 			return;
