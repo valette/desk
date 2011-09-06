@@ -27,6 +27,7 @@ function getParameter( parameterName )
 // global variables
 
 var g_scene;
+var parentCallback=null;
 
 function resizeClient(width,height) {
 
@@ -60,18 +61,20 @@ function adjustViewpointAndRender()
 {
 	g_scene.cameracontroller.viewAll(g_scene.meshesBoundingBox,1);
 	g_scene.client.root.localMatrix=g_scene.cameracontroller.calculateViewMatrix();
-g_scene.render();/*
-	function workaround_render()
-	{
-		g_scene.render();
-	}
-	var t=setTimeout(workaround_render,500);*/
+	g_scene.render();
 }
 
 /**
  * Creates the client area.
  */
-function init() {
+
+function init(callback) {
+	if (getParameter("empty")=="true")
+		return;
+	init2();
+}
+
+function init2() {
 	var parent=document.getElementById("o3d");
 	var height=getParameter("height")
 	if (height!=null)
@@ -79,8 +82,7 @@ function init() {
 	var width=getParameter("width")
 	if (width!=null)
 		parent.style.width=width+"px";
-
-  o3djs.webgl.makeClients(initStep2);
+	o3djs.webgl.makeClients(initStep2);
 }
 /**
  * Initializes O3D, creates the object and sets up the transform and
@@ -94,14 +96,17 @@ function initStep2(clientElements) {
 	g_scene=o3djs.renderscene.createRenderScene(clientElements[0]);
    	g_scene.render();
 	window.onresize = resizeClient;
-
-	var mesh=getParameter("mesh");
-	var mtime=getParameter("mtime");
-//	console.log("mtime : "+mtime);
-	if (mesh!=null)
-		g_scene.loadMesh (mesh, adjustViewpointAndRender,mtime);
+	if (parentCallback!=null)
+		parentCallback();
 	else
-		g_scene.loadMesh ("ADAM/adam.xml", adjustViewpointAndRender,mtime);
+	{
+		var mesh=getParameter("mesh");
+		var mtime=getParameter("mtime");
+		if (mesh!=null)
+			g_scene.loadMesh (mesh, adjustViewpointAndRender,mtime);
+		else
+			g_scene.loadMesh ("ADAM/adam.xml", adjustViewpointAndRender,mtime);
+	}
 }
 
 /**
