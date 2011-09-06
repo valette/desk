@@ -103,12 +103,12 @@ qx.Class.define("desk.meshView",
 			{
 			// quirk for firefox which oes not handle iframes correctly
 				if (mtime!=null)
-				this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?mesh="+file+
-					"&width=400&height=400&mtime="+mtime);
+					this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?mesh="+file+
+						"&width=400&height=400&mtime="+mtime);
 				else
-				this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?mesh="+file+
-					"&width=400&height=400&mtime="+mtime);
-				
+					this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?mesh="+file+
+						"&width=400&height=400&mtime="+mtime);
+
 				this.__iframe.addListenerOnce("load", function(e) { 
 				    this.addListener("resize", 
 					function(event) {this.__iframe.getWindow().resizeClient(this.getWidth()-7,this.getHeight()-32);},this);
