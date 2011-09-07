@@ -25,8 +25,8 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	  this.client.root,
 	  this.client.renderGraphRoot,
 	  [1, 1, 1, 1]); //background color
-//	this.viewInfo.performanceState.getStateParam('CullMode').value = 
-//             o3d.State.CULL_NONE;
+	this.viewInfo.performanceState.getStateParam('CullMode').value = 
+             o3d.State.CULL_NONE;
 
 
 	// Create a new transform and parent the Shape under it.
@@ -133,7 +133,7 @@ o3djs.renderscene.RenderScene.prototype.bind = function(scene)
 
 o3djs.renderscene.RenderScene.prototype.resetCamera = function() 
 {
-	this.cameracontroller.viewAll(g_scene.meshesBoundingBox,1);
+	this.cameracontroller.viewAll(this.meshesBoundingBox,1);
 //	this.cameracontroller.viewAll(this.transform.boundingBox,1);
 //	console.log(this.transform.boundingBox);
 	this.cameracontroller.thisRot_=o3djs.math.matrix4.identity();
@@ -410,7 +410,7 @@ function createFromFile(scene, file,color, opt_flip, opt_callback, opt_mtime) {
 				return;
 			}
 			createFromFile2(xmlhttp, scene, file,color);
-			createFromFile2(xmlhttp, scene, file,color, true);
+//			createFromFile2(xmlhttp, scene, file,color, true);
 			if (opt_callback)
 				opt_callback();
 			return;
@@ -498,11 +498,12 @@ function createFromFile2(xmlhttp, scene, file,color, opt_flip) {
 	}
 
 	var shape=vertexInfo.createShape(scene.pack, material);
+
 //	o3djs.shape.setBoundingBoxesAndZSortPoints(shape); // Maybe usefull to replace bounding box computing by hand
 //	var shape2=o3djs.shape.duplicateShape(scene.pack, shape);
 
 	scene.transform.addShape(shape);
-
+//	material.state.getStateParam('FillMode').value = scene.o3dElement.o3d.State.WIREFRAME;
 /*	var normalStream2 = vertexInfo.addStream(3, o3djs.base.o3d.Stream.NORMAL);
 	for (var i=0;i<numberOfPoints;i++)
 	{

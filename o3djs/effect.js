@@ -1131,7 +1131,7 @@ o3djs.effect.buildStandardShaderString = function(material,
         '  ' + p.FLOAT3 +
         ' halfVector = normalize(surfaceToLight + surfaceToView);\n' +
         '  ' + p.FLOAT4 +
-        ' litR = lit(dot(normal, surfaceToLight), \n' +
+        ' litR = lit(abs(dot(normal, surfaceToLight)), \n' +
         '                    dot(normal, halfVector), shininess);\n' +
         p.endPixelShaderMain(p.FLOAT4 +
         '((emissive +\n' +
