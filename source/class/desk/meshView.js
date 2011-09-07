@@ -87,7 +87,12 @@ qx.Class.define("desk.meshView",
 						scene.loadMesh(fileName, function (){
 							numberOfMeshes--;
 							if (numberOfMeshes==0)
-								scene.render();});
+							{							
+								scene.cameracontroller.viewAll(scene.meshesBoundingBox,1);
+								scene.client.root.localMatrix=scene.cameracontroller.calculateViewMatrix();
+								scene.render();
+							}
+							});
 					}
 					// activate the window
 					var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
