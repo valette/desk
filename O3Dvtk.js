@@ -103,7 +103,7 @@ o3djs.renderscene.RenderScene.prototype.loadMesh = function(file, callback, mtim
 	switch (extension)
 	{
 		case ".vtk":
-			createFromFile(this,file,[1,1,1,1],false,callback, mtime);
+			createFromFile(this,file,[1,1,1,1],callback, mtime);
 			break;
 		case ".xml":
 			this.addMeshes(file, callback);
