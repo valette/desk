@@ -157,10 +157,6 @@ o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile, callback)
 	var readString=xmlhttp.responseXML;
 
 	var meshes=readString.getElementsByTagName("mesh");
-	var globalFlipSwitch=readString.getElementsByTagName("flip");
-	var globalFlip=false;
-	if (globalFlipSwitch.length!=0)
-		globalFlip=true;
 
 	var slashIndex=xmlFile.lastIndexOf("/");
 
@@ -175,13 +171,10 @@ o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile, callback)
 
 	for (var n=0;n<numberOfMeshes;n++)
 	{
-		var flip=0;
 		var mesh=meshes[n];
 		var file=mesh.getAttribute("Mesh");
 		var Label=mesh.getAttribute("Label");
 		var color=[1.0,1.0,1.0,1.0];
-		if (mesh.hasAttribute("flip")||globalFlip)
-			flip=1;
 		if (mesh.hasAttribute("color"))
 		{
 			var colorstring=mesh.getAttribute("color");
@@ -208,7 +201,7 @@ o3djs.renderscene.RenderScene.prototype.addMeshes = function(xmlFile, callback)
 
 		if (Label!="0")
 		{
-			createFromFile(scene, path+"/"+file,color,flip, afterLoading);
+			createFromFile(scene, path+"/"+file,color, afterLoading);
 		}
 		else
 		{
@@ -275,7 +268,7 @@ function createDefaultMaterial(pack, viewInfo, color) {
 	return material;
 }
 
-function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingBox){
+function readVTKFile(filestring,vertexInfo ,positionStream , boundingBox){
 	var reg2=new RegExp("[ \n]+", "gm");
 	var data=filestring.split(reg2);
 	var fileLength=data.length;
@@ -367,16 +360,8 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingB
 			triangle[0]=connectivity[1];
 			for (var i=0;i<numberOfTrianglesInCell;i++)
 			{
-				if (opt_flip)
-				{
-					triangle[2]=connectivity[i+2];
-					triangle[1]=connectivity[i+3];
-				}
-				else
-				{
-					triangle[1]=connectivity[i+2];
-					triangle[2]=connectivity[i+3];
-				}
+				triangle[1]=connectivity[i+2];
+				triangle[2]=connectivity[i+3];
 				vertexInfo.addTriangle(triangle[0],triangle[1],triangle[2]);
 			}
 			
@@ -389,7 +374,7 @@ function readVTKFile(filestring,vertexInfo ,positionStream , opt_flip, boundingB
 	}
 }
 
-function createFromFile(scene, file,color, opt_flip, opt_callback, opt_mtime) {
+function createFromFile(scene, file,color, opt_callback, opt_mtime) {
 
 	var xmlhttp=new XMLHttpRequest();
 	if (opt_mtime==null)
@@ -410,7 +395,6 @@ function createFromFile(scene, file,color, opt_flip, opt_callback, opt_mtime) {
 				return;
 			}
 			createFromFile2(xmlhttp, scene, file,color);
-//			createFromFile2(xmlhttp, scene, file,color, true);
 			if (opt_callback)
 				opt_callback();
 			return;
@@ -418,7 +402,7 @@ function createFromFile(scene, file,color, opt_flip, opt_callback, opt_mtime) {
 	}
 }
 
-function createFromFile2(xmlhttp, scene, file,color, opt_flip) {
+function createFromFile2(xmlhttp, scene, file,color) {
 	var material=createDefaultMaterial(scene.pack, scene.viewInfo, color);
 	if (color[3]<0)
 	{
@@ -447,7 +431,7 @@ function createFromFile2(xmlhttp, scene, file,color, opt_flip) {
 	{
 		case "vtk":
 			var readString=xmlhttp.responseText;
-			var returnValue=readVTKFile(readString,vertexInfo ,positionStream ,opt_flip, scene.meshesBoundingBox);
+			var returnValue=readVTKFile(readString,vertexInfo ,positionStream, scene.meshesBoundingBox);
 			if (returnValue!=null)
 			{
 				alert ("error while reading "+file+" : \n"+returnValue);
