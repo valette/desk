@@ -14,7 +14,88 @@ qx.Class.define("desk.meshView",
 		this.setUseMoveFrame(true);
 		this.setContentPadding(2);
 		this.setCaption(file);
+
+		this.__iframe = new qx.ui.embed.Iframe().set({
+			width: 400,
+			height: 400,
+			minWidth: 200,
+			minHeight: 150,
+			decorator:null});
+		this.__iframe.setFrameName('o3dframe');
+		this.add(this.__iframe,{flex: 1});
 		this.open();
+
+		if (qx.core.Environment.get("browser.name")=="firefox")
+		{
+			// quirk for firefox which oes not handle iframes correctly
+			this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/?empty=true&width=400&height=400");
+
+			this.__iframe.addListenerOnce("load", function(e) { 
+			    this.addListener("resize", 
+				function(event) {this.__iframe.getWindow().resizeClient(this.getWidth()-7,this.getHeight()-32);},this);
+			    }, this);
+		}
+		else
+			this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/?empty=true");
+
+		this.__iframe.addListenerOnce("load", function(e) {
+
+			var myMeshViewer=this;
+			function loadCallback()
+			{
+				myMeshViewer.__sceneReady=true;
+				myMeshViewer.__iframe.getWindow().o3djs.event.addEventListener(myMeshViewer.getScene().o3dElement, 'mousedown', function(){
+					var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
+					windowManager.bringToFront(myMeshViewer);});
+				myMeshViewer.openFile();
+			}
+			this.__iframe.getWindow().parentCallback=loadCallback;
+			this.__iframe.getWindow().init2(loadCallback);
+
+			this.addListener("mouseout", 
+				function(event) {this.__iframe.getWindow().g_scene.stopDragging();},this);
+
+			this.addListener("keypress", 
+				function(event) {this.__iframe.getWindow().keyPressed(event.getKeyCode());},this);
+
+			this.addListener("keypress", function(event) {
+				if (event.getKeyIdentifier()=="S")
+					desk.meshView.LINKEDWINDOW=this;
+				},this);
+
+			this.addListener("click", function(event) {
+				var window=desk.meshView.LINKEDWINDOW;
+				if ((window!=null)&&(window!=this))
+				{
+					this.__iframe.getWindow().g_scene.bind(window.__iframe.getWindow().g_scene);
+					window.__iframe.getWindow().g_scene.bind(this.__iframe.getWindow().g_scene);
+					this.__iframe.getWindow().g_scene.cameracontroller.onChange();
+					desk.meshView.LINKEDWINDOW=null;
+				}},this);
+
+			this.setDroppable(true);
+			this.addListener("drop", function(e) {
+					var fileBrowser=e.getData("fileBrowser");
+					var nodes=fileBrowser.getSelectedNodes();
+					var scene=this.getScene();
+					var numberOfMeshes=nodes.length;
+
+					for (var i=0;i<nodes.length;i++)
+					{
+						var fileNode=nodes[i];
+						var fileName=fileBrowser.getNodeURL(fileNode);
+						scene.loadMesh(fileName, function (){
+							numberOfMeshes--;
+							if (numberOfMeshes==0)
+								scene.render();});
+					}
+					// activate the window
+					var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
+					windowManager.bringToFront(this);
+				}, this);
+
+			    }, this);
+
 
 		var meshView=this;
 		if (fileBrowser!=null)
@@ -86,19 +167,45 @@ qx.Class.define("desk.meshView",
 
 	members : {
 		__iframe : null,
+		__fileToOpen : null,
+		__fileToOpenMTime : null,
+		__sceneReady : null,
 
 		openFile : function (file, mtime) {
-			this.removeAll();
-
-			this.__iframe = new qx.ui.embed.Iframe().set({
-				width: 400,
-				height: 400,
-				minWidth: 200,
-				minHeight: 150,
-				decorator:null});
-		
-			this.__iframe.setFrameName('o3dframe');
-
+			if (file==null)
+			{
+				//no file is provided, maybe the iframe just finished setting up, and there is a file waiting to be loaded
+				if (this.__fileToOpen==null)
+					return;
+				else
+				{
+					var fileToTopen=this.__fileToOpen;
+					this.__fileToOpen=null;
+					var mTime=this.__fileToOpenMTime;
+					this.__fileToOpenMTime=null;
+					this.openFile(fileToTopen,mTime);
+				}
+			}
+			else
+			{
+				if (this.__sceneReady==null)
+				{
+					// the iframe is not ready : store the file name and mtime for future loading
+					this.__fileToOpen=file;
+					this.__fileToOpenMTime=mtime;
+				}
+				else
+				{
+					//open the file
+					var scene=this.getScene();
+					scene.loadMesh(file, function (){
+						scene.cameracontroller.viewAll(scene.meshesBoundingBox,1);
+						scene.client.root.localMatrix=scene.cameracontroller.calculateViewMatrix();
+						scene.render();
+						}, mtime);
+				}
+			}
+/*
 			if (qx.core.Environment.get("browser.name")=="firefox")
 			{
 			// quirk for firefox which oes not handle iframes correctly
@@ -120,51 +227,7 @@ qx.Class.define("desk.meshView",
 					this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?mesh="+file+"&mtime="+mtime);
 				else
 					this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/"+"?mesh="+file);
-			}
-
-			this.add(this.__iframe,{flex: 1});
-
-			this.addListener("mouseout", 
-				function(event) {this.__iframe.getWindow().g_scene.stopDragging();},this);
-
-			this.addListener("keypress", 
-				function(event) {this.__iframe.getWindow().keyPressed(event.getKeyCode());},this);
-
-			this.addListener("keypress", function(event) {
-				if (event.getKeyIdentifier()=="S")
-					desk.meshView.LINKEDWINDOW=this;
-				},this);
-
-			this.addListener("click", function(event) {
-				var window=desk.meshView.LINKEDWINDOW;
-				if ((window!=null)&&(window!=this))
-				{
-					this.__iframe.getWindow().g_scene.bind(window.__iframe.getWindow().g_scene);
-					window.__iframe.getWindow().g_scene.bind(this.__iframe.getWindow().g_scene);
-					this.__iframe.getWindow().g_scene.cameracontroller.onChange();
-					desk.meshView.LINKEDWINDOW=null;
-				}},this);
-
-			this.setDroppable(true);
-			this.addListener("drop", function(e) {
-					var fileBrowser=e.getData("fileBrowser");
-					var nodes=fileBrowser.getSelectedNodes();
-					var scene=this.getScene();
-					var numberOfMeshes=nodes.length;
-
-					for (var i=0;i<nodes.length;i++)
-					{
-						var fileNode=nodes[i];
-						var fileName=fileBrowser.getNodeURL(fileNode);
-						scene.loadMesh(fileName, function (){
-							numberOfMeshes--;
-							if (numberOfMeshes==0)
-								scene.render();});
-					}
-					// activate the window
-					var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
-					windowManager.bringToFront(this);
-				}, this);
+			}*/
 		},
 
 		getScene : function() {
