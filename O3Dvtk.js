@@ -488,7 +488,7 @@ function createFromFile2(xmlhttp, scene, file,color) {
 
 	scene.transform.addShape(shape);
 
-	var mesh=o3djs.mesh.createMesh(shape, material, scene)
+	var mesh=o3djs.mesh.createMesh(file, shape, material, scene)
 
 //	material.getParam('diffuse').value = [0, 0, 1, 0.7];
 //	var material2=createDefaultMaterial(scene.pack, scene.viewInfo, color);
