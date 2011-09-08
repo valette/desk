@@ -37,7 +37,7 @@ qx.Class.define("desk.fileBrowser",
 			this.setShowMinimize(false);
 			this.setUseMoveFrame(true);
 			this.setCaption("files");
-			this.setHeight(600);
+			this.setHeight(500);
 
 			//create menu
 			var menu=new qx.ui.menu.Menu;
