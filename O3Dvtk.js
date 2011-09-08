@@ -284,7 +284,7 @@ function readVTKFile(filestring,vertexInfo ,positionStream , boundingBox){
 	}
 	index++;
 	var numberOfPoints=data[index];
-	if (numberOfPoints>65000)
+	if (numberOfPoints>200000)
 	{
 		return ("mesh is too big : "+numberOfPoints+" vertices");
 	}
@@ -394,9 +394,9 @@ function createFromFile(scene, file,color, opt_callback, opt_mtime) {
 				alert("Could not read file "+file+": error"+xmlhttp.status);
 				return;
 			}
-			createFromFile2(xmlhttp, scene, file,color);
+			var shape=createFromFile2(xmlhttp, scene, file,color);
 			if (opt_callback)
-				opt_callback();
+				opt_callback(shape);
 			return;
 		}
 	}
@@ -487,7 +487,17 @@ function createFromFile2(xmlhttp, scene, file,color) {
 //	var shape2=o3djs.shape.duplicateShape(scene.pack, shape);
 
 	scene.transform.addShape(shape);
+
+	var mesh=o3djs.mesh.createMesh(shape, material, scene)
+
+//	material.getParam('diffuse').value = [0, 0, 1, 0.7];
+//	var material2=createDefaultMaterial(scene.pack, scene.viewInfo, color);
+//	material2.copyParams(material);
+//	material.getParam('diffuse').bind(material2.getParam('diffuse'));
+
+	return (mesh);
 //	material.state.getStateParam('FillMode').value = scene.o3dElement.o3d.State.WIREFRAME;
+
 /*	var normalStream2 = vertexInfo.addStream(3, o3djs.base.o3d.Stream.NORMAL);
 	for (var i=0;i<numberOfPoints;i++)
 	{
