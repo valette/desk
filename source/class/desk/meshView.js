@@ -15,6 +15,9 @@ qx.Class.define("desk.meshView",
 		this.setContentPadding(2);
 		this.setCaption(file);
 
+		var pane = new qx.ui.splitpane.Pane("horizontal")
+		this.add(pane, {flex : 1});
+
 		this.__iframe = new qx.ui.embed.Iframe().set({
 			width: 400,
 			height: 400,
@@ -22,8 +25,76 @@ qx.Class.define("desk.meshView",
 			minHeight: 150,
 			decorator:null});
 		this.__iframe.setFrameName('o3dframe');
-		this.add(this.__iframe,{flex: 1});
+		pane.add(this.__iframe, 1);
 		this.open();
+
+		this.__shapesList=new qx.ui.treevirtual.TreeVirtual(["meshes","wireframe"],
+			{initiallyHiddenColumns : [1]});
+		this.__shapesList.setSelectionMode(qx.ui.treevirtual.TreeVirtual.SelectionMode.MULTIPLE_INTERVAL);
+		this.__shapesList.set({
+			width  : 50,
+			rowHeight: 22,
+			columnVisibilityButtonVisible : false,
+			draggable : true});
+		pane.add(this.__shapesList,0);
+		this.__shapesArray=[];
+
+
+		// context menu to edit meshes appearance
+		var menu = new qx.ui.menu.Menu;
+		var shapesTree=this.__shapesList;
+		var MeshViewer=this;
+		var openButton = new qx.ui.menu.Button("Change Colors");
+		openButton.addListener("execute", function (){
+			var colorsWindow=new qx.ui.window.Window();
+			colorsWindow.setLayout(new qx.ui.layout.HBox());
+			var colorSelector=new qx.ui.control.ColorSelector()
+			colorsWindow.add(colorSelector);//, {flex:1});
+			console.log(MeshViewer.__shapesArray);
+			console.log(shapesTree.getSelectedNodes());
+			var firstSelectedShape=MeshViewer.__shapesArray[shapesTree.getSelectedNodes()[0].nodeId];
+			var color=firstSelectedShape.getColor();
+			var ratio=255;
+			colorSelector.setRed(ratio*color[0]);
+			colorSelector.setGreen(ratio*color[1]);
+			colorSelector.setBlue(ratio*color[2]);
+			var wireframeCheckBox=new qx.ui.form.CheckBox();
+			wireframeCheckBox.setValue(firstSelectedShape.isRepresentationWireframe());
+
+			var ratio=255;
+
+			var slider=new qx.ui.form.Slider();
+			slider.setMinimum(0);
+			slider.setMaximum(ratio);
+			slider.setWidth(30);
+			slider.setOrientation("vertical");
+			colorsWindow.add(slider);
+			colorsWindow.add(wireframeCheckBox);
+			slider.setValue(color[3]*ratio);
+			colorsWindow.open();
+
+			var updateRepresentation=function(event){
+				var shapesArray=shapesTree.getSelectedNodes();
+				for (var i=0;i<shapesArray.length;i++)
+				{
+					var shape=MeshViewer.__shapesArray[shapesArray[i].nodeId];
+					shape.setColor ([colorSelector.getRed()/ratio,
+					colorSelector.getGreen()/ratio,
+					colorSelector.getBlue()/ratio,
+					slider.getValue()/ratio]);
+					shape.setRepresentationToWireframe(wireframeCheckBox.getValue());
+				}
+				shape.scene.render();
+			}
+
+			slider.addListener("changeValue", updateRepresentation);
+			colorSelector.addListener("changeValue", updateRepresentation);
+
+			wireframeCheckBox.addListener('changeValue',updateRepresentation);
+			}, this);
+		menu.add(openButton);
+		this.__shapesList.setContextMenu(menu);
+
 
 		if (qx.core.Environment.get("browser.name")=="firefox")
 		{
@@ -55,8 +126,13 @@ qx.Class.define("desk.meshView",
 			this.addListener("mouseout", 
 				function(event) {this.__iframe.getWindow().g_scene.stopDragging();},this);
 
-			this.addListener("keypress", 
-				function(event) {this.__iframe.getWindow().keyPressed(event.getKeyCode());},this);
+			this.addListener("keypress", function(event) {
+				console.log(event.getKeyIdentifier());
+				if (event.getKeyIdentifier()=="L")
+					this.__shapesListWindow.open();
+				else
+					this.__iframe.getWindow().keyPressed(event.getKeyCode())
+				;},this);
 
 			this.addListener("keypress", function(event) {
 				if (event.getKeyIdentifier()=="S")
@@ -84,10 +160,16 @@ qx.Class.define("desk.meshView",
 					{
 						var fileNode=nodes[i];
 						var fileName=fileBrowser.getNodeURL(fileNode);
-						scene.loadMesh(fileName, function (){
+						scene.loadMesh(fileName, function (shape){
 							numberOfMeshes--;
 							if (numberOfMeshes==0)
-								scene.render();});
+							{							
+								scene.cameracontroller.viewAll(scene.meshesBoundingBox,1);
+								scene.client.root.localMatrix=scene.cameracontroller.calculateViewMatrix();
+								scene.render();
+							}
+							myMeshViewer.addShape(shape);
+							});
 					}
 					// activate the window
 					var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
@@ -170,6 +252,16 @@ qx.Class.define("desk.meshView",
 		__fileToOpen : null,
 		__fileToOpenMTime : null,
 		__sceneReady : null,
+		__shapesList : null,
+		__shapesArray : null,
+
+		addShape : function (shape) {
+			var dataModel=this.__shapesList.getDataModel();
+			var leaf=dataModel.addLeaf(null, shape.getSimpleName(), null);
+			this.__shapesArray[leaf]=shape;
+			dataModel.setData();
+			return;
+		},
 
 		openFile : function (file, mtime) {
 			if (file==null)
@@ -198,10 +290,12 @@ qx.Class.define("desk.meshView",
 				{
 					//open the file
 					var scene=this.getScene();
-					scene.loadMesh(file, function (){
+					var myMeshViewer=this;
+					scene.loadMesh(file, function (shape){
 						scene.cameracontroller.viewAll(scene.meshesBoundingBox,1);
 						scene.client.root.localMatrix=scene.cameracontroller.calculateViewMatrix();
 						scene.render();
+						myMeshViewer.addShape(shape);
 						}, mtime);
 				}
 			}

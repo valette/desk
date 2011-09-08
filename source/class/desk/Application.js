@@ -54,7 +54,7 @@ qx.Class.define("desk.Application",
 //			var myBrowser=new desk.fileBrowser();
 			var actions=new desk.actions();
 //			this.getRoot().add(myBrowser);
-
+/*
 			if (0)
 			{
 			var doc = this.getRoot();
@@ -153,7 +153,7 @@ qx.Class.define("desk.Application",
 	  		var lbl = new qx.ui.basic.Label("You can upload anything you like to test this (or as many as you like); the files will be deleted after the upload completes.")
 				.set({ rich: true, width: 700 });
 			doc.add(lbl, { left: 100, top: 390 });
-			}
+			}*/
 		}
 	}
 });
