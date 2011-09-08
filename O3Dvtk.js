@@ -95,15 +95,18 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	this.resize();
 };
 
-o3djs.renderscene.RenderScene.prototype.loadMesh = function(file, callback, mtime) 
+o3djs.renderscene.RenderScene.prototype.loadMesh = function(file, callback, mtime, color) 
 {
 	var extension=file.substring(file.length-4, file.length);
 	var scene=this;
 
+	if (color==null)
+		color=[1,1,1,1];
+
 	switch (extension)
 	{
 		case ".vtk":
-			createFromFile(this,file,[1,1,1,1],callback, mtime);
+			createFromFile(this,file,color,callback, mtime);
 			break;
 		case ".xml":
 			this.addMeshes(file, callback);
