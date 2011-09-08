@@ -18,13 +18,7 @@ qx.Class.define("desk.meshView",
 		var pane = new qx.ui.splitpane.Pane("horizontal")
 		this.add(pane, {flex : 1});
 
-		this.__iframe = new qx.ui.embed.Iframe().set({
-			width: 400,
-			height: 400,
-			minWidth: 200,
-			minHeight: 150,
-			decorator:null});
-		this.__iframe.setFrameName('o3dframe');
+		this.createDisplayWidget();
 		pane.add(this.__iframe, 1);
 		this.open();
 
@@ -32,7 +26,7 @@ qx.Class.define("desk.meshView",
 			{initiallyHiddenColumns : [1]});
 		this.__shapesList.setSelectionMode(qx.ui.treevirtual.TreeVirtual.SelectionMode.MULTIPLE_INTERVAL);
 		this.__shapesList.set({
-			width  : 50,
+			width  : 150,
 			rowHeight: 22,
 			columnVisibilityButtonVisible : false,
 			draggable : true});
@@ -40,7 +34,7 @@ qx.Class.define("desk.meshView",
 		this.__shapesArray=[];
 
 
-		// context menu to edit meshes appearance
+		//context menu to edit meshes appearance
 		var menu = new qx.ui.menu.Menu;
 		var meshViewer=this;
 		var openButton = new qx.ui.menu.Button("Change Colors");
@@ -52,89 +46,6 @@ qx.Class.define("desk.meshView",
 			}, this);
 		menu.add(openButton);
 		this.__shapesList.setContextMenu(menu);
-
-
-		if (qx.core.Environment.get("browser.name")=="firefox")
-		{
-			// quirk for firefox which oes not handle iframes correctly
-			this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/?empty=true&width=400&height=400");
-
-			this.__iframe.addListenerOnce("load", function(e) { 
-			    this.addListener("resize", 
-				function(event) {this.__iframe.getWindow().resizeClient(this.getWidth()-7,this.getHeight()-32);},this);
-			    }, this);
-		}
-		else
-			this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/?empty=true");
-
-		this.__iframe.addListenerOnce("load", function(e) {
-
-			var myMeshViewer=this;
-			function loadCallback()
-			{
-				myMeshViewer.__sceneReady=true;
-				myMeshViewer.__iframe.getWindow().o3djs.event.addEventListener(myMeshViewer.getScene().o3dElement, 'mousedown', function(){
-					var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
-					windowManager.bringToFront(myMeshViewer);});
-				myMeshViewer.openFile();
-			}
-			this.__iframe.getWindow().parentCallback=loadCallback;
-			this.__iframe.getWindow().init2(loadCallback);
-
-			this.addListener("mouseout", 
-				function(event) {this.__iframe.getWindow().g_scene.stopDragging();},this);
-
-			this.addListener("keypress", function(event) {
-				console.log(event.getKeyIdentifier());
-				if (event.getKeyIdentifier()=="L")
-					this.__shapesListWindow.open();
-				else
-					this.__iframe.getWindow().keyPressed(event.getKeyCode())
-				;},this);
-
-			this.addListener("keypress", function(event) {
-				if (event.getKeyIdentifier()=="S")
-					desk.meshView.LINKEDWINDOW=this;
-				},this);
-
-			this.addListener("click", function(event) {
-				var window=desk.meshView.LINKEDWINDOW;
-				if ((window!=null)&&(window!=this))
-				{
-					this.__iframe.getWindow().g_scene.bind(window.__iframe.getWindow().g_scene);
-					window.__iframe.getWindow().g_scene.bind(this.__iframe.getWindow().g_scene);
-					this.__iframe.getWindow().g_scene.cameracontroller.onChange();
-					desk.meshView.LINKEDWINDOW=null;
-				}},this);
-
-			this.setDroppable(true);
-			this.addListener("drop", function(e) {
-					var fileBrowser=e.getData("fileBrowser");
-					var nodes=fileBrowser.getSelectedNodes();
-					var scene=this.getScene();
-					var numberOfMeshes=nodes.length;
-
-					for (var i=0;i<nodes.length;i++)
-					{
-						var fileNode=nodes[i];
-						var fileName=fileBrowser.getNodeURL(fileNode);
-						scene.loadMesh(fileName, function (shape){
-							numberOfMeshes--;
-							if (numberOfMeshes==0)
-							{							
-								scene.cameracontroller.viewAll(scene.meshesBoundingBox,1);
-								scene.client.root.localMatrix=scene.cameracontroller.calculateViewMatrix();
-								scene.render();
-							}
-							myMeshViewer.addShape(shape);
-							});
-					}
-					// activate the window
-					var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
-					windowManager.bringToFront(this);
-				}, this);
-
-			    }, this);
 
 
 		var meshView=this;
@@ -261,6 +172,96 @@ qx.Class.define("desk.meshView",
 
 		getScene : function() {
 				return this.__iframe.getWindow().g_scene;
+		},
+
+		createDisplayWidget : function(){
+			this.__iframe = new qx.ui.embed.Iframe().set({
+			width: 400,
+			height: 400,
+			minWidth: 200,
+			minHeight: 150,
+			decorator:null});
+			this.__iframe.setFrameName('o3dframe');
+
+			var meshViewer=this;
+			if (qx.core.Environment.get("browser.name")=="firefox")
+			{
+				// quirk for firefox which oes not handle iframes correctly
+				this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/?empty=true&width=400&height=400");
+
+				this.__iframe.addListenerOnce("load", function(e) { 
+					this.addListener("resize", 
+					function(event) {this.__iframe.getWindow().resizeClient(this.getWidth()-7,this.getHeight()-32);},this);
+					}, this);
+			}
+			else
+				this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/?empty=true");
+
+			this.__iframe.addListenerOnce("load", function(e) {
+				function loadCallback()
+				{
+					meshViewer.__sceneReady=true;
+					meshViewer.__iframe.getWindow().o3djs.event.addEventListener(meshViewer.getScene().o3dElement, 'mousedown', function(){
+						var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
+						windowManager.bringToFront(meshViewer);});
+					meshViewer.openFile();
+				}
+				this.__iframe.getWindow().parentCallback=loadCallback;
+				this.__iframe.getWindow().init2(loadCallback);
+
+				this.addListener("mouseout", 
+					function(event) {this.__iframe.getWindow().g_scene.stopDragging();},this);
+
+				this.addListener("keypress", function(event) {
+					console.log(event.getKeyIdentifier());
+					if (event.getKeyIdentifier()=="L")
+						this.__shapesListWindow.open();
+					else
+						this.__iframe.getWindow().keyPressed(event.getKeyCode())
+					;},this);
+
+				this.addListener("keypress", function(event) {
+					if (event.getKeyIdentifier()=="S")
+						desk.meshView.LINKEDWINDOW=this;
+					},this);
+
+				this.addListener("click", function(event) {
+					var window=desk.meshView.LINKEDWINDOW;
+					if ((window!=null)&&(window!=this))
+					{
+						this.__iframe.getWindow().g_scene.bind(window.__iframe.getWindow().g_scene);
+						window.__iframe.getWindow().g_scene.bind(this.__iframe.getWindow().g_scene);
+						this.__iframe.getWindow().g_scene.cameracontroller.onChange();
+						desk.meshView.LINKEDWINDOW=null;
+					}},this);
+
+				this.setDroppable(true);
+				this.addListener("drop", function(e) {
+					var fileBrowser=e.getData("fileBrowser");
+					var nodes=fileBrowser.getSelectedNodes();
+					var scene=this.getScene();
+					var numberOfMeshes=nodes.length;
+
+					for (var i=0;i<nodes.length;i++)
+					{
+						var fileNode=nodes[i];
+						var fileName=fileBrowser.getNodeURL(fileNode);
+						scene.loadMesh(fileName, function (shape){
+							numberOfMeshes--;
+							if (numberOfMeshes==0)
+							{							
+								scene.cameracontroller.viewAll(scene.meshesBoundingBox,1);
+								scene.client.root.localMatrix=scene.cameracontroller.calculateViewMatrix();
+								scene.render();
+							}
+							meshViewer.addShape(shape);
+						});
+					}
+					// activate the window
+					var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
+					windowManager.bringToFront(this);
+				}, this);
+			}, this);
 		},
 
 		createPropertyWidget : function (parentWindow){
