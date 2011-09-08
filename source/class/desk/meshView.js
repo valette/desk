@@ -42,83 +42,13 @@ qx.Class.define("desk.meshView",
 
 		// context menu to edit meshes appearance
 		var menu = new qx.ui.menu.Menu;
-		var shapesTree=this.__shapesList;
-		var MeshViewer=this;
+		var meshViewer=this;
 		var openButton = new qx.ui.menu.Button("Change Colors");
 		openButton.addListener("execute", function (){
-			var colorsWindow=new qx.ui.window.Window();
-			colorsWindow.setLayout(new qx.ui.layout.VBox());
-
-			var topBox = new qx.ui.container.Composite;
-			topBox.setLayout(new qx.ui.layout.HBox());
-			var bottomBox = new qx.ui.container.Composite;
-			bottomBox.setLayout(new qx.ui.layout.HBox());
-			colorsWindow.add(topBox);
-			colorsWindow.add(bottomBox);
-
-			var colorSelector=new qx.ui.control.ColorSelector()
-			bottomBox.add(colorSelector);//, {flex:1});
-
-			var wireframeCheckBox=new qx.ui.form.CheckBox("wireframe      ");
-			topBox.add(wireframeCheckBox);
-
-			var alwaysOnTopCheckBox=new qx.ui.form.CheckBox("this window always on top");
-			alwaysOnTopCheckBox.setValue(true);
-			colorsWindow.setAlwaysOnTop(true);
-			alwaysOnTopCheckBox.addListener('changeValue',function (e){
-				colorsWindow.setAlwaysOnTop(alwaysOnTopCheckBox.getValue());
-				});
-			topBox.add(alwaysOnTopCheckBox);
-
-			var ratio=255;
-			var slider=new qx.ui.form.Slider();
-			slider.setMinimum(0);
-			slider.setMaximum(ratio);
-			slider.setWidth(30);
-			slider.setOrientation("vertical");
-			bottomBox.add(slider);
-
-			var enableUpdate=true;
-			var updateWidgets=function (event)
-			{
-				enableUpdate=false;
-				var firstSelectedShape=MeshViewer.__shapesArray[shapesTree.getSelectedNodes()[0].nodeId];
-				var color=firstSelectedShape.getColor();
-				colorSelector.setRed(ratio*color[0]);
-				colorSelector.setGreen(ratio*color[1]);
-				colorSelector.setBlue(ratio*color[2]);
-				wireframeCheckBox.setValue(firstSelectedShape.isRepresentationWireframe());
-				slider.setValue(color[3]*ratio);
-				enableUpdate=true;
-			}
-			
-			updateWidgets();
-			colorsWindow.open();
-
-			var updateRepresentation=function(event){
-				if (enableUpdate)
-				{
-					var shapesArray=shapesTree.getSelectedNodes();
-					for (var i=0;i<shapesArray.length;i++)
-					{
-						var shape=MeshViewer.__shapesArray[shapesArray[i].nodeId];
-						shape.setColor ([colorSelector.getRed()/ratio,
-						colorSelector.getGreen()/ratio,
-						colorSelector.getBlue()/ratio,
-						slider.getValue()/ratio]);
-						shape.setRepresentationToWireframe(wireframeCheckBox.getValue());
-					}
-					shape.scene.render();
-				}
-			}
-
-			shapesTree.addListener("changeSelection",updateWidgets);
-
-
-			slider.addListener("changeValue", updateRepresentation);
-			colorSelector.addListener("changeValue", updateRepresentation);
-
-			wireframeCheckBox.addListener('changeValue',updateRepresentation);
+			var propertyWindow=new qx.ui.window.Window();
+			propertyWindow.setLayout(new qx.ui.layout.HBox());
+			propertyWindow.add(meshViewer.createPropertyWidget(propertyWindow));
+			propertyWindow.open();			
 			}, this);
 		menu.add(openButton);
 		this.__shapesList.setContextMenu(menu);
@@ -331,6 +261,88 @@ qx.Class.define("desk.meshView",
 
 		getScene : function() {
 				return this.__iframe.getWindow().g_scene;
+		},
+
+		createPropertyWidget : function (parentWindow){
+			var meshViewer=this;
+			var shapesTree=this.__shapesList;
+			
+			var mainContainer = new qx.ui.container.Composite;
+			mainContainer.setLayout(new qx.ui.layout.VBox());
+
+			var topBox = new qx.ui.container.Composite;
+			topBox.setLayout(new qx.ui.layout.HBox());
+			var bottomBox = new qx.ui.container.Composite;
+			bottomBox.setLayout(new qx.ui.layout.HBox());
+			mainContainer.add(topBox);
+			mainContainer.add(bottomBox);
+
+			var colorSelector=new qx.ui.control.ColorSelector()
+			bottomBox.add(colorSelector);//, {flex:1});
+
+			var wireframeCheckBox=new qx.ui.form.CheckBox("wireframe      ");
+			topBox.add(wireframeCheckBox);
+
+			if (parentWindow)
+			{
+				var alwaysOnTopCheckBox=new qx.ui.form.CheckBox("this window always on top");
+				alwaysOnTopCheckBox.setValue(true);
+				parentWindow.setAlwaysOnTop(true);
+				alwaysOnTopCheckBox.addListener('changeValue',function (e){
+					parentWindow.setAlwaysOnTop(alwaysOnTopCheckBox.getValue());
+					});
+				topBox.add(alwaysOnTopCheckBox);
+			}
+			var ratio=255;
+			var slider=new qx.ui.form.Slider();
+			slider.setMinimum(0);
+			slider.setMaximum(ratio);
+			slider.setWidth(30);
+			slider.setOrientation("vertical");
+			bottomBox.add(slider);
+
+			var enableUpdate=true;
+			var updateWidgets=function (event)
+			{
+				enableUpdate=false;
+				var firstSelectedShape=meshViewer.__shapesArray[shapesTree.getSelectedNodes()[0].nodeId];
+				var color=firstSelectedShape.getColor();
+				colorSelector.setRed(ratio*color[0]);
+				colorSelector.setGreen(ratio*color[1]);
+				colorSelector.setBlue(ratio*color[2]);
+				wireframeCheckBox.setValue(firstSelectedShape.isRepresentationWireframe());
+				slider.setValue(color[3]*ratio);
+				enableUpdate=true;
+			}
+			
+			updateWidgets();
+
+
+			var updateRepresentation=function(event){
+				if (enableUpdate)
+				{
+					var shapesArray=shapesTree.getSelectedNodes();
+					for (var i=0;i<shapesArray.length;i++)
+					{
+						var shape=meshViewer.__shapesArray[shapesArray[i].nodeId];
+						shape.setColor ([colorSelector.getRed()/ratio,
+						colorSelector.getGreen()/ratio,
+						colorSelector.getBlue()/ratio,
+						slider.getValue()/ratio]);
+						shape.setRepresentationToWireframe(wireframeCheckBox.getValue());
+					}
+					shape.scene.render();
+				}
+			}
+
+			shapesTree.addListener("changeSelection",updateWidgets);
+
+
+			slider.addListener("changeValue", updateRepresentation);
+			colorSelector.addListener("changeValue", updateRepresentation);
+
+			wireframeCheckBox.addListener('changeValue',updateRepresentation);
+			return (mainContainer);
 		}
 	}
 });
