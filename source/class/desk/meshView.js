@@ -47,45 +47,73 @@ qx.Class.define("desk.meshView",
 		var openButton = new qx.ui.menu.Button("Change Colors");
 		openButton.addListener("execute", function (){
 			var colorsWindow=new qx.ui.window.Window();
-			colorsWindow.setLayout(new qx.ui.layout.HBox());
+			colorsWindow.setLayout(new qx.ui.layout.VBox());
+
+			var topBox = new qx.ui.container.Composite;
+			topBox.setLayout(new qx.ui.layout.HBox());
+			var bottomBox = new qx.ui.container.Composite;
+			bottomBox.setLayout(new qx.ui.layout.HBox());
+			colorsWindow.add(topBox);
+			colorsWindow.add(bottomBox);
+
 			var colorSelector=new qx.ui.control.ColorSelector()
-			colorsWindow.add(colorSelector);//, {flex:1});
-			console.log(MeshViewer.__shapesArray);
-			console.log(shapesTree.getSelectedNodes());
-			var firstSelectedShape=MeshViewer.__shapesArray[shapesTree.getSelectedNodes()[0].nodeId];
-			var color=firstSelectedShape.getColor();
-			var ratio=255;
-			colorSelector.setRed(ratio*color[0]);
-			colorSelector.setGreen(ratio*color[1]);
-			colorSelector.setBlue(ratio*color[2]);
-			var wireframeCheckBox=new qx.ui.form.CheckBox();
-			wireframeCheckBox.setValue(firstSelectedShape.isRepresentationWireframe());
+			bottomBox.add(colorSelector);//, {flex:1});
+
+			var wireframeCheckBox=new qx.ui.form.CheckBox("wireframe      ");
+			topBox.add(wireframeCheckBox);
+
+			var alwaysOnTopCheckBox=new qx.ui.form.CheckBox("this window always on top");
+			alwaysOnTopCheckBox.setValue(true);
+			colorsWindow.setAlwaysOnTop(true);
+			alwaysOnTopCheckBox.addListener('changeValue',function (e){
+				colorsWindow.setAlwaysOnTop(alwaysOnTopCheckBox.getValue());
+				});
+			topBox.add(alwaysOnTopCheckBox);
 
 			var ratio=255;
-
 			var slider=new qx.ui.form.Slider();
 			slider.setMinimum(0);
 			slider.setMaximum(ratio);
 			slider.setWidth(30);
 			slider.setOrientation("vertical");
-			colorsWindow.add(slider);
-			colorsWindow.add(wireframeCheckBox);
-			slider.setValue(color[3]*ratio);
+			bottomBox.add(slider);
+
+			var enableUpdate=true;
+			var updateWidgets=function (event)
+			{
+				enableUpdate=false;
+				var firstSelectedShape=MeshViewer.__shapesArray[shapesTree.getSelectedNodes()[0].nodeId];
+				var color=firstSelectedShape.getColor();
+				colorSelector.setRed(ratio*color[0]);
+				colorSelector.setGreen(ratio*color[1]);
+				colorSelector.setBlue(ratio*color[2]);
+				wireframeCheckBox.setValue(firstSelectedShape.isRepresentationWireframe());
+				slider.setValue(color[3]*ratio);
+				enableUpdate=true;
+			}
+			
+			updateWidgets();
 			colorsWindow.open();
 
 			var updateRepresentation=function(event){
-				var shapesArray=shapesTree.getSelectedNodes();
-				for (var i=0;i<shapesArray.length;i++)
+				if (enableUpdate)
 				{
-					var shape=MeshViewer.__shapesArray[shapesArray[i].nodeId];
-					shape.setColor ([colorSelector.getRed()/ratio,
-					colorSelector.getGreen()/ratio,
-					colorSelector.getBlue()/ratio,
-					slider.getValue()/ratio]);
-					shape.setRepresentationToWireframe(wireframeCheckBox.getValue());
+					var shapesArray=shapesTree.getSelectedNodes();
+					for (var i=0;i<shapesArray.length;i++)
+					{
+						var shape=MeshViewer.__shapesArray[shapesArray[i].nodeId];
+						shape.setColor ([colorSelector.getRed()/ratio,
+						colorSelector.getGreen()/ratio,
+						colorSelector.getBlue()/ratio,
+						slider.getValue()/ratio]);
+						shape.setRepresentationToWireframe(wireframeCheckBox.getValue());
+					}
+					shape.scene.render();
 				}
-				shape.scene.render();
 			}
+
+			shapesTree.addListener("changeSelection",updateWidgets);
+
 
 			slider.addListener("changeValue", updateRepresentation);
 			colorSelector.addListener("changeValue", updateRepresentation);
