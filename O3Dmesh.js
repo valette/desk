@@ -14,9 +14,24 @@ o3djs.mesh.Mesh = function(fileName, shape, material, scene)
 	this.material=material;
 	this.scene=scene;
 	this.fileName=fileName;
+	this.linkedMeshes=[];
 };
 
+o3djs.mesh.Mesh.prototype.bind = function(mesh) 
+{
+	mesh.linkedMeshes.push(this);
+}
+
 o3djs.mesh.Mesh.prototype.setColor = function(color) 
+{
+	this.__setColor(color);
+	for each (var mesh in this.linkedMeshes)
+	{
+		mesh.__setColor(color);
+	}
+}
+
+o3djs.mesh.Mesh.prototype.__setColor = function(color) 
 {
 	this.material.getParam('diffuse').value = 
 		[color[0], color[1], color[2], color[3]];
@@ -35,15 +50,22 @@ o3djs.mesh.Mesh.prototype.getColor = function()
 o3djs.mesh.Mesh.prototype.getSimpleName = function() 
 {
 	var lastSlashIndex=this.fileName.lastIndexOf("\/");
-	console.log (this.fileName);
-	console.log (lastSlashIndex);
 	if (lastSlashIndex<0)
 		return (this.fileName);
 	else
-		return (this.fileName.substring(lastSlashIndex, this.fileName.length));
+		return (this.fileName.substring(lastSlashIndex+1, this.fileName.length));
 }
 
 o3djs.mesh.Mesh.prototype.setRepresentationToWireframe = function(bool) 
+{
+	this.__setRepresentationToWireframe(bool);
+	for each (var mesh in this.linkedMeshes)
+	{
+		mesh.__setRepresentationToWireframe(bool);
+	}
+}
+
+o3djs.mesh.Mesh.prototype.__setRepresentationToWireframe = function(bool) 
 {
 	if (bool)
 		this.material.state.getStateParam('FillMode').value = this.scene.o3dElement.o3d.State.WIREFRAME;
