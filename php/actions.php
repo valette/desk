@@ -95,7 +95,11 @@ foreach ($actions->children() as $action)
 					$parameterType=$parameter["type"];
 
 					$try=$_POST[''.$parameterName];
-					$parameterValue=mysql_real_escape_string($try);
+					if ($parameterType=="xmlcontent")
+						$parameterValue=$try;
+					else
+						$parameterValue=mysql_real_escape_string($try);
+
 					if (($parameter["required"]=="true") && ($parameterValue==null))
 					{
 						die ("parameter $parameterName is required for the server\n".
@@ -109,8 +113,13 @@ foreach ($actions->children() as $action)
 						{
 							case "string":
 								if (strpos($parameterValue," ")
-									||strpos($parameterValue,"/"))
+									||strpos($parameterValue,"/")
+									||strpos($parameterValue,";"))
 									die ("$parameterName : string \"$parameterValue\" should contain no special characters!");
+								break;
+							case "xmlcontent":
+								if (!simplexml_load_string($parameterValue))
+									die ("xml content badly formated : \n".$parameterValue);
 								break;
 							case "file":
 								validatePath($parameterValue);
@@ -165,17 +174,23 @@ foreach ($actions->children() as $action)
 							default :
 								die ("no handler for type $parameterType");
 						}
+
+						$parametersList[''.$parameterName] = "$parameterValue";
+
 						$prefix=$parameter["prefix"];
 						if ($prefix!="")
 							$command.=" ".$prefix;
-
-						$parametersList[''.$parameterName] = "$parameterValue";
+						else
+							$command.=" ";
 
 						if ($prependPHP_DIR)
 							$parameterValue="$DIR_TO_PHP$parameterValue";
 
-//						if ($parameterName!="output_directory")
-							$command.=" ".$parameterValue;
+						$command.=$parameterValue;
+
+						$suffix=$parameter["suffix"];
+						if ($suffix!="")
+							$command.=$suffix;
 					}
 				}
 				else

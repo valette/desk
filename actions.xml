@@ -53,10 +53,15 @@
 <parameter name="input_file" type="file" required="true"/>
 </action>
 
-<action name="sleep" executable="sleep">
+<action name="sleep" executable="sleep" void="true">
 <description>just sleep (usefull for debug)</description>
-<parameter name="time_in_seconds" type="int" default="2" void="true" required="true"/>
+<parameter name="time_in_seconds" type="int" default="2" required="true"/>
 </action>
 
+<action name="saveXML" executable="echo" void="true">
+<description>save an xml content to a file</description>
+<parameter prefix="'" name="content" suffix="'" type="xmlcontent" required="true"/>
+<parameter prefix=">>data/xml/" name="filename" type="string" required="true"/>
+</action>
 
 </actions>
