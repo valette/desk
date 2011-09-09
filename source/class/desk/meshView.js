@@ -26,7 +26,7 @@ qx.Class.define("desk.meshView",
 			{initiallyHiddenColumns : [1]});
 		this.__shapesList.setSelectionMode(qx.ui.treevirtual.TreeVirtual.SelectionMode.MULTIPLE_INTERVAL);
 		this.__shapesList.set({
-			width  : 150,
+			width  : 180,
 			rowHeight: 22,
 			columnVisibilityButtonVisible : false});
 		pane.add(this.__shapesList,0);
@@ -383,6 +383,7 @@ qx.Class.define("desk.meshView",
 				colorSelector.setRed(ratio*color[0]);
 				colorSelector.setGreen(ratio*color[1]);
 				colorSelector.setBlue(ratio*color[2]);
+				colorSelector.setPreviousColor(ratio*color[0],ratio*color[1],ratio*color[2]);
 				wireframeCheckBox.setValue(firstSelectedShape.isRepresentationWireframe());
 				slider.setValue(color[3]*ratio);
 				enableUpdate=true;
