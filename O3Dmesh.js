@@ -14,12 +14,24 @@ o3djs.mesh.Mesh = function(fileName, shape, material, scene)
 	this.material=material;
 	this.scene=scene;
 	this.fileName=fileName;
+
+	// the list of meshes bound to this one
 	this.linkedMeshes=[];
+
+	// the mesh to which one this mesh is bound
+	this.bound=null;
 };
 
 o3djs.mesh.Mesh.prototype.bind = function(mesh) 
 {
+	if (this.bound!=null)
+	{
+		var bindings=this.bound.linkedMeshes;
+		var index= bindings.indexOf(this);
+		bindings.splice(index, 1);
+	}
 	mesh.linkedMeshes.push(this);
+	this.bound=mesh;
 }
 
 o3djs.mesh.Mesh.prototype.setColor = function(color) 
