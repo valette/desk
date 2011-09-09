@@ -28,8 +28,7 @@ qx.Class.define("desk.meshView",
 		this.__shapesList.set({
 			width  : 150,
 			rowHeight: 22,
-			columnVisibilityButtonVisible : false,
-			draggable : true});
+			columnVisibilityButtonVisible : false});
 		pane.add(this.__shapesList,0);
 		this.__shapesArray=[];
 
@@ -283,10 +282,7 @@ qx.Class.define("desk.meshView",
 
 				this.addListener("keypress", function(event) {
 					console.log(event.getKeyIdentifier());
-					if (event.getKeyIdentifier()=="L")
-						this.__shapesListWindow.open();
-					else
-						this.__iframe.getWindow().keyPressed(event.getKeyCode())
+					this.__iframe.getWindow().keyPressed(event.getKeyCode())
 					;},this);
 
 				this.addListener("keypress", function(event) {
