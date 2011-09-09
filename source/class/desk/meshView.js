@@ -124,12 +124,27 @@ qx.Class.define("desk.meshView",
 		__shapesList : null,
 		__shapesArray : null,
 
-		addShape : function (shape) {
+		__readFile : function (file, mtime, color, update) {
+			var label;
+			var lastSlashIndex=file.lastIndexOf("\/");
+			if (lastSlashIndex<0)
+				label=file;
+			else
+				label=file.substring(lastSlashIndex+1, file.length);
+
+			var myMeshViewer=this;
 			var dataModel=this.__shapesList.getDataModel();
-			var leaf=dataModel.addLeaf(null, shape.getSimpleName(), null);
-			this.__shapesArray[leaf]=shape;
+			var leaf=dataModel.addLeaf(null,label, null);
 			dataModel.setData();
-			return;
+			var scene=myMeshViewer.getScene();
+			scene.loadMesh(file, function (shape)
+				{
+					myMeshViewer.__shapesArray[leaf]=shape;		
+					if (update==true)
+						scene.viewAll();
+					else if ((update!=null)&&(update!=false))
+						update();
+				}, mtime, color);
 		},
 
 		openFile : function (file, mtime) {
@@ -160,89 +175,66 @@ qx.Class.define("desk.meshView",
 					//open the file
 					var scene=this.getScene();
 					var myMeshViewer=this;
-
-//o3djs.renderscene.RenderScene.prototype.addMeshes = function(file, callback) 
-//{
-		var extension=file.substring(file.length-4, file.length);
-		switch (extension)
-		{
-			case ".vtk":
-				scene.loadMesh(file, function (shape)
+					var extension=file.substring(file.length-4, file.length);
+					switch (extension)
 					{
-						scene.cameracontroller.viewAll(scene.meshesBoundingBox,1);
-						scene.client.root.localMatrix=scene.cameracontroller.calculateViewMatrix();
-						scene.render();
-						myMeshViewer.addShape(shape);
-					}, mtime);
-				break;
-			
-			case ".xml":
-				var xmlhttp=new XMLHttpRequest();
-				xmlhttp.open("GET",file+"?nocache=" + Math.random(),false);
-				xmlhttp.send();
-				var readString=xmlhttp.responseXML;
+						case ".vtk":
+							this.__readFile (file, mtime, null, true);
+							break;
 
-				var meshes=readString.getElementsByTagName("mesh");
+						case ".xml":
+							var xmlhttp=new XMLHttpRequest();
+							xmlhttp.open("GET",file+"?nocache=" + Math.random(),false);
+							xmlhttp.send();
+							var readString=xmlhttp.responseXML;
 
-				var slashIndex=file.lastIndexOf("/");
+							var meshes=readString.getElementsByTagName("mesh");
 
-				var path="";
-				if (slashIndex>0)
-					path=file.substring(0,slashIndex);
+							var slashIndex=file.lastIndexOf("/");
 
-				var meshIndex=0;
-				var numberOfMeshes=meshes.length;
-				var scene=this.getScene();
-				var numberOfRemainingMeshes=numberOfMeshes;
+							var path="";
+							if (slashIndex>0)
+								path=file.substring(0,slashIndex);
 
-				for (var n=0;n<numberOfMeshes;n++)
-				{
-					var mesh=meshes[n];
-					var Label=mesh.getAttribute("Label");
-					var color=[1.0,1.0,1.0,1.0];
-					if (mesh.hasAttribute("color"))
-					{
-						var colorstring=mesh.getAttribute("color");
-						var colors=colorstring.split(" ");
-						for (var j=0;j<4;j++)
-							color[j]=parseFloat(colors[j]);
+							var meshIndex=0;
+							var numberOfMeshes=meshes.length;
+							var scene=this.getScene();
+							var numberOfRemainingMeshes=numberOfMeshes;
+
+							for (var n=0;n<numberOfMeshes;n++)
+							{
+								var mesh=meshes[n];
+								var Label=mesh.getAttribute("Label");
+								var color=[1.0,1.0,1.0,1.0];
+								if (mesh.hasAttribute("color"))
+								{
+									var colorstring=mesh.getAttribute("color");
+									var colors=colorstring.split(" ");
+									for (var j=0;j<4;j++)
+										color[j]=parseFloat(colors[j]);
+								}
+
+								var update=function()
+								{
+									numberOfRemainingMeshes--;
+									switch (numberOfRemainingMeshes)
+									{
+										case Math.floor(numberOfMeshes/4):
+										case Math.floor(numberOfMeshes/2):
+										case Math.floor(numberOfMeshes*3/4):
+										case 0:
+											scene.viewAll();
+											break;
+										default:
+									}
+								}
+
+								this.__readFile(path+"/"+mesh.getAttribute("Mesh"), mtime, color, update);
+							}
+							break;
+						default : 
+							alert ("error : meshviewer cannot read extension "+extension);
 					}
-		
-					function afterLoading(shape)
-					{
-
-						myMeshViewer.addShape(shape);
-						numberOfRemainingMeshes--;
-						switch (numberOfRemainingMeshes)
-						{
-							case Math.floor(numberOfMeshes/4):
-							case Math.floor(numberOfMeshes/2):
-							case Math.floor(numberOfMeshes*3/4):
-							case 0:
-								scene.cameracontroller.viewAll(scene.meshesBoundingBox,1);
-								scene.client.root.localMatrix=scene.cameracontroller.calculateViewMatrix();
-								scene.render();
-								break;
-							default:
-						}
-					}
-					console.log(color);
-					scene.loadMesh(path+"/"+mesh.getAttribute("Mesh"), afterLoading, mtime, color);
-				}
-				break;
-
-			
-			default : 
-				alert ("error : meshviewer cannot read extension "+extension);
-		}
-
-	
-//};
-
-
-
-
-
 				}
 			}
 		},
@@ -318,21 +310,28 @@ qx.Class.define("desk.meshView",
 					var nodes=fileBrowser.getSelectedNodes();
 					var scene=this.getScene();
 					var numberOfMeshes=nodes.length;
-
+					var numberOfRemainingMeshes=numberOfMeshes;
 					for (var i=0;i<nodes.length;i++)
 					{
 						var fileNode=nodes[i];
 						var fileName=fileBrowser.getNodeURL(fileNode);
-						scene.loadMesh(fileName, function (shape){
-							numberOfMeshes--;
-							if (numberOfMeshes==0)
-							{							
-								scene.cameracontroller.viewAll(scene.meshesBoundingBox,1);
-								scene.client.root.localMatrix=scene.cameracontroller.calculateViewMatrix();
-								scene.render();
+						var mTime=fileBrowser.getNodeMTime(fileNode);
+
+						var update=function()
+						{
+							numberOfRemainingMeshes--;
+							switch (numberOfRemainingMeshes)
+							{
+								case Math.floor(numberOfMeshes/4):
+								case Math.floor(numberOfMeshes/2):
+								case Math.floor(numberOfMeshes*3/4):
+								case 0:
+									scene.viewAll();
+									break;
+								default:
 							}
-							meshViewer.addShape(shape);
-						});
+						}
+						meshViewer.__readFile(fileName, mTime, null, update);
 					}
 					// activate the window
 					var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
@@ -394,7 +393,6 @@ qx.Class.define("desk.meshView",
 			}
 			
 			updateWidgets();
-
 
 			var updateRepresentation=function(event){
 				if (enableUpdate)
