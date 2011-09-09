@@ -134,6 +134,15 @@ o3djs.renderscene.RenderScene.prototype.bind = function(scene)
 	scene.cameracontroller.onChange=onChange;
 }
 
+o3djs.renderscene.RenderScene.prototype.viewAll = function() 
+{
+	this.cameracontroller.viewAll(this.meshesBoundingBox,1);
+	this.client.root.localMatrix=this.cameracontroller.calculateViewMatrix();
+	this.render();
+	if (this.cameracontroller.onChange!=null)
+		this.cameracontroller.onChange();
+}
+
 o3djs.renderscene.RenderScene.prototype.resetCamera = function() 
 {
 	this.cameracontroller.viewAll(this.meshesBoundingBox,1);
@@ -141,6 +150,7 @@ o3djs.renderscene.RenderScene.prototype.resetCamera = function()
 //	console.log(this.transform.boundingBox);
 	this.cameracontroller.thisRot_=o3djs.math.matrix4.identity();
 	this.client.root.localMatrix=this.cameracontroller.calculateViewMatrix();
+	this.render();
 	if (this.cameracontroller.onChange!=null)
 		this.cameracontroller.onChange();
 }
