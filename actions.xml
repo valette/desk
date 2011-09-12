@@ -2,7 +2,7 @@
 <action name="ACVD" executable="/home/visu/src/vtkSurfaceBuild/bin/ACVD">
 <description>generates a simplification of the input mesh</description>
 <parameter name="input_file" type="file" required="true"/>
-<parameter name="number_of_desired_vertices" type="int" min="0" required="true" />
+<parameter name="number_of_desired_vertices" type="int" min="0" required="true" default="65000" />
 <parameter name="gradation" type="float" required="true" min="0" max="30" default="0"/>
 <anchor text="-d 0"/>
 </action>
@@ -10,7 +10,7 @@
 <action name="ACVDQ" executable="/home/visu/src/vtkSurfaceBuild/bin/ACVDQ">
 <description>generates a simplification of the input mesh</description>
 <parameter name="input_file" type="file" required="true"/>
-<parameter name="number_of_desired_vertices" type="int" min="0" required="true" />
+<parameter name="number_of_desired_vertices" type="int" min="0" required="true" default="65000"/>
 <parameter name="gradation" type="float" required="true" min="0" max="30" default="0" />
 </action>
 
@@ -22,7 +22,7 @@
 <action name="Extract_meshes" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeAnalysis">
 <description>extract meshes from labeled volume data</description>
 <parameter name="input_file" type="file" required="true"/>
-<parameter name="max_number_of_vertices" type="int" min="0" default="30000" prefix="-n "/>
+<parameter name="max_number_of_vertices" type="int" min="0" default="65000" prefix="-n "/>
 <parameter name="simlification_method" type="int" min="0" max="1" default="0" prefix="-s "/>
 <parameter name="number_of_smoothing_steps" type="int" min="0" default="0" prefix="-sm "/>
 </action>
@@ -53,10 +53,15 @@
 <parameter name="input_file" type="file" required="true"/>
 </action>
 
-<action name="sleep" executable="sleep">
+<action name="sleep" executable="sleep" void="true">
 <description>just sleep (usefull for debug)</description>
-<parameter name="time_in_seconds" type="int" default="2" void="true" required="true"/>
+<parameter name="time_in_seconds" type="int" default="2" required="true"/>
 </action>
 
+<action name="saveXML" executable="echo" void="true">
+<description>save an xml content to a file</description>
+<parameter prefix="'" name="content" suffix="'" type="xmlcontent" required="true"/>
+<parameter prefix=">>data/xml/" name="filename" type="string" required="true"/>
+</action>
 
 </actions>

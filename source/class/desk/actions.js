@@ -191,6 +191,7 @@ qx.Class.define("desk.actions",
 				}
 				return (true);
 				};
+				var dummyValidator = function(value, item) {return (true)};
 
 			var fileAlreadyPickedFromBrowser=false;
 
@@ -242,6 +243,9 @@ qx.Class.define("desk.actions",
 						}, parameterForm);
 
 					manager.add(parameterForm, stringValidator, parameter);
+					break;
+				case "xmlcontent":
+					manager.add(parameterForm, dummyValidator, parameter);
 					break;
 				default :
 						alert("no validator implemented for type : "+parameterType);
@@ -336,13 +340,16 @@ qx.Class.define("desk.actions",
 						var splitResponse=response.split("\n");
 						outputDirectory=splitResponse[0];
 						executionStatus.setValue(splitResponse[splitResponse.length-2]);
-						if (embededFileBrowser==null)
+						if (action.getAttribute("void")!="true")
 						{
-							//display the results directory
-							embededFileBrowser=new desk.fileBrowser(pane,outputDirectory);
-							actionWindow.setWidth(600);
+							if (embededFileBrowser==null)
+							{
+								//display the results directory
+								embededFileBrowser=new desk.fileBrowser(pane,outputDirectory);
+								actionWindow.setWidth(600);
+							}
+							embededFileBrowser.updateRoot();
 						}
-						embededFileBrowser.updateRoot();
 					}
 				} else {
 					alert(manager.getInvalidMessages().join("\n"));
