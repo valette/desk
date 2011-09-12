@@ -123,7 +123,7 @@ qx.Class.define("desk.meshView",
 		__shapesList : null,
 		__shapesArray : null,
 
-		__readFile : function (file, mtime, color, update) {
+		__readFile : function (file, mtime, color, update, opt_updateDataModel) {
 			var label;
 			var lastSlashIndex=file.lastIndexOf("\/");
 			if (lastSlashIndex<0)
@@ -134,7 +134,9 @@ qx.Class.define("desk.meshView",
 			var myMeshViewer=this;
 			var dataModel=this.__shapesList.getDataModel();
 			var leaf=dataModel.addLeaf(null,label, null);
-			dataModel.setData();
+			if (opt_updateDataModel!=false)
+				dataModel.setData();
+
 			var scene=myMeshViewer.getScene();
 			scene.loadMesh(file, function (shape)
 				{
@@ -223,12 +225,13 @@ qx.Class.define("desk.meshView",
 										case Math.floor(numberOfMeshes*3/4):
 										case 0:
 											scene.viewAll();
+											myMeshViewer.__shapesList.getDataModel().setData();
 											break;
 										default:
 									}
 								}
 
-								this.__readFile(path+"/"+mesh.getAttribute("Mesh"), mtime, color, update);
+								this.__readFile(path+"/"+mesh.getAttribute("Mesh"), mtime, color, update, false);
 							}
 							break;
 						default : 
