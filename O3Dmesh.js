@@ -92,3 +92,20 @@ o3djs.mesh.Mesh.prototype.isRepresentationWireframe = function()
 	else
 		return (false);
 }
+
+o3djs.mesh.Mesh.prototype.hide = function() 
+{
+	if (!this.hidden)
+		this.scene.transform.removeShape(this.shape);
+
+	this.hidden=true;
+}
+
+o3djs.mesh.Mesh.prototype.show = function() 
+{
+	if (this.hidden)
+		this.scene.transform.addShape(this.shape);
+
+	this.hidden=false;
+}
+
