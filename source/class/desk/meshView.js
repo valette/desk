@@ -16,11 +16,15 @@ qx.Class.define("desk.meshView",
 		this.setCaption(file);
 
 		var pane = new qx.ui.splitpane.Pane("horizontal")
-		this.add(pane, {flex : 1});
+		this.add(pane,{flex : 1});
 
 		this.createDisplayWidget();
-		pane.add(this.__iframe, 1);
+		pane.add(this.__iframe, 5);
 		this.open();
+
+		var elementsList = new qx.ui.container.Composite;
+		elementsList.setLayout(new qx.ui.layout.VBox());
+		pane.add(elementsList, 1);
 
 		this.__shapesList=new qx.ui.treevirtual.TreeVirtual(["meshes","wireframe"],
 			{initiallyHiddenColumns : [1]});
@@ -29,25 +33,75 @@ qx.Class.define("desk.meshView",
 			width  : 180,
 			rowHeight: 22,
 			columnVisibilityButtonVisible : false});
-		pane.add(this.__shapesList,0);
+
+
+		var dataModel=this.__shapesList.getDataModel();
+		var filterBox = new qx.ui.container.Composite;
+		filterBox.setLayout(new qx.ui.layout.HBox(10));
+		var filterText=new qx.ui.basic.Label("search");
+		filterBox.add(filterText);
+
+		var meshView=this;
+
+		var filterField = new qx.ui.form.TextField();
+		filterField.setValue("");
+		filterField.addListener("input", function() {
+			dataModel.setData();
+			meshView.getScene().render();
+			},this);
+		filterBox.add(filterField);
+		elementsList.add(filterBox);//, {flex:1});
+
+
+
+		var filter = qx.lang.Function.bind(function(node)
+			{
+				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+					var label = node.label;
+					var shape= meshView.__shapesArray[node.nodeId];
+					if (label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1)
+					{
+						if (shape)
+							shape.show();
+						return true;
+					}
+					else
+					{
+						if (shape)
+							shape.hide();
+						return false;
+					}						
+				}
+				return true;
+			}, this);
+		var resetButton=new qx.ui.form.Button("Reset filter");
+		resetButton.setAllowGrowY(false);
+		resetButton.addListener("execute",function(e){
+			filterField.setValue("");
+			dataModel.setData();
+			meshView.getScene().render();
+			});
+		filterBox.add(resetButton);
+		dataModel.setFilter(filter);
+
+		elementsList.add(this.__shapesList,{flex : 1});
 		this.__shapesArray=[];
 
 
 		//context menu to edit meshes appearance
 		var menu = new qx.ui.menu.Menu;
-		var meshViewer=this;
 		var openButton = new qx.ui.menu.Button("Change Colors");
 		openButton.addListener("execute", function (){
 			var propertyWindow=new qx.ui.window.Window();
 			propertyWindow.setLayout(new qx.ui.layout.HBox());
-			propertyWindow.add(meshViewer.createPropertyWidget(propertyWindow));
+			propertyWindow.add(meshView.createPropertyWidget(propertyWindow));
 			propertyWindow.open();			
 			}, this);
 		menu.add(openButton);
 		this.__shapesList.setContextMenu(menu);
 
 
-		var meshView=this;
+
 		if (fileBrowser!=null)
 		{
 			this.setCaption(fileBrowser.getNodeURL(file));
@@ -283,7 +337,7 @@ qx.Class.define("desk.meshView",
 				this.addListener("mouseout", 
 					function(event) {this.__iframe.getWindow().g_scene.stopDragging();},this);
 
-				this.addListener("keypress", function(event) {
+				this.__iframe.addListener("keypress", function(event) {
 					console.log(event.getKeyIdentifier());
 					this.__iframe.getWindow().keyPressed(event.getKeyCode())
 					;},this);
