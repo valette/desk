@@ -283,10 +283,10 @@ function createDefaultMaterial(pack, viewInfo, color) {
 	return material;
 }
 
-function readVTKFile(xmlhttp,vertexInfo ,positionStream , boundingBox){
+function readVTKFile(text,vertexInfo ,positionStream , boundingBox){
 
 	var httpIndex=0;
-	var httpLength=xmlhttp.responseText.length;
+	var httpLength=text.length;
 	function readNextString ()
 	{
 		while (1)
@@ -296,7 +296,7 @@ function readVTKFile(xmlhttp,vertexInfo ,positionStream , boundingBox){
 			var currentString="";
 			while (1)
 			{
-				var currentChar=xmlhttp.responseText.charAt(httpIndex);
+				var currentChar=text.charAt(httpIndex);
 				httpIndex++;
 				if ((currentChar!="\n")&&
 					(currentChar!=" "))
@@ -421,9 +421,9 @@ function readVTKFile(xmlhttp,vertexInfo ,positionStream , boundingBox){
 	}
 }
 
-function readVTKFile2(xmlhttp,vertexInfo ,positionStream , boundingBox){
+function readVTKFile2(text,vertexInfo ,positionStream , boundingBox){
 	var reg2=new RegExp("[ \n]+", "gm");
-	var data=xmlhttp.responseText.split(reg2);
+	var data=text.split(reg2);
 	var fileLength=data.length;
 	
 	// read point data
@@ -583,7 +583,7 @@ function createFromFile2(xmlhttp, scene, file,color) {
 	switch (extension)
 	{
 		case "vtk":
-			var returnValue=readVTKFile(xmlhttp,vertexInfo ,positionStream, scene.meshesBoundingBox);
+			var returnValue=readVTKFile(xmlhttp.responseText,vertexInfo ,positionStream, scene.meshesBoundingBox);
 			if (returnValue!=null)
 			{
 				alert ("error while reading "+file+" : \n"+returnValue);
