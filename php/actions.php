@@ -68,6 +68,9 @@ $parametersList=array();
 $actions = simplexml_load_file("../actions.xml")
 	or die("Fichier introuvable. L'analyse a ete suspendue");
 
+if (!($_POST["action"]))
+	die ("no action asked!");
+
 $actionToPerform=mysql_real_escape_string($_POST["action"])
 	or die ("no action asked!");
 
@@ -94,7 +97,8 @@ foreach ($actions->children() as $action)
 //					echo $parameterName,"\n";
 					$parameterType=$parameter["type"];
 
-					$try=$_POST[''.$parameterName];
+					if (isset($_POST[''.$parameterName]))
+						$try=$_POST[''.$parameterName];
 					if ($parameterType=="xmlcontent")
 						$parameterValue=$try;
 					else
@@ -209,7 +213,8 @@ foreach ($actions->children() as $action)
 				$voidAction=true;
 			else
 			{
-				$try=$_POST['output_directory'];
+				if (isset($_POST['output_directory']))
+					$try=$_POST['output_directory'];
 				if ($try)
 				{
 					// output directory is provided
@@ -275,7 +280,7 @@ foreach ($actions->children() as $action)
 				fwrite($flog, "$logHeader : cd $outputDirectory\n");
 
 				$commandHash=sha1($command);
-				if (($newAction==false)&&($_POST['force_update']!='true'))
+				if (($newAction==false)&&(isset($_POST['force_update'])))
 				{
 					$oldParameters=readParameters("$parametersFileName");
 					$outputMtime=filemtime('.');
