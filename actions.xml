@@ -2,7 +2,7 @@
 <action name="ACVD" executable="/home/visu/src/vtkSurfaceBuild/bin/ACVD">
 <description>generates a simplification of the input mesh</description>
 <parameter name="input_file" type="file" required="true"/>
-<parameter name="number_of_desired_vertices" type="int" min="0" required="true" default="65000" />
+<parameter name="number_of_desired_vertices" type="int" min="0" required="true" />
 <parameter name="gradation" type="float" required="true" min="0" max="30" default="0"/>
 <anchor text="-d 0"/>
 </action>
@@ -10,7 +10,7 @@
 <action name="ACVDQ" executable="/home/visu/src/vtkSurfaceBuild/bin/ACVDQ">
 <description>generates a simplification of the input mesh</description>
 <parameter name="input_file" type="file" required="true"/>
-<parameter name="number_of_desired_vertices" type="int" min="0" required="true" default="65000"/>
+<parameter name="number_of_desired_vertices" type="int" min="0" required="true" />
 <parameter name="gradation" type="float" required="true" min="0" max="30" default="0" />
 </action>
 
