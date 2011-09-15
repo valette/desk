@@ -280,7 +280,11 @@ foreach ($actions->children() as $action)
 				fwrite($flog, "$logHeader : cd $outputDirectory\n");
 
 				$commandHash=sha1($command);
-				if (($newAction==false)&&(isset($_POST['force_update'])))
+				$forceUpdate=false;
+				if (isset($_POST['force_update']))
+					$forceUpdate=$_POST['force_update'];
+
+				if (($newAction==false)&&($forceUpdate!="true"))
 				{
 					$oldParameters=readParameters("$parametersFileName");
 					$outputMtime=filemtime('.');
