@@ -10,10 +10,22 @@ qx.Class.define("desk.actions",
 		this.populateActionMenu();
 //		this.__menuButton=new qx.ui.menu.Button("Actions", null , null, this.__actionMenu);
 
+		function getParameter( parameterName )
+		{
+		  parameterName = parameterName.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+		  var regexS = "[\\?&]"+parameterName+"=([^&#]*)";
+		  var regex = new RegExp( regexS );
+		  var results = regex.exec( window.location.href );
+		  if( results == null )
+			return null;
+		  else
+			return results[1];
+		}
+
 		if (fileBrowser!=null)
 			this.__fileBrowser=fileBrowser;
 		else
-			this.__fileBrowser=new desk.fileBrowser();
+			this.__fileBrowser=new desk.fileBrowser(null ,getParameter("rootDir"));				
 
 		var ongoingActions = new qx.ui.form.List().set({
 			width: 200
