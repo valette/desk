@@ -68,6 +68,9 @@ $parametersList=array();
 $actions = simplexml_load_file("../actions.xml")
 	or die("Fichier introuvable. L'analyse a ete suspendue");
 
+if (!($_POST["action"]))
+	die ("no action asked!");
+
 $actionToPerform=mysql_real_escape_string($_POST["action"])
 	or die ("no action asked!");
 
@@ -93,17 +96,16 @@ foreach ($actions->children() as $action)
 					$parameterName=$parameter["name"];
 //					echo $parameterName,"\n";
 					$parameterType=$parameter["type"];
-
-					$try=$_POST[''.$parameterName];
-					if ($parameterType=="xmlcontent")
-						$parameterValue=$try;
-					else
-						$parameterValue=mysql_real_escape_string($try);
+					$parameterValue=null;
+					if (isset($_POST[''.$parameterName]))
+						$parameterValue=$_POST[''.$parameterName];
+					if ($parameterType!="xmlcontent")
+						$parameterValue=mysql_real_escape_string($parameterValue);
 
 					if (($parameter["required"]=="true") && ($parameterValue==null))
 					{
 						die ("parameter $parameterName is required for the server\n".
-							$try);
+							$parameterValue);
 					}
 
 					if ($parameterValue!=null) 
@@ -209,11 +211,13 @@ foreach ($actions->children() as $action)
 				$voidAction=true;
 			else
 			{
-				$try=$_POST['output_directory'];
-				if ($try)
+				$outputDirectory=null;
+				if (isset($_POST['output_directory']))
+					$outputDirectory=$_POST['output_directory'];
+				if ($outputDirectory)
 				{
 					// output directory is provided
-					$outputDirectory=mysql_real_escape_string($try);
+					$outputDirectory=mysql_real_escape_string($outputDirectory);
 				}
 				else
 				{
@@ -275,7 +279,11 @@ foreach ($actions->children() as $action)
 				fwrite($flog, "$logHeader : cd $outputDirectory\n");
 
 				$commandHash=sha1($command);
-				if (($newAction==false)&&($_POST['force_update']!='true'))
+				$forceUpdate=false;
+				if (isset($_POST['force_update']))
+					$forceUpdate=$_POST['force_update'];
+
+				if (($newAction==false)&&($forceUpdate!="true"))
 				{
 					$oldParameters=readParameters("$parametersFileName");
 					$outputMtime=filemtime('.');

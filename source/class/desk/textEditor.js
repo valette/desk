@@ -6,27 +6,53 @@ qx.Class.define("desk.textEditor",
 	{
 		this.base(arguments);
 		this.setLayout(new qx.ui.layout.VBox());
-		this.setHeight(400);
-		this.setWidth(400);
+		this.setHeight(500);
+		this.setWidth(500);
 		this.setShowClose(true);
 		this.setShowMinimize(false);
 		this.setResizable(true,true,true,true);
 		this.setUseResizeFrame(true);
 		this.setUseMoveFrame(true);
-		this.setCaption(file);
 
-		var xmlhttp=new XMLHttpRequest();
-		xmlhttp.open("GET",fileBrowser.getNodeURL(file)+"?nocache=" + Math.random(),false);
-		xmlhttp.send();
-		var text=xmlhttp.responseText;
+		this.__reloadButton = new qx.ui.form.Button("Reload");
+		this.__reloadButton.addListener("execute", function(e) {
+			this.openFileURL(this.__fileURL);
+			}, this);
 
-		this.__textArea = new qx.ui.form.TextArea(text);
+		this.add(this.__reloadButton);
+
+		this.__textArea = new qx.ui.form.TextArea();
 		this.add(this.__textArea,{flex : 1});
 		this.open();
+
+		if (file!=null)
+		{
+			if (fileBrowser!=null)
+				this.openFileURL(fileBrowser.getNodeURL(file));
+			else
+				this.openFileURL(file);
+		}
+		
 		return (this);
 	},
 
 	members : {
-		__textArea : null
+		__textArea : null,
+		__fileURL : null,
+		__reloadButton : null,
+
+		openFileURL : function (fileURL)
+		{
+			this.__fileURL=fileURL;
+			this.__reloadButton.setEnabled(false);
+			var req = new qx.io.request.Xhr(this.__fileURL+"?nocache=" + Math.random());
+			req.setAsync(true);
+			req.addListener('load', function (e){
+				this.__textArea.setValue(req.getResponse());
+				this.setCaption(fileURL);
+				this.__reloadButton.setEnabled(true);
+				}, this);
+			req.send();
+		}
 	}
 });

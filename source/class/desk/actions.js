@@ -10,10 +10,22 @@ qx.Class.define("desk.actions",
 		this.populateActionMenu();
 //		this.__menuButton=new qx.ui.menu.Button("Actions", null , null, this.__actionMenu);
 
+		function getParameter( parameterName )
+		{
+		  parameterName = parameterName.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+		  var regexS = "[\\?&]"+parameterName+"=([^&#]*)";
+		  var regex = new RegExp( regexS );
+		  var results = regex.exec( window.location.href );
+		  if( results == null )
+			return null;
+		  else
+			return results[1];
+		}
+
 		if (fileBrowser!=null)
 			this.__fileBrowser=fileBrowser;
 		else
-			this.__fileBrowser=new desk.fileBrowser();
+			this.__fileBrowser=new desk.fileBrowser(null ,getParameter("rootDir"));				
 
 		var ongoingActions = new qx.ui.form.List().set({
 			width: 200
@@ -80,6 +92,16 @@ qx.Class.define("desk.actions",
 				var action=actions[n];
 				var actionName=action.getAttribute("name");
 				var button=new qx.ui.menu.Button(actionName);
+				var descriptions=action.getElementsByTagName("description");
+				var tooltip=new qx.ui.tooltip.ToolTip("hello");
+				button.setToolTip(tooltip);//descriptions[0].nodeValue);
+				if (descriptions.length>0)
+				{
+			//		button.setToolTipText("hello");//descriptions[0].nodeValue);
+//					if (n==0)
+		//				alert (descriptions[0]);
+				}
+
 				button.addListener("click", function (e){
 					actionMenu.createActionWindow(this.getLabel(), null, actionMenu.__currentFileBrowser);});
 				this.__actionMenu.add(button);
@@ -125,6 +147,13 @@ qx.Class.define("desk.actions",
 			pane.add(parametersBox);
 			actionWindow.add(pane, {flex : 1});
 
+			var logFileURL=null;
+			var showLogButton=new qx.ui.form.Button("Show console log");
+			showLogButton.addListener("execute",function (e) {
+				var logViewer=new desk.textEditor(logFileURL);
+				})
+			showLogButton.setVisibility("excluded");
+
 			var outputDirectory=null;
 			if (providedParameters)
 			{
@@ -133,6 +162,8 @@ qx.Class.define("desk.actions",
 				{
 					embededFileBrowser=new desk.fileBrowser(pane,outputDirectory);
 					actionWindow.setWidth(600);
+					logFileURL=embededFileBrowser.getFileURL(outputDirectory+"/action.log");
+					showLogButton.setVisibility("visible");
 				}
 			}
 			
@@ -285,21 +316,7 @@ qx.Class.define("desk.actions",
 
 			executeBox.add(forceUpdateCheckBox);
 			executeBox.add(executionStatus);
-
-			var displayOutputOnOff = new qx.ui.form.CheckBox("Show log");
-			displayOutputOnOff.setVisibility("excluded");
-			parametersBox.add(displayOutputOnOff);
-			displayOutputOnOff.setValue(false);
-
-			var phpOutputTextArea = new qx.ui.form.TextArea();
-			phpOutputTextArea.setVisibility("excluded");
-			parametersBox.add(phpOutputTextArea, {flex : 1});
-			displayOutputOnOff.addListener("changeValue", function (e) {
-				if (displayOutputOnOff.getValue()==true)
-					phpOutputTextArea.setVisibility("visible");
-				else
-					phpOutputTextArea.setVisibility("excluded");
-				});
+			parametersBox.add(showLogButton, {flex : 1});
 
 			// add a listener to the form manager for the validation complete
 			manager.addListener("complete", function() {
@@ -325,7 +342,7 @@ qx.Class.define("desk.actions",
 
 					// add the value of the "force update" checkbox
 					parameterMap["force_update"]=forceUpdateCheckBox.getValue();
-
+					executionStatus.setValue("Processing...");
 					this.launchAction (parameterMap, getAnswer, this)
 					function getAnswer(e)
 					{
@@ -335,8 +352,7 @@ qx.Class.define("desk.actions",
 
 						var req = e.getTarget();
 						var response=req.getResponseText();
-						displayOutputOnOff.setVisibility("visible");
-						phpOutputTextArea.setValue(response);
+						showLogButton.setVisibility("visible");
 						var splitResponse=response.split("\n");
 						outputDirectory=splitResponse[0];
 						executionStatus.setValue(splitResponse[splitResponse.length-2]);
@@ -347,6 +363,8 @@ qx.Class.define("desk.actions",
 								//display the results directory
 								embededFileBrowser=new desk.fileBrowser(pane,outputDirectory);
 								actionWindow.setWidth(600);
+								logFileURL=embededFileBrowser.getFileURL(outputDirectory+"/action.log");
+								showLogButton.setVisibility("visible");
 							}
 							embededFileBrowser.updateRoot();
 						}

@@ -304,6 +304,11 @@ qx.Class.define("desk.fileBrowser",
 			return (this.__baseURL+this.getNodePath(node));
 		},
 
+		getFileURL : function (file)
+		{
+			return (this.__baseURL+file);
+		},
+
 		getNodePath : function (node)
 		{
 			var hierarchy=this.__virtualTree.getHierarchy(node);
