@@ -80,6 +80,16 @@ qx.Class.define("desk.actions",
 				var action=actions[n];
 				var actionName=action.getAttribute("name");
 				var button=new qx.ui.menu.Button(actionName);
+				var descriptions=action.getElementsByTagName("description");
+				var tooltip=new qx.ui.tooltip.ToolTip("hello");
+				button.setToolTip(tooltip);//descriptions[0].nodeValue);
+				if (descriptions.length>0)
+				{
+			//		button.setToolTipText("hello");//descriptions[0].nodeValue);
+//					if (n==0)
+		//				alert (descriptions[0]);
+				}
+
 				button.addListener("click", function (e){
 					actionMenu.createActionWindow(this.getLabel(), null, actionMenu.__currentFileBrowser);});
 				this.__actionMenu.add(button);
@@ -320,7 +330,7 @@ qx.Class.define("desk.actions",
 
 					// add the value of the "force update" checkbox
 					parameterMap["force_update"]=forceUpdateCheckBox.getValue();
-
+					executionStatus.setValue("Processing...");
 					this.launchAction (parameterMap, getAnswer, this)
 					function getAnswer(e)
 					{
