@@ -265,24 +265,6 @@ o3djs.renderscene.RenderScene.prototype.render = function()
 	this.client.render();
 }
 
-function createDefaultMaterial(pack, viewInfo, color) {
-
-	var transparency=0;
-	if ((color[3]<0.99)&&(color[3]>0))
-		transparency=1;
-
-	var material=o3djs.material.createBasicMaterial(pack, viewInfo, color, transparency);
-
-	material.getParam('lightWorldPos').value=[2000,2000,10000];
-	material.getParam('emissive').value = [0.1, 0.1, 0.1 , 0.08];
-	material.getParam('ambient').value = [0.1, 0.1, 0.1, 0.005];
-	material.getParam('specular').value = [0.1, 0.1, 0.1, 0.01];
-	material.getParam('shininess').value=0.02;
-	material.getParam('specularFactor').value = 0.1;
-	material.getParam('lightColor').value = [0.8, 0.8, 0.8, 0.5];
-	return material;
-}
-
 function readVTKFile(text,vertexInfo ,positionStream , boundingBox){
 
 	var httpIndex=0;
@@ -556,7 +538,21 @@ function createFromFile(scene, file,color, opt_callback, opt_mtime) {
 }
 
 function createFromFile2(xmlhttp, scene, file,color) {
-	var material=createDefaultMaterial(scene.pack, scene.viewInfo, color);
+
+	var transparency=0;
+	if ((color[3]<0.99)&&(color[3]>0))
+		transparency=1;
+
+	var material=o3djs.material.createBasicMaterial(scene.pack, scene.viewInfo, color, transparency);
+
+	material.getParam('lightWorldPos').value=[2000,2000,10000];
+	material.getParam('emissive').value = [0.1, 0.1, 0.1 , 0.08];
+	material.getParam('ambient').value = [0.1, 0.1, 0.1, 0.005];
+	material.getParam('specular').value = [0.1, 0.1, 0.1, 0.01];
+	material.getParam('shininess').value=0.02;
+	material.getParam('specularFactor').value = 0.1;
+	material.getParam('lightColor').value = [0.8, 0.8, 0.8, 0.5];
+
 	if (color[3]<0)
 	{
 		var state = scene.pack.createObject('State'); 
@@ -571,6 +567,7 @@ function createFromFile2(xmlhttp, scene, file,color) {
 		state.getStateParam('PolygonOffset1').value = 1;
 		state.getStateParam('PolygonOffset2').value = 1;
 	}
+
 	var vertexInfo = o3djs.primitives.createVertexInfo();
 	var positionStream = vertexInfo.addStream(
 		3, o3djs.base.o3d.Stream.POSITION);
