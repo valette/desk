@@ -3,10 +3,7 @@ qx.Class.define("desk.gcSegmentation",
   extend : qx.ui.window.Window,
 
 	construct : function(file, fileBrowser)
-	{
-		
-		
-		
+	{		
 		this.base(arguments);
 		
         // Enable logging in debug variant
@@ -19,12 +16,6 @@ qx.Class.define("desk.gcSegmentation",
         };
 
     ////Global variables
-
- 
-		
-		
-		
-		
 		
 		var volView = this;
 		
@@ -39,10 +30,6 @@ qx.Class.define("desk.gcSegmentation",
         });
 
         volView.setLayout(new qx.ui.layout.Canvas());
-		
-		
-		
-		
 		
 		if (fileBrowser!=null)
 		{
@@ -80,11 +67,7 @@ qx.Class.define("desk.gcSegmentation",
 		
 		return (volView);
 	},
-	
-	
-	
-	
-	
+
 	statics :
 	{
 		// LINKEDWINDOW : null
@@ -94,6 +77,11 @@ qx.Class.define("desk.gcSegmentation",
 	{
 		__winXP : true,
 
+// Données pour la position de l'objet window qui contient l'interface
+//(position par rapport au document <-> fenêtre de l'explorateur)
+// La largeur et la hauteur sont des valeurs par défaut. Si les widgets
+//dans la fenêtre ont besoin de plus d'espace, la fenêtre s'élargit
+// d'elle-même...normalement...
 		__winMap : {
 			left : 16,
 			top : 8,
@@ -101,6 +89,10 @@ qx.Class.define("desk.gcSegmentation",
 			height : 444
 		},
 
+// Données pour la position de la zone image dans l'interface
+// Les champs width et height sont remplis à partir du fichier xml
+// Ils sont utilisés pour réaliser différents calculs pour le dessin
+// et l'affichage
 		__imgMap : {
 			left : 40,
 			top : 4,
@@ -108,80 +100,100 @@ qx.Class.define("desk.gcSegmentation",
 			height : 0
 		},
 
+// Variable pour le canvas HTMLCanvasElement des seeds (utilisé pour les calculs
+// en arrière plan: changement de slide, zoom, annuler<-click droit)
 		__htmlCanvasLabels : null,
 
+// Variable pour le contexte associé au canvas précédent
 		__htmlContextLabels : null,
 
-		__drawingCanvasParams : {
-			sliceNumber : 0,
-			drawingContext : null,
-			paintFlag : false,
-			eraseFlag : false,
-			brCrFixingFlag : false,
-			currentColor : '#101010',
-			curCtxtZoom : 1,
-			myLineWidth : 4,
-			myLineCap : "round",
-			myLineJoin : "bevel",
-			myMiterLimit : 1
-		},
+// Données globales pour le canvas qx.html.Canvas des seeds (utilisé pour l'affichage)
+         __drawingCanvasParams : {
+             sliceNumber : 0,
+             drawingContext : null,     //Variable pour le contexte du canvas qx.html.Canvas des seeds (utilisé pour l'affichage)
+             paintFlag : false,     //Indique si l'utilisateur est en train de dessiner
+             eraseFlag : false,     //Indique si l'utilisateur est en train d'effacer
+             brCrFixingFlag : false,     //Indique si l'utilisateur est en train de modifier la luminosité ou le contraste de l'image de fond
+             curCtxtZoom : 1,     //Indique le zoom courant de la zone image, appliqué aux canvas d'affichage
+             currentColor : '#101010',
+             myLineWidth : 4,
+             myLineCap : "round",
+             myLineJoin : "bevel",
+             myMiterLimit : 1
+         },
 
-		__imgCanvasParams : {
-			imgContext : null,
-			brightness : 0,
-			contrast : 0
-		},
+// Variable pour le canvas HTMLCanvasElement des images (utilisé pour les calculs en arrière plan:
+// changement de slide, zoom, annuler<-click droit)
+         __htmlCanvasImage : null,
 
-		__horizSlices : {
-			inProgData : [],
-			sliceImages : [],
-			sliceLabels : [],
-			usedSliceSeeds : [],
-			sliceResults : []
-		},
+// Variable pour le contexte du canvas précédent
+         __htmlContextImage : null,
+		 
+// Données globales pour le canvas qx.html.Canvas des images (utilisé pour l'affichage)
+         __imgCanvasParams : {
+             imgContext : null,     //Variable pour le contexte du canvas qx.html.Canvas des images (utilisé pour l'affichage)
+             brightness : 0,     //Luminosité comprise entre -150 et 150
+             contrast : 0     //Contraste positif limité dans le programme à 5
+         },
 
-		__ctrlZData : [],
+// Tableaux de taille "nombre de slides" contenant pour chaque slide respectivement
+// des données globales, l'image chargée, les seeds, les seeds utilisés pour la segmentation la plus récente
+// et l'image segmentée chargée
+         __horizSlices : {
+             inProgData : [],
+             sliceImages : [],
+             sliceLabels : [],
+             usedSliceSeeds : [],
+             sliceResults : []
+         },
 
-		__undoLimit : 10,
+// Tableau contenant la pile de canvas permettant de faire "annuler" avec click droit
+         __ctrlZData : [],
 
-		__mouseData : {
-			xPos : 0,
-			yPos : 0,
-			recentX : 0,
-			recentY : 0,
-			decaleZoomX : 0,
-			decaleZoomY : 0,
-			mouseLeftDownFlag : 0,
-			mouseMiddleDownFlag : 0,
-			mouseRightDownFlag : 0
-		},
+// Taille de la pile "annuler"
+         __undoLimit : 10,
 
-		__labelColors : [],
+// Données globales associées à la souris (position et evenements)
+         __mouseData : {
+             xPos : 0,    //Position en x récupérée lors d'un évenement souris
+             yPos : 0,    //Position en y récupérée lors d'un évenement souris
+             recentX : 0,     //Position en x enregistrée à la fin d'un évenement souris
+             recentY : 0,     //Position en y enregistrée à la fin d'un évenement souris
+             decaleZoomX : 0,     //Décalage en x de la fenêtre zoomée par rapport à l'image taille x1
+             decaleZoomY : 0,     //Décalage en y de la fenêtre zoomée par rapport à l'image taille x1
+             mouseLeftDownFlag : 0,     //Indique si on appuyé sur le bouton gauche de la souris (dessin, gomme, luminosité/contraste)
+             mouseMiddleDownFlag : 0,     //Indique si on appuyé sur le bouton du milieu de la souris (déplace dans l'image zoomée)
+             mouseRightDownFlag : 0     //Indique si on appuyé sur le bouton droit de la souris (fonction "annuler")
+         },
 
-		__imageZ : 1,
-		__tempNum : 0,
-		__MaxZoom : 4,
-		__timestamp : 0,
-		__eraserCoeff : 2,
-		__numberOfSlices : 0,
-		__slicesNameOffset : 0,
-		__eraserCursorZ : 65535,
-		__drawingCanvasZ : 1023,
-		__slicesNamePrefix : "",
-		__segImgSKeyOpacity : 0.5,
-		__drawingSKeyOpacity : 0,
+// Tableau contenant les couleurs des seeds
+         __labelColors : [],
 
-		__htmlContextUsedSeeds : null,
+         __imageZ : 1,     // Indice de position en z du canvas image (tout au fond)
+         __tempNum : 0,     //Variable utilisée pour les calculs associés à la liste des slides
+         __MaxZoom : 4,     //Limite du zoom : x4
+         __timestamp : 0,     //Valeur calculée pour différencier les images dans le caché de l'explorateur
+         __eraserCoeff : 2,     //Taille gomme  =  eraserCoeff * taille crayon --> c'est plus agréable d'effacer comme ça
+         __numberOfSlices : 0,     //Contient le nombre de slides récuperé à partir du fichier xml (le programme est fait pour  numberOfSlices = "z")
 
-		__htmlContextSegImg : null,
+         __slicesNameOffset : 0,     //Contient la valeur de l'offset récuperé à partir du fichier xml
+         __eraserCursorZ : 65535,     //Indice de position en z du widget qui représente la gomme (toujours devant)
+         __drawingCanvasZ : 1023,     //Indice de position en z du canvas dessin (devant l'image, derrière la gomme)
+         __slicesNamePrefix : "",     //Contient la chaîne de charactéres du prefix récuperée à partir du fichier xml
+         __segImgSKeyOpacity : 0.5,     //Opacité à appliquer au canvas d'affichage de la segmentation dans la zone image lors d'un appui sur la touche "s"
+         __drawingSKeyOpacity : 0,     //Opacité à appliquer au canvas de dessin dans la zone image lors d'un appui sur la touche "s"
 
-		__htmlCanvasUsedSeeds : null,
+//Variable pour le canvas HTMLCanvasElement des seeds utilisés pour la segmentation la plus récente
+         __htmlContextUsedSeeds : null,
 
-		__htmlCanvasSegImg : null,
+//Variable pour le contexte du canvas précédent
+         __htmlContextSegImg : null,
 
-		__htmlCanvasImage : null,
+//Variable pour le canvas HTMLCanvasElement des image resultat de la segmentation
+         __htmlCanvasUsedSeeds : null,
 
-		__htmlContextImage : null,
+//Variable pour le contexte du canvas précédent
+         __htmlCanvasSegImg : null,
 
 		__path : null,
 		// __offset : null,

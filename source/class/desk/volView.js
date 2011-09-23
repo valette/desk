@@ -42,7 +42,25 @@ qx.Class.define("desk.volView",
 			this.setCaption(file);
 			this.openFile(file);
 		}
-			
+
+		// drag and drop support
+		this.setDraggable(true);
+		this.addListener("dragstart", function(e) {
+			e.addAction("copy");
+			e.addType("volumeSlice");
+			});
+
+		this.addListener("droprequest", function(e) {
+				var type = e.getCurrentType();
+				switch (type)
+				{
+				case "volumeSlice":
+					e.addData(type, this);
+					break;
+				default :
+					alert ("type "+type+"not supported for drag and drop");
+				}
+			}, this);
 
 		this.open();
 		return (this);		
@@ -61,7 +79,38 @@ qx.Class.define("desk.volView",
 		__slider : null,
 		__timestamp : null,
 		__fileFormatBox : null,
-		
+
+		extent : null,
+		origin : null,
+		spacing : null,
+		dimensions: null,
+
+		getCornersCoordinates : function () {
+			var z=this.origin[2]+(this.__slider.getValue()+this.extent[4])*this.spacing[2];
+			var xmin=this.origin[0]+this.extent[0]*this.spacing[0];
+			var xmax=this.origin[0]+this.extent[1]*this.spacing[0];
+			var ymin=this.origin[1]+this.extent[2]*this.spacing[1];
+			var ymax=this.origin[1]+this.extent[3]*this.spacing[1];
+			var coordinates=[];
+			coordinates[0]=xmin;
+			coordinates[1]=ymin;
+			coordinates[2]=z;
+			coordinates[3]=xmax;
+			coordinates[4]=ymin;
+			coordinates[5]=z;
+			coordinates[6]=xmax;
+			coordinates[7]=ymax;
+			coordinates[8]=z;
+			coordinates[9]=xmin;
+			coordinates[10]=ymax;
+			coordinates[11]=z;
+			return (coordinates);
+		},
+
+		getImage : function(){
+			return (this.__image);
+		},
+
 		openFile : function (file) {
 			this.removeAll();
 
@@ -77,8 +126,30 @@ qx.Class.define("desk.volView",
 			if (volume==null)
 				return;
 
-			var dimensions=volume.getElementsByTagName("dimensions")[0];
-			this.__maxZ=parseInt(dimensions.getAttribute("z"))-1;
+			// parse extent, dimensions, origin, spacing
+			var XMLextent=volume.getElementsByTagName("extent")[0];
+			this.extent=new Array(parseInt(XMLextent.getAttribute("x1")),
+							parseInt(XMLextent.getAttribute("x2")),
+							parseInt(XMLextent.getAttribute("y1")),
+							parseInt(XMLextent.getAttribute("y2")),
+							parseInt(XMLextent.getAttribute("z1")),
+							parseInt(XMLextent.getAttribute("z2")));
+
+			var XMLdimensions=volume.getElementsByTagName("dimensions")[0];
+			this.__maxZ=parseInt(XMLdimensions.getAttribute("z"))-1;
+			this.dimensions=new Array(parseInt(XMLdimensions.getAttribute("x")),
+							parseInt(XMLdimensions.getAttribute("y")),
+							parseInt(XMLdimensions.getAttribute("z")));
+
+			var XMLspacing=volume.getElementsByTagName("spacing")[0];
+			this.spacing=new Array(parseFloat(XMLspacing.getAttribute("x")),
+							parseFloat(XMLspacing.getAttribute("y")),
+							parseFloat(XMLspacing.getAttribute("z")));
+
+			var XMLorigin=volume.getElementsByTagName("origin")[0];
+			this.origin=new Array(parseFloat(XMLorigin.getAttribute("x")),
+							parseFloat(XMLorigin.getAttribute("y")),
+							parseFloat(XMLorigin.getAttribute("z")));
 
 			var slices=volume.getElementsByTagName("slicesprefix")[0];
 			this.__offset=parseInt(slices.getAttribute("offset"));
@@ -97,6 +168,7 @@ qx.Class.define("desk.volView",
 			this.__slider=new qx.ui.form.Slider();
 			this.__slider.setMinimum(0);
 			this.__slider.setMaximum(this.__maxZ);
+			this.__slider.setValue(Math.round(0.5*this.__maxZ));
 			this.__slider.setWidth(30);
 			this.__slider.setOrientation("vertical");
 			this.__slider.addListener("changeValue", function(event){this.updateImage();},this);

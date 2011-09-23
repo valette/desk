@@ -359,32 +359,78 @@ qx.Class.define("desk.meshView",
 
 				this.setDroppable(true);
 				this.addListener("drop", function(e) {
-					var fileBrowser=e.getData("fileBrowser");
-					var nodes=fileBrowser.getSelectedNodes();
-					var scene=this.getScene();
-					var numberOfMeshes=nodes.length;
-					var numberOfRemainingMeshes=numberOfMeshes;
-					for (var i=0;i<nodes.length;i++)
+					if (e.supportsType("fileBrowser"))
 					{
-						var fileNode=nodes[i];
-						var fileName=fileBrowser.getNodeURL(fileNode);
-						var mTime=fileBrowser.getNodeMTime(fileNode);
-
-						var update=function()
+						var fileBrowser=e.getData("fileBrowser");
+						var nodes=fileBrowser.getSelectedNodes();
+						var scene=this.getScene();
+						var numberOfMeshes=nodes.length;
+						var numberOfRemainingMeshes=numberOfMeshes;
+						for (var i=0;i<nodes.length;i++)
 						{
-							numberOfRemainingMeshes--;
-							switch (numberOfRemainingMeshes)
+							var fileNode=nodes[i];
+							var fileName=fileBrowser.getNodeURL(fileNode);
+							var mTime=fileBrowser.getNodeMTime(fileNode);
+
+							var update=function()
 							{
-								case Math.floor(numberOfMeshes/4):
-								case Math.floor(numberOfMeshes/2):
-								case Math.floor(numberOfMeshes*3/4):
-								case 0:
-									scene.viewAll();
-									break;
-								default:
+								numberOfRemainingMeshes--;
+								switch (numberOfRemainingMeshes)
+								{
+									case Math.floor(numberOfMeshes/4):
+									case Math.floor(numberOfMeshes/2):
+									case Math.floor(numberOfMeshes*3/4):
+									case 0:
+										scene.viewAll();
+										break;
+									default:
+								}
 							}
+							meshViewer.__readFile(fileName, mTime, null, update);
 						}
-						meshViewer.__readFile(fileName, mTime, null, update);
+					}
+					if (e.supportsType("volumeSlice"))
+					{
+						var volView=e.getData("volumeSlice");
+						var scene=this.getScene();
+						var square=this.__iframe.getWindow().o3djs.mesh.createSquare(scene);
+						var coords=volView.getCornersCoordinates();
+						for (var i=0;i<4;i++)
+							square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);
+						
+						var imageWidget=volView.getImage();
+
+						var width=volView.dimensions[0];
+						var height=volView.dimensions[1];
+						var newCanvas = document.createElement('canvas');
+						newCanvas.height=""+height;
+						newCanvas.width=""+width;
+						var context = newCanvas.getContext('2d');
+
+						function transferTexture()
+						{
+							console.log(imageWidget.getContentElement());
+							console.log(imageWidget.getContentElement().getDomElement());
+							var image = imageWidget.getContentElement().getDomElement().getElementsByTagName("img");
+							console.log(image);						
+							context.drawImage(image, 0, 0);
+							var data = context.getImageData(0, 0, width, height).data;
+							var numPixels=height*width*4;
+							var pixels=square.pixels;
+							for (var p = 0; p < numPixels; p++)
+								pixels[p]=data[p]/255;
+							square.texture.set(0, pixels);
+							scene.render();
+						}
+						transferTexture();
+						volView.getSlider().addListener('changeValue',function(e)
+						{
+							var coords=volView.getCornersCoordinates();
+							for (var i=0;i<4;i++)
+								square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);
+							scene.render();
+						});
+						scene.render();
 					}
 					// activate the window
 					var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
