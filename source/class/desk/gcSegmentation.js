@@ -29,6 +29,53 @@ qx.Class.define("desk.gcSegmentation",
 		this.__ctrlZData=[];
 		this.__labelColors=[];
 
+// Données pour la position de l'objet window qui contient l'interface
+//(position par rapport au document <-> fenêtre de l'explorateur)
+// La largeur et la hauteur sont des valeurs par défaut. Si les widgets
+//dans la fenêtre ont besoin de plus d'espace, la fenêtre s'élargit
+// d'elle-même...normalement...
+		this.__winMap = {
+			left : 16,
+			top : 8,
+			width : 400,
+			height : 444
+		};
+
+// Données pour la position de la zone image dans l'interface
+// Les champs width et height sont remplis à partir du fichier xml
+// Ils sont utilisés pour réaliser différents calculs pour le dessin
+// et l'affichage
+		this.__imgMap = {
+			left : 40,
+			top : 4,
+			width : 0,
+			height : 0
+			};
+
+
+		// Données globales pour le canvas qx.html.Canvas des seeds (utilisé pour l'affichage)
+		this.__drawingCanvasParams = {
+			sliceNumber : 0,
+			drawingContext : null,     //Variable pour le contexte du canvas qx.html.Canvas des seeds (utilisé pour l'affichage)
+			paintFlag : false,     //Indique si l'utilisateur est en train de dessiner
+			eraseFlag : false,     //Indique si l'utilisateur est en train d'effacer
+			brCrFixingFlag : false,     //Indique si l'utilisateur est en train de modifier la luminosité ou le contraste de l'image de fond
+			curCtxtZoom : 1,     //Indique le zoom courant de la zone image, appliqué aux canvas d'affichage
+			currentColor : '#101010',
+			myLineWidth : 4,
+			myLineCap : "round",
+			myLineJoin : "bevel",
+			myMiterLimit : 1
+			};
+
+// Données globales pour le canvas qx.html.Canvas des images (utilisé pour l'affichage)
+		this.__imgCanvasParams = {
+			imgContext : null,     //Variable pour le contexte du canvas qx.html.Canvas des images (utilisé pour l'affichage)
+			brightness : 0,     //Luminosité comprise entre -150 et 150
+			contrast : 0     //Contraste positif limité dans le programme à 5
+			};
+
+
 		var volView = this;
 		
         volView.set({
@@ -94,23 +141,13 @@ qx.Class.define("desk.gcSegmentation",
 // La largeur et la hauteur sont des valeurs par défaut. Si les widgets
 //dans la fenêtre ont besoin de plus d'espace, la fenêtre s'élargit
 // d'elle-même...normalement...
-		__winMap : {
-			left : 16,
-			top : 8,
-			width : 400,
-			height : 444
-		},
+		__winMap : null,
 
 // Données pour la position de la zone image dans l'interface
 // Les champs width et height sont remplis à partir du fichier xml
 // Ils sont utilisés pour réaliser différents calculs pour le dessin
 // et l'affichage
-		__imgMap : {
-			left : 40,
-			top : 4,
-			width : 0,
-			height : 0
-		},
+		__imgMap : null,
 
 // Variable pour le canvas HTMLCanvasElement des seeds (utilisé pour les calculs
 // en arrière plan: changement de slide, zoom, annuler<-click droit)
@@ -120,19 +157,7 @@ qx.Class.define("desk.gcSegmentation",
 		__htmlContextLabels : null,
 
 // Données globales pour le canvas qx.html.Canvas des seeds (utilisé pour l'affichage)
-         __drawingCanvasParams : {
-             sliceNumber : 0,
-             drawingContext : null,     //Variable pour le contexte du canvas qx.html.Canvas des seeds (utilisé pour l'affichage)
-             paintFlag : false,     //Indique si l'utilisateur est en train de dessiner
-             eraseFlag : false,     //Indique si l'utilisateur est en train d'effacer
-             brCrFixingFlag : false,     //Indique si l'utilisateur est en train de modifier la luminosité ou le contraste de l'image de fond
-             curCtxtZoom : 1,     //Indique le zoom courant de la zone image, appliqué aux canvas d'affichage
-             currentColor : '#101010',
-             myLineWidth : 4,
-             myLineCap : "round",
-             myLineJoin : "bevel",
-             myMiterLimit : 1
-         },
+         __drawingCanvasParams : null,
 
 // Variable pour le canvas HTMLCanvasElement des images (utilisé pour les calculs en arrière plan:
 // changement de slide, zoom, annuler<-click droit)
@@ -142,11 +167,7 @@ qx.Class.define("desk.gcSegmentation",
          __htmlContextImage : null,
 		 
 // Données globales pour le canvas qx.html.Canvas des images (utilisé pour l'affichage)
-         __imgCanvasParams : {
-             imgContext : null,     //Variable pour le contexte du canvas qx.html.Canvas des images (utilisé pour l'affichage)
-             brightness : 0,     //Luminosité comprise entre -150 et 150
-             contrast : 0     //Contraste positif limité dans le programme à 5
-         },
+         __imgCanvasParams : null,
 
 // Tableaux de taille "nombre de slides" contenant pour chaque slide respectivement
 // des données globales, l'image chargée, les seeds, les seeds utilisés pour la segmentation la plus récente
@@ -193,7 +214,7 @@ qx.Class.define("desk.gcSegmentation",
          __slicesNameOffset : 0,     //Contient la valeur de l'offset récuperé à partir du fichier xml
          __eraserCursorZ : 65535,     //Indice de position en z du widget qui représente la gomme (toujours devant)
          __drawingCanvasZ : 1023,     //Indice de position en z du canvas dessin (devant l'image, derrière la gomme)
-         __slicesNamePrefix : "",     //Contient la chaîne de charactéres du prefix récuperée à partir du fichier xml
+         __slicesNamePrefix : null,     //Contient la chaîne de charactéres du prefix récuperée à partir du fichier xml
          __segImgSKeyOpacity : 0.5,     //Opacité à appliquer au canvas d'affichage de la segmentation dans la zone image lors d'un appui sur la touche "s"
          __drawingSKeyOpacity : 0,     //Opacité à appliquer au canvas de dessin dans la zone image lors d'un appui sur la touche "s"
 
