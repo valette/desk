@@ -198,7 +198,7 @@ qx.Class.define("desk.gcSegmentation",
 		__path : null,
 
 		__embedObjectImage : null,
-		
+		__embedObjectLabels : null,
 		openFile : function (file,volView) {
 			this.removeAll();
 
@@ -1154,24 +1154,25 @@ qx.Class.define("desk.gcSegmentation",
 			
 			
 			var updateContext = function(event)
-            {
-                    var data = event.getData();
-                    // volView.debug("data : " + event.getData());
-                    volView.__drawingCanvasParams.drawingContext = data.context;
-					// volView.debug("volView.__drawingCanvasParams.drawingContext : " + volView.__drawingCanvasParams.drawingContext);
-                    volView.__drawingCanvasParams.drawingContext.setTransform(volView.__drawingCanvasParams.curCtxtZoom,0,0,volView.__drawingCanvasParams.curCtxtZoom,0,0);
-					volView.__drawingCanvasParams.drawingContext.mozImageSmoothingEnabled = false;
-					volView.__htmlCanvasLabels = document.getElementById("htmlTagCanvasLabels");
-                    volView.__htmlContextLabels = volView.__htmlCanvasLabels.getContext("2d");
-					volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
-                    volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
-                    volView.__htmlContextLabels.lineWidth = volView.__drawingCanvasParams.myLineWidth*volView.__drawingCanvasParams.curCtxtZoom;
-                    volView.__htmlContextLabels.lineCap = volView.__drawingCanvasParams.myLineCap;
-                    volView.__htmlContextLabels.lineJoin = volView.__drawingCanvasParams.myLineJoin;
-                    volView.__htmlContextLabels.miterLimit = volView.__drawingCanvasParams.myMiterLimit;
-                    volView.__htmlContextLabels.setTransform(volView.__drawingCanvasParams.curCtxtZoom,0,0,volView.__drawingCanvasParams.curCtxtZoom,0,0);
-					volView.__htmlContextLabels.mozImageSmoothingEnabled = false;
-            };
+			{
+				var data = event.getData();
+				// volView.debug("data : " + event.getData());
+				volView.__drawingCanvasParams.drawingContext = data.context;
+				// volView.debug("volView.__drawingCanvasParams.drawingContext : " + volView.__drawingCanvasParams.drawingContext);
+				volView.__drawingCanvasParams.drawingContext.setTransform(volView.__drawingCanvasParams.curCtxtZoom,0,0,volView.__drawingCanvasParams.curCtxtZoom,0,0);
+				volView.__drawingCanvasParams.drawingContext.mozImageSmoothingEnabled = false;
+				//					volView.__htmlCanvasLabels = document.getElementById("htmlTagCanvasLabels");
+				volView.__htmlCanvasLabels = volView.__embedObjectLabels.getContentElement().getDomElement().firstChild;
+				volView.__htmlContextLabels = volView.__htmlCanvasLabels.getContext("2d");
+				volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
+				volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
+				volView.__htmlContextLabels.lineWidth = volView.__drawingCanvasParams.myLineWidth*volView.__drawingCanvasParams.curCtxtZoom;
+				volView.__htmlContextLabels.lineCap = volView.__drawingCanvasParams.myLineCap;
+				volView.__htmlContextLabels.lineJoin = volView.__drawingCanvasParams.myLineJoin;
+				volView.__htmlContextLabels.miterLimit = volView.__drawingCanvasParams.myMiterLimit;
+				volView.__htmlContextLabels.setTransform(volView.__drawingCanvasParams.curCtxtZoom,0,0,volView.__drawingCanvasParams.curCtxtZoom,0,0);
+				volView.__htmlContextLabels.mozImageSmoothingEnabled = false;
+			};
 			
 			var mouseDownHandler = function(event)
             {
@@ -1555,7 +1556,7 @@ qx.Class.define("desk.gcSegmentation",
             var containerLayoutLabels = new qx.ui.layout.VBox();
             var containerHtmlLabels = new qx.ui.container.Composite(containerLayoutLabels);
             containerHtmlLabels.add(embedObjectLabels);
-			
+			this.__embedObjectLabels=embedObjectLabels;
             this.add(containerHtmlLabels, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
 			
 			
