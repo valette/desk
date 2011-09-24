@@ -16,7 +16,19 @@ qx.Class.define("desk.gcSegmentation",
         };
 
     ////Global variables
-		
+
+		// init 
+		this.__horizSlices={
+		inProgData : [],
+		sliceImages : [],
+		sliceLabels : [],
+		usedSliceSeeds : [],
+		sliceResults : []
+		};
+
+		this.__ctrlZData=[];
+		this.__labelColors=[];
+
 		var volView = this;
 		
         volView.set({
@@ -139,16 +151,18 @@ qx.Class.define("desk.gcSegmentation",
 // Tableaux de taille "nombre de slides" contenant pour chaque slide respectivement
 // des données globales, l'image chargée, les seeds, les seeds utilisés pour la segmentation la plus récente
 // et l'image segmentée chargée
-         __horizSlices : {
+/*         __horizSlices : {
              inProgData : [],
              sliceImages : [],
              sliceLabels : [],
              usedSliceSeeds : [],
              sliceResults : []
-         },
+         },*/
+
+         __horizSlices : null,
 
 // Tableau contenant la pile de canvas permettant de faire "annuler" avec click droit
-         __ctrlZData : [],
+         __ctrlZData : null,
 
 // Taille de la pile "annuler"
          __undoLimit : 10,
@@ -167,7 +181,7 @@ qx.Class.define("desk.gcSegmentation",
          },
 
 // Tableau contenant les couleurs des seeds
-         __labelColors : [],
+         __labelColors : null,
 
          __imageZ : 1,     // Indice de position en z du canvas image (tout au fond)
          __tempNum : 0,     //Variable utilisée pour les calculs associés à la liste des slides
