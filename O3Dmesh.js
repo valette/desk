@@ -124,17 +124,8 @@ o3djs.mesh.createSquare = function(scene, width, height)
 	effect.loadVertexShaderFromString("uniform mat4 worldViewProjection;attribute vec4 position;attribute vec2 texCoord0;varying vec2 texCoord;void main() {gl_Position = worldViewProjection * position;texCoord = texCoord0;}");
 	effect.loadPixelShaderFromString("varying vec2 texCoord;uniform sampler2D texSampler;void main() {gl_FragColor = texture2D(texSampler, texCoord);}");
 
-//	var material2 = o3djs.material.createMaterialFromFile(
-//		scene.pack,'texture-only-glsl.shader',scene.viewInfo.zOrderedDrawList);
-
-	var material2 = o3djs.material.createMaterialFromFile(
+	var material = o3djs.material.createMaterialFromFile(
 		scene.pack,'texture-only-glsl.shader',scene.viewInfo.performanceDrawList);
-
-	var material = scene.pack.createObject('Material');
-	material.drawList = scene.viewInfo.performanceDrawList;
-	material.effect = effect;
-	effect.createUniformParameters(material);
-
 
 	var vertexInfo = o3djs.primitives.createVertexInfo();
 
@@ -165,10 +156,10 @@ o3djs.mesh.createSquare = function(scene, width, height)
 	texCoordStream.addElement(0, 1);
 
 	var filename="slices";
-
-	var shape=vertexInfo.createShape(scene.pack, material2);
-//////////////////////////////
-    var samplerParam = scene.transform.createParam('texSampler0', 'ParamSampler');
+    var transform = scene.pack.createObject('Transform');
+    transform.parent=scene.transform;
+	var shape=vertexInfo.createShape(scene.pack, material);
+    var samplerParam = transform.createParam('texSampler0', 'ParamSampler');
     var sampler = scene.pack.createObject('Sampler');
     samplerParam.value = sampler;
     sampler.addressModeU = scene.o3dElement.o3d.Sampler.CLAMP;
@@ -180,8 +171,8 @@ o3djs.mesh.createSquare = function(scene, width, height)
 	for (var y = 0; y < height; ++y) {
 		for (var x = 0; x < width; ++x) {
 		var offset = (y * width + x) * 4;  // rgba
-		var u = x / width * Math.PI * 0.5;
-		var v = y / height * Math.PI * 0.5;
+//		var u = x / width * Math.PI * 0.5;
+//		var v = y / height * Math.PI * 0.5;
 		pixels[offset + 0] = 0;//Math.cos(v);  // red
 		pixels[offset + 1] = 1.0;//Math.sin(u);  // green
 		pixels[offset + 2] = 0;//Math.sin(v);  // blue
@@ -192,25 +183,9 @@ o3djs.mesh.createSquare = function(scene, width, height)
 	var texture = scene.pack.createTexture2D(width, height, scene.o3dElement.o3d.Texture.ARGB8, 1, false);
 	texture.set(0, pixels);
 
-/*	var img = new Image();
-	img.src = 'test.jpg';
-	img.onload=function(){
-	var newCanvas = document.createElement('canvas');
-	newCanvas.height=""+height;
-	newCanvas.width=""+width;
-	var context = newCanvas.getContext('2d');
-	context.drawImage(img, 0, 0);
-	var data = context.getImageData(0, 0, width, height).data;
-	var numPixels=height*width*4;
-	for (var p = 0; p < numPixels; p++)
-		pixels[p]=data[p]/255;
-	texture.set(0, pixels);
-	}
-*/
 	sampler.texture = texture;
 
-//////////////////////////////////////////
-	scene.transform.addShape(shape);
+	transform.addShape(shape);
 
 	var mesh=o3djs.mesh.createMesh(filename, shape, material, scene)
 	mesh.texture=texture;
