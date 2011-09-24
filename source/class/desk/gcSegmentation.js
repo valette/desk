@@ -196,13 +196,8 @@ qx.Class.define("desk.gcSegmentation",
          __htmlCanvasSegImg : null,
 
 		__path : null,
-		// __offset : null,
-		// __prefix : null,
-		// __image : null,
-		// __maxZ : null,
-		// __slider : null,
-		// __volView.__timestamp : null,
-		// __fileFormatBox : null,
+
+		__embedObjectImage : null,
 		
 		openFile : function (file,volView) {
 			this.removeAll();
@@ -1459,7 +1454,8 @@ qx.Class.define("desk.gcSegmentation",
 			{
                     var data = event.getData();
                     volView.__imgCanvasParams.imgContext = data.context;
-					volView.__htmlCanvasImage = document.getElementById("htmlTagCanvasImage");
+					volView.__htmlCanvasImage = volView.__embedObjectImage.getContentElement().getDomElement().firstChild;
+//					volView.__htmlCanvasImage = document.getElementById("htmlTagCanvasImage");
                     volView.__htmlContextImage = volView.__htmlCanvasImage.getContext("2d");
 					volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);	// here for unbuild version
 					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);	// here for unbuild version
@@ -1544,7 +1540,7 @@ qx.Class.define("desk.gcSegmentation",
             var containerLayoutImage = new qx.ui.layout.VBox();
             var containerHtmlImage = new qx.ui.container.Composite(containerLayoutImage);
             containerHtmlImage.add(embedObjectImage);
-			
+			this.__embedObjectImage=embedObjectImage;
             this.add(containerHtmlImage, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
 			
 			
