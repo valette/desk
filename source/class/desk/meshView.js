@@ -393,27 +393,18 @@ qx.Class.define("desk.meshView",
 					{
 						var volView=e.getData("volumeSlice");
 						var scene=this.getScene();
-						var square=this.__iframe.getWindow().o3djs.mesh.createSquare(scene);
+						var dimensions=volView.getDimensions();
+						var width=dimensions[0];
+						var height=dimensions[1];
+						var square=this.__iframe.getWindow().o3djs.mesh.createSquare(scene, width, height);
 						var coords=volView.getCornersCoordinates();
 						for (var i=0;i<4;i++)
-							square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);
-						
-						var imageWidget=volView.getImage();
+							square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);						
+						var canvas = volView.getCanvas();
 
-						var width=volView.dimensions[0];
-						var height=volView.dimensions[1];
-						var newCanvas = document.createElement('canvas');
-						newCanvas.height=""+height;
-						newCanvas.width=""+width;
-						var context = newCanvas.getContext('2d');
-
-						function transferTexture()
+						function updateTexture()
 						{
-							console.log(imageWidget.getContentElement());
-							console.log(imageWidget.getContentElement().getDomElement());
-							var image = imageWidget.getContentElement().getDomElement().getElementsByTagName("img");
-							console.log(image);						
-							context.drawImage(image, 0, 0);
+							var context = canvas.getContext2d();
 							var data = context.getImageData(0, 0, width, height).data;
 							var numPixels=height*width*4;
 							var pixels=square.pixels;
@@ -422,12 +413,13 @@ qx.Class.define("desk.meshView",
 							square.texture.set(0, pixels);
 							scene.render();
 						}
-						transferTexture();
+						updateTexture();
 						volView.getSlider().addListener('changeValue',function(e)
 						{
 							var coords=volView.getCornersCoordinates();
 							for (var i=0;i<4;i++)
 								square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);
+							updateTexture();
 							scene.render();
 						});
 						scene.render();

@@ -75,40 +75,54 @@ qx.Class.define("desk.volView",
 		__offset : null,
 		__prefix : null,
 		__image : null,
+		__canvas : null,
 		__maxZ : null,
 		__slider : null,
 		__timestamp : null,
 		__fileFormatBox : null,
 
-		extent : null,
-		origin : null,
-		spacing : null,
-		dimensions: null,
+		__extent : null,
+		__origin : null,
+		__spacing : null,
+		__dimensions: null,
 
-		getCornersCoordinates : function () {
-			var z=this.origin[2]+(this.__slider.getValue()+this.extent[4])*this.spacing[2];
-			var xmin=this.origin[0]+this.extent[0]*this.spacing[0];
-			var xmax=this.origin[0]+this.extent[1]*this.spacing[0];
-			var ymin=this.origin[1]+this.extent[2]*this.spacing[1];
-			var ymax=this.origin[1]+this.extent[3]*this.spacing[1];
-			var coordinates=[];
-			coordinates[0]=xmin;
-			coordinates[1]=ymin;
-			coordinates[2]=z;
-			coordinates[3]=xmax;
-			coordinates[4]=ymin;
-			coordinates[5]=z;
-			coordinates[6]=xmax;
-			coordinates[7]=ymax;
-			coordinates[8]=z;
-			coordinates[9]=xmin;
-			coordinates[10]=ymax;
-			coordinates[11]=z;
-			return (coordinates);
+		getDimensions : function ()
+		{
+			return (this.__dimensions);
 		},
 
 		getImage : function(){
-			return (this.__image);
+			return this.__image;
+		},
+
+		getCanvas : function(){
+			return this.__canvas;
+		},
+
+		getSlider : function (){
+			return this.__slider;
+		},
+
+		getCornersCoordinates : function () {
+			var z=this.__origin[2]+(this.__dimensions[2]-this.__slider.getValue()+this.__extent[4])*this.__spacing[2];
+			var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
+			var xmax=this.__origin[0]+this.__extent[1]*this.__spacing[0];
+			var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
+			var ymax=this.__origin[1]+this.__extent[3]*this.__spacing[1];
+			var coordinates=[];
+			coordinates[0]=xmin;
+			coordinates[1]=ymax;
+			coordinates[2]=z;
+			coordinates[3]=xmax;
+			coordinates[4]=ymax;
+			coordinates[5]=z;
+			coordinates[6]=xmax;
+			coordinates[7]=ymin;
+			coordinates[8]=z;
+			coordinates[9]=xmin;
+			coordinates[10]=ymin;
+			coordinates[11]=z;
+			return (coordinates);
 		},
 
 		openFile : function (file) {
@@ -128,7 +142,7 @@ qx.Class.define("desk.volView",
 
 			// parse extent, dimensions, origin, spacing
 			var XMLextent=volume.getElementsByTagName("extent")[0];
-			this.extent=new Array(parseInt(XMLextent.getAttribute("x1")),
+			this.__extent=new Array(parseInt(XMLextent.getAttribute("x1")),
 							parseInt(XMLextent.getAttribute("x2")),
 							parseInt(XMLextent.getAttribute("y1")),
 							parseInt(XMLextent.getAttribute("y2")),
@@ -137,17 +151,17 @@ qx.Class.define("desk.volView",
 
 			var XMLdimensions=volume.getElementsByTagName("dimensions")[0];
 			this.__maxZ=parseInt(XMLdimensions.getAttribute("z"))-1;
-			this.dimensions=new Array(parseInt(XMLdimensions.getAttribute("x")),
+			this.__dimensions=new Array(parseInt(XMLdimensions.getAttribute("x")),
 							parseInt(XMLdimensions.getAttribute("y")),
 							parseInt(XMLdimensions.getAttribute("z")));
 
 			var XMLspacing=volume.getElementsByTagName("spacing")[0];
-			this.spacing=new Array(parseFloat(XMLspacing.getAttribute("x")),
+			this.__spacing=new Array(parseFloat(XMLspacing.getAttribute("x")),
 							parseFloat(XMLspacing.getAttribute("y")),
 							parseFloat(XMLspacing.getAttribute("z")));
 
 			var XMLorigin=volume.getElementsByTagName("origin")[0];
-			this.origin=new Array(parseFloat(XMLorigin.getAttribute("x")),
+			this.__origin=new Array(parseFloat(XMLorigin.getAttribute("x")),
 							parseFloat(XMLorigin.getAttribute("y")),
 							parseFloat(XMLorigin.getAttribute("z")));
 
@@ -188,8 +202,18 @@ qx.Class.define("desk.volView",
 
 			this.add(leftContainer);
 
-			this.__image=new qx.ui.basic.Image();
-			this.add(this.__image);
+			this.__image=new Image();
+			this.__canvas = new qx.ui.embed.Canvas().set({
+				canvasWidth: this.__dimensions[0],
+				canvasHeight: this.__dimensions[1],
+				width: this.__dimensions[0],
+				height: this.__dimensions[1],
+				syncDimension: true
+				});
+	        this.__canvas.addListener("redraw", this.redraw, this);
+
+			console.log(this.__dimensions);
+			this.add(this.__canvas);
 			this.updateImage();
 
 			this.addListener("keypress",
@@ -205,10 +229,19 @@ qx.Class.define("desk.volView",
 					}},this);				
 		},
 
+		redraw : function()
+		{
+			var width=this.__dimensions[0];
+			var height=this.__dimensions[1];
+			this.__canvas.getContext2d().drawImage(this.__image, 0, 0, width, height,
+							0, 0, width, height);
+		},
+
 		updateImage : function() {
-			this.__image.setSource(
-				this.__path+this.__prefix+(this.__offset+this.__maxZ-this.__slider.getValue())+"."+
-					this.__fileFormatBox.getSelection()[0].getLabel()+"?nocache="+this.__timestamp);
+			var volView=this;
+			this.__image.onload=function(){volView.redraw();};
+			this.__image.src=this.__path+this.__prefix+(this.__offset+this.__maxZ-this.__slider.getValue())
+				+"."+this.__fileFormatBox.getSelection()[0].getLabel()+"?nocache="+this.__timestamp;
 		}
 	}
 });
