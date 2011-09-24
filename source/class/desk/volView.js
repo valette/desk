@@ -70,6 +70,10 @@ qx.Class.define("desk.volView",
 		LINKEDWINDOW : null
 	},
 
+	properties : {
+		slice : { check : "Number", init : 0 ,  event : "changeSlice"}
+	},
+
 	members : {
 		__path : null,
 		__offset : null,
@@ -239,7 +243,10 @@ qx.Class.define("desk.volView",
 
 		updateImage : function() {
 			var volView=this;
-			this.__image.onload=function(){volView.redraw();};
+			this.__image.onload=function(){
+				volView.redraw();
+				volView.setSlice(volView.__maxZ-volView.__slider.getValue());
+				};
 			this.__image.src=this.__path+this.__prefix+(this.__offset+this.__maxZ-this.__slider.getValue())
 				+"."+this.__fileFormatBox.getSelection()[0].getLabel()+"?nocache="+this.__timestamp;
 		}

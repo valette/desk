@@ -414,7 +414,7 @@ qx.Class.define("desk.meshView",
 							scene.render();
 						}
 						updateTexture();
-						volView.getSlider().addListener('changeValue',function(e)
+						volView.addListener('changeSlice',function(e)
 						{
 							var coords=volView.getCornersCoordinates();
 							for (var i=0;i<4;i++)
