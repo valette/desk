@@ -199,6 +199,9 @@ qx.Class.define("desk.gcSegmentation",
 
 		__embedObjectImage : null,
 		__embedObjectLabels : null,
+		__embedObjectSegImg : null,
+		__embedObjectUsedSeeds : null,
+
 		openFile : function (file,volView) {
 			this.removeAll();
 
@@ -1136,7 +1139,8 @@ qx.Class.define("desk.gcSegmentation",
 			{
                     var data = event.getData();
                     extWinSeedsCanvas.extWinSeedsContext = data.context;
-					volView.__htmlCanvasUsedSeeds = document.getElementById("htmlTagCanvasUsedSeeds");
+					volView.__htmlCanvasUsedSeeds = volView.__embedObjectUsedSeeds.getContentElement().getDomElement().firstChild;
+//					volView.__htmlCanvasUsedSeeds = document.getElementById("htmlTagCanvasUsedSeeds");
                     volView.__htmlContextUsedSeeds = volView.__htmlCanvasUsedSeeds.getContext("2d");
             }, this);
             externalWindow.add(extWinSeedsCanvas, {left: 0, top: 0});
@@ -1409,7 +1413,8 @@ qx.Class.define("desk.gcSegmentation",
 			{
                     var data = event.getData();
                     segmentedImgCanvas.segImgContext = data.context;
-					volView.__htmlCanvasSegImg = document.getElementById("htmlTagCanvasSegImg");
+//					volView.__htmlCanvasSegImg = document.getElementById("htmlTagCanvasSegImg");
+					volView.__htmlCanvasSegImg = volView.__embedObjectSegImg.getContentElement().getDomElement().firstChild;
                     volView.__htmlContextSegImg = volView.__htmlCanvasSegImg.getContext("2d");
             }, this);
 			segmentedImgCanvas.addListener("mousemove", function(event)
@@ -1571,7 +1576,7 @@ qx.Class.define("desk.gcSegmentation",
             var containerLayoutSegImg = new qx.ui.layout.VBox();
             var containerHtmlSegImg = new qx.ui.container.Composite(containerLayoutSegImg);
             containerHtmlSegImg.add(embedObjectSegImg);
-			
+			this.__embedObjectSegImg=embedObjectSegImg;
             this.add(containerHtmlSegImg, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
 			
 			
@@ -1586,7 +1591,7 @@ qx.Class.define("desk.gcSegmentation",
             var containerLayoutUsedSeeds = new qx.ui.layout.VBox();
             var containerHtmlUsedSeeds = new qx.ui.container.Composite(containerLayoutUsedSeeds);
             containerHtmlUsedSeeds.add(embedObjectUsedSeeds);
-			
+			this.__embedObjectUsedSeeds=embedObjectUsedSeeds;
             this.add(containerHtmlUsedSeeds, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
 			
 			
