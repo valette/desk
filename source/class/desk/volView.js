@@ -216,7 +216,6 @@ qx.Class.define("desk.volView",
 				});
 	        this.__canvas.addListener("redraw", this.redraw, this);
 
-			console.log(this.__dimensions);
 			this.add(this.__canvas);
 			this.updateImage();
 
