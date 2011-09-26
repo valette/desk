@@ -94,34 +94,31 @@ qx.Class.define("desk.gcSegmentation",
 		{
 			//file is a tree node...
 			var node=file;
-			volView.setCaption(node.label);
-			var ajax = new XMLHttpRequest();
-			ajax.onreadystatechange = function()
+			this.setCaption(node.label);
+			var parameterMap={
+				"action" : "Slice_Volume",
+				"input_file" : fileBrowser.getNodePath(node),
+				"output_directory" : "cache\/"};
+			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
+
+			function getAnswer(e)
 			{
-				if(this.readyState == 4 && this.status == 200)
-				{
-					var sha1=ajax.responseText.split("\n")[0];
-					volView.openFile("\/visu\/visu_cache\/"+sha1+"\/"+"volume.xml",volView);
-				}
-				else if (this.readyState == 4 && this.status != 200)
-				{
-					// fetched the wrong page or network error...
-					alert('"Fetched the wrong page" OR "Network error"');
-				}
-			};
+				var req = e.getTarget();
+				var slicesDirectory=req.getResponseText().split("\n")[0];
+				volView.openFile("\/visu\/desk\/php\/"+slicesDirectory+"\/"+"volume.xml");
+			}
+
 			var label = new qx.ui.basic.Label("Computing slices, wait...").set({
 				font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
 				});
-			volView.add(label);
-			ajax.open("POST", "/visu/desk/php/volumeSlice.php", true);
-			ajax.send(fileBrowser.getNodePath(node));
+			this.add(label, {flex : 1});
 		}
 		else
 		{
-			volView.setCaption(file);
-			volView.openFile(file,volView);
+			this.setCaption(file);
+			this.openFile(file);
 		}
-		
+
 		volView.open();
 		
 		return (volView);
