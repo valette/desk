@@ -132,6 +132,8 @@ qx.Class.define("desk.gcSegmentation",
 
 	members :
 	{
+		__currentSeedsModified : false,
+
 		__winXP : true,
 
 // Données pour la position de l'objet window qui contient l'interface
@@ -1144,6 +1146,7 @@ qx.Class.define("desk.gcSegmentation",
                     {
 							if((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.eraseFlag))
 							{
+					            	volView.__currentSeedsModified=true;
 									save2undoStack(event);
 							}
                             if((volView.__drawingCanvasParams.paintFlag)&&(!volView.__drawingCanvasParams.eraseFlag)&&(!volView.__drawingCanvasParams.brCrFixingFlag))
@@ -1586,25 +1589,25 @@ qx.Class.define("desk.gcSegmentation",
 			
 			slider.addListener("changeValue", function(event)
 			{
-					volView.__htmlContextLabels.beginPath();
+					volView.__htmlContextLabels.beginPath(); // seb : why???
 					volView.__mouseData.mouseLeftDownFlag = false;
 				////Save current image
-					volView.__horizSlices.sliceLabels[volView.__drawingCanvasParams.sliceNumber] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
-
 					var oldSliceIndex= volView.__drawingCanvasParams.sliceNumber;;
-					volView.__horizSlices.inProgData[oldSliceIndex].curTagged = !pngCanvasFctn();	//  pngCanvasFctn() returns true if image is all black
+					volView.__horizSlices.sliceLabels[oldSliceIndex] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
+
+					volView.__horizSlices.inProgData[oldSliceIndex].curTagged = 
+						!pngCanvasFctn(volView.__horizSlices.inProgData[oldSliceIndex].curTagged);	//  pngCanvasFctn() returns true if image is all black
 					var newSliceIndex=event.getData();
 					volView.__drawingCanvasParams.sliceNumber = newSliceIndex;
 					if(segmentationDone)
 					{
 							var index = 0;
-							volView.__htmlContextSegImg.drawImage(volView.__horizSlices.sliceResults[volView.__drawingCanvasParams.sliceNumber][index],
-														0,
-														0,
-														volView.__horizSlices.sliceResults[volView.__drawingCanvasParams.sliceNumber][index].width,
-														volView.__horizSlices.sliceResults[volView.__drawingCanvasParams.sliceNumber][index].height);
-							if(typeof volView.__horizSlices.usedSliceSeeds[volView.__drawingCanvasParams.sliceNumber][index] != "undefined")
-									volView.__htmlContextUsedSeeds.putImageData(volView.__horizSlices.usedSliceSeeds[volView.__drawingCanvasParams.sliceNumber][index], 0, 0);
+							var segmentationResult=volView.__horizSlices.sliceResults[newSliceIndex][index];
+							volView.__htmlContextSegImg.drawImage(segmentationResult,
+														0,0,segmentationResult.width,
+														segmentationResult.height);
+							if(typeof volView.__horizSlices.usedSliceSeeds[newSliceIndex][index] != "undefined")
+									volView.__htmlContextUsedSeeds.putImageData(volView.__horizSlices.usedSliceSeeds[newSliceIndex][index], 0, 0);
 							else
 									volView.__htmlContextUsedSeeds.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 					}
@@ -1622,6 +1625,7 @@ qx.Class.define("desk.gcSegmentation",
 													tempPos++;
 									}
 									slicesListSemaphore = false;
+									console.log("adding slice : "+oldSliceIndex);
 									modifSlicesList.addAt(sliceItem, tempPos);
 								// Update members list
 									var tempMembers = [];
@@ -1670,51 +1674,41 @@ qx.Class.define("desk.gcSegmentation",
 									if(typeof modifSlicesList.getChildren()[tempPos-1] != "undefined")
 											modifSlicesList.setSelection([modifSlicesList.getChildren()[tempPos-1]]);
 									slicesListSemaphore = false;
-									if(0<listMembers.length)
-									{
-										////Update XML file
-											updateSeedsXML();
-									}
-									else
-									{
-										////Erase XML file
-					//commented by seb						eraseFile("seeds.xml");
-										////Reset image and drawing canvas if list is empty
-											resetZoom();
-											startButton.set({opacity: 0.5, enabled : false});
-									}
+									if(listMembers.length==0)
+										startButton.set({opacity: 0.5, enabled : false});
 							}
 					}	////End if(volView.__horizSlices.inProgData[oldSliceIndex].curTagged)
 				////Set canvas, buttons, list
-					if(volView.__horizSlices.inProgData[volView.__drawingCanvasParams.sliceNumber].curTagged)	////NEXT slice HAS seeds
+					if(volView.__horizSlices.inProgData[newSliceIndex].curTagged)	////NEXT slice HAS seeds
 					{
-							volView.__htmlContextLabels.putImageData(volView.__horizSlices.sliceLabels[volView.__drawingCanvasParams.sliceNumber], 0, 0);
+							volView.__htmlContextLabels.putImageData(volView.__horizSlices.sliceLabels[newSliceIndex], 0, 0);
 							clearButton.set({opacity: 1, enabled : true});
 							eraserButton.set({opacity: 1, enabled : true});
                             startButton.set({opacity: 1, enabled : true});
 						////Update XML file
-							updateSeedsXML();
-							if(volView.__horizSlices.inProgData[volView.__drawingCanvasParams.sliceNumber].inList)
+			// commented by seb				updateSeedsXML();
+							if(volView.__horizSlices.inProgData[newSliceIndex].inList)
 							{
-									var tempPos = findInArray(listMembers, volView.__drawingCanvasParams.sliceNumber);
+									var tempPos = findInArray(listMembers, newSliceIndex);
 									slicesListSemaphore = true;
 									modifSlicesList.setSelection([modifSlicesList.getChildren()[tempPos]]);
 									slicesListSemaphore = false;
 							}
 							else
-							{
+							{ /////seb : why???? if next slice has seeds, it is already in the list, no?
 								////Update XML file
 									updateSeedsXML();
 								////Add slice to list
-									var sliceItem = new qx.ui.form.ListItem("Slice No." + volView.__drawingCanvasParams.sliceNumber);
+									var sliceItem = new qx.ui.form.ListItem("Slice No." + newSliceIndex);
 									var tempPos = 0;
-									for(var i=0; i<=volView.__drawingCanvasParams.sliceNumber; i++)
+									for(var i=0; i<=newSliceIndex; i++)
 									{
-											if(listMembers[i]<volView.__drawingCanvasParams.sliceNumber)
+											if(listMembers[i]<newSliceIndex)
 													tempPos++;
 									}
 									// slicesListSemaphore = true;
 									slicesListSemaphore = false;
+									console.log("adding slice (2): "+oldSliceIndex);
 									modifSlicesList.addAt(sliceItem, tempPos);
 									// slicesListSemaphore = false;
 								////Update members list
@@ -1729,7 +1723,7 @@ qx.Class.define("desk.gcSegmentation",
 											}
 											if(j==tempPos)
 											{
-													tempMembers[j] = volView.__drawingCanvasParams.sliceNumber;
+													tempMembers[j] = newSliceIndex;
 													i--;	// do "i--;" so when doing "i++;" i index doesn't actually change
 											}
 											j++;
@@ -1738,7 +1732,7 @@ qx.Class.define("desk.gcSegmentation",
 									listSemahpore = false;
 									for(var i=0; i<volView.__numberOfSlices; i++)
 									{
-											if(i!=volView.__drawingCanvasParams.sliceNumber)
+											if(i!=newSliceIndex)
 													volView.__horizSlices.inProgData[i].inList = volView.__horizSlices.inProgData[i].inList;
 											else
 													volView.__horizSlices.inProgData[i].inList = true;
@@ -1753,18 +1747,18 @@ qx.Class.define("desk.gcSegmentation",
 							clearButton.execute();
 							volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 							startButton.set({opacity: 0.5, enabled : false});
-							if(listMembers.length<1)
-							{
+				//			if(listMembers.length<1)
+				//			{
 				// commented by seb					eraseFile("seeds.xml");
-							}
-							if(!volView.__horizSlices.inProgData[volView.__drawingCanvasParams.sliceNumber].inList)
+				//			}
+							if(!volView.__horizSlices.inProgData[newSliceIndex].inList)
 							{
 								////Add slice to list
-									var sliceItem = new qx.ui.form.ListItem("Slice No." + volView.__drawingCanvasParams.sliceNumber);
+									var sliceItem = new qx.ui.form.ListItem("Slice No." + newSliceIndex);
 									var tempPos = 0;
-									for(var i=0; i<=volView.__drawingCanvasParams.sliceNumber; i++)
+									for(var i=0; i<=newSliceIndex; i++)
 									{
-											if(listMembers[i]<volView.__drawingCanvasParams.sliceNumber)
+											if(listMembers[i]<newSliceIndex)
 													tempPos++;
 									}
 									// slicesListSemaphore = true;
@@ -1773,13 +1767,13 @@ qx.Class.define("desk.gcSegmentation",
 									// slicesListSemaphore = false;
 									for(var i=0; i<volView.__numberOfSlices; i++)
 									{
-											if(i!=volView.__drawingCanvasParams.sliceNumber)
+											if(i!=newSliceIndex)
 													volView.__horizSlices.inProgData[i].inList = volView.__horizSlices.inProgData[i].inList;
 											else
 													volView.__horizSlices.inProgData[i].inList = true;
 									}
 								////Update XML file
-									updateSeedsXML();
+					// commented by seb				updateSeedsXML();
 									slicesListSemaphore = true;
 									modifSlicesList.setSelection([modifSlicesList.getChildren()[tempPos]]);
 									slicesListSemaphore = false;
@@ -1796,28 +1790,30 @@ qx.Class.define("desk.gcSegmentation",
 											}
 											if(j==tempPos)
 											{
-													tempMembers[j] = volView.__drawingCanvasParams.sliceNumber;
+													tempMembers[j] = newSliceIndex;
 											}
 									}
 									listMembers = tempMembers;
 									listSemahpore = false;
 							}
-					};	////End if(typeof volView.__horizSlices.sliceLabels[volView.__drawingCanvasParams.sliceNumber] != "undefined")
+					};	////End if(typeof volView.__horizSlices.sliceLabels[newSliceIndex] != "undefined")
 				////Update image canvas
-					if(volView.__horizSlices.sliceImages[volView.__drawingCanvasParams.sliceNumber].srcImage.src=="")
+					if(volView.__horizSlices.sliceImages[newSliceIndex].srcImage.src=="")
 					{
 						////First access to slice. Load image by passing source url
-							volView.__horizSlices.sliceImages[volView.__drawingCanvasParams.sliceNumber].srcImage.src = volView.__horizSlices.sliceImages[volView.__drawingCanvasParams.sliceNumber].url;
+							volView.__horizSlices.sliceImages[newSliceIndex].srcImage.src = volView.__horizSlices.sliceImages[newSliceIndex].url;
 					}
 					else
 					{
 						////Slice has previously been accessed. Load image by copying image into "canvasImage" global variable
-							canvasImage = volView.__horizSlices.sliceImages[volView.__drawingCanvasParams.sliceNumber].srcImage;
+							canvasImage = volView.__horizSlices.sliceImages[newSliceIndex].srcImage;
 							volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 							drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
 					};
 				////Clear "undo" stack
 					volView.__ctrlZData = [];
+	            	volView.__currentSeedsModified=false;
+
 			}, this);
 
             slider.addListener("mouseup", function(event)
@@ -2125,6 +2121,7 @@ qx.Class.define("desk.gcSegmentation",
 		////Pops out the last state in the "undo" stack and draw image on the canvas
             var undoFnct = function(mouseEvent)
             {
+            	volView.__currentSeedsModified=true;
 				if(mouseEvent.isRightPressed())
 				{
 					if(0<volView.__ctrlZData.length)
@@ -2186,6 +2183,7 @@ qx.Class.define("desk.gcSegmentation",
 		////Clear labels canvas at mouse position
             var eraseFnct = function(autoComplete)
             {
+            	volView.__currentSeedsModified=true;
 				var tempX, tempY;
 				if(autoComplete)
 				{
@@ -2245,8 +2243,11 @@ qx.Class.define("desk.gcSegmentation",
 			
 		////Function reads drawing canvas to save it in png format in the server  or
 		//// to return true value if image is all black (if canvas is empty)
-            var pngCanvasFctn = function()
+            var pngCanvasFctn = function(previousValue)
             {
+            	if (volView.__currentSeedsModified==false)
+            		return (!previousValue);
+
                 var sliceData = volView.__htmlContextImage.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
                 var pixels = sliceData.data;
                 var seeds = volView.__horizSlices.sliceLabels[volView.__drawingCanvasParams.sliceNumber].data;
@@ -2431,20 +2432,20 @@ qx.Class.define("desk.gcSegmentation",
 			
 			
 		////Recreate list after removing member
-			var updateList = function(tempPos)
+			var updateList = function(pos)
             {
 					var tempMembers = [];
 					var j = 0;
 					listSemahpore = true;
 					for(var i=0; i<listMembers.length; i++)
 					{
-							if(i!=tempPos)
+							if(i!=pos)
 							{
 									tempMembers[j] = listMembers[i];
 									volView.__horizSlices.inProgData[listMembers[i]].inList = volView.__horizSlices.inProgData[listMembers[i]].inList;
 									j++;
 							}
-							if(i==tempPos)
+							else
 							{
 									volView.__horizSlices.sliceLabels[listMembers[i]] = null;
 									volView.__horizSlices.inProgData[listMembers[i]].inList = false;
