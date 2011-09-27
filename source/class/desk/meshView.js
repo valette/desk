@@ -141,7 +141,6 @@ qx.Class.define("desk.meshView",
 					"action" : "mesh2vtk",
 					"input_file" : file,
 					"output_directory" : "cache\/"};
-				fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 
 				function getAnswer(e)
 				{
@@ -152,6 +151,8 @@ qx.Class.define("desk.meshView",
 					var mtime=splitResponse[splitResponse.length-3];
 					meshView.openFile("\/visu\/desk\/php\/"+outputDir+"\/"+"mesh.vtk",mtime);
 				}
+
+				fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 				break;
 			default	:
 				alert ("extension "+extension+" not supported for mesh viewer");
@@ -316,7 +317,7 @@ qx.Class.define("desk.meshView",
 
 				this.__iframe.addListenerOnce("load", function(e) { 
 					this.addListener("resize", 
-					function(event) {this.__iframe.getWindow().resizeClient(this.getWidth()-7,this.getHeight()-32);},this);
+					function(event) {this.__iframe.getWindow().resizeClient(this.getWidth()-70,this.getHeight()-32);},this);
 					}, this);
 			}
 			else
@@ -408,19 +409,27 @@ qx.Class.define("desk.meshView",
 							var data = context.getImageData(0, 0, width, height).data;
 							var numPixels=height*width*4;
 							var pixels=square.pixels;
-							for (var p = 0; p < numPixels; p++)
-								pixels[p]=data[p]/255;
+							while (--numPixels)
+								pixels[numPixels]=data[numPixels]/255;
 							square.texture.set(0, pixels);
 							scene.render();
 						}
 						updateTexture();
 						volView.addListener('changeSlice',function(e)
 						{
-							var coords=volView.getCornersCoordinates();
-							for (var i=0;i<4;i++)
-								square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);
-							updateTexture();
-							scene.render();
+							var slice=volView.getSlice();
+							while (1)
+							{
+								var coords=volView.getCornersCoordinates();
+								updateTexture();
+								for (var i=0;i<4;i++)
+									square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);
+								scene.render();
+								if (slice==volView.getSlice())
+									break;
+								else
+									console.log("skew detected...");
+							}
 						});
 						scene.render();
 					}

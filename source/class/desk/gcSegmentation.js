@@ -99,7 +99,6 @@ qx.Class.define("desk.gcSegmentation",
 				"action" : "Slice_Volume",
 				"input_file" : fileBrowser.getNodePath(node),
 				"output_directory" : "cache\/"};
-			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 
 			function getAnswer(e)
 			{
@@ -107,6 +106,8 @@ qx.Class.define("desk.gcSegmentation",
 				var slicesDirectory=req.getResponseText().split("\n")[0];
 				volView.openFile("\/visu\/desk\/php\/"+slicesDirectory+"\/"+"volume.xml");
 			}
+
+			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 
 			var label = new qx.ui.basic.Label("Computing slices, wait...").set({
 				font : new qx.bom.Font(28, ["Verdana", "sans-serif"])

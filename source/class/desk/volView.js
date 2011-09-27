@@ -19,18 +19,19 @@ qx.Class.define("desk.volView",
 			//file is a tree node...
 			var node=file;
 			this.setCaption(node.label);
+
+			function getAnswer(e)
+				{
+					var req = e.getTarget();
+					var slicesDirectory=req.getResponseText().split("\n")[0];
+					volView.openFile("\/visu\/desk\/php\/"+slicesDirectory+"\/"+"volume.xml");
+				}
+
 			var parameterMap={
 				"action" : "Slice_Volume",
 				"input_file" : fileBrowser.getNodePath(node),
 				"output_directory" : "cache\/"};
 			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
-
-			function getAnswer(e)
-			{
-				var req = e.getTarget();
-				var slicesDirectory=req.getResponseText().split("\n")[0];
-				volView.openFile("\/visu\/desk\/php\/"+slicesDirectory+"\/"+"volume.xml");
-			}
 
 			var label = new qx.ui.basic.Label("Computing slices, wait...").set({
 				font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
@@ -234,17 +235,15 @@ qx.Class.define("desk.volView",
 
 		redraw : function()
 		{
-			var width=this.__dimensions[0];
-			var height=this.__dimensions[1];
-			this.__canvas.getContext2d().drawImage(this.__image, 0, 0, width, height,
-							0, 0, width, height);
+			this.__canvas.getContext2d().drawImage(this.__image, 0, 0);
 		},
 
 		updateImage : function() {
 			var volView=this;
+			var slice=volView.__maxZ-volView.__slider.getValue();
 			this.__image.onload=function(){
 				volView.redraw();
-				volView.setSlice(volView.__maxZ-volView.__slider.getValue());
+				volView.setSlice(slice);
 				};
 			this.__image.src=this.__path+this.__prefix+(this.__offset+this.__maxZ-this.__slider.getValue())
 				+"."+this.__fileFormatBox.getSelection()[0].getLabel()+"?nocache="+this.__timestamp;

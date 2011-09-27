@@ -343,8 +343,8 @@ qx.Class.define("desk.actions",
 					// add the value of the "force update" checkbox
 					parameterMap["force_update"]=forceUpdateCheckBox.getValue();
 					executionStatus.setValue("Processing...");
-					this.launchAction (parameterMap, getAnswer, this)
-					function getAnswer(e)
+
+					function getAnswer (e)
 					{
 						// configure the send button
 						send.setEnabled(true);
@@ -368,7 +368,9 @@ qx.Class.define("desk.actions",
 							}
 							embededFileBrowser.updateRoot();
 						}
+
 					}
+					this.launchAction (parameterMap, getAnswer, this)
 				} else {
 					alert(manager.getInvalidMessages().join("\n"));
 				}
