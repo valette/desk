@@ -203,7 +203,7 @@ qx.Class.define("desk.gcSegmentation",
          __labelColors : null,
 
          __imageZ : 1,     // Indice de position en z du canvas image (tout au fond)
-         __tempNum : 0,     //Variable utilisée pour les calculs associés à la liste des slides
+
          __MaxZoom : 4,     //Limite du zoom : x4
          __timestamp : 0,     //Valeur calculée pour différencier les images dans le caché de l'explorateur
          __eraserCoeff : 2,     //Taille gomme  =  eraserCoeff * taille crayon --> c'est plus agréable d'effacer comme ça
@@ -242,77 +242,69 @@ qx.Class.define("desk.gcSegmentation",
 
         volView.addListener("mouseout", function(event)
 		{
-                if(((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.brCrFixingFlag))&&(!volView.__drawingCanvasParams.eraseFlag))
-                {
-						volView.__htmlContextLabels.beginPath();
-						volView.__mouseData.mouseLeftDownFlag = false;
-						volView.__mouseData.mouseMiddleDownFlag = false;
-						eraserCursor.set({cursor: "default"});
-						drawingCanvas.set({cursor: "default"});
-                }
+            if(((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.brCrFixingFlag))&&(!volView.__drawingCanvasParams.eraseFlag))
+            {
+				volView.__htmlContextLabels.beginPath();
+				volView.__mouseData.mouseLeftDownFlag = false;
+				volView.__mouseData.mouseMiddleDownFlag = false;
+				eraserCursor.set({cursor: "default"});
+				drawingCanvas.set({cursor: "default"});
+            }
         },this);
         volView.addListener("mouseover", function(event)
 		{
-				volView.set({opacity: 1, enabled : true});
-                if(((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.brCrFixingFlag))||(volView.__drawingCanvasParams.eraseFlag))
-                {
-						getPosition(event,false);
-						var tempMargin = 4;
-						if(!((tempMargin<=volView.__mouseData.xPos)&&(volView.__mouseData.xPos<=volView.__imgMap.width-tempMargin)&&(tempMargin<=volView.__mouseData.yPos)&&(volView.__mouseData.yPos<=volView.__imgMap.height-tempMargin)))
-						{
-								volView.__htmlContextLabels.beginPath();
-								volView.__mouseData.mouseLeftDownFlag = false;
-								volView.__mouseData.mouseMiddleDownFlag = false;
-								eraserCursor.set({cursor: "default"});
-								drawingCanvas.set({cursor: "default"});
-						}
-                }
+			volView.set({opacity: 1, enabled : true});
+            if(((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.brCrFixingFlag))||(volView.__drawingCanvasParams.eraseFlag))
+            {
+				getPosition(event,false);
+				var tempMargin = 4;
+				if(!((tempMargin<=volView.__mouseData.xPos)&&(volView.__mouseData.xPos<=volView.__imgMap.width-tempMargin)&&(tempMargin<=volView.__mouseData.yPos)&&(volView.__mouseData.yPos<=volView.__imgMap.height-tempMargin)))
+				{
+					volView.__htmlContextLabels.beginPath();
+					volView.__mouseData.mouseLeftDownFlag = false;
+					volView.__mouseData.mouseMiddleDownFlag = false;
+					eraserCursor.set({cursor: "default"});
+					drawingCanvas.set({cursor: "default"});
+				}
+            }
         },this);
         volView.addListener("click", function(event)
 		{
-                volView.__winMap.left = volView.getBounds().left;
-                volView.__winMap.top = volView.getBounds().top;
+            volView.__winMap.left = volView.getBounds().left;
+            volView.__winMap.top = volView.getBounds().top;
         },this);
-		
-		
-		
-		
-		
-		
-		
-		
 		
 		
 		////Get image dimensions and number of slices 
 			var globalParamRequest = new XMLHttpRequest();
 			globalParamRequest.onreadystatechange = function()
 			{
-					 if(this.readyState == 4 && this.status == 200)
-					 {
-							// so far so good
-							if(this.responseXML!=null)
-							{
-									var response = this.responseXML;
-									volView.__imgMap.width = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("x"));
-									volView.__imgMap.height = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("y"));
-									volView.__numberOfSlices = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("z"));
-									volView.__slicesNameOffset = parseInt(response.getElementsByTagName("slicesprefix")[0].getAttribute("offset"));
-									volView.__slicesNamePrefix = response.getElementsByTagName("slicesprefix")[0].firstChild.nodeValue;
-									volView.__timestamp = response.getElementsByTagName("slicesprefix")[0].getAttribute("volView.__timestamp");
-									if (volView.__timestamp==null)
-										volView.__timestamp = (new Date()).getTime();
-							}
-							else
-							{
-									alert("Global Params : Failure...");
-									return;
-							}
-					}
-					else if (this.readyState == 4 && this.status != 200)
+				 if(this.readyState == 4 && this.status == 200)
+				 {
+					// so far so good
+					if(this.responseXML!=null)
 					{
-							// fetched the wrong page or network error...
-							alert('Global Params : "Fetched the wrong page" OR "Network error"');
+						var response = this.responseXML;
+						volView.__imgMap.width = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("x"));
+						volView.__imgMap.height = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("y"));
+						volView.__numberOfSlices = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("z"));
+						volView.__slicesNameOffset = parseInt(response.getElementsByTagName("slicesprefix")[0].getAttribute("offset"));
+						volView.__slicesNamePrefix = response.getElementsByTagName("slicesprefix")[0].firstChild.nodeValue;
+						volView.__timestamp = response.getElementsByTagName("slicesprefix")[0].getAttribute("volView.__timestamp");
+						if (volView.__timestamp==null)
+							volView.__timestamp = (new Date()).getTime();
 					}
+					else
+					{
+							alert("Global Params : Failure...");
+							return;
+					}
+				}
+				else if (this.readyState == 4 && this.status != 200)
+				{
+						// fetched the wrong page or network error...
+						alert('Global Params : "Fetched the wrong page" OR "Network error"');
+				}
 			};
 			globalParamRequest.open("GET",file+"?nocache=" + Math.random(),false);
 			globalParamRequest.send(null);
@@ -332,16 +324,16 @@ qx.Class.define("desk.gcSegmentation",
 			
 		////Create pen tool
             var penSize = new qx.ui.form.Spinner().set({
-                    minimum: 1,
-                    maximum: 100,
-                    value: volView.__drawingCanvasParams.myLineWidth
+                minimum: 1,
+                maximum: 100,
+                value: volView.__drawingCanvasParams.myLineWidth
             });
 			
             penSize.addListener("changeValue", function(event)
 			{
-                    volView.__htmlContextLabels.lineWidth = event.getData();
-                    eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*volView.__drawingCanvasParams.curCtxtZoom),
-                                        height: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*volView.__drawingCanvasParams.curCtxtZoom)});
+                volView.__htmlContextLabels.lineWidth = event.getData();
+                eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*volView.__drawingCanvasParams.curCtxtZoom),
+                                    height: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*volView.__drawingCanvasParams.curCtxtZoom)});
             });
 			
 			var penLabel = new qx.ui.basic.Label("Brush : ");
@@ -367,80 +359,80 @@ qx.Class.define("desk.gcSegmentation",
 			
             eraserCursor.addListener("mousedown", function(event)
 			{
-                ////Erase
-					if(event.isLeftPressed())
-                    {
-							getPosition(event,true);
-							save2undoStack(event);
-							eraseFnct();
-                            volView.__mouseData.mouseLeftDownFlag = true;	// Activate erasing while moving
-                    }
-				////Activate moving
-                    if(event.isMiddlePressed())
-                    {
-							eraserCursor.set({cursor: "move"});
-                            volView.__mouseData.mouseMiddleDownFlag = true;
-							volView.__mouseData.recentX = volView.__mouseData.xPos;
-							volView.__mouseData.recentY = volView.__mouseData.yPos;
-                    }
-				////"Undo" (draw previous canvas)
-					undoFnct(event);
+            ////Erase
+				if(event.isLeftPressed())
+                {
+					getPosition(event,true);
+					save2undoStack(event);
+					eraseFnct();
+                    volView.__mouseData.mouseLeftDownFlag = true;	// Activate erasing while moving
+                }
+			////Activate moving
+                if(event.isMiddlePressed())
+                {
+					eraserCursor.set({cursor: "move"});
+                    volView.__mouseData.mouseMiddleDownFlag = true;
+					volView.__mouseData.recentX = volView.__mouseData.xPos;
+					volView.__mouseData.recentY = volView.__mouseData.yPos;
+                }
+			////"Undo" (draw previous canvas)
+				undoFnct(event);
             });
 			
             eraserCursor.addListener("mousemove", function(event)
 			{
-					getPosition(event,false);	// No scaling so coordinates are compatible with placeEraser function
-                    var tempMargin = 4/volView.__drawingCanvasParams.curCtxtZoom;
-				////Hide eraser if out of drawing zone
-                    if(!((tempMargin<=volView.__mouseData.xPos)&&(volView.__mouseData.xPos<=volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom-tempMargin)&&(tempMargin<=volView.__mouseData.yPos)&&(volView.__mouseData.yPos<=volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom-tempMargin)))
-                    {
-                            if(eraserCursor.getVisibility()=="visible")
-							{
-                                    eraserCursor.exclude();
-							}
-                    }
-				////Move eraser to mouse position
-                    eraserCursor.set({marginLeft: Math.round((volView.__mouseData.xPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
-                                        marginTop: Math.round((volView.__mouseData.yPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
-					volView.__mouseData.xPos = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.xPos;
-                    volView.__mouseData.yPos = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.yPos;
-					if(volView.__mouseData.mouseLeftDownFlag)
-							eraseFnct(true);
-                    if(volView.__mouseData.mouseMiddleDownFlag)
-                    {
-							moveCanvas();
-                    }
+				getPosition(event,false);	// No scaling so coordinates are compatible with placeEraser function
+                var tempMargin = 4/volView.__drawingCanvasParams.curCtxtZoom;
+			////Hide eraser if out of drawing zone
+                if(!((tempMargin<=volView.__mouseData.xPos)&&(volView.__mouseData.xPos<=volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom-tempMargin)&&(tempMargin<=volView.__mouseData.yPos)&&(volView.__mouseData.yPos<=volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom-tempMargin)))
+                {
+                    if(eraserCursor.getVisibility()=="visible")
+					{
+                        eraserCursor.exclude();
+					}
+                }
+			////Move eraser to mouse position
+                eraserCursor.set({marginLeft: Math.round((volView.__mouseData.xPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
+                                    marginTop: Math.round((volView.__mouseData.yPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
+				volView.__mouseData.xPos = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.xPos;
+                volView.__mouseData.yPos = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.yPos;
+				if(volView.__mouseData.mouseLeftDownFlag)
+						eraseFnct(true);
+                if(volView.__mouseData.mouseMiddleDownFlag)
+                {
+					moveCanvas();
+                }
             },this);
 			
             eraserCursor.addListener("mouseup", function(event)
 			{
-                    volView.__mouseData.mouseMiddleDownFlag = false;
-                    volView.__mouseData.mouseLeftDownFlag = false;
-					eraserCursor.set({cursor: "default"});
+                volView.__mouseData.mouseMiddleDownFlag = false;
+                volView.__mouseData.mouseLeftDownFlag = false;
+				eraserCursor.set({cursor: "default"});
             },this);
 
             this.add(eraserCursor, {left:0, top: 0});
 
 			eraserCursor.addListener("keydown", function(event)
 			{
-					if(event.getKeyIdentifier()=="S")
-					{
-						////Load reults canvas
-						drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
-						////Change opacity of results canvas and drawing canvas
-						drawingCanvas.set({opacity: volView.__drawingSKeyOpacity});
-						segmentedImgCanvas.set({opacity: volView.__segImgSKeyOpacity, zIndex: volView.__drawingCanvasZ+1});
-					}
+				if(event.getKeyIdentifier()=="S")
+				{
+					////Load reults canvas
+					drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
+					////Change opacity of results canvas and drawing canvas
+					drawingCanvas.set({opacity: volView.__drawingSKeyOpacity});
+					segmentedImgCanvas.set({opacity: volView.__segImgSKeyOpacity, zIndex: volView.__drawingCanvasZ+1});
+				}
 			},this);
 			
 			eraserCursor.addListener("keyup", function(event)
 			{
-					if(event.getKeyIdentifier()=="S")
-					{
-						////Change opacity of results canvas and drawing canvas
-						segmentedImgCanvas.set({opacity: 0, zIndex: volView.__drawingCanvasZ-1});
-						drawingCanvas.set({opacity: whileDrawingDrwngOpacitySlider.getValue()});
-					}
+				if(event.getKeyIdentifier()=="S")
+				{
+					////Change opacity of results canvas and drawing canvas
+					segmentedImgCanvas.set({opacity: 0, zIndex: volView.__drawingCanvasZ-1});
+					drawingCanvas.set({opacity: whileDrawingDrwngOpacitySlider.getValue()});
+				}
 			},this);
 			
             eraserCursor.exclude();
@@ -455,24 +447,24 @@ qx.Class.define("desk.gcSegmentation",
 			
 			eraserButton.addListener("changeValue", function(event)
 			{
-                    volView.__drawingCanvasParams.eraseFlag = event.getData();
-				////Activate erasing
-                    if(volView.__drawingCanvasParams.eraseFlag)
-                    {
-                            brghtnssCntrstButton.setValue(false);
-                            volView.__drawingCanvasParams.brCrFixingFlag = false;
-                    }
-				////Hide eraser
-                    else
-                    {
-                            eraserCursor.exclude();
-                    }
+                volView.__drawingCanvasParams.eraseFlag = event.getData();
+			////Activate erasing
+                if(volView.__drawingCanvasParams.eraseFlag)
+                {
+                    brghtnssCntrstButton.setValue(false);
+                    volView.__drawingCanvasParams.brCrFixingFlag = false;
+                }
+			////Hide eraser
+                else
+                {
+                    eraserCursor.exclude();
+                }
             });
 
             eraserButton.addListener("mouseup", function(event)
 			{
-                    volView.__htmlContextLabels.beginPath();
-                    volView.__mouseData.mouseLeftDownFlag = false;
+                volView.__htmlContextLabels.beginPath();
+                volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 			
             if(this.__winXP)
@@ -489,21 +481,21 @@ qx.Class.define("desk.gcSegmentation",
 			
 			clearButton.addListener("execute", function(event)
 			{
-                    volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-                    volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-					volView.__htmlContextLabels.beginPath();
-                    volView.__mouseData.mouseLeftDownFlag = false;
-                    clearButton.set({opacity: 0.5, enabled : false});
-                    eraserButton.set({opacity: 0.5, enabled : false});
-                    eraserButton.setValue(false);
-                    volView.__drawingCanvasParams.eraseFlag = false;
-                    eraserCursor.exclude();
+                volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+                volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+				volView.__htmlContextLabels.beginPath();
+                volView.__mouseData.mouseLeftDownFlag = false;
+                clearButton.set({opacity: 0.5, enabled : false});
+                eraserButton.set({opacity: 0.5, enabled : false});
+                eraserButton.setValue(false);
+                volView.__drawingCanvasParams.eraseFlag = false;
+                eraserCursor.exclude();
             });
 
             clearButton.addListener("mouseup", function(event)
 			{
-                    volView.__htmlContextLabels.beginPath();
-                    volView.__mouseData.mouseLeftDownFlag = false;
+                volView.__htmlContextLabels.beginPath();
+                volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 			
 			if(this.__winXP)
@@ -524,8 +516,8 @@ qx.Class.define("desk.gcSegmentation",
 
             colorsTabView.addListener("mouseup", function(event)
 			{
-                    volView.__htmlContextLabels.beginPath();
-                    volView.__mouseData.mouseLeftDownFlag = false;
+                volView.__htmlContextLabels.beginPath();
+                volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 
             this.add(colorsTabView, {left: volView.__imgMap.width + 50, top: 73+4});
@@ -539,80 +531,80 @@ qx.Class.define("desk.gcSegmentation",
 			var nbLines = 1;
 			var createToolBox = function(inLabel)
             {
-                    var labelLayout = new qx.ui.layout.VBox();
-                    labelLayout.setSpacing(4);
-					var labelBox = new qx.ui.container.Composite().set({
-                            layout : labelLayout,
-                            allowGrowX: false,
-                            allowGrowY: false,
-                            width: boxWidth,
-                            height: 53,
-                            decorator: unfocusedBorder,
-                            backgroundColor: "background-light",
-                            focusable : true
-                    });
-					var colorBox = new qx.ui.container.Composite().set({
-                            maxWidth: boxWidth-12,
-                            height: 25,
-                            alignX : "center",
-							backgroundColor: inLabel.color
-                    });
-					labelBox.addListener("click", function(){
-                            volView.__drawingCanvasParams.paintFlag = true;
-                            var i = 0;
-                            var children = colorsPage.getChildren();
-                            while(children[i]!=this)
+                var labelLayout = new qx.ui.layout.VBox();
+                labelLayout.setSpacing(4);
+				var labelBox = new qx.ui.container.Composite().set({
+                    layout : labelLayout,
+                    allowGrowX: false,
+                    allowGrowY: false,
+                    width: boxWidth,
+                    height: 53,
+                    decorator: unfocusedBorder,
+                    backgroundColor: "background-light",
+                    focusable : true
+                });
+				var colorBox = new qx.ui.container.Composite().set({
+                    maxWidth: boxWidth-12,
+                    height: 25,
+                    alignX : "center",
+					backgroundColor: inLabel.color
+                });
+				labelBox.addListener("click", function(){
+                    volView.__drawingCanvasParams.paintFlag = true;
+                    var i = 0;
+                    var children = colorsPage.getChildren();
+                    while(children[i]!=this)
+                    {
+                        i++;
+                    };
+					if(!((children[i].getBackgroundColor()=="white")&&(!volView.__drawingCanvasParams.eraseFlag)))
+                    {
+                        children[i].set({decorator: focusedBorder, backgroundColor: "white"});
+                        for(var j=0; j<nbLabels; j++)
+                        {
+                            if(j!=i)
                             {
-                                    i++;
-                            };
-							if(!((children[i].getBackgroundColor()=="white")&&(!volView.__drawingCanvasParams.eraseFlag)))
-                            {
-                                    children[i].set({decorator: focusedBorder, backgroundColor: "white"});
-                                    for(var j=0; j<nbLabels; j++)
-                                    {
-                                            if(j!=i)
-                                            {
-                                                    children[j].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
-                                            }
-                                    }
+                                children[j].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
                             }
-						////Comment to desactivate color on/off on click
-                            else
-                            {
-                                    children[i].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
-                                    volView.__drawingCanvasParams.paintFlag = false;
-                            }
-                            volView.__drawingCanvasParams.currentColor = colorBox.getBackgroundColor();
-                            eraserButton.setValue(false);
-                            volView.__drawingCanvasParams.eraseFlag = false;
-                            brghtnssCntrstButton.setValue(false);
-                            volView.__drawingCanvasParams.brCrFixingFlag = false;
-                            colorsPage.set({opacity: 1});
-                    });
-					var boxLabel = new qx.ui.basic.Label("\\" + inLabel.id + " : " + inLabel.name).set({alignX:"left"});
-					labelBox.add(boxLabel);
-					labelBox.add(colorBox);
-					if(inLabel.id<=colorCount)
+                        }
+                    }
+				////Comment to desactivate color on/off on click
+                    else
+                    {
+                        children[i].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
+                        volView.__drawingCanvasParams.paintFlag = false;
+                    }
+                    volView.__drawingCanvasParams.currentColor = colorBox.getBackgroundColor();
+                    eraserButton.setValue(false);
+                    volView.__drawingCanvasParams.eraseFlag = false;
+                    brghtnssCntrstButton.setValue(false);
+                    volView.__drawingCanvasParams.brCrFixingFlag = false;
+                    colorsPage.set({opacity: 1});
+                });
+				var boxLabel = new qx.ui.basic.Label("\\" + inLabel.id + " : " + inLabel.name).set({alignX:"left"});
+				labelBox.add(boxLabel);
+				labelBox.add(colorBox);
+				if(inLabel.id<=colorCount)
+				{
+					colorsPage.add(labelBox, {column: inLabel.id-(nbLines-1)*columnLimit, row: (nbLines-1)});
+				}
+				else
+				{
+					nbLines++;
+					colorsPage.add(labelBox, {column: inLabel.id-(nbLines-1)*columnLimit, row: (nbLines-1)});
+					colorCount += columnLimit;
+				};
+				var tempColors = colorsPage._getChildren();
+				if((boxWidth<boxLabel.getSizeHint().width+8)&&(0<tempColors.length))
+				{
+					boxWidth = boxLabel.getSizeHint().width + 16;	//// value returned by getSizeHint() is not enough
+					for(var i=0; i<tempColors.length; i++)
 					{
-							colorsPage.add(labelBox, {column: inLabel.id-(nbLines-1)*columnLimit, row: (nbLines-1)});
+						tempColors[i].set({width:boxWidth});
+						tempColors[i]._getChildren()[1].set({maxWidth:boxWidth-12});
 					}
-					else
-					{
-							nbLines++;
-							colorsPage.add(labelBox, {column: inLabel.id-(nbLines-1)*columnLimit, row: (nbLines-1)});
-							colorCount += columnLimit;
-					};
-					var tempColors = colorsPage._getChildren();
-					if((boxWidth<boxLabel.getSizeHint().width+8)&&(0<tempColors.length))
-					{
-							boxWidth = boxLabel.getSizeHint().width + 16;	//// value returned by getSizeHint() is not enough
-							for(var i=0; i<tempColors.length; i++)
-							{
-									tempColors[i].set({width:boxWidth});
-									tempColors[i]._getChildren()[1].set({maxWidth:boxWidth-12});
-							}
-					};
-					
+				};
+				
             };
 			
 		////Fill labels zone width data from the xml file
@@ -620,37 +612,37 @@ qx.Class.define("desk.gcSegmentation",
 			var colorsParamRequest = new XMLHttpRequest();
 			colorsParamRequest.onreadystatechange = function()
 			{
-					 if(this.readyState == 4 && this.status == 200)
-					 {
-							// so far so good
-							if(this.responseXML!=null)
-							{
-									var response = this.responseXML;
-									nbLabels = response.getElementsByTagName("color").length;
-									for(var i=0; i<nbLabels; i++)
-									{
-											volView.__labelColors[i] = {
-													red : response.getElementsByTagName("color")[i].getAttribute("red"),
-													green : response.getElementsByTagName("color")[i].getAttribute("green"),
-													blue : response.getElementsByTagName("color")[i].getAttribute("blue")
-											};
-											var newLabel = {
-													id : parseInt(response.getElementsByTagName("color")[i].getAttribute("label")),
-													name : response.getElementsByTagName("color")[i].getAttribute("name"),
-													color : "rgb(" + volView.__labelColors[i].red + "," + volView.__labelColors[i].green + "," + volView.__labelColors[i].blue + ")"
-											};
-											newLabel.name = newLabel.name.replace(newLabel.name.charAt(0), newLabel.name.charAt(0).toUpperCase());
-											createToolBox(newLabel);
-									};
-							}
-							else
-									alert("Global Params : Failure...");
-					}
-					else if (this.readyState == 4 && this.status != 200)
+				 if(this.readyState == 4 && this.status == 200)
+				 {
+					// so far so good
+					if(this.responseXML!=null)
 					{
-							// fetched the wrong page or network error...
-							alert('Global Params : "Fetched the wrong page" OR "Network error"');
+						var response = this.responseXML;
+						nbLabels = response.getElementsByTagName("color").length;
+						for(var i=0; i<nbLabels; i++)
+						{
+							volView.__labelColors[i] = {
+								red : response.getElementsByTagName("color")[i].getAttribute("red"),
+								green : response.getElementsByTagName("color")[i].getAttribute("green"),
+								blue : response.getElementsByTagName("color")[i].getAttribute("blue")
+							};
+							var newLabel = {
+								id : parseInt(response.getElementsByTagName("color")[i].getAttribute("label")),
+								name : response.getElementsByTagName("color")[i].getAttribute("name"),
+								color : "rgb(" + volView.__labelColors[i].red + "," + volView.__labelColors[i].green + "," + volView.__labelColors[i].blue + ")"
+							};
+							newLabel.name = newLabel.name.replace(newLabel.name.charAt(0), newLabel.name.charAt(0).toUpperCase());
+							createToolBox(newLabel);
+						};
 					}
+					else
+							alert("Global Params : Failure...");
+				}
+				else if (this.readyState == 4 && this.status != 200)
+				{
+						// fetched the wrong page or network error...
+						alert('Global Params : "Fetched the wrong page" OR "Network error"');
+				}
 			};
 			colorsParamRequest.open("GET", "/visu/colors3.xml", false);
 			colorsParamRequest.send(null);
@@ -666,18 +658,18 @@ qx.Class.define("desk.gcSegmentation",
 
             brghtnssCntrstButton.addListener("changeValue", function(event)
 			{
-                    volView.__drawingCanvasParams.brCrFixingFlag = event.getData();
-                    if(volView.__drawingCanvasParams.brCrFixingFlag)
+                volView.__drawingCanvasParams.brCrFixingFlag = event.getData();
+                if(volView.__drawingCanvasParams.brCrFixingFlag)
+                {
+                    var children = colorsPage.getChildren();
+                    for(var i=0; i<nbLabels; i++)
                     {
-                            var children = colorsPage.getChildren();
-                            for(var i=0; i<nbLabels; i++)
-                            {
-                                    children[i].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
-                            }
-                            eraserButton.setValue(false);
-                            volView.__drawingCanvasParams.eraseFlag = false;
-                            volView.__drawingCanvasParams.paintFlag = false;
+                            children[i].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
                     }
+                    eraserButton.setValue(false);
+                    volView.__drawingCanvasParams.eraseFlag = false;
+                    volView.__drawingCanvasParams.paintFlag = false;
+                }
             });
 			
 			if(this.__winXP)
@@ -694,11 +686,11 @@ qx.Class.define("desk.gcSegmentation",
 			
 			resetBrCrButton.addListener("execute", function(event)
 			{
-                    volView.__imgCanvasParams.brightness = 0;
-                    volView.__imgCanvasParams.contrast = 0;
-					drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
-                    resetBrCrButton.set({opacity: 0.5, enabled : false});
-                    brghtnssCntrstButton.setValue(false);
+                volView.__imgCanvasParams.brightness = 0;
+                volView.__imgCanvasParams.contrast = 0;
+				drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
+                resetBrCrButton.set({opacity: 0.5, enabled : false});
+                brghtnssCntrstButton.setValue(false);
             });
 			
 			this.add(resetBrCrButton);
@@ -769,69 +761,69 @@ qx.Class.define("desk.gcSegmentation",
 			
 			modifSlicesList.addListener("keypress", function(event)
 			{
-					if((event.getKeyIdentifier()=="Delete")&&(typeof listMembers[0] != "undefined"))
+				if((event.getKeyIdentifier()=="Delete")&&(typeof listMembers[0] != "undefined"))
+				{
+					var selectedChild = modifSlicesList.getSelection();
+					var tempChildren = modifSlicesList.getChildren();
+					var tempPos = findInArray(tempChildren, selectedChild[0]);
+				////Erase image on the server
+					eraseFile(volView.__slicesNamePrefix + (volView.__slicesNameOffset + listMembers[tempPos]) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp);
+				////Update members list
+					updateList(tempPos);
+				////Clear drawing canvas
+					clearButton.execute();
+				////Erase from widget list
+					modifSlicesList.remove(modifSlicesList.getSelection()[0]);
+					if(typeof modifSlicesList.getChildren()[tempPos-1] != "undefined")
+						modifSlicesList.setSelection([modifSlicesList.getChildren()[tempPos-1]]);
+					if(0<listMembers.length)
 					{
-							var selectedChild = modifSlicesList.getSelection();
-							var tempChildren = modifSlicesList.getChildren();
-							var tempPos = findInArray(tempChildren, selectedChild[0]);
-						////Erase image on the server
-							eraseFile(volView.__slicesNamePrefix + (volView.__slicesNameOffset + listMembers[tempPos]) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp);
-						////Update members list
-							updateList(tempPos);
-						////Clear drawing canvas
-							clearButton.execute();
-						////Erase from widget list
-							modifSlicesList.remove(modifSlicesList.getSelection()[0]);
-							if(typeof modifSlicesList.getChildren()[tempPos-1] != "undefined")
-									modifSlicesList.setSelection([modifSlicesList.getChildren()[tempPos-1]]);
-							if(0<listMembers.length)
-							{
-								////Update XML file
-									updateSeedsXML();
-							}
-							else
-							{
-								////Reset widget list to current slice
-									var tempSlide = slider.getValue();
-									if(tempSlide!=0)
-									{
-											slider.setValue(0);
-											slider.setValue(tempSlide);
-									}
-									else
-									{
-											slider.setValue(1);
-											slider.setValue(0);
-									}
-								////Erase XML file
-									eraseFile("seeds.xml");
-								////Reset image and drawing canvas if list is empty
-									resetZoom();
-									startButton.set({opacity: 0.5, enabled : false});
-							}
+					////Update XML file
+						updateSeedsXML();
 					}
+					else
+					{
+					////Reset widget list to current slice
+						var tempSlide = slider.getValue();
+						if(tempSlide!=0)
+						{
+								slider.setValue(0);
+								slider.setValue(tempSlide);
+						}
+						else
+						{
+								slider.setValue(1);
+								slider.setValue(0);
+						}
+					////Erase XML file
+						eraseFile("seeds.xml");
+					////Reset image and drawing canvas if list is empty
+						resetZoom();
+						startButton.set({opacity: 0.5, enabled : false});
+					}
+				}
 			}, this);
 			
 			modifSlicesList.addListener("changeSelection", function(event)
 			{
-					if(!slicesListSemaphore)
+				if(!slicesListSemaphore)
+				{
+					var selectedChild = event.getData();
+					var tempChildren = modifSlicesList.getChildren();
+					for(var i=0; i<tempChildren.length; i++)
 					{
-							var selectedChild = event.getData();
-							var tempChildren = modifSlicesList.getChildren();
-							for(var i=0; i<tempChildren.length; i++)
+						if(tempChildren[i]==selectedChild[0])
+						{
+							while(listSemahpore);
+							if(typeof listMembers != "undefined")	// Prevents error when the list has not yet been created
 							{
-									if(tempChildren[i]==selectedChild[0])
-									{
-											while(listSemahpore);
-											if(typeof listMembers != "undefined")	// Prevents error when the list has not yet been created
-											{
-													if(typeof listMembers[i] != "undefined")	// Prevents error when the member has not yet been added
-															slider.setValue(listMembers[i]);
-											}
-											continue;
-									}
+								if(typeof listMembers[i] != "undefined")	// Prevents error when the member has not yet been added
+										slider.setValue(listMembers[i]);
 							}
+							continue;
+						}
 					}
+				}
 			}, this);
 			
 			slicesPage.add(modifSlicesList, {column: 0, row: 0});
@@ -848,84 +840,84 @@ qx.Class.define("desk.gcSegmentation",
 			var segSemahpore = true;
 			startButton.addListener("changeValue", function(event)
 			{
-					if(event.getData())
+				if(event.getData())
+				{
+					segmentationDone = false;
+                    var children = colorsPage.getChildren();
+                    for(var i=0; i<nbLabels; i++)
+                    {
+                        children[i].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
+                    }
+                    volView.__drawingCanvasParams.paintFlag = false;
+                    eraserButton.setValue(false);
+                    volView.__drawingCanvasParams.eraseFlag = false;
+					brghtnssCntrstButton.setValue(false);
+					volView.__drawingCanvasParams.brCrFixingFlag = false;
+					this.set({opacity: 0.5, enabled : false});
+					var tempMax = volView.__horizSlices.usedSliceSeeds[0].length;
+					for(var i=0; i<listMembers.length; i++)
 					{
-							segmentationDone = false;
-                            var children = colorsPage.getChildren();
-                            for(var i=0; i<nbLabels; i++)
-                            {
-                                    children[i].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
-                            }
-                            volView.__drawingCanvasParams.paintFlag = false;
-                            eraserButton.setValue(false);
-                            volView.__drawingCanvasParams.eraseFlag = false;
-							brghtnssCntrstButton.setValue(false);
-							volView.__drawingCanvasParams.brCrFixingFlag = false;
-							this.set({opacity: 0.5, enabled : false});
-							var tempMax = volView.__horizSlices.usedSliceSeeds[0].length;
-							for(var i=0; i<listMembers.length; i++)
-							{
-									volView.__horizSlices.usedSliceSeeds[listMembers[i]][tempMax] = volView.__horizSlices.sliceLabels[listMembers[i]];
-							}
-							volView.__htmlContextUsedSeeds.putImageData(volView.__horizSlices.usedSliceSeeds[volView.__drawingCanvasParams.sliceNumber][tempMax], 0, 0);
-							segSemahpore = true;
-							while(this.getEnabled())
-									segSemahpore = true;
-							segSemahpore = false;
+						volView.__horizSlices.usedSliceSeeds[listMembers[i]][tempMax] = volView.__horizSlices.sliceLabels[listMembers[i]];
 					}
+					volView.__htmlContextUsedSeeds.putImageData(volView.__horizSlices.usedSliceSeeds[volView.__drawingCanvasParams.sliceNumber][tempMax], 0, 0);
+					segSemahpore = true;
+					while(this.getEnabled())
+							segSemahpore = true;
+					segSemahpore = false;
+				}
 			},this);
 			
 			var segmentationDone = false;
 			this.addListener("changeEnabled", function(event)
 			{
-					if(!segSemahpore)
+				if(!segSemahpore)
+				{
+					var startRequest = new XMLHttpRequest();
+					startRequest.onreadystatechange = function()
 					{
-							var startRequest = new XMLHttpRequest();
-							startRequest.onreadystatechange = function()
+						if(this.readyState == 4 && this.status == 200)
+						{
+							var response = startRequest.responseText;
+							volView.debug("\n" + response);
+							// if(response=="success")
+									// volView.debug("Success!");
+							// else
+									// volView.debug("...got error...");
+						////Add image into current results array
+							var base = "/visu/data/results/png/slice";
+							var tempMax = volView.__horizSlices.sliceResults[0].length;
+							for(var i=0; i<volView.__numberOfSlices; i++)
 							{
-									if(this.readyState == 4 && this.status == 200)
-									{
-											var response = startRequest.responseText;
-											volView.debug("\n" + response);
-											// if(response=="success")
-													// volView.debug("Success!");
-											// else
-													// volView.debug("...got error...");
-										////Add image into current results array
-											var base = "/visu/data/results/png/slice";
-											var tempMax = volView.__horizSlices.sliceResults[0].length;
-											for(var i=0; i<volView.__numberOfSlices; i++)
-											{
-													volView.__horizSlices.sliceResults[i][tempMax] = new Image();
-													volView.__horizSlices.sliceResults[i][tempMax].src = base + (volView.__slicesNameOffset + i) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + (new Date()).getTime();
-											};
-											var tempSrc = base + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel();
-											volView.__horizSlices.sliceResults[volView.__drawingCanvasParams.sliceNumber][tempMax].src = tempSrc + "?nocache=" + (new Date()).getTime();
-											volView.__horizSlices.sliceResults[volView.__drawingCanvasParams.sliceNumber][tempMax].onload = function()
-											{
-													volView.__htmlContextSegImg.drawImage(this, 0, 0, this.width, this.height);
-											};
-											whileShowingDrwngOpacityLabel.set({opacity: 1, enabled : true});
-											whileShowingDrwngOpacitySlider.set({opacity: 1, enabled : true});
-											segImgOpacityLabel.set({opacity: 1, enabled : true});
-											whileDrawingSegImgOpacityLabel.set({opacity: 1, enabled : true});
-											whileDrawingSegImgOpacitySlider.set({opacity: 1, enabled : true});
-											whileShowingSegImgOpacityLabel.set({opacity: 1, enabled : true});
-											whileShowingSegImgOpacitySlider.set({opacity: 1, enabled : true});
-											extWinCheckBox.set({opacity: 1, enabled : true});
-											segmentationDone = true;
-									}
-									else if (this.readyState == 4 && this.status != 200)
-									{
-											// fetched the wrong page or network error...
-											volView.debug('"Fetched the wrong page" OR "Network error"');
-									}
+								volView.__horizSlices.sliceResults[i][tempMax] = new Image();
+								volView.__horizSlices.sliceResults[i][tempMax].src = base + (volView.__slicesNameOffset + i) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + (new Date()).getTime();
 							};
-							startRequest.open("POST", "/visu/cvtGcMultiseg.php", false);
-							startRequest.send("/home/visu/data/gc/image/" + "slice" + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp);
-							startButton.setValue(false);
-							segSemahpore = true;
-					}
+							var tempSrc = base + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel();
+							volView.__horizSlices.sliceResults[volView.__drawingCanvasParams.sliceNumber][tempMax].src = tempSrc + "?nocache=" + (new Date()).getTime();
+							volView.__horizSlices.sliceResults[volView.__drawingCanvasParams.sliceNumber][tempMax].onload = function()
+							{
+								volView.__htmlContextSegImg.drawImage(this, 0, 0, this.width, this.height);
+							};
+							whileShowingDrwngOpacityLabel.set({opacity: 1, enabled : true});
+							whileShowingDrwngOpacitySlider.set({opacity: 1, enabled : true});
+							segImgOpacityLabel.set({opacity: 1, enabled : true});
+							whileDrawingSegImgOpacityLabel.set({opacity: 1, enabled : true});
+							whileDrawingSegImgOpacitySlider.set({opacity: 1, enabled : true});
+							whileShowingSegImgOpacityLabel.set({opacity: 1, enabled : true});
+							whileShowingSegImgOpacitySlider.set({opacity: 1, enabled : true});
+							extWinCheckBox.set({opacity: 1, enabled : true});
+							segmentationDone = true;
+						}
+						else if (this.readyState == 4 && this.status != 200)
+						{
+								// fetched the wrong page or network error...
+								volView.debug('"Fetched the wrong page" OR "Network error"');
+						}
+					};
+					startRequest.open("POST", "/visu/cvtGcMultiseg.php", false);
+					startRequest.send("/home/visu/data/gc/image/" + "slice" + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp);
+					startButton.setValue(false);
+					segSemahpore = true;
+				}
 			},this);
 
             startButton.addListener("mouseup", function(event)
@@ -1453,13 +1445,13 @@ qx.Class.define("desk.gcSegmentation",
                 volView.__horizSlices.sliceImages[i].url = this.__path + "slice" + (volView.__slicesNameOffset+i) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp;
 				volView.__horizSlices.sliceImages[i].srcImage.onload = function()
 				{
-						//volView.debug(" <!>   Image  No." + volView.__drawingCanvasParams.sliceNumber + "  loaded");
-						if(volView.__drawingCanvasParams.drawingContext!=null)
-						{
-								canvasImage = volView.__horizSlices.sliceImages[volView.__drawingCanvasParams.sliceNumber].srcImage;
-								volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-								drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
-						}
+					//volView.debug(" <!>   Image  No." + volView.__drawingCanvasParams.sliceNumber + "  loaded");
+					if(volView.__drawingCanvasParams.drawingContext!=null)
+					{
+						canvasImage = volView.__horizSlices.sliceImages[volView.__drawingCanvasParams.sliceNumber].srcImage;
+						volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+						drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
+					}
 				};
             };
 			
@@ -1598,9 +1590,11 @@ qx.Class.define("desk.gcSegmentation",
 					volView.__mouseData.mouseLeftDownFlag = false;
 				////Save current image
 					volView.__horizSlices.sliceLabels[volView.__drawingCanvasParams.sliceNumber] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
-					volView.__tempNum = volView.__drawingCanvasParams.sliceNumber;
-					volView.__horizSlices.inProgData[volView.__tempNum].curTagged = !pngCanvasFctn();	//  pngCanvasFctn() returns true if image is all black
-					volView.__drawingCanvasParams.sliceNumber = event.getData();
+
+					var oldSliceIndex= volView.__drawingCanvasParams.sliceNumber;;
+					volView.__horizSlices.inProgData[oldSliceIndex].curTagged = !pngCanvasFctn();	//  pngCanvasFctn() returns true if image is all black
+					var newSliceIndex=event.getData();
+					volView.__drawingCanvasParams.sliceNumber = newSliceIndex;
 					if(segmentationDone)
 					{
 							var index = 0;
@@ -1615,16 +1609,16 @@ qx.Class.define("desk.gcSegmentation",
 									volView.__htmlContextUsedSeeds.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 					}
 				////Update lists
-					if(volView.__horizSlices.inProgData[volView.__tempNum].curTagged)	////CURRENT slice has seeds
+					if(volView.__horizSlices.inProgData[oldSliceIndex].curTagged)	////CURRENT slice has seeds
 					{
-							if(!volView.__horizSlices.inProgData[volView.__tempNum].inList)
+							if(!volView.__horizSlices.inProgData[oldSliceIndex].inList)
 							{
 								// Add slice to list
-									var sliceItem = new qx.ui.form.ListItem("Slice No." + volView.__tempNum);
+									var sliceItem = new qx.ui.form.ListItem("Slice No." + oldSliceIndex);
 									var tempPos = 0;
-									for(var i=0; i<=volView.__tempNum; i++)
+									for(var i=0; i<=oldSliceIndex; i++)
 									{
-											if(listMembers[i]<volView.__tempNum)
+											if(listMembers[i]<oldSliceIndex)
 													tempPos++;
 									}
 									slicesListSemaphore = false;
@@ -1641,7 +1635,7 @@ qx.Class.define("desk.gcSegmentation",
 											}
 											if(j==tempPos)
 											{
-													tempMembers[j] = volView.__tempNum;
+													tempMembers[j] =oldSliceIndex;
 													i--;	// do "i--;" so when doing "i++;" i index doesn't actually change
 											}
 											j++;
@@ -1650,7 +1644,7 @@ qx.Class.define("desk.gcSegmentation",
 									listSemahpore = false;
 									for(var i=0; i<volView.__numberOfSlices; i++)
 									{
-											if(i!=volView.__tempNum)
+											if(i!=oldSliceIndex)
 													volView.__horizSlices.inProgData[i].inList = volView.__horizSlices.inProgData[i].inList;
 											else
 													volView.__horizSlices.inProgData[i].inList = true;
@@ -1664,12 +1658,12 @@ qx.Class.define("desk.gcSegmentation",
 					}
 					else	////CURRENT slice has NO seeds
 					{
-							if(volView.__horizSlices.inProgData[volView.__tempNum].inList)
+							if(volView.__horizSlices.inProgData[oldSliceIndex].inList)
 							{
 								////Erase image on the server
-									eraseFile(volView.__slicesNamePrefix + (volView.__slicesNameOffset + volView.__tempNum) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp);
+					// commented by seb				eraseFile(volView.__slicesNamePrefix + (volView.__slicesNameOffset + oldSliceIndex) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp);
 								////Update members list
-									var tempPos = findInArray(listMembers, volView.__tempNum);
+									var tempPos = findInArray(listMembers, oldSliceIndex);
 									updateList(tempPos);
 									slicesListSemaphore = true;
 									modifSlicesList.remove(modifSlicesList.getChildren()[tempPos]);
@@ -1684,13 +1678,13 @@ qx.Class.define("desk.gcSegmentation",
 									else
 									{
 										////Erase XML file
-											eraseFile("seeds.xml");
+					//commented by seb						eraseFile("seeds.xml");
 										////Reset image and drawing canvas if list is empty
 											resetZoom();
 											startButton.set({opacity: 0.5, enabled : false});
 									}
 							}
-					}	////End if(volView.__horizSlices.inProgData[volView.__tempNum].curTagged)
+					}	////End if(volView.__horizSlices.inProgData[oldSliceIndex].curTagged)
 				////Set canvas, buttons, list
 					if(volView.__horizSlices.inProgData[volView.__drawingCanvasParams.sliceNumber].curTagged)	////NEXT slice HAS seeds
 					{
@@ -1761,7 +1755,7 @@ qx.Class.define("desk.gcSegmentation",
 							startButton.set({opacity: 0.5, enabled : false});
 							if(listMembers.length<1)
 							{
-									eraseFile("seeds.xml");
+				// commented by seb					eraseFile("seeds.xml");
 							}
 							if(!volView.__horizSlices.inProgData[volView.__drawingCanvasParams.sliceNumber].inList)
 							{
@@ -2022,21 +2016,21 @@ qx.Class.define("desk.gcSegmentation",
 		////The labels image is not modified
 			var drawBrush = function(mouseEvent,scale)
             {
-                    var tempX = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/scale;
-                    var tempY = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/scale;
-                    var tempMargin = 4/scale;
-                    if((tempMargin<tempX)&&(tempX<volView.__imgMap.width/scale-tempMargin)&&(tempMargin<tempY)&&(tempY<volView.__imgMap.height/scale-tempMargin))
-                    {
-                            volView.__drawingCanvasParams.drawingContext.strokeStyle = volView.__drawingCanvasParams.currentColor;
-                            volView.__drawingCanvasParams.drawingContext.fillStyle = volView.__drawingCanvasParams.currentColor;
-                            volView.__drawingCanvasParams.drawingContext.beginPath();
-                            volView.__drawingCanvasParams.drawingContext.arc(tempX,
-                                                                    tempY,
-																			Math.ceil(volView.__htmlContextLabels.lineWidth/2),
-                                                                            0, Math.PI * 2, false);
-                            volView.__drawingCanvasParams.drawingContext.closePath();
-                            volView.__drawingCanvasParams.drawingContext.fill();
-                    }
+                var tempX = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/scale;
+                var tempY = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/scale;
+                var tempMargin = 4/scale;
+                if((tempMargin<tempX)&&(tempX<volView.__imgMap.width/scale-tempMargin)&&(tempMargin<tempY)&&(tempY<volView.__imgMap.height/scale-tempMargin))
+                {
+                    volView.__drawingCanvasParams.drawingContext.strokeStyle = volView.__drawingCanvasParams.currentColor;
+                    volView.__drawingCanvasParams.drawingContext.fillStyle = volView.__drawingCanvasParams.currentColor;
+                    volView.__drawingCanvasParams.drawingContext.beginPath();
+                    volView.__drawingCanvasParams.drawingContext.arc(tempX,
+                                                            tempY,
+																	Math.ceil(volView.__htmlContextLabels.lineWidth/2),
+                                                                    0, Math.PI * 2, false);
+                    volView.__drawingCanvasParams.drawingContext.closePath();
+                    volView.__drawingCanvasParams.drawingContext.fill();
+                }
 			};
 			
 			
@@ -2046,42 +2040,42 @@ qx.Class.define("desk.gcSegmentation",
 		////Draw cross in the results window at copied mouse position
 			var drawPointer = function(mouseEvent,scale)
             {
-                    var tempX = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/scale;
-                    var tempY = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/scale;
-                    var tempMargin = 4/scale;
-                    if((tempMargin<tempX)&&(tempX<volView.__imgMap.width/scale-tempMargin)&&(tempMargin<tempY)&&(tempY<volView.__imgMap.height/scale-tempMargin))
-                    {
-						////Set line width
-							extWinSegImgCanvas.extWinSegImgContext.lineWidth = 5/scale;
-						////Draw up cursor line
-							extWinSegImgCanvas.extWinSegImgContext.fillRect(tempX - 4/scale, tempY - 20/scale, 8/scale, 16/scale);
-                            extWinSegImgCanvas.extWinSegImgContext.beginPath();
-							extWinSegImgCanvas.extWinSegImgContext.moveTo(tempX, tempY - 16/scale);
-							extWinSegImgCanvas.extWinSegImgContext.lineTo(tempX, tempY - 8/scale);
-							extWinSegImgCanvas.extWinSegImgContext.stroke();
-							extWinSegImgCanvas.extWinSegImgContext.closePath();
-						////Draw left cursor line
-							extWinSegImgCanvas.extWinSegImgContext.fillRect(tempX - 20/scale, tempY - 4/scale, 16/scale, 8/scale);
-                            extWinSegImgCanvas.extWinSegImgContext.beginPath();
-							extWinSegImgCanvas.extWinSegImgContext.moveTo(tempX - 16/scale, tempY);
-							extWinSegImgCanvas.extWinSegImgContext.lineTo(tempX - 8/scale, tempY);
-							extWinSegImgCanvas.extWinSegImgContext.stroke();
-							extWinSegImgCanvas.extWinSegImgContext.closePath();
-						////Draw down cursor line
-							extWinSegImgCanvas.extWinSegImgContext.fillRect(tempX - 4/scale, tempY + 4/scale, 8/scale, 16/scale);
-                            extWinSegImgCanvas.extWinSegImgContext.beginPath();
-							extWinSegImgCanvas.extWinSegImgContext.moveTo(tempX, tempY + 8/scale);
-							extWinSegImgCanvas.extWinSegImgContext.lineTo(tempX, tempY + 16/scale);
-							extWinSegImgCanvas.extWinSegImgContext.stroke();
-							extWinSegImgCanvas.extWinSegImgContext.closePath();
-						////Draw right cursor line
-							extWinSegImgCanvas.extWinSegImgContext.fillRect(tempX + 4/scale, tempY - 4/scale, 16/scale, 8/scale);
-                            extWinSegImgCanvas.extWinSegImgContext.beginPath();
-							extWinSegImgCanvas.extWinSegImgContext.moveTo(tempX + 8/scale, tempY);
-							extWinSegImgCanvas.extWinSegImgContext.lineTo(tempX + 16/scale, tempY);
-							extWinSegImgCanvas.extWinSegImgContext.stroke();
-							extWinSegImgCanvas.extWinSegImgContext.closePath();
-                    }
+                var tempX = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/scale;
+                var tempY = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/scale;
+                var tempMargin = 4/scale;
+                if((tempMargin<tempX)&&(tempX<volView.__imgMap.width/scale-tempMargin)&&(tempMargin<tempY)&&(tempY<volView.__imgMap.height/scale-tempMargin))
+                {
+				////Set line width
+					extWinSegImgCanvas.extWinSegImgContext.lineWidth = 5/scale;
+				////Draw up cursor line
+					extWinSegImgCanvas.extWinSegImgContext.fillRect(tempX - 4/scale, tempY - 20/scale, 8/scale, 16/scale);
+                    extWinSegImgCanvas.extWinSegImgContext.beginPath();
+					extWinSegImgCanvas.extWinSegImgContext.moveTo(tempX, tempY - 16/scale);
+					extWinSegImgCanvas.extWinSegImgContext.lineTo(tempX, tempY - 8/scale);
+					extWinSegImgCanvas.extWinSegImgContext.stroke();
+					extWinSegImgCanvas.extWinSegImgContext.closePath();
+				////Draw left cursor line
+					extWinSegImgCanvas.extWinSegImgContext.fillRect(tempX - 20/scale, tempY - 4/scale, 16/scale, 8/scale);
+                    extWinSegImgCanvas.extWinSegImgContext.beginPath();
+					extWinSegImgCanvas.extWinSegImgContext.moveTo(tempX - 16/scale, tempY);
+					extWinSegImgCanvas.extWinSegImgContext.lineTo(tempX - 8/scale, tempY);
+					extWinSegImgCanvas.extWinSegImgContext.stroke();
+					extWinSegImgCanvas.extWinSegImgContext.closePath();
+				////Draw down cursor line
+					extWinSegImgCanvas.extWinSegImgContext.fillRect(tempX - 4/scale, tempY + 4/scale, 8/scale, 16/scale);
+                    extWinSegImgCanvas.extWinSegImgContext.beginPath();
+					extWinSegImgCanvas.extWinSegImgContext.moveTo(tempX, tempY + 8/scale);
+					extWinSegImgCanvas.extWinSegImgContext.lineTo(tempX, tempY + 16/scale);
+					extWinSegImgCanvas.extWinSegImgContext.stroke();
+					extWinSegImgCanvas.extWinSegImgContext.closePath();
+				////Draw right cursor line
+					extWinSegImgCanvas.extWinSegImgContext.fillRect(tempX + 4/scale, tempY - 4/scale, 16/scale, 8/scale);
+                    extWinSegImgCanvas.extWinSegImgContext.beginPath();
+					extWinSegImgCanvas.extWinSegImgContext.moveTo(tempX + 8/scale, tempY);
+					extWinSegImgCanvas.extWinSegImgContext.lineTo(tempX + 16/scale, tempY);
+					extWinSegImgCanvas.extWinSegImgContext.stroke();
+					extWinSegImgCanvas.extWinSegImgContext.closePath();
+                }
 			};
 			
 			
@@ -2091,37 +2085,37 @@ qx.Class.define("desk.gcSegmentation",
 		////Save current labels image (used before any modification on the canvas)
 			var save2undoStack = function(mouseEvent)
             {
-					if(!mouseEvent.isRightPressed())
+				if(!mouseEvent.isRightPressed())
+				{
+					var tempData = [];
+					if(volView.__ctrlZData.length==0)
 					{
-							var tempData = [];
-							if(volView.__ctrlZData.length==0)
-							{
-									tempData[0] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
-							}
-							else
-							{
-									if(volView.__ctrlZData.length<volView.__undoLimit)
-									{
-											for(var i=0; i<volView.__ctrlZData.length; i++)
-											{
-													tempData[volView.__ctrlZData.length-i] = volView.__ctrlZData[volView.__ctrlZData.length-i-1];
-											}
-											tempData[0] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
-									}
-									else
-									{
-											if(volView.__ctrlZData.length==volView.__undoLimit)
-											{
-													for(var i=1; i<volView.__ctrlZData.length; i++)
-													{
-															tempData[volView.__ctrlZData.length-i] = volView.__ctrlZData[volView.__ctrlZData.length-i-1];
-													}
-													tempData[0] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
-											}
-									}
-							}
-							volView.__ctrlZData = tempData;
+						tempData[0] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 					}
+					else
+					{
+						if(volView.__ctrlZData.length<volView.__undoLimit)
+						{
+							for(var i=0; i<volView.__ctrlZData.length; i++)
+							{
+									tempData[volView.__ctrlZData.length-i] = volView.__ctrlZData[volView.__ctrlZData.length-i-1];
+							}
+							tempData[0] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
+						}
+						else
+						{
+							if(volView.__ctrlZData.length==volView.__undoLimit)
+							{
+								for(var i=1; i<volView.__ctrlZData.length; i++)
+								{
+									tempData[volView.__ctrlZData.length-i] = volView.__ctrlZData[volView.__ctrlZData.length-i-1];
+								}
+								tempData[0] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
+							}
+						}
+					}
+					volView.__ctrlZData = tempData;
+				}
 			};
 			
 			
@@ -2131,20 +2125,20 @@ qx.Class.define("desk.gcSegmentation",
 		////Pops out the last state in the "undo" stack and draw image on the canvas
             var undoFnct = function(mouseEvent)
             {
-					if(mouseEvent.isRightPressed())
+				if(mouseEvent.isRightPressed())
+				{
+					if(0<volView.__ctrlZData.length)
 					{
-							if(0<volView.__ctrlZData.length)
-							{
-									volView.__htmlContextLabels.putImageData(volView.__ctrlZData[0], 0, 0);
-									drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
-							}
-							var tempData = [];
-							for(var i=1; i<volView.__ctrlZData.length; i++)
-							{
-									tempData[i-1] = volView.__ctrlZData[i];
-							}
-							volView.__ctrlZData = tempData;
+						volView.__htmlContextLabels.putImageData(volView.__ctrlZData[0], 0, 0);
+						drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
 					}
+					var tempData = [];
+					for(var i=1; i<volView.__ctrlZData.length; i++)
+					{
+						tempData[i-1] = volView.__ctrlZData[i];
+					}
+					volView.__ctrlZData = tempData;
+				}
 			};
 			
 			
@@ -2154,35 +2148,35 @@ qx.Class.define("desk.gcSegmentation",
 		////Redraw image and drawing canvas when translation
             var moveCanvas = function()
             {
-					var tempDecaleX = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.recentX-volView.__mouseData.xPos;
-					var tempDecaleY = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.recentY-volView.__mouseData.yPos;
-					if(tempDecaleX<0)
-					{
-							volView.__mouseData.decaleZoomX = 0;
-					}
-					if(volView.__imgMap.width-volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom<tempDecaleX)
-					{
-							volView.__mouseData.decaleZoomX = volView.__imgMap.width-volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom;
-					}
-					if((0<=tempDecaleX)&&(tempDecaleX<=volView.__imgMap.width-volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom))
-					{
-							volView.__mouseData.decaleZoomX = tempDecaleX;
-					}
-					if(tempDecaleY<0)
-					{
-							volView.__mouseData.decaleZoomY = 0;
-					}
-					if(volView.__imgMap.height-volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom<tempDecaleY)
-					{
-							volView.__mouseData.decaleZoomY = volView.__imgMap.height-volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom;
-					}
-					if((0<=tempDecaleY)&&(tempDecaleY<=volView.__imgMap.height-volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom))
-					{
-							volView.__mouseData.decaleZoomY = tempDecaleY;
-					}
-					volView.__mouseData.decaleZoomX = volView.__mouseData.decaleZoomX*volView.__drawingCanvasParams.curCtxtZoom;
-					volView.__mouseData.decaleZoomY = volView.__mouseData.decaleZoomY*volView.__drawingCanvasParams.curCtxtZoom;
-					drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
+				var tempDecaleX = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.recentX-volView.__mouseData.xPos;
+				var tempDecaleY = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.recentY-volView.__mouseData.yPos;
+				if(tempDecaleX<0)
+				{
+					volView.__mouseData.decaleZoomX = 0;
+				}
+				if(volView.__imgMap.width-volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom<tempDecaleX)
+				{
+					volView.__mouseData.decaleZoomX = volView.__imgMap.width-volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom;
+				}
+				if((0<=tempDecaleX)&&(tempDecaleX<=volView.__imgMap.width-volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom))
+				{
+					volView.__mouseData.decaleZoomX = tempDecaleX;
+				}
+				if(tempDecaleY<0)
+				{
+					volView.__mouseData.decaleZoomY = 0;
+				}
+				if(volView.__imgMap.height-volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom<tempDecaleY)
+				{
+					volView.__mouseData.decaleZoomY = volView.__imgMap.height-volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom;
+				}
+				if((0<=tempDecaleY)&&(tempDecaleY<=volView.__imgMap.height-volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom))
+				{
+					volView.__mouseData.decaleZoomY = tempDecaleY;
+				}
+				volView.__mouseData.decaleZoomX = volView.__mouseData.decaleZoomX*volView.__drawingCanvasParams.curCtxtZoom;
+				volView.__mouseData.decaleZoomY = volView.__mouseData.decaleZoomY*volView.__drawingCanvasParams.curCtxtZoom;
+				drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
 			};
 			
 			
@@ -2192,31 +2186,31 @@ qx.Class.define("desk.gcSegmentation",
 		////Clear labels canvas at mouse position
             var eraseFnct = function(autoComplete)
             {
-					var tempX, tempY;
-					if(autoComplete)
-					{
-							tempX = (volView.__mouseData.recentX+volView.__mouseData.xPos)/2-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
-							tempY = (volView.__mouseData.recentY+volView.__mouseData.yPos)/2-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
-							var newCoor = changeInto05Coordinates(tempX,tempY);
-							tempX = newCoor.newX;
-							tempY = newCoor.newY;
-                            volView.__htmlContextLabels.clearRect(tempX,
-                                                        tempY,
-                                                            volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth,
-                                                            volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth);
-					}
-					tempX = volView.__mouseData.xPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
-					tempY = volView.__mouseData.yPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
+				var tempX, tempY;
+				if(autoComplete)
+				{
+					tempX = (volView.__mouseData.recentX+volView.__mouseData.xPos)/2-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
+					tempY = (volView.__mouseData.recentY+volView.__mouseData.yPos)/2-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
 					var newCoor = changeInto05Coordinates(tempX,tempY);
 					tempX = newCoor.newX;
 					tempY = newCoor.newY;
                     volView.__htmlContextLabels.clearRect(tempX,
-												tempY,
-													volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth,
-													volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth);
-                    drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
-                    volView.__mouseData.recentX = volView.__mouseData.xPos;
-                    volView.__mouseData.recentY = volView.__mouseData.yPos;
+                                                tempY,
+                                                    volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth,
+                                                    volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth);
+				}
+				tempX = volView.__mouseData.xPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
+				tempY = volView.__mouseData.yPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
+				var newCoor = changeInto05Coordinates(tempX,tempY);
+				tempX = newCoor.newX;
+				tempY = newCoor.newY;
+                volView.__htmlContextLabels.clearRect(tempX,
+											tempY,
+												volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth,
+												volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth);
+                drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
+                volView.__mouseData.recentX = volView.__mouseData.xPos;
+                volView.__mouseData.recentY = volView.__mouseData.yPos;
 			};
 			
 			
@@ -2226,23 +2220,23 @@ qx.Class.define("desk.gcSegmentation",
 		////Redraw image canvas at original scale
             var resetZoom = function(autoComplete)
             {
-					volView.__imgCanvasParams.imgContext.setTransform(1,0,0,1,0,0);
-					volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
-					var outImg = processBrCr(volView.__imgCanvasParams.brightness, volView.__imgCanvasParams.contrast, true);
-					volView.__htmlContextImage.putImageData(outImg, 0, 0);
-					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);
-					volView.__drawingCanvasParams.drawingContext.setTransform(1,0,0,1,0,0);
-					extWinSegImgCanvas.extWinSegImgContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
-					volView.__drawingCanvasParams.drawingContext.drawImage(volView.__htmlCanvasLabels,0,0);
-					extWinSegImgCanvas.extWinSegImgContext.setTransform(1,0,0,1,0,0);
-					extWinSegImgCanvas.extWinSegImgContext.drawImage(volView.__htmlCanvasSegImg,0,0);
-					extWinSeedsCanvas.extWinSeedsContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
-					extWinSeedsCanvas.extWinSeedsContext.setTransform(1,0,0,1,0,0);
-					extWinSeedsCanvas.extWinSeedsContext.drawImage(volView.__htmlCanvasUsedSeeds,0,0);
-					volView.__mouseData.decaleZoomX = 0;
-					volView.__mouseData.decaleZoomY = 0;
-					wheelScale = 0;
-					volView.__drawingCanvasParams.curCtxtZoom = 1;
+				volView.__imgCanvasParams.imgContext.setTransform(1,0,0,1,0,0);
+				volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
+				var outImg = processBrCr(volView.__imgCanvasParams.brightness, volView.__imgCanvasParams.contrast, true);
+				volView.__htmlContextImage.putImageData(outImg, 0, 0);
+				volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);
+				volView.__drawingCanvasParams.drawingContext.setTransform(1,0,0,1,0,0);
+				extWinSegImgCanvas.extWinSegImgContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
+				volView.__drawingCanvasParams.drawingContext.drawImage(volView.__htmlCanvasLabels,0,0);
+				extWinSegImgCanvas.extWinSegImgContext.setTransform(1,0,0,1,0,0);
+				extWinSegImgCanvas.extWinSegImgContext.drawImage(volView.__htmlCanvasSegImg,0,0);
+				extWinSeedsCanvas.extWinSeedsContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
+				extWinSeedsCanvas.extWinSeedsContext.setTransform(1,0,0,1,0,0);
+				extWinSeedsCanvas.extWinSeedsContext.drawImage(volView.__htmlCanvasUsedSeeds,0,0);
+				volView.__mouseData.decaleZoomX = 0;
+				volView.__mouseData.decaleZoomY = 0;
+				wheelScale = 0;
+				volView.__drawingCanvasParams.curCtxtZoom = 1;
 			};
 			
 			
@@ -2253,63 +2247,63 @@ qx.Class.define("desk.gcSegmentation",
 		//// to return true value if image is all black (if canvas is empty)
             var pngCanvasFctn = function()
             {
-                    var sliceData = volView.__htmlContextImage.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
-                    var pixels = sliceData.data;
-                    var seeds = volView.__horizSlices.sliceLabels[volView.__drawingCanvasParams.sliceNumber].data;
-                    var isAllBlack = true;
-                    for(var i=0; i<seeds.length; i+=4)
+                var sliceData = volView.__htmlContextImage.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
+                var pixels = sliceData.data;
+                var seeds = volView.__horizSlices.sliceLabels[volView.__drawingCanvasParams.sliceNumber].data;
+                var isAllBlack = true;
+                for(var i=0; i<seeds.length; i+=4)
+                {
+					if(128<=seeds[i+3])  //  if( color is solid not totally transparent, ie. alpha=0) <-> if( not background )
                     {
-							if(128<=seeds[i+3])  //  if( color is solid not totally transparent, ie. alpha=0) <-> if( not background )
-                            {
-									var red = 0;
-									var green = 0;
-									var blue = 0;
-									var distance = 500;
-									var rightColorIndex = 0;
-									for(var j=0; j<volView.__labelColors.length; j++)
-									{
-											red = volView.__labelColors[j].red;
-											green = volView.__labelColors[j].green;
-											blue = volView.__labelColors[j].blue;
-											var testD = Math.sqrt(Math.pow(red-seeds[i],2)+Math.pow(green-seeds[i+1],2)+Math.pow(blue-seeds[i+2],2));
-											if(testD<distance)
-											{
-													distance = testD;
-													rightColorIndex = j;
-											}
-									}
-									pixels[i] = volView.__labelColors[rightColorIndex].red;
-									pixels[i+1] = volView.__labelColors[rightColorIndex].green;
-									pixels[i+2] = volView.__labelColors[rightColorIndex].blue;
-									pixels[i+3] = 255;
-                                    isAllBlack = false;
-                            }
-						////Comment "else" to send combined image
-							else
+						var red = 0;
+						var green = 0;
+						var blue = 0;
+						var distance = 500;
+						var rightColorIndex = 0;
+						for(var j=0; j<volView.__labelColors.length; j++)
+						{
+							red = volView.__labelColors[j].red;
+							green = volView.__labelColors[j].green;
+							blue = volView.__labelColors[j].blue;
+							var testD = Math.sqrt(Math.pow(red-seeds[i],2)+Math.pow(green-seeds[i+1],2)+Math.pow(blue-seeds[i+2],2));
+							if(testD<distance)
 							{
-                                    pixels[i] = 0;
-                                    pixels[i+1] = 0;
-                                    pixels[i+2] = 0;
-									pixels[i+3] = 0;
+								distance = testD;
+								rightColorIndex = j;
 							}
+						}
+						pixels[i] = volView.__labelColors[rightColorIndex].red;
+						pixels[i+1] = volView.__labelColors[rightColorIndex].green;
+						pixels[i+2] = volView.__labelColors[rightColorIndex].blue;
+						pixels[i+3] = 255;
+                        isAllBlack = false;
                     }
-					if(!isAllBlack)
-                    {
-							sliceData.data = pixels;
-							volView.__htmlContextLabels.putImageData(sliceData, 0, 0);
-							if(selectBox.getSelection()[0].getLabel()=="png")
-									var pngImg = volView.__htmlCanvasLabels.toDataURL("image/png");
-							if(selectBox.getSelection()[0].getLabel()=="jpg")
-									var pngImg = volView.__htmlCanvasLabels.toDataURL("image/jpeg",1);
-                            //volView.debug("pngImg : " + pngImg);
-						////Send png image to server
-							var pngRequest = new XMLHttpRequest();
-							pngRequest.open("POST",'/visu/saveFile.php',true);
-							pngRequest.setRequestHeader('Content-Type', 'application/upload');
-							volView.debug("Writing  data/seeds/" + volView.__slicesNamePrefix + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel());
-							pngRequest.send("data/seeds/" + volView.__slicesNamePrefix + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel() + "!" + pngImg);
-                    }
-                    return isAllBlack;
+				////Comment "else" to send combined image
+					else
+					{
+                        pixels[i] = 0;
+                        pixels[i+1] = 0;
+                        pixels[i+2] = 0;
+						pixels[i+3] = 0;
+					}
+                }
+				if(!isAllBlack)
+                {
+					sliceData.data = pixels;
+					volView.__htmlContextLabels.putImageData(sliceData, 0, 0);
+					if(selectBox.getSelection()[0].getLabel()=="png")
+							var pngImg = volView.__htmlCanvasLabels.toDataURL("image/png");
+					if(selectBox.getSelection()[0].getLabel()=="jpg")
+							var pngImg = volView.__htmlCanvasLabels.toDataURL("image/jpeg",1);
+                    //volView.debug("pngImg : " + pngImg);
+				////Send png image to server
+					var pngRequest = new XMLHttpRequest();
+					pngRequest.open("POST",'/visu/saveFile.php',true);
+					pngRequest.setRequestHeader('Content-Type', 'application/upload');
+					volView.debug("Writing  data/seeds_seb/" + volView.__slicesNamePrefix + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel());
+					pngRequest.send("data/seeds_seb/" + volView.__slicesNamePrefix + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel() + "!" + pngImg);
+                }
+                return isAllBlack;
             };
 			
 			
@@ -2319,63 +2313,63 @@ qx.Class.define("desk.gcSegmentation",
 		////Function applies brightness and contrast values
             var processBrCr = function(inBrightness, inContrast, inLegacy)
             {
-                    var brightness = inBrightness; //parsing ???
-                    var contrast = inContrast; //parsing ???
-                    var legacy = !!(inLegacy && inLegacy != "false");
-                    if (legacy) {
-                        brightness = Math.min(150,Math.max(-150,brightness));
-                    } else {
-                        var brightMul = 1 + Math.min(150,Math.max(-150,brightness)) / 150;
-                    }
-                    contrast = Math.max(0,contrast+1);
-                    if (typeof volView.__htmlContextImage.getImageData == "function")
-                    {
-                        var dataDesc = volView.__htmlContextImage.getImageData(0, 0, canvasImage.width, canvasImage.height);
-                        var data = dataDesc.data;
-                        var p = canvasImage.width * canvasImage.height;
-                        var pix = p*4, pix1, pix2;
-                        var mul, add;
-                        if (contrast != 1) {
-                            if (legacy) {
-                                mul = contrast;
-                                add = (brightness - 128) * contrast + 128;
-                            } else {
-                                mul = brightMul * contrast;
-                                add = - contrast * 128 + 128;
-                            }
-                        } else {  // this if-then is not necessary anymore, is it?
-                            if (legacy) {
-                                mul = 1;
-                                add = brightness;
-                            } else {
-                                mul = brightMul;
-                                add = 0;
-                            }
+                var brightness = inBrightness; //parsing ???
+                var contrast = inContrast; //parsing ???
+                var legacy = !!(inLegacy && inLegacy != "false");
+                if (legacy) {
+                    brightness = Math.min(150,Math.max(-150,brightness));
+                } else {
+                    var brightMul = 1 + Math.min(150,Math.max(-150,brightness)) / 150;
+                }
+                contrast = Math.max(0,contrast+1);
+                if (typeof volView.__htmlContextImage.getImageData == "function")
+                {
+                    var dataDesc = volView.__htmlContextImage.getImageData(0, 0, canvasImage.width, canvasImage.height);
+                    var data = dataDesc.data;
+                    var p = canvasImage.width * canvasImage.height;
+                    var pix = p*4, pix1, pix2;
+                    var mul, add;
+                    if (contrast != 1) {
+                        if (legacy) {
+                            mul = contrast;
+                            add = (brightness - 128) * contrast + 128;
+                        } else {
+                            mul = brightMul * contrast;
+                            add = - contrast * 128 + 128;
                         }
-                        var r, g, b;
-                        while (p--) {
-                            if ((r = data[pix-=4] * mul + add) > 255 )
-                                data[pix] = 255;
-                            else if (r < 0)
-                                data[pix] = 0;
-                            else
-                                data[pix] = r;
-                            if ((g = data[pix1=pix+1] * mul + add) > 255 )
-                                data[pix1] = 255;
-                            else if (g < 0)
-                                data[pix1] = 0;
-                            else
-                                data[pix1] = g;
-                            if ((b = data[pix2=pix+2] * mul + add) > 255 )
-                                data[pix2] = 255;
-                            else if (b < 0)
-                                data[pix2] = 0;
-                            else
-                                data[pix2] = b;
+                    } else {  // this if-then is not necessary anymore, is it?
+                        if (legacy) {
+                            mul = 1;
+                            add = brightness;
+                        } else {
+                            mul = brightMul;
+                            add = 0;
                         }
-                        dataDesc.data = data;
                     }
-                    return dataDesc;
+                    var r, g, b;
+                    while (p--) {
+                        if ((r = data[pix-=4] * mul + add) > 255 )
+                            data[pix] = 255;
+                        else if (r < 0)
+                            data[pix] = 0;
+                        else
+                            data[pix] = r;
+                        if ((g = data[pix1=pix+1] * mul + add) > 255 )
+                            data[pix1] = 255;
+                        else if (g < 0)
+                            data[pix1] = 0;
+                        else
+                            data[pix1] = g;
+                        if ((b = data[pix2=pix+2] * mul + add) > 255 )
+                            data[pix2] = 255;
+                        else if (b < 0)
+                            data[pix2] = 0;
+                        else
+                            data[pix2] = b;
+                    }
+                    dataDesc.data = data;
+                }
+                return dataDesc;
             };
 			
 			
@@ -2385,32 +2379,32 @@ qx.Class.define("desk.gcSegmentation",
 		////Use a php file to remove the spceciefd file in the server
 			var eraseFile = function(file)
             {
-					var removeRequest = new XMLHttpRequest();
-					removeRequest.open("POST",'/visu/eraseFile.php',true);
-					removeRequest.setRequestHeader('Content-Type', 'application/upload');
-					volView.debug("Erasing " + file);
-					removeRequest.send(file);
+				var removeRequest = new XMLHttpRequest();
+				removeRequest.open("POST",'/visu/eraseFile.php',true);
+				removeRequest.setRequestHeader('Content-Type', 'application/upload');
+				volView.debug("Erasing " + file);
+				removeRequest.send(file);
 			};
-            
-			
-			
-			
-			
+
+
+
+
+	
 		////Rewrite xml list of the drawn seeds
 			var updateSeedsXML = function()
             {
-					var sliceID;
-					var xmlContent = '\n';
-					for(var i=0; i<listMembers.length; i++)
-					{
-							sliceID = {slice: listMembers[i] + ""};
-							xmlContent += '     ' + element('seed', volView.__slicesNamePrefix + (volView.__slicesNameOffset + listMembers[i]) + "." + selectBox.getSelection()[0].getLabel(), sliceID) + '\n';
-					}
-					var xmlUpdateRequest = new XMLHttpRequest();
-					xmlUpdateRequest.open("POST",'/visu/createXML.php',true);
-					xmlUpdateRequest.setRequestHeader('Content-Type', 'application/upload');
-					volView.debug("Writing  seeds.xml");
-					xmlUpdateRequest.send(element('seeds', xmlContent));
+				var sliceID;
+				var xmlContent = '\n';
+				for(var i=0; i<listMembers.length; i++)
+				{
+					sliceID = {slice: listMembers[i] + ""};
+					xmlContent += '     ' + element('seed', volView.__slicesNamePrefix + (volView.__slicesNameOffset + listMembers[i]) + "." + selectBox.getSelection()[0].getLabel(), sliceID) + '\n';
+				}
+				var xmlUpdateRequest = new XMLHttpRequest();
+				xmlUpdateRequest.open("POST",'/visu/createXML_Seb.php',true);
+				xmlUpdateRequest.setRequestHeader('Content-Type', 'application/upload');
+				volView.debug("Writing  seeds.xml");
+				xmlUpdateRequest.send(element('seeds', xmlContent));
 			};
 			
 			
@@ -2529,18 +2523,7 @@ qx.Class.define("desk.gcSegmentation",
 				}
 				return xml
 			}
-
-
-
-
-
-
-
-
-
-
 		}
-
 		// updateImage : function() {
 			// this.__image.setSource(
 				// this.__path+this.__prefix+(this.__offset+this.__maxZ-this.__slider.getValue())+"."+
