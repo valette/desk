@@ -763,28 +763,28 @@ qx.Class.define("desk.gcSegmentation",
 			
 			modifSlicesList.addListener("keypress", function(event)
 			{
-				if((event.getKeyIdentifier()=="Delete")&&(typeof listMembers[0] != "undefined"))
+				if(event.getKeyIdentifier()=="Delete")
 				{
 					var selectedChild = modifSlicesList.getSelection()[0];
-					var tempPos = selectedChild.getUserData("slice");
-				////Erase image on the server
-					eraseFile(volView.__slicesNamePrefix + (volView.__slicesNameOffset + listMembers[tempPos]) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp);
-				////Update members list
-					clearButton.execute();
-				////Erase from widget list
-					modifSlicesList.remove(selectedChild);
+					if (selectedChild!=null)
+					{
+						var sliceId = selectedChild.getUserData("slice");
+					////Erase image on the server
+						eraseFile(volView.__slicesNamePrefix + (volView.__slicesNameOffset + sliceId) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp);
+					////Update members list
+						clearButton.execute();
+					////Erase from widget list
+						modifSlicesList.remove(selectedChild);
 
-					updateSeedsXML();
+						updateSeedsXML();
+					}
 				}
 			}, this);
 			
 			modifSlicesList.addListener("changeSelection", function(event)
 			{
-				if(!slicesListSemaphore)
-				{
 					var selectedChild = event.getData()[0];
 					slider.setValue(selectedChild.getUserData("slice"));
-				}
 			}, this);
 			
 			slicesPage.add(modifSlicesList, {column: 0, row: 0});
@@ -816,9 +816,12 @@ qx.Class.define("desk.gcSegmentation",
 					volView.__drawingCanvasParams.brCrFixingFlag = false;
 					this.set({opacity: 0.5, enabled : false});
 					var tempMax = volView.__horizSlices.usedSliceSeeds[0].length;
-					for(var i=0; i<listMembers.length; i++)
+					
+					var seedsList=modifSlicesList.getChildren();
+					for(var i=0; i<seedsList.length; i++)
 					{
-						volView.__horizSlices.usedSliceSeeds[listMembers[i]][tempMax] = volView.__horizSlices.sliceLabels[listMembers[i]];
+						var sliceId=seedsList[i].getuserData("slice");
+						volView.__horizSlices.usedSliceSeeds[sliceId][tempMax] = volView.__horizSlices.sliceLabels[sliceId];
 					}
 					volView.__htmlContextUsedSeeds.putImageData(volView.__horizSlices.usedSliceSeeds[volView.__drawingCanvasParams.sliceNumber][tempMax], 0, 0);
 					segSemahpore = true;
@@ -1509,14 +1512,10 @@ qx.Class.define("desk.gcSegmentation",
             this.add(containerHtmlUsedSeeds, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
 
 
-			var listMembers = [];
-			var listSemahpore = false;
-			var slicesListSemaphore = false;
 			for(var i=0; i<volView.__numberOfSlices; i++)
 			{
 				volView.__horizSlices.inProgData[i] = {
 						curTagged : false,
-						inList : false,
 						segmented : false
 				};
 			};
@@ -1548,48 +1547,23 @@ qx.Class.define("desk.gcSegmentation",
 				////Update lists
 					if(volView.__horizSlices.inProgData[oldSliceIndex].curTagged)	////CURRENT slice has seeds
 					{
+							updateSeedsXML();
 							if(!volView.__horizSlices.inProgData[oldSliceIndex].inList)
 							{
 								// Add slice to list
 									var sliceItem = new qx.ui.form.ListItem("Slice No." + oldSliceIndex);
 									sliceItem.setUserData("slice",oldSliceIndex);
 									var tempPos = 0;
-									for(var i=0; i<=oldSliceIndex; i++)
+									var seedsList=modifSlicesList.getChildren();
+									for(var i=0; i<seedsList.length; i++)
 									{
-											if(listMembers[i]<oldSliceIndex)
+											if(seedsList[i].getUserData("slice")<oldSliceIndex)
 													tempPos++;
 									}
-									slicesListSemaphore = false;
-									console.log("adding slice : "+oldSliceIndex);
 									modifSlicesList.addAt(sliceItem, tempPos);
-								// Update members list
-									var tempMembers = [];
-									var j = 0;
-									listSemahpore = true;
-									for(var i=0; i<=listMembers.length; i++)
-									{
-											if((j!=tempPos)&&(i<listMembers.length))
-											{
-													tempMembers[j] = listMembers[i];
-											}
-											if(j==tempPos)
-											{
-													tempMembers[j] =oldSliceIndex;
-													i--;	// do "i--;" so when doing "i++;" i index doesn't actually change
-											}
-											j++;
-									}
-									listMembers = tempMembers;
-									listSemahpore = false;
-									for(var i=0; i<volView.__numberOfSlices; i++)
-									{
-											if(i!=oldSliceIndex)
-													volView.__horizSlices.inProgData[i].inList = volView.__horizSlices.inProgData[i].inList;
-											else
-													volView.__horizSlices.inProgData[i].inList = true;
-									}
+									volView.__horizSlices.inProgData[oldSliceIndex].inList = true;
 								////Update XML file
-									updateSeedsXML();
+
 							}
 						////Since there is at least one saved seeds image, activate start button
                             if(!startButton.isEnabled())
@@ -2200,10 +2174,12 @@ qx.Class.define("desk.gcSegmentation",
             {
 				var sliceID;
 				var xmlContent = '\n';
-				for(var i=0; i<listMembers.length; i++)
+				var seedsList=modifSlicesList.getChildren();
+				for(var i=0; i<seedsList.length; i++)
 				{
-					sliceID = {slice: listMembers[i] + ""};
-					xmlContent += '     ' + element('seed', volView.__slicesNamePrefix + (volView.__slicesNameOffset + listMembers[i]) + "." + selectBox.getSelection()[0].getLabel(), sliceID) + '\n';
+					var sliceId=seedsList[i].getUserData("slice");
+					sliceID = {slice: sliceId + ""};
+					xmlContent += '     ' + element('seed', volView.__slicesNamePrefix + (volView.__slicesNameOffset + sliceId) + "." + selectBox.getSelection()[0].getLabel(), sliceID) + '\n';
 				}
 				var xmlUpdateRequest = new XMLHttpRequest();
 				xmlUpdateRequest.open("POST",'/visu/createXML_Seb.php',true);
