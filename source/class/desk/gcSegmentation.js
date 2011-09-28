@@ -765,44 +765,16 @@ qx.Class.define("desk.gcSegmentation",
 			{
 				if((event.getKeyIdentifier()=="Delete")&&(typeof listMembers[0] != "undefined"))
 				{
-					var selectedChild = modifSlicesList.getSelection();
-					var tempChildren = modifSlicesList.getChildren();
-					var tempPos = findInArray(tempChildren, selectedChild[0]);
+					var selectedChild = modifSlicesList.getSelection()[0];
+					var tempPos = selectedChild.getUserData("slice");
 				////Erase image on the server
 					eraseFile(volView.__slicesNamePrefix + (volView.__slicesNameOffset + listMembers[tempPos]) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp);
 				////Update members list
-					updateList(tempPos);
-				////Clear drawing canvas
 					clearButton.execute();
 				////Erase from widget list
-					modifSlicesList.remove(modifSlicesList.getSelection()[0]);
-					if(typeof modifSlicesList.getChildren()[tempPos-1] != "undefined")
-						modifSlicesList.setSelection([modifSlicesList.getChildren()[tempPos-1]]);
-					if(0<listMembers.length)
-					{
-					////Update XML file
-						updateSeedsXML();
-					}
-					else
-					{
-					////Reset widget list to current slice
-						var tempSlide = slider.getValue();
-						if(tempSlide!=0)
-						{
-								slider.setValue(0);
-								slider.setValue(tempSlide);
-						}
-						else
-						{
-								slider.setValue(1);
-								slider.setValue(0);
-						}
-					////Erase XML file
-						eraseFile("seeds.xml");
-					////Reset image and drawing canvas if list is empty
-						resetZoom();
-						startButton.set({opacity: 0.5, enabled : false});
-					}
+					modifSlicesList.remove(selectedChild);
+
+					updateSeedsXML();
 				}
 			}, this);
 			
@@ -810,21 +782,8 @@ qx.Class.define("desk.gcSegmentation",
 			{
 				if(!slicesListSemaphore)
 				{
-					var selectedChild = event.getData();
-					var tempChildren = modifSlicesList.getChildren();
-					for(var i=0; i<tempChildren.length; i++)
-					{
-						if(tempChildren[i]==selectedChild[0])
-						{
-							while(listSemahpore);
-							if(typeof listMembers != "undefined")	// Prevents error when the list has not yet been created
-							{
-								if(typeof listMembers[i] != "undefined")	// Prevents error when the member has not yet been added
-										slider.setValue(listMembers[i]);
-							}
-							continue;
-						}
-					}
+					var selectedChild = event.getData()[0];
+					slider.setValue(selectedChild.getUserData("slice"));
 				}
 			}, this);
 			
@@ -1564,7 +1523,6 @@ qx.Class.define("desk.gcSegmentation",
 	
 			slider.addListener("changeValue", function(event)
 			{
-					modifSlicesList.setSelection([]);
 					volView.__htmlContextLabels.beginPath(); // seb : why???
 					volView.__mouseData.mouseLeftDownFlag = false;
 				////Save current image
@@ -1588,13 +1546,13 @@ qx.Class.define("desk.gcSegmentation",
 									volView.__htmlContextUsedSeeds.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 					}
 				////Update lists
-				console.log ("last slice : "+oldSliceIndex+" tagged : "+volView.__horizSlices.inProgData[oldSliceIndex].curTagged);
 					if(volView.__horizSlices.inProgData[oldSliceIndex].curTagged)	////CURRENT slice has seeds
 					{
 							if(!volView.__horizSlices.inProgData[oldSliceIndex].inList)
 							{
 								// Add slice to list
 									var sliceItem = new qx.ui.form.ListItem("Slice No." + oldSliceIndex);
+									sliceItem.setUserData("slice",oldSliceIndex);
 									var tempPos = 0;
 									for(var i=0; i<=oldSliceIndex; i++)
 									{
@@ -2254,55 +2212,7 @@ qx.Class.define("desk.gcSegmentation",
 				xmlUpdateRequest.send(element('seeds', xmlContent));
 			};
 			
-			
-			
-			
-			
-		////Seek value in given array (not implemented by default in Javascript)
-			var findInArray = function(array, value)
-            {
-					var position = 0;
-					for(var i=0; i<array.length; i++)
-					{
-							if(array[i]==value)
-							{
-									position = i;
-									continue;
-							}
-					}
-					return position
-			};
-			
-			
-			
-			
-			
-		////Recreate list after removing member
-			var updateList = function(pos)
-            {
-					var tempMembers = [];
-					var j = 0;
-					listSemahpore = true;
-					for(var i=0; i<listMembers.length; i++)
-					{
-							if(i!=pos)
-							{
-									tempMembers[j] = listMembers[i];
-									volView.__horizSlices.inProgData[listMembers[i]].inList = volView.__horizSlices.inProgData[listMembers[i]].inList;
-									j++;
-							}
-							else
-							{
-									volView.__horizSlices.sliceLabels[listMembers[i]] = null;
-									volView.__horizSlices.inProgData[listMembers[i]].inList = false;
-							}
-					}
-					listMembers = tempMembers;
-					listSemahpore = false;
-			};
-			
-			
-			
+
 			
 			
 			// XML writer with attributes and smart attribute quote escaping 
