@@ -1575,8 +1575,10 @@ qx.Class.define("desk.gcSegmentation",
 			};
 		
 		////Initialize list
-			modifSlicesList.addAt(new qx.ui.form.ListItem("Slice No." + 0), 0);
+/*			modifSlicesList.addAt(new qx.ui.form.ListItem("Slice No." + 0), 0);
 			listMembers[0] = 0;
+			volView.__horizSlices.inProgData[0].inList = true;*/
+/*
 			for(var i=0; i<volView.__numberOfSlices; i++)
 			{
 					if(i!=0)
@@ -1584,7 +1586,7 @@ qx.Class.define("desk.gcSegmentation",
 					else
 							volView.__horizSlices.inProgData[i].inList = true;
 			};
-			
+			*/
 			
 			
 			slider.addListener("changeValue", function(event)
@@ -1592,7 +1594,7 @@ qx.Class.define("desk.gcSegmentation",
 					volView.__htmlContextLabels.beginPath(); // seb : why???
 					volView.__mouseData.mouseLeftDownFlag = false;
 				////Save current image
-					var oldSliceIndex= volView.__drawingCanvasParams.sliceNumber;;
+					var oldSliceIndex= volView.__drawingCanvasParams.sliceNumber;
 					volView.__horizSlices.sliceLabels[oldSliceIndex] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 
 					volView.__horizSlices.inProgData[oldSliceIndex].curTagged = 
@@ -1612,6 +1614,7 @@ qx.Class.define("desk.gcSegmentation",
 									volView.__htmlContextUsedSeeds.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 					}
 				////Update lists
+				console.log ("last slice : "+oldSliceIndex+" tagged : "+volView.__horizSlices.inProgData[oldSliceIndex].curTagged);
 					if(volView.__horizSlices.inProgData[oldSliceIndex].curTagged)	////CURRENT slice has seeds
 					{
 							if(!volView.__horizSlices.inProgData[oldSliceIndex].inList)
@@ -1660,8 +1663,8 @@ qx.Class.define("desk.gcSegmentation",
                             if(!startButton.isEnabled())
                                     startButton.set({opacity: 1, enabled : true});
 					}
-					else	////CURRENT slice has NO seeds
-					{
+		/*	commented by seb			else	////CURRENT slice has NO seeds
+				{
 							if(volView.__horizSlices.inProgData[oldSliceIndex].inList)
 							{
 								////Erase image on the server
@@ -1677,7 +1680,8 @@ qx.Class.define("desk.gcSegmentation",
 									if(listMembers.length==0)
 										startButton.set({opacity: 0.5, enabled : false});
 							}
-					}	////End if(volView.__horizSlices.inProgData[oldSliceIndex].curTagged)
+					}	////End if(volView.__horizSlices.inProgData[oldSliceIndex].curTagged)*/  
+
 				////Set canvas, buttons, list
 					if(volView.__horizSlices.inProgData[newSliceIndex].curTagged)	////NEXT slice HAS seeds
 					{
@@ -1686,7 +1690,7 @@ qx.Class.define("desk.gcSegmentation",
 							eraserButton.set({opacity: 1, enabled : true});
                             startButton.set({opacity: 1, enabled : true});
 						////Update XML file
-			// commented by seb				updateSeedsXML();
+	/*		// commented by seb				updateSeedsXML();
 							if(volView.__horizSlices.inProgData[newSliceIndex].inList)
 							{
 									var tempPos = findInArray(listMembers, newSliceIndex);
@@ -1740,7 +1744,7 @@ qx.Class.define("desk.gcSegmentation",
 									slicesListSemaphore = true;
 									modifSlicesList.setSelection([modifSlicesList.getChildren()[tempPos]]);
 									slicesListSemaphore = false;
-							}
+							}*/
 					}
 					else	////NEXT slice has NO seeds
 					{
@@ -1751,7 +1755,7 @@ qx.Class.define("desk.gcSegmentation",
 				//			{
 				// commented by seb					eraseFile("seeds.xml");
 				//			}
-							if(!volView.__horizSlices.inProgData[newSliceIndex].inList)
+/*							if(!volView.__horizSlices.inProgData[newSliceIndex].inList)
 							{
 								////Add slice to list
 									var sliceItem = new qx.ui.form.ListItem("Slice No." + newSliceIndex);
@@ -1795,7 +1799,7 @@ qx.Class.define("desk.gcSegmentation",
 									}
 									listMembers = tempMembers;
 									listSemahpore = false;
-							}
+							}*/
 					};	////End if(typeof volView.__horizSlices.sliceLabels[newSliceIndex] != "undefined")
 				////Update image canvas
 					if(volView.__horizSlices.sliceImages[newSliceIndex].srcImage.src=="")
