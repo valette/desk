@@ -676,22 +676,7 @@ qx.Class.define("desk.gcSegmentation",
             volView.__brghtnssCntrstButton.addListener("changeValue", function(event)
 			{
 				if (event.getData()==true)
-				{
 					volView.setMouseActionMode(1);
-				}
-
-                volView.__drawingCanvasParams.brCrFixingFlag = event.getData();
-                if(volView.__drawingCanvasParams.brCrFixingFlag)
-                {
-                    var children = colorsPage.getChildren();
-                    for(var i=0; i<nbLabels; i++)
-                    {
-                            children[i].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
-                    }
-                    eraserButton.setValue(false);
-                    volView.__drawingCanvasParams.eraseFlag = false;
-                    volView.__drawingCanvasParams.paintFlag = false;
-                }
             });
 			
 			
@@ -766,7 +751,7 @@ qx.Class.define("desk.gcSegmentation",
 			this.__mainRightContainer.add(slicesTabView);
 
 			var modifSlicesList = new qx.ui.form.List(true);
-			modifSlicesList.set({ height: 64, width: colorsTabView.getSizeHint().width, selectionMode : "one" , spacing : 8});
+			modifSlicesList.set({ height: 64, width: colorsTabView.getSizeHint().width , spacing : 8});
 			
 			modifSlicesList.addListener("keypress", function(event)
 			{
@@ -1618,6 +1603,10 @@ qx.Class.define("desk.gcSegmentation",
 							}
 							modifSlicesList.addAt(sliceItem, tempPos);
 							volView.__horizSlices.inProgData[oldSliceIndex].inList = true;
+							sliceItem.addListener("click", function(event)
+							{
+									slider.setValue(this.getUserData("slice"));
+							}, sliceItem);
 						////Update XML file
 							updateSeedsXML();
 						}
@@ -1639,6 +1628,7 @@ qx.Class.define("desk.gcSegmentation",
 					}
 					else	////NEXT slice has NO seeds
 					{
+							modifSlicesList.resetSelection();
 							clearButton.execute();
 							volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 							startButton.set({opacity: 0.5, enabled : false});
