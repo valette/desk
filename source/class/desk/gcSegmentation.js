@@ -1084,16 +1084,12 @@ qx.Class.define("desk.gcSegmentation",
 			
 			var mouseDownHandler = function(event)
             {
-				console.log ("clik");
-				console.log ("paint flag : "+volView.__drawingCanvasParams.paintFlag);
-				console.log ("erase flag : "+volView.__drawingCanvasParams.eraseFlag);
-				console.log ("contrast flag : "+volView.__drawingCanvasParams.brCrFixingFlag);
 				volView.__mouseActionActive=true;
+
 
 				////Update image
 				if(!((volView.__mouseData.brCrFixingFlag)&&(volView.__mouseData.mouseLeftDownFlag)))
 				{
-					console.log("update image");
 					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 					drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
 				}
@@ -1107,8 +1103,10 @@ qx.Class.define("desk.gcSegmentation",
 		            	volView.__currentSeedsModified=true;
 						save2undoStack(event);
 					}
-                    if((volView.__drawingCanvasParams.paintFlag)&&(!volView.__drawingCanvasParams.eraseFlag)&&(!volView.__drawingCanvasParams.brCrFixingFlag))
+					if (volView.__mouseActionMode==3)
                     {
+						drawBrush(event,volView.__drawingCanvasParams.curCtxtZoom);
+                    	console.log("draw...");
                         volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
                         volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
                         volView.__htmlContextLabels.beginPath();
@@ -1122,7 +1120,8 @@ qx.Class.define("desk.gcSegmentation",
                         if(!eraserButton.isEnabled())
                             eraserButton.set({opacity: 1, enabled : true});
                     }
-                    if(volView.__drawingCanvasParams.brCrFixingFlag)
+
+					if (volView.__mouseActionMode==1);
                     {
                         drawingCanvas.set({cursor: "crosshair"});
                         volView.__mouseData.recentX = volView.__mouseData.xPos;
@@ -1142,12 +1141,7 @@ qx.Class.define("desk.gcSegmentation",
 			////"Undo" (draw previous canvas)
 				undoFnct(event);
 			////Draw cursor
-                if((volView.__drawingCanvasParams.paintFlag)&&(!volView.__drawingCanvasParams.eraseFlag)&&(!volView.__drawingCanvasParams.brCrFixingFlag))
-                {
-					drawBrush(event,volView.__drawingCanvasParams.curCtxtZoom);
-                }
 				drawPointer(event,volView.__drawingCanvasParams.curCtxtZoom);
-				console.log ("mode : "+volView.__mouseActionMode);
             };
 			
 			var wheelScale = 0;
