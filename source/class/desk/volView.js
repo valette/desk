@@ -19,18 +19,19 @@ qx.Class.define("desk.volView",
 			//file is a tree node...
 			var node=file;
 			this.setCaption(node.label);
+
+			function getAnswer(e)
+				{
+					var req = e.getTarget();
+					var slicesDirectory=req.getResponseText().split("\n")[0];
+					volView.openFile("\/visu\/desk\/php\/"+slicesDirectory+"\/"+"volume.xml");
+				}
+
 			var parameterMap={
 				"action" : "Slice_Volume",
 				"input_file" : fileBrowser.getNodePath(node),
 				"output_directory" : "cache\/"};
 			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
-
-			function getAnswer(e)
-			{
-				var req = e.getTarget();
-				var slicesDirectory=req.getResponseText().split("\n")[0];
-				volView.openFile("\/visu\/desk\/php\/"+slicesDirectory+"\/"+"volume.xml");
-			}
 
 			var label = new qx.ui.basic.Label("Computing slices, wait...").set({
 				font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
@@ -42,7 +43,25 @@ qx.Class.define("desk.volView",
 			this.setCaption(file);
 			this.openFile(file);
 		}
-			
+
+		// drag and drop support
+		this.setDraggable(true);
+		this.addListener("dragstart", function(e) {
+			e.addAction("copy");
+			e.addType("volumeSlice");
+			});
+
+		this.addListener("droprequest", function(e) {
+				var type = e.getCurrentType();
+				switch (type)
+				{
+				case "volumeSlice":
+					e.addData(type, this);
+					break;
+				default :
+					alert ("type "+type+"not supported for drag and drop");
+				}
+			}, this);
 
 		this.open();
 		return (this);		
@@ -52,16 +71,65 @@ qx.Class.define("desk.volView",
 		LINKEDWINDOW : null
 	},
 
+	properties : {
+		slice : { check : "Number", init : 0 ,  event : "changeSlice"}
+	},
+
 	members : {
 		__path : null,
 		__offset : null,
 		__prefix : null,
 		__image : null,
+		__canvas : null,
 		__maxZ : null,
 		__slider : null,
 		__timestamp : null,
 		__fileFormatBox : null,
-		
+
+		__extent : null,
+		__origin : null,
+		__spacing : null,
+		__dimensions: null,
+
+		getDimensions : function ()
+		{
+			return (this.__dimensions);
+		},
+
+		getImage : function(){
+			return this.__image;
+		},
+
+		getCanvas : function(){
+			return this.__canvas;
+		},
+
+		getSlider : function (){
+			return this.__slider;
+		},
+
+		getCornersCoordinates : function () {
+			var z=this.__origin[2]+(this.__dimensions[2]-this.__slider.getValue()+this.__extent[4])*this.__spacing[2];
+			var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
+			var xmax=this.__origin[0]+this.__extent[1]*this.__spacing[0];
+			var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
+			var ymax=this.__origin[1]+this.__extent[3]*this.__spacing[1];
+			var coordinates=[];
+			coordinates[0]=xmin;
+			coordinates[1]=ymax;
+			coordinates[2]=z;
+			coordinates[3]=xmax;
+			coordinates[4]=ymax;
+			coordinates[5]=z;
+			coordinates[6]=xmax;
+			coordinates[7]=ymin;
+			coordinates[8]=z;
+			coordinates[9]=xmin;
+			coordinates[10]=ymin;
+			coordinates[11]=z;
+			return (coordinates);
+		},
+
 		openFile : function (file) {
 			this.removeAll();
 
@@ -77,8 +145,30 @@ qx.Class.define("desk.volView",
 			if (volume==null)
 				return;
 
-			var dimensions=volume.getElementsByTagName("dimensions")[0];
-			this.__maxZ=parseInt(dimensions.getAttribute("z"))-1;
+			// parse extent, dimensions, origin, spacing
+			var XMLextent=volume.getElementsByTagName("extent")[0];
+			this.__extent=new Array(parseInt(XMLextent.getAttribute("x1")),
+							parseInt(XMLextent.getAttribute("x2")),
+							parseInt(XMLextent.getAttribute("y1")),
+							parseInt(XMLextent.getAttribute("y2")),
+							parseInt(XMLextent.getAttribute("z1")),
+							parseInt(XMLextent.getAttribute("z2")));
+
+			var XMLdimensions=volume.getElementsByTagName("dimensions")[0];
+			this.__maxZ=parseInt(XMLdimensions.getAttribute("z"))-1;
+			this.__dimensions=new Array(parseInt(XMLdimensions.getAttribute("x")),
+							parseInt(XMLdimensions.getAttribute("y")),
+							parseInt(XMLdimensions.getAttribute("z")));
+
+			var XMLspacing=volume.getElementsByTagName("spacing")[0];
+			this.__spacing=new Array(parseFloat(XMLspacing.getAttribute("x")),
+							parseFloat(XMLspacing.getAttribute("y")),
+							parseFloat(XMLspacing.getAttribute("z")));
+
+			var XMLorigin=volume.getElementsByTagName("origin")[0];
+			this.__origin=new Array(parseFloat(XMLorigin.getAttribute("x")),
+							parseFloat(XMLorigin.getAttribute("y")),
+							parseFloat(XMLorigin.getAttribute("z")));
 
 			var slices=volume.getElementsByTagName("slicesprefix")[0];
 			this.__offset=parseInt(slices.getAttribute("offset"));
@@ -97,6 +187,7 @@ qx.Class.define("desk.volView",
 			this.__slider=new qx.ui.form.Slider();
 			this.__slider.setMinimum(0);
 			this.__slider.setMaximum(this.__maxZ);
+			this.__slider.setValue(Math.round(0.5*this.__maxZ));
 			this.__slider.setWidth(30);
 			this.__slider.setOrientation("vertical");
 			this.__slider.addListener("changeValue", function(event){this.updateImage();},this);
@@ -116,8 +207,17 @@ qx.Class.define("desk.volView",
 
 			this.add(leftContainer);
 
-			this.__image=new qx.ui.basic.Image();
-			this.add(this.__image);
+			this.__image=new Image();
+			this.__canvas = new qx.ui.embed.Canvas().set({
+				canvasWidth: this.__dimensions[0],
+				canvasHeight: this.__dimensions[1],
+				width: this.__dimensions[0],
+				height: this.__dimensions[1],
+				syncDimension: true
+				});
+	        this.__canvas.addListener("redraw", this.redraw, this);
+
+			this.add(this.__canvas);
 			this.updateImage();
 
 			this.addListener("keypress",
@@ -133,10 +233,20 @@ qx.Class.define("desk.volView",
 					}},this);				
 		},
 
+		redraw : function()
+		{
+			this.__canvas.getContext2d().drawImage(this.__image, 0, 0);
+		},
+
 		updateImage : function() {
-			this.__image.setSource(
-				this.__path+this.__prefix+(this.__offset+this.__maxZ-this.__slider.getValue())+"."+
-					this.__fileFormatBox.getSelection()[0].getLabel()+"?nocache="+this.__timestamp);
+			var volView=this;
+			var slice=volView.__maxZ-volView.__slider.getValue();
+			this.__image.onload=function(){
+				volView.redraw();
+				volView.setSlice(slice);
+				};
+			this.__image.src=this.__path+this.__prefix+(this.__offset+this.__maxZ-this.__slider.getValue())
+				+"."+this.__fileFormatBox.getSelection()[0].getLabel()+"?nocache="+this.__timestamp;
 		}
 	}
 });
