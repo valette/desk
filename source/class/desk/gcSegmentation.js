@@ -356,10 +356,8 @@ qx.Class.define("desk.gcSegmentation",
 			
 			var penLabel = new qx.ui.basic.Label("Brush : ");
 			
-			this.add(penLabel, {left: volView.__imgMap.width + 60, top: 8});
-			
-			this.add(penSize, {left: volView.__imgMap.width + penLabel.getSizeHint().width+4 + 60, top: 4});
-			
+			this.__topRightContainer.add(penLabel);
+			this.__topRightContainer.add(penSize);
 			
 			
 			
@@ -410,8 +408,8 @@ qx.Class.define("desk.gcSegmentation",
 					}
                 }
 			////Move eraser to mouse position
-                volView.__eraserCursor.set({marginLeft: Math.round((volView.__mouseData.xPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
-                                    marginTop: Math.round((volView.__mouseData.yPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
+                volView.__eraserCursor.set({marginLeft: Math.round((volView.__mouseData.xPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom),
+                                    marginTop: Math.round((volView.__mouseData.yPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom)});
 				volView.__mouseData.xPos = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.xPos;
                 volView.__mouseData.yPos = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.yPos;
 				if(volView.__mouseData.mouseLeftDownFlag)
@@ -476,10 +474,11 @@ qx.Class.define("desk.gcSegmentation",
                 volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 			
-            if(this.__winXP)
-                this.add(eraserButton, {left: volView.__imgMap.width + 56, top: 40});
-            else
-                this.add(eraserButton, {left: volView.__imgMap.width + 56, top: 36});
+//            if(this.__winXP)
+//               this.add(eraserButton, {left: volView.__imgMap.width + 56, top: 40});
+//            else
+//                this.add(eraserButton, {left: volView.__imgMap.width + 56, top: 36});
+			this.__topRightContainer.add(eraserButton)
 			
 			
 			
@@ -507,12 +506,12 @@ qx.Class.define("desk.gcSegmentation",
                 volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 			
-			if(this.__winXP)
+/*			if(this.__winXP)
                 this.add(clearButton, {left: volView.__imgMap.width + eraserButton.getSizeHint().width+8 + 67, top: 40});
             else
                 this.add(clearButton, {left: volView.__imgMap.width + eraserButton.getSizeHint().width+8 + 74, top: 36});
-			
-			
+	*/		
+			this.__topRightContainer.add(clearButton)
 			
 			
 			
@@ -529,8 +528,9 @@ qx.Class.define("desk.gcSegmentation",
                 volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 
-            this.add(colorsTabView, {left: volView.__imgMap.width + 50, top: 73+4});
-			
+        //    this.add(colorsTabView, {left: volView.__imgMap.width + 50, top: 73+4});
+			this.__mainRightContainer.add(colorsTabView)
+
 		////Function creates one label box
 			var unfocusedBorder = new qx.ui.decoration.Single(2, "solid", "black");
             var focusedBorder = new qx.ui.decoration.Single(3, "solid", "red");
@@ -752,8 +752,9 @@ qx.Class.define("desk.gcSegmentation",
                     volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 
-            this.add(slicesTabView, {left: volView.__imgMap.width + 50, top: colorsTabView.getLayoutProperties().top + colorsTabView.getSizeHint().height+8 + 61});
-			
+//            this.add(slicesTabView, {left: volView.__imgMap.width + 50, top: colorsTabView.getLayoutProperties().top + colorsTabView.getSizeHint().height+8 + 61});
+			this.__mainRightContainer.add(slicesTabView);
+
 			var modifSlicesList = new qx.ui.form.List(true);
 			modifSlicesList.set({ height: 64, width: colorsTabView.getSizeHint().width, selectionMode : "one" , spacing : 8});
 			
@@ -1257,8 +1258,12 @@ qx.Class.define("desk.gcSegmentation",
 						var canvasLocation=volView.__imageCanvas.getContentLocation();
 						var tempX = (event.getDocumentLeft()-canvasLocation.left)/volView.__drawingCanvasParams.curCtxtZoom;
 						var tempY = (event.getDocumentTop()-canvasLocation.top)/volView.__drawingCanvasParams.curCtxtZoom;
-						volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
-											marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
+//						volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
+//											marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
+
+						volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom),
+											marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom)});
+
                         if(volView.__eraserCursor.getVisibility()=="excluded")
 						{
                                 volView.__eraserCursor.show();
@@ -1407,6 +1412,7 @@ qx.Class.define("desk.gcSegmentation",
 			
 		this.__imageCanvas.addListener("mouseout", function(event)
 		{
+			this.__mouseActionActive=false;
 			if(((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.brCrFixingFlag))&&(!volView.__drawingCanvasParams.eraseFlag))
 			{
 				volView.__htmlContextLabels.beginPath();
