@@ -76,6 +76,20 @@ qx.Class.define("desk.gcSegmentation",
 			};
 
 
+		this.__window=new qx.ui.window.Window();
+		this.__window.setLayout(new qx.ui.layout.HBox());
+		
+		this.__mainLeftContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+		this.__window.add(this.__mainLeftContainer);
+		
+		this.__topLeftContainer = new qx.ui.container.Composite(new qx.ui.layout.HBox());
+		this.__mainLeftContainer.add(this.__topLeftContainer);
+
+		this.__imageContainer = new qx.ui.container.Composite(new qx.ui.layout.HBox());
+		this.__mainLeftContainer.add(this.__imageContainer, {flex : 1});
+
+
+
 		var volView = this;
 		
         volView.set({
@@ -132,6 +146,13 @@ qx.Class.define("desk.gcSegmentation",
 
 	members :
 	{
+
+		__window : null,
+		__mainLeftContainer : null,
+		__topLeftContainer : null,
+		__imageContainer : null,
+		__imageCanvas : null,
+
 		__currentSeedsModified : false,
 
 		__winXP : true,
@@ -674,11 +695,12 @@ qx.Class.define("desk.gcSegmentation",
                 }
             });
 			
-			if(this.__winXP)
+/*			if(this.__winXP)
                 this.add(brghtnssCntrstButton, {left: volView.__imgMap.width + colorsTabView.getSizeHint().width - 4, top: 40});
             else
                 this.add(brghtnssCntrstButton, {left: volView.__imgMap.width + colorsTabView.getSizeHint().width - 4, top: 36});
-			
+*/
+
 			
 			
 		////Create reset brightness/contrast button
@@ -695,25 +717,28 @@ qx.Class.define("desk.gcSegmentation",
                 brghtnssCntrstButton.setValue(false);
             });
 			
-			this.add(resetBrCrButton);
+//			this.add(resetBrCrButton);
 
+/*
             if(this.__winXP)
                 resetBrCrButton.setUserBounds(volView.__imgMap.width + colorsTabView.getSizeHint().width + 39, 41, 50, 32);
             else
                 resetBrCrButton.setUserBounds(volView.__imgMap.width + colorsTabView.getSizeHint().width + 39, 36, 50, 32);
-			
+*/		
 			
 			
 			
 			
 		////Create slider
             var slider = new qx.ui.form.Slider();
-            slider.setHeight(volView.__imgMap.height - 18);  ////  set below to match image height
+ //           slider.setHeight(volView.__imgMap.height - 18);  ////  set below to match image height
             slider.setWidth(30);
             slider.setMaximum(volView.__numberOfSlices-1);
             slider.setMinimum(0);
             slider.setOrientation("vertical");
-            this.add(slider, {left: 0, top: 4});
+
+//            this.add(slider, {left: 0, top: 4});
+            volView.__imageContainer.add(slider);
 			
 			
 			
@@ -727,7 +752,11 @@ qx.Class.define("desk.gcSegmentation",
             slider.bind("maximum", spinner, "maximum");
             spinner.bind("minimum", slider, "minimum");
             slider.bind("minimum", spinner, "minimum");
-            this.add(spinner, {left: 0, top: volView.__imgMap.height + 8});
+//            this.add(spinner, {left: 0, top: volView.__imgMap.height + 8});
+
+			volView.__topLeftContainer.add(spinner);
+			volView.__topLeftContainer.add(brghtnssCntrstButton);
+			volView.__topLeftContainer.add(resetBrCrButton);
 			
 			
 			
@@ -780,13 +809,14 @@ qx.Class.define("desk.gcSegmentation",
 					}
 				}
 			}, this);
-			
+
+/*			
 			modifSlicesList.addListener("changeSelection", function(event)
 			{
 					var selectedChild = event.getData()[0];
 					slider.setValue(selectedChild.getUserData("slice"));
 			}, this);
-			
+*/
 			slicesPage.add(modifSlicesList, {column: 0, row: 0});
 			
 			
@@ -1366,12 +1396,29 @@ qx.Class.define("desk.gcSegmentation",
 			
 			
 			
+			this.__imageCanvas = new qx.ui.container.Composite(new qx.ui.layout.Canvas);
+//			this.__imageCanvas.sedWidth(volView.__imgMap.width);
+//			this.__imageCanvas.sedHeight(volView.__imgMap.height);			
+
+/*			var imgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true,
+														 zIndex: volView.__imageZ,
+														 width : volView.__imgMap.width,
+														 height : volView.__imgMap.height });
+*/
+
+			var imgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true,
+														zIndex: volView.__imageZ,
+														width : volView.__imgMap.width,
+														height : volView.__imgMap.height });
+
 			
-			var imgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true, zIndex: volView.__imageZ});
+//            this.add(imgCanvas, {left: volView.__imgMap.left, top: volView.__imgMap.top});
+
+			this.__imageCanvas.add(imgCanvas);
+            volView.__imageContainer.add(this.__imageCanvas);
+
 			
-            this.add(imgCanvas, {left: volView.__imgMap.left, top: volView.__imgMap.top});
-			
-            imgCanvas.setUserBounds(volView.__imgMap.left, volView.__imgMap.top, volView.__imgMap.width, volView.__imgMap.height);
+      //      imgCanvas.setUserBounds(volView.__imgMap.left, volView.__imgMap.top, volView.__imgMap.width, volView.__imgMap.height);
 			
 			imgCanvas.addListener("redraw", function(event)
 			{
@@ -1534,40 +1581,39 @@ qx.Class.define("desk.gcSegmentation",
 					volView.__drawingCanvasParams.sliceNumber = newSliceIndex;
 					if(segmentationDone)
 					{
-							var index = 0;
-							var segmentationResult=volView.__horizSlices.sliceResults[newSliceIndex][index];
-							volView.__htmlContextSegImg.drawImage(segmentationResult,
-														0,0,segmentationResult.width,
-														segmentationResult.height);
-							if(typeof volView.__horizSlices.usedSliceSeeds[newSliceIndex][index] != "undefined")
-									volView.__htmlContextUsedSeeds.putImageData(volView.__horizSlices.usedSliceSeeds[newSliceIndex][index], 0, 0);
-							else
-									volView.__htmlContextUsedSeeds.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+						var index = 0;
+						var segmentationResult=volView.__horizSlices.sliceResults[newSliceIndex][index];
+						volView.__htmlContextSegImg.drawImage(segmentationResult,
+													0,0,segmentationResult.width,
+													segmentationResult.height);
+						if(typeof volView.__horizSlices.usedSliceSeeds[newSliceIndex][index] != "undefined")
+							volView.__htmlContextUsedSeeds.putImageData(volView.__horizSlices.usedSliceSeeds[newSliceIndex][index], 0, 0);
+						else
+							volView.__htmlContextUsedSeeds.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 					}
 				////Update lists
 					if(volView.__horizSlices.inProgData[oldSliceIndex].curTagged)	////CURRENT slice has seeds
 					{
-							updateSeedsXML();
-							if(!volView.__horizSlices.inProgData[oldSliceIndex].inList)
+						if(!volView.__horizSlices.inProgData[oldSliceIndex].inList)
+						{
+						// Add slice to list
+							var sliceItem = new qx.ui.form.ListItem("Slice No." + oldSliceIndex);
+							sliceItem.setUserData("slice",oldSliceIndex);
+							var tempPos = 0;
+							var seedsList=modifSlicesList.getChildren();
+							for(var i=0; i<seedsList.length; i++)
 							{
-								// Add slice to list
-									var sliceItem = new qx.ui.form.ListItem("Slice No." + oldSliceIndex);
-									sliceItem.setUserData("slice",oldSliceIndex);
-									var tempPos = 0;
-									var seedsList=modifSlicesList.getChildren();
-									for(var i=0; i<seedsList.length; i++)
-									{
-											if(seedsList[i].getUserData("slice")<oldSliceIndex)
-													tempPos++;
-									}
-									modifSlicesList.addAt(sliceItem, tempPos);
-									volView.__horizSlices.inProgData[oldSliceIndex].inList = true;
-								////Update XML file
-
+									if(seedsList[i].getUserData("slice")<oldSliceIndex)
+											tempPos++;
 							}
-						////Since there is at least one saved seeds image, activate start button
-                            if(!startButton.isEnabled())
-                                    startButton.set({opacity: 1, enabled : true});
+							modifSlicesList.addAt(sliceItem, tempPos);
+							volView.__horizSlices.inProgData[oldSliceIndex].inList = true;
+						////Update XML file
+							updateSeedsXML();
+						}
+					////Since there is at least one saved seeds image, activate start button
+                        if(!startButton.isEnabled())
+                                startButton.set({opacity: 1, enabled : true});
 					}
 
 				////Set canvas, buttons, list
@@ -1621,7 +1667,7 @@ qx.Class.define("desk.gcSegmentation",
                     volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 
-
+		this.__window.open();
 
 		/* ************************************************************************************************************************************* */
 		//
