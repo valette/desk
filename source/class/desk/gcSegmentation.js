@@ -155,6 +155,10 @@ qx.Class.define("desk.gcSegmentation",
 
 		__currentSeedsModified : false,
 
+
+		__mouseActionMode : 0,
+		__mouseActionActive : false,
+
 		__winXP : true,
 
 // Données pour la position de l'objet window qui contient l'interface
@@ -542,6 +546,7 @@ qx.Class.define("desk.gcSegmentation",
                 });
 				labelBox.addListener("click", function(){
                     volView.__drawingCanvasParams.paintFlag = true;
+                    volView.__mouseActionMode=3;
                     var i = 0;
                     var children = colorsPage.getChildren();
                     while(children[i]!=this)
@@ -649,6 +654,11 @@ qx.Class.define("desk.gcSegmentation",
 
             brghtnssCntrstButton.addListener("changeValue", function(event)
 			{
+				if (event.getData()==true)
+				{
+					volView.__mouseActionMode=1;
+				}
+
                 volView.__drawingCanvasParams.brCrFixingFlag = event.getData();
                 if(volView.__drawingCanvasParams.brCrFixingFlag)
                 {
@@ -663,12 +673,6 @@ qx.Class.define("desk.gcSegmentation",
                 }
             });
 			
-/*			if(this.__winXP)
-                this.add(brghtnssCntrstButton, {left: volView.__imgMap.width + colorsTabView.getSizeHint().width - 4, top: 40});
-            else
-                this.add(brghtnssCntrstButton, {left: volView.__imgMap.width + colorsTabView.getSizeHint().width - 4, top: 36});
-*/
-
 			
 			
 		////Create reset brightness/contrast button
@@ -684,28 +688,16 @@ qx.Class.define("desk.gcSegmentation",
                 resetBrCrButton.set({opacity: 0.5, enabled : false});
                 brghtnssCntrstButton.setValue(false);
             });
-			
-//			this.add(resetBrCrButton);
-
-/*
-            if(this.__winXP)
-                resetBrCrButton.setUserBounds(volView.__imgMap.width + colorsTabView.getSizeHint().width + 39, 41, 50, 32);
-            else
-                resetBrCrButton.setUserBounds(volView.__imgMap.width + colorsTabView.getSizeHint().width + 39, 36, 50, 32);
-*/		
-			
+	
 			
 			
 			
 		////Create slider
             var slider = new qx.ui.form.Slider();
- //           slider.setHeight(volView.__imgMap.height - 18);  ////  set below to match image height
             slider.setWidth(30);
             slider.setMaximum(volView.__numberOfSlices-1);
             slider.setMinimum(0);
             slider.setOrientation("vertical");
-
-//            this.add(slider, {left: 0, top: 4});
             volView.__imageContainer.add(slider);
 			
 			
@@ -720,7 +712,6 @@ qx.Class.define("desk.gcSegmentation",
             slider.bind("maximum", spinner, "maximum");
             spinner.bind("minimum", slider, "minimum");
             slider.bind("minimum", spinner, "minimum");
-//            this.add(spinner, {left: 0, top: volView.__imgMap.height + 8});
 
 			volView.__topLeftContainer.add(spinner);
 			volView.__topLeftContainer.add(brghtnssCntrstButton);
@@ -1095,9 +1086,15 @@ qx.Class.define("desk.gcSegmentation",
 			var mouseDownHandler = function(event)
             {
             	console.log ("clik");
+				console.log ("paint flag : "+volView.__drawingCanvasParams.paintFlag);
+				console.log ("erase flag : "+volView.__drawingCanvasParams.eraseFlag);
+				console.log ("contrast flag : "+volView.__drawingCanvasParams.brCrFixingFlag);
+				volView.__mouseActionActive=true;
+
 				////Update image
                     if(!((volView.__mouseData.brCrFixingFlag)&&(volView.__mouseData.mouseLeftDownFlag)))
 					{
+	                    	console.log("update image");
 							volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 							drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
                     }
@@ -1105,6 +1102,7 @@ qx.Class.define("desk.gcSegmentation",
 				////Draw at cursor position, activate drawing, activate brightness/contrast fixing
 					if(event.isLeftPressed())
                     {
+                    	console.log("begin draw");
 							if((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.eraseFlag))
 							{
 					            	volView.__currentSeedsModified=true;
@@ -1150,6 +1148,7 @@ qx.Class.define("desk.gcSegmentation",
 							drawBrush(event,volView.__drawingCanvasParams.curCtxtZoom);
                     }
 					drawPointer(event,volView.__drawingCanvasParams.curCtxtZoom);
+					console.log ("mode : "+volView.__mouseActionMode);
             };
 			
 			var wheelScale = 0;
@@ -1273,20 +1272,6 @@ qx.Class.define("desk.gcSegmentation",
 						////Erase at mouse position
                             if(volView.__drawingCanvasParams.eraseFlag)
 									eraseFnct(true);
-						////Use mouse mouvement to set brightness/contrast
-                            if(volView.__drawingCanvasParams.brCrFixingFlag)
-                            {
-                                    var tempBrightness = volView.__imgCanvasParams.brightness + (volView.__mouseData.yPos-volView.__mouseData.recentY)*150/volView.__imgMap.height;
-                                    var tempContrast = volView.__imgCanvasParams.contrast + (volView.__mouseData.xPos-volView.__mouseData.recentX)*5/volView.__imgMap.width;
-                                    if((0<tempBrightness+150)&&(tempBrightness<150))
-                                            volView.__imgCanvasParams.brightness = tempBrightness;
-                                    if((0<tempContrast+1)&&(tempContrast<5))
-                                            volView.__imgCanvasParams.contrast = tempContrast;
-									drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
-                                    resetBrCrButton.set({opacity: 1, enabled : true});
-                                    volView.__mouseData.recentX = volView.__mouseData.xPos;
-                                    volView.__mouseData.recentY = volView.__mouseData.yPos;
-                            }
                     }
                     if(volView.__mouseData.mouseMiddleDownFlag)
                     {
@@ -1299,10 +1284,34 @@ qx.Class.define("desk.gcSegmentation",
                     }
 					drawPointer(event,volView.__drawingCanvasParams.curCtxtZoom);
 				////Update image
-					if((volView.__drawingCanvasParams.brCrFixingFlag)&&(volView.__mouseData.mouseLeftDownFlag))
+ 
+				if (volView.__mouseActionActive)
+				{
+					switch (volView.__mouseActionMode)
 					{
-							drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
-                    }
+					case 1 :
+						////Use mouse mouvement to set brightness/contrast
+						var tempBrightness = volView.__imgCanvasParams.brightness + (volView.__mouseData.yPos-volView.__mouseData.recentY)*150/volView.__imgMap.height;
+						var tempContrast = volView.__imgCanvasParams.contrast + (volView.__mouseData.xPos-volView.__mouseData.recentX)*5/volView.__imgMap.width;
+						if((0<tempBrightness+150)&&(tempBrightness<150))
+							volView.__imgCanvasParams.brightness = tempBrightness;
+						if((0<tempContrast+1)&&(tempContrast<5))
+							volView.__imgCanvasParams.contrast = tempContrast;
+						drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
+						resetBrCrButton.set({opacity: 1, enabled : true});
+						volView.__mouseData.recentX = volView.__mouseData.xPos;
+						volView.__mouseData.recentY = volView.__mouseData.yPos;
+						drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
+						break;
+						default:
+							//do nothing
+					}
+/*					if((volView.__drawingCanvasParams.brCrFixingFlag)&&(volView.__mouseData.mouseLeftDownFlag))
+					{
+						drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
+                    }*/
+ 				}
+
             };
 			
 			var mouseUpHandler = function(event)
@@ -1310,6 +1319,7 @@ qx.Class.define("desk.gcSegmentation",
                     volView.__mouseData.mouseLeftDownFlag = false;
 					volView.__mouseData.mouseMiddleDownFlag = false;
                     drawingCanvas.set({cursor: "default"});
+					volView.__mouseActionActive=false;
             };
 			
 			
@@ -1692,11 +1702,21 @@ qx.Class.define("desk.gcSegmentation",
 		////If(scaling) applies zoom factor for relative coordinates (on zoomed window)
 			var getPosition = function(mouseEvent,scaling)
             {
-					volView.__mouseData.xPos = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/volView.__drawingCanvasParams.curCtxtZoom;
-					volView.__mouseData.yPos = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/volView.__drawingCanvasParams.curCtxtZoom;
+//					volView.__mouseData.xPos = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/volView.__drawingCanvasParams.curCtxtZoom;
+//					volView.__mouseData.yPos = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/volView.__drawingCanvasParams.curCtxtZoom;
+
+
+//					volView.__mouseData.xPos = (mouseEvent.getScreenLeft()-volView.__imageCanvas.left)/volView.__drawingCanvasParams.curCtxtZoom;
+//					volView.__mouseData.yPos = (mouseEvent.getScreenLeft()--volView.__imageCanvas.top)/volView.__drawingCanvasParams.curCtxtZoom;
+
+					var canvasLocation=volView.__imageCanvas.getContentLocation();
+					volView.__mouseData.xPos = (mouseEvent.getDocumentLeft()-canvasLocation.left)/volView.__drawingCanvasParams.curCtxtZoom;
+					volView.__mouseData.yPos = (mouseEvent.getDocumentTop()-canvasLocation.top)/volView.__drawingCanvasParams.curCtxtZoom;
 					////volView.debug(mouseEvent.getType() + "(" + volView.__mouseData.xPos + "," + volView.__mouseData.yPos + ")");
 					if(scaling)
 					{
+							volView.__mouseData.xPos = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.xPos;
+							volView.__mouseData.yPos = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.yPos;
 							volView.__mouseData.xPos = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.xPos;
 							volView.__mouseData.yPos = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.yPos;
 							////volView.debug(mouseEvent.getType() + "(" + volView.__mouseData.xPos + "," + volView.__mouseData.yPos + ")");
@@ -1845,8 +1865,9 @@ qx.Class.define("desk.gcSegmentation",
 		////The labels image is not modified
 			var drawBrush = function(mouseEvent,scale)
             {
-                var tempX = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/scale;
-                var tempY = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/scale;
+				var canvasLocation=volView.__imageCanvas.getContentLocation();
+                var tempX = (mouseEvent.getDocumentLeft()-canvasLocation.left)/scale;
+                var tempY = (mouseEvent.getDocumentTop()-canvasLocation.top)/scale;
                 var tempMargin = 4/scale;
                 if((tempMargin<tempX)&&(tempX<volView.__imgMap.width/scale-tempMargin)&&(tempMargin<tempY)&&(tempY<volView.__imgMap.height/scale-tempMargin))
                 {
@@ -1869,8 +1890,8 @@ qx.Class.define("desk.gcSegmentation",
 		////Draw cross in the results window at copied mouse position
 			var drawPointer = function(mouseEvent,scale)
             {
-                var tempX = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/scale;
-                var tempY = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/scale;
+                var tempX = (mouseEvent.getViewportLeft()-volView.__winMap.left-10-volView.__imgMap.left)/scale;
+                var tempY = (mouseEvent.getViewportTop()-volView.__winMap.top-35-volView.__imgMap.top)/scale;
                 var tempMargin = 4/scale;
                 if((tempMargin<tempX)&&(tempX<volView.__imgMap.width/scale-tempMargin)&&(tempMargin<tempY)&&(tempY<volView.__imgMap.height/scale-tempMargin))
                 {
