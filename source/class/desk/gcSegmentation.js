@@ -76,24 +76,40 @@ qx.Class.define("desk.gcSegmentation",
 			};
 
 
+		var spacing=5;
 		this.__window=new qx.ui.window.Window();
-		this.__window.setLayout(new qx.ui.layout.HBox());
+		var windowLayout=new qx.ui.layout.HBox();
+		windowLayout.setSpacing(spacing);
+		this.__window.setLayout(windowLayout);
 		
-		this.__mainLeftContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+		var mLCL=new qx.ui.layout.VBox();
+		mLCL.setSpacing(spacing);
+		this.__mainLeftContainer = new qx.ui.container.Composite(mLCL);
 		this.__window.add(this.__mainLeftContainer);
 		
-		this.__topLeftContainer = new qx.ui.container.Composite(new qx.ui.layout.HBox());
+		var tLCL=new qx.ui.layout.HBox();
+		tLCL.setSpacing(spacing);
+		this.__topLeftContainer = new qx.ui.container.Composite(tLCL);
 		this.__mainLeftContainer.add(this.__topLeftContainer);
 
-		this.__imageContainer = new qx.ui.container.Composite(new qx.ui.layout.HBox());
+		var iCL=new qx.ui.layout.HBox();
+		iCL.setSpacing(spacing);
+		this.__imageContainer = new qx.ui.container.Composite(iCL);
 		this.__mainLeftContainer.add(this.__imageContainer, {flex : 1});
 
-		this.__mainRightContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+		var mRCL=new qx.ui.layout.VBox();
+		mRCL.setSpacing(spacing);
+		this.__mainRightContainer = new qx.ui.container.Composite(mRCL);
 		this.__window.add(this.__mainRightContainer);
-		
-		this.__topRightContainer = new qx.ui.container.Composite(new qx.ui.layout.HBox());
+
+		var tRCL=new qx.ui.layout.HBox();
+		tRCL.setSpacing(spacing);
+		this.__topRightContainer = new qx.ui.container.Composite(tRCL);
 		this.__mainRightContainer.add(this.__topRightContainer);
-		this.__bottomRightContainer= new qx.ui.container.Composite(new qx.ui.layout.HBox());
+
+		var bRCL=new qx.ui.layout.HBox();
+		bRCL.setSpacing(spacing);
+		this.__bottomRightContainer= new qx.ui.container.Composite(bRCL);
 
 
 
