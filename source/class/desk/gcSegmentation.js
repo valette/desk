@@ -263,39 +263,7 @@ qx.Class.define("desk.gcSegmentation",
 
 		var volView=this;
 
-        volView.addListener("mouseout", function(event)
-		{
-            if(((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.brCrFixingFlag))&&(!volView.__drawingCanvasParams.eraseFlag))
-            {
-				volView.__htmlContextLabels.beginPath();
-				volView.__mouseData.mouseLeftDownFlag = false;
-				volView.__mouseData.mouseMiddleDownFlag = false;
-				eraserCursor.set({cursor: "default"});
-				drawingCanvas.set({cursor: "default"});
-            }
-        },this);
-        volView.addListener("mouseover", function(event)
-		{
-			volView.set({opacity: 1, enabled : true});
-            if(((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.brCrFixingFlag))||(volView.__drawingCanvasParams.eraseFlag))
-            {
-				getPosition(event,false);
-				var tempMargin = 4;
-				if(!((tempMargin<=volView.__mouseData.xPos)&&(volView.__mouseData.xPos<=volView.__imgMap.width-tempMargin)&&(tempMargin<=volView.__mouseData.yPos)&&(volView.__mouseData.yPos<=volView.__imgMap.height-tempMargin)))
-				{
-					volView.__htmlContextLabels.beginPath();
-					volView.__mouseData.mouseLeftDownFlag = false;
-					volView.__mouseData.mouseMiddleDownFlag = false;
-					eraserCursor.set({cursor: "default"});
-					drawingCanvas.set({cursor: "default"});
-				}
-            }
-        },this);
-        volView.addListener("click", function(event)
-		{
-            volView.__winMap.left = volView.getBounds().left;
-            volView.__winMap.top = volView.getBounds().top;
-        },this);
+//        volView.addListener("mouseout", function(event)
 		
 		
 		////Get image dimensions and number of slices 
@@ -1126,6 +1094,7 @@ qx.Class.define("desk.gcSegmentation",
 			
 			var mouseDownHandler = function(event)
             {
+            	console.log ("clik");
 				////Update image
                     if(!((volView.__mouseData.brCrFixingFlag)&&(volView.__mouseData.mouseLeftDownFlag)))
 					{
@@ -1432,7 +1401,41 @@ qx.Class.define("desk.gcSegmentation",
             }, this);
 			
 			
-			
+		this.__imageCanvas.addListener("mouseout", function(event)
+		{
+			if(((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.brCrFixingFlag))&&(!volView.__drawingCanvasParams.eraseFlag))
+			{
+				volView.__htmlContextLabels.beginPath();
+				volView.__mouseData.mouseLeftDownFlag = false;
+				volView.__mouseData.mouseMiddleDownFlag = false;
+				eraserCursor.set({cursor: "default"});
+				drawingCanvas.set({cursor: "default"});
+			}
+		},this);
+
+        this.__imageCanvas.addListener("mouseover", function(event)
+		{
+			volView.set({opacity: 1, enabled : true});
+            if(((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.brCrFixingFlag))||(volView.__drawingCanvasParams.eraseFlag))
+            {
+				getPosition(event,false);
+				var tempMargin = 4;
+				if(!((tempMargin<=volView.__mouseData.xPos)&&(volView.__mouseData.xPos<=volView.__imgMap.width-tempMargin)&&(tempMargin<=volView.__mouseData.yPos)&&(volView.__mouseData.yPos<=volView.__imgMap.height-tempMargin)))
+				{
+					volView.__htmlContextLabels.beginPath();
+					volView.__mouseData.mouseLeftDownFlag = false;
+					volView.__mouseData.mouseMiddleDownFlag = false;
+					eraserCursor.set({cursor: "default"});
+					drawingCanvas.set({cursor: "default"});
+				}
+            }
+        },this);
+        this.__imageCanvas.addListener("click", function(event)
+		{
+            volView.__winMap.left = volView.getBounds().left;
+            volView.__winMap.top = volView.getBounds().top;
+        },this);
+	
 			
 			
 			var canvasImage = new Image();
@@ -1483,7 +1486,11 @@ qx.Class.define("desk.gcSegmentation",
 			
 			
 			
-            var drawingCanvas = new qx.ui.embed.Canvas().set({syncDimension: true, zIndex: volView.__drawingCanvasZ});
+            var drawingCanvas = new qx.ui.embed.Canvas().set({syncDimension: true,
+            											 zIndex: volView.__drawingCanvasZ,
+            											 width : volView.__imgMap.width,
+														height : volView.__imgMap.height });
+
 			
             drawingCanvas.addListener("redraw", updateContext, this);
             drawingCanvas.addListener("mousedown", mouseDownHandler, this);
@@ -1493,10 +1500,11 @@ qx.Class.define("desk.gcSegmentation",
             drawingCanvas.addListener("mouseup", mouseUpHandler, this);
 			drawingCanvas.addListener("keydown", keyDownHandler, this);
 			drawingCanvas.addListener("keyup", keyUpHandler, this);
-			
-            this.add(drawingCanvas, {left: volView.__imgMap.left, top: volView.__imgMap.top});
 
-            drawingCanvas.setUserBounds(volView.__imgMap.left, volView.__imgMap.top, volView.__imgMap.width, volView.__imgMap.height);
+			this.__imageCanvas.add(drawingCanvas);	
+//            this.add(drawingCanvas, {left: volView.__imgMap.left, top: volView.__imgMap.top});
+
+//            drawingCanvas.setUserBounds(volView.__imgMap.left, volView.__imgMap.top, volView.__imgMap.width, volView.__imgMap.height);
 			
 			
 			
@@ -1511,8 +1519,9 @@ qx.Class.define("desk.gcSegmentation",
             var containerHtmlImage = new qx.ui.container.Composite(containerLayoutImage);
             containerHtmlImage.add(embedObjectImage);
 			this.__embedObjectImage=embedObjectImage;
-            this.add(containerHtmlImage, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
-			
+ //           this.add(containerHtmlImage, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
+//            this.add(containerHtmlImage, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
+			this.__imageCanvas.add(containerHtmlImage);		/// seb why 2 images?	
 			
 			
             // HTML embed for drawn labels
@@ -1526,8 +1535,8 @@ qx.Class.define("desk.gcSegmentation",
             var containerHtmlLabels = new qx.ui.container.Composite(containerLayoutLabels);
             containerHtmlLabels.add(embedObjectLabels);
 			this.__embedObjectLabels=embedObjectLabels;
-            this.add(containerHtmlLabels, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
-			
+//            this.add(containerHtmlLabels, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
+			this.__imageCanvas.add(containerHtmlLabels);
 			
 			
             // HTML embed for segmented image
@@ -1541,9 +1550,9 @@ qx.Class.define("desk.gcSegmentation",
             var containerHtmlSegImg = new qx.ui.container.Composite(containerLayoutSegImg);
             containerHtmlSegImg.add(embedObjectSegImg);
 			this.__embedObjectSegImg=embedObjectSegImg;
-            this.add(containerHtmlSegImg, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
+//            this.add(containerHtmlSegImg, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
 			
-			
+			this.__imageCanvas.add(containerHtmlSegImg);
 			
             // HTML embed for seeds used for segmentation
             var embedHtmlCodeUsedSeeds = '<canvas id="htmlTagCanvasUsedSeeds" width="' + volView.__imgMap.width + '" height="' + volView.__imgMap.height + '" ></canvas>';
@@ -1556,8 +1565,8 @@ qx.Class.define("desk.gcSegmentation",
             var containerHtmlUsedSeeds = new qx.ui.container.Composite(containerLayoutUsedSeeds);
             containerHtmlUsedSeeds.add(embedObjectUsedSeeds);
 			this.__embedObjectUsedSeeds=embedObjectUsedSeeds;
-            this.add(containerHtmlUsedSeeds, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
-
+//            this.add(containerHtmlUsedSeeds, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
+			this.__imageCanvas.add(containerHtmlUsedSeeds);
 
 			for(var i=0; i<volView.__numberOfSlices; i++)
 			{
