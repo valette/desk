@@ -88,6 +88,12 @@ qx.Class.define("desk.gcSegmentation",
 		this.__imageContainer = new qx.ui.container.Composite(new qx.ui.layout.HBox());
 		this.__mainLeftContainer.add(this.__imageContainer, {flex : 1});
 
+		this.__mainRightContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+		this.__window.add(this.__mainRightContainer);
+		
+		this.__topRightContainer = new qx.ui.container.Composite(new qx.ui.layout.HBox());
+		this.__mainRightContainer.add(this.__topRightContainer);
+
 
 
 		var volView = this;
@@ -152,6 +158,9 @@ qx.Class.define("desk.gcSegmentation",
 		__topLeftContainer : null,
 		__imageContainer : null,
 		__imageCanvas : null,
+
+		__mainRightContainer : null,
+		__topRightContainer : null,
 
 		__currentSeedsModified : false,
 
@@ -262,6 +271,20 @@ qx.Class.define("desk.gcSegmentation",
 		__embedObjectSegImg : null,
 		__embedObjectUsedSeeds : null,
 
+
+		__eraserCursor : null,
+		__brghtnssCntrstButton : null,
+
+		setMouseActionMode : function (mode) {
+			if (mode!=1)
+				this.__brghtnssCntrstButton.setValue(false);
+
+
+			if (mode!=4)
+				this.__eraserCursor.exclude();
+			this.__mouseActionMode = mode;
+		},
+
 		openFile : function (file,volView) {
 			this.removeAll();
 
@@ -327,7 +350,7 @@ qx.Class.define("desk.gcSegmentation",
             penSize.addListener("changeValue", function(event)
 			{
                 volView.__htmlContextLabels.lineWidth = event.getData();
-                eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*volView.__drawingCanvasParams.curCtxtZoom),
+                volView.__eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*volView.__drawingCanvasParams.curCtxtZoom),
                                     height: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*volView.__drawingCanvasParams.curCtxtZoom)});
             });
 			
@@ -344,7 +367,7 @@ qx.Class.define("desk.gcSegmentation",
 		////Create eraser
             var eraserBorder = new qx.ui.decoration.Single(1, "solid", "black");
 			
-            var eraserCursor = new qx.ui.core.Widget().set({
+            volView.__eraserCursor = new qx.ui.core.Widget().set({
 										backgroundColor: "white",
 										decorator: eraserBorder,
 										width: volView.__eraserCoeff*volView.__drawingCanvasParams.myLineWidth*volView.__drawingCanvasParams.curCtxtZoom,
@@ -352,7 +375,7 @@ qx.Class.define("desk.gcSegmentation",
 										zIndex : volView.__eraserCursorZ
 								});
 			
-            eraserCursor.addListener("mousedown", function(event)
+            volView.__eraserCursor.addListener("mousedown", function(event)
 			{
             ////Erase
 				if(event.isLeftPressed())
@@ -365,7 +388,7 @@ qx.Class.define("desk.gcSegmentation",
 			////Activate moving
                 if(event.isMiddlePressed())
                 {
-					eraserCursor.set({cursor: "move"});
+					volView.__eraserCursor.set({cursor: "move"});
                     volView.__mouseData.mouseMiddleDownFlag = true;
 					volView.__mouseData.recentX = volView.__mouseData.xPos;
 					volView.__mouseData.recentY = volView.__mouseData.yPos;
@@ -374,20 +397,20 @@ qx.Class.define("desk.gcSegmentation",
 				undoFnct(event);
             });
 			
-            eraserCursor.addListener("mousemove", function(event)
+            volView.__eraserCursor.addListener("mousemove", function(event)
 			{
 				getPosition(event,false);	// No scaling so coordinates are compatible with placeEraser function
                 var tempMargin = 4/volView.__drawingCanvasParams.curCtxtZoom;
 			////Hide eraser if out of drawing zone
                 if(!((tempMargin<=volView.__mouseData.xPos)&&(volView.__mouseData.xPos<=volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom-tempMargin)&&(tempMargin<=volView.__mouseData.yPos)&&(volView.__mouseData.yPos<=volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom-tempMargin)))
                 {
-                    if(eraserCursor.getVisibility()=="visible")
+                    if(volView.__eraserCursor.getVisibility()=="visible")
 					{
-                        eraserCursor.exclude();
+                        volView.__eraserCursor.exclude();
 					}
                 }
 			////Move eraser to mouse position
-                eraserCursor.set({marginLeft: Math.round((volView.__mouseData.xPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
+                volView.__eraserCursor.set({marginLeft: Math.round((volView.__mouseData.xPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
                                     marginTop: Math.round((volView.__mouseData.yPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
 				volView.__mouseData.xPos = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.xPos;
                 volView.__mouseData.yPos = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.yPos;
@@ -399,16 +422,16 @@ qx.Class.define("desk.gcSegmentation",
                 }
             },this);
 			
-            eraserCursor.addListener("mouseup", function(event)
+            volView.__eraserCursor.addListener("mouseup", function(event)
 			{
                 volView.__mouseData.mouseMiddleDownFlag = false;
                 volView.__mouseData.mouseLeftDownFlag = false;
-				eraserCursor.set({cursor: "default"});
+				volView.__eraserCursor.set({cursor: "default"});
             },this);
 
-            this.add(eraserCursor, {left:0, top: 0});
 
-			eraserCursor.addListener("keydown", function(event)
+
+			volView.__eraserCursor.addListener("keydown", function(event)
 			{
 				if(event.getKeyIdentifier()=="S")
 				{
@@ -420,7 +443,7 @@ qx.Class.define("desk.gcSegmentation",
 				}
 			},this);
 			
-			eraserCursor.addListener("keyup", function(event)
+			volView.__eraserCursor.addListener("keyup", function(event)
 			{
 				if(event.getKeyIdentifier()=="S")
 				{
@@ -430,7 +453,7 @@ qx.Class.define("desk.gcSegmentation",
 				}
 			},this);
 			
-            eraserCursor.exclude();
+            volView.__eraserCursor.exclude();
 
 			
 			
@@ -442,18 +465,9 @@ qx.Class.define("desk.gcSegmentation",
 			
 			eraserButton.addListener("changeValue", function(event)
 			{
-                volView.__drawingCanvasParams.eraseFlag = event.getData();
-			////Activate erasing
-                if(volView.__drawingCanvasParams.eraseFlag)
-                {
-                    brghtnssCntrstButton.setValue(false);
-                    volView.__drawingCanvasParams.brCrFixingFlag = false;
-                }
-			////Hide eraser
-                else
-                {
-                    eraserCursor.exclude();
-                }
+				if (event.getData()==true)
+					volView.setMouseActionMode(4);
+
             });
 
             eraserButton.addListener("mouseup", function(event)
@@ -484,7 +498,7 @@ qx.Class.define("desk.gcSegmentation",
                 eraserButton.set({opacity: 0.5, enabled : false});
                 eraserButton.setValue(false);
                 volView.__drawingCanvasParams.eraseFlag = false;
-                eraserCursor.exclude();
+                volView.__eraserCursor.exclude();
             });
 
             clearButton.addListener("mouseup", function(event)
@@ -546,7 +560,7 @@ qx.Class.define("desk.gcSegmentation",
                 });
 				labelBox.addListener("click", function(){
                     volView.__drawingCanvasParams.paintFlag = true;
-                    volView.__mouseActionMode=3;
+                    volView.setMouseActionMode(3);
                     var i = 0;
                     var children = colorsPage.getChildren();
                     while(children[i]!=this)
@@ -571,10 +585,6 @@ qx.Class.define("desk.gcSegmentation",
                         volView.__drawingCanvasParams.paintFlag = false;
                     }
                     volView.__drawingCanvasParams.currentColor = colorBox.getBackgroundColor();
-                    eraserButton.setValue(false);
-                    volView.__drawingCanvasParams.eraseFlag = false;
-                    brghtnssCntrstButton.setValue(false);
-                    volView.__drawingCanvasParams.brCrFixingFlag = false;
                     colorsPage.set({opacity: 1});
                 });
 				var boxLabel = new qx.ui.basic.Label("\\" + inLabel.id + " : " + inLabel.name).set({alignX:"left"});
@@ -648,15 +658,15 @@ qx.Class.define("desk.gcSegmentation",
 			
 			
 		////Create brightness/contrast fixing on/off button
-			var brghtnssCntrstButton = new qx.ui.form.ToggleButton(null, "desk/Contrast_Logo_petit.PNG");
+			volView.__brghtnssCntrstButton = new qx.ui.form.ToggleButton(null, "desk/Contrast_Logo_petit.PNG");
 			
-            brghtnssCntrstButton.set({toolTipText : "LUMINOSITE/CONTRASTE"});
+            volView.__brghtnssCntrstButton.set({toolTipText : "LUMINOSITE/CONTRASTE"});
 
-            brghtnssCntrstButton.addListener("changeValue", function(event)
+            volView.__brghtnssCntrstButton.addListener("changeValue", function(event)
 			{
 				if (event.getData()==true)
 				{
-					volView.__mouseActionMode=1;
+					volView.setMouseActionMode(1);
 				}
 
                 volView.__drawingCanvasParams.brCrFixingFlag = event.getData();
@@ -685,8 +695,6 @@ qx.Class.define("desk.gcSegmentation",
                 volView.__imgCanvasParams.brightness = 0;
                 volView.__imgCanvasParams.contrast = 0;
 				drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
-                resetBrCrButton.set({opacity: 0.5, enabled : false});
-                brghtnssCntrstButton.setValue(false);
             });
 	
 			
@@ -714,7 +722,7 @@ qx.Class.define("desk.gcSegmentation",
             slider.bind("minimum", spinner, "minimum");
 
 			volView.__topLeftContainer.add(spinner);
-			volView.__topLeftContainer.add(brghtnssCntrstButton);
+			volView.__topLeftContainer.add(volView.__brghtnssCntrstButton);
 			volView.__topLeftContainer.add(resetBrCrButton);
 			
 			
@@ -801,7 +809,6 @@ qx.Class.define("desk.gcSegmentation",
                     volView.__drawingCanvasParams.paintFlag = false;
                     eraserButton.setValue(false);
                     volView.__drawingCanvasParams.eraseFlag = false;
-					brghtnssCntrstButton.setValue(false);
 					volView.__drawingCanvasParams.brCrFixingFlag = false;
 					this.set({opacity: 0.5, enabled : false});
 					var tempMax = volView.__horizSlices.usedSliceSeeds[0].length;
@@ -1223,13 +1230,13 @@ qx.Class.define("desk.gcSegmentation",
 											drawBrush(event,zoomFactor);
 									}
 									drawPointer(event,zoomFactor);
-									eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*zoomFactor)+1,
+									volView.__eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*zoomFactor)+1,
 														height: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*zoomFactor)+1});
 								////Place the center of the eraser at mouse position
 									if(volView.__drawingCanvasParams.eraseFlag)
 									{
-											eraserCursor.set({marginLeft: Math.round((volView.__mouseData.xPos/zoomFactor-eraserCursor.getBounds().width/(2*zoomFactor))*zoomFactor+volView.__imgMap.left),
-																marginTop: Math.round((volView.__mouseData.yPos/zoomFactor-eraserCursor.getBounds().height/(2*zoomFactor))*zoomFactor+volView.__imgMap.top)});
+											volView.__eraserCursor.set({marginLeft: Math.round((volView.__mouseData.xPos/zoomFactor-volView.__eraserCursor.getBounds().width/(2*zoomFactor))*zoomFactor+volView.__imgMap.left),
+																marginTop: Math.round((volView.__mouseData.yPos/zoomFactor-volView.__eraserCursor.getBounds().height/(2*zoomFactor))*zoomFactor+volView.__imgMap.top)});
 									}
 									wheelScale = tempScale;
 									volView.__drawingCanvasParams.curCtxtZoom = zoomFactor;
@@ -1245,33 +1252,24 @@ qx.Class.define("desk.gcSegmentation",
                     }
 					getPosition(event,true);
 				////Set eraser cursor position
-					if(volView.__drawingCanvasParams.eraseFlag)
-                    {
-							var tempX = (event.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/volView.__drawingCanvasParams.curCtxtZoom;
-							var tempY = (event.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/volView.__drawingCanvasParams.curCtxtZoom;
-							eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
-												marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
-                            if(eraserCursor.getVisibility()=="excluded")
-							{
-                                    eraserCursor.show();
-							}
-                    }
+					if(volView.__mouseActionMode==4)
+					{
+						var canvasLocation=volView.__imageCanvas.getContentLocation();
+						var tempX = (event.getDocumentLeft()-canvasLocation.left)/volView.__drawingCanvasParams.curCtxtZoom;
+						var tempY = (event.getDocumentTop()-canvasLocation.top)/volView.__drawingCanvasParams.curCtxtZoom;
+						volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
+											marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
+                        if(volView.__eraserCursor.getVisibility()=="excluded")
+						{
+                                volView.__eraserCursor.show();
+						}
+					}
                     if(volView.__mouseData.mouseLeftDownFlag)
                     {
-						////Draw to mouse position
-                            if((volView.__drawingCanvasParams.paintFlag)&&(!volView.__drawingCanvasParams.eraseFlag)&&(!volView.__drawingCanvasParams.brCrFixingFlag))
-                            {
-                                    volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
-                                    volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
-                                    volView.__htmlContextLabels.lineTo(volView.__mouseData.xPos,volView.__mouseData.yPos);
-                                    volView.__htmlContextLabels.stroke();
-                                    clearButton.set({opacity: 1, enabled : true});
-                                    if(!eraserButton.isEnabled())
-                                            eraserButton.set({opacity: 1, enabled : true});
-                            }
+
 						////Erase at mouse position
-                            if(volView.__drawingCanvasParams.eraseFlag)
-									eraseFnct(true);
+//                            if(volView.__drawingCanvasParams.eraseFlag)
+//									eraseFnct(true);
                     }
                     if(volView.__mouseData.mouseMiddleDownFlag)
                     {
@@ -1303,6 +1301,16 @@ qx.Class.define("desk.gcSegmentation",
 						volView.__mouseData.recentY = volView.__mouseData.yPos;
 						drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
 						break;
+					case 3 : 
+						////Draw to mouse position
+							volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
+							volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
+							volView.__htmlContextLabels.lineTo(volView.__mouseData.xPos,volView.__mouseData.yPos);
+							volView.__htmlContextLabels.stroke();
+							clearButton.set({opacity: 1, enabled : true});
+							break;
+					case 4 :
+							eraseFnct(true);
 						default:
 							//do nothing
 					}
@@ -1339,7 +1347,6 @@ qx.Class.define("desk.gcSegmentation",
 			{
                     var data = event.getData();
                     segmentedImgCanvas.segImgContext = data.context;
-//					volView.__htmlCanvasSegImg = document.getElementById("htmlTagCanvasSegImg");
 					volView.__htmlCanvasSegImg = volView.__embedObjectSegImg.getContentElement().getDomElement().firstChild;
                     volView.__htmlContextSegImg = volView.__htmlCanvasSegImg.getContext("2d");
             }, this);
@@ -1376,22 +1383,10 @@ qx.Class.define("desk.gcSegmentation",
 			
 			
 			this.__imageCanvas = new qx.ui.container.Composite(new qx.ui.layout.Canvas);
-//			this.__imageCanvas.sedWidth(volView.__imgMap.width);
-//			this.__imageCanvas.sedHeight(volView.__imgMap.height);			
-
-/*			var imgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true,
-														 zIndex: volView.__imageZ,
-														 width : volView.__imgMap.width,
-														 height : volView.__imgMap.height });
-*/
-
 			var imgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true,
 														zIndex: volView.__imageZ,
 														width : volView.__imgMap.width,
 														height : volView.__imgMap.height });
-
-			
-//            this.add(imgCanvas, {left: volView.__imgMap.left, top: volView.__imgMap.top});
 
 			this.__imageCanvas.add(imgCanvas);
             volView.__imageContainer.add(this.__imageCanvas);
@@ -1404,7 +1399,6 @@ qx.Class.define("desk.gcSegmentation",
                     var data = event.getData();
                     volView.__imgCanvasParams.imgContext = data.context;
 					volView.__htmlCanvasImage = volView.__embedObjectImage.getContentElement().getDomElement().firstChild;
-//					volView.__htmlCanvasImage = document.getElementById("htmlTagCanvasImage");
                     volView.__htmlContextImage = volView.__htmlCanvasImage.getContext("2d");
 					volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);	// here for unbuild version
 					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);	// here for unbuild version
@@ -1418,14 +1412,13 @@ qx.Class.define("desk.gcSegmentation",
 				volView.__htmlContextLabels.beginPath();
 				volView.__mouseData.mouseLeftDownFlag = false;
 				volView.__mouseData.mouseMiddleDownFlag = false;
-				eraserCursor.set({cursor: "default"});
+				volView.__eraserCursor.set({cursor: "default"});
 				drawingCanvas.set({cursor: "default"});
 			}
 		},this);
 
-        this.__imageCanvas.addListener("mouseover", function(event)
+  /*      this.__imageCanvas.addListener("mouseover", function(event)
 		{
-			volView.set({opacity: 1, enabled : true});
             if(((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.brCrFixingFlag))||(volView.__drawingCanvasParams.eraseFlag))
             {
 				getPosition(event,false);
@@ -1439,7 +1432,7 @@ qx.Class.define("desk.gcSegmentation",
 					drawingCanvas.set({cursor: "default"});
 				}
             }
-        },this);
+        },this);*/
         this.__imageCanvas.addListener("click", function(event)
 		{
             volView.__winMap.left = volView.getBounds().left;
@@ -1505,7 +1498,7 @@ qx.Class.define("desk.gcSegmentation",
             drawingCanvas.addListener("redraw", updateContext, this);
             drawingCanvas.addListener("mousedown", mouseDownHandler, this);
             drawingCanvas.addListener("mousewheel", mouseWheelHandler, this);
-            eraserCursor.addListener("mousewheel", mouseWheelHandler, this);
+            volView.__eraserCursor.addListener("mousewheel", mouseWheelHandler, this);
 			drawingCanvas.addListener("mousemove", mouseMoveHandler, this);
             drawingCanvas.addListener("mouseup", mouseUpHandler, this);
 			drawingCanvas.addListener("keydown", keyDownHandler, this);
@@ -1686,6 +1679,7 @@ qx.Class.define("desk.gcSegmentation",
                     volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 
+            volView.__imageCanvas.add(volView.__eraserCursor);
 		this.__window.open();
 
 		/* ************************************************************************************************************************************* */
@@ -1702,17 +1696,10 @@ qx.Class.define("desk.gcSegmentation",
 		////If(scaling) applies zoom factor for relative coordinates (on zoomed window)
 			var getPosition = function(mouseEvent,scaling)
             {
-//					volView.__mouseData.xPos = (mouseEvent.getDocumentLeft()-volView.__winMap.left-10-volView.__imgMap.left)/volView.__drawingCanvasParams.curCtxtZoom;
-//					volView.__mouseData.yPos = (mouseEvent.getDocumentTop()-volView.__winMap.top-35-volView.__imgMap.top)/volView.__drawingCanvasParams.curCtxtZoom;
-
-
-//					volView.__mouseData.xPos = (mouseEvent.getScreenLeft()-volView.__imageCanvas.left)/volView.__drawingCanvasParams.curCtxtZoom;
-//					volView.__mouseData.yPos = (mouseEvent.getScreenLeft()--volView.__imageCanvas.top)/volView.__drawingCanvasParams.curCtxtZoom;
-
 					var canvasLocation=volView.__imageCanvas.getContentLocation();
 					volView.__mouseData.xPos = (mouseEvent.getDocumentLeft()-canvasLocation.left)/volView.__drawingCanvasParams.curCtxtZoom;
 					volView.__mouseData.yPos = (mouseEvent.getDocumentTop()-canvasLocation.top)/volView.__drawingCanvasParams.curCtxtZoom;
-					////volView.debug(mouseEvent.getType() + "(" + volView.__mouseData.xPos + "," + volView.__mouseData.yPos + ")");
+
 					if(scaling)
 					{
 							volView.__mouseData.xPos = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.xPos;
