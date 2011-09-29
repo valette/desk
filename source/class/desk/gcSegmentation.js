@@ -302,6 +302,14 @@ qx.Class.define("desk.gcSegmentation",
 			this.__mouseActionMode = mode;
 		},
 
+		__updateCursorType : function()
+		{
+			switch (this.__mouseActionType)
+			{
+			}
+			
+		},
+
 		openFile : function (file,volView) {
 			this.removeAll();
 
@@ -661,7 +669,7 @@ qx.Class.define("desk.gcSegmentation",
 						alert('Global Params : "Fetched the wrong page" OR "Network error"');
 				}
 			};
-			colorsParamRequest.open("GET", "/visu/colors3.xml", false);
+			colorsParamRequest.open("GET", "/visu/colors3.xml", true);
 			colorsParamRequest.send(null);
 			
 			
@@ -732,27 +740,9 @@ qx.Class.define("desk.gcSegmentation",
             selectBox.add(SelectJPG);
 			
 			
-			
-			
-			
-		////Create slices list zone
-			var slicesPage = new qx.ui.tabview.Page("SLICES");
-            slicesPage.setLayout(new qx.ui.layout.Grid(1,1));
-			
-			var slicesTabView = new qx.ui.tabview.TabView();
-            slicesTabView.add(slicesPage);
-
-            slicesTabView.addListener("mouseup", function(event)
-			{
-                    volView.__htmlContextLabels.beginPath();
-                    volView.__mouseData.mouseLeftDownFlag = false;
-            },this);
-
-			this.__mainRightContainer.add(slicesTabView);
 
 			var modifSlicesList = new qx.ui.form.List(true);
-			modifSlicesList.set({ height: 64, width: colorsTabView.getSizeHint().width , spacing : 8});
-			
+			modifSlicesList.setHeight(64);
 			modifSlicesList.addListener("keypress", function(event)
 			{
 				if(event.getKeyIdentifier()=="Delete")
@@ -773,21 +763,13 @@ qx.Class.define("desk.gcSegmentation",
 				}
 			}, this);
 
-/*			
-			modifSlicesList.addListener("changeSelection", function(event)
-			{
-					var selectedChild = event.getData()[0];
-					slider.setValue(selectedChild.getUserData("slice"));
-			}, this);
-*/
-			slicesPage.add(modifSlicesList, {column: 0, row: 0});
+			this.__mainRightContainer.add(modifSlicesList, {flex : 1});
+			this.__mainRightContainer.add(new qx.ui.core.Spacer(30, 40), {flex: 5});
+
+
 			
-			
-			
-			
-			
-		////Create start algorythm button
-			var startButton = new qx.ui.form.ToggleButton("Start");
+		////Create start algorithm button
+			var startButton = new qx.ui.form.ToggleButton("Start segmentation");
 
             startButton.set({opacity: 0.5, enabled : false});
 			
@@ -886,8 +868,6 @@ qx.Class.define("desk.gcSegmentation",
 			this.__mainRightContainer.add(this.__bottomRightContainer);
 			this.__bottomRightContainer.add(startButton);
 			// this.add(selectBox, {left: volView.__imgMap.width - selectBox.getSizeHint().width+8 - startButton.getSizeHint().width+8 + 26, top: volView.__imgMap.height + 7});
-			
-			
 			
 			
 			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
@@ -1084,9 +1064,6 @@ qx.Class.define("desk.gcSegmentation",
 			
 			var mouseDownHandler = function(event)
             {
-				volView.__mouseActionActive=true;
-
-
 				////Update image
 				if(!((volView.__mouseData.brCrFixingFlag)&&(volView.__mouseData.mouseLeftDownFlag)))
 				{
@@ -1097,7 +1074,7 @@ qx.Class.define("desk.gcSegmentation",
 			////Draw at cursor position, activate drawing, activate brightness/contrast fixing
 				if(event.isLeftPressed())
                 {
-                	console.log("begin draw");
+       				volView.__mouseActionActive=true;
 					if((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.eraseFlag))
 					{
 		            	volView.__currentSeedsModified=true;
@@ -1150,7 +1127,7 @@ qx.Class.define("desk.gcSegmentation",
 				if((event.isLeftPressed()==false)&&(event.isMiddlePressed()==false)&&(event.isRightPressed()==false))
 				{
 					var tempScale = wheelScale;
-					tempScale += -event.getWheelDelta()/16;
+					tempScale += -event.getWheelDelta()/8;
 					volView.__drawingCanvasParams.drawingContext.setTransform(1,0,0,1,0,0);
 					volView.__imgCanvasParams.imgContext.setTransform(1,0,0,1,0,0);
 					var curentZoom = volView.__drawingCanvasParams.curCtxtZoom;
@@ -1305,6 +1282,7 @@ qx.Class.define("desk.gcSegmentation",
             {
                     volView.__mouseData.mouseLeftDownFlag = false;
 					volView.__mouseData.mouseMiddleDownFlag = false;
+					volView.__updateCursorType();
                     drawingCanvas.set({cursor: "default"});
 					volView.__mouseActionActive=false;
             };
