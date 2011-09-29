@@ -1247,47 +1247,40 @@ qx.Class.define("desk.gcSegmentation",
 			
 			var mouseMoveHandler = function(event)
             {
-					if(!((volView.__drawingCanvasParams.brCrFixingFlag)&&(volView.__mouseData.mouseLeftDownFlag)))
-					{
-							drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
-                    }
-					getPosition(event,true);
-				////Set eraser cursor position
-					if(volView.__mouseActionMode==4)
-					{
-						var canvasLocation=volView.__imageCanvas.getContentLocation();
-						var tempX = (event.getDocumentLeft()-canvasLocation.left)/volView.__drawingCanvasParams.curCtxtZoom;
-						var tempY = (event.getDocumentTop()-canvasLocation.top)/volView.__drawingCanvasParams.curCtxtZoom;
-//						volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.left),
-//											marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom+volView.__imgMap.top)});
+				if(!((volView.__drawingCanvasParams.brCrFixingFlag)&&(volView.__mouseData.mouseLeftDownFlag)))
+				{
+						drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
+                }
+				getPosition(event,true);
+                if(volView.__mouseData.mouseMiddleDownFlag)
+                {
+						moveCanvas();
+				}
 
-						volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom),
-											marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom)});
-
-                        if(volView.__eraserCursor.getVisibility()=="excluded")
-						{
-                                volView.__eraserCursor.show();
-						}
-					}
-                    if(volView.__mouseData.mouseLeftDownFlag)
-                    {
-
-						////Erase at mouse position
-//                            if(volView.__drawingCanvasParams.eraseFlag)
-//									eraseFnct(true);
-                    }
-                    if(volView.__mouseData.mouseMiddleDownFlag)
-                    {
-							moveCanvas();
-					}
-				////Draw cursor
-                    if((volView.__drawingCanvasParams.paintFlag)&&(!volView.__drawingCanvasParams.eraseFlag)&&(!volView.__drawingCanvasParams.brCrFixingFlag))
-                    {
-							drawBrush(event,volView.__drawingCanvasParams.curCtxtZoom);
-                    }
-					drawPointer(event,volView.__drawingCanvasParams.curCtxtZoom);
-				////Update image
  
+
+
+
+				switch (volView.__mouseActionMode)
+				{
+				case 3 :
+					drawBrush(event,volView.__drawingCanvasParams.curCtxtZoom);
+					break;
+				case 4 :
+					////Set eraser cursor position
+					var canvasLocation=volView.__imageCanvas.getContentLocation();
+					var tempX = (event.getDocumentLeft()-canvasLocation.left)/volView.__drawingCanvasParams.curCtxtZoom;
+					var tempY = (event.getDocumentTop()-canvasLocation.top)/volView.__drawingCanvasParams.curCtxtZoom;
+					volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom),
+						marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom)});
+					if(volView.__eraserCursor.getVisibility()=="excluded")
+						volView.__eraserCursor.show();
+					break;
+				default:
+					////Draw cursor
+					drawPointer(event,volView.__drawingCanvasParams.curCtxtZoom);
+				}
+
 				if (volView.__mouseActionActive)
 				{
 					switch (volView.__mouseActionMode)
@@ -1308,14 +1301,16 @@ qx.Class.define("desk.gcSegmentation",
 						break;
 					case 3 : 
 						////Draw to mouse position
-							volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
-							volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
-							volView.__htmlContextLabels.lineTo(volView.__mouseData.xPos,volView.__mouseData.yPos);
-							volView.__htmlContextLabels.stroke();
-							clearButton.set({opacity: 1, enabled : true});
-							break;
+						volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
+						volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
+						volView.__htmlContextLabels.lineTo(volView.__mouseData.xPos,volView.__mouseData.yPos);
+						volView.__htmlContextLabels.stroke();
+						clearButton.set({opacity: 1, enabled : true});
+						break;
 					case 4 :
-							eraseFnct(true);
+						////Erase at mouse position
+						eraseFnct(true);
+						break;
 						default:
 							//do nothing
 					}
