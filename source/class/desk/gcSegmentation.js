@@ -93,6 +93,7 @@ qx.Class.define("desk.gcSegmentation",
 		
 		this.__topRightContainer = new qx.ui.container.Composite(new qx.ui.layout.HBox());
 		this.__mainRightContainer.add(this.__topRightContainer);
+		this.__bottomRightContainer= new qx.ui.container.Composite(new qx.ui.layout.HBox());
 
 
 
@@ -506,11 +507,6 @@ qx.Class.define("desk.gcSegmentation",
                 volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 			
-/*			if(this.__winXP)
-                this.add(clearButton, {left: volView.__imgMap.width + eraserButton.getSizeHint().width+8 + 67, top: 40});
-            else
-                this.add(clearButton, {left: volView.__imgMap.width + eraserButton.getSizeHint().width+8 + 74, top: 36});
-	*/		
 			this.__topRightContainer.add(clearButton)
 			
 			
@@ -528,7 +524,6 @@ qx.Class.define("desk.gcSegmentation",
                 volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 
-        //    this.add(colorsTabView, {left: volView.__imgMap.width + 50, top: 73+4});
 			this.__mainRightContainer.add(colorsTabView)
 
 		////Function creates one label box
@@ -752,7 +747,6 @@ qx.Class.define("desk.gcSegmentation",
                     volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 
-//            this.add(slicesTabView, {left: volView.__imgMap.width + 50, top: colorsTabView.getLayoutProperties().top + colorsTabView.getSizeHint().height+8 + 61});
 			this.__mainRightContainer.add(slicesTabView);
 
 			var modifSlicesList = new qx.ui.form.List(true);
@@ -858,14 +852,14 @@ qx.Class.define("desk.gcSegmentation",
 							{
 								volView.__htmlContextSegImg.drawImage(this, 0, 0, this.width, this.height);
 							};
-							whileShowingDrwngOpacityLabel.set({opacity: 1, enabled : true});
-							whileShowingDrwngOpacitySlider.set({opacity: 1, enabled : true});
-							segImgOpacityLabel.set({opacity: 1, enabled : true});
-							whileDrawingSegImgOpacityLabel.set({opacity: 1, enabled : true});
-							whileDrawingSegImgOpacitySlider.set({opacity: 1, enabled : true});
-							whileShowingSegImgOpacityLabel.set({opacity: 1, enabled : true});
-							whileShowingSegImgOpacitySlider.set({opacity: 1, enabled : true});
-							extWinCheckBox.set({opacity: 1, enabled : true});
+	//seb						whileShowingDrwngOpacityLabel.set({opacity: 1, enabled : true});
+	//seb						whileShowingDrwngOpacitySlider.set({opacity: 1, enabled : true});
+	//seb						segImgOpacityLabel.set({opacity: 1, enabled : true});
+	//seb						whileDrawingSegImgOpacityLabel.set({opacity: 1, enabled : true});
+	//seb						whileDrawingSegImgOpacitySlider.set({opacity: 1, enabled : true});
+	//seb						whileShowingSegImgOpacityLabel.set({opacity: 1, enabled : true});
+	//seb						whileShowingSegImgOpacitySlider.set({opacity: 1, enabled : true});
+	//seb						extWinCheckBox.set({opacity: 1, enabled : true});
 							segmentationDone = true;
 						}
 						else if (this.readyState == 4 && this.status != 200)
@@ -887,30 +881,28 @@ qx.Class.define("desk.gcSegmentation",
                     volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 			
-            this.add(startButton, {left: volView.__imgMap.width - 4, top: volView.__imgMap.height + 7});
+    //        this.__.add(startButton, {left: volView.__imgMap.width - 4, top: volView.__imgMap.height + 7});
+			this.__mainRightContainer.add(this.__bottomRightContainer);
+			this.__bottomRightContainer.add(startButton);
 			// this.add(selectBox, {left: volView.__imgMap.width - selectBox.getSizeHint().width+8 - startButton.getSizeHint().width+8 + 26, top: volView.__imgMap.height + 7});
 			
 			
 			
 			
-			
-			var drawingDrwngOpacityLabel = new qx.ui.basic.Label("Drawing layer opacity : ");
-			this.add(drawingDrwngOpacityLabel, {left: 0, top: spinner.getLayoutProperties().top + spinner.getSizeHint().height+4 + 21});
-			
-			
-			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("While drawing");
-			this.add(whileDrawingDrwngOpacityLabel, {left: 0, top: drawingDrwngOpacityLabel.getLayoutProperties().top + drawingDrwngOpacityLabel.getSizeHint().height+4 + 2});
+			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
+			this.__topRightContainer.add(whileDrawingDrwngOpacityLabel);
 			
             var whileDrawingDrwngOpacitySlider = new qx.ui.form.Slider();
-            whileDrawingDrwngOpacitySlider.setHeight(whileDrawingDrwngOpacityLabel.getSizeHint().height+4 - 4);
-			whileDrawingDrwngOpacitySlider.set({width:128, maximum:100, minimum:21, value:100});
+			whileDrawingDrwngOpacitySlider.setValue(100);
 			whileDrawingDrwngOpacitySlider.addListener("changeValue", function(event)
 			{
 					drawingCanvas.set({opacity: event.getData()/100});
 			},this);
-            this.add(whileDrawingDrwngOpacitySlider, {left: 137, top: whileDrawingDrwngOpacityLabel.getLayoutProperties().top});
+            this.__topRightContainer.add(whileDrawingDrwngOpacitySlider, {flex : 1});
 			
-			
+	/*		
+	
+			/// Seb : deleted widgets... to put back again...
 			var whileShowingDrwngOpacityLabel = new qx.ui.basic.Label('While pressing "s" key');
 			whileShowingDrwngOpacityLabel.set({opacity: 0.5, enabled : false});
 			this.add(whileShowingDrwngOpacityLabel, {left: 0, top: whileDrawingDrwngOpacityLabel.getLayoutProperties().top + whileDrawingDrwngOpacityLabel.getSizeHint().height+4 + 2});
@@ -922,12 +914,10 @@ qx.Class.define("desk.gcSegmentation",
 			{
 					volView.__drawingSKeyOpacity = event.getData()/100;
 			},this);
+
+
 			whileShowingDrwngOpacitySlider.set({opacity: 0.5, enabled : false});
             this.add(whileShowingDrwngOpacitySlider, {left: 137, top: whileShowingDrwngOpacityLabel.getLayoutProperties().top});
-			
-			
-			
-			
 			
 			var segImgOpacityLabel = new qx.ui.basic.Label("Segmented image opacity : ");
 			segImgOpacityLabel.set({opacity: 0.5, enabled : false});
@@ -1003,7 +993,7 @@ qx.Class.define("desk.gcSegmentation",
 					}
 			},this);
 			extWinCheckBox.set({opacity: 0.5, enabled : false});
-			this.add(extWinCheckBox, {left: volView.__imgMap.width - extWinCheckBox.getSizeHint().width+4 + 73, top: drawingDrwngOpacityLabel.getLayoutProperties().top - 4});
+			this.add(extWinCheckBox);
 			externalWindow.addListener("close", function(event)
 			{
 					extWinCheckBox.setValue(false);
@@ -1064,7 +1054,7 @@ qx.Class.define("desk.gcSegmentation",
 			
 			
 			
-			
+			*/
 			
 			
 			
@@ -1353,7 +1343,7 @@ qx.Class.define("desk.gcSegmentation",
 			segmentedImgCanvas.addListener("mousemove", function(event)
 			{
 				////Change opacity of results canvas and drawing canvas
-					segmentedImgCanvas.set({opacity: whileDrawingSegImgOpacitySlider.getValue(), zIndex: volView.__drawingCanvasZ-1});
+	//seb				segmentedImgCanvas.set({opacity: whileDrawingSegImgOpacitySlider.getValue(), zIndex: volView.__drawingCanvasZ-1});
 					drawingCanvas.set({opacity: whileDrawingDrwngOpacitySlider.getValue()});
 			}, this);
 			
@@ -1374,7 +1364,7 @@ qx.Class.define("desk.gcSegmentation",
 					if(event.getKeyIdentifier()=="S")
 					{
 						////Change opacity of results canvas and drawing canvas
-						segmentedImgCanvas.set({opacity: whileDrawingSegImgOpacitySlider.getValue(), zIndex: volView.__drawingCanvasZ-1});
+	//seb					segmentedImgCanvas.set({opacity: whileDrawingSegImgOpacitySlider.getValue(), zIndex: volView.__drawingCanvasZ-1});
 						drawingCanvas.set({opacity: whileDrawingDrwngOpacitySlider.getValue()});
 					}
 			};
@@ -1505,11 +1495,7 @@ qx.Class.define("desk.gcSegmentation",
 			drawingCanvas.addListener("keydown", keyDownHandler, this);
 			drawingCanvas.addListener("keyup", keyUpHandler, this);
 
-			this.__imageCanvas.add(drawingCanvas);	
-//            this.add(drawingCanvas, {left: volView.__imgMap.left, top: volView.__imgMap.top});
-
-//            drawingCanvas.setUserBounds(volView.__imgMap.left, volView.__imgMap.top, volView.__imgMap.width, volView.__imgMap.height);
-			
+			this.__imageCanvas.add(drawingCanvas);		
 			
 			
             // HTML embed for background image
@@ -1523,8 +1509,6 @@ qx.Class.define("desk.gcSegmentation",
             var containerHtmlImage = new qx.ui.container.Composite(containerLayoutImage);
             containerHtmlImage.add(embedObjectImage);
 			this.__embedObjectImage=embedObjectImage;
- //           this.add(containerHtmlImage, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
-//            this.add(containerHtmlImage, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
 			this.__imageCanvas.add(containerHtmlImage);		/// seb why 2 images?	
 			
 			
@@ -1539,7 +1523,6 @@ qx.Class.define("desk.gcSegmentation",
             var containerHtmlLabels = new qx.ui.container.Composite(containerLayoutLabels);
             containerHtmlLabels.add(embedObjectLabels);
 			this.__embedObjectLabels=embedObjectLabels;
-//            this.add(containerHtmlLabels, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
 			this.__imageCanvas.add(containerHtmlLabels);
 			
 			
@@ -1554,7 +1537,6 @@ qx.Class.define("desk.gcSegmentation",
             var containerHtmlSegImg = new qx.ui.container.Composite(containerLayoutSegImg);
             containerHtmlSegImg.add(embedObjectSegImg);
 			this.__embedObjectSegImg=embedObjectSegImg;
-//            this.add(containerHtmlSegImg, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
 			
 			this.__imageCanvas.add(containerHtmlSegImg);
 			
@@ -1569,7 +1551,6 @@ qx.Class.define("desk.gcSegmentation",
             var containerHtmlUsedSeeds = new qx.ui.container.Composite(containerLayoutUsedSeeds);
             containerHtmlUsedSeeds.add(embedObjectUsedSeeds);
 			this.__embedObjectUsedSeeds=embedObjectUsedSeeds;
-//            this.add(containerHtmlUsedSeeds, {left: volView.__imgMap.left/*  + 500 */, top: volView.__imgMap.top/*  + 260 */});
 			this.__imageCanvas.add(containerHtmlUsedSeeds);
 
 			for(var i=0; i<volView.__numberOfSlices; i++)
@@ -1770,8 +1751,8 @@ qx.Class.define("desk.gcSegmentation",
 					volView.__drawingCanvasParams.drawingContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
 					volView.__imgCanvasParams.imgContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
 					segmentedImgCanvas.segImgContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
-					extWinSeedsCanvas.extWinSeedsContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
-					extWinSegImgCanvas.extWinSegImgContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
+	//seb				extWinSeedsCanvas.extWinSeedsContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
+	//seb				extWinSegImgCanvas.extWinSegImgContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
 				////Refresh image while drawing
 					if(zooming)
 					{
@@ -1822,7 +1803,7 @@ qx.Class.define("desk.gcSegmentation",
                                                                         0,
                                                                         sdw,
                                                                         sdh);
-							extWinSeedsCanvas.extWinSeedsContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+		/*seb					extWinSeedsCanvas.extWinSeedsContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 							extWinSeedsCanvas.extWinSeedsContext.drawImage(volView.__htmlCanvasUsedSeeds,
                                                                         sx,
                                                                         sy,
@@ -1841,7 +1822,7 @@ qx.Class.define("desk.gcSegmentation",
                                                                         0,
                                                                         0,
                                                                         sdw,
-                                                                        sdh);
+                                                                        sdh);*/
 					}
 			};
 			
@@ -1884,7 +1865,7 @@ qx.Class.define("desk.gcSegmentation",
                 if((tempMargin<tempX)&&(tempX<volView.__imgMap.width/scale-tempMargin)&&(tempMargin<tempY)&&(tempY<volView.__imgMap.height/scale-tempMargin))
                 {
 				////Set line width
-					extWinSegImgCanvas.extWinSegImgContext.lineWidth = 5/scale;
+	/*	seb			extWinSegImgCanvas.extWinSegImgContext.lineWidth = 5/scale;
 				////Draw up cursor line
 					extWinSegImgCanvas.extWinSegImgContext.fillRect(tempX - 4/scale, tempY - 20/scale, 8/scale, 16/scale);
                     extWinSegImgCanvas.extWinSegImgContext.beginPath();
@@ -1912,7 +1893,7 @@ qx.Class.define("desk.gcSegmentation",
 					extWinSegImgCanvas.extWinSegImgContext.moveTo(tempX + 8/scale, tempY);
 					extWinSegImgCanvas.extWinSegImgContext.lineTo(tempX + 16/scale, tempY);
 					extWinSegImgCanvas.extWinSegImgContext.stroke();
-					extWinSegImgCanvas.extWinSegImgContext.closePath();
+					extWinSegImgCanvas.extWinSegImgContext.closePath();*/
                 }
 			};
 			
@@ -2066,13 +2047,13 @@ qx.Class.define("desk.gcSegmentation",
 				volView.__htmlContextImage.putImageData(outImg, 0, 0);
 				volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);
 				volView.__drawingCanvasParams.drawingContext.setTransform(1,0,0,1,0,0);
-				extWinSegImgCanvas.extWinSegImgContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
+//				extWinSegImgCanvas.extWinSegImgContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
 				volView.__drawingCanvasParams.drawingContext.drawImage(volView.__htmlCanvasLabels,0,0);
-				extWinSegImgCanvas.extWinSegImgContext.setTransform(1,0,0,1,0,0);
+/*	seb			extWinSegImgCanvas.extWinSegImgContext.setTransform(1,0,0,1,0,0);
 				extWinSegImgCanvas.extWinSegImgContext.drawImage(volView.__htmlCanvasSegImg,0,0);
 				extWinSeedsCanvas.extWinSeedsContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
 				extWinSeedsCanvas.extWinSeedsContext.setTransform(1,0,0,1,0,0);
-				extWinSeedsCanvas.extWinSeedsContext.drawImage(volView.__htmlCanvasUsedSeeds,0,0);
+				extWinSeedsCanvas.extWinSeedsContext.drawImage(volView.__htmlCanvasUsedSeeds,0,0);*/
 				volView.__mouseData.decaleZoomX = 0;
 				volView.__mouseData.decaleZoomY = 0;
 				wheelScale = 0;
