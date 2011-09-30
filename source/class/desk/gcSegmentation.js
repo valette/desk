@@ -100,6 +100,7 @@ qx.Class.define("desk.gcSegmentation",
 		mRCL.setSpacing(spacing);
 		this.__mainRightContainer = new qx.ui.container.Composite(mRCL);
 		this.__window.add(this.__mainRightContainer);
+		this.__mainRightContainer.setVisibility("excluded");
 
 		var tRCL=new qx.ui.layout.HBox();
 		tRCL.setSpacing(spacing);
@@ -717,14 +718,16 @@ qx.Class.define("desk.gcSegmentation",
 			
 		////Create brightness/contrast fixing on/off button
 			volView.__brghtnssCntrstButton = new qx.ui.form.ToggleButton(null, "desk/Contrast_Logo_petit.PNG");
-			
-            volView.__brghtnssCntrstButton.set({toolTipText : "LUMINOSITE/CONTRASTE"});
 
-            volView.__brghtnssCntrstButton.addListener("changeValue", function(event)
+			volView.__brghtnssCntrstButton.set({toolTipText : "LUMINOSITE/CONTRASTE"});
+
+			volView.__brghtnssCntrstButton.addListener("click", function(event)
 			{
-				if (event.getData()==true)
+				if (volView.__brghtnssCntrstButton.getValue()==true)
 					volView.setMouseActionMode(1);
-            });
+				else
+					volView.setMouseActionMode(0);
+			});
 			
 			
 			
@@ -767,8 +770,15 @@ qx.Class.define("desk.gcSegmentation",
 			volView.__topLeftContainer.add(spinner);
 			volView.__topLeftContainer.add(volView.__brghtnssCntrstButton);
 			volView.__topLeftContainer.add(resetBrCrButton);
-			
-			
+
+			var paintPaneVisibilitySwitch=new qx.ui.form.ToggleButton("Paint")
+			paintPaneVisibilitySwitch.addListener("changeValue", function (e) {
+				if (e.getData())
+					volView.__mainRightContainer.setVisibility("visible");
+				else
+					volView.__mainRightContainer.setVisibility("excluded");				
+				});
+			volView.__topLeftContainer.add(paintPaneVisibilitySwitch);
 			
         ////Create and add the jpeg/png format select box
             var selectBox = new qx.ui.form.SelectBox();
