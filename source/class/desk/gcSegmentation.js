@@ -75,43 +75,6 @@ qx.Class.define("desk.gcSegmentation",
 			};
 
 
-		var spacing=5;
-		this.__window=new qx.ui.window.Window();
-		var windowLayout=new qx.ui.layout.HBox();
-		windowLayout.setSpacing(spacing);
-		this.__window.setLayout(windowLayout);
-		
-		var mLCL=new qx.ui.layout.VBox();
-		mLCL.setSpacing(spacing);
-		this.__mainLeftContainer = new qx.ui.container.Composite(mLCL);
-		this.__window.add(this.__mainLeftContainer);
-		
-		var tLCL=new qx.ui.layout.HBox();
-		tLCL.setSpacing(spacing);
-		this.__topLeftContainer = new qx.ui.container.Composite(tLCL);
-		this.__mainLeftContainer.add(this.__topLeftContainer);
-
-		var iCL=new qx.ui.layout.HBox();
-		iCL.setSpacing(spacing);
-		this.__imageContainer = new qx.ui.container.Composite(iCL);
-		this.__mainLeftContainer.add(this.__imageContainer, {flex : 1});
-
-		var mRCL=new qx.ui.layout.VBox();
-		mRCL.setSpacing(spacing);
-		this.__mainRightContainer = new qx.ui.container.Composite(mRCL);
-		this.__window.add(this.__mainRightContainer);
-		this.__mainRightContainer.setVisibility("excluded");
-
-		var tRCL=new qx.ui.layout.HBox();
-		tRCL.setSpacing(spacing);
-		this.__topRightContainer = new qx.ui.container.Composite(tRCL);
-		this.__mainRightContainer.add(this.__topRightContainer);
-
-		var bRCL=new qx.ui.layout.HBox();
-		bRCL.setSpacing(spacing);
-		this.__bottomRightContainer= new qx.ui.container.Composite(bRCL);
-
-
 
 		var volView = this;
 		
@@ -323,6 +286,43 @@ qx.Class.define("desk.gcSegmentation",
 		openFile : function (file,volView) {
 			this.removeAll();
 
+		var spacing=5;
+		this.__window=this;//new qx.ui.window.Window();
+		var windowLayout=new qx.ui.layout.HBox();
+		windowLayout.setSpacing(spacing);
+		this.__window.setLayout(windowLayout);
+		
+		var mLCL=new qx.ui.layout.VBox();
+		mLCL.setSpacing(spacing);
+		this.__mainLeftContainer = new qx.ui.container.Composite(mLCL);
+		this.__window.add(this.__mainLeftContainer);
+		
+		var tLCL=new qx.ui.layout.HBox();
+		tLCL.setSpacing(spacing);
+		this.__topLeftContainer = new qx.ui.container.Composite(tLCL);
+		this.__mainLeftContainer.add(this.__topLeftContainer);
+
+		var iCL=new qx.ui.layout.HBox();
+		iCL.setSpacing(spacing);
+		this.__imageContainer = new qx.ui.container.Composite(iCL);
+		this.__mainLeftContainer.add(this.__imageContainer, {flex : 1});
+
+		var mRCL=new qx.ui.layout.VBox();
+		mRCL.setSpacing(spacing);
+		this.__mainRightContainer = new qx.ui.container.Composite(mRCL);
+		this.__window.add(this.__mainRightContainer);
+		this.__mainRightContainer.setVisibility("excluded");
+
+		var tRCL=new qx.ui.layout.HBox();
+		tRCL.setSpacing(spacing);
+		this.__topRightContainer = new qx.ui.container.Composite(tRCL);
+		this.__mainRightContainer.add(this.__topRightContainer);
+
+		var bRCL=new qx.ui.layout.HBox();
+		bRCL.setSpacing(spacing);
+		this.__bottomRightContainer= new qx.ui.container.Composite(bRCL);
+
+
 		var volView=this;
 
 //        volView.addListener("mouseout", function(event)
@@ -506,7 +506,7 @@ qx.Class.define("desk.gcSegmentation",
 					drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
 					////Change opacity of results canvas and drawing canvas
 					drawingCanvas.set({opacity: volView.__drawingSKeyOpacity});
-					segmentedImgCanvas.set({opacity: volView.__segImgSKeyOpacity, zIndex: volView.__drawingCanvasZ+1});
+//					segmentedImgCanvas.set({opacity: volView.__segImgSKeyOpacity, zIndex: volView.__drawingCanvasZ+1});
 				}
 			},this);
 			
@@ -515,7 +515,7 @@ qx.Class.define("desk.gcSegmentation",
 				if(event.getKeyIdentifier()=="S")
 				{
 					////Change opacity of results canvas and drawing canvas
-					segmentedImgCanvas.set({opacity: 0, zIndex: volView.__drawingCanvasZ-1});
+//					segmentedImgCanvas.set({opacity: 0, zIndex: volView.__drawingCanvasZ-1});
 					drawingCanvas.set({opacity: whileDrawingDrwngOpacitySlider.getValue()});
 				}
 			},this);
@@ -1344,11 +1344,23 @@ qx.Class.define("desk.gcSegmentation",
                 volView.__horizSlices.sliceResults[i] = [];
 				volView.__horizSlices.usedSliceSeeds[i] = [];
             };
+
+
+			
+			this.__imageCanvas = new qx.ui.container.Composite(new qx.ui.layout.Canvas);
+			var imgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true,
+														zIndex: volView.__imageZ,
+														width : volView.__imgMap.width,
+														height : volView.__imgMap.height });
+
+			this.__imageCanvas.add(imgCanvas);
+            volView.__imageContainer.add(this.__imageCanvas);
+/*
 			
 			var segmentedImgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true, zIndex: volView.__drawingCanvasZ-1});
 			segmentedImgCanvas.set({opacity: 0});
-            this.add(segmentedImgCanvas, {left: volView.__imgMap.left, top: volView.__imgMap.top});
-            segmentedImgCanvas.setUserBounds(volView.__imgMap.left, volView.__imgMap.top, volView.__imgMap.width, volView.__imgMap.height);
+            this.__imageCanvas.add(segmentedImgCanvas);
+      //      segmentedImgCanvas.setUserBounds(volView.__imgMap.left, volView.__imgMap.top, volView.__imgMap.width, volView.__imgMap.height);
 			segmentedImgCanvas.addListener("redraw", function(event)
 			{
                 var data = event.getData();
@@ -1362,7 +1374,7 @@ qx.Class.define("desk.gcSegmentation",
 	//seb				segmentedImgCanvas.set({opacity: whileDrawingSegImgOpacitySlider.getValue(), zIndex: volView.__drawingCanvasZ-1});
 					drawingCanvas.set({opacity: whileDrawingDrwngOpacitySlider.getValue()});
 			}, this);
-			
+	*/		
 			var keyDownHandler = function(event)
 			{
 					if(event.getKeyIdentifier()=="S")
@@ -1371,7 +1383,7 @@ qx.Class.define("desk.gcSegmentation",
 							drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
 						////Change opacity of results canvas and drawing canvas
 							drawingCanvas.set({opacity: volView.__drawingSKeyOpacity});
-							segmentedImgCanvas.set({opacity: volView.__segImgSKeyOpacity, zIndex: volView.__drawingCanvasZ+1});
+			//				segmentedImgCanvas.set({opacity: volView.__segImgSKeyOpacity, zIndex: volView.__drawingCanvasZ+1});
 					}
 			};
 			
@@ -1387,15 +1399,6 @@ qx.Class.define("desk.gcSegmentation",
 			
 			
 			
-			
-			this.__imageCanvas = new qx.ui.container.Composite(new qx.ui.layout.Canvas);
-			var imgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true,
-														zIndex: volView.__imageZ,
-														width : volView.__imgMap.width,
-														height : volView.__imgMap.height });
-
-			this.__imageCanvas.add(imgCanvas);
-            volView.__imageContainer.add(this.__imageCanvas);
 
 			
       //      imgCanvas.setUserBounds(volView.__imgMap.left, volView.__imgMap.top, volView.__imgMap.width, volView.__imgMap.height);
@@ -1740,7 +1743,7 @@ qx.Class.define("desk.gcSegmentation",
 				}
 				volView.__drawingCanvasParams.drawingContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
 				volView.__imgCanvasParams.imgContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
-				segmentedImgCanvas.segImgContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
+//				segmentedImgCanvas.segImgContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
 //seb				extWinSeedsCanvas.extWinSeedsContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
 //seb				extWinSegImgCanvas.extWinSegImgContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
 			////Refresh image while drawing
@@ -1783,7 +1786,7 @@ qx.Class.define("desk.gcSegmentation",
                                                                     0,
                                                                     sdw,
                                                                     sdh);
-						segmentedImgCanvas.segImgContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+/*						segmentedImgCanvas.segImgContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 						segmentedImgCanvas.segImgContext.drawImage(volView.__htmlCanvasSegImg,
                                                                     sx,
                                                                     sy,
@@ -1792,7 +1795,7 @@ qx.Class.define("desk.gcSegmentation",
                                                                     0,
                                                                     0,
                                                                     sdw,
-                                                                    sdh);
+                                                                    sdh);*/
 	/*seb					extWinSeedsCanvas.extWinSeedsContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 						extWinSeedsCanvas.extWinSeedsContext.drawImage(volView.__htmlCanvasUsedSeeds,
                                                                     sx,
