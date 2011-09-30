@@ -185,8 +185,6 @@ qx.Class.define("desk.gcSegmentation",
 		__mouseActionMode : 0,
 		__mouseActionActive : false,
 
-		__winXP : true,
-
 // Données pour la position de l'objet window qui contient l'interface
 //(position par rapport au document <-> fenêtre de l'explorateur)
 // La largeur et la hauteur sont des valeurs par défaut. Si les widgets
@@ -292,6 +290,16 @@ qx.Class.define("desk.gcSegmentation",
 		__eraserCursor : null,
 		__brghtnssCntrstButton : null,
 
+
+		__extent : null,
+		__dimensions : null,
+		__spacing  : null,
+		__origin : null,
+		__scalarSize : 1,
+		__scalarType : null,
+		__scalarMin : null,
+		__scalaMax : null,
+		
 		setMouseActionMode : function (mode) {
 			if (mode!=1)
 				this.__brghtnssCntrstButton.setValue(false);
@@ -328,14 +336,48 @@ qx.Class.define("desk.gcSegmentation",
 					if(this.responseXML!=null)
 					{
 						var response = this.responseXML;
+						var volume=response.getElementsByTagName("volume")[0];
+
 						volView.__imgMap.width = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("x"));
 						volView.__imgMap.height = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("y"));
 						volView.__numberOfSlices = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("z"));
 						volView.__slicesNameOffset = parseInt(response.getElementsByTagName("slicesprefix")[0].getAttribute("offset"));
 						volView.__slicesNamePrefix = response.getElementsByTagName("slicesprefix")[0].firstChild.nodeValue;
 						volView.__timestamp = response.getElementsByTagName("slicesprefix")[0].getAttribute("volView.__timestamp");
+
 						if (volView.__timestamp==null)
 							volView.__timestamp = (new Date()).getTime();
+
+						var XMLextent=volume.getElementsByTagName("extent")[0];
+						volView.__extent=new Array(parseInt(XMLextent.getAttribute("x1")),
+										parseInt(XMLextent.getAttribute("x2")),
+										parseInt(XMLextent.getAttribute("y1")),
+										parseInt(XMLextent.getAttribute("y2")),
+										parseInt(XMLextent.getAttribute("z1")),
+										parseInt(XMLextent.getAttribute("z2")));
+
+						var XMLdimensions=volume.getElementsByTagName("dimensions")[0];
+						volView.__maxZ=parseInt(XMLdimensions.getAttribute("z"))-1;
+						volView.__dimensions=new Array(parseInt(XMLdimensions.getAttribute("x")),
+										parseInt(XMLdimensions.getAttribute("y")),
+										parseInt(XMLdimensions.getAttribute("z")));
+
+						var XMLspacing=volume.getElementsByTagName("spacing")[0];
+						volView.__spacing=new Array(parseFloat(XMLspacing.getAttribute("x")),
+										parseFloat(XMLspacing.getAttribute("y")),
+										parseFloat(XMLspacing.getAttribute("z")));
+
+						var XMLorigin=volume.getElementsByTagName("origin")[0];
+						volView.__origin=new Array(parseFloat(XMLorigin.getAttribute("x")),
+										parseFloat(XMLorigin.getAttribute("y")),
+										parseFloat(XMLorigin.getAttribute("z")));
+
+						var XMLscalars=volume.getElementsByTagName("scalars")[0];
+						volView.__scalarType=parseInt(XMLscalars.getAttribute("type"));
+						volView.__scalarSize=parseInt(XMLscalars.getAttribute("size"));
+						volView.__scalarMin=parseFloat(XMLscalars.getAttribute("min"));
+						volView.__scalarMax=parseFloat(XMLscalars.getAttribute("max"));
+
 					}
 					else
 					{
@@ -499,10 +541,6 @@ qx.Class.define("desk.gcSegmentation",
                 volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 			
-//            if(this.__winXP)
-//               this.add(eraserButton, {left: volView.__imgMap.width + 56, top: 40});
-//            else
-//                this.add(eraserButton, {left: volView.__imgMap.width + 56, top: 36});
 			this.__topRightContainer.add(eraserButton)
 			
 			
@@ -1247,7 +1285,7 @@ qx.Class.define("desk.gcSegmentation",
 						var tempContrast = volView.__imgCanvasParams.contrast + (volView.__mouseData.xPos-volView.__mouseData.recentX)*5/volView.__imgMap.width;
 						if((0<tempBrightness+150)&&(tempBrightness<150))
 							volView.__imgCanvasParams.brightness = tempBrightness;
-						if((0<tempContrast+1)&&(tempContrast<5))
+						if((0<tempContrast+1)&&(tempContrast<20))
 							volView.__imgCanvasParams.contrast = tempContrast;
 						drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
 						resetBrCrButton.set({opacity: 1, enabled : true});
@@ -1436,8 +1474,9 @@ qx.Class.define("desk.gcSegmentation",
 			{
 				if((volView.__drawingCanvasParams.sliceNumber==0)&&(typeof volView.__htmlContextImage!="undefined")&&(typeof volView.__imgCanvasParams.imgContext!="undefined"))
 				{
-					volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
-					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);
+					drawZoomedCanvas(1,false);
+//					volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
+//					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);
 				}
 			};
 			
@@ -1474,7 +1513,7 @@ qx.Class.define("desk.gcSegmentation",
             var containerHtmlImage = new qx.ui.container.Composite(containerLayoutImage);
             containerHtmlImage.add(embedObjectImage);
 			this.__embedObjectImage=embedObjectImage;
-			this.__imageCanvas.add(containerHtmlImage);		/// seb why 2 images?	
+			this.__imageCanvas.add(containerHtmlImage);
 			
 			
             // HTML embed for drawn labels
@@ -2140,27 +2179,77 @@ qx.Class.define("desk.gcSegmentation",
                             add = 0;
                         }
                     }
-                    var r, g, b;
-                    while (p--) {
-                        if ((r = data[pix-=4] * mul + add) > 255 )
-                            data[pix] = 255;
-                        else if (r < 0)
-                            data[pix] = 0;
-                        else
-                            data[pix] = r;
-                        if ((g = data[pix1=pix+1] * mul + add) > 255 )
-                            data[pix1] = 255;
-                        else if (g < 0)
-                            data[pix1] = 0;
-                        else
-                            data[pix1] = g;
-                        if ((b = data[pix2=pix+2] * mul + add) > 255 )
-                            data[pix2] = 255;
-                        else if (b < 0)
-                            data[pix2] = 0;
-                        else
-                            data[pix2] = b;
-                    }
+
+	                var r, g, b,a,c;
+	                console.log("scalar size : "+volView.__scalarSize);
+					switch (volView.__scalarSize)
+                    {
+					case 1:
+		                while (p--) {
+		                    if ((r = data[pix-=4] * mul + add) > 255 )
+		                        data[pix] = 255;
+		                    else if (r < 0)
+		                        data[pix] = 0;
+		                    else
+		                        data[pix] = r;
+		                    if ((g = data[pix1=pix+1] * mul + add) > 255 )
+		                        data[pix1] = 255;
+		                    else if (g < 0)
+		                        data[pix1] = 0;
+		                    else
+		                        data[pix1] = g;
+		                    if ((b = data[pix2=pix+2] * mul + add) > 255 )
+		                        data[pix2] = 255;
+		                    else if (b < 0)
+		                        data[pix2] = 0;
+		                    else
+		                        data[pix2] = b;
+		                        
+		                }
+		                break;
+					case 2:
+		            	pix=0;
+		            	while (p--){
+		            		r= data[pix];
+		            		b= data[pix+2];
+		            		c=(b*256+r)/256;
+		            		c=c* mul + add;
+		            		if (c>255)
+		            			c=255;
+		            		else if (c<0)
+		            			c=0;
+		            		data[pix++]=c;
+		            		data[pix++]=c;
+		            		data[pix++]=c;
+		            		data[pix++]=255;
+		            	}
+		            	break;
+		            case 4:
+		            	pix=0;
+		            	console.log("pix1 :"+data[0]);
+		            	console.log("pix2 :"+data[1]);
+		            	console.log("pix3 :"+data[2]);
+		            	console.log("pix4 :"+data[3]);
+		            	while (p--){
+		            		r= data[pix];
+		            		g= data[pix+1];
+		            		b= data[pix+2];
+		            		a= data[pix+3];
+		            		c=(b*65536+g*256+r)/65536;
+		            		c=c* mul + add;
+		            		if (c>255)
+		            			c=255;
+		            		else if (c<0)
+		            			c=0;
+		            		data[pix++]=c;
+		            		data[pix++]=c;
+		            		data[pix++]=c;
+		            		data[pix++]=255;
+		            	}
+		            	break;
+					default :
+						alert("format not supported. please repport");
+		            }
                     dataDesc.data = data;
                 }
                 return dataDesc;
