@@ -20,7 +20,6 @@ qx.Class.define("desk.gcSegmentation",
 		// init 
 		this.__horizSlices={
 		inProgData : [],
-		sliceImages : [],
 		sliceLabels : [],
 		usedSliceSeeds : [],
 		sliceResults : []
@@ -289,6 +288,8 @@ qx.Class.define("desk.gcSegmentation",
 
 		__eraserCursor : null,
 		__brghtnssCntrstButton : null,
+
+		__loadImage : null,
 
 
 		__extent : null,
@@ -1436,48 +1437,31 @@ qx.Class.define("desk.gcSegmentation",
 			},this);			
 			
 			var canvasImage = new Image();
+
+			volView.__loadImage=canvasImage;
 			
 			var slashIndex = file.lastIndexOf("/");
 			this.__path = "";
 			if (slashIndex>0)
 				this.__path = file.substring(0,slashIndex)+"\/";
 			volView.debug("this.__path : " + this.__path);
-            var sliceImg = function()
-			{
-                var imgObj = {
-                        url : null,
-                        srcImage : new Image()
-                };
-                return imgObj;
-            };
-		////Set url for each source image
-            for(var i=0; i<volView.__numberOfSlices; i++)
-            {
-                volView.__horizSlices.sliceImages[i] = new sliceImg();
-                volView.__horizSlices.sliceImages[i].url = this.__path + "slice" + (volView.__slicesNameOffset+i) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp;
-				volView.__horizSlices.sliceImages[i].srcImage.onload = function()
-				{
-					//volView.debug(" <!>   Image  No." + volView.__drawingCanvasParams.sliceNumber + "  loaded");
-					if(volView.__drawingCanvasParams.drawingContext!=null)
-					{
-						canvasImage = volView.__horizSlices.sliceImages[volView.__drawingCanvasParams.sliceNumber].srcImage;
-						volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-						drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
-					}
-				};
-            };
-			
-			canvasImage.src = volView.__horizSlices.sliceImages[0].url;
-			volView.__horizSlices.sliceImages[0].srcImage = canvasImage;
+
+//			volView.__horizSlices.sliceImages[0].srcImage = canvasImage;
 			
 			canvasImage.onload = function()	// here for build version
 			{
-				if((volView.__drawingCanvasParams.sliceNumber==0)&&(typeof volView.__htmlContextImage!="undefined")&&(typeof volView.__imgCanvasParams.imgContext!="undefined"))
+/*				if((volView.__drawingCanvasParams.sliceNumber==0)&&(typeof volView.__htmlContextImage!="undefined")&&(typeof volView.__imgCanvasParams.imgContext!="undefined"))
 				{
 					drawZoomedCanvas(1,false);
 //					volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
 //					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);
-				}
+				}*/
+					if(volView.__drawingCanvasParams.drawingContext!=null)
+					{
+						volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+						drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
+					}
+
 			};
 			
 			
@@ -1637,18 +1621,8 @@ qx.Class.define("desk.gcSegmentation",
 						startButton.set({opacity: 0.5, enabled : false});
 				};	////End if(typeof volView.__horizSlices.sliceLabels[newSliceIndex] != "undefined")
 			////Update image canvas
-				if(volView.__horizSlices.sliceImages[newSliceIndex].srcImage.src=="")
-				{
-					////First access to slice. Load image by passing source url
-						volView.__horizSlices.sliceImages[newSliceIndex].srcImage.src = volView.__horizSlices.sliceImages[newSliceIndex].url;
-				}
-				else
-				{
-					////Slice has previously been accessed. Load image by copying image into "canvasImage" global variable
-						canvasImage = volView.__horizSlices.sliceImages[newSliceIndex].srcImage;
-						volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-						drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
-				};
+
+				volView.__loadImage.src=volView.__path + "slice" + (volView.__slicesNameOffset+slider.getValue()) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp;
 			////Clear "undo" stack
 				volView.__ctrlZData = [];
             	volView.__currentSeedsModified=false;
@@ -1695,9 +1669,6 @@ qx.Class.define("desk.gcSegmentation",
 				{
 					volView.__mouseData.xPos = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.xPos;
 					volView.__mouseData.yPos = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.yPos;
-//					volView.__mouseData.xPos = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.xPos;
-//					volView.__mouseData.yPos = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.yPos;
-					////volView.debug(mouseEvent.getType() + "(" + volView.__mouseData.xPos + "," + volView.__mouseData.yPos + ")");
 				}
 				var newCoor = changeInto05Coordinates(volView.__mouseData.xPos,volView.__mouseData.yPos);
 				volView.__mouseData.xPos = newCoor.newX;
@@ -2181,7 +2152,6 @@ qx.Class.define("desk.gcSegmentation",
                     }
 
 	                var r, g, b,a,c;
-	                console.log("scalar size : "+volView.__scalarSize);
 					switch (volView.__scalarSize)
                     {
 					case 1:
@@ -2226,10 +2196,6 @@ qx.Class.define("desk.gcSegmentation",
 		            	break;
 		            case 4:
 		            	pix=0;
-		            	console.log("pix1 :"+data[0]);
-		            	console.log("pix2 :"+data[1]);
-		            	console.log("pix3 :"+data[2]);
-		            	console.log("pix4 :"+data[3]);
 		            	while (p--){
 		            		r= data[pix];
 		            		g= data[pix+1];
