@@ -701,7 +701,7 @@ qx.Class.define("desk.gcSegmentation",
             slider.setMaximum(volView.__numberOfSlices-1);
             slider.setMinimum(0);
             slider.setOrientation("vertical");
-            volView.__imageContainer.add(slider);
+
 			
 			
 			
@@ -1040,7 +1040,8 @@ qx.Class.define("desk.gcSegmentation",
 														height : volView.__imgMap.height });
 
 			this.__imageCanvas.add(imgCanvas);
-            volView.__imageContainer.add(this.__imageCanvas);
+			volView.__imageContainer.add(this.__imageCanvas);
+			volView.__imageContainer.add(slider);
 
 			
 			imgCanvas.addListener("redraw", function(event)
