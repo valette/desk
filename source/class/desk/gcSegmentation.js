@@ -91,8 +91,6 @@ qx.Class.define("desk.gcSegmentation",
 		var volView = this;
 		
         volView.set({
-                width: volView.__winMap.width,
-                height: volView.__winMap.height,
                 showMinimize: false,
                 showMaximize: false,
                 showClose: true,
@@ -153,6 +151,9 @@ qx.Class.define("desk.gcSegmentation",
 
 		__mainRightContainer : null,
 		__topRightContainer : null,
+
+		__slider : null,
+		__formatSelectBox : null,
 
 		__currentSeedsModified : false,
 
@@ -247,6 +248,12 @@ qx.Class.define("desk.gcSegmentation",
 		__scalarType : null,
 		__scalarMin : null,
 		__scalaMax : null,
+
+		__updateImage : function () {
+			this.__loadImage.src=this.__path + "slice" + 
+				(this.__slicesNameOffset+this.__slider.getValue()) + 
+				"." + this.__formatSelectBox.getSelection()[0].getLabel() + "?nocache=" + this.__timestamp;
+		},
 		
 		setMouseActionMode : function (mode) {
 			if (mode!=1)
@@ -701,6 +708,7 @@ qx.Class.define("desk.gcSegmentation",
             slider.setMaximum(volView.__numberOfSlices-1);
             slider.setMinimum(0);
             slider.setOrientation("vertical");
+            this.__slider=slider;
 
 			
 			
@@ -720,6 +728,21 @@ qx.Class.define("desk.gcSegmentation",
 			volView.__topLeftContainer.add(volView.__brghtnssCntrstButton);
 			volView.__topLeftContainer.add(resetBrCrButton);
 
+
+        ////Create and add the jpeg/png format select box
+            volView.__formatSelectBox = new qx.ui.form.SelectBox();
+			volView.__formatSelectBox.set({width: 52});
+            var SelectPNG = new qx.ui.form.ListItem("png");
+            volView.__formatSelectBox.add(SelectPNG);
+            var SelectJPG = new qx.ui.form.ListItem("jpg");
+            volView.__formatSelectBox.add(SelectJPG);
+            volView.__formatSelectBox.addListener('changeSelection', function (e){
+            	this.__updateImage();}, volView);
+			
+
+			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});			
+			volView.__topLeftContainer.add(volView.__formatSelectBox);
+
 			var paintPaneVisibilitySwitch=new qx.ui.form.ToggleButton("Paint")
 			paintPaneVisibilitySwitch.addListener("changeValue", function (e) {
 				if (e.getData())
@@ -727,18 +750,8 @@ qx.Class.define("desk.gcSegmentation",
 				else
 					volView.__mainRightContainer.setVisibility("excluded");				
 				});
-			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});
-			
+			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});			
 			volView.__topLeftContainer.add(paintPaneVisibilitySwitch);
-			
-        ////Create and add the jpeg/png format select box
-            var selectBox = new qx.ui.form.SelectBox();
-			selectBox.set({width: 52});
-            var SelectPNG = new qx.ui.form.ListItem("png");
-            selectBox.add(SelectPNG);
-            var SelectJPG = new qx.ui.form.ListItem("jpg");
-            selectBox.add(SelectJPG);
-			
 			
 
 			var modifSlicesList = new qx.ui.form.List(true);
@@ -752,7 +765,7 @@ qx.Class.define("desk.gcSegmentation",
 					{
 						var sliceId = selectedChild.getUserData("slice");
 					////Erase image on the server
-						eraseFile(volView.__slicesNamePrefix + (volView.__slicesNameOffset + sliceId) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp);
+						eraseFile(volView.__slicesNamePrefix + (volView.__slicesNameOffset + sliceId) + ".png");
 					////Update members list
 						clearButton.execute();
 					////Erase from widget list
@@ -774,7 +787,6 @@ qx.Class.define("desk.gcSegmentation",
             startButton.set({opacity: 0.5, enabled : false});
 			this.__mainRightContainer.add(this.__bottomRightContainer);
 			this.__bottomRightContainer.add(startButton);
-			// this.add(selectBox, {left: volView.__imgMap.width - selectBox.getSizeHint().width+8 - startButton.getSizeHint().width+8 + 26, top: volView.__imgMap.height + 7});
 			
 			
 			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
@@ -1041,7 +1053,7 @@ qx.Class.define("desk.gcSegmentation",
 
 			this.__imageCanvas.add(imgCanvas);
 			volView.__imageContainer.add(this.__imageCanvas);
-			volView.__imageContainer.add(slider);
+			volView.__imageContainer.add(slider, {flex : 1});
 
 			
 			imgCanvas.addListener("redraw", function(event)
@@ -1234,8 +1246,8 @@ qx.Class.define("desk.gcSegmentation",
 						startButton.set({opacity: 0.5, enabled : false});
 				};	////End if(typeof volView.__horizSlices.sliceLabels[newSliceIndex] != "undefined")
 			////Update image canvas
+				volView.__updateImage();
 
-				volView.__loadImage.src=volView.__path + "slice" + (volView.__slicesNameOffset+slider.getValue()) + "." + selectBox.getSelection()[0].getLabel() + "?nocache=" + volView.__timestamp;
 			////Clear "undo" stack
 				volView.__ctrlZData = [];
             	volView.__currentSeedsModified=false;
@@ -1266,7 +1278,7 @@ qx.Class.define("desk.gcSegmentation",
 				(volView.__embedObjectLabels.getContentElement().getDomElement()==null))
 				{
 				console.log("not ready");
-				setTimeout(initSlider, 1000);
+				setTimeout(initSlider, 100);
 				}
 			else
 				slider.setValue(Math.round(volView.__dimensions[2]/2));
@@ -1636,17 +1648,14 @@ qx.Class.define("desk.gcSegmentation",
                 {
 					sliceData.data = pixels;
 					volView.__htmlContextLabels.putImageData(sliceData, 0, 0);
-					if(selectBox.getSelection()[0].getLabel()=="png")
-							var pngImg = volView.__htmlCanvasLabels.toDataURL("image/png");
-					if(selectBox.getSelection()[0].getLabel()=="jpg")
-							var pngImg = volView.__htmlCanvasLabels.toDataURL("image/jpeg",1);
+					var pngImg = volView.__htmlCanvasLabels.toDataURL("image/png");
                     //volView.debug("pngImg : " + pngImg);
 				////Send png image to server
 					var pngRequest = new XMLHttpRequest();
 					pngRequest.open("POST",'/visu/saveFile.php',true);
 					pngRequest.setRequestHeader('Content-Type', 'application/upload');
-					volView.debug("Writing  data/seeds_seb/" + volView.__slicesNamePrefix + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel());
-					pngRequest.send("data/seeds_seb/" + volView.__slicesNamePrefix + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + "." + selectBox.getSelection()[0].getLabel() + "!" + pngImg);
+					volView.debug("Writing  data/seeds_seb/" + volView.__slicesNamePrefix + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + ".png");
+					pngRequest.send("data/seeds_seb/" + volView.__slicesNamePrefix + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + ".png"+ "!" + pngImg);
                 }
                 return isAllBlack;
             };
@@ -1790,7 +1799,7 @@ qx.Class.define("desk.gcSegmentation",
 				{
 					var sliceId=seedsList[i].getUserData("slice");
 					sliceID = {slice: sliceId + ""};
-					xmlContent += '     ' + element('seed', volView.__slicesNamePrefix + (volView.__slicesNameOffset + sliceId) + "." + selectBox.getSelection()[0].getLabel(), sliceID) + '\n';
+					xmlContent += '     ' + element('seed', volView.__slicesNamePrefix + (volView.__slicesNameOffset + sliceId) + "." + volView.__formatSelectBox.getSelection()[0].getLabel(), sliceID) + '\n';
 				}
 				var xmlUpdateRequest = new XMLHttpRequest();
 				xmlUpdateRequest.open("POST",'/visu/createXML_Seb.php',true);
