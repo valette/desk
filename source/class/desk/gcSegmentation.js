@@ -306,8 +306,7 @@ qx.Class.define("desk.gcSegmentation",
 		this.__bottomRightContainer= new qx.ui.container.Composite(bRCL);
 
 
-		var volView=this;
-		
+		var volView=this;		
 		
 		////Get image dimensions and number of slices 
 			var globalParamRequest = new XMLHttpRequest();
@@ -377,10 +376,83 @@ qx.Class.define("desk.gcSegmentation",
 			globalParamRequest.open("GET",file+"?nocache=" + Math.random(),false);
 			globalParamRequest.send(null);
 			
-			var xmlDoc = globalParamRequest.responseXML;
-			var volume = xmlDoc.getElementsByTagName("volume")[0];
-			if (volume==null)
-				return;
+			var canvasImage = new Image();
+
+			volView.__loadImage=canvasImage;
+			
+			var slashIndex = file.lastIndexOf("/");
+			this.__path = "";
+			if (slashIndex>0)
+				this.__path = file.substring(0,slashIndex)+"\/";
+			volView.debug("this.__path : " + this.__path);
+
+			canvasImage.onload = function()
+			{
+				if(volView.__drawingCanvasParams.drawingContext!=null)
+				{
+					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+					drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
+				}
+
+			};
+
+			this.__imageCanvas = new qx.ui.container.Composite(new qx.ui.layout.Canvas);
+			var imgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true,
+														zIndex: volView.__imageZ,
+														width : volView.__imgMap.width,
+														height : volView.__imgMap.height });
+
+			this.__imageCanvas.add(imgCanvas);
+            volView.__imageContainer.add(this.__imageCanvas);
+
+			
+            var drawingCanvas = new qx.ui.embed.Canvas().set({syncDimension: true,
+            											 zIndex: volView.__drawingCanvasZ,
+            											 width : volView.__imgMap.width,
+														height : volView.__imgMap.height });
+
+			this.__imageCanvas.add(drawingCanvas);		
+			
+            // HTML embed for background image
+            var embedHtmlCodeImage = '<canvas id="htmlTagCanvasImage" width="' + volView.__imgMap.width + '" height="' + volView.__imgMap.height + '" ></canvas>';
+            var embedObjectImage = new qx.ui.embed.Html(embedHtmlCodeImage);
+            embedObjectImage.setDecorator("main");
+            embedObjectImage.setWidth(volView.__imgMap.width);
+            embedObjectImage.setHeight(volView.__imgMap.height);
+			
+            var containerLayoutImage = new qx.ui.layout.VBox();
+            var containerHtmlImage = new qx.ui.container.Composite(containerLayoutImage);
+            containerHtmlImage.add(embedObjectImage);
+			this.__embedObjectImage=embedObjectImage;
+			this.__imageCanvas.add(containerHtmlImage);
+			
+			
+            // HTML embed for drawn labels
+            var embedHtmlCodeLabels = '<canvas id="htmlTagCanvasLabels" width="' + volView.__imgMap.width + '" height="' + volView.__imgMap.height + '" ></canvas>';
+            var embedObjectLabels = new qx.ui.embed.Html(embedHtmlCodeLabels);
+            embedObjectLabels.setDecorator("main");
+            embedObjectLabels.setWidth(volView.__imgMap.width);
+            embedObjectLabels.setHeight(volView.__imgMap.height);
+			
+            var containerLayoutLabels = new qx.ui.layout.VBox();
+            var containerHtmlLabels = new qx.ui.container.Composite(containerLayoutLabels);
+            containerHtmlLabels.add(embedObjectLabels);
+			this.__embedObjectLabels=embedObjectLabels;
+			this.__imageCanvas.add(containerHtmlLabels);
+			
+			
+            // HTML embed for seeds used for segmentation
+            var embedHtmlCodeUsedSeeds = '<canvas id="htmlTagCanvasUsedSeeds" width="' + volView.__imgMap.width + '" height="' + volView.__imgMap.height + '" ></canvas>';
+            var embedObjectUsedSeeds = new qx.ui.embed.Html(embedHtmlCodeUsedSeeds);
+            embedObjectUsedSeeds.setDecorator("main");
+            embedObjectUsedSeeds.setWidth(volView.__imgMap.width);
+            embedObjectUsedSeeds.setHeight(volView.__imgMap.height);
+			
+            var containerLayoutUsedSeeds = new qx.ui.layout.VBox();
+            var containerHtmlUsedSeeds = new qx.ui.container.Composite(containerLayoutUsedSeeds);
+            containerHtmlUsedSeeds.add(embedObjectUsedSeeds);
+			this.__embedObjectUsedSeeds=embedObjectUsedSeeds;
+			this.__imageCanvas.add(containerHtmlUsedSeeds);
 
 			
 			
@@ -501,24 +573,6 @@ qx.Class.define("desk.gcSegmentation",
 
             clearButton.set({opacity: 0.5, enabled : false});
 			
-			clearButton.addListener("execute", function(event)
-			{
-                volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-                volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-				volView.__htmlContextLabels.beginPath();
-                volView.__mouseData.mouseLeftDownFlag = false;
-                clearButton.set({opacity: 0.5, enabled : false});
-                eraserButton.set({opacity: 0.5, enabled : false});
-                eraserButton.setValue(false);
-                volView.__drawingCanvasParams.eraseFlag = false;
-                volView.__eraserCursor.exclude();
-            });
-
-            clearButton.addListener("mouseup", function(event)
-			{
-                volView.__htmlContextLabels.beginPath();
-                volView.__mouseData.mouseLeftDownFlag = false;
-            },this);
 			
 			this.__topRightContainer.add(clearButton)
 			
@@ -727,6 +781,7 @@ qx.Class.define("desk.gcSegmentation",
 				else
 					volView.__mainRightContainer.setVisibility("excluded");				
 				});
+			volView.__topLeftContainer.add(new qx.ui.core.Spacer(10),{flex : 1});
 			volView.__topLeftContainer.add(paintPaneVisibilitySwitch);
 			
         ////Create and add the jpeg/png format select box
@@ -791,11 +846,8 @@ qx.Class.define("desk.gcSegmentation",
 			var updateContext = function(event)
 			{
 				var data = event.getData();
-				volView.__drawingCanvasParams.drawingContext = data.context;
 				volView.__drawingCanvasParams.drawingContext.setTransform(volView.__drawingCanvasParams.curCtxtZoom,0,0,volView.__drawingCanvasParams.curCtxtZoom,0,0);
 				volView.__drawingCanvasParams.drawingContext.mozImageSmoothingEnabled = false;
-				volView.__htmlCanvasLabels = volView.__embedObjectLabels.getContentElement().getDomElement().firstChild;
-				volView.__htmlContextLabels = volView.__htmlCanvasLabels.getContext("2d");
 				volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
 				volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
 				volView.__htmlContextLabels.lineWidth = volView.__drawingCanvasParams.myLineWidth*volView.__drawingCanvasParams.curCtxtZoom;
@@ -1028,140 +1080,8 @@ qx.Class.define("desk.gcSegmentation",
                 volView.__horizSlices.sliceResults[i] = [];
 				volView.__horizSlices.usedSliceSeeds[i] = [];
             };
-
-
-			
-			this.__imageCanvas = new qx.ui.container.Composite(new qx.ui.layout.Canvas);
-			var imgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true,
-														zIndex: volView.__imageZ,
-														width : volView.__imgMap.width,
-														height : volView.__imgMap.height });
-
-			this.__imageCanvas.add(imgCanvas);
-            volView.__imageContainer.add(this.__imageCanvas);
-
-			
-			imgCanvas.addListener("redraw", function(event)
-			{
-                    var data = event.getData();
-                    volView.__imgCanvasParams.imgContext = data.context;
-					volView.__htmlCanvasImage = volView.__embedObjectImage.getContentElement().getDomElement().firstChild;
-                    volView.__htmlContextImage = volView.__htmlCanvasImage.getContext("2d");
-					volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);	// here for unbuild version
-					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);	// here for unbuild version
-            }, this);
 			
 			
-			this.__imageCanvas.addListener("mouseout", function(event)
-			{
-				this.__mouseActionActive=false;
-				if(((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.brCrFixingFlag))&&(!volView.__drawingCanvasParams.eraseFlag))
-				{
-					volView.__htmlContextLabels.beginPath();
-					volView.__mouseData.mouseLeftDownFlag = false;
-					volView.__mouseData.mouseMiddleDownFlag = false;
-					volView.__eraserCursor.set({cursor: "default"});
-					drawingCanvas.set({cursor: "default"});
-				}
-			},this);
-
-			this.__imageCanvas.addListener("click", function(event)
-			{
-				volView.__winMap.left = volView.getBounds().left;
-				volView.__winMap.top = volView.getBounds().top;
-			},this);			
-			
-			var canvasImage = new Image();
-
-			volView.__loadImage=canvasImage;
-			
-			var slashIndex = file.lastIndexOf("/");
-			this.__path = "";
-			if (slashIndex>0)
-				this.__path = file.substring(0,slashIndex)+"\/";
-			volView.debug("this.__path : " + this.__path);
-
-			
-			canvasImage.onload = function()	// here for build version
-			{
-				if(volView.__drawingCanvasParams.drawingContext!=null)
-				{
-					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-					drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
-				}
-
-			};
-
-			
-            var drawingCanvas = new qx.ui.embed.Canvas().set({syncDimension: true,
-            											 zIndex: volView.__drawingCanvasZ,
-            											 width : volView.__imgMap.width,
-														height : volView.__imgMap.height });
-
-			
-            drawingCanvas.addListener("redraw", updateContext, this);
-            drawingCanvas.addListener("mousedown", mouseDownHandler, this);
-            drawingCanvas.addListener("mousewheel", mouseWheelHandler, this);
-            volView.__eraserCursor.addListener("mousewheel", mouseWheelHandler, this);
-			drawingCanvas.addListener("mousemove", mouseMoveHandler, this);
-            drawingCanvas.addListener("mouseup", mouseUpHandler, this);
-
-			this.__imageCanvas.add(drawingCanvas);		
-			
-            // HTML embed for background image
-            var embedHtmlCodeImage = '<canvas id="htmlTagCanvasImage" width="' + volView.__imgMap.width + '" height="' + volView.__imgMap.height + '" ></canvas>';
-            var embedObjectImage = new qx.ui.embed.Html(embedHtmlCodeImage);
-            embedObjectImage.setDecorator("main");
-            embedObjectImage.setWidth(volView.__imgMap.width);
-            embedObjectImage.setHeight(volView.__imgMap.height);
-			
-            var containerLayoutImage = new qx.ui.layout.VBox();
-            var containerHtmlImage = new qx.ui.container.Composite(containerLayoutImage);
-            containerHtmlImage.add(embedObjectImage);
-			this.__embedObjectImage=embedObjectImage;
-			this.__imageCanvas.add(containerHtmlImage);
-			
-			
-            // HTML embed for drawn labels
-            var embedHtmlCodeLabels = '<canvas id="htmlTagCanvasLabels" width="' + volView.__imgMap.width + '" height="' + volView.__imgMap.height + '" ></canvas>';
-            var embedObjectLabels = new qx.ui.embed.Html(embedHtmlCodeLabels);
-            embedObjectLabels.setDecorator("main");
-            embedObjectLabels.setWidth(volView.__imgMap.width);
-            embedObjectLabels.setHeight(volView.__imgMap.height);
-			
-            var containerLayoutLabels = new qx.ui.layout.VBox();
-            var containerHtmlLabels = new qx.ui.container.Composite(containerLayoutLabels);
-            containerHtmlLabels.add(embedObjectLabels);
-			this.__embedObjectLabels=embedObjectLabels;
-			this.__imageCanvas.add(containerHtmlLabels);
-			
-			
-            // HTML embed for segmented image
-            var embedHtmlCodeSegImg = '<canvas id="htmlTagCanvasSegImg" width="' + volView.__imgMap.width + '" height="' + volView.__imgMap.height + '" ></canvas>';
-            var embedObjectSegImg = new qx.ui.embed.Html(embedHtmlCodeSegImg);
-            embedObjectSegImg.setDecorator("main");
-            embedObjectSegImg.setWidth(volView.__imgMap.width);
-            embedObjectSegImg.setHeight(volView.__imgMap.height);
-			
-            var containerLayoutSegImg = new qx.ui.layout.VBox();
-            var containerHtmlSegImg = new qx.ui.container.Composite(containerLayoutSegImg);
-            containerHtmlSegImg.add(embedObjectSegImg);
-			this.__embedObjectSegImg=embedObjectSegImg;
-			
-			this.__imageCanvas.add(containerHtmlSegImg);
-			
-            // HTML embed for seeds used for segmentation
-            var embedHtmlCodeUsedSeeds = '<canvas id="htmlTagCanvasUsedSeeds" width="' + volView.__imgMap.width + '" height="' + volView.__imgMap.height + '" ></canvas>';
-            var embedObjectUsedSeeds = new qx.ui.embed.Html(embedHtmlCodeUsedSeeds);
-            embedObjectUsedSeeds.setDecorator("main");
-            embedObjectUsedSeeds.setWidth(volView.__imgMap.width);
-            embedObjectUsedSeeds.setHeight(volView.__imgMap.height);
-			
-            var containerLayoutUsedSeeds = new qx.ui.layout.VBox();
-            var containerHtmlUsedSeeds = new qx.ui.container.Composite(containerLayoutUsedSeeds);
-            containerHtmlUsedSeeds.add(embedObjectUsedSeeds);
-			this.__embedObjectUsedSeeds=embedObjectUsedSeeds;
-			this.__imageCanvas.add(containerHtmlUsedSeeds);
 
 			for(var i=0; i<volView.__numberOfSlices; i++)
 			{
@@ -1171,9 +1091,10 @@ qx.Class.define("desk.gcSegmentation",
 				};
 			};
 	
-			slider.addListener("changeValue", function(event)
+
+			function sliderChangeValueHandler (event)
 			{
-				volView.__htmlContextLabels.beginPath(); // seb : why???
+//				volView.__htmlContextLabels.beginPath(); // seb : why???
 				volView.__mouseData.mouseLeftDownFlag = false;
 			////Save current image
 				var oldSliceIndex= volView.__drawingCanvasParams.sliceNumber;
@@ -1237,25 +1158,107 @@ qx.Class.define("desk.gcSegmentation",
 				volView.__ctrlZData = [];
             	volView.__currentSeedsModified=false;
 
-			}, this);
+			}
 
-            slider.addListener("mouseup", function(event)
+/*            slider.addListener("mouseup", function(event)
 			{
                     volView.__htmlContextLabels.beginPath();
                     volView.__mouseData.mouseLeftDownFlag = false;
             },this);
-			
-            slider.setHeight(volView.__imgMap.height);    //	set to match image height
-			slider.setValue(0);//Math.round(0.5*volView.__numberOfSlices));
-			
+*/			
+
+/*		
             spinner.addListener("mouseup", function(event)
 			{
                     volView.__htmlContextLabels.beginPath();
                     volView.__mouseData.mouseLeftDownFlag = false;
             },this);
+*/
+		this.__window.open();
 
             volView.__imageCanvas.add(volView.__eraserCursor);
-		this.__window.open();
+
+			function initCanvas()
+			{
+				if ((volView.__embedObjectLabels.getContentElement().getDomElement()==null)||
+					(volView.__embedObjectImage.getContentElement().getDomElement()==null))
+				{
+					setTimeout(initCanvas, 100)
+				}
+				else
+				{
+
+					volView.__htmlCanvasLabels = volView.__embedObjectLabels.getContentElement().getDomElement().firstChild;
+					volView.__htmlContextLabels = volView.__htmlCanvasLabels.getContext("2d");
+					volView.__drawingCanvasParams.drawingContext = volView.__htmlContextLabels;
+					console.log("volView.__drawingCanvasParams.drawingContext :"+volView.__drawingCanvasParams.drawingContext);
+
+					volView.__htmlCanvasImage = volView.__embedObjectImage.getContentElement().getDomElement().firstChild;
+					volView.__htmlContextImage = volView.__htmlCanvasImage.getContext("2d");
+					volView.__imgCanvasParams.imgContext=volView.__htmlContextImage;
+
+			clearButton.addListener("execute", function(event)
+			{
+                volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+                volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+				volView.__htmlContextLabels.beginPath();
+                volView.__mouseData.mouseLeftDownFlag = false;
+                clearButton.set({opacity: 0.5, enabled : false});
+                eraserButton.set({opacity: 0.5, enabled : false});
+                eraserButton.setValue(false);
+                volView.__drawingCanvasParams.eraseFlag = false;
+                volView.__eraserCursor.exclude();
+            });
+
+            clearButton.addListener("mouseup", function(event)
+			{
+                volView.__htmlContextLabels.beginPath();
+                volView.__mouseData.mouseLeftDownFlag = false;
+            },volView);
+
+
+            drawingCanvas.addListener("redraw", updateContext, volView);
+            drawingCanvas.addListener("mousedown", mouseDownHandler, volView);
+            drawingCanvas.addListener("mousewheel", mouseWheelHandler, volView);
+            volView.__eraserCursor.addListener("mousewheel", mouseWheelHandler, volView);
+			drawingCanvas.addListener("mousemove", mouseMoveHandler, volView);
+            drawingCanvas.addListener("mouseup", mouseUpHandler, volView);
+
+			imgCanvas.addListener("redraw", function(event)
+			{
+                    var data = event.getData();
+//                    volView.__imgCanvasParams.imgContext = data.context;
+					volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);	// here for unbuild version
+					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);	// here for unbuild version
+            }, volView);
+			
+
+			volView.__imageCanvas.addListener("mouseout", function(event)
+			{
+				volView.__mouseActionActive=false;
+				if(((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.brCrFixingFlag))&&(!volView.__drawingCanvasParams.eraseFlag))
+				{
+					volView.__htmlContextLabels.beginPath();
+					volView.__mouseData.mouseLeftDownFlag = false;
+					volView.__mouseData.mouseMiddleDownFlag = false;
+					volView.__eraserCursor.set({cursor: "default"});
+					drawingCanvas.set({cursor: "default"});
+				}
+			},volView);
+
+			volView.__imageCanvas.addListener("click", function(event)
+			{
+				volView.__winMap.left = volView.getBounds().left;
+				volView.__winMap.top = volView.getBounds().top;
+			},volView);			
+
+			slider.addListener("changeValue", sliderChangeValueHandler);
+
+					slider.setValue(Math.round(0.5*volView.__numberOfSlices));
+				}
+			}
+
+			initCanvas();
 
 		/* ************************************************************************************************************************************* */
 		//
