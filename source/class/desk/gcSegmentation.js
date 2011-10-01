@@ -727,6 +727,8 @@ qx.Class.define("desk.gcSegmentation",
 				else
 					volView.__mainRightContainer.setVisibility("excluded");				
 				});
+			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});
+			
 			volView.__topLeftContainer.add(paintPaneVisibilitySwitch);
 			
         ////Create and add the jpeg/png format select box
@@ -1255,6 +1257,21 @@ qx.Class.define("desk.gcSegmentation",
             },this);
 
             volView.__imageCanvas.add(volView.__eraserCursor);
+
+		function initSlider()
+		{
+			// wait for the canvas to really appear in the window otherwise things get bad
+			if ((volView.__embedObjectImage.getContentElement().getDomElement()==null)||
+				(volView.__embedObjectLabels.getContentElement().getDomElement()==null))
+				{
+				console.log("not ready");
+				setTimeout(initSlider, 1000);
+				}
+			else
+				slider.setValue(Math.round(volView.__dimensions[2]/2));
+		}
+		initSlider();
+
 		this.__window.open();
 
 		/* ************************************************************************************************************************************* */
@@ -1704,7 +1721,7 @@ qx.Class.define("desk.gcSegmentation",
 		            	pix=0;
 		            	while (p--){
 		            		r= data[pix];
-		            		b= data[pix+2];
+		            		b= data[pix+1];
 		            		c=(b*256+r)/256;
 		            		c=c* mul + add;
 		            		if (c>255)
