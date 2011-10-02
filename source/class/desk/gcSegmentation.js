@@ -844,9 +844,9 @@ qx.Class.define("desk.gcSegmentation",
 				this.__pathJPG = file.substring(0,slashIndex)+"\/";
 			console.log("this.__pathJPG : " + this.__pathJPG);
 
-			volView.__createDragAndDropLabel();
+
 			volView.__createFormatSelectBox();
-			
+			volView.__createDragAndDropLabel();			
 
 			var modifSlicesList = new qx.ui.form.List(true);
 			modifSlicesList.setHeight(64);
