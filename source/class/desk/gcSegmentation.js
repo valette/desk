@@ -1902,10 +1902,7 @@ qx.Class.define("desk.gcSegmentation",
                 }
                 return dataDesc;
             };
-			
-			
-			
-			
+
 			
 		////Use a php file to remove the spceciefd file in the server
 			var eraseFile = function(file)
@@ -2032,6 +2029,25 @@ qx.Class.define("desk.gcSegmentation",
 						alert ("type "+type+"not supported for drag and drop");
 					}
 				}, this);
+
+		// enable linking between volume viewers by drag and drop
+			this.setDroppable(true);
+			this.addListener("drop", function(e) {
+				if (e.supportsType("volumeSlice"))
+				{
+					var volView2=e.getData("volumeSlice");
+					if (volView2!=this)
+					{
+						this.__slider.bind("value", volView2.__slider, "value");
+						volView2.__slider.bind("value", this.__slider, "value");
+					}
+				}
+				else
+				{
+					alert("drop type not allowed for this widget!");
+				}
+			},this);
+
 		},
 
 		getDimensions : function ()
