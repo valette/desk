@@ -247,7 +247,7 @@ qx.Class.define("desk.gcSegmentation",
 		__scalarSize : 1,
 		__scalarType : null,
 		__scalarMin : null,
-		__scalaMax : null,
+		__scalarMax : null,
 
 		__updateImage : function () {
 			this.__loadImage.src=this.__path + "slice" + 
@@ -732,10 +732,10 @@ qx.Class.define("desk.gcSegmentation",
         ////Create and add the jpeg/png format select box
             volView.__formatSelectBox = new qx.ui.form.SelectBox();
 			volView.__formatSelectBox.set({width: 52});
-            var SelectPNG = new qx.ui.form.ListItem("png");
-            volView.__formatSelectBox.add(SelectPNG);
             var SelectJPG = new qx.ui.form.ListItem("jpg");
             volView.__formatSelectBox.add(SelectJPG);
+            var SelectPNG = new qx.ui.form.ListItem("png");
+            volView.__formatSelectBox.add(SelectPNG);
             volView.__formatSelectBox.addListener('changeSelection', function (e){
             	this.__updateImage();}, volView);
 			
@@ -1702,70 +1702,124 @@ qx.Class.define("desk.gcSegmentation",
                     }
 
 	                var r, g, b,a,c;
-					switch (volView.__scalarSize)
-                    {
-					case 1:
-		                while (p--) {
-		                    if ((r = data[pix-=4] * mul + add) > 255 )
-		                        data[pix] = 255;
-		                    else if (r < 0)
-		                        data[pix] = 0;
-		                    else
-		                        data[pix] = r;
-		                    if ((g = data[pix1=pix+1] * mul + add) > 255 )
-		                        data[pix1] = 255;
-		                    else if (g < 0)
-		                        data[pix1] = 0;
-		                    else
-		                        data[pix1] = g;
-		                    if ((b = data[pix2=pix+2] * mul + add) > 255 )
-		                        data[pix2] = 255;
-		                    else if (b < 0)
-		                        data[pix2] = 0;
-		                    else
-		                        data[pix2] = b;
-		                        
-		                }
-		                break;
-					case 2:
-		            	pix=0;
-		            	while (p--){
-		            		r= data[pix];
-		            		b= data[pix+1];
-		            		c=(b*256+r)/256;
-		            		c=c* mul + add;
-		            		if (c>255)
-		            			c=255;
-		            		else if (c<0)
-		            			c=0;
-		            		data[pix++]=c;
-		            		data[pix++]=c;
-		            		data[pix++]=c;
-		            		data[pix++]=255;
-		            	}
-		            	break;
-		            case 4:
-		            	pix=0;
-		            	while (p--){
-		            		r= data[pix];
-		            		g= data[pix+1];
-		            		b= data[pix+2];
-		            		a= data[pix+3];
-		            		c=(b*65536+g*256+r)/65536;
-		            		c=c* mul + add;
-		            		if (c>255)
-		            			c=255;
-		            		else if (c<0)
-		            			c=0;
-		            		data[pix++]=c;
-		            		data[pix++]=c;
-		            		data[pix++]=c;
-		            		data[pix++]=255;
-		            	}
-		            	break;
-					default :
-						alert("format not supported. please repport");
-		            }
+	                var r1=1/256;
+	                var r2=1/(256*256);
+	                var max=volView.__scalarMax;
+	                var min=volView.__scalarMin;
+	                var shift=-min;
+	                var scale=255/(max-min);
+					if (volView.__formatSelectBox.getSelection()[0].getLabel()=="png")
+					{
+						switch (volView.__scalarSize)
+		                {
+						case 1:
+				            while (p--) {
+				                if ((r = data[pix-=4] * mul + add) > 255 )
+				                    data[pix] = 255;
+				                else if (r < 0)
+				                    data[pix] = 0;
+				                else
+				                    data[pix] = r;
+				                if ((g = data[pix1=pix+1] * mul + add) > 255 )
+				                    data[pix1] = 255;
+				                else if (g < 0)
+				                    data[pix1] = 0;
+				                else
+				                    data[pix1] = g;
+				                if ((b = data[pix2=pix+2] * mul + add) > 255 )
+				                    data[pix2] = 255;
+				                else if (b < 0)
+				                    data[pix2] = 0;
+				                else
+				                    data[pix2] = b;
+				                    
+				            }
+				            break;
+						case 2:
+							if (volView.__scalarType==4)
+							{
+							// signed short : need to check for sign
+								pix=0;
+								while (p--){
+									r= data[pix];
+									g= data[pix+1];
+									c=r+256*g;
+									// check sign
+									if (g>127)
+										c-=65536;
+									c=(c+shift)*scale;
+									c=c* mul + add;
+
+									if (c>255)
+										c=255;
+									else if (c<0)
+										c=0;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=255;
+								}
+							}
+							else
+							{
+							// unsigned short : no need to check sign
+								pix=0;
+								while (p--){
+									r= data[pix];
+									g= data[pix+1];
+									c=r*r1+g;
+									c=c* mul + add;
+									if (c>255)
+										c=255;
+									else if (c<0)
+										c=0;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=255;
+								}
+							}
+				        	break;
+				        case 4:
+				        	pix=0;
+				        	while (p--){
+				        		r= data[pix];
+				        		g= data[pix+1];
+				        		b= data[pix+2];
+				        		a= data[pix+3];
+				        		c=r*r2+g*r1+b;
+				        		c=c* mul + add;
+				        		if (c>255)
+				        			c=255;
+				        		else if (c<0)
+				        			c=0;
+				        		data[pix++]=c;
+				        		data[pix++]=c;
+				        		data[pix++]=c;
+				        		data[pix++]=255;
+				        	}
+				        	break;
+						default :
+							alert("format not supported. please repport");
+				        }
+					}
+					else
+					{
+						// format is jpeg : just copy the pixels
+			        	pix=0;
+			        	while (p--){
+			        		c= data[pix];
+			          		c=c* mul + add;
+			        		if (c>255)
+			        			c=255;
+			        		else if (c<0)
+			        			c=0;
+			        		data[pix++]=c;
+			        		data[pix++]=c;
+			        		data[pix++]=c;
+			        		data[pix++]=255;
+			        	}
+					}
                     dataDesc.data = data;
                 }
                 return dataDesc;
