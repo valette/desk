@@ -142,6 +142,10 @@ qx.Class.define("desk.gcSegmentation",
 		// LINKEDWINDOW : null
 	},
 
+	properties : {
+		slice : { check : "Number", init : 0 ,  event : "changeSlice"}
+	},
+
 	members :
 	{
 		// the file browser which launched the viewer
@@ -236,6 +240,7 @@ qx.Class.define("desk.gcSegmentation",
 //Variable pour le canvas HTMLCanvasElement des image resultat de la segmentation
          __htmlCanvasUsedSeeds : null,
 
+		// the path containing jpg slices
 		__pathJPG : null,
 
 		__embedObjectImage : null,
@@ -243,25 +248,60 @@ qx.Class.define("desk.gcSegmentation",
 		__embedObjectUsedSeeds : null,
 
 
+		// the image pixels after brightness/contrast processing
+		__pixels : null,
+
 		__eraserCursor : null,
 		__brghtnssCntrstButton : null,
 
+		// the image used to load volume slices
 		__loadImage : null,
 
 
+		// volume extent (VTK style)
 		__extent : null,
+
+		// volume dimensions in 3 directions
 		__dimensions : null,
+
+		// volume spacing in 3 directions
 		__spacing  : null,
+
+		// volume origin
 		__origin : null,
+
+		// size of data (in bytes)
 		__scalarSize : 1,
+
+		// scalar type, as defined by VTK
 		__scalarType : null,
+
+		// minimal scalar value in the volume
 		__scalarMin : null,
+
+		// maximal scalar value in the volume
 		__scalarMax : null,
 
+		// the function which draws the canvas
+		__drawZoomedCanvas : null,
+
 		__updateImage : function () {
+			var volView=this;
+			var slice=volView.__dimensions[2]-1-volView.__slider.getValue();
+			
+			this.__loadImage.onload = function()
+			{
+				if(volView.__drawingCanvasParams.drawingContext!=null)
+				{
+					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+					volView.__drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
+				}
+
+			};
+
 			var selection=this.__formatSelectBox.getSelection()[0];
 			this.__loadImage.src=selection.getUserData("path") + "slice" + 
-				(this.__slicesNameOffset+this.__slider.getValue()) + 
+				(this.__slicesNameOffset+slice) + 
 				"." + selection.getLabel() + "?nocache=" + this.__timestamp;
 		},
 		
@@ -350,46 +390,46 @@ qx.Class.define("desk.gcSegmentation",
 		openFile : function (file,volView) {
 			this.removeAll();
 
-		var spacing=5;
-		this.__window=this;//new qx.ui.window.Window();
-		var windowLayout=new qx.ui.layout.HBox();
-		windowLayout.setSpacing(spacing);
-		this.__window.setLayout(windowLayout);
+			var spacing=5;
+			this.__window=this;//new qx.ui.window.Window();
+			var windowLayout=new qx.ui.layout.HBox();
+			windowLayout.setSpacing(spacing);
+			this.__window.setLayout(windowLayout);
 		
-		var mLCL=new qx.ui.layout.VBox();
-		mLCL.setSpacing(spacing);
-		this.__mainLeftContainer = new qx.ui.container.Composite(mLCL);
-		this.__window.add(this.__mainLeftContainer);
+			var mLCL=new qx.ui.layout.VBox();
+			mLCL.setSpacing(spacing);
+			this.__mainLeftContainer = new qx.ui.container.Composite(mLCL);
+			this.__window.add(this.__mainLeftContainer);
 		
-		var tLCL=new qx.ui.layout.HBox();
-		tLCL.setSpacing(spacing);
-		this.__topLeftContainer = new qx.ui.container.Composite(tLCL);
-		this.__mainLeftContainer.add(this.__topLeftContainer);
+			var tLCL=new qx.ui.layout.HBox();
+			tLCL.setSpacing(spacing);
+			this.__topLeftContainer = new qx.ui.container.Composite(tLCL);
+			this.__mainLeftContainer.add(this.__topLeftContainer);
 
-		var iCL=new qx.ui.layout.HBox();
-		iCL.setSpacing(spacing);
-		this.__imageContainer = new qx.ui.container.Composite(iCL);
-		this.__mainLeftContainer.add(this.__imageContainer, {flex : 1});
+			var iCL=new qx.ui.layout.HBox();
+			iCL.setSpacing(spacing);
+			this.__imageContainer = new qx.ui.container.Composite(iCL);
+			this.__mainLeftContainer.add(this.__imageContainer, {flex : 1});
 
-		var mRCL=new qx.ui.layout.VBox();
-		mRCL.setSpacing(spacing);
-		this.__mainRightContainer = new qx.ui.container.Composite(mRCL);
-		this.__window.add(this.__mainRightContainer);
-		this.__mainRightContainer.setVisibility("excluded");
+			var mRCL=new qx.ui.layout.VBox();
+			mRCL.setSpacing(spacing);
+			this.__mainRightContainer = new qx.ui.container.Composite(mRCL);
+			this.__window.add(this.__mainRightContainer);
+			this.__mainRightContainer.setVisibility("excluded");
 
-		var tRCL=new qx.ui.layout.HBox();
-		tRCL.setSpacing(spacing);
-		this.__topRightContainer = new qx.ui.container.Composite(tRCL);
-		this.__mainRightContainer.add(this.__topRightContainer);
+			var tRCL=new qx.ui.layout.HBox();
+			tRCL.setSpacing(spacing);
+			this.__topRightContainer = new qx.ui.container.Composite(tRCL);
+			this.__mainRightContainer.add(this.__topRightContainer);
 
-		var bRCL=new qx.ui.layout.HBox();
-		bRCL.setSpacing(spacing);
-		this.__bottomRightContainer= new qx.ui.container.Composite(bRCL);
+			var bRCL=new qx.ui.layout.HBox();
+			bRCL.setSpacing(spacing);
+			this.__bottomRightContainer= new qx.ui.container.Composite(bRCL);
 
 
-		var volView=this;
-		
-		
+			var volView=this;
+
+
 		////Get image dimensions and number of slices 
 			var globalParamRequest = new XMLHttpRequest();
 			globalParamRequest.onreadystatechange = function()
@@ -804,7 +844,7 @@ qx.Class.define("desk.gcSegmentation",
 				this.__pathJPG = file.substring(0,slashIndex)+"\/";
 			console.log("this.__pathJPG : " + this.__pathJPG);
 
-
+			volView.__createDragAndDropLabel();
 			volView.__createFormatSelectBox();
 			
 
@@ -1143,18 +1183,6 @@ qx.Class.define("desk.gcSegmentation",
 			var canvasImage = new Image();
 
 			volView.__loadImage=canvasImage;
-
-			
-			canvasImage.onload = function()	// here for build version
-			{
-				if(volView.__drawingCanvasParams.drawingContext!=null)
-				{
-					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-					drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
-				}
-
-			};
-
 			
             var drawingCanvas = new qx.ui.embed.Canvas().set({syncDimension: true,
             											 zIndex: volView.__drawingCanvasZ,
@@ -1461,7 +1489,7 @@ qx.Class.define("desk.gcSegmentation",
 				}
 			};
 			
-			
+			this.__drawZoomedCanvas=drawZoomedCanvas;
 			
 			
 			
@@ -1869,6 +1897,8 @@ qx.Class.define("desk.gcSegmentation",
 			        	}
 					}
                     dataDesc.data = data;
+                    volView.__pixels=data;
+					volView.setSlice(Math.random());
                 }
                 return dataDesc;
             };
@@ -1978,6 +2008,62 @@ qx.Class.define("desk.gcSegmentation",
 				}
 				return xml
 			}
+		},
+
+		__createDragAndDropLabel : function ()
+		{
+			var dragLabel=new qx.ui.basic.Label("Link");
+			this.__topLeftContainer.add(dragLabel);
+			// drag and drop support
+			dragLabel.setDraggable(true);
+			dragLabel.addListener("dragstart", function(e) {
+				e.addAction("copy");
+				e.addType("volumeSlice");
+				});
+
+			dragLabel.addListener("droprequest", function(e) {
+					var type = e.getCurrentType();
+					switch (type)
+					{
+					case "volumeSlice":
+						e.addData(type, this);
+						break;
+					default :
+						alert ("type "+type+"not supported for drag and drop");
+					}
+				}, this);
+		},
+
+		getDimensions : function ()
+		{
+			return (this.__dimensions);
+		},
+
+		getSlicePixels : function()
+		{
+			return this.__pixels;
+		},
+
+		getCornersCoordinates : function () {
+			var z=this.__origin[2]+(this.__dimensions[2]-this.__slider.getValue()+this.__extent[4])*this.__spacing[2];
+			var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
+			var xmax=this.__origin[0]+this.__extent[1]*this.__spacing[0];
+			var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
+			var ymax=this.__origin[1]+this.__extent[3]*this.__spacing[1];
+			var coordinates=[];
+			coordinates[0]=xmin;
+			coordinates[1]=ymax;
+			coordinates[2]=z;
+			coordinates[3]=xmax;
+			coordinates[4]=ymax;
+			coordinates[5]=z;
+			coordinates[6]=xmax;
+			coordinates[7]=ymin;
+			coordinates[8]=z;
+			coordinates[9]=xmin;
+			coordinates[10]=ymin;
+			coordinates[11]=z;
+			return (coordinates);
 		}
 	}
 });

@@ -401,12 +401,13 @@ qx.Class.define("desk.meshView",
 						var coords=volView.getCornersCoordinates();
 						for (var i=0;i<4;i++)
 							square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);						
-						var canvas = volView.getCanvas();
+//						var canvas = volView.getCanvas();
 
 						function updateTexture()
 						{
-							var context = canvas.getContext2d();
-							var data = context.getImageData(0, 0, width, height).data;
+//							var context = canvas.getContext2d();
+//							var data = context.getImageData(0, 0, width, height).data;
+							var data = volView.getSlicePixels();
 							var numPixels=height*width*4;
 							var pixels=square.pixels;
 							while (--numPixels)

@@ -108,6 +108,11 @@ qx.Class.define("desk.volView",
 			return this.__slider;
 		},
 
+		getSlicePixels : function (){
+			return this.__canvas.getContext2d().getImageData(0, 0,
+					this.__dimensions[0], this.__dimensions[1]).data;
+		},
+
 		getCornersCoordinates : function () {
 			var z=this.__origin[2]+(this.__dimensions[2]-this.__slider.getValue()+this.__extent[4])*this.__spacing[2];
 			var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
