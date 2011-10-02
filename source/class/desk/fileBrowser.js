@@ -224,11 +224,11 @@ qx.Class.define("desk.fileBrowser",
 					myBrowser.__actionsHandler.createActionWindowFromURL(
 						myBrowser.getNodeURL(node)+"\/parameters.txt");});
 
-			myBrowser.addAction("segment", function (node) {
+			myBrowser.addAction("volViewSimple", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-					var volView=new desk.gcSegmentation(node, myBrowser);
+					var volView=new desk.volViewSimple(node, myBrowser);
 				else
-					alert("Cannot segment a directory!");});
+					alert("Cannot view a directory!");});
 
 			myBrowser.addAction("download",function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
