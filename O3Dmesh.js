@@ -118,6 +118,40 @@ o3djs.mesh.Mesh.prototype.setVertexCoordinates = function(Id,x,y,z)
 	field.setAt(Id,[x,y,z]);
 }
 
+o3djs.mesh.Mesh.prototype.setTexturePixels = function(inPixels)
+{
+	if (this.texture!=null)
+	{
+/*			var a=0;
+		var data=this.pixels;
+		while (p--)
+			data[p]=pixels[p]/255;
+
+		this.texture.set(0, data);*/
+
+		var pixels = new Uint8Array(inPixels.length);
+
+		var p=inPixels.length;
+		var i=0;
+		while (p--)
+		{
+			pixels[i]=inPixels[i];
+			i++;
+		}
+		var texture=this.texture;
+		var format = texture.getGLTextureFormat_();
+		texture.gl.bindTexture(texture.texture_target_, texture.texture_);
+
+		texture.gl.texSubImage2D(texture.getTexImage2DTarget_(null),
+		0, 0, 0, texture.texture_width_, texture.texture_height_,
+		format, texture.gl.UNSIGNED_BYTE, pixels);
+
+	}
+	else
+		console.log("warning : trying to set texture pixels while no texture was created");
+}
+
+
 o3djs.mesh.createSquare = function(scene, width, height)
 {
 	var effect = scene.pack.createObject('Effect');
@@ -189,6 +223,8 @@ o3djs.mesh.createSquare = function(scene, width, height)
 
 	var mesh=o3djs.mesh.createMesh(filename, shape, material, scene)
 	mesh.texture=texture;
+	mesh.textureWidth=width;
+	mesh.textureHeight=height;
 	mesh.pixels=pixels;
 	return (mesh);
 }
