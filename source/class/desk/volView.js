@@ -557,19 +557,6 @@ qx.Class.define("desk.volView",
 			var clearButton = new qx.ui.form.Button("Clear drawing");
 
             clearButton.set({opacity: 0.5, enabled : false});
-			
-			clearButton.addListener("execute", function(event)
-			{
-                volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-                volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-				volView.__htmlContextLabels.beginPath();
-                volView.__mouseData.mouseLeftDownFlag = false;
-                clearButton.set({opacity: 0.5, enabled : false});
-                eraserButton.set({opacity: 0.5, enabled : false});
-                eraserButton.setValue(false);
-                volView.__drawingCanvasParams.eraseFlag = false;
-                volView.__eraserCursor.exclude();
-            });
 
             clearButton.addListener("mouseup", function(event)
 			{
@@ -839,11 +826,9 @@ qx.Class.define("desk.volView",
 			var updateContext = function(event)
 			{
 				var data = event.getData();
-				volView.__drawingCanvasParams.drawingContext = data.context;
+
 				volView.__drawingCanvasParams.drawingContext.setTransform(volView.__drawingCanvasParams.curCtxtZoom,0,0,volView.__drawingCanvasParams.curCtxtZoom,0,0);
 				volView.__drawingCanvasParams.drawingContext.mozImageSmoothingEnabled = false;
-				volView.__htmlCanvasLabels = volView.__embedObjectLabels.getContentElement().getDomElement().firstChild;
-				volView.__htmlContextLabels = volView.__htmlCanvasLabels.getContext("2d");
 				volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
 				volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
 				volView.__htmlContextLabels.lineWidth = volView.__drawingCanvasParams.myLineWidth*volView.__drawingCanvasParams.curCtxtZoom;
@@ -1129,14 +1114,6 @@ qx.Class.define("desk.volView",
             											 width : volView.__imgMap.width,
 														height : volView.__imgMap.height });
 
-			
-            drawingCanvas.addListener("redraw", updateContext, this);
-            drawingCanvas.addListener("mousedown", mouseDownHandler, this);
-            drawingCanvas.addListener("mousewheel", mouseWheelHandler, this);
-            volView.__eraserCursor.addListener("mousewheel", mouseWheelHandler, this);
-			drawingCanvas.addListener("mousemove", mouseMoveHandler, this);
-            drawingCanvas.addListener("mouseup", mouseUpHandler, this);
-
 			this.__imageCanvas.add(drawingCanvas);		
 			
             // HTML embed for background image
@@ -1291,13 +1268,41 @@ qx.Class.define("desk.volView",
 		{
 			// wait for the canvas to really appear in the window otherwise things get bad
 			if ((volView.__embedObjectImage.getContentElement().getDomElement()==null)||
-				(volView.__embedObjectLabels.getContentElement().getDomElement()==null))
+				(volView.__embedObjectLabels.getContentElement().getDomElement()==null)||
+				(drawingCanvas.getContext2d()==null))
 				{
 				console.log("not ready");
 				setTimeout(initSlider, 100);
 				}
 			else
+			{
+				volView.__htmlCanvasLabels = volView.__embedObjectLabels.getContentElement().getDomElement().firstChild;
+				volView.__htmlContextLabels = volView.__htmlCanvasLabels.getContext("2d");
+				volView.__drawingCanvasParams.drawingContext = drawingCanvas.getContext2d();
+
+
+				drawingCanvas.addListener("redraw", updateContext, volView);
+				drawingCanvas.addListener("mousedown", mouseDownHandler, volView);
+				drawingCanvas.addListener("mousewheel", mouseWheelHandler, volView);
+				volView.__eraserCursor.addListener("mousewheel", mouseWheelHandler, volView);
+				drawingCanvas.addListener("mousemove", mouseMoveHandler, volView);
+				drawingCanvas.addListener("mouseup", mouseUpHandler, volView);
+
+				clearButton.addListener("execute", function(event)
+				{
+		            volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+		            volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+					volView.__htmlContextLabels.beginPath();
+		            volView.__mouseData.mouseLeftDownFlag = false;
+		            clearButton.set({opacity: 0.5, enabled : false});
+		            eraserButton.set({opacity: 0.5, enabled : false});
+		            eraserButton.setValue(false);
+		            volView.__drawingCanvasParams.eraseFlag = false;
+		            volView.__eraserCursor.exclude();
+		        });
+
 				slider.setValue(Math.round(volView.__dimensions[2]/2));
+			}
 		}
 		initSlider();
 
@@ -1783,7 +1788,8 @@ qx.Class.define("desk.volView",
 								while (p--){
 									r= data[pix];
 									g= data[pix+1];
-									c=r*r1+g;
+									c=r+256*g;
+									c=(c+shift)*scale;
 									c=c* mul + add;
 									if (c>255)
 										c=255;
@@ -1797,22 +1803,52 @@ qx.Class.define("desk.volView",
 							}
 				        	break;
 				        case 4:
-				        	pix=0;
-				        	while (p--){
-				        		r= data[pix];
-				        		g= data[pix+1];
-				        		b= data[pix+2];
-				        		a= data[pix+3];
-				        		c=r*r2+g*r1+b;
-				        		c=c* mul + add;
-				        		if (c>255)
-				        			c=255;
-				        		else if (c<0)
-				        			c=0;
-				        		data[pix++]=c;
-				        		data[pix++]=c;
-				        		data[pix++]=c;
-				        		data[pix++]=255;
+							if (volView.__scalarType==7)
+							{
+								// unsigned int : no need to check sign
+						    	pix=0;
+						    	while (p--){
+						    		r= data[pix];
+						    		g= data[pix+1];
+						    		b= data[pix+2];
+						    		a= data[pix+3];
+						    		c=r+256*g+65536*b;
+									c=(c+shift)*scale;
+						    		c=c* mul + add;
+						    		if (c>255)
+						    			c=255;
+						    		else if (c<0)
+						    			c=0;
+						    		data[pix++]=c;
+						    		data[pix++]=c;
+						    		data[pix++]=c;
+						    		data[pix++]=255;
+						    	}
+						    }
+				        	else
+				        	{
+				        	// signed int : check sign
+
+					    	pix=0;
+						    	while (p--){
+						    		r= data[pix];
+						    		g= data[pix+1];
+						    		b= data[pix+2];
+						    		a= data[pix+3];
+						    		c=r+256*g+65536*b;
+						    		if (c>8388607)
+						    			c-=16777216;
+									c=(c+shift)*scale;
+						    		c=c* mul + add;
+						    		if (c>255)
+						    			c=255;
+						    		else if (c<0)
+						    			c=0;
+						    		data[pix++]=c;
+						    		data[pix++]=c;
+						    		data[pix++]=c;
+						    		data[pix++]=255;
+						    	}
 				        	}
 				        	break;
 						default :
