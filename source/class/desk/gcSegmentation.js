@@ -283,6 +283,70 @@ qx.Class.define("desk.gcSegmentation",
 			
 		},
 
+       ////Create and add the jpeg/png format select box
+       __createFormatSelectBox : function()
+		{
+			var volView=this;
+			volView.__formatSelectBox = new qx.ui.form.SelectBox();
+			volView.__formatSelectBox.set({width: 52});
+			var JPGFormat = new qx.ui.form.ListItem("jpg");
+			JPGFormat.setUserData("path",volView.__pathJPG);
+			volView.__formatSelectBox.add(JPGFormat);
+			var PNGFormat = new qx.ui.form.ListItem("png");
+			volView.__formatSelectBox.add(PNGFormat);
+
+			volView.__formatSelectBox.addListener('changeSelection', function (e){
+				var path=volView.__formatSelectBox.getSelection()[0].getUserData("path");
+				switch(path)
+				{
+				case null :
+					//we need to compute png slices : launch action
+					var parameterMap={
+						"action" : "Slice_Volume",
+						"input_file" : volView.__fileBrowser.getNodePath(volView.__fileNode),
+						"output_directory" : "cache\/",
+						"format" : "0"};
+					var slicingLabel=new qx.ui.basic.Label("computing...");
+					volView.__topRightContainer.addAfter(slicingLabel,volView.__formatSelectBox);
+					function getAnswer(e)
+					{
+						var req = e.getTarget();
+						var slicesDirectory=req.getResponseText().split("\n")[0];
+						PNGFormat.setUserData("path","\/visu\/desk\/php\/"+slicesDirectory+"\/");
+						volView.__topLeftContainer.remove(slicingLabel);
+						volView.__formatSelectBox.setSelection([PNGFormat])
+					}
+
+					PNGFormat.setUserData("path","computing");
+					// switch back to before computing is done png
+					volView.__formatSelectBox.setSelection([JPGFormat]);
+					volView.__topLeftContainer.addAfter(slicingLabel,volView.__formatSelectBox);
+					volView.__fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
+					break;
+				case "computing":
+					// slices are being computed. re-switch to jpg
+					volView.__formatSelectBox.setSelection([JPGFormat]);
+					break;
+				default :
+					// slices are ready (PNG or JPG)
+					this.__updateImage();
+				}}, volView);
+			
+
+			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});			
+			volView.__topLeftContainer.add(volView.__formatSelectBox);
+
+			var paintPaneVisibilitySwitch=new qx.ui.form.ToggleButton("Paint")
+			paintPaneVisibilitySwitch.addListener("changeValue", function (e) {
+				if (e.getData())
+					volView.__mainRightContainer.setVisibility("visible");
+				else
+					volView.__mainRightContainer.setVisibility("excluded");				
+				});
+			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});			
+			volView.__topLeftContainer.add(paintPaneVisibilitySwitch);
+		},
+
 		openFile : function (file,volView) {
 			this.removeAll();
 
@@ -709,8 +773,7 @@ qx.Class.define("desk.gcSegmentation",
 				drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
             });
 	
-			
-			
+
 			
 		////Create slider
             var slider = new qx.ui.form.Slider();
@@ -719,9 +782,6 @@ qx.Class.define("desk.gcSegmentation",
             slider.setMinimum(0);
             slider.setOrientation("vertical");
             this.__slider=slider;
-
-			
-			
 			
 		////Create spinner and sync it with the slider
             var spinner = new qx.ui.form.Spinner();
@@ -744,65 +804,8 @@ qx.Class.define("desk.gcSegmentation",
 				this.__pathJPG = file.substring(0,slashIndex)+"\/";
 			console.log("this.__pathJPG : " + this.__pathJPG);
 
-        ////Create and add the jpeg/png format select box
-			volView.__formatSelectBox = new qx.ui.form.SelectBox();
-			volView.__formatSelectBox.set({width: 52});
-			var JPGFormat = new qx.ui.form.ListItem("jpg");
-			JPGFormat.setUserData("path",volView.__pathJPG);
-			volView.__formatSelectBox.add(JPGFormat);
-			var PNGFormat = new qx.ui.form.ListItem("png");
-			volView.__formatSelectBox.add(PNGFormat);
 
-			volView.__formatSelectBox.addListener('changeSelection', function (e){
-				var path=volView.__formatSelectBox.getSelection()[0].getUserData("path");
-				switch(path)
-				{
-				case null :
-					//we need to compute png slices : launch action
-					var parameterMap={
-						"action" : "Slice_Volume",
-						"input_file" : volView.__fileBrowser.getNodePath(volView.__fileNode),
-						"output_directory" : "cache\/",
-						"format" : "0"};
-					var slicingLabel=new qx.ui.basic.Label("computing...");
-					volView.__topRightContainer.addAfter(slicingLabel,volView.__formatSelectBox);
-					function getAnswer(e)
-					{
-						var req = e.getTarget();
-						var slicesDirectory=req.getResponseText().split("\n")[0];
-						PNGFormat.setUserData("path","\/visu\/desk\/php\/"+slicesDirectory+"\/");
-						volView.__topLeftContainer.remove(slicingLabel);
-						volView.__formatSelectBox.setSelection([PNGFormat])
-					}
-
-					PNGFormat.setUserData("path","computing");
-					// switch back to before computing is done png
-					volView.__formatSelectBox.setSelection([JPGFormat]);
-					volView.__topLeftContainer.addAfter(slicingLabel,volView.__formatSelectBox);
-					volView.__fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
-					break;
-				case "computing":
-					// slices are being computed. re-switch to jpg
-					volView.__formatSelectBox.setSelection([JPGFormat]);
-					break;
-				default :
-					// slices are ready (PNG or JPG)
-					this.__updateImage();
-				}}, volView);
-			
-
-			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});			
-			volView.__topLeftContainer.add(volView.__formatSelectBox);
-
-			var paintPaneVisibilitySwitch=new qx.ui.form.ToggleButton("Paint")
-			paintPaneVisibilitySwitch.addListener("changeValue", function (e) {
-				if (e.getData())
-					volView.__mainRightContainer.setVisibility("visible");
-				else
-					volView.__mainRightContainer.setVisibility("excluded");				
-				});
-			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});			
-			volView.__topLeftContainer.add(paintPaneVisibilitySwitch);
+			volView.__createFormatSelectBox();
 			
 
 			var modifSlicesList = new qx.ui.form.List(true);
