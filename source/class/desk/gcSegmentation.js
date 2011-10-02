@@ -102,8 +102,10 @@ qx.Class.define("desk.gcSegmentation",
 		
 		if (fileBrowser!=null)
 		{
+			this.__fileBrowser=fileBrowser;
 			//file is a tree node...
 			var node=file;
+			this.__fileNode=file;
 			this.setCaption(node.label);
 			var parameterMap={
 				"action" : "Slice_Volume",
@@ -142,8 +144,15 @@ qx.Class.define("desk.gcSegmentation",
 
 	members :
 	{
+		// the file browser which launched the viewer
+		__fileBrowser : null,
 
+		// the initial volume file (.mhd)
+		__fileNode : null,
+
+		// the main window
 		__window : null,
+
 		__mainLeftContainer : null,
 		__topLeftContainer : null,
 		__imageContainer : null,
@@ -227,7 +236,7 @@ qx.Class.define("desk.gcSegmentation",
 //Variable pour le canvas HTMLCanvasElement des image resultat de la segmentation
          __htmlCanvasUsedSeeds : null,
 
-		__path : null,
+		__pathJPG : null,
 
 		__embedObjectImage : null,
 		__embedObjectLabels : null,
@@ -250,9 +259,10 @@ qx.Class.define("desk.gcSegmentation",
 		__scalarMax : null,
 
 		__updateImage : function () {
-			this.__loadImage.src=this.__path + "slice" + 
+			var selection=this.__formatSelectBox.getSelection()[0];
+			this.__loadImage.src=selection.getUserData("path") + "slice" + 
 				(this.__slicesNameOffset+this.__slider.getValue()) + 
-				"." + this.__formatSelectBox.getSelection()[0].getLabel() + "?nocache=" + this.__timestamp;
+				"." + selection.getLabel() + "?nocache=" + this.__timestamp;
 		},
 		
 		setMouseActionMode : function (mode) {
@@ -728,16 +738,57 @@ qx.Class.define("desk.gcSegmentation",
 			volView.__topLeftContainer.add(volView.__brghtnssCntrstButton);
 			volView.__topLeftContainer.add(resetBrCrButton);
 
+			var slashIndex = file.lastIndexOf("/");
+			this.__pathJPG = "";
+			if (slashIndex>0)
+				this.__pathJPG = file.substring(0,slashIndex)+"\/";
+			console.log("this.__pathJPG : " + this.__pathJPG);
 
         ////Create and add the jpeg/png format select box
-            volView.__formatSelectBox = new qx.ui.form.SelectBox();
+			volView.__formatSelectBox = new qx.ui.form.SelectBox();
 			volView.__formatSelectBox.set({width: 52});
-            var SelectJPG = new qx.ui.form.ListItem("jpg");
-            volView.__formatSelectBox.add(SelectJPG);
-            var SelectPNG = new qx.ui.form.ListItem("png");
-            volView.__formatSelectBox.add(SelectPNG);
-            volView.__formatSelectBox.addListener('changeSelection', function (e){
-            	this.__updateImage();}, volView);
+			var JPGFormat = new qx.ui.form.ListItem("jpg");
+			JPGFormat.setUserData("path",volView.__pathJPG);
+			volView.__formatSelectBox.add(JPGFormat);
+			var PNGFormat = new qx.ui.form.ListItem("png");
+			volView.__formatSelectBox.add(PNGFormat);
+
+			volView.__formatSelectBox.addListener('changeSelection', function (e){
+				var path=volView.__formatSelectBox.getSelection()[0].getUserData("path");
+				switch(path)
+				{
+				case null :
+					//we need to compute png slices : launch action
+					var parameterMap={
+						"action" : "Slice_Volume",
+						"input_file" : volView.__fileBrowser.getNodePath(volView.__fileNode),
+						"output_directory" : "cache\/",
+						"format" : "0"};
+					var slicingLabel=new qx.ui.basic.Label("computing...");
+					volView.__topRightContainer.addAfter(slicingLabel,volView.__formatSelectBox);
+					function getAnswer(e)
+					{
+						var req = e.getTarget();
+						var slicesDirectory=req.getResponseText().split("\n")[0];
+						PNGFormat.setUserData("path","\/visu\/desk\/php\/"+slicesDirectory+"\/");
+						volView.__topLeftContainer.remove(slicingLabel);
+						volView.__formatSelectBox.setSelection([PNGFormat])
+					}
+
+					PNGFormat.setUserData("path","computing");
+					// switch back to before computing is done png
+					volView.__formatSelectBox.setSelection([JPGFormat]);
+					volView.__topLeftContainer.addAfter(slicingLabel,volView.__formatSelectBox);
+					volView.__fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
+					break;
+				case "computing":
+					// slices are being computed. re-switch to jpg
+					volView.__formatSelectBox.setSelection([JPGFormat]);
+					break;
+				default :
+					// slices are ready (PNG or JPG)
+					this.__updateImage();
+				}}, volView);
 			
 
 			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});			
@@ -1089,12 +1140,6 @@ qx.Class.define("desk.gcSegmentation",
 			var canvasImage = new Image();
 
 			volView.__loadImage=canvasImage;
-			
-			var slashIndex = file.lastIndexOf("/");
-			this.__path = "";
-			if (slashIndex>0)
-				this.__path = file.substring(0,slashIndex)+"\/";
-			volView.debug("this.__path : " + this.__path);
 
 			
 			canvasImage.onload = function()	// here for build version
