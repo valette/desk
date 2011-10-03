@@ -131,10 +131,8 @@ qx.Class.define("desk.meshView",
 				fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 				break;
 			case ".vtk":
-				this.openFile(fileBrowser.getFileURL(file),mtime);
-				break;
 			case ".xml":
-				this.openFile(fileBrowser.getFileURL(file));
+				this.openFile(fileBrowser.getFileURL(file),mtime);
 				break;
 			default	:
 				alert ("extension "+extension+" not supported for mesh viewer");
