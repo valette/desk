@@ -135,6 +135,10 @@ foreach ($actions->children() as $action)
 									die ("$parameterName : directory \"$parameterValue\" does not exist");
 								$prependPHP_DIR=true;
 								break;
+							case "new_directory":
+								validatePath($parameterValue);
+								$prependPHP_DIR=true;
+								break;
 							case "int":
 								if (!ctype_digit("$parameterValue"))
 									die ("$parameterName : value \"$parameterValue\" is not an integer value");

@@ -29,7 +29,7 @@
 
 <action name="Create_directory" executable="mkdir" void="true">
 <description>create a directory</description>
-<parameter name="directory_name" type="directory" required="true"/>
+<parameter name="directory_name" type="new_directory" required="true"/>
 </action>
 
 <action name="delete" executable="rm" void="true">

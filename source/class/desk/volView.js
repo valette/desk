@@ -2018,31 +2018,33 @@ qx.Class.define("desk.volView",
 
 			var createNewSession = function()
 			{
-				var newSession=fileBrowser.createNewSession(volView.__file,sessionType)
-				var session = new qx.ui.form.ListItem(""+newSession.sessionId);
-				updateList();
+				var newSession=fileBrowser.createNewSession(volView.__file,sessionType, updateList);
 			};
 
 			var updateList = function() {
-				sessionsList.removeAll();
-				var sessions=fileBrowser.getFileSessions(file, sessionType);
-				for (var i=0; i<sessions.length; i++)
+			
+				function buildSessionsItems (sessions)
 				{
-					var directory=sessions[i];
-					var session = new qx.ui.form.ListItem(""+file.sessionId);
-					session.setUserData("sessionDirectory",directory);
-					session.addListener("click", function(e){
-						var clickedSession=e.getTarget().getUserData("sessionDirectory");
-						console.log("clickedSession:");
-						console.log(clickedSession);
-						});
-					sessionsList.add(session);
+					sessionsList.removeAll();
+					for (var i=0; i<sessions.length; i++)
+					{
+						var session=sessions[i];
+						var session = new qx.ui.form.ListItem(""+session);
+						session.addListener("click", function(e){
+							var clickedSession=e.getTarget().getLabel();
+							console.log("clickedSession:");
+							console.log(clickedSession);
+							});
+						sessionsList.add(session);
+					}
+					// add "create new session" item
+					var createNewSessionListItem = new qx.ui.form.ListItem("create new session");
+					createNewSessionListItem.addListener("click", function(e){
+						createNewSession();});
+						sessionsList.add(createNewSessionListItem);
 				}
-				// add "create new session" item
-				var createNewSessionListItem = new qx.ui.form.ListItem("create new session");
-				createNewSessionListItem.addListener("click", function(e){
-					createNewSession();});
-					sessionsList.add(createNewSessionListItem);
+
+				fileBrowser.getFileSessions(file, sessionType, buildSessionsItems);
 			};
 			updateList();
 			return sessionsList;

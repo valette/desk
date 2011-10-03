@@ -148,95 +148,108 @@ qx.Class.define("desk.fileBrowser",
 		__updateDirectoryInProgress : null,
 
 
-		// returns an array containing sessions of given type (string)
+		// creates an array containing sessions of given type (string)
 		// sessions are just directories for which the name contains in order:
 		// -the fileNode name
 		// -the sessionType
 		// -the session number
 		// separated by a "."
-		getFileSessions : function (file, sessionType)
-		{
-			var sessions=[];
-/*			var nodeLabel=node.label;
-			console.log("nodeLabel:"+nodeLabel);
-			var parentId=node.parentNodeId;
-			console.log("parent Id : "+parentId);
-			var parent=this.__virtualTree.nodeGet(parentId);
-			console.log("parent:");
-			console.log(parent);
-			var children=parent.children;
-			for (var i=0;i<children.length;i++)
-			{
-				var childId=children[i];
-				var child=this.__virtualTree.nodeGet(childId);
+		// the array as passed as parameter to the callback function
 
-				// process only directories
-				if (child.type==qx.ui.treevirtual.MTreePrimitive.Type.BRANCH)
+		getFileSessions : function (file, sessionType, callback)
+		{
+			var lastSlashIndex=file.lastIndexOf("/");
+			var directory=file.substring(0,lastSlashIndex);
+			console.log("directory : "+directory);
+
+			var shortFileName=file.substring(lastSlashIndex+1,file.length);
+			console.log("file name : "+shortFileName);
+			function readFileList(e)
+			{
+				var sessions=[];
+				var req = e.getTarget();
+				var files=req.getResponseText().split("\n");
+				for (var i=0;i<files.length;i++)
 				{
-					//first, test if the directory begins like the file
-					var childLabel=child.label;
-					var begining=childLabel.substring(0,nodeLabel.length+1);
-					console.log ("child label : "+begining);
-					if (begining==(nodeLabel+"."))
+					var splitfile=files[i].split(" ");
+					var fileName=splitfile[0];
+					if (fileName!="")
 					{
-						console.log ("matches");
-						var remaining=childLabel.substring(nodeLabel.length+1, childLabel.length);
-						console.log("remaining : "+remaining);
-						if (sessionType!=null)
+						if (splitfile[1]=="dir")
 						{
-							var childSession=remaining.substring(0,sessionType.length+1);
-							if (childSession==(sessionType+"."))
+							//first, test if the directory begins like the file
+							var childLabel=splitfile[0];
+							var begining=childLabel.substring(0,shortFileName.length+1);
+							console.log ("child label : *"+begining+"*");
+							if (begining==(shortFileName+"."))
 							{
-								var sessionId=parseInt(remaining.substring(sessionType.length+1,remaining.length));
-								child.sessionId=sessionId;
-								console.log(sessionId);
-								sessions.push(child);
+								console.log ("matches");
+								var remaining=childLabel.substring(shortFileName.length+1, childLabel.length);
+								console.log("remaining : "+remaining);
+								if (sessionType!=null)
+								{
+									var childSession=remaining.substring(0,sessionType.length+1);
+									if (childSession==(sessionType+"."))
+									{
+										var sessionId=parseInt(remaining.substring(sessionType.length+1,remaining.length));
+										console.log(sessionId);
+										sessions.push(sessionId);
+									}
+								}
+								else
+								{
+									alert("error : no session type asked");
+								}
 							}
 						}
-						else
-						{
-							alert("error : no session type asked");
-						}
 					}
-				}			
+				}
+				callback(sessions);
 			}
-			*/
-			console.log("sessions array : ");
-			console.log(sessions);
-			return (sessions);
+
+			// Instantiate request
+			var req = new qx.io.request.Xhr();
+			req.setUrl("/visu/desk/php/listDir.php");
+			req.setMethod("POST");
+			req.setAsync(true);
+			req.setRequestData({"dir" : directory});
+			req.addListener("success", readFileList, this);
+			req.send();
 		},
 
 
 		// returns a newly created directory node 
 		// executes callback with the new node as parameter when finished
-		createNewSession : function (node, sessionType, callback)
+		createNewSession : function (file, sessionType, callback)
 		{
 			var fileBrowser=this;
-			var sessions=this.getNodeSessions(node, sessionType);
-			var maxId=-1;
-			for (var i=0;i<sessions.length;i++)
+			console.log("file name : "+file);
+			function success(sessions)
 			{
-				var sessionId=sessions[i].sessionId;
-				if (sessionId>maxId)
-					maxId=sessionId;
+				var maxId=-1;
+				for (var i=0;i<sessions.length;i++)
+				{
+					var sessionId=sessions[i];
+					if (sessionId>maxId)
+						maxId=sessionId;
+				}
+
+				var newSessionId=maxId+1;
+
+				function getAnswer(e)
+				{
+					callback(newSessionId);
+				}
+
+				var newDir=file+"."+sessionType+"."+newSessionId;
+
+				var parameterMap={
+					"action" : "Create_directory",
+					"directory_name" : newDir};
+				fileBrowser.getActions().launchAction(parameterMap, getAnswer);
 			}
 
-			var newSessionId=maxId+1;
-
-			var parentId=node.parentNodeId;
-			var parent=this.__virtualTree.nodeGet(parentId);
-
-			function getAnswer(e)
-			{
-	//			fileBrowser.
-			}
-
-			var newDir=fileBrowser.getNodeFile(parent)+"/"+node.label+"."+sessionType+"."+newSessionId;
-
-			var parameterMap={
-				"action" : "Create_directory",
-				"directory_name" : newDir};
-			fileBrowser.getActions().launchAction(parameterMap, getAnswer);
+			this.getFileSessions(file, sessionType, success);
 		},
 
 		updateRoot : function ()
