@@ -103,13 +103,11 @@ qx.Class.define("desk.volView",
 		if (fileBrowser!=null)
 		{
 			this.__fileBrowser=fileBrowser;
-			//file is a tree node...
-			var node=file;
 			this.__file=file;
-			this.setCaption(node.label);
+			this.setCaption(file);
 			var parameterMap={
 				"action" : "Slice_Volume",
-				"input_file" : fileBrowser.getNodePath(node),
+				"input_file" : file,
 				"output_directory" : "cache\/"};
 
 			function getAnswer(e)
@@ -128,8 +126,7 @@ qx.Class.define("desk.volView",
 		}
 		else
 		{
-			this.setCaption(file);
-			this.openFile(file);
+			alert ("error : no filebrowser provided for volView");
 		}
 
 		volView.open();
@@ -155,7 +152,7 @@ qx.Class.define("desk.volView",
 		__file : null,
 
 		// the segmentation session (a node directory)
-		__sessionNode : null,
+		__sessionDirectory : null,
 
 		// the main window
 		__window : null,
@@ -2010,14 +2007,14 @@ qx.Class.define("desk.volView",
 
 			var updateList = function() {
 				sessionsList.removeAll();
-				var sessions=fileBrowser.getNodeSessions(file, sessionType);
+				var sessions=fileBrowser.getFileSessions(file, sessionType);
 				for (var i=0; i<sessions.length; i++)
 				{
-					var node=sessions[i];
-					var session = new qx.ui.form.ListItem(""+node.sessionId);
-					session.setUserData("sessionNode",node);
+					var directory=sessions[i];
+					var session = new qx.ui.form.ListItem(""+file.sessionId);
+					session.setUserData("sessionDirectory",directory);
 					session.addListener("click", function(e){
-						var clickedSession=e.getTarget().getUserData("sessionNode");
+						var clickedSession=e.getTarget().getUserData("sessionDirectory");
 						console.log("clickedSession:");
 						console.log(clickedSession);
 						});

@@ -13,6 +13,8 @@ qx.Class.define("desk.meshView",
 		this.setUseResizeFrame(true);
 		this.setUseMoveFrame(true);
 		this.setContentPadding(2);
+		if (fileBrowser==null)
+			alert ("error : no fileBrowser provided");
 		this.setCaption(file);
 
 		var pane = new qx.ui.splitpane.Pane("horizontal")
@@ -104,36 +106,10 @@ qx.Class.define("desk.meshView",
 
 		if (fileBrowser!=null)
 		{
-			this.setCaption(fileBrowser.getNodeURL(file));
-			//file is a tree node...
-			var node=file;
-			var file=fileBrowser.getNodePath(node);
+			this.setCaption(file);
 			var extension=file.substring(file.length-4, file.length);
 			switch (extension)
 			{
-			case ".xml":
-				this.setCaption(node.label);
-				var ajax = new XMLHttpRequest();
-				ajax.onreadystatechange = function()
-				{
-					if(this.readyState == 4 && this.status == 200)
-					{
-						var sha1=ajax.responseText.split("\n")[0];
-						meshView.openFile("\/visu\/visu_cache\/"+sha1+"\/"+"meshes.xml");
-					}
-					else if (this.readyState == 4 && this.status != 200)
-					{
-						// fetched the wrong page or network error...
-						alert('"Fetched the wrong page" OR "Network error"');
-					}
-				};
-				var label = new qx.ui.basic.Label("Extracting meshes, wait...").set({
-					font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
-					});
-				this.add(label, {flex : 1});
-				ajax.open("POST", "\/visu\/desk\/php\/volumeAnalysis.php", true);
-				ajax.send(file);
-				break;
 			case ".ply":
 			case ".obj":
 			case ".stl":
@@ -157,11 +133,6 @@ qx.Class.define("desk.meshView",
 			default	:
 				alert ("extension "+extension+" not supported for mesh viewer");
 			}
-		}
-		else
-		{
-			this.setCaption(file);
-			this.openFile(file);
 		}
 		return (this);
 	},
