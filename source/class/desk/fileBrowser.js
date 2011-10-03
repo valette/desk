@@ -266,7 +266,7 @@ qx.Class.define("desk.fileBrowser",
 				case ".ply":
 				case ".obj":
 				case ".stl":
-					var meshView=new desk.meshView(node,myBrowser);
+					var meshView=new desk.meshView(file,myBrowser);
 					qx.core.Init.getApplication().getRoot().add(meshView);
 					break;
 				case ".png":
