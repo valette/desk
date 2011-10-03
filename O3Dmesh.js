@@ -122,30 +122,17 @@ o3djs.mesh.Mesh.prototype.setTexturePixels = function(inPixels)
 {
 	if (this.texture!=null)
 	{
-/*			var a=0;
-		var data=this.pixels;
-		while (p--)
-			data[p]=pixels[p]/255;
-
-		this.texture.set(0, data);*/
-
-		var pixels = new Uint8Array(inPixels.length);
-
-		var p=inPixels.length;
-		var i=0;
-		while (p--)
-		{
-			pixels[i]=inPixels[i];
-			i++;
-		}
 		var texture=this.texture;
+		var pixels=this.pixels;
+		var p=inPixels.length;
+		for (var i=0;i!=p;i++)
+			pixels[i]=inPixels[i];
+
 		var format = texture.getGLTextureFormat_();
-		texture.gl.bindTexture(texture.texture_target_, texture.texture_);
 
 		texture.gl.texSubImage2D(texture.getTexImage2DTarget_(null),
 		0, 0, 0, texture.texture_width_, texture.texture_height_,
 		format, texture.gl.UNSIGNED_BYTE, pixels);
-
 	}
 	else
 		console.log("warning : trying to set texture pixels while no texture was created");
@@ -201,21 +188,12 @@ o3djs.mesh.createSquare = function(scene, width, height)
 	sampler.minFilter = scene.o3dElement.o3d.Sampler.ANISOTROPIC;
 	sampler.maxAnisotropy = 4;
 
-	var pixels = [];
-	for (var y = 0; y < height; ++y) {
-		for (var x = 0; x < width; ++x) {
-		var offset = (y * width + x) * 4;  // rgba
-//		var u = x / width * Math.PI * 0.5;
-//		var v = y / height * Math.PI * 0.5;
-		pixels[offset + 0] = 0;//Math.cos(v);  // red
-		pixels[offset + 1] = 1.0;//Math.sin(u);  // green
-		pixels[offset + 2] = 0;//Math.sin(v);  // blue
-		pixels[offset + 3] = 1.0;//Math.abs(Math.sin(u * 8));  // alpha
-		}
-	}
+	var pixels = new Uint8Array(width*height*4);
+	var numBytes=width*height*4;
+	for (var i = 0; i!=numBytes;i++)
+		pixels[i]=255;
 
 	var texture = scene.pack.createTexture2D(width, height, scene.o3dElement.o3d.Texture.ARGB8, 1, false);
-	texture.set(0, pixels);
 
 	sampler.texture = texture;
 
@@ -226,5 +204,8 @@ o3djs.mesh.createSquare = function(scene, width, height)
 	mesh.textureWidth=width;
 	mesh.textureHeight=height;
 	mesh.pixels=pixels;
+	texture.gl.bindTexture(texture.texture_target_, texture.texture_);
+
+	mesh.setTexturePixels(pixels);
 	return (mesh);
 }
