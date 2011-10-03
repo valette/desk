@@ -117,7 +117,7 @@ qx.Class.define("desk.fileBrowser",
 				switch (type)
 				{
 				case "text":
-					e.addData(type, this.getNodePath(this.getSelectedNode()));
+					e.addData(type, this.getNodeFile(this.getSelectedNode()));
 					break;
 				case "fileBrowser":
 					e.addData(type, this);
@@ -147,6 +147,111 @@ qx.Class.define("desk.fileBrowser",
 
 		__updateDirectoryInProgress : null,
 
+
+		// creates an array containing sessions of given type (string)
+		// sessions are just directories for which the name contains in order:
+		// -the fileNode name
+		// -the sessionType
+		// -the session number
+		// separated by a "."
+		// the array as passed as parameter to the callback function
+
+		getFileSessions : function (file, sessionType, callback)
+		{
+			var lastSlashIndex=file.lastIndexOf("/");
+			var directory=file.substring(0,lastSlashIndex);
+			console.log("directory : "+directory);
+
+			var shortFileName=file.substring(lastSlashIndex+1,file.length);
+			console.log("file name : "+shortFileName);
+			function readFileList(e)
+			{
+				var sessions=[];
+				var req = e.getTarget();
+				var files=req.getResponseText().split("\n");
+				for (var i=0;i<files.length;i++)
+				{
+					var splitfile=files[i].split(" ");
+					var fileName=splitfile[0];
+					if (fileName!="")
+					{
+						if (splitfile[1]=="dir")
+						{
+							//first, test if the directory begins like the file
+							var childLabel=splitfile[0];
+							var begining=childLabel.substring(0,shortFileName.length+1);
+							console.log ("child label : *"+begining+"*");
+							if (begining==(shortFileName+"."))
+							{
+								console.log ("matches");
+								var remaining=childLabel.substring(shortFileName.length+1, childLabel.length);
+								console.log("remaining : "+remaining);
+								if (sessionType!=null)
+								{
+									var childSession=remaining.substring(0,sessionType.length+1);
+									if (childSession==(sessionType+"."))
+									{
+										var sessionId=parseInt(remaining.substring(sessionType.length+1,remaining.length));
+										console.log(sessionId);
+										sessions.push(sessionId);
+									}
+								}
+								else
+								{
+									alert("error : no session type asked");
+								}
+							}
+						}
+					}
+				}
+				callback(sessions);
+			}
+
+			// Instantiate request
+			var req = new qx.io.request.Xhr();
+			req.setUrl("/visu/desk/php/listDir.php");
+			req.setMethod("POST");
+			req.setAsync(true);
+			req.setRequestData({"dir" : directory});
+			req.addListener("success", readFileList, this);
+			req.send();
+		},
+
+
+		// returns a newly created directory node 
+		// executes callback with the new node as parameter when finished
+		createNewSession : function (file, sessionType, callback)
+		{
+			var fileBrowser=this;
+			console.log("file name : "+file);
+			function success(sessions)
+			{
+				var maxId=-1;
+				for (var i=0;i<sessions.length;i++)
+				{
+					var sessionId=sessions[i];
+					if (sessionId>maxId)
+						maxId=sessionId;
+				}
+
+				var newSessionId=maxId+1;
+
+				function getAnswer(e)
+				{
+					callback(newSessionId);
+				}
+
+				var newDir=file+"."+sessionType+"."+newSessionId;
+
+				var parameterMap={
+					"action" : "Create_directory",
+					"directory_name" : newDir};
+				fileBrowser.getActions().launchAction(parameterMap, getAnswer);
+			}
+
+			this.getFileSessions(file, sessionType, success);
+		},
+
 		updateRoot : function ()
 		{
 			this.expandDirectoryListing(this.__rootId);
@@ -162,47 +267,48 @@ qx.Class.define("desk.fileBrowser",
 			var myBrowser=this;
 			function fileClicked(node) {
 				var modificationTime=myBrowser.getNodeMTime(node);
-				var file=myBrowser.getNodeURL(node);
+				var file=myBrowser.getNodeFile(node);
+				var fileURL=myBrowser.getFileURL(file);
 				var extension=file.substring(file.length-4, file.length);
 				switch (extension)
 				{
 				case ".vtk":
-					var meshView=new desk.meshView(file);
+					var meshView=new desk.meshView(file, myBrowser,modificationTime);
 					qx.core.Init.getApplication().getRoot().add(meshView);
 					break;
 				case ".ply":
 				case ".obj":
 				case ".stl":
-					var meshView=new desk.meshView(node,myBrowser);
+					var meshView=new desk.meshView(file,myBrowser);
 					qx.core.Init.getApplication().getRoot().add(meshView);
 					break;
 				case ".png":
 				case ".jpg":
 				case ".bmp":
-					var imageView=new desk.imageView(file);
+					var imageView=new desk.imageView(file, myBrowser);
 					qx.core.Init.getApplication().getRoot().add(imageView);
 					break;
 				case ".xml":
 					var xmlhttp=new XMLHttpRequest();
-					xmlhttp.open("GET",file+"?nocache=" + myBrowser.getNodeMTime(node),false);
+					xmlhttp.open("GET",fileURL+"?nocache=" +modificationTime,false);
 					xmlhttp.send();
 					var xmlDoc=xmlhttp.responseXML;
 					
 					if (xmlDoc.getElementsByTagName("mesh").length!=0)
 					{
-						var meshView=new desk.meshView(file);
+						var meshView=new desk.meshView(file, myBrowser, modificationTime);
 						qx.core.Init.getApplication().getRoot().add(meshView);
 					}
 					else if (xmlDoc.getElementsByTagName("volume").length!=0)
 					{
-						var volView=new desk.volView(file);
+						var volView=new desk.volView(file, myBrowser, modificationTime);
 						qx.core.Init.getApplication().getRoot().add(volView);
 					}
 					else
 						alert ("xml file of unknown type!");
 					break;
 				case ".mhd":
-					var volView=new desk.volView(node, myBrowser);
+					var volView=new desk.volView(file, myBrowser);
 					qx.core.Init.getApplication().getRoot().add(volView);
 					break;
 				case ".par":
@@ -224,17 +330,17 @@ qx.Class.define("desk.fileBrowser",
 					myBrowser.__actionsHandler.createActionWindowFromURL(
 						myBrowser.getNodeURL(node)+"\/parameters.txt");});
 
-			myBrowser.addAction("segment", function (node) {
+			myBrowser.addAction("volViewSimple", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-					var volView=new desk.gcSegmentation(node, myBrowser);
+					var volView=new desk.volViewSimple(node, myBrowser);
 				else
-					alert("Cannot segment a directory!");});
+					alert("Cannot view a directory!");});
 
 			myBrowser.addAction("download",function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 				{
 					var oIFrm = document.getElementById('myIFrm');
-					oIFrm.src = "/visu/desk/php/download.php?fileName="+myBrowser.getNodePath(node);
+					oIFrm.src = "/visu/desk/php/download.php?fileName="+myBrowser.getNodeFile(node);
 				} 
 				else
 					alert("Cannot download a directory!");});
@@ -244,7 +350,7 @@ qx.Class.define("desk.fileBrowser",
 					var volView=new desk.textEditor(node, myBrowser);});
 
 			myBrowser.addAction("info",function (node) {
-				alert ("file name : "+myBrowser.getNodePath(node)
+				alert ("file name : "+myBrowser.getNodeFile(node)
 					+"\n file URL : "+myBrowser.getNodeURL(node));});
 
 			myBrowser.addAction("update",function (node) {
@@ -301,7 +407,7 @@ qx.Class.define("desk.fileBrowser",
 
 		getNodeURL : function (node)
 		{
-			return (this.__baseURL+this.getNodePath(node));
+			return (this.__baseURL+this.getNodeFile(node));
 		},
 
 		getFileURL : function (file)
@@ -309,7 +415,7 @@ qx.Class.define("desk.fileBrowser",
 			return (this.__baseURL+file);
 		},
 
-		getNodePath : function (node)
+		getNodeFile : function (node)
 		{
 			var hierarchy=this.__virtualTree.getHierarchy(node);
 			return (hierarchy.join("\/"));
@@ -381,7 +487,7 @@ qx.Class.define("desk.fileBrowser",
 			req.setUrl("/visu/desk/php/listDir.php");
 			req.setMethod("POST");
 			req.setAsync(true);
-			req.setRequestData({"dir" : this.getNodePath(node)});
+			req.setRequestData({"dir" : this.getNodeFile(node)});
 			req.addListener("success", readFileList, this);
 			req.send();
 

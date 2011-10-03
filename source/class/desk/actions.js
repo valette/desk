@@ -253,14 +253,14 @@ qx.Class.define("desk.actions",
 					if ((!fileAlreadyPickedFromBrowser) && (fileBrowser!=null))
 					{
 						fileAlreadyPickedFromBrowser=true;
-						parameterForm.setValue(fileBrowser.getNodePath(
+						parameterForm.setValue(fileBrowser.getNodeFile(
 							fileBrowser.getSelectedNode()));
 					}
 					parameterForm.setDroppable(true);
 					parameterForm.addListener("drop", function(e) {
 							var fileBrowser=e.getData("fileBrowser");
 							var fileNode=fileBrowser.getSelectedNode();
- 							this.setValue(fileBrowser.getNodePath(fileNode));
+ 							this.setValue(fileBrowser.getNodeFile(fileNode));
 						}, parameterForm);
 
 					manager.add(parameterForm, stringValidator, parameter);
@@ -270,7 +270,7 @@ qx.Class.define("desk.actions",
 					parameterForm.addListener("drop", function(e) {
 							var fileBrowser=e.getData("fileBrowser");
 							var fileNode=fileBrowser.getSelectedNode();
- 							this.setValue(fileBrowser.getNodePath(fileNode));
+ 							this.setValue(fileBrowser.getNodeFile(fileNode));
 						}, parameterForm);
 
 					manager.add(parameterForm, stringValidator, parameter);

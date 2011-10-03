@@ -29,7 +29,7 @@
 
 <action name="Create_directory" executable="mkdir" void="true">
 <description>create a directory</description>
-<parameter name="directory_name" type="directory" required="true"/>
+<parameter name="directory_name" type="new_directory" required="true"/>
 </action>
 
 <action name="delete" executable="rm" void="true">
@@ -51,6 +51,7 @@
 <action name="Slice_Volume" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeSlice">
 <description>Slice a volume image into 2D images</description>
 <parameter name="input_file" type="file" required="true"/>
+<parameter prefix="-f " name="format" type="int" min="0" max="1"/>
 </action>
 
 <action name="Volume_Median_Filtering" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeMedian">

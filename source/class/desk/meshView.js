@@ -2,7 +2,7 @@ qx.Class.define("desk.meshView",
 {
   extend : qx.ui.window.Window,
 
-	construct : function(file, fileBrowser)
+	construct : function(file, fileBrowser, mtime)
 	{
 		this.base(arguments);
 
@@ -104,64 +104,13 @@ qx.Class.define("desk.meshView",
 
 		if (fileBrowser!=null)
 		{
-			this.setCaption(fileBrowser.getNodeURL(file));
-			//file is a tree node...
-			var node=file;
-			var file=fileBrowser.getNodePath(node);
-			var extension=file.substring(file.length-4, file.length);
-			switch (extension)
-			{
-			case ".xml":
-				this.setCaption(node.label);
-				var ajax = new XMLHttpRequest();
-				ajax.onreadystatechange = function()
-				{
-					if(this.readyState == 4 && this.status == 200)
-					{
-						var sha1=ajax.responseText.split("\n")[0];
-						meshView.openFile("\/visu\/visu_cache\/"+sha1+"\/"+"meshes.xml");
-					}
-					else if (this.readyState == 4 && this.status != 200)
-					{
-						// fetched the wrong page or network error...
-						alert('"Fetched the wrong page" OR "Network error"');
-					}
-				};
-				var label = new qx.ui.basic.Label("Extracting meshes, wait...").set({
-					font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
-					});
-				this.add(label, {flex : 1});
-				ajax.open("POST", "\/visu\/desk\/php\/volumeAnalysis.php", true);
-				ajax.send(file);
-				break;
-			case ".ply":
-			case ".obj":
-			case ".stl":
-				var parameterMap={
-					"action" : "mesh2vtk",
-					"input_file" : file,
-					"output_directory" : "cache\/"};
-
-				function getAnswer(e)
-				{
-					var req = e.getTarget();
-					var splitResponse=req.getResponseText().split("\n");
-					var outputDir=splitResponse[0];
-					console.log(req.getResponseText());
-					var mtime=splitResponse[splitResponse.length-3];
-					meshView.openFile("\/visu\/desk\/php\/"+outputDir+"\/"+"mesh.vtk",mtime);
-				}
-
-				fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
-				break;
-			default	:
-				alert ("extension "+extension+" not supported for mesh viewer");
-			}
+			this.__fileBrowser=fileBrowser;
+			this.setCaption(file);
+			this.openFile(file,mtime);
 		}
 		else
 		{
-			this.setCaption(file);
-			this.openFile(file);
+			alert("error : no file browser provided to mesh viewer");
 		}
 		return (this);
 	},
@@ -171,6 +120,7 @@ qx.Class.define("desk.meshView",
 	},
 
 	members : {
+		__fileBrowser : null,
 		__iframe : null,
 		__fileToOpen : null,
 		__fileToOpenMTime : null,
@@ -193,14 +143,49 @@ qx.Class.define("desk.meshView",
 				dataModel.setData();
 
 			var scene=myMeshViewer.getScene();
-			scene.loadMesh(file, function (shape)
+			var fileBrowser=this.__fileBrowser;
+
+			var loadMeshIntoScene=function(file)
+			{
+				scene.loadMesh(fileBrowser.getFileURL(file), function (shape)
+					{
+						myMeshViewer.__shapesArray[leaf]=shape;		
+						if (update==true)
+							scene.viewAll();
+						else if ((update!=null)&&(update!=false))
+							update();
+					}, mtime, color);
+			}
+
+			var extension=file.substring(file.length-4, file.length);
+			switch (extension)
+			{
+			case ".ply":
+			case ".obj":
+			case ".stl":
+				var parameterMap={
+					"action" : "mesh2vtk",
+					"input_file" : file,
+					"output_directory" : "cache\/"};
+
+				function getAnswer(e)
 				{
-					myMeshViewer.__shapesArray[leaf]=shape;		
-					if (update==true)
-						scene.viewAll();
-					else if ((update!=null)&&(update!=false))
-						update();
-				}, mtime, color);
+					var req = e.getTarget();
+					var splitResponse=req.getResponseText().split("\n");
+					var outputDir=splitResponse[0];
+					console.log(req.getResponseText());
+					var mtime=splitResponse[splitResponse.length-3];
+					loadMeshIntoScene(outputDir+"\/"+"mesh.vtk",mtime);
+				}
+
+				fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
+				break;
+			case ".vtk":
+				loadMeshIntoScene(file);
+				break;
+			default : 
+				alert("error : file "+file+"cannot be displayed by mesh viewer");
+			}
 		},
 
 		openFile : function (file, mtime) {
@@ -223,6 +208,11 @@ qx.Class.define("desk.meshView",
 				if (this.__sceneReady==null)
 				{
 					// the iframe is not ready : store the file name and mtime for future loading
+					if (mtime==null)
+					{
+						console.log("Warning : no file mtime was given for mesh "+file+", will set mtime as random");
+						mtime=Math.random();
+					}
 					this.__fileToOpen=file;
 					this.__fileToOpenMTime=mtime;
 				}
@@ -234,13 +224,16 @@ qx.Class.define("desk.meshView",
 					var extension=file.substring(file.length-4, file.length);
 					switch (extension)
 					{
+						case ".ply":
+						case ".obj":
+						case ".stl":
 						case ".vtk":
 							this.__readFile (file, mtime, null, true);
 							break;
 
 						case ".xml":
 							var xmlhttp=new XMLHttpRequest();
-							xmlhttp.open("GET",file+"?nocache=" + Math.random(),false);
+							xmlhttp.open("GET",myMeshViewer.__fileBrowser.getFileURL(file)+"?nocache=" + Math.random(),false);
 							xmlhttp.send();
 							var readString=xmlhttp.responseXML;
 
@@ -370,7 +363,7 @@ qx.Class.define("desk.meshView",
 						for (var i=0;i<nodes.length;i++)
 						{
 							var fileNode=nodes[i];
-							var fileName=fileBrowser.getNodeURL(fileNode);
+							var fileName=fileBrowser.getNodeFile(fileNode);
 							var mTime=fileBrowser.getNodeMTime(fileNode);
 
 							var update=function()
@@ -400,18 +393,12 @@ qx.Class.define("desk.meshView",
 						var square=this.__iframe.getWindow().o3djs.mesh.createSquare(scene, width, height);
 						var coords=volView.getCornersCoordinates();
 						for (var i=0;i<4;i++)
-							square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);						
-						var canvas = volView.getCanvas();
+							square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);
 
 						function updateTexture()
 						{
-							var context = canvas.getContext2d();
-							var data = context.getImageData(0, 0, width, height).data;
-							var numPixels=height*width*4;
-							var pixels=square.pixels;
-							while (--numPixels)
-								pixels[numPixels]=data[numPixels]/255;
-							square.texture.set(0, pixels);
+							var pixels = volView.getSlicePixels();
+							square.setTexturePixels(pixels);
 							scene.render();
 						}
 						updateTexture();
