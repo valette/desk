@@ -147,6 +147,72 @@ qx.Class.define("desk.fileBrowser",
 
 		__updateDirectoryInProgress : null,
 
+
+		// returns an array containing sessions of given type (string)
+		// sessions are just directories for which the name contains in order:
+		// -the fileNode name
+		// -the sessionType
+		// -the session number
+		// separated by a "."
+		getNodeSessions : function (node, sessionType)
+		{
+			var nodeLabel=node.label;
+			console.log("nodeLabel:"+nodeLabel);
+			var parentId=node.parentNodeId;
+			console.log("parent Id : "+parentId);
+			var parent=this.__virtualTree.nodeGet(parentId);
+			console.log("parent:");
+			console.log(parent);
+			var children=parent.children;
+			var sessions=[];
+			for (var i=0;i<children.length;i++)
+			{
+				var childId=children[i];
+				var child=this.__virtualTree.nodeGet(childId);
+
+				// process only directories
+				if (child.type==qx.ui.treevirtual.MTreePrimitive.Type.BRANCH)
+				{
+					//first, test if the directory begins like the file
+					var childLabel=child.label;
+					var begining=childLabel.substring(0,nodeLabel.length+1);
+					console.log ("child label : "+begining);
+					if (begining==(nodeLabel+"."))
+					{
+						console.log ("matches");
+						var remaining=childLabel.substring(nodeLabel.length+1, childLabel.length);
+						console.log("remaining : "+remaining);
+						if (sessionType!=null)
+						{
+							var childSession=remaining.substring(0,sessionType.length+1);
+							if (childSession==(sessionType+"."))
+							{
+								var sessionId=parseInt(remaining.substring(sessionType.length+1,remaining.length));
+								child.sessionId=sessionId;
+								console.log(sessionId);
+								sessions.push(child);
+							}
+						}
+						else
+						{
+							alert("error : no session type asked");
+						}
+					}
+				}			
+			}
+			console.log("sessions array : ");
+			console.log(sessions);
+			return (sessions);
+		},
+
+
+		// returns a newly created directory node
+		createNewSession : function (node, sessionType)
+		{
+			var sessions=this.getNodeSessions(node, sessionType);
+			
+		},
+
 		updateRoot : function ()
 		{
 			this.expandDirectoryListing(this.__rootId);

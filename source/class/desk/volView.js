@@ -154,6 +154,9 @@ qx.Class.define("desk.volView",
 		// the initial volume file (.mhd)
 		__fileNode : null,
 
+		// the segmentation session (a node directory)
+		__sessionNode : null,
+
 		// the main window
 		__window : null,
 
@@ -167,6 +170,10 @@ qx.Class.define("desk.volView",
 
 		__slider : null,
 		__formatSelectBox : null,
+
+
+		// the comboBox containing segmentation sessions
+		__sessionsList : null,
 
 		__currentSeedsModified : false,
 
@@ -774,6 +781,9 @@ qx.Class.define("desk.volView",
 			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});			
 			volView.__topLeftContainer.add(volView.__getDragAndDropLabel());	
 			volView.__topLeftContainer.add(volView.__getPaintPanelVisibilitySwitch());
+
+			volView.__sessionsList=volView.__getSessionsList();
+			volView.__mainRightContainer.add(volView.__sessionsList);
 
 			var modifSlicesList = new qx.ui.form.List(true);
 			modifSlicesList.setHeight(64);
@@ -1983,7 +1993,35 @@ qx.Class.define("desk.volView",
 			}
 		},
 
+		__getSessionsList : function()
+		{
+			var sessionsList = new qx.ui.form.ComboBox();
+			var fileBrowser=this.__fileBrowser;
+			var fileNode=this.__fileNode;
+			var volView=this;
+
+			function updateList() {
+				var sessions=fileBrowser.getNodeSessions(fileNode, "gcSegmentation");
+				for (var i=0; i<sessions.length; i++)
+				{
+					var node=sessions[i];
+					var session = new qx.ui.form.ListItem(""+node.sessionId);
+					session.setUserData("sessionNode",node);
+					session.addListener("click", function(e){
+						var clickedSession=e.getTarget().getUserData("sessionNode");
+						console.log("clickedSession:");
+						console.log(clickedSession);
+					});
+					sessionsList.add(session);
+				}
+			}
+			updateList();
+			return sessionsList;
+		},
+
 		__getPaintPanelVisibilitySwitch : function () {
+			var volView=this;
+			var fileBrowser=this.__fileBrowser;
 			var paintPaneVisibilitySwitch=new qx.ui.form.ToggleButton("Paint")
 			paintPaneVisibilitySwitch.addListener("changeValue", function (e) {
 				if (e.getData())
