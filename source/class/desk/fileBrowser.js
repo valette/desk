@@ -260,7 +260,7 @@ qx.Class.define("desk.fileBrowser",
 				switch (extension)
 				{
 				case ".vtk":
-					var meshView=new desk.meshView(file, myBrowser);
+					var meshView=new desk.meshView(file, myBrowser,modificationTime);
 					qx.core.Init.getApplication().getRoot().add(meshView);
 					break;
 				case ".ply":
@@ -277,18 +277,18 @@ qx.Class.define("desk.fileBrowser",
 					break;
 				case ".xml":
 					var xmlhttp=new XMLHttpRequest();
-					xmlhttp.open("GET",fileURL+"?nocache=" + myBrowser.getNodeMTime(node),false);
+					xmlhttp.open("GET",fileURL+"?nocache=" +modificationTime,false);
 					xmlhttp.send();
 					var xmlDoc=xmlhttp.responseXML;
 					
 					if (xmlDoc.getElementsByTagName("mesh").length!=0)
 					{
-						var meshView=new desk.meshView(file, myBrowser);
+						var meshView=new desk.meshView(file, myBrowser, modificationTime);
 						qx.core.Init.getApplication().getRoot().add(meshView);
 					}
 					else if (xmlDoc.getElementsByTagName("volume").length!=0)
 					{
-						var volView=new desk.volView(file, myBrowser);
+						var volView=new desk.volView(file, myBrowser, modificationTime);
 						qx.core.Init.getApplication().getRoot().add(volView);
 					}
 					else

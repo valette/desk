@@ -2,7 +2,7 @@ qx.Class.define("desk.meshView",
 {
   extend : qx.ui.window.Window,
 
-	construct : function(file, fileBrowser)
+	construct : function(file, fileBrowser, mtime)
 	{
 		this.base(arguments);
 
@@ -130,9 +130,19 @@ qx.Class.define("desk.meshView",
 
 				fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 				break;
+			case ".vtk":
+				this.openFile(fileBrowser.getFileURL(file),mtime);
+				break;
+			case ".xml":
+				this.openFile(fileBrowser.getFileURL(file));
+				break;
 			default	:
 				alert ("extension "+extension+" not supported for mesh viewer");
 			}
+		}
+		else
+		{
+			alert("error : no file browser provided to mesh viewer");
 		}
 		return (this);
 	},
@@ -194,6 +204,11 @@ qx.Class.define("desk.meshView",
 				if (this.__sceneReady==null)
 				{
 					// the iframe is not ready : store the file name and mtime for future loading
+					if (mtime==null)
+					{
+						console.log("Warning : no file mtime was given for mesh "+file+", will set mtime as random");
+						mtime=Math.random();
+					}
 					this.__fileToOpen=file;
 					this.__fileToOpenMTime=mtime;
 				}
