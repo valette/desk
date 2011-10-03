@@ -105,7 +105,7 @@ qx.Class.define("desk.volView",
 			this.__fileBrowser=fileBrowser;
 			//file is a tree node...
 			var node=file;
-			this.__fileNode=file;
+			this.__file=file;
 			this.setCaption(node.label);
 			var parameterMap={
 				"action" : "Slice_Volume",
@@ -152,7 +152,7 @@ qx.Class.define("desk.volView",
 		__fileBrowser : null,
 
 		// the initial volume file (.mhd)
-		__fileNode : null,
+		__file : null,
 
 		// the segmentation session (a node directory)
 		__sessionNode : null,
@@ -1995,13 +1995,22 @@ qx.Class.define("desk.volView",
 
 		__getSessionsList : function()
 		{
+			var sessionType="gcSegmentation";
 			var sessionsList = new qx.ui.form.ComboBox();
 			var fileBrowser=this.__fileBrowser;
-			var fileNode=this.__fileNode;
+			var file=this.__file;
 			var volView=this;
 
-			function updateList() {
-				var sessions=fileBrowser.getNodeSessions(fileNode, "gcSegmentation");
+			var createNewSession = function()
+			{
+				var newSession=fileBrowser.createNewSession(volView.__file,sessionType)
+				var session = new qx.ui.form.ListItem(""+newSession.sessionId);
+				updateList();
+			};
+
+			var updateList = function() {
+				sessionsList.removeAll();
+				var sessions=fileBrowser.getNodeSessions(file, sessionType);
 				for (var i=0; i<sessions.length; i++)
 				{
 					var node=sessions[i];
@@ -2011,10 +2020,15 @@ qx.Class.define("desk.volView",
 						var clickedSession=e.getTarget().getUserData("sessionNode");
 						console.log("clickedSession:");
 						console.log(clickedSession);
-					});
+						});
 					sessionsList.add(session);
 				}
-			}
+				// add "create new session" item
+				var createNewSessionListItem = new qx.ui.form.ListItem("create new session");
+				createNewSessionListItem.addListener("click", function(e){
+					createNewSession();});
+					sessionsList.add(createNewSessionListItem);
+			};
 			updateList();
 			return sessionsList;
 		},
@@ -2052,7 +2066,7 @@ qx.Class.define("desk.volView",
 					//we need to compute png slices : launch action
 					var parameterMap={
 						"action" : "Slice_Volume",
-						"input_file" : volView.__fileBrowser.getNodePath(volView.__fileNode),
+						"input_file" : volView.__file,
 						"output_directory" : "cache\/",
 						"format" : "0"};
 					var slicingLabel=new qx.ui.basic.Label("computing...");

@@ -14,11 +14,12 @@ qx.Class.define("desk.volViewSimple",
 		this.setUseMoveFrame(true);
 
 		var volView=this;
-		if (fileBrowser!=null)
+		if (fileBrowser==null)
+			alert ("error! no file browser was provided");
+		else
 		{
 			//file is a tree node...
-			var node=file;
-			this.setCaption(node.label);
+			this.setCaption(fileBrowser.getFileName(file));
 
 			function getAnswer(e)
 				{
@@ -29,7 +30,7 @@ qx.Class.define("desk.volViewSimple",
 
 			var parameterMap={
 				"action" : "Slice_Volume",
-				"input_file" : fileBrowser.getNodePath(node),
+				"input_file" : file,
 				"output_directory" : "cache\/"};
 			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 
@@ -37,11 +38,6 @@ qx.Class.define("desk.volViewSimple",
 				font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
 				});
 			this.add(label, {flex : 1});
-		}
-		else
-		{
-			this.setCaption(file);
-			this.openFile(file);
 		}
 
 		// drag and drop support

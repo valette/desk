@@ -206,11 +206,36 @@ qx.Class.define("desk.fileBrowser",
 		},
 
 
-		// returns a newly created directory node
-		createNewSession : function (node, sessionType)
+		// returns a newly created directory node 
+		// executes callback with the new node as parameter when finished
+		createNewSession : function (node, sessionType, callback)
 		{
+	/*		var fileBrowser=this;
 			var sessions=this.getNodeSessions(node, sessionType);
-			
+			var maxId=-1;
+			for (var i=0;i<sessions.length;i++)
+			{
+				var sessionId=sessions[i].sessionId;
+				if (sessionId>maxId)
+					maxId=sessionId;
+			}
+
+			var newSessionId=maxId+1;
+
+			var parentId=node.parentNodeId;
+			var parent=this.__virtualTree.nodeGet(parentId);
+
+			function getAnswer(e)
+			{
+				fileBrowser.
+			}
+
+			var newDir=fileBrowser.getNodePath(parent)+"/"+node.label+"."+sessionType+"."+newSessionId;
+
+			var parameterMap={
+				"action" : "Create_directory",
+				"directory_name" : newDir};
+			fileBrowser.getActions().launchAction(parameterMap, getAnswer);*/
 		},
 
 		updateRoot : function ()
