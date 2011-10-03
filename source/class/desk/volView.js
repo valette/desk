@@ -1741,26 +1741,44 @@ qx.Class.define("desk.volView",
 						switch (volView.__scalarSize)
 		                {
 						case 1:
-				            while (p--) {
-				                if ((r = data[pix-=4] * mul + add) > 255 )
-				                    data[pix] = 255;
-				                else if (r < 0)
-				                    data[pix] = 0;
-				                else
-				                    data[pix] = r;
-				                if ((g = data[pix1=pix+1] * mul + add) > 255 )
-				                    data[pix1] = 255;
-				                else if (g < 0)
-				                    data[pix1] = 0;
-				                else
-				                    data[pix1] = g;
-				                if ((b = data[pix2=pix+2] * mul + add) > 255 )
-				                    data[pix2] = 255;
-				                else if (b < 0)
-				                    data[pix2] = 0;
-				                else
-				                    data[pix2] = b;
-				                    
+							if (volView.__scalarType==3)
+							{
+							pix=0;
+							// unsigned char: no need to check for sign
+						        while (p--) {
+									c=data[pix];
+									c=(c+shift)*scale;
+									c=c* mul + add;
+
+									if (c>255)
+										c=255;
+									else if (c<0)
+										c=0;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=255;
+								}
+				            }
+				            else
+				            {
+				            	pix=0;
+						        while (p--) {
+									c=data[pix];
+									if (c>127)
+										c-=256;
+									c=(c+shift)*scale;
+									c=c* mul + add;
+
+									if (c>255)
+										c=255;
+									else if (c<0)
+										c=0;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=255;
+								}
 				            }
 				            break;
 						case 2:
@@ -1836,7 +1854,7 @@ qx.Class.define("desk.volView",
 				        	{
 				        	// signed int : check sign
 
-					    	pix=0;
+					    		pix=0;
 						    	while (p--){
 						    		r= data[pix];
 						    		g= data[pix+1];
