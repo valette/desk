@@ -13,8 +13,6 @@ qx.Class.define("desk.meshView",
 		this.setUseResizeFrame(true);
 		this.setUseMoveFrame(true);
 		this.setContentPadding(2);
-		if (fileBrowser==null)
-			alert ("error : no fileBrowser provided");
 		this.setCaption(file);
 
 		var pane = new qx.ui.splitpane.Pane("horizontal")
@@ -106,37 +104,9 @@ qx.Class.define("desk.meshView",
 
 		if (fileBrowser!=null)
 		{
+			this.__fileBrowser=fileBrowser;
 			this.setCaption(file);
-			var extension=file.substring(file.length-4, file.length);
-			switch (extension)
-			{
-			case ".ply":
-			case ".obj":
-			case ".stl":
-				var parameterMap={
-					"action" : "mesh2vtk",
-					"input_file" : file,
-					"output_directory" : "cache\/"};
-
-				function getAnswer(e)
-				{
-					var req = e.getTarget();
-					var splitResponse=req.getResponseText().split("\n");
-					var outputDir=splitResponse[0];
-					console.log(req.getResponseText());
-					var mtime=splitResponse[splitResponse.length-3];
-					meshView.openFile("\/visu\/desk\/php\/"+outputDir+"\/"+"mesh.vtk",mtime);
-				}
-
-				fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
-				break;
-			case ".vtk":
-			case ".xml":
-				this.openFile(fileBrowser.getFileURL(file),mtime);
-				break;
-			default	:
-				alert ("extension "+extension+" not supported for mesh viewer");
-			}
+			this.openFile(file,mtime);
 		}
 		else
 		{
@@ -150,6 +120,7 @@ qx.Class.define("desk.meshView",
 	},
 
 	members : {
+		__fileBrowser : null,
 		__iframe : null,
 		__fileToOpen : null,
 		__fileToOpenMTime : null,
@@ -172,14 +143,49 @@ qx.Class.define("desk.meshView",
 				dataModel.setData();
 
 			var scene=myMeshViewer.getScene();
-			scene.loadMesh(file, function (shape)
+			var fileBrowser=this.__fileBrowser;
+
+			var loadMeshIntoScene=function(file)
+			{
+				scene.loadMesh(fileBrowser.getFileURL(file), function (shape)
+					{
+						myMeshViewer.__shapesArray[leaf]=shape;		
+						if (update==true)
+							scene.viewAll();
+						else if ((update!=null)&&(update!=false))
+							update();
+					}, mtime, color);
+			}
+
+			var extension=file.substring(file.length-4, file.length);
+			switch (extension)
+			{
+			case ".ply":
+			case ".obj":
+			case ".stl":
+				var parameterMap={
+					"action" : "mesh2vtk",
+					"input_file" : file,
+					"output_directory" : "cache\/"};
+
+				function getAnswer(e)
 				{
-					myMeshViewer.__shapesArray[leaf]=shape;		
-					if (update==true)
-						scene.viewAll();
-					else if ((update!=null)&&(update!=false))
-						update();
-				}, mtime, color);
+					var req = e.getTarget();
+					var splitResponse=req.getResponseText().split("\n");
+					var outputDir=splitResponse[0];
+					console.log(req.getResponseText());
+					var mtime=splitResponse[splitResponse.length-3];
+					loadMeshIntoScene(outputDir+"\/"+"mesh.vtk",mtime);
+				}
+
+				fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
+				break;
+			case ".vtk":
+				loadMeshIntoScene(file);
+				break;
+			default : 
+				alert("error : file "+file+"cannot be displayed by mesh viewer");
+			}
 		},
 
 		openFile : function (file, mtime) {
@@ -218,13 +224,16 @@ qx.Class.define("desk.meshView",
 					var extension=file.substring(file.length-4, file.length);
 					switch (extension)
 					{
+						case ".ply":
+						case ".obj":
+						case ".stl":
 						case ".vtk":
 							this.__readFile (file, mtime, null, true);
 							break;
 
 						case ".xml":
 							var xmlhttp=new XMLHttpRequest();
-							xmlhttp.open("GET",file+"?nocache=" + Math.random(),false);
+							xmlhttp.open("GET",myMeshViewer.__fileBrowser.getFileURL(file)+"?nocache=" + Math.random(),false);
 							xmlhttp.send();
 							var readString=xmlhttp.responseXML;
 
@@ -354,7 +363,7 @@ qx.Class.define("desk.meshView",
 						for (var i=0;i<nodes.length;i++)
 						{
 							var fileNode=nodes[i];
-							var fileName=fileBrowser.getNodeURL(fileNode);
+							var fileName=fileBrowser.getNodeFile(fileNode);
 							var mTime=fileBrowser.getNodeMTime(fileNode);
 
 							var update=function()
