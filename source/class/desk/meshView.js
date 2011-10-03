@@ -404,12 +404,8 @@ qx.Class.define("desk.meshView",
 
 						function updateTexture()
 						{
-							var data = volView.getSlicePixels();
-							var numPixels=height*width*4;
-							var pixels=square.pixels;
-							while (--numPixels)
-								pixels[numPixels]=data[numPixels]/255;
-							square.texture.set(0, pixels);
+							var pixels = volView.getSlicePixels();
+							square.setTexturePixels(pixels);
 							scene.render();
 						}
 						updateTexture();
