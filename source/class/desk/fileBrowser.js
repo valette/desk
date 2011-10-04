@@ -202,7 +202,12 @@ qx.Class.define("desk.fileBrowser",
 						}
 					}
 				}
-				sessions.sort();
+				// we need to tweak the .sort() method so that it generates correct output for ints
+				function sortNumber(a,b)
+				{
+					return b - a;
+				}
+				sessions.sort(sortNumber);
 				callback(sessions);
 			}
 

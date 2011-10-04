@@ -1697,7 +1697,8 @@ qx.Class.define("desk.volView",
 					pngRequest.open("POST",'/visu/saveFile.php',true);
 					pngRequest.setRequestHeader('Content-Type', 'application/upload');
 					volView.debug("Writing  data/seeds_seb/" + volView.__slicesNamePrefix + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + ".png");
-					pngRequest.send("data/seeds_seb/" + volView.__slicesNamePrefix + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + ".png"+ "!" + pngImg);
+					
+					pngRequest.send(volView.__sessionDirectory +"/" + volView.__slicesNamePrefix + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + ".png"+ "!" + pngImg);
                 }
                 return isAllBlack;
             };
@@ -1925,7 +1926,7 @@ qx.Class.define("desk.volView",
 				var removeRequest = new XMLHttpRequest();
 				removeRequest.open("POST",'/visu/eraseFile.php',true);
 				removeRequest.setRequestHeader('Content-Type', 'application/upload');
-				volView.debug("Erasing " + file);
+				console.log("Erasing " + file);
 				removeRequest.send(file);
 			};
 
@@ -2053,6 +2054,8 @@ qx.Class.define("desk.volView",
 							console.log("clickedSession:");
 							volView.__colorsList.setVisibility("visible");
 							console.log(clickedSession);
+							volView.__sessionDirectory=fileBrowser.getSessionDirectory(
+								volView.__file,sessionType,sessionIdToSelect);
 							});
 					}
 					// add "create new session" item
@@ -2061,9 +2064,16 @@ qx.Class.define("desk.volView",
 						createNewSession();});
 						sessionsList.add(createNewSessionItem);
 					if (sessionItemToSelect!=null)
+					{
 						sessionsList.setSelection([sessionItemToSelect]);
+						volView.__colorsList.setVisibility("visible");
+					}
 					else
-						sessionsList.setSelection([createNewSessionItem]);					
+					{
+						sessionsList.setSelection([createNewSessionItem]);
+						volView.__sessionDirectory=fileBrowser.getSessionDirectory(
+							volView.__file,sessionType,sessionIdToSelect);
+					}
 				}
 
 				fileBrowser.getFileSessions(file, sessionType, buildSessionsItems);
