@@ -1250,11 +1250,12 @@ qx.Class.define("desk.volView",
 						clearButton.set({opacity: 1, enabled : true});
 						eraserButton.set({opacity: 1, enabled : true});
                         startButton.set({opacity: 1, enabled : true});
-              // this should work like this...          this.__colorsList.setSelection(volView.__horizSlices.inProgData[newSliceIndex].inList);
+                        modifSlicesList.setSelection([volView.__horizSlices.inProgData[newSliceIndex].inList]);
+              //			this.__colorsList.setSelection(volView.__horizSlices.inProgData[newSliceIndex].inList);
 				}
 				else	////NEXT slice has NO seeds
 				{
-				 // this should work like this... 		this.__colorsList.resetSelection();
+				 		modifSlicesList.resetSelection();
 						clearButton.execute();
 						volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 						startButton.set({opacity: 0.5, enabled : false});
