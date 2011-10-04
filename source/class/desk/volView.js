@@ -582,7 +582,7 @@ qx.Class.define("desk.volView",
 			var colorsPage = new qx.ui.tabview.Page("REGIONS");
 			volView.__colorsList=colorsPage;
             colorsPage.setLayout(new qx.ui.layout.Grid(1,1));
-			
+
 			var colorsTabView = new qx.ui.tabview.TabView();
             colorsTabView.add(colorsPage);
 
@@ -593,6 +593,7 @@ qx.Class.define("desk.volView",
             },this);
 
 			this.__mainRightContainer.add(colorsTabView)
+			colorsPage.setVisibility("excluded");
 
 		////Function creates one label box
 			var unfocusedBorder = new qx.ui.decoration.Single(2, "solid", "black");
@@ -1251,7 +1252,6 @@ qx.Class.define("desk.volView",
 						eraserButton.set({opacity: 1, enabled : true});
                         startButton.set({opacity: 1, enabled : true});
                         modifSlicesList.setSelection([volView.__horizSlices.inProgData[newSliceIndex].inList]);
-              //			this.__colorsList.setSelection(volView.__horizSlices.inProgData[newSliceIndex].inList);
 				}
 				else	////NEXT slice has NO seeds
 				{
@@ -2048,6 +2048,7 @@ qx.Class.define("desk.volView",
 						session.addListener("click", function(e){
 							var clickedSession=e.getTarget().getLabel();
 							console.log("clickedSession:");
+							volView.__colorsList.setVisibility("visible");
 							console.log(clickedSession);
 							});
 						sessionsList.add(session);
@@ -2133,7 +2134,8 @@ qx.Class.define("desk.volView",
 
 		__getDragAndDropLabel : function ()
 		{
-			var dragLabel=new qx.ui.basic.Label("Link");
+			var dragLabel=new qx.ui.basic.Label("Link").set({
+        decorator: "main"});
 			// drag and drop support
 			dragLabel.setDraggable(true);
 			dragLabel.addListener("dragstart", function(e) {
