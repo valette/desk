@@ -168,6 +168,8 @@ qx.Class.define("desk.volView",
 		__slider : null,
 		__formatSelectBox : null,
 
+		// the widget containing the defined colors for painting
+		__colorsList : null,
 
 		// the comboBox containing segmentation sessions
 		__sessionsList : null,
@@ -313,6 +315,10 @@ qx.Class.define("desk.volView",
 			if (mode!=1)
 				this.__brghtnssCntrstButton.setValue(false);
 
+			if (mode!=3)
+			{
+	//			this.__colorsList.resetSelection();
+			}
 
 			if (mode!=4)
 				this.__eraserCursor.exclude();
@@ -574,6 +580,7 @@ qx.Class.define("desk.volView",
 			
 		////Create labels zone
 			var colorsPage = new qx.ui.tabview.Page("REGIONS");
+			volView.__colorsList=colorsPage;
             colorsPage.setLayout(new qx.ui.layout.Grid(1,1));
 			
 			var colorsTabView = new qx.ui.tabview.TabView();
@@ -779,8 +786,15 @@ qx.Class.define("desk.volView",
 			volView.__topLeftContainer.add(volView.__getDragAndDropLabel());	
 			volView.__topLeftContainer.add(volView.__getPaintPanelVisibilitySwitch());
 
+			var sessionsListLayout=new qx.ui.layout.HBox();
+			sessionsListLayout.setSpacing(spacing);
+			var sessionsListContainer=new qx.ui.container.Composite(sessionsListLayout);
+			var sessionsListLabel=new qx.ui.basic.Label("Sessions : ");
+			sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});
+			sessionsListContainer.add(sessionsListLabel);
 			volView.__sessionsList=volView.__getSessionsList();
-			volView.__mainRightContainer.add(volView.__sessionsList);
+			sessionsListContainer.add(volView.__sessionsList);
+			volView.__mainRightContainer.add(sessionsListContainer);
 
 			var modifSlicesList = new qx.ui.form.List(true);
 			modifSlicesList.setHeight(64);
@@ -969,7 +983,7 @@ qx.Class.define("desk.volView",
 							resetZoom();
 						}
 					////Draw cursor
-						if((volView.__drawingCanvasParams.paintFlag)&&(!volView.__drawingCanvasParams.eraseFlag)&&(!volView.__drawingCanvasParams.brCrFixingFlag))
+						if(volView.__mouseActionMode==3)
 						{
 							drawBrush(event,zoomFactor);
 						}
@@ -1096,13 +1110,14 @@ qx.Class.define("desk.volView",
 			this.__imageCanvas.addListener("mouseout", function(event)
 			{
 				this.__mouseActionActive=false;
-				if(((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.brCrFixingFlag))&&(!volView.__drawingCanvasParams.eraseFlag))
+	//			if(((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.brCrFixingFlag))&&(!volView.__drawingCanvasParams.eraseFlag))
 				{
 					volView.__htmlContextLabels.beginPath();
 					volView.__mouseData.mouseLeftDownFlag = false;
 					volView.__mouseData.mouseMiddleDownFlag = false;
 					volView.__eraserCursor.set({cursor: "default"});
 					drawingCanvas.set({cursor: "default"});
+				//	volView.__eraserCursor.exclude(); this should be here, but when enabled, the eraser cursor blinks
 				}
 			},this);
 
@@ -1181,6 +1196,7 @@ qx.Class.define("desk.volView",
 			for(var i=0; i<volView.__numberOfSlices; i++)
 			{
 				volView.__horizSlices.inProgData[i] = {
+						inList : null,
 						curTagged : false,
 						segmented : false
 				};
@@ -1201,7 +1217,7 @@ qx.Class.define("desk.volView",
 			////Update lists
 				if(volView.__horizSlices.inProgData[oldSliceIndex].curTagged)	////CURRENT slice has seeds
 				{
-					if(!volView.__horizSlices.inProgData[oldSliceIndex].inList)
+					if(volView.__horizSlices.inProgData[oldSliceIndex].inList==null)
 					{
 					// Add slice to list
 						var sliceItem = new qx.ui.form.ListItem("Slice No." + oldSliceIndex);
@@ -1214,7 +1230,7 @@ qx.Class.define("desk.volView",
 										tempPos++;
 						}
 						modifSlicesList.addAt(sliceItem, tempPos);
-						volView.__horizSlices.inProgData[oldSliceIndex].inList = true;
+						volView.__horizSlices.inProgData[oldSliceIndex].inList = sliceItem;
 						sliceItem.addListener("click", function(event)
 						{
 								slider.setValue(this.getUserData("slice"));
@@ -1234,17 +1250,15 @@ qx.Class.define("desk.volView",
 						clearButton.set({opacity: 1, enabled : true});
 						eraserButton.set({opacity: 1, enabled : true});
                         startButton.set({opacity: 1, enabled : true});
-					////Update XML file
-		// commented by seb				updateSeedsXML();
-
+              // this should work like this...          this.__colorsList.setSelection(volView.__horizSlices.inProgData[newSliceIndex].inList);
 				}
 				else	////NEXT slice has NO seeds
 				{
-						modifSlicesList.resetSelection();
+				 // this should work like this... 		this.__colorsList.resetSelection();
 						clearButton.execute();
 						volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 						startButton.set({opacity: 0.5, enabled : false});
-				};	////End if(typeof volView.__horizSlices.sliceLabels[newSliceIndex] != "undefined")
+				};
 			////Update image canvas
 				volView.__updateImage();
 
@@ -2011,7 +2025,7 @@ qx.Class.define("desk.volView",
 		__getSessionsList : function()
 		{
 			var sessionType="gcSegmentation";
-			var sessionsList = new qx.ui.form.ComboBox();
+			var sessionsList = new qx.ui.form.SelectBox();
 			var fileBrowser=this.__fileBrowser;
 			var file=this.__file;
 			var volView=this;
@@ -2100,12 +2114,14 @@ qx.Class.define("desk.volView",
 					PNGFormat.setUserData("path","computing");
 					// switch back to before computing is done png
 					selectBox.setSelection([JPGFormat]);
+					selectBox.close();
 					volView.__topLeftContainer.addAfter(slicingLabel,selectBox);
 					volView.__fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 					break;
 				case "computing":
 					// slices are being computed. re-switch to jpg
 					selectBox.setSelection([JPGFormat]);
+					selectBox.close();
 					break;
 				default :
 					// slices are ready (PNG or JPG)

@@ -32,9 +32,14 @@
 <parameter name="directory_name" type="new_directory" required="true"/>
 </action>
 
-<action name="delete" executable="rm" void="true">
+<action name="delete_file" executable="rm" void="true">
 <description>delete a file or directory</description>
 <parameter name="input_file" type="file" required="true"/>
+</action>
+
+<action name="delete_directory" executable="rm -rf" void="true">
+<description>delete a file or directory</description>
+<parameter name="directory" type="directory" required="true"/>
 </action>
 
 <action name="mesh2vtk" executable="/home/visu/src/vtkSurfaceBuild/bin/mesh2vtk">
