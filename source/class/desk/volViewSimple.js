@@ -19,7 +19,7 @@ qx.Class.define("desk.volViewSimple",
 		else
 		{
 			//file is a tree node...
-			this.setCaption(fileBrowser.getFileName(file));
+			this.setCaption(file);
 
 			function getAnswer(e)
 				{
@@ -201,8 +201,8 @@ qx.Class.define("desk.volViewSimple",
 			this.__fileFormatBox.setWidth(30);
 			var SelectJPG = new qx.ui.form.ListItem("jpg");
 			this.__fileFormatBox.add(SelectJPG);
-			var SelectPNG = new qx.ui.form.ListItem("png");
-			this.__fileFormatBox.add(SelectPNG);
+//			var SelectPNG = new qx.ui.form.ListItem("png");
+//			this.__fileFormatBox.add(SelectPNG);
 			leftContainer.add(this.__fileFormatBox);
 			this.__fileFormatBox.addListener("changeSelection", function(event){this.updateImage();},this);
 

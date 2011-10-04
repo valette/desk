@@ -147,23 +147,25 @@ qx.Class.define("desk.fileBrowser",
 
 		__updateDirectoryInProgress : null,
 
+		// returns the directory for the given file, session type and Id
+		getSessionDirectory : function (file,sessionType,sessionId)
+		{
+			return file+"."+sessionType+"."+sessionId;
+		},
 
 		// creates an array containing sessions of given type (string)
-		// sessions are just directories for which the name contains in order:
-		// -the fileNode name
+		// sessions are directories for which the name contains in order:
+		// -the file name
 		// -the sessionType
 		// -the session number
-		// separated by a "."
+		// all separated by a "."
 		// the array as passed as parameter to the callback function
-
 		getFileSessions : function (file, sessionType, callback)
 		{
 			var lastSlashIndex=file.lastIndexOf("/");
 			var directory=file.substring(0,lastSlashIndex);
-			console.log("directory : "+directory);
 
 			var shortFileName=file.substring(lastSlashIndex+1,file.length);
-			console.log("file name : "+shortFileName);
 			function readFileList(e)
 			{
 				var sessions=[];
@@ -180,19 +182,15 @@ qx.Class.define("desk.fileBrowser",
 							//first, test if the directory begins like the file
 							var childLabel=splitfile[0];
 							var begining=childLabel.substring(0,shortFileName.length+1);
-							console.log ("child label : *"+begining+"*");
 							if (begining==(shortFileName+"."))
 							{
-								console.log ("matches");
 								var remaining=childLabel.substring(shortFileName.length+1, childLabel.length);
-								console.log("remaining : "+remaining);
 								if (sessionType!=null)
 								{
 									var childSession=remaining.substring(0,sessionType.length+1);
 									if (childSession==(sessionType+"."))
 									{
 										var sessionId=parseInt(remaining.substring(sessionType.length+1,remaining.length));
-										console.log(sessionId);
 										sessions.push(sessionId);
 									}
 								}
@@ -204,6 +202,7 @@ qx.Class.define("desk.fileBrowser",
 						}
 					}
 				}
+				sessions.sort();
 				callback(sessions);
 			}
 
@@ -219,11 +218,10 @@ qx.Class.define("desk.fileBrowser",
 
 
 		// returns a newly created directory node 
-		// executes callback with the new node as parameter when finished
+		// executes the callback with the new session Id as parameter when finished
 		createNewSession : function (file, sessionType, callback)
 		{
 			var fileBrowser=this;
-			console.log("file name : "+file);
 			function success(sessions)
 			{
 				var maxId=-1;
@@ -332,7 +330,7 @@ qx.Class.define("desk.fileBrowser",
 
 			myBrowser.addAction("volViewSimple", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-					var volView=new desk.volViewSimple(node, myBrowser);
+					var volView=new desk.volViewSimple(myBrowser.getNodeFile(node), myBrowser);
 				else
 					alert("Cannot view a directory!");});
 

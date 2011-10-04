@@ -777,8 +777,6 @@ qx.Class.define("desk.volView",
 			this.__pathJPG = "";
 			if (slashIndex>0)
 				this.__pathJPG = file.substring(0,slashIndex)+"\/";
-			console.log("this.__pathJPG : " + this.__pathJPG);
-
 
 			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});
 			volView.__formatSelectBox=volView.__getFormatSelectBox()
@@ -1293,11 +1291,12 @@ qx.Class.define("desk.volView",
 				(volView.__embedObjectLabels.getContentElement().getDomElement()==null)||
 				(drawingCanvas.getContext2d()==null))
 				{
-				console.log("not ready");
+				console.log("not yet ready");
 				setTimeout(initSlider, 100);
 				}
 			else
 			{
+				console.log("ready");
 				volView.__htmlCanvasLabels = volView.__embedObjectLabels.getContentElement().getDomElement().firstChild;
 				volView.__htmlContextLabels = volView.__htmlCanvasLabels.getContext("2d");
 				volView.__drawingCanvasParams.drawingContext = drawingCanvas.getContext2d();
@@ -2036,28 +2035,35 @@ qx.Class.define("desk.volView",
 				var newSession=fileBrowser.createNewSession(volView.__file,sessionType, updateList);
 			};
 
-			var updateList = function() {
+			var updateList = function(sessionIdToSelect) {
 			
 				function buildSessionsItems (sessions)
 				{
+					var sessionItemToSelect=null;
 					sessionsList.removeAll();
 					for (var i=0; i<sessions.length; i++)
 					{
-						var session=sessions[i];
-						var session = new qx.ui.form.ListItem(""+session);
-						session.addListener("click", function(e){
+						var sessionId=sessions[i];
+						var sessionItem = new qx.ui.form.ListItem(""+sessionId);
+						sessionsList.add(sessionItem);
+						if (sessionId==sessionIdToSelect)
+							sessionItemToSelect=sessionItem;
+						sessionItem.addListener("click", function(e){
 							var clickedSession=e.getTarget().getLabel();
 							console.log("clickedSession:");
 							volView.__colorsList.setVisibility("visible");
 							console.log(clickedSession);
 							});
-						sessionsList.add(session);
 					}
 					// add "create new session" item
-					var createNewSessionListItem = new qx.ui.form.ListItem("create new session");
-					createNewSessionListItem.addListener("click", function(e){
+					var createNewSessionItem = new qx.ui.form.ListItem("create new session");
+					createNewSessionItem.addListener("click", function(e){
 						createNewSession();});
-						sessionsList.add(createNewSessionListItem);
+						sessionsList.add(createNewSessionItem);
+					if (sessionItemToSelect!=null)
+						sessionsList.setSelection([sessionItemToSelect]);
+					else
+						sessionsList.setSelection([createNewSessionItem]);					
 				}
 
 				fileBrowser.getFileSessions(file, sessionType, buildSessionsItems);
