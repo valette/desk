@@ -25,6 +25,27 @@ function readParameters($file) {
 	return ($parameters);
 }
 
+function validateBase64($buffer)
+{
+  $p    = $buffer;   
+  $len  = strlen($p);      
+ 
+  for($i=0; $i<$len; $i++)
+  {
+     if( ($p[$i]>="A" && $p[$i]<="Z")||
+         ($p[$i]>="a" && $p[$i]<="z")||
+         ($p[$i]>="/" && $p[$i]<="9")||
+         ($p[$i]=="+")||
+         ($p[$i]=="=")||
+         ($p[$i]=="\x0a")||
+         ($p[$i]=="\x0d")
+       )
+       continue;
+     else
+       die("provided data is not base-64 valid");
+  }
+}
+
 function validatePath($file) {
 $DATA_ROOT_FROM_PHP="data";
 $CACHE_ROOT_FROM_PHP="cache";
@@ -60,7 +81,6 @@ $ACTIONS_ROOT_FROM_PHP="action";
 			}
 		}
 	}
-
 }
 
 $parametersList=array();
@@ -133,6 +153,10 @@ foreach ($actions->children() as $action)
 								validatePath($parameterValue);
 								if (!is_dir($parameterValue))
 									die ("$parameterName : directory \"$parameterValue\" does not exist");
+								$prependPHP_DIR=true;
+								break;
+							case "base64":
+								validateBase64($parameterValue);
 								$prependPHP_DIR=true;
 								break;
 							case "new_directory":
@@ -265,6 +289,9 @@ foreach ($actions->children() as $action)
 
 			if ($voidAction==false)
 			{
+				if (!is_dir($outputDirectory))
+					die ("directory \"$outputDirectory\" does not exist");
+
 				switch (validatePath($outputDirectory))
 				{
 					case "cache":
@@ -301,40 +328,54 @@ foreach ($actions->children() as $action)
 				}
 				$parametersList['hash']=$commandHash;
 			}
-			fwrite($flog, "$logHeader : $command\n");
 
-			echo "command : $command\n";
-
-			if ($cached==false)
+			// switch between core actions and xml-provided actions
+			switch ($actionToPerform)
 			{
-				echo ("Output : \n");
-				system("$command | tee action.log");
-				$duration=time()-$startTime;
-				if ($voidAction==false)
+			case "save_binary_file":
+				$base64Data=$parametersList['base64Data'];
+				$binaryData = base64_decode($base64Data);
+				$binaryFileName=$parametersList['file_name'];
+				$binaryFile = fopen( "$binaryFileName", 'wb' );
+				fwrite( $binaryFile, $binaryData);
+				fclose( $binaryFile );
+				fwrite($flog, "$logHeader : wrote binary data into $binaryFileName\n");
+				break;
+			default:
+				fwrite($flog, "$logHeader : $command\n");
+
+				echo "command : $command\n";
+				if ($cached==false)
 				{
-					touch ('.');
+					echo ("Output : \n");
+					system("$command | tee action.log");
+					$duration=time()-$startTime;
+					if ($voidAction==false)
+					{
+						touch ('.');
+						clearstatcache();
+						$omtime=filemtime('.');
+						fwrite($flog, "$logHeader : output directory mtime : $omtime\n");
+						$fp = fopen($parametersFileName, 'w+') or die("Could not open $parametersFileName");
+						$parametersList2=array();
+						foreach ($parametersList as $parameter => $value)
+							$parametersList2[]="$parameter=$value";
+
+						fwrite($fp, implode("\n", $parametersList2));
+						fclose($fp);
+						echo "\n".$omtime;
+					}
+					echo "\nOK ($duration s.)";
+				}
+				else
+				{
+					echo ("Cached output : \n");
+					readfile ("action.log");
 					clearstatcache();
 					$omtime=filemtime('.');
-					fwrite($flog, "$logHeader : output directory mtime : $omtime\n");
-					$fp = fopen($parametersFileName, 'w+') or die("Could not open $parametersFileName");
-					$parametersList2=array();
-					foreach ($parametersList as $parameter => $value)
-						$parametersList2[]="$parameter=$value";
-
-					fwrite($fp, implode("\n", $parametersList2));
-					fclose($fp);
 					echo "\n".$omtime;
+					echo "\nCACHED";
 				}
-				echo "\nOK ($duration s.)";
-			}
-			else
-			{
-				echo ("Cached output : \n");
-				readfile ("action.log");
-				clearstatcache();
-				$omtime=filemtime('.');
-				echo "\n".$omtime;
-				echo "\nCACHED";
 			}
 			fwrite($flog, "******************************************************\n");
 			fclose($flog);		}

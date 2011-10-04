@@ -84,6 +84,11 @@
 <parameter prefix=">>data/xml/" name="filename" type="string" required="true"/>
 </action>
 
+<action name="save_binary_file" executable="not needed">
+<description>writes binary data (encoded in base64) to a file</description>
+<parameter name="file_name" type="string" required="true"/>
+<parameter name="base64Data" type="base64" required="true"/>
+</action>
 
 
 </actions>

@@ -73,7 +73,13 @@ qx.Class.define("desk.actions",
 			
 			function onSuccess (e){
 				this.__ongoingActions.remove(actionNotification);
-				successCallback.call(context,e);
+				if (successCallback!=null)
+				{
+					if (context!=null)
+						successCallback.call(context,e);
+					else
+						successCallback(e);
+				}
 			}
 
 		},

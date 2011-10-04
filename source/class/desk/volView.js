@@ -1688,25 +1688,25 @@ qx.Class.define("desk.volView",
                 }
 				if(!isAllBlack)
                 {
+					////Send png image to server
 					sliceData.data = pixels;
 					volView.__htmlContextLabels.putImageData(sliceData, 0, 0);
 					var pngImg = volView.__htmlCanvasLabels.toDataURL("image/png");
-                    //volView.debug("pngImg : " + pngImg);
-				////Send png image to server
-					var pngRequest = new XMLHttpRequest();
-					pngRequest.open("POST",'/visu/saveFile.php',true);
-					pngRequest.setRequestHeader('Content-Type', 'application/upload');
-					volView.debug("Writing  data/seeds_seb/" + volView.__slicesNamePrefix + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + ".png");
-					
-					pngRequest.send(volView.__sessionDirectory +"/" + volView.__slicesNamePrefix + (volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) + ".png"+ "!" + pngImg);
+					var commaIndex=pngImg.lastIndexOf(",");
+				    var base64Img = pngImg.substring(commaIndex+1,pngImg.length);
+					var parameterMap={
+						"action" : "save_binary_file",
+						"file_name" : volView.__slicesNamePrefix + 
+							(volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) +
+							".png",
+						"base64Data" : base64Img,
+						"output_directory" : volView.__sessionDirectory};
+
+					volView.__fileBrowser.getActions().launchAction(parameterMap);
                 }
                 return isAllBlack;
             };
-			
-			
-			
-			
-			
+
 		////Function applies brightness and contrast values
             var processBrCr = function(inBrightness, inContrast, inLegacy)
             {
@@ -2050,12 +2050,9 @@ qx.Class.define("desk.volView",
 						if (sessionId==sessionIdToSelect)
 							sessionItemToSelect=sessionItem;
 						sessionItem.addListener("click", function(e){
-							var clickedSession=e.getTarget().getLabel();
-							console.log("clickedSession:");
 							volView.__colorsList.setVisibility("visible");
-							console.log(clickedSession);
 							volView.__sessionDirectory=fileBrowser.getSessionDirectory(
-								volView.__file,sessionType,sessionIdToSelect);
+								volView.__file,sessionType,e.getTarget().getLabel());
 							});
 					}
 					// add "create new session" item
