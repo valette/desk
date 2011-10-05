@@ -1946,11 +1946,20 @@ qx.Class.define("desk.volView",
 					sliceID = {slice: sliceId + ""};
 					xmlContent += '     ' + element('seed', volView.__slicesNamePrefix + (volView.__slicesNameOffset + sliceId) + "." + volView.__formatSelectBox.getSelection()[0].getLabel(), sliceID) + '\n';
 				}
-				var xmlUpdateRequest = new XMLHttpRequest();
+/*				var xmlUpdateRequest = new XMLHttpRequest();
 				xmlUpdateRequest.open("POST",'/visu/createXML_Seb.php',true);
 				xmlUpdateRequest.setRequestHeader('Content-Type', 'application/upload');
 				volView.debug("Writing  seeds.xml");
-				xmlUpdateRequest.send(element('seeds', xmlContent));
+				xmlUpdateRequest.send(element('seeds', xmlContent));*/
+
+					////Send png image to server
+					var parameterMap={
+						"action" : "save_XML_file",
+						"file_name" : "seeds.xml",
+						"xmlData" : element('seeds', xmlContent),
+						"output_directory" : volView.__sessionDirectory};
+
+					volView.__fileBrowser.getActions().launchAction(parameterMap);
 			};
 			
 

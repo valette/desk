@@ -347,6 +347,14 @@ foreach ($actions->children() as $action)
 				fclose( $binaryFile );
 				fwrite($flog, "$logHeader : wrote binary data into $binaryFileName\n");
 				break;
+			case "save_XML_file":
+				$xmlData=$parametersList['xmlData'];
+				$xmlFileName=$parametersList['file_name'];
+				$xmlFile = fopen( "$xmlFileName", 'wb' );
+				fwrite( $xmlFile, $xmlData);
+				fclose( $xmlFile );
+				fwrite($flog, "$logHeader : wrote XML data into $xmlFileName\n");
+				break;
 			default:
 				fwrite($flog, "$logHeader : $command\n");
 
