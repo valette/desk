@@ -20,7 +20,6 @@ qx.Class.define("desk.volView",
 		// init 
 		this.__horizSlices={
 		inProgData : [],
-		sliceLabels : [],
 		usedSliceSeeds : [],
 		sliceResults : []
 		};
@@ -148,6 +147,8 @@ qx.Class.define("desk.volView",
 		// the file browser which launched the viewer
 		__fileBrowser : null,
 
+		__seedsCacheTags : null,
+
 		// the initial volume file (.mhd)
 		__file : null,
 
@@ -174,6 +175,9 @@ qx.Class.define("desk.volView",
 
 		// the comboBox containing segmentation sessions
 		__sessionsList : null,
+
+		// the list displaying slices having seeds
+		__seedsList : null,
 
 		__currentSeedsModified : false,
 
@@ -264,6 +268,7 @@ qx.Class.define("desk.volView",
 		// the image used to load volume slices
 		__loadImage : null,
 
+		__loadSeeds : null,
 
 		// volume extent (VTK style)
 		__extent : null,
@@ -300,7 +305,7 @@ qx.Class.define("desk.volView",
 			{
 				if(volView.__drawingCanvasParams.drawingContext!=null)
 				{
-					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+	//				volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 					volView.__drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
 				}
 
@@ -311,7 +316,28 @@ qx.Class.define("desk.volView",
 				(this.__slicesNameOffset+slice) + 
 				"." + selection.getLabel() + "?nocache=" + this.__timestamp;
 		},
-		
+
+		__updateSeeds : function () {
+			var volView=this;
+			var slice=volView.__spinner.getValue();
+			
+			this.__loadSeeds.onload = function()
+			{
+				if(volView.__drawingCanvasParams.drawingContext!=null)
+				{
+					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+					volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
+					volView.__htmlContextLabels.drawImage(volView.__loadSeeds, 0, 0);
+					volView.__drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
+				}
+
+			};
+
+			var selection=this.__formatSelectBox.getSelection()[0];
+			this.__loadSeeds.src=volView.__fileBrowser.getFileURL(this.__sessionDirectory+"/"+this.getSeedFileName(slice))+
+				"?nocache=" + volView.__seedsCacheTags[slice];
+		},
+
 		setMouseActionMode : function (mode) {
 			if (mode!=1)
 				this.__brghtnssCntrstButton.setValue(false);
@@ -795,6 +821,7 @@ qx.Class.define("desk.volView",
 			volView.__mainRightContainer.add(sessionsListContainer);
 
 			var modifSlicesList = new qx.ui.form.List(true);
+			volView.__seedsList=modifSlicesList;
 			modifSlicesList.setHeight(64);
 			modifSlicesList.addListener("keypress", function(event)
 			{
@@ -1129,6 +1156,9 @@ qx.Class.define("desk.volView",
 			var canvasImage = new Image();
 
 			volView.__loadImage=canvasImage;
+
+			var seedImage = new Image();
+			volView.__loadSeeds=seedImage;
 			
             var drawingCanvas = new qx.ui.embed.Canvas().set({syncDimension: true,
             											 zIndex: volView.__drawingCanvasZ,
@@ -1192,6 +1222,8 @@ qx.Class.define("desk.volView",
 			this.__embedObjectUsedSeeds=embedObjectUsedSeeds;
 			this.__imageCanvas.add(containerHtmlUsedSeeds);
 
+
+			volView.__seedsCacheTags=new Array(volView.__numberOfSlices);
 			for(var i=0; i<volView.__numberOfSlices; i++)
 			{
 				volView.__horizSlices.inProgData[i] = {
@@ -1212,9 +1244,7 @@ qx.Class.define("desk.volView",
 
 				volView.__htmlContextLabels.beginPath(); // seb : why???
 				volView.__mouseData.mouseLeftDownFlag = false;
-			////Save current image
 				var oldSliceIndex= volView.__drawingCanvasParams.sliceNumber;
-				volView.__horizSlices.sliceLabels[oldSliceIndex] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 
 				var sliceHasSeeds=false;
 				if (volView.__horizSlices.inProgData[oldSliceIndex].inList!=0)
@@ -1227,23 +1257,7 @@ qx.Class.define("desk.volView",
 				{
 					if(volView.__horizSlices.inProgData[oldSliceIndex].inList==0)
 					{
-					// Add slice to list
-						var sliceItem = new qx.ui.form.ListItem("Slice No." + oldSliceIndex);
-						sliceItem.setUserData("slice",oldSliceIndex);
-						var tempPos = 0;
-						var seedsList=modifSlicesList.getChildren();
-						for(var i=0; i<seedsList.length; i++)
-						{
-								if(seedsList[i].getUserData("slice")<oldSliceIndex)
-										tempPos++;
-						}
-						modifSlicesList.addAt(sliceItem, tempPos);
-						volView.__horizSlices.inProgData[oldSliceIndex].inList = sliceItem;
-						sliceItem.addListener("click", function(event)
-						{
-								spinner.setValue(this.getUserData("slice"));
-						}, sliceItem);
-					////Update XML file
+						volView.__addNewSeedItemToList(oldSliceIndex);
 						updateSeedsXML();
 					}
 				////Since there is at least one saved seeds image, activate start button
@@ -1255,7 +1269,7 @@ qx.Class.define("desk.volView",
 			////Set canvas, buttons, list
 				if(volView.__horizSlices.inProgData[newSliceIndex].inList!=0)	////NEXT slice HAS seeds
 				{
-						volView.__htmlContextLabels.putImageData(volView.__horizSlices.sliceLabels[newSliceIndex], 0, 0);
+						volView.__updateSeeds();
 						clearButton.set({opacity: 1, enabled : true});
 						eraserButton.set({opacity: 1, enabled : true});
                         startButton.set({opacity: 1, enabled : true});
@@ -1277,20 +1291,8 @@ qx.Class.define("desk.volView",
 
 			}, this);
 
-/*            slider.addListener("mouseup", function(event)
-			{
-                    volView.__htmlContextLabels.beginPath();
-                    volView.__mouseData.mouseLeftDownFlag = false;
-            },this);*/
-			
- //           slider.setHeight(volView.__imgMap.height);    //	set to match image height
 			spinner.setValue(0);//Math.round(0.5*volView.__numberOfSlices));
-			
- /*           spinner.addListener("mouseup", function(event)
-			{
-                    volView.__htmlContextLabels.beginPath();
-                    volView.__mouseData.mouseLeftDownFlag = false;
-            },this);*/
+
 
             volView.__imageCanvas.add(volView.__eraserCursor);
 
@@ -1658,7 +1660,7 @@ qx.Class.define("desk.volView",
 
                 var sliceData = volView.__htmlContextImage.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
                 var pixels = sliceData.data;
-                var seeds = volView.__horizSlices.sliceLabels[volView.__drawingCanvasParams.sliceNumber].data;
+                var seeds=volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height).data;
                 var isAllBlack = true;
                 for(var i=0; i<seeds.length; i+=4)
                 {
@@ -1711,6 +1713,7 @@ qx.Class.define("desk.volView",
 						"output_directory" : volView.__sessionDirectory};
 
 					volView.__fileBrowser.getActions().launchAction(parameterMap);
+					volView.__seedsCacheTags[volView.__drawingCanvasParams.sliceNumber]=Math.random();
                 }
                 return isAllBlack;
             };
@@ -2029,6 +2032,23 @@ qx.Class.define("desk.volView",
 				}
 				return xml
 			}
+		},
+
+		__addNewSeedItemToList : function (sliceId)
+		{
+			var sliceItem = new qx.ui.form.ListItem("Slice No." + sliceId);
+			sliceItem.setUserData("slice",sliceId);
+			var tempPos = 0;
+			var seedsList=this.__seedsList.getChildren();
+			for(var i=0; i<seedsList.length; i++)
+			{
+				if(seedsList[i].getUserData("slice")<sliceId)
+					tempPos++;
+			}
+			this.__seedsList.addAt(sliceItem, tempPos);
+			this.__horizSlices.inProgData[sliceId].inList = sliceItem;
+			sliceItem.addListener("click", function(event)
+				{this.__spinner.setValue(event.getTarget().getUserData("slice"));}, this);
 		},
 
 		__getSessionsList : function()
