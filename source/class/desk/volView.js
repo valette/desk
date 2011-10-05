@@ -19,7 +19,6 @@ qx.Class.define("desk.volView",
 
 		// init 
 		this.__horizSlices={
-		inProgData : [],
 		usedSliceSeeds : [],
 		sliceResults : []
 		};
@@ -178,6 +177,9 @@ qx.Class.define("desk.volView",
 
 		// the list displaying slices having seeds
 		__seedsList : null,
+
+		// array defining whether a slice contains seeds
+		__seedsArray : null,
 
 		__currentSeedsModified : false,
 
@@ -833,7 +835,7 @@ qx.Class.define("desk.volView",
 						var sliceId = selectedChild.getUserData("slice");
 					////Erase image on the server
 						eraseFile(volView.__sessionDirectory+"/"+volView.getSeedFileName(sliceId));
-						volView.__horizSlices.inProgData[sliceId].inList=0;
+						volView.__seedsArray[sliceId]=0;
 						console.log("deleted slice "+sliceId)
 					////Update members list
 						clearButton.execute();
@@ -1222,15 +1224,7 @@ qx.Class.define("desk.volView",
 			this.__embedObjectUsedSeeds=embedObjectUsedSeeds;
 			this.__imageCanvas.add(containerHtmlUsedSeeds);
 
-
-			volView.__seedsCacheTags=new Array(volView.__numberOfSlices);
-			for(var i=0; i<volView.__numberOfSlices; i++)
-			{
-				volView.__horizSlices.inProgData[i] = {
-						inList : 0,
-						segmented : false
-				};
-			};
+			volView.__resetSeedsList();
 	
 			spinner.addListener("changeValue", function(event)
 			{
@@ -1247,7 +1241,7 @@ qx.Class.define("desk.volView",
 				var oldSliceIndex= volView.__drawingCanvasParams.sliceNumber;
 
 				var sliceHasSeeds=false;
-				if (volView.__horizSlices.inProgData[oldSliceIndex].inList!=0)
+				if (volView.__seedsArray[oldSliceIndex]!=0)
 					sliceHasSeeds=true;
 				
 				sliceHasSeeds=	!pngCanvasFctn(sliceHasSeeds);	//  pngCanvasFctn() returns true if image is all black
@@ -1255,7 +1249,7 @@ qx.Class.define("desk.volView",
 			////Update lists
 				if(sliceHasSeeds)	////CURRENT slice has seeds
 				{
-					if(volView.__horizSlices.inProgData[oldSliceIndex].inList==0)
+					if(volView.__seedsArray[oldSliceIndex]==0)
 					{
 						volView.__addNewSeedItemToList(oldSliceIndex);
 						updateSeedsXML();
@@ -1267,13 +1261,13 @@ qx.Class.define("desk.volView",
 
 				volView.__drawingCanvasParams.sliceNumber = newSliceIndex;
 			////Set canvas, buttons, list
-				if(volView.__horizSlices.inProgData[newSliceIndex].inList!=0)	////NEXT slice HAS seeds
+				if(volView.__seedsArray[newSliceIndex]!=0)	////NEXT slice HAS seeds
 				{
 						volView.__updateSeeds();
 						clearButton.set({opacity: 1, enabled : true});
 						eraserButton.set({opacity: 1, enabled : true});
                         startButton.set({opacity: 1, enabled : true});
-                        modifSlicesList.setSelection([volView.__horizSlices.inProgData[newSliceIndex].inList]);
+                        modifSlicesList.setSelection([volView.__seedsArray[newSliceIndex]]);
 				}
 				else	////NEXT slice has NO seeds
 				{
@@ -1291,7 +1285,7 @@ qx.Class.define("desk.volView",
 
 			}, this);
 
-			spinner.setValue(0);//Math.round(0.5*volView.__numberOfSlices));
+		//	spinner.setValue(0);//Math.round(0.5*volView.__numberOfSlices));
 
 
             volView.__imageCanvas.add(volView.__eraserCursor);
@@ -2034,6 +2028,54 @@ qx.Class.define("desk.volView",
 			}
 		},
 
+		__loadSession : function()
+		{
+			this.__resetSeedsList();
+			console.log("loading slices:");
+			var colorsParamRequest = new XMLHttpRequest();
+			var volView=this;
+			colorsParamRequest.onreadystatechange = function()
+			{
+				 if(this.readyState == 4 && this.status == 200)
+				 {
+					// so far so good
+					if(this.responseXML!=null)
+					{
+						var response = this.responseXML;
+						var seeds = response.getElementsByTagName("seed");
+						for(var i=0; i<seeds.length; i++)
+						{
+							var sliceId=parseInt(seeds[i].getAttribute("slice"));
+							console.log("adding slice :"+sliceId);
+							volView.__addNewSeedItemToList(sliceId);
+						};
+					}
+					else
+						alert("no seeds found");
+				}
+				else if (this.readyState == 4 && this.status != 200)
+				{
+						// fetched the wrong page or network error...
+						alert("network error when loading seeds list");
+				}
+			};
+			colorsParamRequest.open("GET", this.__fileBrowser.getFileURL(this.__sessionDirectory+"/seeds.xml"), true);
+			colorsParamRequest.send(null);
+		},
+
+		__resetSeedsList : function()
+		{
+			this.__seedsList.removeAll();
+			var numberOfSlices=this.__dimensions[2]-1;
+			this.__seedsArray=new Array(numberOfSlices);
+			this.__seedsCacheTags=new Array (numberOfSlices);
+			for (var i=0;i!=numberOfSlices;i++)
+			{
+				this.__seedsCacheTags[i]=Math.random();
+				this.__seedsArray[i]=0;
+			}	
+		},
+
 		__addNewSeedItemToList : function (sliceId)
 		{
 			var sliceItem = new qx.ui.form.ListItem("Slice No." + sliceId);
@@ -2046,7 +2088,7 @@ qx.Class.define("desk.volView",
 					tempPos++;
 			}
 			this.__seedsList.addAt(sliceItem, tempPos);
-			this.__horizSlices.inProgData[sliceId].inList = sliceItem;
+			this.__seedsArray[sliceId] = sliceItem;
 			sliceItem.addListener("click", function(event)
 				{this.__spinner.setValue(event.getTarget().getUserData("slice"));}, this);
 		},
@@ -2081,6 +2123,7 @@ qx.Class.define("desk.volView",
 							volView.__colorsList.setVisibility("visible");
 							volView.__sessionDirectory=fileBrowser.getSessionDirectory(
 								volView.__file,sessionType,e.getTarget().getLabel());
+							volView.__loadSession();
 							});
 					}
 					// add "create new session" item
