@@ -272,6 +272,8 @@ qx.Class.define("desk.volView",
 
 		__loadSeeds : null,
 
+		__currentSeedsSlice : null,
+
 		// volume extent (VTK style)
 		__extent : null,
 
@@ -306,10 +308,7 @@ qx.Class.define("desk.volView",
 			this.__loadImage.onload = function()
 			{
 				if(volView.__drawingCanvasParams.drawingContext!=null)
-				{
 					volView.__drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
-				}
-
 			};
 
 			var selection=this.__formatSelectBox.getSelection()[0];
@@ -320,9 +319,9 @@ qx.Class.define("desk.volView",
 
 		__updateSeeds : function () {
 			var volView=this;
-			var slice=volView.__spinner.getValue();
-			
-			this.__loadSeeds.onload = function()
+			var sliceId=volView.__spinner.getValue();
+			var oldSeedSlice=volView.__currentSeedsSlice;
+			function seedsLoaded()
 			{
 				if(volView.__drawingCanvasParams.drawingContext!=null)
 				{
@@ -330,13 +329,23 @@ qx.Class.define("desk.volView",
 					volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 					volView.__htmlContextLabels.drawImage(volView.__loadSeeds, 0, 0);
 					volView.__drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
+					volView.__currentSeedsSlice=sliceId;
 				}
 
 			};
 
+			this.__loadSeeds.onload = seedsLoaded;
+
 			var selection=this.__formatSelectBox.getSelection()[0];
-			this.__loadSeeds.src=volView.__fileBrowser.getFileURL(this.__sessionDirectory+"/"+this.getSeedFileName(slice))+
-				"?nocache=" + volView.__seedsCacheTags[slice];
+
+			var seedsURL=volView.__fileBrowser.getFileURL(this.__sessionDirectory+"/"+this.getSeedFileName(sliceId))+
+				"?nocache=" + volView.__seedsCacheTags[sliceId];
+
+			// test wether the seed is already loaded.
+			if (oldSeedSlice==sliceId)
+				seedsLoaded();
+			else
+				this.__loadSeeds.src=seedsURL;
 		},
 
 		setMouseActionMode : function (mode) {
@@ -1984,7 +1993,6 @@ qx.Class.define("desk.volView",
 		__updateAll : function()
 		{
 			var currentSlice=this.__drawingCanvasParams.sliceNumber;
-
 			if(this.__seedsArray[currentSlice]!=0)
 			{
 				// the slice contains seeds
@@ -2045,14 +2053,15 @@ qx.Class.define("desk.volView",
 		__resetSeedsList : function()
 		{
 			this.__seedsList.removeAll();
-			var numberOfSlices=this.__dimensions[2]-1;
+			var numberOfSlices=this.__dimensions[2];
 			this.__seedsArray=new Array(numberOfSlices);
 			this.__seedsCacheTags=new Array (numberOfSlices);
 			for (var i=0;i!=numberOfSlices;i++)
 			{
 				this.__seedsCacheTags[i]=Math.random();
 				this.__seedsArray[i]=0;
-			}	
+			}
+			this.__currentSeedsSlice=null;
 		},
 
 		__addNewSeedItemToList : function (sliceId)
