@@ -574,7 +574,7 @@ qx.Class.define("desk.volView",
                 volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 			
-			this.__topRightContainer.add(clearButton)
+	//		this.__topRightContainer.add(clearButton)
 			
 			
 			
@@ -807,6 +807,8 @@ qx.Class.define("desk.volView",
 						var sliceId = selectedChild.getUserData("slice");
 					////Erase image on the server
 						eraseFile(volView.__sessionDirectory+"/"+volView.getSeedFileName(sliceId));
+						volView.__horizSlices.inProgData[sliceId].inList=0;
+						console.log("deleted slice "+sliceId)
 					////Update members list
 						clearButton.execute();
 					////Erase from widget list
@@ -1194,8 +1196,7 @@ qx.Class.define("desk.volView",
 			for(var i=0; i<volView.__numberOfSlices; i++)
 			{
 				volView.__horizSlices.inProgData[i] = {
-						inList : null,
-						curTagged : false,
+						inList : 0,
 						segmented : false
 				};
 			};
@@ -1208,14 +1209,17 @@ qx.Class.define("desk.volView",
 				var oldSliceIndex= volView.__drawingCanvasParams.sliceNumber;
 				volView.__horizSlices.sliceLabels[oldSliceIndex] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
 
-				volView.__horizSlices.inProgData[oldSliceIndex].curTagged = 
-					!pngCanvasFctn(volView.__horizSlices.inProgData[oldSliceIndex].curTagged);	//  pngCanvasFctn() returns true if image is all black
+				var sliceHasSeeds=false;
+				if (volView.__horizSlices.inProgData[oldSliceIndex].inList!=0)
+					sliceHasSeeds=true;
+				
+				sliceHasSeeds=	!pngCanvasFctn(sliceHasSeeds);	//  pngCanvasFctn() returns true if image is all black
 				var newSliceIndex=event.getData();
-				volView.__drawingCanvasParams.sliceNumber = newSliceIndex;
+
 			////Update lists
-				if(volView.__horizSlices.inProgData[oldSliceIndex].curTagged)	////CURRENT slice has seeds
+				if(sliceHasSeeds)	////CURRENT slice has seeds
 				{
-					if(volView.__horizSlices.inProgData[oldSliceIndex].inList==null)
+					if(volView.__horizSlices.inProgData[oldSliceIndex].inList==0)
 					{
 					// Add slice to list
 						var sliceItem = new qx.ui.form.ListItem("Slice No." + oldSliceIndex);
@@ -1241,8 +1245,9 @@ qx.Class.define("desk.volView",
                             startButton.set({opacity: 1, enabled : true});
 				}
 
+				volView.__drawingCanvasParams.sliceNumber = newSliceIndex;
 			////Set canvas, buttons, list
-				if(volView.__horizSlices.inProgData[newSliceIndex].curTagged)	////NEXT slice HAS seeds
+				if(volView.__horizSlices.inProgData[newSliceIndex].inList!=0)	////NEXT slice HAS seeds
 				{
 						volView.__htmlContextLabels.putImageData(volView.__horizSlices.sliceLabels[newSliceIndex], 0, 0);
 						clearButton.set({opacity: 1, enabled : true});
@@ -1920,11 +1925,6 @@ qx.Class.define("desk.volView",
 		////Use a php file to remove the spceciefd file in the server
 			var eraseFile = function(file)
             {
-		/*		var removeRequest = new XMLHttpRequest();
-				removeRequest.open("POST",'/visu/eraseFile.php',true);
-				removeRequest.setRequestHeader('Content-Type', 'application/upload');
-				console.log("Erasing " + file);
-				removeRequest.send(file);*/
 				var parameterMap={
 					"action" : "delete_file",
 					"file_name" : file};
