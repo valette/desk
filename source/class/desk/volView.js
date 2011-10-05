@@ -166,6 +166,7 @@ qx.Class.define("desk.volView",
 		__topRightContainer : null,
 
 		__slider : null,
+		__spinner : null,
 		__formatSelectBox : null,
 
 		// the widget containing the defined colors for painting
@@ -293,7 +294,7 @@ qx.Class.define("desk.volView",
 
 		__updateImage : function () {
 			var volView=this;
-			var slice=volView.__dimensions[2]-1-volView.__slider.getValue();
+			var slice=volView.__spinner.getValue();
 			
 			this.__loadImage.onload = function()
 			{
@@ -760,14 +761,12 @@ qx.Class.define("desk.volView",
 			
 		////Create spinner and sync it with the slider
             var spinner = new qx.ui.form.Spinner();
+            this.__spinner=spinner;
             spinner.setMaximum(volView.__numberOfSlices-1);
             spinner.setMinimum(0);
-            spinner.bind("value", slider, "value");
-            slider.bind("value", spinner, "value");
-            spinner.bind("maximum", slider, "maximum");
-            slider.bind("maximum", spinner, "maximum");
-            spinner.bind("minimum", slider, "minimum");
-            slider.bind("minimum", spinner, "minimum");
+            spinner.setValue(0);
+            slider.addListener("changeValue",function(e){
+            	spinner.setValue(volView.__numberOfSlices-1-e.getData());});
 
 			volView.__topLeftContainer.add(spinner);
 			volView.__topLeftContainer.add(volView.__brghtnssCntrstButton);
@@ -1201,8 +1200,16 @@ qx.Class.define("desk.volView",
 				};
 			};
 	
-			slider.addListener("changeValue", function(event)
+			spinner.addListener("changeValue", function(event)
 			{
+				var newSliceIndex=event.getData();
+				if (newSliceIndex!=Math.round(newSliceIndex))
+				{
+					spinner.setValue(Math.round(newSliceIndex));
+					return;
+				}
+				slider.setValue(volView.__numberOfSlices-1-newSliceIndex);
+
 				volView.__htmlContextLabels.beginPath(); // seb : why???
 				volView.__mouseData.mouseLeftDownFlag = false;
 			////Save current image
@@ -1214,7 +1221,6 @@ qx.Class.define("desk.volView",
 					sliceHasSeeds=true;
 				
 				sliceHasSeeds=	!pngCanvasFctn(sliceHasSeeds);	//  pngCanvasFctn() returns true if image is all black
-				var newSliceIndex=event.getData();
 
 			////Update lists
 				if(sliceHasSeeds)	////CURRENT slice has seeds
@@ -1235,7 +1241,7 @@ qx.Class.define("desk.volView",
 						volView.__horizSlices.inProgData[oldSliceIndex].inList = sliceItem;
 						sliceItem.addListener("click", function(event)
 						{
-								slider.setValue(this.getUserData("slice"));
+								spinner.setValue(this.getUserData("slice"));
 						}, sliceItem);
 					////Update XML file
 						updateSeedsXML();
@@ -1271,24 +1277,24 @@ qx.Class.define("desk.volView",
 
 			}, this);
 
-            slider.addListener("mouseup", function(event)
+/*            slider.addListener("mouseup", function(event)
 			{
                     volView.__htmlContextLabels.beginPath();
                     volView.__mouseData.mouseLeftDownFlag = false;
-            },this);
+            },this);*/
 			
-            slider.setHeight(volView.__imgMap.height);    //	set to match image height
-			slider.setValue(0);//Math.round(0.5*volView.__numberOfSlices));
+ //           slider.setHeight(volView.__imgMap.height);    //	set to match image height
+			spinner.setValue(0);//Math.round(0.5*volView.__numberOfSlices));
 			
-            spinner.addListener("mouseup", function(event)
+ /*           spinner.addListener("mouseup", function(event)
 			{
                     volView.__htmlContextLabels.beginPath();
                     volView.__mouseData.mouseLeftDownFlag = false;
-            },this);
+            },this);*/
 
             volView.__imageCanvas.add(volView.__eraserCursor);
 
-		function initSlider()
+		function waitForinit()
 		{
 			// wait for the canvas to really appear in the window otherwise things get bad
 			if ((volView.__embedObjectImage.getContentElement().getDomElement()==null)||
@@ -1296,7 +1302,7 @@ qx.Class.define("desk.volView",
 				(drawingCanvas.getContext2d()==null))
 				{
 				console.log("not yet ready");
-				setTimeout(initSlider, 100);
+				setTimeout(waitForinit, 100);
 				}
 			else
 			{
@@ -1326,10 +1332,10 @@ qx.Class.define("desk.volView",
 		            volView.__eraserCursor.exclude();
 		        });
 
-				slider.setValue(Math.round(volView.__dimensions[2]/2));
+				spinner.setValue(Math.round(volView.__dimensions[2]/2));
 			}
 		}
-		initSlider();
+		waitForinit();
 
 		this.__window.open();
 
@@ -2178,8 +2184,8 @@ qx.Class.define("desk.volView",
 					var volView2=e.getData("volumeSlice");
 					if (volView2!=this)
 					{
-						volView2.__slider.bind("value", this.__slider, "value");
-						this.__slider.bind("value", volView2.__slider, "value");
+						volView2.__spinner.bind("value", this.__spinner, "value");
+						this.__spinner.bind("value", volView2.__spinner, "value");
 					}
 				}
 				else
@@ -2206,7 +2212,7 @@ qx.Class.define("desk.volView",
 		},
 
 		getCornersCoordinates : function () {
-			var z=this.__origin[2]+(this.__dimensions[2]-this.__slider.getValue()+this.__extent[4])*this.__spacing[2];
+			var z=this.__origin[2]+(this.__spinner.getValue()+this.__extent[4])*this.__spacing[2];
 			var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
 			var xmax=this.__origin[0]+this.__extent[1]*this.__spacing[0];
 			var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
