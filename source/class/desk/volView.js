@@ -806,7 +806,7 @@ qx.Class.define("desk.volView",
 					{
 						var sliceId = selectedChild.getUserData("slice");
 					////Erase image on the server
-						eraseFile(volView.__slicesNamePrefix + (volView.__slicesNameOffset + sliceId) + ".png");
+						eraseFile(volView.__sessionDirectory+"/"+volView.getSeedFileName(sliceId));
 					////Update members list
 						clearButton.execute();
 					////Erase from widget list
@@ -880,7 +880,6 @@ qx.Class.define("desk.volView",
 					if (volView.__mouseActionMode==3)
                     {
 						drawBrush(event,volView.__drawingCanvasParams.curCtxtZoom);
-                    	console.log("draw...");
                         volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
                         volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
                         volView.__htmlContextLabels.beginPath();
@@ -1696,9 +1695,7 @@ qx.Class.define("desk.volView",
 				    var base64Img = pngImg.substring(commaIndex+1,pngImg.length);
 					var parameterMap={
 						"action" : "save_binary_file",
-						"file_name" : volView.__slicesNamePrefix + 
-							(volView.__slicesNameOffset + volView.__drawingCanvasParams.sliceNumber) +
-							".png",
+						"file_name" : volView.getSeedFileName(volView.__drawingCanvasParams.sliceNumber),
 						"base64Data" : base64Img,
 						"output_directory" : volView.__sessionDirectory};
 
@@ -1919,47 +1916,43 @@ qx.Class.define("desk.volView",
                 return dataDesc;
             };
 
-			
+
 		////Use a php file to remove the spceciefd file in the server
 			var eraseFile = function(file)
             {
-				var removeRequest = new XMLHttpRequest();
+		/*		var removeRequest = new XMLHttpRequest();
 				removeRequest.open("POST",'/visu/eraseFile.php',true);
 				removeRequest.setRequestHeader('Content-Type', 'application/upload');
 				console.log("Erasing " + file);
-				removeRequest.send(file);
+				removeRequest.send(file);*/
+				var parameterMap={
+					"action" : "delete_file",
+					"file_name" : file};
+
+				volView.__fileBrowser.getActions().launchAction(parameterMap);
 			};
 
 
 
-
-	
 		////Rewrite xml list of the drawn seeds
 			var updateSeedsXML = function()
             {
-				var sliceID;
 				var xmlContent = '\n';
 				var seedsList=modifSlicesList.getChildren();
 				for(var i=0; i<seedsList.length; i++)
 				{
 					var sliceId=seedsList[i].getUserData("slice");
-					sliceID = {slice: sliceId + ""};
-					xmlContent += '     ' + element('seed', volView.__slicesNamePrefix + (volView.__slicesNameOffset + sliceId) + "." + volView.__formatSelectBox.getSelection()[0].getLabel(), sliceID) + '\n';
+					var sliceAttributes = {slice: sliceId + ""};
+					xmlContent += element('seed', volView.getSeedFileName(sliceId), sliceAttributes) + '\n';
 				}
-/*				var xmlUpdateRequest = new XMLHttpRequest();
-				xmlUpdateRequest.open("POST",'/visu/createXML_Seb.php',true);
-				xmlUpdateRequest.setRequestHeader('Content-Type', 'application/upload');
-				volView.debug("Writing  seeds.xml");
-				xmlUpdateRequest.send(element('seeds', xmlContent));*/
 
-					////Send png image to server
-					var parameterMap={
-						"action" : "save_XML_file",
-						"file_name" : "seeds.xml",
-						"xmlData" : element('seeds', xmlContent),
-						"output_directory" : volView.__sessionDirectory};
+				var parameterMap={
+					"action" : "save_XML_file",
+					"file_name" : "seeds.xml",
+					"xmlData" : element('seeds', xmlContent),
+					"output_directory" : volView.__sessionDirectory};
 
-					volView.__fileBrowser.getActions().launchAction(parameterMap);
+				volView.__fileBrowser.getActions().launchAction(parameterMap);
 			};
 			
 
@@ -2073,12 +2066,12 @@ qx.Class.define("desk.volView",
 					{
 						sessionsList.setSelection([sessionItemToSelect]);
 						volView.__colorsList.setVisibility("visible");
+						volView.__sessionDirectory=fileBrowser.getSessionDirectory(
+							volView.__file,sessionType,sessionIdToSelect);
 					}
 					else
 					{
 						sessionsList.setSelection([createNewSessionItem]);
-						volView.__sessionDirectory=fileBrowser.getSessionDirectory(
-							volView.__file,sessionType,sessionIdToSelect);
 					}
 				}
 
@@ -2205,6 +2198,11 @@ qx.Class.define("desk.volView",
 		getSlicePixels : function()
 		{
 			return this.__pixels;
+		},
+
+		getSeedFileName : function(sliceId)
+		{
+			return 'seed', this.__slicesNamePrefix + (this.__slicesNameOffset + sliceId) +".png";
 		},
 
 		getCornersCoordinates : function () {

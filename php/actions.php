@@ -338,6 +338,11 @@ foreach ($actions->children() as $action)
 			// switch between core actions and xml-provided actions
 			switch ($actionToPerform)
 			{
+			case "delete_file":
+				$fileToDelete=$parametersList['file_name'];
+				system("rm -f $fileToDelete");
+				fwrite($flog, "$logHeader : erased $fileToDelete\n");
+				break;
 			case "save_binary_file":
 				$base64Data=$parametersList['base64Data'];
 				$binaryData = base64_decode($base64Data);
