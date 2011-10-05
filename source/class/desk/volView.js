@@ -307,7 +307,6 @@ qx.Class.define("desk.volView",
 			{
 				if(volView.__drawingCanvasParams.drawingContext!=null)
 				{
-	//				volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 					volView.__drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
 				}
 
@@ -589,22 +588,7 @@ qx.Class.define("desk.volView",
             },this);
 			
 			this.__topRightContainer.add(eraserButton)
-			
-			
-			
-		////Create clear drawing zone button
-			var clearButton = new qx.ui.form.Button("Clear drawing");
 
-            clearButton.set({opacity: 0.5, enabled : false});
-
-            clearButton.addListener("mouseup", function(event)
-			{
-                volView.__htmlContextLabels.beginPath();
-                volView.__mouseData.mouseLeftDownFlag = false;
-            },this);
-			
-	//		this.__topRightContainer.add(clearButton)
-			
 			
 			
 		////Create labels zone
@@ -837,9 +821,7 @@ qx.Class.define("desk.volView",
 						eraseFile(volView.__sessionDirectory+"/"+volView.getSeedFileName(sliceId));
 						volView.__seedsArray[sliceId]=0;
 						console.log("deleted slice "+sliceId)
-					////Update members list
-						clearButton.execute();
-					////Erase from widget list
+						volView.clearDrawingCanvas();
 						modifSlicesList.remove(selectedChild);
 
 						updateSeedsXML();
@@ -919,7 +901,6 @@ qx.Class.define("desk.volView",
                                                         0, Math.PI*2, false);
                         volView.__htmlContextLabels.closePath();
                         volView.__htmlContextLabels.fill();
-                        clearButton.set({opacity: 1, enabled : true});
                         if(!eraserButton.isEnabled())
                             eraserButton.set({opacity: 1, enabled : true});
                     }
@@ -1080,7 +1061,6 @@ qx.Class.define("desk.volView",
 						volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
 						volView.__htmlContextLabels.lineTo(volView.__mouseData.xPos,volView.__mouseData.yPos);
 						volView.__htmlContextLabels.stroke();
-						clearButton.set({opacity: 1, enabled : true});
 						break;
 					case 4 :
 						////Erase at mouse position
@@ -1260,29 +1240,7 @@ qx.Class.define("desk.volView",
 				}
 
 				volView.__drawingCanvasParams.sliceNumber = newSliceIndex;
-			////Set canvas, buttons, list
-				if(volView.__seedsArray[newSliceIndex]!=0)	////NEXT slice HAS seeds
-				{
-						volView.__updateSeeds();
-						clearButton.set({opacity: 1, enabled : true});
-						eraserButton.set({opacity: 1, enabled : true});
-                        startButton.set({opacity: 1, enabled : true});
-                        modifSlicesList.setSelection([volView.__seedsArray[newSliceIndex]]);
-				}
-				else	////NEXT slice has NO seeds
-				{
-				 		modifSlicesList.resetSelection();
-						clearButton.execute();
-						volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-						startButton.set({opacity: 0.5, enabled : false});
-				};
-			////Update image canvas
-				volView.__updateImage();
-
-			////Clear "undo" stack
-				volView.__ctrlZData = [];
-            	volView.__currentSeedsModified=false;
-
+				volView.__updateAll();
 			}, this);
 
 		//	spinner.setValue(0);//Math.round(0.5*volView.__numberOfSlices));
@@ -1314,19 +1272,6 @@ qx.Class.define("desk.volView",
 				volView.__eraserCursor.addListener("mousewheel", mouseWheelHandler, volView);
 				drawingCanvas.addListener("mousemove", mouseMoveHandler, volView);
 				drawingCanvas.addListener("mouseup", mouseUpHandler, volView);
-
-				clearButton.addListener("execute", function(event)
-				{
-		            volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-		            volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
-					volView.__htmlContextLabels.beginPath();
-		            volView.__mouseData.mouseLeftDownFlag = false;
-		            clearButton.set({opacity: 0.5, enabled : false});
-		            eraserButton.set({opacity: 0.5, enabled : false});
-		            eraserButton.setValue(false);
-		            volView.__drawingCanvasParams.eraseFlag = false;
-		            volView.__eraserCursor.exclude();
-		        });
 
 				spinner.setValue(Math.round(volView.__dimensions[2]/2));
 			}
@@ -2028,6 +1973,39 @@ qx.Class.define("desk.volView",
 			}
 		},
 
+		__clearDrawingCanvas : function()
+		{
+			this.__drawingCanvasParams.drawingContext.clearRect(-16, -16, this.__imgMap.width+32, this.__imgMap.height+32);
+			this.__htmlContextLabels.clearRect(-16, -16, this.__imgMap.width+32, this.__imgMap.height+32);
+			this.__htmlContextLabels.beginPath();
+			this.__eraserCursor.exclude();
+		},
+
+		__updateAll : function()
+		{
+			var currentSlice=this.__drawingCanvasParams.sliceNumber;
+
+			if(this.__seedsArray[currentSlice]!=0)
+			{
+				// the slice contains seeds
+				this.__updateSeeds();
+				this.__seedsList.setSelection([this.__seedsArray[currentSlice]]);
+			}
+			else
+			{
+				// current slice has no seeds
+				this.__seedsList.resetSelection();
+				this.__clearDrawingCanvas();
+				this.__htmlContextLabels.clearRect(-16, -16, this.__imgMap.width+32, this.__imgMap.height+32);
+			};
+			////Update image canvas
+			this.__updateImage();
+
+			////Clear "undo" stack
+			this.__ctrlZData = [];
+			this.__currentSeedsModified=false;
+		},
+
 		__loadSession : function()
 		{
 			this.__resetSeedsList();
@@ -2049,6 +2027,7 @@ qx.Class.define("desk.volView",
 							console.log("adding slice :"+sliceId);
 							volView.__addNewSeedItemToList(sliceId);
 						};
+						volView.__updateAll();
 					}
 					else
 						alert("no seeds found");
@@ -2104,6 +2083,9 @@ qx.Class.define("desk.volView",
 			var createNewSession = function()
 			{
 				var newSession=fileBrowser.createNewSession(volView.__file,sessionType, updateList);
+				volView.__sessionDirectory=fileBrowser.getSessionDirectory(volView.__file,sessionType,newSession);
+				volView.__resetSeedsList();
+				volView.__updateAll();
 			};
 
 			var updateList = function(sessionIdToSelect) {
