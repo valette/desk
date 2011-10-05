@@ -15,12 +15,15 @@ $inputFilesLastMtime=0;
 
 function readParameters($file) {
 	$parameters=array();
-	$content = file_get_contents($file);
-	$parametersLines=explode("\n",$content);
-	foreach ($parametersLines as $line)
+	if (is_file($file))
 	{
-		$parameter=explode("=",$line);
-		$parameters[''.$parameter[0]]=$parameter[1];
+		$content = file_get_contents($file);
+		$parametersLines=explode("\n",$content);
+		foreach ($parametersLines as $line)
+		{
+			$parameter=explode("=",$line);
+			$parameters[''.$parameter[0]]=$parameter[1];
+		}
 	}
 	return ($parameters);
 }
@@ -318,12 +321,15 @@ foreach ($actions->children() as $action)
 				{
 					$oldParameters=readParameters("$parametersFileName");
 					$outputMtime=filemtime('.');
-					if (($inputFilesLastMtime<= $outputMtime)&&
-							($oldParameters['hash']==$commandHash))
+					if (isset($oldParameters['hash']))
 					{
-						$cached=true;
-						fwrite($flog, "$logHeader : cached because input files were not modified\n");
-						fwrite($flog, "$logHeader : directoryMtime : $outputMtime, inputFilesLastMtime : $inputFilesLastMtime\n");
+						if (($inputFilesLastMtime<= $outputMtime)&&
+								($oldParameters['hash']==$commandHash))
+						{
+							$cached=true;
+							fwrite($flog, "$logHeader : cached because input files were not modified\n");
+							fwrite($flog, "$logHeader : directoryMtime : $outputMtime, inputFilesLastMtime : $inputFilesLastMtime\n");
+						}
 					}
 				}
 				$parametersList['hash']=$commandHash;
