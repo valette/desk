@@ -1118,18 +1118,7 @@ qx.Class.define("desk.volView",
 
 			this.__imageContainer.add(modifSlicesList, {flex : 1});
 			modifSlicesList.setVisibility("excluded");
-			
-			imgCanvas.addListener("redraw", function(event)
-			{
-                    var data = event.getData();
-                    volView.__imgCanvasParams.imgContext = data.context;
-					volView.__htmlCanvasImage = volView.__embedObjectImage.getContentElement().getDomElement().firstChild;
-                    volView.__htmlContextImage = volView.__htmlCanvasImage.getContext("2d");
-					volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);	// here for unbuild version
-					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);	// here for unbuild version
-            }, this);
-			
-			
+
 			this.__imageCanvas.addListener("mouseout", function(event)
 			{
 				this.__mouseActionActive=false;
@@ -1190,8 +1179,8 @@ qx.Class.define("desk.volView",
             containerHtmlLabels.add(embedObjectLabels);
 			this.__embedObjectLabels=embedObjectLabels;
 			this.__imageCanvas.add(containerHtmlLabels);
-			
-			
+
+
             // HTML embed for segmented image
             var embedHtmlCodeSegImg = '<canvas id="htmlTagCanvasSegImg" width="' + volView.__imgMap.width + '" height="' + volView.__imgMap.height + '" ></canvas>';
             var embedObjectSegImg = new qx.ui.embed.Html(embedHtmlCodeSegImg);
@@ -1268,10 +1257,11 @@ qx.Class.define("desk.volView",
 			// wait for the canvas to really appear in the window otherwise things get bad
 			if ((volView.__embedObjectImage.getContentElement().getDomElement()==null)||
 				(volView.__embedObjectLabels.getContentElement().getDomElement()==null)||
-				(drawingCanvas.getContext2d()==null))
+				(drawingCanvas.getContext2d()==null)||
+				(imgCanvas.getContext2d()==null))
 				{
-				console.log("not yet ready");
-				setTimeout(waitForinit, 100);
+					console.log("not yet ready");
+					setTimeout(waitForinit, 100);
 				}
 			else
 			{
@@ -1279,6 +1269,10 @@ qx.Class.define("desk.volView",
 				volView.__htmlCanvasLabels = volView.__embedObjectLabels.getContentElement().getDomElement().firstChild;
 				volView.__htmlContextLabels = volView.__htmlCanvasLabels.getContext("2d");
 				volView.__drawingCanvasParams.drawingContext = drawingCanvas.getContext2d();
+                volView.__imgCanvasParams.imgContext = imgCanvas.getContext2d();
+
+				volView.__htmlCanvasImage = volView.__embedObjectImage.getContentElement().getDomElement().firstChild;
+				volView.__htmlContextImage = volView.__htmlCanvasImage.getContext("2d");
 
 
 				drawingCanvas.addListener("redraw", updateContext, volView);
@@ -1287,6 +1281,12 @@ qx.Class.define("desk.volView",
 				volView.__eraserCursor.addListener("mousewheel", mouseWheelHandler, volView);
 				drawingCanvas.addListener("mousemove", mouseMoveHandler, volView);
 				drawingCanvas.addListener("mouseup", mouseUpHandler, volView);
+
+				imgCanvas.addListener("redraw", function(event)
+				{
+					volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
+					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);
+		        });
 
 				spinner.setValue(Math.round(volView.__dimensions[2]/2));
 			}
@@ -2127,6 +2127,7 @@ qx.Class.define("desk.volView",
 						if (sessionId==sessionIdToSelect)
 							sessionItemToSelect=sessionItem;
 						sessionItem.addListener("click", function(e){
+						console.log("loading session "+e.getTarget().getLabel());
 							volView.__colorsList.setVisibility("visible");
 							volView.__sessionDirectory=fileBrowser.getSessionDirectory(
 								volView.__file,sessionType,e.getTarget().getLabel());
