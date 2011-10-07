@@ -876,8 +876,9 @@ qx.Class.define("desk.volView",
 		            	volView.__currentSeedsModified=true;
 						save2undoStack(event);
 					}
-					if (volView.__mouseActionMode==3)
+					switch (volView.__mouseActionMode)
                     {
+                    case 3:
 						drawBrush(event,volView.__drawingCanvasParams.curCtxtZoom);
                         volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
                         volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
@@ -890,13 +891,14 @@ qx.Class.define("desk.volView",
                         volView.__htmlContextLabels.fill();
                         if(!eraserButton.isEnabled())
                             eraserButton.set({opacity: 1, enabled : true});
-                    }
-
-					if (volView.__mouseActionMode==1);
-                    {
+                        break;
+                    case 1:  
                         drawingCanvas.set({cursor: "crosshair"});
                         volView.__mouseData.recentX = volView.__mouseData.xPos;
                         volView.__mouseData.recentY = volView.__mouseData.yPos;
+                        break;
+                    default :
+						drawingCanvas.set({cursor: "default"});
                     };
 					volView.__mouseData.mouseLeftDownFlag = true;
                     volView.__htmlContextLabels.beginPath();
@@ -916,7 +918,6 @@ qx.Class.define("desk.volView",
 			var wheelScale = 0;
             var mouseWheelHandler = function(event)
             {
-				if((event.isLeftPressed()==false)&&(event.isMiddlePressed()==false)&&(event.isRightPressed()==false))
 				{
 					var tempScale = wheelScale;
 					tempScale += -event.getWheelDelta()/8;
