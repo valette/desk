@@ -24,7 +24,6 @@ qx.Class.define("desk.volView",
 		};
 
 		this.__ctrlZData=[];
-		this.__labelColors=[];
 
 // Données pour la position de l'objet window qui contient l'interface
 //(position par rapport au document <-> fenêtre de l'explorateur)
@@ -711,16 +710,22 @@ qx.Class.define("desk.volView",
 					{
 						var response = this.responseXML;
 						nbLabels = response.getElementsByTagName("color").length;
+						volView.__labelColors=new Array(nbLabels);
 						for(var i=0; i<nbLabels; i++)
 						{
+							var color=response.getElementsByTagName("color")[i];
+							var label=parseInt(color.getAttribute("label"))
+							var colorName=color.getAttribute("name");
 							volView.__labelColors[i] = {
-								red : response.getElementsByTagName("color")[i].getAttribute("red"),
-								green : response.getElementsByTagName("color")[i].getAttribute("green"),
-								blue : response.getElementsByTagName("color")[i].getAttribute("blue")
+								red : color.getAttribute("red"),
+								green : color.getAttribute("green"),
+								blue : color.getAttribute("blue"),
+								label : ""+label,
+								name : colorName
 							};
 							var newLabel = {
-								id : parseInt(response.getElementsByTagName("color")[i].getAttribute("label")),
-								name : response.getElementsByTagName("color")[i].getAttribute("name"),
+								id : label,
+								name : colorName,
 								color : "rgb(" + volView.__labelColors[i].red + "," + volView.__labelColors[i].green + "," + volView.__labelColors[i].blue + ")"
 							};
 							newLabel.name = newLabel.name.replace(newLabel.name.charAt(0), newLabel.name.charAt(0).toUpperCase());
@@ -815,31 +820,7 @@ qx.Class.define("desk.volView",
 			sessionsListContainer.add(volView.__sessionsList);
 			volView.__mainRightContainer.add(sessionsListContainer);
 
-			var modifSlicesList = new qx.ui.form.List(true);
-			volView.__seedsList=modifSlicesList;
-			modifSlicesList.setHeight(64);
-			modifSlicesList.addListener("keypress", function(event)
-			{
-				if(event.getKeyIdentifier()=="Delete")
-				{
-					var selectedChild = modifSlicesList.getSelection()[0];
-					if (selectedChild!=null)
-					{
-						var sliceId = selectedChild.getUserData("slice");
-					////Erase image on the server
-						eraseFile(volView.__sessionDirectory+"/"+volView.getSeedFileName(sliceId));
-						volView.__seedsArray[sliceId]=0;
-						console.log("deleted slice "+sliceId)
-						volView.clearDrawingCanvas();
-						modifSlicesList.remove(selectedChild);
-
-						updateSeedsXML();
-					}
-				}
-			}, this);
-
-			this.__mainRightContainer.add(modifSlicesList, {flex : 1});
-			this.__mainRightContainer.add(new qx.ui.core.Spacer(30, 40), {flex: 5});
+//			this.__mainRightContainer.add(new qx.ui.core.Spacer(30, 40), {flex: 5});
 
 
 			
@@ -1112,6 +1093,31 @@ qx.Class.define("desk.volView",
 			volView.__imageContainer.add(this.__imageCanvas);
 			volView.__imageContainer.add(slider, {flex : 1});
 
+			var modifSlicesList = new qx.ui.form.List();
+			modifSlicesList.setWidth(30);
+			volView.__seedsList=modifSlicesList;
+			modifSlicesList.addListener("keypress", function(event)
+			{
+				if(event.getKeyIdentifier()=="Delete")
+				{
+					var selectedChild = modifSlicesList.getSelection()[0];
+					if (selectedChild!=null)
+					{
+						var sliceId = selectedChild.getUserData("slice");
+					////Erase image on the server
+						eraseFile(volView.__sessionDirectory+"/"+volView.getSeedFileName(sliceId));
+						volView.__seedsArray[sliceId]=0;
+						console.log("deleted slice "+sliceId)
+						volView.__clearDrawingCanvas();
+						modifSlicesList.remove(selectedChild);
+
+						updateSeedsXML();
+					}
+				}
+			}, this);
+
+			this.__imageContainer.add(modifSlicesList, {flex : 1});
+			modifSlicesList.setVisibility("excluded");
 			
 			imgCanvas.addListener("redraw", function(event)
 			{
@@ -1610,30 +1616,33 @@ qx.Class.define("desk.volView",
                 var pixels = sliceData.data;
                 var seeds=volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height).data;
                 var isAllBlack = true;
+                var labelColors=volView.__labelColors;
                 for(var i=0; i<seeds.length; i+=4)
                 {
 					if(128<=seeds[i+3])  //  if( color is solid not totally transparent, ie. alpha=0) <-> if( not background )
                     {
-						var red = 0;
-						var green = 0;
-						var blue = 0;
-						var distance = 500;
+						var dRed = 0;
+						var dGreen = 0;
+						var dBlue = 0;
+						var distance = 500000;
 						var rightColorIndex = 0;
-						for(var j=0; j<volView.__labelColors.length; j++)
+						for(var j=0; j!=labelColors.length; j++)
 						{
-							red = volView.__labelColors[j].red;
-							green = volView.__labelColors[j].green;
-							blue = volView.__labelColors[j].blue;
-							var testD = Math.sqrt(Math.pow(red-seeds[i],2)+Math.pow(green-seeds[i+1],2)+Math.pow(blue-seeds[i+2],2));
+							var color=labelColors[j];
+							dRed = color.red-seeds[i];
+							dGreen = color.green-seeds[i+1];
+							dBlue = color.blue-seeds[i+2];
+							var testD = dRed*dRed+dGreen*dGreen+dBlue*dBlue;
 							if(testD<distance)
 							{
 								distance = testD;
 								rightColorIndex = j;
 							}
 						}
-						pixels[i] = volView.__labelColors[rightColorIndex].red;
-						pixels[i+1] = volView.__labelColors[rightColorIndex].green;
-						pixels[i+2] = volView.__labelColors[rightColorIndex].blue;
+						var rightColor=labelColors[rightColorIndex];
+						pixels[i] = rightColor.red;
+						pixels[i+1] = rightColor.green;
+						pixels[i+2] = rightColor.blue;
 						pixels[i+3] = 255;
                         isAllBlack = false;
                     }
@@ -1662,6 +1671,7 @@ qx.Class.define("desk.volView",
 
 					volView.__fileBrowser.getActions().launchAction(parameterMap);
 					volView.__seedsCacheTags[volView.__drawingCanvasParams.sliceNumber]=Math.random();
+					updateSeedsXML();
                 }
                 return isAllBlack;
             };
@@ -1895,6 +1905,12 @@ qx.Class.define("desk.volView",
 			var updateSeedsXML = function()
             {
 				var xmlContent = '\n';
+				var colors='\n';
+				for(var i=0; i<volView.__labelColors.length; i++)
+				{
+					colors+=element('color',null, volView.__labelColors[i]);
+				}
+				xmlContent+=element('colors', colors);
 				var seedsList=modifSlicesList.getChildren();
 				for(var i=0; i<seedsList.length; i++)
 				{
@@ -2066,13 +2082,13 @@ qx.Class.define("desk.volView",
 
 		__addNewSeedItemToList : function (sliceId)
 		{
-			var sliceItem = new qx.ui.form.ListItem("Slice No." + sliceId);
+			var sliceItem = new qx.ui.form.ListItem(""+ sliceId);
 			sliceItem.setUserData("slice",sliceId);
 			var tempPos = 0;
 			var seedsList=this.__seedsList.getChildren();
 			for(var i=0; i<seedsList.length; i++)
 			{
-				if(seedsList[i].getUserData("slice")<sliceId)
+				if(seedsList[i].getUserData("slice")>sliceId)
 					tempPos++;
 			}
 			this.__seedsList.addAt(sliceItem, tempPos);
@@ -2147,9 +2163,15 @@ qx.Class.define("desk.volView",
 			var paintPaneVisibilitySwitch=new qx.ui.form.ToggleButton("Paint")
 			paintPaneVisibilitySwitch.addListener("changeValue", function (e) {
 				if (e.getData())
+				{
 					this.__mainRightContainer.setVisibility("visible");
+					this.__seedsList.setVisibility("visible");
+				}
 				else
-					this.__mainRightContainer.setVisibility("excluded");				
+				{
+					this.__mainRightContainer.setVisibility("excluded");
+					this.__seedsList.setVisibility("excluded");
+				}
 				}, this);
 			return paintPaneVisibilitySwitch;
 		},
@@ -2273,16 +2295,16 @@ qx.Class.define("desk.volView",
 			var ymax=this.__origin[1]+this.__extent[3]*this.__spacing[1];
 			var coordinates=[];
 			coordinates[0]=xmin;
-			coordinates[1]=ymax;
+			coordinates[1]=ymin;
 			coordinates[2]=z;
 			coordinates[3]=xmax;
-			coordinates[4]=ymax;
+			coordinates[4]=ymin;
 			coordinates[5]=z;
 			coordinates[6]=xmax;
-			coordinates[7]=ymin;
+			coordinates[7]=ymax;
 			coordinates[8]=z;
 			coordinates[9]=xmin;
-			coordinates[10]=ymin;
+			coordinates[10]=ymax;
 			coordinates[11]=z;
 			return (coordinates);
 		}
