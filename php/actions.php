@@ -109,7 +109,7 @@ foreach ($actions->children() as $action)
 		if ($actionToPerform==$currentActionName)
 		{
 			$parametersList["action"]="$actionToPerform";
-			$command=$action["executable"]
+			$command="nice ".$action["executable"]
 				or die("no executable provided for action \"$actionToPerform\"");
 			// action was found in xml file, let's parse the parameters
 			foreach ($action->children() as $parameter)

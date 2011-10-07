@@ -58,6 +58,20 @@
 <parameter prefix="-f " name="diffusion_factor" type="float"/>
 </action>
 
+<action name="cvtseg2" executable="/home/visu/src/vtkSurfaceBuild/bin/cvtseg2">
+<description>compute an image-based clustering of the input volume</description>
+<parameter name="input_volume" type="file" required="true"/>
+<anchor text="-cs 50 -gfn 1 -n 1"/>
+</action>
+
+<action name="cvtgcbinseg" executable="/home/visu/src/gc2/gc/cvtgcbinseg">
+<description>(binary) segments a volume using graph cuts and clustering techniques</description>
+<parameter prefix="-i " name="input_volume" type="file" required="true"/>
+<parameter prefix="-x " name="seeds" type="file" required="true"/>
+<parameter prefix="-cf " name="clustering" type="file" required="true"/>
+<anchor text="-gfn 1"/>
+</action>
+
 <action name="sleep" executable="sleep" void="true">
 <description>just sleep (usefull for debug)</description>
 <parameter name="time_in_seconds" type="int" default="2" required="true"/>

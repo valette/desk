@@ -235,7 +235,7 @@ qx.Class.define("desk.volView",
 
          __imageZ : 1,     // Indice de position en z du canvas image (tout au fond)
 
-         __MaxZoom : 4,     //Limite du zoom : x4
+         __MaxZoom : 10,     //Limite du zoom : x4
          __timestamp : 0,     //Valeur calculée pour différencier les images dans le caché de l'explorateur
          __eraserCoeff : 2,     //Taille gomme  =  eraserCoeff * taille crayon --> c'est plus agréable d'effacer comme ça
          __numberOfSlices : 0,     //Contient le nombre de slides récuperé à partir du fichier xml (le programme est fait pour  numberOfSlices = "z")
@@ -822,12 +822,12 @@ qx.Class.define("desk.volView",
 
 			
 		////Create start algorithm button
-			var startButton = new qx.ui.form.ToggleButton("Start segmentation");
+			var startButton = this.__getStartButton();
 
             startButton.set({opacity: 0.5, enabled : false});
+
 			this.__mainRightContainer.add(this.__bottomRightContainer);
 			this.__bottomRightContainer.add(startButton);
-			
 			
 			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
 			this.__topRightContainer.add(whileDrawingDrwngOpacityLabel);
@@ -2313,6 +2313,43 @@ qx.Class.define("desk.volView",
 			coordinates[10]=ymax;
 			coordinates[11]=z;
 			return (coordinates);
+		},
+
+		__getStartButton : function () {
+			var button=new qx.ui.form.ToggleButton("Start segmentation");
+			var volView=this;
+
+			button.addListener("execute", function (e){
+				var parameterMap={
+					"action" : "cvtseg2",
+					"input_volume" : volView.__file,
+					"output_directory" : "cache/"};
+
+				function getAnswer(e)
+				{
+					var req = e.getTarget();
+					var clusteringDirectory=req.getResponseText().split("\n")[0];
+
+					var parameterMap2={
+						"action" : "cvtgcbinseg",
+						"input_volume" : volView.__file,
+						"seeds" : volView.__sessionDirectory+"/seeds.xml",
+						"clustering" : clusteringDirectory+"/clustering-index.mhd",
+						"output_directory" : volView.__sessionDirectory};
+
+					function getAnswer2(e)
+					{
+						var req = e.getTarget();
+						var clusteringDirectory=req.getResponseText().split("\n")[0];
+					}
+
+					volView.__fileBrowser.getActions().launchAction(parameterMap2, getAnswer2);
+
+				}
+
+				volView.__fileBrowser.getActions().launchAction(parameterMap, getAnswer);
+			});
+			return button;
 		}
 	}
 });
