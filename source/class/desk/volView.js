@@ -276,10 +276,15 @@ qx.Class.define("desk.volView",
 		__setVolume : function (file,fileBrowser) {
 			this.__fileBrowser=fileBrowser;
 			this.__file=file;
-			this.setCaption(file);
+			this.__updateVolume();
+		},
+
+		__updateVolume : function()
+		{
+			this.setCaption("computing slices, wait...");
 			var parameterMap={
 				"action" : "Slice_Volume",
-				"input_file" : file,
+				"input_file" : this.__file,
 				"output_directory" : "cache\/"};
 
 			var volView=this;
@@ -287,15 +292,84 @@ qx.Class.define("desk.volView",
 			{
 				var req = e.getTarget();
 				var slicesDirectory=req.getResponseText().split("\n")[0];
-				volView.openFile("\/visu\/desk\/php\/"+slicesDirectory+"\/"+"volume.xml");
+				volView.setCaption(volView.__file);
+
+				volView.__pathJPG = volView.__fileBrowser.getFileURL(slicesDirectory);
+
+				////Get image dimensions and number of slices 
+				var globalParamRequest = new XMLHttpRequest();
+				globalParamRequest.onreadystatechange = function()
+				{
+					if(this.readyState == 4 && this.status == 200)
+					{
+						// so far so good
+						if(this.responseXML!=null)
+						{
+							var response = this.responseXML;
+							var volume=response.getElementsByTagName("volume")[0];
+							if (volume==null)
+								return;
+
+							volView.__imgMap.width = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("x"));
+							volView.__imgMap.height = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("y"));
+							volView.__numberOfSlices = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("z"));
+							volView.__slicesNameOffset = parseInt(response.getElementsByTagName("slicesprefix")[0].getAttribute("offset"));
+							volView.__slicesNamePrefix = response.getElementsByTagName("slicesprefix")[0].firstChild.nodeValue;
+							volView.__timestamp = response.getElementsByTagName("slicesprefix")[0].getAttribute("volView.__timestamp");
+
+							if (volView.__timestamp==null)
+								volView.__timestamp = (new Date()).getTime();
+
+							var XMLextent=volume.getElementsByTagName("extent")[0];
+							volView.__extent=new Array(parseInt(XMLextent.getAttribute("x1")),
+											parseInt(XMLextent.getAttribute("x2")),
+											parseInt(XMLextent.getAttribute("y1")),
+											parseInt(XMLextent.getAttribute("y2")),
+											parseInt(XMLextent.getAttribute("z1")),
+											parseInt(XMLextent.getAttribute("z2")));
+
+							var XMLdimensions=volume.getElementsByTagName("dimensions")[0];
+							volView.__maxZ=parseInt(XMLdimensions.getAttribute("z"))-1;
+							volView.__dimensions=new Array(parseInt(XMLdimensions.getAttribute("x")),
+											parseInt(XMLdimensions.getAttribute("y")),
+											parseInt(XMLdimensions.getAttribute("z")));
+
+							var XMLspacing=volume.getElementsByTagName("spacing")[0];
+							volView.__spacing=new Array(parseFloat(XMLspacing.getAttribute("x")),
+											parseFloat(XMLspacing.getAttribute("y")),
+											parseFloat(XMLspacing.getAttribute("z")));
+
+							var XMLorigin=volume.getElementsByTagName("origin")[0];
+							volView.__origin=new Array(parseFloat(XMLorigin.getAttribute("x")),
+											parseFloat(XMLorigin.getAttribute("y")),
+											parseFloat(XMLorigin.getAttribute("z")));
+
+							var XMLscalars=volume.getElementsByTagName("scalars")[0];
+							volView.__scalarType=parseInt(XMLscalars.getAttribute("type"));
+							volView.__scalarSize=parseInt(XMLscalars.getAttribute("size"));
+							volView.__scalarMin=parseFloat(XMLscalars.getAttribute("min"));
+							volView.__scalarMax=parseFloat(XMLscalars.getAttribute("max"));
+
+							volView.__buildUI();
+
+						}
+						else
+						{
+								alert("Global Params : Failure...");
+								return;
+						}
+					}
+					else if (this.readyState == 4 && this.status != 200)
+					{
+						// fetched the wrong page or network error...
+						alert('Global Params : "Fetched the wrong page" OR "Network error"');
+					}
+				};
+				globalParamRequest.open("GET",volView.__pathJPG+"/volume.xml?nocache=" + Math.random(),false);
+				globalParamRequest.send(null);
 			}
 
-			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
-
-			var label = new qx.ui.basic.Label("Computing slices, wait...").set({
-				font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
-				});
-			this.add(label, {flex : 1});
+			volView.__fileBrowser.getActions().launchAction(parameterMap, getAnswer);
 		},
 
 
@@ -310,7 +384,7 @@ qx.Class.define("desk.volView",
 			};
 
 			var selection=this.__formatSelectBox.getSelection()[0];
-			this.__loadImage.src=selection.getUserData("path") + "slice" + 
+			this.__loadImage.src=selection.getUserData("path") + "/slice" + 
 				(this.__slicesNameOffset+slice) + 
 				"." + selection.getLabel() + "?nocache=" + this.__timestamp;
 		},
@@ -365,8 +439,7 @@ qx.Class.define("desk.volView",
 			
 		},
 
-		openFile : function (file,volView) {
-			this.removeAll();
+		__buildUI : function () {
 
 			var spacing=5;
 			this.__window=this;//new qx.ui.window.Window();
@@ -406,82 +479,6 @@ qx.Class.define("desk.volView",
 
 
 			var volView=this;
-
-
-		////Get image dimensions and number of slices 
-			var globalParamRequest = new XMLHttpRequest();
-			globalParamRequest.onreadystatechange = function()
-			{
-				 if(this.readyState == 4 && this.status == 200)
-				 {
-					// so far so good
-					if(this.responseXML!=null)
-					{
-						var response = this.responseXML;
-						var volume=response.getElementsByTagName("volume")[0];
-
-						volView.__imgMap.width = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("x"));
-						volView.__imgMap.height = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("y"));
-						volView.__numberOfSlices = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("z"));
-						volView.__slicesNameOffset = parseInt(response.getElementsByTagName("slicesprefix")[0].getAttribute("offset"));
-						volView.__slicesNamePrefix = response.getElementsByTagName("slicesprefix")[0].firstChild.nodeValue;
-						volView.__timestamp = response.getElementsByTagName("slicesprefix")[0].getAttribute("volView.__timestamp");
-
-						if (volView.__timestamp==null)
-							volView.__timestamp = (new Date()).getTime();
-
-						var XMLextent=volume.getElementsByTagName("extent")[0];
-						volView.__extent=new Array(parseInt(XMLextent.getAttribute("x1")),
-										parseInt(XMLextent.getAttribute("x2")),
-										parseInt(XMLextent.getAttribute("y1")),
-										parseInt(XMLextent.getAttribute("y2")),
-										parseInt(XMLextent.getAttribute("z1")),
-										parseInt(XMLextent.getAttribute("z2")));
-
-						var XMLdimensions=volume.getElementsByTagName("dimensions")[0];
-						volView.__maxZ=parseInt(XMLdimensions.getAttribute("z"))-1;
-						volView.__dimensions=new Array(parseInt(XMLdimensions.getAttribute("x")),
-										parseInt(XMLdimensions.getAttribute("y")),
-										parseInt(XMLdimensions.getAttribute("z")));
-
-						var XMLspacing=volume.getElementsByTagName("spacing")[0];
-						volView.__spacing=new Array(parseFloat(XMLspacing.getAttribute("x")),
-										parseFloat(XMLspacing.getAttribute("y")),
-										parseFloat(XMLspacing.getAttribute("z")));
-
-						var XMLorigin=volume.getElementsByTagName("origin")[0];
-						volView.__origin=new Array(parseFloat(XMLorigin.getAttribute("x")),
-										parseFloat(XMLorigin.getAttribute("y")),
-										parseFloat(XMLorigin.getAttribute("z")));
-
-						var XMLscalars=volume.getElementsByTagName("scalars")[0];
-						volView.__scalarType=parseInt(XMLscalars.getAttribute("type"));
-						volView.__scalarSize=parseInt(XMLscalars.getAttribute("size"));
-						volView.__scalarMin=parseFloat(XMLscalars.getAttribute("min"));
-						volView.__scalarMax=parseFloat(XMLscalars.getAttribute("max"));
-
-					}
-					else
-					{
-							alert("Global Params : Failure...");
-							return;
-					}
-				}
-				else if (this.readyState == 4 && this.status != 200)
-				{
-						// fetched the wrong page or network error...
-						alert('Global Params : "Fetched the wrong page" OR "Network error"');
-				}
-			};
-			globalParamRequest.open("GET",file+"?nocache=" + Math.random(),false);
-			globalParamRequest.send(null);
-			
-			var xmlDoc = globalParamRequest.responseXML;
-			var volume = xmlDoc.getElementsByTagName("volume")[0];
-			if (volume==null)
-				return;
-
-			
 			
 		////Create pen tool
             var penSize = new qx.ui.form.Spinner().set({
@@ -793,11 +790,6 @@ qx.Class.define("desk.volView",
 			volView.__topLeftContainer.add(spinner);
 			volView.__topLeftContainer.add(volView.__brghtnssCntrstButton);
 			volView.__topLeftContainer.add(resetBrCrButton);
-
-			var slashIndex = file.lastIndexOf("/");
-			this.__pathJPG = "";
-			if (slashIndex>0)
-				this.__pathJPG = file.substring(0,slashIndex)+"\/";
 
 			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});
 			volView.__formatSelectBox=volView.__getFormatSelectBox()
@@ -2178,7 +2170,7 @@ qx.Class.define("desk.volView",
 					{
 						var req = e.getTarget();
 						var slicesDirectory=req.getResponseText().split("\n")[0];
-						PNGFormat.setUserData("path","\/visu\/desk\/php\/"+slicesDirectory+"\/");
+						PNGFormat.setUserData("path","\/visu\/desk\/php\/"+slicesDirectory);
 						volView.__topLeftContainer.remove(slicingLabel);
 						selectBox.setSelection([PNGFormat])
 					}
