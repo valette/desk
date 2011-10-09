@@ -84,51 +84,24 @@ qx.Class.define("desk.volView",
              mouseRightDownFlag : 0     //Indique si on appuyé sur le bouton droit de la souris (fonction "annuler")
          };
 
+		this.set({
+			showMinimize: false,
+			showMaximize: false,
+			showClose: true,
+			resizable: false,
+			movable : true
+			});
 
-		var volView = this;
-		
-        volView.set({
-                showMinimize: false,
-                showMaximize: false,
-                showClose: true,
-                resizable: false,
-                movable : true
-        });
+		this.setLayout(new qx.ui.layout.Canvas());
 
-        volView.setLayout(new qx.ui.layout.Canvas());
-		
 		if (fileBrowser!=null)
-		{
-			this.__fileBrowser=fileBrowser;
-			this.__file=file;
-			this.setCaption(file);
-			var parameterMap={
-				"action" : "Slice_Volume",
-				"input_file" : file,
-				"output_directory" : "cache\/"};
-
-			function getAnswer(e)
-			{
-				var req = e.getTarget();
-				var slicesDirectory=req.getResponseText().split("\n")[0];
-				volView.openFile("\/visu\/desk\/php\/"+slicesDirectory+"\/"+"volume.xml");
-			}
-
-			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
-
-			var label = new qx.ui.basic.Label("Computing slices, wait...").set({
-				font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
-				});
-			this.add(label, {flex : 1});
-		}
+			this.__setVolume(file, fileBrowser);
 		else
-		{
 			alert ("error : no filebrowser provided for volView");
-		}
 
-		volView.open();
-		
-		return (volView);
+		this.open();
+
+		return (this);
 	},
 
 	statics :
@@ -299,6 +272,32 @@ qx.Class.define("desk.volView",
 
 		// the function which draws the canvas
 		__drawZoomedCanvas : null,
+
+		__setVolume : function (file,fileBrowser) {
+			this.__fileBrowser=fileBrowser;
+			this.__file=file;
+			this.setCaption(file);
+			var parameterMap={
+				"action" : "Slice_Volume",
+				"input_file" : file,
+				"output_directory" : "cache\/"};
+
+			var volView=this;
+			function getAnswer(e)
+			{
+				var req = e.getTarget();
+				var slicesDirectory=req.getResponseText().split("\n")[0];
+				volView.openFile("\/visu\/desk\/php\/"+slicesDirectory+"\/"+"volume.xml");
+			}
+
+			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
+
+			var label = new qx.ui.basic.Label("Computing slices, wait...").set({
+				font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
+				});
+			this.add(label, {flex : 1});
+		},
+
 
 		__updateImage : function () {
 			var volView=this;
