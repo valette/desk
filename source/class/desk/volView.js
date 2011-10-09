@@ -821,13 +821,8 @@ qx.Class.define("desk.volView",
 
 
 			
-		////Create start algorithm button
-			var startButton = this.__getStartButton();
-
-            startButton.set({opacity: 0.5, enabled : false});
-
 			this.__mainRightContainer.add(this.__bottomRightContainer);
-			this.__bottomRightContainer.add(startButton);
+
 			
 			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
 			this.__topRightContainer.add(whileDrawingDrwngOpacityLabel);
@@ -1108,11 +1103,12 @@ qx.Class.define("desk.volView",
 						console.log("deleted slice "+sliceId)
 						volView.__clearDrawingCanvas();
 						modifSlicesList.remove(selectedChild);
-
 						volView.__saveSeedsXML();
 					}
 				}
 			}, this);
+
+			this.__bottomRightContainer.add(this.__getStartButton());
 
 			this.__imageContainer.add(modifSlicesList, {flex : 1});
 			modifSlicesList.setVisibility("excluded");
@@ -1209,6 +1205,77 @@ qx.Class.define("desk.volView",
 	
 			spinner.addListener("changeValue", function(event)
 			{
+				volView.__htmlContextLabels.beginPath(); // seb : why???
+				volView.__mouseData.mouseLeftDownFlag = false;
+				var oldSliceIndex= volView.__drawingCanvasParams.sliceNumber;
+				
+				if (volView.__currentSeedsModified!=false)
+				{
+					var sliceData = volView.__htmlContextImage.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
+					var pixels = sliceData.data;
+					var seeds=volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height).data;
+					var isAllBlack = true;
+					var labelColors=volView.__labelColors;
+					for(var i=0; i<seeds.length; i+=4)
+					{
+						if(128<=seeds[i+3])  //  if( color is solid not totally transparent, ie. alpha=0) <-> if( not background )
+						{
+							var dRed = 0;
+							var dGreen = 0;
+							var dBlue = 0;
+							var distance = 500000;
+							var rightColorIndex = 0;
+							for(var j=0; j!=labelColors.length; j++)
+							{
+								var color=labelColors[j];
+								dRed = color.red-seeds[i];
+								dGreen = color.green-seeds[i+1];
+								dBlue = color.blue-seeds[i+2];
+								var testD = dRed*dRed+dGreen*dGreen+dBlue*dBlue;
+								if(testD<distance)
+								{
+									distance = testD;
+									rightColorIndex = j;
+								}
+							}
+							var rightColor=labelColors[rightColorIndex];
+							pixels[i] = rightColor.red;
+							pixels[i+1] = rightColor.green;
+							pixels[i+2] = rightColor.blue;
+							pixels[i+3] = 255;
+							isAllBlack = false;
+						}
+						////Comment "else" to send combined image
+						else
+						{
+							pixels[i] = 0;
+							pixels[i+1] = 0;
+							pixels[i+2] = 0;
+							pixels[i+3] = 0;
+						}
+					}
+					if(!isAllBlack)
+					{
+						////Send png image to server
+						sliceData.data = pixels;
+						volView.__htmlContextLabels.putImageData(sliceData, 0, 0);
+						var pngImg = volView.__htmlCanvasLabels.toDataURL("image/png");
+						var commaIndex=pngImg.lastIndexOf(",");
+						var base64Img = pngImg.substring(commaIndex+1,pngImg.length);
+						var parameterMap={
+						"action" : "save_binary_file",
+						"file_name" : volView.getSeedFileName(volView.__drawingCanvasParams.sliceNumber),
+						"base64Data" : base64Img,
+						"output_directory" : volView.__sessionDirectory};
+
+						volView.__fileBrowser.getActions().launchAction(parameterMap);
+						volView.__seedsCacheTags[volView.__drawingCanvasParams.sliceNumber]=Math.random();
+						if(volView.__seedsArray[oldSliceIndex]==0)
+							volView.__addNewSeedItemToList(oldSliceIndex);
+						volView.__saveSeedsXML();
+					}
+				}
+
 				var newSliceIndex=event.getData();
 				if (newSliceIndex!=Math.round(newSliceIndex))
 				{
@@ -1216,29 +1283,6 @@ qx.Class.define("desk.volView",
 					return;
 				}
 				slider.setValue(volView.__numberOfSlices-1-newSliceIndex);
-
-				volView.__htmlContextLabels.beginPath(); // seb : why???
-				volView.__mouseData.mouseLeftDownFlag = false;
-				var oldSliceIndex= volView.__drawingCanvasParams.sliceNumber;
-
-				var sliceHasSeeds=false;
-				if (volView.__seedsArray[oldSliceIndex]!=0)
-					sliceHasSeeds=true;
-				
-				sliceHasSeeds=	!pngCanvasFctn(sliceHasSeeds);	//  pngCanvasFctn() returns true if image is all black
-
-			////Update lists
-				if(sliceHasSeeds)	////CURRENT slice has seeds
-				{
-					if(volView.__seedsArray[oldSliceIndex]==0)
-					{
-						volView.__addNewSeedItemToList(oldSliceIndex);
-						volView.__saveSeedsXML();
-					}
-				////Since there is at least one saved seeds image, activate start button
-                    if(!startButton.isEnabled())
-                            startButton.set({opacity: 1, enabled : true});
-				}
 
 				volView.__drawingCanvasParams.sliceNumber = newSliceIndex;
 				volView.__updateAll();
@@ -1597,81 +1641,7 @@ qx.Class.define("desk.volView",
 				wheelScale = 0;
 				volView.__drawingCanvasParams.curCtxtZoom = 1;
 			};
-			
-			
-			
-			
-			
-		////Function reads drawing canvas to save it in png format in the server  or
-		//// to return true value if image is all black (if canvas is empty)
-            var pngCanvasFctn = function(previousValue)
-            {
-            	if (volView.__currentSeedsModified==false)
-            		return (!previousValue);
 
-                var sliceData = volView.__htmlContextImage.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
-                var pixels = sliceData.data;
-                var seeds=volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height).data;
-                var isAllBlack = true;
-                var labelColors=volView.__labelColors;
-                for(var i=0; i<seeds.length; i+=4)
-                {
-					if(128<=seeds[i+3])  //  if( color is solid not totally transparent, ie. alpha=0) <-> if( not background )
-                    {
-						var dRed = 0;
-						var dGreen = 0;
-						var dBlue = 0;
-						var distance = 500000;
-						var rightColorIndex = 0;
-						for(var j=0; j!=labelColors.length; j++)
-						{
-							var color=labelColors[j];
-							dRed = color.red-seeds[i];
-							dGreen = color.green-seeds[i+1];
-							dBlue = color.blue-seeds[i+2];
-							var testD = dRed*dRed+dGreen*dGreen+dBlue*dBlue;
-							if(testD<distance)
-							{
-								distance = testD;
-								rightColorIndex = j;
-							}
-						}
-						var rightColor=labelColors[rightColorIndex];
-						pixels[i] = rightColor.red;
-						pixels[i+1] = rightColor.green;
-						pixels[i+2] = rightColor.blue;
-						pixels[i+3] = 255;
-                        isAllBlack = false;
-                    }
-				////Comment "else" to send combined image
-					else
-					{
-                        pixels[i] = 0;
-                        pixels[i+1] = 0;
-                        pixels[i+2] = 0;
-						pixels[i+3] = 0;
-					}
-                }
-				if(!isAllBlack)
-                {
-					////Send png image to server
-					sliceData.data = pixels;
-					volView.__htmlContextLabels.putImageData(sliceData, 0, 0);
-					var pngImg = volView.__htmlCanvasLabels.toDataURL("image/png");
-					var commaIndex=pngImg.lastIndexOf(",");
-				    var base64Img = pngImg.substring(commaIndex+1,pngImg.length);
-					var parameterMap={
-						"action" : "save_binary_file",
-						"file_name" : volView.getSeedFileName(volView.__drawingCanvasParams.sliceNumber),
-						"base64Data" : base64Img,
-						"output_directory" : volView.__sessionDirectory};
-
-					volView.__fileBrowser.getActions().launchAction(parameterMap);
-					volView.__seedsCacheTags[volView.__drawingCanvasParams.sliceNumber]=Math.random();
-					volView.__saveSeedsXML();
-                }
-                return isAllBlack;
-            };
 
 		////Function applies brightness and contrast values
             var processBrCr = function(inBrightness, inContrast, inLegacy)
@@ -2057,7 +2027,7 @@ qx.Class.define("desk.volView",
 						alert("network error when loading seeds list");
 				}
 			};
-			colorsParamRequest.open("GET", this.__fileBrowser.getFileURL(this.__sessionDirectory+"/seeds.xml"), true);
+			colorsParamRequest.open("GET", this.__fileBrowser.getFileURL(this.__sessionDirectory+"/seeds.xml?nocache="+Math.random()), true);
 			colorsParamRequest.send(null);
 		},
 
@@ -2171,12 +2141,10 @@ qx.Class.define("desk.volView",
 				if (e.getData())
 				{
 					this.__mainRightContainer.setVisibility("visible");
-					this.__seedsList.setVisibility("visible");
 				}
 				else
 				{
 					this.__mainRightContainer.setVisibility("excluded");
-					this.__seedsList.setVisibility("excluded");
 				}
 				}, this);
 			return paintPaneVisibilitySwitch;
@@ -2318,6 +2286,19 @@ qx.Class.define("desk.volView",
 		__getStartButton : function () {
 			var button=new qx.ui.form.ToggleButton("Start segmentation");
 			var volView=this;
+
+			this.__seedsList.addListener("removeItem",function(e){
+				if (this.getChildren().length==0)
+				{
+					button.setEnabled(false);
+					this.setVisibility("exclude");
+				}
+			},this.__seedsList);
+
+			this.__seedsList.addListener("addItem",function(e){
+					button.setEnabled(true);
+					this.setVisibility("visible");
+			},this.__seedsList);
 
 			button.addListener("execute", function (e){
 				var parameterMap={

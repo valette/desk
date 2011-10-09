@@ -49,12 +49,12 @@ function validateBase64($buffer)
   }
 }
 
-function validatePath($file) {
+function validatePath($file, $accountMTime) {
 $DATA_ROOT_FROM_PHP="data";
 $CACHE_ROOT_FROM_PHP="cache";
 $ACTIONS_ROOT_FROM_PHP="action";
 
-	if ($file!="cache/")
+	if (($file!="cache/")&&($accountMTime==true))
 	{
 		$fileMTime=filemtime($file);
 		fwrite($GLOBALS["flog"], "$file : mtime=$fileMTime\n");
@@ -147,13 +147,13 @@ foreach ($actions->children() as $action)
 									die ("xml content badly formated : \n".$parameterValue);
 								break;
 							case "file":
-								validatePath($parameterValue);
+								validatePath($parameterValue, true);
 								if (!is_file($parameterValue))
 									die ("$parameterName : file \"$parameterValue\" does not exist");
 								$prependPHP_DIR=true;
 								break;
 							case "directory":
-								validatePath($parameterValue);
+								validatePath($parameterValue, true);
 								if (!is_dir($parameterValue))
 									die ("$parameterName : directory \"$parameterValue\" does not exist");
 								$prependPHP_DIR=true;
@@ -163,7 +163,7 @@ foreach ($actions->children() as $action)
 								$prependPHP_DIR=true;
 								break;
 							case "new_directory":
-								validatePath($parameterValue);
+								validatePath($parameterValue, true);
 								$prependPHP_DIR=true;
 								break;
 							case "int":
@@ -295,7 +295,7 @@ foreach ($actions->children() as $action)
 				if (!is_dir($outputDirectory))
 					die ("directory \"$outputDirectory\" does not exist");
 
-				switch (validatePath($outputDirectory))
+				switch (validatePath($outputDirectory, false))
 				{
 					case "cache":
 						$outputDirectory="$CACHE_ROOT_FROM_PHP".sha1($command);
