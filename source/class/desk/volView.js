@@ -150,9 +150,6 @@ qx.Class.define("desk.volView",
 		// the widget containing the defined colors for painting
 		__colorsList : null,
 
-		// the comboBox containing segmentation sessions
-		__sessionsList : null,
-
 		// the list displaying slices having seeds
 		__seedsList : null,
 
@@ -289,7 +286,16 @@ qx.Class.define("desk.volView",
 
 		__updateVolume : function(buildUI)
 		{
-			this.setCaption("computing slices, wait...");
+			if (buildUI==true)
+			{
+				var label = new qx.ui.basic.Label("Computing slices, wait...").set({
+					font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
+					});
+				this.add(label, {flex : 1});
+			}
+			else
+				this.setCaption("computing slices, wait...");
+
 			var parameterMap={
 				"action" : "Slice_Volume",
 				"input_file" : this.__file,
@@ -358,7 +364,10 @@ qx.Class.define("desk.volView",
 							volView.__scalarMin=parseFloat(XMLscalars.getAttribute("min"));
 							volView.__scalarMax=parseFloat(XMLscalars.getAttribute("max"));
 							if (buildUI)
+							{
+								volView.removeAll();
 								volView.__buildUI();
+							}
 							else
 								volView.__updateAll();
 
@@ -807,15 +816,7 @@ qx.Class.define("desk.volView",
 			volView.__topLeftContainer.add(volView.__getDragAndDropLabel());	
 			volView.__topLeftContainer.add(volView.__getPaintPanelVisibilitySwitch());
 
-			var sessionsListLayout=new qx.ui.layout.HBox();
-			sessionsListLayout.setSpacing(spacing);
-			var sessionsListContainer=new qx.ui.container.Composite(sessionsListLayout);
-			var sessionsListLabel=new qx.ui.basic.Label("Sessions : ");
-			sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});
-			sessionsListContainer.add(sessionsListLabel);
-			volView.__sessionsList=volView.__getSessionsList();
-			sessionsListContainer.add(volView.__sessionsList);
-			volView.__mainRightContainer.add(sessionsListContainer);
+			volView.__mainRightContainer.add(volView.__getSessionsWidget());
 
 //			this.__mainRightContainer.add(new qx.ui.core.Spacer(30, 40), {flex: 5});
 
@@ -2086,10 +2087,20 @@ qx.Class.define("desk.volView",
 				{this.__spinner.setValue(event.getTarget().getUserData("slice"));}, this);
 		},
 
-		__getSessionsList : function()
+		__getSessionsWidget : function()
 		{
+			var sessionsListLayout=new qx.ui.layout.HBox();
+			sessionsListLayout.setSpacing(4);
+			var sessionsListContainer=new qx.ui.container.Composite(sessionsListLayout);
+			var sessionsListLabel=new qx.ui.basic.Label("Sessions : ");
+			sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});
+			sessionsListContainer.add(sessionsListLabel);
+			var button=new qx.ui.form.ToggleButton("new session");
+			sessionsListContainer.add(button);
+
 			var sessionType="gcSegmentation";
 			var sessionsList = new qx.ui.form.SelectBox();
+			sessionsListContainer.add(sessionsList);
 			var fileBrowser=this.__fileBrowser;
 			var file=this.__file;
 			var volView=this;
@@ -2110,10 +2121,13 @@ qx.Class.define("desk.volView",
 						if (sessionId==sessionIdToSelect)
 							sessionItemToSelect=sessionItem;
 					}
-					// add "create new session" item
-					var createNewSessionItem = new qx.ui.form.ListItem("create new session");
-					sessionsList.add(createNewSessionItem);
-					createNewSessionItem.setUserData("creator",true);
+					var dummyItem=null;
+					if (sessionIdToSelect==null)
+					{
+						dummyItem = new qx.ui.form.ListItem("select a session");
+						sessionsList.add(dummyItem);
+						dummyItem.setUserData("dummy",true);
+					}
 					if (sessionItemToSelect!=null)
 					{
 						sessionsList.setSelection([sessionItemToSelect]);
@@ -2123,9 +2137,7 @@ qx.Class.define("desk.volView",
 						volView.__saveSeedsXML();
 					}
 					else
-					{
-						sessionsList.setSelection([createNewSessionItem]);
-					}
+						sessionsList.setSelection([dummyItem]);					
 					updateInProgress=false;
 				}
 
@@ -2137,24 +2149,24 @@ qx.Class.define("desk.volView",
 				if (!updateInProgress)
 				{
 					var listItem=sessionsList.getSelection()[0];
-					volView.__colorsList.setVisibility("visible");
-					if (listItem.getUserData("creator")!=true)
+					if (listItem.getUserData("dummy")!=true)
 					{
 						volView.__colorsList.setVisibility("visible");
 						volView.__sessionDirectory=fileBrowser.getSessionDirectory(
 							volView.__file,sessionType,listItem.getLabel());
 						volView.__loadSession();
 					}
-					else
-					{
-						volView.__resetSeedsList();
-						volView.__updateAll();
-						fileBrowser.createNewSession(volView.__file,sessionType, updateList);
-					};
 					sessionsList.close();
 				}});
+
+			button.addListener("execute", function (e){
+				volView.__resetSeedsList();
+				volView.__updateAll();
+				fileBrowser.createNewSession(volView.__file,sessionType, updateList);
+				});
+
 			updateList();
-			return sessionsList;
+			return sessionsListContainer;
 		},
 
 		__getPaintPanelVisibilitySwitch : function () {

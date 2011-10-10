@@ -245,7 +245,6 @@ qx.Class.define("desk.fileBrowser",
 				}
 
 				var newDir=file+"."+sessionType+"."+newSessionId;
-
 				var parameterMap={
 					"action" : "Create_directory",
 					"directory_name" : newDir};
