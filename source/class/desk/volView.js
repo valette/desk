@@ -2023,47 +2023,36 @@ qx.Class.define("desk.volView",
 		__loadSession : function()
 		{
 			this.__resetSeedsList();
-			console.log("loading slices:");
 			var colorsParamRequest = new XMLHttpRequest();
 			var volView=this;
 
-			console.log("launching add_directory...");
-			this.__fileBrowser.getActions().launchAction({
-				"action" : "add_subdirectory",
-				"subdirectory_name" : "segmentation",
-				"output_directory" : this.__sessionDirectory}, reallyLoadSession);
-
-			function reallyLoadSession(e)
+			colorsParamRequest.onreadystatechange = function()
 			{
-				colorsParamRequest.onreadystatechange = function()
-				{
-					 if(this.readyState == 4 && this.status == 200)
-					 {
-						// so far so good
-						if(this.responseXML!=null)
-						{
-							var response = this.responseXML;
-							var seeds = response.getElementsByTagName("seed");
-							for(var i=0; i<seeds.length; i++)
-							{
-								var sliceId=parseInt(seeds[i].getAttribute("slice"));
-								console.log("adding slice :"+sliceId);
-								volView.__addNewSeedItemToList(sliceId);
-							};
-							volView.__updateAll();
-						}
-						else
-							alert("no seeds found");
-					}
-					else if (this.readyState == 4 && this.status != 200)
+				 if(this.readyState == 4 && this.status == 200)
+				 {
+					// so far so good
+					if(this.responseXML!=null)
 					{
-							// fetched the wrong page or network error...
-							alert("network error when loading seeds list");
+						var response = this.responseXML;
+						var seeds = response.getElementsByTagName("seed");
+						for(var i=0; i<seeds.length; i++)
+						{
+							var sliceId=parseInt(seeds[i].getAttribute("slice"));
+							volView.__addNewSeedItemToList(sliceId);
+						};
+						volView.__updateAll();
 					}
-				};
-				colorsParamRequest.open("GET", volView.__fileBrowser.getFileURL(volView.__sessionDirectory+"/seeds.xml?nocache="+Math.random()), true);
-				colorsParamRequest.send(null);
-			}
+					else
+						alert("no seeds found");
+				}
+				else if (this.readyState == 4 && this.status != 200)
+				{
+						// fetched the wrong page or network error...
+						alert("network error when loading seeds list");
+				}
+			};
+			colorsParamRequest.open("GET", volView.__fileBrowser.getFileURL(volView.__sessionDirectory+"/seeds.xml?nocache="+Math.random()), true);
+			colorsParamRequest.send(null);
 		},
 
 		__resetSeedsList : function()
@@ -2347,6 +2336,30 @@ qx.Class.define("desk.volView",
 			return (coordinates);
 		},
 
+		__getextractMeshesButton : function () {
+			var button=new qx.ui.form.ToggleButton("extract meshes");
+			var volView=this;
+			var meshesViewer=null;
+			button.setEnabled(false);
+
+			button.addListener("execute", function (e){
+				function afterDirectoryCreated() {
+					function afterExtractionExecuted()
+					{
+						
+					}
+					this.__fileBrowser.getActions().launchAction({
+						"action" : "exctract_meshes",
+						"input_volume" : volView.sessionDirectory+"/segmentation/cvtgcbinseg.mhd",
+						"output_directory" : this.__sessionDirectory}, afterExtractionExecuted);
+					}
+				this.__fileBrowser.getActions().launchAction({
+					"action" : "add_subdirectory",
+					"subdirectory_name" : "segmentation",
+					"output_directory" : this.__sessionDirectory}, afterDirectoryCreated);
+				});
+
+		},
 		__getStartSegmentationButton : function () {
 			var button=new qx.ui.form.ToggleButton("Start segmentation");
 			var volView=this;
@@ -2367,48 +2380,53 @@ qx.Class.define("desk.volView",
 			},this.__seedsList);
 
 			button.addListener("execute", function (e){
-				function afterSeedsSaved()
-				{	
-					var parameterMap={
-						"action" : "cvtseg2",
-						"input_volume" : volView.__file,
-						"output_directory" : "cache/"};
-
-					function getAnswer(e)
-					{
-						var req = e.getTarget();
-						var clusteringDirectory=req.getResponseText().split("\n")[0];
-
-						var parameterMap2={
-							"action" : "cvtgcbinseg",
+				function afterDirectoryCreated() {
+					function afterSeedsSaved()
+					{	
+						var parameterMap={
+							"action" : "cvtseg2",
 							"input_volume" : volView.__file,
-							"seeds" : volView.__sessionDirectory+"/seeds.xml",
-							"clustering" : clusteringDirectory+"/clustering-index.mhd",
-							"output_directory" : "cache/"};//volView.__sessionDirectory};
+							"output_directory" : "cache/"};
 
-						function getAnswer2(e)
+						function afterClusteringComputed(e)
 						{
 							var req = e.getTarget();
-							var segmentationDirectory=req.getResponseText().split("\n")[0];
-							if (segmentationViewer==null)
+							var clusteringDirectory=req.getResponseText().split("\n")[0];
+
+							var parameterMap2={
+								"action" : "cvtgcbinseg",
+								"input_volume" : volView.__file,
+								"seeds" : volView.__sessionDirectory+"/seeds.xml",
+								"clustering" : clusteringDirectory+"/clustering-index.mhd",
+								"output_directory" : volView.__sessionDirectory+"/segmentation"};
+
+							function afterSegmentationComputed(e)
 							{
-								segmentationViewer=new desk.volView(segmentationDirectory+"/cvtgcbinseg.mhd",
-									volView.__fileBrowser);
-								segmentationViewer.getWindow().addListener("close", function (e) {
-									segmentationViewer=null;});
+								var req = e.getTarget();
+								var segmentationDirectory=req.getResponseText().split("\n")[0];
+								if (segmentationViewer==null)
+								{
+									segmentationViewer=new desk.volView(segmentationDirectory+"/seg-cvtgcbinseg.mhd",
+										volView.__fileBrowser);
+									segmentationViewer.getWindow().addListener("close", function (e) {
+										segmentationViewer=null;});
+								}
+								else
+								{
+									segmentationViewer.__updateVolume();
+								}
 							}
-							else
-							{
-								segmentationViewer.__updateVolume();
-							}
+
+							volView.__fileBrowser.getActions().launchAction(parameterMap2, afterSegmentationComputed);
 						}
-
-						volView.__fileBrowser.getActions().launchAction(parameterMap2, getAnswer2);
-
+						volView.__fileBrowser.getActions().launchAction(parameterMap, afterClusteringComputed);
 					}
-					volView.__fileBrowser.getActions().launchAction(parameterMap, getAnswer);
+					volView.__saveCurrentSeeds(afterSeedsSaved);
 				}
-				volView.__saveCurrentSeeds(afterSeedsSaved);
+				volView.__fileBrowser.getActions().launchAction({
+					"action" : "add_subdirectory",
+					"subdirectory_name" : "segmentation",
+					"output_directory" : volView.__sessionDirectory}, afterDirectoryCreated);
 			});
 			return button;
 		}

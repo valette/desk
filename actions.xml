@@ -69,7 +69,7 @@
 <parameter prefix="-i " name="input_volume" type="file" required="true"/>
 <parameter prefix="-x " name="seeds" type="file" required="true"/>
 <parameter prefix="-cf " name="clustering" type="file" required="true"/>
-<anchor text="-gfn 1"/>
+<anchor text="-op seg"/>
 </action>
 
 <action name="sleep" executable="sleep" void="true">
