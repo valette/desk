@@ -95,7 +95,10 @@ qx.Class.define("desk.volView",
 		this.setLayout(new qx.ui.layout.Canvas());
 
 		if (fileBrowser!=null)
+		{
 			this.__setVolume(file, fileBrowser);
+			this.__updateVolume(true);
+		}
 		else
 			alert ("error : no filebrowser provided for volView");
 
@@ -276,10 +279,9 @@ qx.Class.define("desk.volView",
 		__setVolume : function (file,fileBrowser) {
 			this.__fileBrowser=fileBrowser;
 			this.__file=file;
-			this.__updateVolume();
 		},
 
-		__updateVolume : function()
+		__updateVolume : function(buildUI)
 		{
 			this.setCaption("computing slices, wait...");
 			var parameterMap={
@@ -349,8 +351,10 @@ qx.Class.define("desk.volView",
 							volView.__scalarSize=parseInt(XMLscalars.getAttribute("size"));
 							volView.__scalarMin=parseFloat(XMLscalars.getAttribute("min"));
 							volView.__scalarMax=parseFloat(XMLscalars.getAttribute("max"));
-
-							volView.__buildUI();
+							if (buildUI)
+								volView.__buildUI();
+							else
+								volView.__updateAll();
 
 						}
 						else
@@ -1079,6 +1083,8 @@ qx.Class.define("desk.volView",
 
 			var modifSlicesList = new qx.ui.form.List();
 			modifSlicesList.setWidth(30);
+			modifSlicesList.setScrollbarY("off");
+			
 			volView.__seedsList=modifSlicesList;
 			modifSlicesList.addListener("keypress", function(event)
 			{
@@ -2201,7 +2207,7 @@ qx.Class.define("desk.volView",
 			// drag and drop support
 			dragLabel.setDraggable(true);
 			dragLabel.addListener("dragstart", function(e) {
-				e.addAction("copy");
+				e.addAction("alias");
 				e.addType("volumeSlice");
 				});
 
@@ -2234,6 +2240,35 @@ qx.Class.define("desk.volView",
 					alert("drop type not allowed for this widget!");
 				}
 			},this);
+
+			// add listener on close window event to remove bindings
+			this.__window.addListener("close", function (e){
+				var bindings=this.__spinner.getBindings();
+				// according to the documentation, getBindings returns : An array of binding informations. 
+				//Every binding information is an array itself containing 
+				//	id,
+				// 	sourceObject,
+				//	sourceEvent,
+				//	targetObject,
+				//	targetProperty.
+				for (var i=0;i<bindings.length;i++)
+				{
+					var binding=bindings[i];
+					var targetObject=binding[3];
+					// loop through all target bindings to remove the reverse binding
+					var targetBindings=targetObject.getBindings();
+					for (var j=0;j<targetBindings.length;j++)
+					{
+						var targetBinding=targetBindings[j];
+						if (this.__spinner==targetBinding[3])
+						{
+							targetObject.removeBinding(targetBinding[0]);
+							break;
+						}
+					}
+				}
+				this.__spinner.removeAllBindings();
+				},this)
 			return dragLabel;
 		},
 
@@ -2277,6 +2312,8 @@ qx.Class.define("desk.volView",
 		__getStartButton : function () {
 			var button=new qx.ui.form.ToggleButton("Start segmentation");
 			var volView=this;
+			var segmentationViewer=null;
+			button.setEnabled(false);
 
 			this.__seedsList.addListener("removeItem",function(e){
 				if (this.getChildren().length==0)
@@ -2307,12 +2344,21 @@ qx.Class.define("desk.volView",
 						"input_volume" : volView.__file,
 						"seeds" : volView.__sessionDirectory+"/seeds.xml",
 						"clustering" : clusteringDirectory+"/clustering-index.mhd",
-						"output_directory" : volView.__sessionDirectory};
+						"output_directory" : "cache/"};//volView.__sessionDirectory};
 
 					function getAnswer2(e)
 					{
 						var req = e.getTarget();
-						var clusteringDirectory=req.getResponseText().split("\n")[0];
+						var segmentationDirectory=req.getResponseText().split("\n")[0];
+						if (segmentationViewer==null)
+						{
+							segmentationViewer=new desk.volView(segmentationDirectory+"/cvtgcbinseg.mhd",
+								volView.__fileBrowser);
+						}
+						else
+						{
+							segmentationViewer.__updateVolume();
+						}
 					}
 
 					volView.__fileBrowser.getActions().launchAction(parameterMap2, getAnswer2);

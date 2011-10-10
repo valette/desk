@@ -64,13 +64,7 @@ qx.Class.define("desk.actions",
 			var actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
 			this.__ongoingActions.add(actionNotification);
 			var req = new qx.io.request.Xhr();
-			req.setUrl("/visu/desk/php/actions.php");
-			req.setMethod("POST");
-			req.setAsync(true);
-			req.setRequestData(actionParameters);
-			req.addListener("success", onSuccess, this);
-			req.send();
-			
+
 			function onSuccess (e){
 				this.__ongoingActions.remove(actionNotification);
 				if (successCallback!=null)
@@ -82,6 +76,12 @@ qx.Class.define("desk.actions",
 				}
 			}
 
+			req.setUrl("/visu/desk/php/actions.php");
+			req.setMethod("POST");
+			req.setAsync(true);
+			req.setRequestData(actionParameters);
+			req.addListener("success", onSuccess, this);
+			req.send();
 		},
 
 		populateActionMenu : function()
