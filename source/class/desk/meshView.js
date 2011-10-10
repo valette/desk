@@ -131,6 +131,10 @@ qx.Class.define("desk.meshView",
 		__shapesList : null,
 		__shapesArray : null,
 
+		getWindow : function() {
+			return this.__window;
+		},
+
 		__readFile : function (file, mtime, color, update, opt_updateDataModel) {
 			var label;
 			var lastSlashIndex=file.lastIndexOf("\/");

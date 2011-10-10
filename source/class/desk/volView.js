@@ -5,7 +5,8 @@ qx.Class.define("desk.volView",
 	construct : function(file, fileBrowser)
 	{		
 		this.base(arguments);
-		
+		this.__window=this;//new qx.ui.window.Window();
+
         // Enable logging in debug variant
         if(qx.core.Environment.get("qx.debug"))
         {
@@ -144,6 +145,8 @@ qx.Class.define("desk.volView",
 		__spinner : null,
 		__formatSelectBox : null,
 
+		__startSegmentationButton : null,
+
 		// the widget containing the defined colors for painting
 		__colorsList : null,
 
@@ -275,6 +278,9 @@ qx.Class.define("desk.volView",
 
 		// the function which draws the canvas
 		__drawZoomedCanvas : null,
+
+		getWindow : function() {
+			return this.__window;},
 
 		__setVolume : function (file,fileBrowser) {
 			this.__fileBrowser=fileBrowser;
@@ -446,7 +452,6 @@ qx.Class.define("desk.volView",
 		__buildUI : function () {
 
 			var spacing=5;
-			this.__window=this;//new qx.ui.window.Window();
 			var windowLayout=new qx.ui.layout.HBox();
 			windowLayout.setSpacing(spacing);
 			this.__window.setLayout(windowLayout);
@@ -861,11 +866,6 @@ qx.Class.define("desk.volView",
 				if(event.isLeftPressed())
                 {
        				volView.__mouseActionActive=true;
-					if((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.eraseFlag))
-					{
-		            	volView.__currentSeedsModified=true;
-						save2undoStack(event);
-					}
 					switch (volView.__mouseActionMode)
                     {
                     case 3:
@@ -881,6 +881,10 @@ qx.Class.define("desk.volView",
                         volView.__htmlContextLabels.fill();
                         if(!eraserButton.isEnabled())
                             eraserButton.set({opacity: 1, enabled : true});
+						volView.__startSegmentationButton.setEnabled(true);
+		            	volView.__currentSeedsModified=true;
+						save2undoStack(event);
+
                         break;
                     case 1:  
                         drawingCanvas.set({cursor: "crosshair"});
@@ -1104,8 +1108,8 @@ qx.Class.define("desk.volView",
 					}
 				}
 			}, this);
-
-			this.__bottomRightContainer.add(this.__getStartButton());
+			this.__startSegmentationButton=this.__getStartSegmentationButton();
+			this.__bottomRightContainer.add(this.__startSegmentationButton);
 
 			this.__imageContainer.add(modifSlicesList, {flex : 1});
 			modifSlicesList.setVisibility("excluded");
@@ -1463,9 +1467,9 @@ qx.Class.define("desk.volView",
 		////Pops out the last state in the "undo" stack and draw image on the canvas
             var undoFnct = function(mouseEvent)
             {
-            	volView.__currentSeedsModified=true;
 				if(mouseEvent.isRightPressed())
 				{
+	            	volView.__currentSeedsModified=true;
 					if(0<volView.__ctrlZData.length)
 					{
 						volView.__htmlContextLabels.putImageData(volView.__ctrlZData[0], 0, 0);
@@ -1519,13 +1523,10 @@ qx.Class.define("desk.volView",
 			};
 			
 			
-			
-			
-			
 		////Clear labels canvas at mouse position
             var eraseFnct = function(autoComplete)
             {
-            	volView.__currentSeedsModified=true;
+				volView.__currentSeedsModified=true;
 				var tempX, tempY;
 				if(autoComplete)
 				{
@@ -2025,34 +2026,44 @@ qx.Class.define("desk.volView",
 			console.log("loading slices:");
 			var colorsParamRequest = new XMLHttpRequest();
 			var volView=this;
-			colorsParamRequest.onreadystatechange = function()
+
+			console.log("launching add_directory...");
+			this.__fileBrowser.getActions().launchAction({
+				"action" : "add_subdirectory",
+				"subdirectory_name" : "segmentation",
+				"output_directory" : this.__sessionDirectory}, reallyLoadSession);
+
+			function reallyLoadSession(e)
 			{
-				 if(this.readyState == 4 && this.status == 200)
-				 {
-					// so far so good
-					if(this.responseXML!=null)
-					{
-						var response = this.responseXML;
-						var seeds = response.getElementsByTagName("seed");
-						for(var i=0; i<seeds.length; i++)
-						{
-							var sliceId=parseInt(seeds[i].getAttribute("slice"));
-							console.log("adding slice :"+sliceId);
-							volView.__addNewSeedItemToList(sliceId);
-						};
-						volView.__updateAll();
-					}
-					else
-						alert("no seeds found");
-				}
-				else if (this.readyState == 4 && this.status != 200)
+				colorsParamRequest.onreadystatechange = function()
 				{
-						// fetched the wrong page or network error...
-						alert("network error when loading seeds list");
-				}
-			};
-			colorsParamRequest.open("GET", this.__fileBrowser.getFileURL(this.__sessionDirectory+"/seeds.xml?nocache="+Math.random()), true);
-			colorsParamRequest.send(null);
+					 if(this.readyState == 4 && this.status == 200)
+					 {
+						// so far so good
+						if(this.responseXML!=null)
+						{
+							var response = this.responseXML;
+							var seeds = response.getElementsByTagName("seed");
+							for(var i=0; i<seeds.length; i++)
+							{
+								var sliceId=parseInt(seeds[i].getAttribute("slice"));
+								console.log("adding slice :"+sliceId);
+								volView.__addNewSeedItemToList(sliceId);
+							};
+							volView.__updateAll();
+						}
+						else
+							alert("no seeds found");
+					}
+					else if (this.readyState == 4 && this.status != 200)
+					{
+							// fetched the wrong page or network error...
+							alert("network error when loading seeds list");
+					}
+				};
+				colorsParamRequest.open("GET", volView.__fileBrowser.getFileURL(volView.__sessionDirectory+"/seeds.xml?nocache="+Math.random()), true);
+				colorsParamRequest.send(null);
+			}
 		},
 
 		__resetSeedsList : function()
@@ -2336,7 +2347,7 @@ qx.Class.define("desk.volView",
 			return (coordinates);
 		},
 
-		__getStartButton : function () {
+		__getStartSegmentationButton : function () {
 			var button=new qx.ui.form.ToggleButton("Start segmentation");
 			var volView=this;
 			var segmentationViewer=null;
@@ -2383,6 +2394,8 @@ qx.Class.define("desk.volView",
 							{
 								segmentationViewer=new desk.volView(segmentationDirectory+"/cvtgcbinseg.mhd",
 									volView.__fileBrowser);
+								segmentationViewer.getWindow().addListener("close", function (e) {
+									segmentationViewer=null;});
 							}
 							else
 							{

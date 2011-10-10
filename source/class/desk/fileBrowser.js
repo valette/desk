@@ -312,7 +312,7 @@ qx.Class.define("desk.fileBrowser",
 					break;
 				case ".mhd":
 					var volView=new desk.volView(file, myBrowser);
-//					qx.core.Init.getApplication().getRoot().add(volView);
+					qx.core.Init.getApplication().getRoot().add(volView);
 					break;
 				case ".par":
 					myBrowser.getActions().createActionWindowFromURL(myBrowser.getNodeURL(node));

@@ -66,6 +66,16 @@ qx.Class.define("desk.actions",
 			var req = new qx.io.request.Xhr();
 
 			function onSuccess (e){
+					var req = e.getTarget();
+					var response=req.getResponseText();
+					var splitResponse=response.split("\n");
+					
+					var executionStatus=splitResponse[splitResponse.length-2].split(" ")[0];
+					if ((executionStatus!="OK")&&(executionStatus!="CACHED"))
+					{
+						alert ("error for action "+actionParameters.action+": \n"+splitResponse[0]);
+					}
+
 				this.__ongoingActions.remove(actionNotification);
 				if (successCallback!=null)
 				{

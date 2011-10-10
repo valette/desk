@@ -10,7 +10,6 @@ $parametersFileName="action.par";
 $flog = fopen("actions.log", 'a');
 $logHeader=$_SERVER['REMOTE_ADDR']." ".date("D M j G:i:s");
 $startTime=time();
-
 $inputFilesLastMtime=0;
 
 function readParameters($file) {
@@ -111,6 +110,7 @@ foreach ($actions->children() as $action)
 			$parametersList["action"]="$actionToPerform";
 			$command="nice ".$action["executable"]
 				or die("no executable provided for action \"$actionToPerform\"");
+			fwrite($flog, "$logHeader :$currentActionName\n");
 			// action was found in xml file, let's parse the parameters
 			foreach ($action->children() as $parameter)
 			{
@@ -342,6 +342,18 @@ foreach ($actions->children() as $action)
 				$fileToDelete=$parametersList['file_name'];
 				system("rm -f $fileToDelete");
 				fwrite($flog, "$logHeader : erased $fileToDelete\n");
+				echo("\nOK");
+				break;
+			case "add_subdirectory":
+				$newSubdir=$parametersList['subdirectory_name'];
+				if (!is_dir($newSubdir))
+				{
+					mkdir ($newSubdir);
+					fwrite($flog, "$logHeader : created $newSubdir subdirectory\n");
+				}
+				else
+					fwrite($flog, "$logHeader : $newSubdir already exists. not created\n");
+				echo("\nOK");
 				break;
 			case "save_binary_file":
 				$base64Data=$parametersList['base64Data'];
@@ -351,6 +363,7 @@ foreach ($actions->children() as $action)
 				fwrite( $binaryFile, $binaryData);
 				fclose( $binaryFile );
 				fwrite($flog, "$logHeader : wrote binary data into $binaryFileName\n");
+				echo("\nOK");
 				break;
 			case "save_XML_file":
 				$xmlData=$parametersList['xmlData'];
@@ -359,6 +372,7 @@ foreach ($actions->children() as $action)
 				fwrite( $xmlFile, $xmlData);
 				fclose( $xmlFile );
 				fwrite($flog, "$logHeader : wrote XML data into $xmlFileName\n");
+				echo("\nOK");
 				break;
 			default:
 				fwrite($flog, "$logHeader : $command\n");
