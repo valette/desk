@@ -277,19 +277,19 @@ qx.Class.define("desk.fileBrowser",
 				{
 				case ".vtk":
 					var meshView=new desk.meshView(file, myBrowser,modificationTime);
-					qx.core.Init.getApplication().getRoot().add(meshView);
+//					qx.core.Init.getApplication().getRoot().add(meshView);
 					break;
 				case ".ply":
 				case ".obj":
 				case ".stl":
 					var meshView=new desk.meshView(file,myBrowser);
-					qx.core.Init.getApplication().getRoot().add(meshView);
+//					qx.core.Init.getApplication().getRoot().add(meshView);
 					break;
 				case ".png":
 				case ".jpg":
 				case ".bmp":
 					var imageView=new desk.imageView(file, myBrowser);
-					qx.core.Init.getApplication().getRoot().add(imageView);
+//					qx.core.Init.getApplication().getRoot().add(imageView);
 					break;
 				case ".xml":
 					var xmlhttp=new XMLHttpRequest();
@@ -300,19 +300,19 @@ qx.Class.define("desk.fileBrowser",
 					if (xmlDoc.getElementsByTagName("mesh").length!=0)
 					{
 						var meshView=new desk.meshView(file, myBrowser, modificationTime);
-						qx.core.Init.getApplication().getRoot().add(meshView);
+//						qx.core.Init.getApplication().getRoot().add(meshView);
 					}
 					else if (xmlDoc.getElementsByTagName("volume").length!=0)
 					{
 						var volView=new desk.volView(file, myBrowser, modificationTime);
-						qx.core.Init.getApplication().getRoot().add(volView);
+//						qx.core.Init.getApplication().getRoot().add(volView);
 					}
 					else
 						alert ("xml file of unknown type!");
 					break;
 				case ".mhd":
 					var volView=new desk.volView(file, myBrowser);
-					qx.core.Init.getApplication().getRoot().add(volView);
+//					qx.core.Init.getApplication().getRoot().add(volView);
 					break;
 				case ".par":
 					myBrowser.getActions().createActionWindowFromURL(myBrowser.getNodeURL(node));

@@ -1204,74 +1204,8 @@ qx.Class.define("desk.volView",
 			{
 				volView.__htmlContextLabels.beginPath(); // seb : why???
 				volView.__mouseData.mouseLeftDownFlag = false;
-				var oldSliceIndex= volView.__drawingCanvasParams.sliceNumber;
-				
-				if (volView.__currentSeedsModified!=false)
-				{
-					var sliceData = volView.__htmlContextImage.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
-					var pixels = sliceData.data;
-					var seeds=volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height).data;
-					var isAllBlack = true;
-					var labelColors=volView.__labelColors;
-					for(var i=0; i<seeds.length; i+=4)
-					{
-						if(128<=seeds[i+3])  //  if( color is solid not totally transparent, ie. alpha=0) <-> if( not background )
-						{
-							var dRed = 0;
-							var dGreen = 0;
-							var dBlue = 0;
-							var distance = 500000;
-							var rightColorIndex = 0;
-							for(var j=0; j!=labelColors.length; j++)
-							{
-								var color=labelColors[j];
-								dRed = color.red-seeds[i];
-								dGreen = color.green-seeds[i+1];
-								dBlue = color.blue-seeds[i+2];
-								var testD = dRed*dRed+dGreen*dGreen+dBlue*dBlue;
-								if(testD<distance)
-								{
-									distance = testD;
-									rightColorIndex = j;
-								}
-							}
-							var rightColor=labelColors[rightColorIndex];
-							pixels[i] = rightColor.red;
-							pixels[i+1] = rightColor.green;
-							pixels[i+2] = rightColor.blue;
-							pixels[i+3] = 255;
-							isAllBlack = false;
-						}
-						////Comment "else" to send combined image
-						else
-						{
-							pixels[i] = 0;
-							pixels[i+1] = 0;
-							pixels[i+2] = 0;
-							pixels[i+3] = 0;
-						}
-					}
-					if(!isAllBlack)
-					{
-						////Send png image to server
-						sliceData.data = pixels;
-						volView.__htmlContextLabels.putImageData(sliceData, 0, 0);
-						var pngImg = volView.__htmlCanvasLabels.toDataURL("image/png");
-						var commaIndex=pngImg.lastIndexOf(",");
-						var base64Img = pngImg.substring(commaIndex+1,pngImg.length);
-						var parameterMap={
-						"action" : "save_binary_file",
-						"file_name" : volView.getSeedFileName(volView.__drawingCanvasParams.sliceNumber),
-						"base64Data" : base64Img,
-						"output_directory" : volView.__sessionDirectory};
 
-						volView.__fileBrowser.getActions().launchAction(parameterMap);
-						volView.__seedsCacheTags[volView.__drawingCanvasParams.sliceNumber]=Math.random();
-						if(volView.__seedsArray[oldSliceIndex]==0)
-							volView.__addNewSeedItemToList(oldSliceIndex);
-						volView.__saveSeedsXML();
-					}
-				}
+				volView.__saveCurrentSeeds();
 
 				var newSliceIndex=event.getData();
 				if (newSliceIndex!=Math.round(newSliceIndex))
@@ -1864,8 +1798,101 @@ qx.Class.define("desk.volView",
 			};
 		},
 
+		__saveCurrentSeeds : function(callback)
+		{
+			var oldSliceIndex= this.__drawingCanvasParams.sliceNumber;
+			
+			if (this.__currentSeedsModified!=false)
+			{
+				var sliceData = this.__htmlContextImage.getImageData(0, 0, this.__imgMap.width, this.__imgMap.height);
+				var pixels = sliceData.data;
+				var seeds=this.__htmlContextLabels.getImageData(0, 0, this.__imgMap.width, this.__imgMap.height).data;
+				var isAllBlack = true;
+				var labelColors=this.__labelColors;
+				for(var i=0; i<seeds.length; i+=4)
+				{
+					if(128<=seeds[i+3])  //  if( color is solid not totally transparent, ie. alpha=0) <-> if( not background )
+					{
+						var dRed = 0;
+						var dGreen = 0;
+						var dBlue = 0;
+						var distance = 500000;
+						var rightColorIndex = 0;
+						for(var j=0; j!=labelColors.length; j++)
+						{
+							var color=labelColors[j];
+							dRed = color.red-seeds[i];
+							dGreen = color.green-seeds[i+1];
+							dBlue = color.blue-seeds[i+2];
+							var testD = dRed*dRed+dGreen*dGreen+dBlue*dBlue;
+							if(testD<distance)
+							{
+								distance = testD;
+								rightColorIndex = j;
+							}
+						}
+						var rightColor=labelColors[rightColorIndex];
+						pixels[i] = rightColor.red;
+						pixels[i+1] = rightColor.green;
+						pixels[i+2] = rightColor.blue;
+						pixels[i+3] = 255;
+						isAllBlack = false;
+					}
+					////Comment "else" to send combined image
+					else
+					{
+						pixels[i] = 0;
+						pixels[i+1] = 0;
+						pixels[i+2] = 0;
+						pixels[i+3] = 0;
+					}
+				}
+				if(!isAllBlack)
+				{
+					var volView=this;
+					var numberOfRemainingRequests=2;
+					function success(e){
+						numberOfRemainingRequests--;
+						if ((numberOfRemainingRequests==0)&&(callback!=null))
+						{
+			            	volView.__currentSeedsModified=false;
+			            	if (callback!=null)
+			            		callback();
+						}
+					}
+					////Send png image to server
+					sliceData.data = pixels;
+					this.__htmlContextLabels.putImageData(sliceData, 0, 0);
+					var pngImg = this.__htmlCanvasLabels.toDataURL("image/png");
+					var commaIndex=pngImg.lastIndexOf(",");
+					var base64Img = pngImg.substring(commaIndex+1,pngImg.length);
+					var parameterMap={
+						"action" : "save_binary_file",
+						"file_name" : this.getSeedFileName(this.__drawingCanvasParams.sliceNumber),
+						"base64Data" : base64Img,
+						"output_directory" : this.__sessionDirectory};
+
+					this.__fileBrowser.getActions().launchAction(parameterMap, success);
+					this.__seedsCacheTags[this.__drawingCanvasParams.sliceNumber]=Math.random();
+					if(this.__seedsArray[oldSliceIndex]==0)
+						this.__addNewSeedItemToList(oldSliceIndex);
+					this.__saveSeedsXML(success);
+				}
+				else
+				{
+	            	if (callback!=null)
+						callback();
+				}
+			}
+			else
+			{
+				if (callback!=null)
+					callback();
+			}
+		},
+
 		////Rewrite xml list of the drawn seeds
-		__saveSeedsXML : function()
+		__saveSeedsXML : function(callback)
         {
             
             // XML writer with attributes and smart attribute quote escaping 
@@ -1956,7 +1983,7 @@ qx.Class.define("desk.volView",
 				"xmlData" : element('seeds', xmlContent),
 				"output_directory" : this.__sessionDirectory};
 
-			this.__fileBrowser.getActions().launchAction(parameterMap);
+			this.__fileBrowser.getActions().launchAction(parameterMap, callback);
 		},
 			
 
@@ -2329,43 +2356,46 @@ qx.Class.define("desk.volView",
 			},this.__seedsList);
 
 			button.addListener("execute", function (e){
-				var parameterMap={
-					"action" : "cvtseg2",
-					"input_volume" : volView.__file,
-					"output_directory" : "cache/"};
-
-				function getAnswer(e)
-				{
-					var req = e.getTarget();
-					var clusteringDirectory=req.getResponseText().split("\n")[0];
-
-					var parameterMap2={
-						"action" : "cvtgcbinseg",
+				function afterSeedsSaved()
+				{	
+					var parameterMap={
+						"action" : "cvtseg2",
 						"input_volume" : volView.__file,
-						"seeds" : volView.__sessionDirectory+"/seeds.xml",
-						"clustering" : clusteringDirectory+"/clustering-index.mhd",
-						"output_directory" : "cache/"};//volView.__sessionDirectory};
+						"output_directory" : "cache/"};
 
-					function getAnswer2(e)
+					function getAnswer(e)
 					{
 						var req = e.getTarget();
-						var segmentationDirectory=req.getResponseText().split("\n")[0];
-						if (segmentationViewer==null)
+						var clusteringDirectory=req.getResponseText().split("\n")[0];
+
+						var parameterMap2={
+							"action" : "cvtgcbinseg",
+							"input_volume" : volView.__file,
+							"seeds" : volView.__sessionDirectory+"/seeds.xml",
+							"clustering" : clusteringDirectory+"/clustering-index.mhd",
+							"output_directory" : "cache/"};//volView.__sessionDirectory};
+
+						function getAnswer2(e)
 						{
-							segmentationViewer=new desk.volView(segmentationDirectory+"/cvtgcbinseg.mhd",
-								volView.__fileBrowser);
+							var req = e.getTarget();
+							var segmentationDirectory=req.getResponseText().split("\n")[0];
+							if (segmentationViewer==null)
+							{
+								segmentationViewer=new desk.volView(segmentationDirectory+"/cvtgcbinseg.mhd",
+									volView.__fileBrowser);
+							}
+							else
+							{
+								segmentationViewer.__updateVolume();
+							}
 						}
-						else
-						{
-							segmentationViewer.__updateVolume();
-						}
+
+						volView.__fileBrowser.getActions().launchAction(parameterMap2, getAnswer2);
+
 					}
-
-					volView.__fileBrowser.getActions().launchAction(parameterMap2, getAnswer2);
-
+					volView.__fileBrowser.getActions().launchAction(parameterMap, getAnswer);
 				}
-
-				volView.__fileBrowser.getActions().launchAction(parameterMap, getAnswer);
+				volView.__saveCurrentSeeds(afterSeedsSaved);
 			});
 			return button;
 		}
