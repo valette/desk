@@ -185,7 +185,9 @@ o3djs.mesh.createSquare = function(scene, width, height)
     samplerParam.value = sampler;
     sampler.addressModeU = scene.o3dElement.o3d.Sampler.CLAMP;
     sampler.addressModeV = scene.o3dElement.o3d.Sampler.CLAMP;
-	sampler.minFilter = scene.o3dElement.o3d.Sampler.ANISOTROPIC;
+	sampler.magFilter = scene.o3dElement.o3d.Sampler.NONE;
+	sampler.minFilter = scene.o3dElement.o3d.Sampler.NONE;
+//	sampler.minFilter = scene.o3dElement.o3d.Sampler.ANISOTROPIC;
 	sampler.maxAnisotropy = 4;
 
 	var pixels = new Uint8Array(width*height*4);
