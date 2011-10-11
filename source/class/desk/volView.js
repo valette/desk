@@ -1109,8 +1109,10 @@ qx.Class.define("desk.volView",
 					}
 				}
 			}, this);
-			this.__startSegmentationButton=this.__getStartSegmentationButton();
+			var segmentationButtons=this.__getSegmentationButtons();
+			this.__startSegmentationButton=segmentationButtons[0];
 			this.__bottomRightContainer.add(this.__startSegmentationButton);
+			this.__bottomRightContainer.add(segmentationButtons[1]);
 
 			this.__imageContainer.add(modifSlicesList, {flex : 1});
 			modifSlicesList.setVisibility("excluded");
@@ -2281,7 +2283,7 @@ qx.Class.define("desk.volView",
 			},this);
 
 			// add listener on close window event to remove bindings
-			this.__window.addListener("close", function (e){
+			this.__window.addListener("beforeClose", function (e){
 				var bindings=this.__spinner.getBindings();
 				// according to the documentation, getBindings returns : An array of binding informations. 
 				//Every binding information is an array itself containing 
@@ -2372,11 +2374,12 @@ qx.Class.define("desk.volView",
 				});
 
 		},
-		__getStartSegmentationButton : function () {
+		__getSegmentationButtons : function () {
 			var button=new qx.ui.form.ToggleButton("Start segmentation");
 			var volView=this;
 			var segmentationViewer=null;
 			button.setEnabled(false);
+			var clusteringPercentageField=new qx.ui.form.TextField("0.01");
 
 			this.__seedsList.addListener("removeItem",function(e){
 				if (this.getChildren().length==0)
@@ -2398,6 +2401,7 @@ qx.Class.define("desk.volView",
 						var parameterMap={
 							"action" : "cvtseg2",
 							"input_volume" : volView.__file,
+							"clusters_percentage" : clusteringPercentageField.getValue(),
 							"output_directory" : "cache/"};
 
 						function afterClusteringComputed(e)
@@ -2420,7 +2424,7 @@ qx.Class.define("desk.volView",
 								{
 									segmentationViewer=new desk.volView(segmentationDirectory+"/seg-cvtgcmultiseg.mhd",
 										volView.__fileBrowser);
-									segmentationViewer.getWindow().addListener("close", function (e) {
+									segmentationViewer.getWindow().addListener("beforeClose", function (e) {
 										segmentationViewer=null;});
 								}
 								else
@@ -2440,7 +2444,7 @@ qx.Class.define("desk.volView",
 					"subdirectory_name" : "segmentation",
 					"output_directory" : volView.__sessionDirectory}, afterDirectoryCreated);
 			});
-			return button;
+			return [button,clusteringPercentageField];
 		}
 	}
 });

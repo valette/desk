@@ -61,6 +61,7 @@
 <action name="cvtseg2" executable="/home/visu/src/vtkSurfaceBuild/bin/cvtseg2">
 <description>compute an image-based clustering of the input volume</description>
 <parameter name="input_volume" type="file" required="true"/>
+<parameter prefix="-cn " name="clusters_percentage" type="float"/>
 <anchor text="-cs 50 -gfn 1 -n 1"/>
 </action>
 

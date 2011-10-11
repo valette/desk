@@ -131,6 +131,8 @@ qx.Class.define("desk.meshView",
 		__shapesList : null,
 		__shapesArray : null,
 
+		__volumes : null,
+
 		getWindow : function() {
 			return this.__window;
 		},
@@ -412,7 +414,7 @@ qx.Class.define("desk.meshView",
 							scene.render();
 						}
 						updateTexture();
-						volView.addListener('changeSlice',function(e)
+						var listenerId=volView.addListener('changeSlice',function(e)
 						{
 							var slice=volView.getSlice();
 							while (1)
@@ -428,12 +430,26 @@ qx.Class.define("desk.meshView",
 									console.log("skew detected...");
 							}
 						});
+						if (meshViewer.__volumes==null)
+							meshViewer.__volumes=[];
+						meshViewer.__volumes.push({
+								volumeViewer : volView,
+								listener : listenerId});
 						scene.render();
 					}
 					// activate the window
 					var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
 					windowManager.bringToFront(this.__window);
 				}, this);
+
+			this.__window.addListener("beforeClose", function(e) {
+				// remove bindings from volume viewers
+				var volumes=this.__volumes;
+				for (var i=0;i<volumes.length;i++)
+					volumes[i].volumeViewer.removeListenerById(volumes[i].listener);
+				this.__volumes=null;
+				},this);
+
 			}, this);
 		},
 
