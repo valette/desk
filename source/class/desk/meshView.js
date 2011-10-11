@@ -343,9 +343,8 @@ qx.Class.define("desk.meshView",
 					if (myScene!=null)
 						myScene.stopDragging();},this);
 
-				this.__iframe.addListener("keypress", function(event) {
-					console.log(event.getKeyIdentifier());
-					this.__iframe.getWindow().keyPressed(event.getKeyCode())
+				this.__window.addListener("keypress", function(event) {
+					this.__iframe.getWindow().keyPressed(event.getKeyIdentifier())
 					;},this);
 
 				this.__window.addListener("keypress", function(event) {
@@ -445,8 +444,9 @@ qx.Class.define("desk.meshView",
 			this.__window.addListener("beforeClose", function(e) {
 				// remove bindings from volume viewers
 				var volumes=this.__volumes;
-				for (var i=0;i<volumes.length;i++)
-					volumes[i].volumeViewer.removeListenerById(volumes[i].listener);
+				if (volumes!=null)
+					for (var i=0;i<volumes.length;i++)
+						volumes[i].volumeViewer.removeListenerById(volumes[i].listener);
 				this.__volumes=null;
 				},this);
 
