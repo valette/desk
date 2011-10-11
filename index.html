@@ -127,11 +127,11 @@ function keyPressedEvent(e)
 {
 	keyPressed(e.which);
 }
-function keyPressed(code)
+function keyPressed(pressedKey)
 {
-	var pressedKey=String.fromCharCode(code);
+	console.log("pressed Key : "+pressedKey)
 //	alert (pressedKey);
-	if (pressedKey=='c')
+	if (pressedKey=='C')
 	{
 //		var myCanvas=document.getElementsByTagName('canvas')[0];
 //		alert(document.getElementsByTagName('canvas').length);
