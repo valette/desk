@@ -10,27 +10,50 @@ $parametersFileName="action.par";
 $flog = fopen("actions.log", 'a');
 $logHeader=$_SERVER['REMOTE_ADDR']." ".date("D M j G:i:s");
 $startTime=time();
-
 $inputFilesLastMtime=0;
 
 function readParameters($file) {
 	$parameters=array();
-	$content = file_get_contents($file);
-	$parametersLines=explode("\n",$content);
-	foreach ($parametersLines as $line)
+	if (is_file($file))
 	{
-		$parameter=explode("=",$line);
-		$parameters[''.$parameter[0]]=$parameter[1];
+		$content = file_get_contents($file);
+		$parametersLines=explode("\n",$content);
+		foreach ($parametersLines as $line)
+		{
+			$parameter=explode("=",$line);
+			$parameters[''.$parameter[0]]=$parameter[1];
+		}
 	}
 	return ($parameters);
 }
 
-function validatePath($file) {
+function validateBase64($buffer)
+{
+  $p    = $buffer;   
+  $len  = strlen($p);      
+ 
+  for($i=0; $i<$len; $i++)
+  {
+     if( ($p[$i]>="A" && $p[$i]<="Z")||
+         ($p[$i]>="a" && $p[$i]<="z")||
+         ($p[$i]>="/" && $p[$i]<="9")||
+         ($p[$i]=="+")||
+         ($p[$i]=="=")||
+         ($p[$i]=="\x0a")||
+         ($p[$i]=="\x0d")
+       )
+       continue;
+     else
+       die("provided data is not base-64 valid");
+  }
+}
+
+function validatePath($file, $accountMTime) {
 $DATA_ROOT_FROM_PHP="data";
 $CACHE_ROOT_FROM_PHP="cache";
 $ACTIONS_ROOT_FROM_PHP="action";
 
-	if ($file!="cache/")
+	if (($file!="cache/")&&($accountMTime==true))
 	{
 		$fileMTime=filemtime($file);
 		fwrite($GLOBALS["flog"], "$file : mtime=$fileMTime\n");
@@ -60,7 +83,6 @@ $ACTIONS_ROOT_FROM_PHP="action";
 			}
 		}
 	}
-
 }
 
 $parametersList=array();
@@ -86,8 +108,9 @@ foreach ($actions->children() as $action)
 		if ($actionToPerform==$currentActionName)
 		{
 			$parametersList["action"]="$actionToPerform";
-			$command=$action["executable"]
+			$command="nice ".$action["executable"]
 				or die("no executable provided for action \"$actionToPerform\"");
+			fwrite($flog, "$logHeader :$currentActionName\n");
 			// action was found in xml file, let's parse the parameters
 			foreach ($action->children() as $parameter)
 			{
@@ -124,19 +147,23 @@ foreach ($actions->children() as $action)
 									die ("xml content badly formated : \n".$parameterValue);
 								break;
 							case "file":
-								validatePath($parameterValue);
+								validatePath($parameterValue, true);
 								if (!is_file($parameterValue))
 									die ("$parameterName : file \"$parameterValue\" does not exist");
 								$prependPHP_DIR=true;
 								break;
 							case "directory":
-								validatePath($parameterValue);
+								validatePath($parameterValue, true);
 								if (!is_dir($parameterValue))
 									die ("$parameterName : directory \"$parameterValue\" does not exist");
 								$prependPHP_DIR=true;
 								break;
+							case "base64":
+								validateBase64($parameterValue);
+								$prependPHP_DIR=true;
+								break;
 							case "new_directory":
-								validatePath($parameterValue);
+								validatePath($parameterValue, true);
 								$prependPHP_DIR=true;
 								break;
 							case "int":
@@ -265,7 +292,10 @@ foreach ($actions->children() as $action)
 
 			if ($voidAction==false)
 			{
-				switch (validatePath($outputDirectory))
+				if (!is_dir($outputDirectory))
+					die ("directory \"$outputDirectory\" does not exist");
+
+				switch (validatePath($outputDirectory, false))
 				{
 					case "cache":
 						$outputDirectory="$CACHE_ROOT_FROM_PHP".sha1($command);
@@ -291,50 +321,94 @@ foreach ($actions->children() as $action)
 				{
 					$oldParameters=readParameters("$parametersFileName");
 					$outputMtime=filemtime('.');
-					if (($inputFilesLastMtime<= $outputMtime)&&
-							($oldParameters['hash']==$commandHash))
+					if (isset($oldParameters['hash']))
 					{
-						$cached=true;
-						fwrite($flog, "$logHeader : cached because input files were not modified\n");
-						fwrite($flog, "$logHeader : directoryMtime : $outputMtime, inputFilesLastMtime : $inputFilesLastMtime\n");
+						if (($inputFilesLastMtime<= $outputMtime)&&
+								($oldParameters['hash']==$commandHash))
+						{
+							$cached=true;
+							fwrite($flog, "$logHeader : cached because input files were not modified\n");
+							fwrite($flog, "$logHeader : directoryMtime : $outputMtime, inputFilesLastMtime : $inputFilesLastMtime\n");
+						}
 					}
 				}
 				$parametersList['hash']=$commandHash;
 			}
-			fwrite($flog, "$logHeader : $command\n");
 
-			echo "command : $command\n";
-
-			if ($cached==false)
+			// switch between core actions and xml-provided actions
+			switch ($actionToPerform)
 			{
-				echo ("Output : \n");
-				system("$command | tee action.log");
-				$duration=time()-$startTime;
-				if ($voidAction==false)
+			case "delete_file":
+				$fileToDelete=$parametersList['file_name'];
+				system("rm -f $fileToDelete");
+				fwrite($flog, "$logHeader : erased $fileToDelete\n");
+				echo("\nOK");
+				break;
+			case "add_subdirectory":
+				$newSubdir=$parametersList['subdirectory_name'];
+				if (!is_dir($newSubdir))
 				{
-					touch ('.');
+					mkdir ($newSubdir);
+					fwrite($flog, "$logHeader : created $newSubdir subdirectory\n");
+				}
+				else
+					fwrite($flog, "$logHeader : $newSubdir already exists. not created\n");
+				echo("\nOK");
+				break;
+			case "save_binary_file":
+				$base64Data=$parametersList['base64Data'];
+				$binaryData = base64_decode($base64Data);
+				$binaryFileName=$parametersList['file_name'];
+				$binaryFile = fopen( "$binaryFileName", 'wb' );
+				fwrite( $binaryFile, $binaryData);
+				fclose( $binaryFile );
+				fwrite($flog, "$logHeader : wrote binary data into $binaryFileName\n");
+				echo("\nOK");
+				break;
+			case "save_XML_file":
+				$xmlData=$parametersList['xmlData'];
+				$xmlFileName=$parametersList['file_name'];
+				$xmlFile = fopen( "$xmlFileName", 'wb' );
+				fwrite( $xmlFile, $xmlData);
+				fclose( $xmlFile );
+				fwrite($flog, "$logHeader : wrote XML data into $xmlFileName\n");
+				echo("\nOK");
+				break;
+			default:
+				fwrite($flog, "$logHeader : $command\n");
+
+				echo "command : $command\n";
+				if ($cached==false)
+				{
+					echo ("Output : \n");
+					system("$command | tee action.log");
+					$duration=time()-$startTime;
+					if ($voidAction==false)
+					{
+						touch ('.');
+						clearstatcache();
+						$omtime=filemtime('.');
+						fwrite($flog, "$logHeader : output directory mtime : $omtime\n");
+						$fp = fopen($parametersFileName, 'w+') or die("Could not open $parametersFileName");
+						$parametersList2=array();
+						foreach ($parametersList as $parameter => $value)
+							$parametersList2[]="$parameter=$value";
+
+						fwrite($fp, implode("\n", $parametersList2));
+						fclose($fp);
+						echo "\n".$omtime;
+					}
+					echo "\nOK ($duration s.)";
+				}
+				else
+				{
+					echo ("Cached output : \n");
+					readfile ("action.log");
 					clearstatcache();
 					$omtime=filemtime('.');
-					fwrite($flog, "$logHeader : output directory mtime : $omtime\n");
-					$fp = fopen($parametersFileName, 'w+') or die("Could not open $parametersFileName");
-					$parametersList2=array();
-					foreach ($parametersList as $parameter => $value)
-						$parametersList2[]="$parameter=$value";
-
-					fwrite($fp, implode("\n", $parametersList2));
-					fclose($fp);
 					echo "\n".$omtime;
+					echo "\nCACHED";
 				}
-				echo "\nOK ($duration s.)";
-			}
-			else
-			{
-				echo ("Cached output : \n");
-				readfile ("action.log");
-				clearstatcache();
-				$omtime=filemtime('.');
-				echo "\n".$omtime;
-				echo "\nCACHED";
 			}
 			fwrite($flog, "******************************************************\n");
 			fclose($flog);		}

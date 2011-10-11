@@ -27,16 +27,6 @@
 <parameter name="number_of_smoothing_steps" type="int" min="0" default="0" prefix="-sm "/>
 </action>
 
-<action name="Create_directory" executable="mkdir" void="true">
-<description>create a directory</description>
-<parameter name="directory_name" type="new_directory" required="true"/>
-</action>
-
-<action name="delete" executable="rm" void="true">
-<description>delete a file or directory</description>
-<parameter name="input_file" type="file" required="true"/>
-</action>
-
 <action name="mesh2vtk" executable="/home/visu/src/vtkSurfaceBuild/bin/mesh2vtk">
 <description>converts a mesh to .vtk format</description>
 <parameter name="input_file" type="file" required="true"/>
@@ -68,17 +58,65 @@
 <parameter prefix="-f " name="diffusion_factor" type="float"/>
 </action>
 
+<action name="cvtseg2" executable="/home/visu/src/vtkSurfaceBuild/bin/cvtseg2">
+<description>compute an image-based clustering of the input volume</description>
+<parameter name="input_volume" type="file" required="true"/>
+<parameter prefix="-cn " name="clusters_percentage" type="float"/>
+<anchor text="-cs 50 -gfn 1 -n 1"/>
+</action>
+
+<action name="cvtgcbinseg" executable="/home/visu/src/gc2/gc/cvtgcbinseg">
+<description>(binary) segments a volume using graph cuts and clustering techniques</description>
+<parameter prefix="-i " name="input_volume" type="file" required="true"/>
+<parameter prefix="-x " name="seeds" type="file" required="true"/>
+<parameter prefix="-cf " name="clustering" type="file" required="true"/>
+<anchor text="-op seg"/>
+</action>
+
+<action name="cvtgcmultiseg" executable="/home/visu/src/gc2/gc/cvtgcmultiseg">
+<description>(multi-objects) segments a volume using graph cuts and clustering techniques</description>
+<parameter prefix="-i " name="input_volume" type="file" required="true"/>
+<parameter prefix="-x " name="seeds" type="file" required="true"/>
+<parameter prefix="-cf " name="clustering" type="file" required="true"/>
+<anchor text="-op seg -t 0.1"/>
+</action>
+
 <action name="sleep" executable="sleep" void="true">
 <description>just sleep (usefull for debug)</description>
 <parameter name="time_in_seconds" type="int" default="2" required="true"/>
 </action>
 
-<action name="saveXML" executable="echo" void="true">
-<description>save an xml content to a file</description>
-<parameter prefix="'" name="content" suffix="'" type="xmlcontent" required="true"/>
-<parameter prefix=">>data/xml/" name="filename" type="string" required="true"/>
+<action name="delete_file" executable="not needed" void="true">
+<description>delete a file</description>
+<parameter name="file_name" type="file" required="true"/>
 </action>
 
+<action name="Create_directory" executable="mkdir" void="true">
+<description>create a directory</description>
+<parameter name="directory_name" type="new_directory" required="true"/>
+</action>
+
+<action name="add_subdirectory" executable="not needed">
+<description>add a subdirectory to an existing directory</description>
+<parameter name="subdirectory_name" type="string" required="true"/>
+</action>
+
+<action name="delete_directory" executable="rm -rf" void="true">
+<description>delete a file or directory</description>
+<parameter name="directory" type="directory" required="true"/>
+</action>
+
+<action name="save_XML_file" executable="not needed">
+<description>save an xml content to a file</description>
+<parameter name="xmlData" type="xmlcontent" required="true"/>
+<parameter name="file_name" type="string" required="true"/>
+</action>
+
+<action name="save_binary_file" executable="not needed">
+<description>writes binary data (encoded in base64) to a file</description>
+<parameter name="file_name" type="string" required="true"/>
+<parameter name="base64Data" type="base64" required="true"/>
+</action>
 
 
 </actions>

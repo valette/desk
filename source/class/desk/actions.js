@@ -64,18 +64,34 @@ qx.Class.define("desk.actions",
 			var actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
 			this.__ongoingActions.add(actionNotification);
 			var req = new qx.io.request.Xhr();
+
+			function onSuccess (e){
+					var req = e.getTarget();
+					var response=req.getResponseText();
+					var splitResponse=response.split("\n");
+					
+					var executionStatus=splitResponse[splitResponse.length-2].split(" ")[0];
+					if ((executionStatus!="OK")&&(executionStatus!="CACHED"))
+					{
+						alert ("error for action "+actionParameters.action+": \n"+splitResponse[0]);
+					}
+
+				this.__ongoingActions.remove(actionNotification);
+				if (successCallback!=null)
+				{
+					if (context!=null)
+						successCallback.call(context,e);
+					else
+						successCallback(e);
+				}
+			}
+
 			req.setUrl("/visu/desk/php/actions.php");
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData(actionParameters);
 			req.addListener("success", onSuccess, this);
 			req.send();
-			
-			function onSuccess (e){
-				this.__ongoingActions.remove(actionNotification);
-				successCallback.call(context,e);
-			}
-
 		},
 
 		populateActionMenu : function()
