@@ -65,7 +65,12 @@ qx.Class.define("desk.meshView",
 					if (label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1)
 					{
 						if (shape)
-							shape.show();
+						{
+							if (meshView.__shapesVisibility[node.nodeId])
+								shape.show();
+							else
+								shape.hide();
+						}
 						return true;
 					}
 					else
@@ -89,11 +94,12 @@ qx.Class.define("desk.meshView",
 
 		elementsList.add(this.__shapesList,{flex : 1});
 		this.__shapesArray=[];
+		this.__shapesVisibility = [];
 
 
 		//context menu to edit meshes appearance
 		var menu = new qx.ui.menu.Menu;
-		var openButton = new qx.ui.menu.Button("Change Colors");
+		var openButton = new qx.ui.menu.Button("color");
 		openButton.addListener("execute", function (){
 			var propertyWindow=new qx.ui.window.Window();
 			propertyWindow.setLayout(new qx.ui.layout.HBox());
@@ -101,6 +107,34 @@ qx.Class.define("desk.meshView",
 			propertyWindow.open();			
 			}, this);
 		menu.add(openButton);
+
+		var showButton = new qx.ui.menu.Button("show");
+		showButton.addListener("execute", function (){
+			var shapesArray=this.__shapesList.getSelectedNodes();
+			for (var i=0;i<shapesArray.length;i++)
+			{
+				var shapeId=shapesArray[i].nodeId;
+				var shape=this.__shapesArray[shapeId];
+				shape.show();
+				this.__shapesVisibility[shapeId]=true;
+			}
+			this.getScene().render();		
+			},this);
+		menu.add(showButton);
+
+		var hideButton = new qx.ui.menu.Button("hide");
+		hideButton.addListener("execute", function (){
+			var shapesArray=this.__shapesList.getSelectedNodes();
+			for (var i=0;i<shapesArray.length;i++)
+			{
+				var shapeId=shapesArray[i].nodeId;
+				var shape=this.__shapesArray[shapeId];
+				shape.hide();
+				this.__shapesVisibility[shapeId]=false;
+			}
+			this.getScene().render();		
+			},this);
+		menu.add(hideButton);
 		this.__shapesList.setContextMenu(menu);
 
 
@@ -131,6 +165,8 @@ qx.Class.define("desk.meshView",
 		__shapesList : null,
 		__shapesArray : null,
 
+		__shapesVisibility : null,
+
 		__volumes : null,
 
 		getWindow : function() {
@@ -158,7 +194,8 @@ qx.Class.define("desk.meshView",
 			{
 				scene.loadMesh(fileBrowser.getFileURL(file), function (shape)
 					{
-						myMeshViewer.__shapesArray[leaf]=shape;		
+						myMeshViewer.__shapesArray[leaf]=shape;	
+						myMeshViewer.__shapesVisibility[leaf]=true;
 						if (update==true)
 							scene.viewAll();
 						else if ((update!=null)&&(update!=false))

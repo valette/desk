@@ -69,21 +69,28 @@ qx.Class.define("desk.actions",
 					var req = e.getTarget();
 					var response=req.getResponseText();
 					var splitResponse=response.split("\n");
-					
-					var executionStatus=splitResponse[splitResponse.length-2].split(" ")[0];
-					if ((executionStatus!="OK")&&(executionStatus!="CACHED"))
-					{
+					var actionOK=true;
+					if (splitResponse.length<2)
 						alert ("error for action "+actionParameters.action+": \n"+splitResponse[0]);
-					}
-
-				this.__ongoingActions.remove(actionNotification);
-				if (successCallback!=null)
-				{
-					if (context!=null)
-						successCallback.call(context,e);
 					else
-						successCallback(e);
-				}
+					{
+						var executionStatus=splitResponse[splitResponse.length-2].split(" ")[0];
+						if ((executionStatus!="OK")&&(executionStatus!="CACHED"))
+						{
+							alert ("error for action "+actionParameters.action+": \n"+splitResponse[0]);
+						}
+						else
+						{
+							this.__ongoingActions.remove(actionNotification);
+							if (successCallback!=null)
+							{
+								if (context!=null)
+									successCallback.call(context,e);
+								else
+									successCallback(e);
+							}
+						}
+					}
 			}
 
 			req.setUrl("/visu/desk/php/actions.php");
