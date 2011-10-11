@@ -414,21 +414,13 @@ qx.Class.define("desk.meshView",
 						}
 						updateTexture();
 						var listenerId=volView.addListener('changeSlice',function(e)
-						{
-							var slice=volView.getSlice();
-							while (1)
 							{
-								var coords=volView.getCornersCoordinates();
-								updateTexture();
-								for (var i=0;i<4;i++)
-									square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);
-								scene.render();
-								if (slice==volView.getSlice())
-									break;
-								else
-									console.log("skew detected...");
-							}
-						});
+							var coords=volView.getCornersCoordinates();
+							updateTexture();
+							for (var i=0;i<4;i++)
+								square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);
+							scene.render();});
+
 						if (meshViewer.__volumes==null)
 							meshViewer.__volumes=[];
 						meshViewer.__volumes.push({

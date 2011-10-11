@@ -113,8 +113,8 @@ qx.Class.define("desk.volView",
 		// LINKEDWINDOW : null
 	},
 
-	properties : {
-		slice : { check : "Number", init : 0 ,  event : "changeSlice"}
+	events : {
+		"changeSlice" : "qx.event.type.Event"
 	},
 
 	members :
@@ -1785,7 +1785,7 @@ qx.Class.define("desk.volView",
 					}
                     dataDesc.data = data;
                     volView.__pixels=data;
-					volView.setSlice(Math.random());
+					volView.fireEvent("changeSlice");
                 }
                 return dataDesc;
             };
