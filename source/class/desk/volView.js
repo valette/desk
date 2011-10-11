@@ -297,8 +297,8 @@ qx.Class.define("desk.volView",
 				this.setCaption("computing slices, wait...");
 
 			var parameterMap={
-				"action" : "Slice_Volume",
-				"input_file" : this.__file,
+				"action" : "slice_volume",
+				"input_volume" : this.__file,
 				"output_directory" : "cache\/"};
 
 			var volView=this;
@@ -611,19 +611,19 @@ qx.Class.define("desk.volView",
 			
 			
 		////Create labels zone
-			var colorsPage = new qx.ui.tabview.Page("REGIONS");
+			var colorsPage = new qx.ui.tabview.Page("colors");
 			volView.__colorsList=colorsPage;
             colorsPage.setLayout(new qx.ui.layout.Grid(1,1));
 
 			var colorsTabView = new qx.ui.tabview.TabView();
             colorsTabView.add(colorsPage);
 
-            colorsTabView.addListener("mouseup", function(event)
+   /*         colorsTabView.addListener("mouseup", function(event)
 			{
                 volView.__htmlContextLabels.beginPath();
                 volView.__mouseData.mouseLeftDownFlag = false;
             },this);
-
+*/
 			this.__mainRightContainer.add(colorsTabView)
 			colorsPage.setVisibility("excluded");
 
@@ -631,8 +631,8 @@ qx.Class.define("desk.volView",
 			var unfocusedBorder = new qx.ui.decoration.Single(2, "solid", "black");
             var focusedBorder = new qx.ui.decoration.Single(3, "solid", "red");
 			var boxWidth = 37;
-			var columnLimit = 5;
-			var colorCount = 5;
+			var columnLimit = 4;
+			var colorCount = 4;
 			var nbLines = 1;
 			var createToolBox = function(inLabel)
             {
@@ -1109,10 +1109,18 @@ qx.Class.define("desk.volView",
 					}
 				}
 			}, this);
-			var segmentationButtons=this.__getSegmentationButtons();
-			this.__startSegmentationButton=segmentationButtons[0];
+			var segmentationWidgets=this.__getSegmentationWidgets();
+			this.__startSegmentationButton=segmentationWidgets[0];
 			this.__bottomRightContainer.add(this.__startSegmentationButton);
-			this.__bottomRightContainer.add(segmentationButtons[1]);
+			var extractMeshesWidgets=this.__getextractMeshesWidgets()
+			this.__bottomRightContainer.add(extractMeshesWidgets[0]);
+
+			var settingsPage = new qx.ui.tabview.Page("settings");
+            settingsPage.setLayout(new qx.ui.layout.VBox());
+			colorsTabView.add(settingsPage);
+			settingsPage.add(segmentationWidgets[1]);
+			settingsPage.add(extractMeshesWidgets[1]);
+			settingsPage.add(extractMeshesWidgets[2]);
 
 			this.__imageContainer.add(modifSlicesList, {flex : 1});
 			modifSlicesList.setVisibility("excluded");
@@ -1982,7 +1990,7 @@ qx.Class.define("desk.volView",
 			}
 
 			var parameterMap={
-				"action" : "save_XML_file",
+				"action" : "save_xml_file",
 				"file_name" : "seeds.xml",
 				"xmlData" : element('seeds', xmlContent),
 				"output_directory" : this.__sessionDirectory};
@@ -2207,8 +2215,8 @@ qx.Class.define("desk.volView",
 				case null :
 					//we need to compute png slices : launch action
 					var parameterMap={
-						"action" : "Slice_Volume",
-						"input_file" : volView.__file,
+						"action" : "slice_volume",
+						"input_volume" : volView.__file,
 						"output_directory" : "cache\/",
 						"format" : "0"};
 					var slicingLabel=new qx.ui.basic.Label("computing...");
@@ -2350,36 +2358,46 @@ qx.Class.define("desk.volView",
 			return (coordinates);
 		},
 
-		__getextractMeshesButton : function () {
+		__getextractMeshesWidgets : function () {
 			var button=new qx.ui.form.ToggleButton("extract meshes");
 			var volView=this;
 			var meshesViewer=null;
-			button.setEnabled(false);
+			button.setEnabled(true);
 
 			button.addListener("execute", function (e){
 				function afterDirectoryCreated() {
 					function afterExtractionExecuted()
 					{
-						
+					//	if (meshesViewer==null)
+							meshesViewer=new desk.meshView(volView.__sessionDirectory+"/meshes/meshes.xml",
+								volView.__fileBrowser);
 					}
-					this.__fileBrowser.getActions().launchAction({
-						"action" : "exctract_meshes",
-						"input_volume" : volView.sessionDirectory+"/segmentation/cvtgcbinseg.mhd",
-						"output_directory" : this.__sessionDirectory}, afterExtractionExecuted);
+					volView.__fileBrowser.getActions().launchAction({
+						"action" : "extract_meshes",
+						"max_number_of_vertices" : numberOfVerticesForm.getValue(),
+						"number_of_smoothing_steps" : numberOfSmoothingStepsForm.getValue(),
+						"input_volume" : volView.__sessionDirectory+"/segmentation/seg-cvtgcmultiseg.mhd",
+						"output_directory" : volView.__sessionDirectory+"/meshes"}, afterExtractionExecuted);
 					}
-				this.__fileBrowser.getActions().launchAction({
+				volView.__fileBrowser.getActions().launchAction({
 					"action" : "add_subdirectory",
-					"subdirectory_name" : "segmentation",
-					"output_directory" : this.__sessionDirectory}, afterDirectoryCreated);
+					"subdirectory_name" : "meshes",
+					"output_directory" : volView.__sessionDirectory}, afterDirectoryCreated);
 				});
+			var numberOfVerticesForm=new qx.ui.form.TextField("5000");
+			var numberOfSmoothingStepsForm=new qx.ui.form.TextField("5");
+			return [button, numberOfVerticesForm, numberOfSmoothingStepsForm];
 
 		},
-		__getSegmentationButtons : function () {
+		__getSegmentationWidgets : function () {
 			var button=new qx.ui.form.ToggleButton("Start segmentation");
 			var volView=this;
 			var segmentationViewer=null;
 			button.setEnabled(false);
+//			var percentageLayout=new qx.ui.layout.HBox();
+//			this.__topLeftContainer = new qx.ui.container.Composite(tLCL);
 			var clusteringPercentageField=new qx.ui.form.TextField("0.01");
+//			var temperatureField=new qx.ui.form.TextField("0.1");
 
 			this.__seedsList.addListener("removeItem",function(e){
 				if (this.getChildren().length==0)

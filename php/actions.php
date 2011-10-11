@@ -365,7 +365,7 @@ foreach ($actions->children() as $action)
 				fwrite($flog, "$logHeader : wrote binary data into $binaryFileName\n");
 				echo("\nOK");
 				break;
-			case "save_XML_file":
+			case "save_xml_file":
 				$xmlData=$parametersList['xmlData'];
 				$xmlFileName=$parametersList['file_name'];
 				$xmlFile = fopen( "$xmlFileName", 'wb' );

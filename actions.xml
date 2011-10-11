@@ -1,15 +1,15 @@
 <actions>
-<action name="ACVD" executable="/home/visu/src/vtkSurfaceBuild/bin/ACVD">
+<action name="acvd" executable="/home/visu/src/vtkSurfaceBuild/bin/ACVD">
 <description>generates a simplification of the input mesh</description>
-<parameter name="input_file" type="file" required="true"/>
+<parameter name="input_mesh" type="file" required="true"/>
 <parameter name="number_of_desired_vertices" type="int" min="0" required="true" />
 <parameter name="gradation" type="float" required="true" min="0" max="30" default="0"/>
 <anchor text="-d 0"/>
 </action>
 
-<action name="ACVDQ" executable="/home/visu/src/vtkSurfaceBuild/bin/ACVDQ">
+<action name="acvdq" executable="/home/visu/src/vtkSurfaceBuild/bin/ACVDQ">
 <description>generates a simplification of the input mesh</description>
-<parameter name="input_file" type="file" required="true"/>
+<parameter name="input_mesh" type="file" required="true"/>
 <parameter name="number_of_desired_vertices" type="int" min="0" required="true" />
 <parameter name="gradation" type="float" required="true" min="0" max="30" default="0" />
 </action>
@@ -19,9 +19,9 @@
 <parameter name="input_file" type="file" required="true"/>
 </action>
 
-<action name="Extract_meshes" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeAnalysis">
+<action name="extract_meshes" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeAnalysis">
 <description>extract meshes from labeled volume data</description>
-<parameter name="input_file" type="file" required="true"/>
+<parameter name="input_volume" type="file" required="true"/>
 <parameter name="max_number_of_vertices" type="int" min="0" default="10000" prefix="-n "/>
 <parameter name="simlification_method" type="int" min="0" max="1" default="0" prefix="-s "/>
 <parameter name="number_of_smoothing_steps" type="int" min="0" default="0" prefix="-sm "/>
@@ -29,7 +29,7 @@
 
 <action name="mesh2vtk" executable="/home/visu/src/vtkSurfaceBuild/bin/mesh2vtk">
 <description>converts a mesh to .vtk format</description>
-<parameter name="input_file" type="file" required="true"/>
+<parameter name="input_mesh" type="file" required="true"/>
 </action>
 
 <action name="compress_to_zip" executable="zip">
@@ -38,19 +38,19 @@
 <parameter name="input_file" type="file" required="true"/>
 </action>
 
-<action name="Slice_Volume" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeSlice">
+<action name="slice_volume" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeSlice">
 <description>Slice a volume image into 2D images</description>
-<parameter name="input_file" type="file" required="true"/>
+<parameter name="input_volume" type="file" required="true"/>
 <parameter prefix="-f " name="format" type="int" min="0" max="1"/>
 </action>
 
-<action name="Volume_Median_Filtering" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeMedian">
+<action name="volume_median_filtering" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeMedian">
 <description>compute median filtering on input volume</description>
 <parameter name="input_volume" type="file" required="true"/>
 <parameter name="kernel_size" type="int" required="true" min="1"/>
 </action>
 
-<action name="Volume_Anisotropic_Diffusion" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeAnisotropicDiffusion">
+<action name="volume_anisotropic_diffusion" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeAnisotropicDiffusion">
 <description>compute anisotropic diffusion on input volume</description>
 <parameter name="input_volume" type="file" required="true"/>
 <parameter name="number_of_iterations" type="int" required="true" min="1"/>
@@ -91,7 +91,7 @@
 <parameter name="file_name" type="file" required="true"/>
 </action>
 
-<action name="Create_directory" executable="mkdir" void="true">
+<action name="create_directory" executable="mkdir" void="true">
 <description>create a directory</description>
 <parameter name="directory_name" type="new_directory" required="true"/>
 </action>
@@ -106,7 +106,7 @@
 <parameter name="directory" type="directory" required="true"/>
 </action>
 
-<action name="save_XML_file" executable="not needed">
+<action name="save_xml_file" executable="not needed">
 <description>save an xml content to a file</description>
 <parameter name="xmlData" type="xmlcontent" required="true"/>
 <parameter name="file_name" type="string" required="true"/>

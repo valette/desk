@@ -174,7 +174,7 @@ qx.Class.define("desk.meshView",
 			case ".stl":
 				var parameterMap={
 					"action" : "mesh2vtk",
-					"input_file" : file,
+					"input_mesh" : file,
 					"output_directory" : "cache\/"};
 
 				function getAnswer(e)
