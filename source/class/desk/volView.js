@@ -2406,7 +2406,7 @@ qx.Class.define("desk.volView",
 							var clusteringDirectory=req.getResponseText().split("\n")[0];
 
 							var parameterMap2={
-								"action" : "cvtgcbinseg",
+								"action" : "cvtgcmultiseg",
 								"input_volume" : volView.__file,
 								"seeds" : volView.__sessionDirectory+"/seeds.xml",
 								"clustering" : clusteringDirectory+"/clustering-index.mhd",
@@ -2418,7 +2418,7 @@ qx.Class.define("desk.volView",
 								var segmentationDirectory=req.getResponseText().split("\n")[0];
 								if (segmentationViewer==null)
 								{
-									segmentationViewer=new desk.volView(segmentationDirectory+"/seg-cvtgcbinseg.mhd",
+									segmentationViewer=new desk.volView(segmentationDirectory+"/seg-cvtgcmultiseg.mhd",
 										volView.__fileBrowser);
 									segmentationViewer.getWindow().addListener("close", function (e) {
 										segmentationViewer=null;});

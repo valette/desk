@@ -72,6 +72,14 @@
 <anchor text="-op seg"/>
 </action>
 
+<action name="cvtgcmultiseg" executable="/home/visu/src/gc2/gc/cvtgcmultiseg">
+<description>(multi-objects) segments a volume using graph cuts and clustering techniques</description>
+<parameter prefix="-i " name="input_volume" type="file" required="true"/>
+<parameter prefix="-x " name="seeds" type="file" required="true"/>
+<parameter prefix="-cf " name="clustering" type="file" required="true"/>
+<anchor text="-op seg -t 0.1"/>
+</action>
+
 <action name="sleep" executable="sleep" void="true">
 <description>just sleep (usefull for debug)</description>
 <parameter name="time_in_seconds" type="int" default="2" required="true"/>
