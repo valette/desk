@@ -793,15 +793,17 @@ function createFromFile3(xmlhttp, scene, file,color) {
 
 		var numberOfPoints=parseInt(readNextString());
 		var vertexArray=new Float32Array(numberOfPoints*3);
-		var normalArray=new Float32Array(numberOfPoints*3);
 		var vertexArrayIndex=0;
-		var currentVerticesArray=new Int32Array(numberOfPoints);
+		var normalArray=new Float32Array(numberOfPoints*3);
+		var newIndex=0;
+		var old2new=new Int32Array(numberOfPoints);
+		var new2old=new Int32Array(65500);
+
+//		for (var i=0;i<numberOfPoints;i++)
+//			normalStream.addElement(0,0,0);
 
 		for (var i=0;i<numberOfPoints;i++)
-			normalStream.addElement(0,0,0);
-
-		for (var i=0;i<numberOfPoints;i++)
-			currentVerticesArray[i]=-1;
+			old2new[i]=-1;
 
 		if (numberOfPoints>200000)
 		{
@@ -839,7 +841,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 			if (index2==3)
 			{
 				index2=0;
-				positionStream.addElement(coord[0],coord[1],coord[2]);
+//				positionStream.addElement(coord[0],coord[1],coord[2]);
 				boundingBox.addPoint(coord);
 
 				numberOfPoints--;
@@ -903,21 +905,46 @@ function createFromFile3(xmlhttp, scene, file,color) {
 				var triangle=[0,0,0];
 				index2=0;
 				var numberOfTrianglesInCell=connectivity[0]-2;
-				triangle[0]=connectivity[1];
-				var subIndex=triangle[0]*3;
-
+				var vertex1=triangle[0]=connectivity[1];
+				var subIndex=vertex1*3;
 				var P1=[vertexArray[subIndex],vertexArray[subIndex+1],vertexArray[subIndex+2]];
+				var newVertex1=old2new[vertex1];
+				if (newVertex1==-1)
+				{
+					positionStream.addElement(P1[0],P1[1],P1[2]);
+					newVertex1=newIndex++;
+					old2new[vertex1]=newVertex1;
+					new2old[newVertex1]=vertex1;
+				}
+
 				for (var i=0;i<numberOfTrianglesInCell;i++)
 				{
 					var vertex2=triangle[1]=connectivity[i+2];
-					var vertex3=triangle[2]=connectivity[i+3];
-
 					subIndex=vertex2*3;
 					var P2=[vertexArray[subIndex],vertexArray[subIndex+1],vertexArray[subIndex+2]];
 
+					var newVertex2=old2new[vertex2];
+					if (newVertex2==-1)
+					{
+						positionStream.addElement(P2[0],P2[1],P2[2]);
+						newVertex2=newIndex++;
+						old2new[vertex2]=newVertex2;
+						new2old[newVertex2]=vertex2;
+					}
 
+					var vertex3=triangle[2]=connectivity[i+3];
 					subIndex=vertex3*3;
 					var P3=[vertexArray[subIndex],vertexArray[subIndex+1],vertexArray[subIndex+2]];
+
+					var newVertex3=old2new[vertex3];
+					if (newVertex3==-1)
+					{
+						positionStream.addElement(P3[0],P3[1],P3[2]);
+						newVertex3=newIndex++;
+						old2new[vertex3]=newVertex3;
+						new2old[newVertex3]=vertex3;
+					}
+
 
 					var v0 = myMath.subVector(P2,P1);
 					var v1 = myMath.subVector(P3,P2);
@@ -928,13 +955,14 @@ function createFromFile3(xmlhttp, scene, file,color) {
 						for (var iii=0;iii<3;iii++)
 						{
 							var currentPoint=triangle[iii];
-							var normal2=normalStream.getElementVector(currentPoint);
-							normalStream.setElementVector(currentPoint,
-								myMath.addVector(normal,normal2));
+							var currentSubIndex=currentPoint*3;
+							normalArray[currentSubIndex]+=normal[0];
+							normalArray[currentSubIndex+1]+=normal[1];
+							normalArray[currentSubIndex+2]+=normal[2];
 						}
 					}
 
-					vertexInfo.addTriangle(triangle[0],triangle[1],triangle[2]);
+					vertexInfo.addTriangle(newVertex1,newVertex2,newVertex3);
 				}
 			
 				numberOfPolygons--;
@@ -980,8 +1008,12 @@ function createFromFile3(xmlhttp, scene, file,color) {
 */
 	for (var i=0;i<numberOfPoints;i++)
 	{
-		var normal=normalStream.getElementVector(i);
-		normalStream.setElementVector(i,myMath.normalize(normal));
+		var oldVertex=new2old[i];
+		var subIndex=oldVertex*3;
+
+		var normal=myMath.normalize([normalArray[subIndex],normalArray[subIndex+1],normalArray[subIndex+2]]);
+//		normalStream.setElementVector(i,myMath.normalize(normal));
+		normalStream.addElementVector(normal);
 	}
 
 	var shape=vertexInfo.createShape(scene.pack, material);
