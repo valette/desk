@@ -132,17 +132,33 @@ o3djs.mesh.Mesh.prototype.setTexturePixels = function(inPixels)
 		texture.gl.bindTexture(texture.texture_target_, texture.texture_);
 
 //		this could be optimized, look at :		http://www.khronos.org/registry/webgl/specs/latest/#2.4
-		texture.gl.texSubImage2D(texture.getTexImage2DTarget_(null),
+		var myGL=texture.gl;
+		myGL.texSubImage2D(texture.getTexImage2DTarget_(null),
 		0, 0, 0, texture.texture_width_, texture.texture_height_,
-		format, texture.gl.UNSIGNED_BYTE, pixels);
-		
+		format, myGL.UNSIGNED_BYTE, pixels);
+
+//		myGL.texImage2D ( texture.getTexImage2DTarget_(null), 0, myGL.RGBA, myGL.RGBA,
+//                                      myGL.UNSIGNED_BYTE, inPixels);
 //		texImage2D(texture.getTexImage2DTarget_(null), 0, format,
 //                    format, texture.gl.UNSIGNED_BYTE, pixels);
 	}
 	else
 		console.log("warning : trying to set texture pixels while no texture was created");
 }
-
+o3djs.mesh.Mesh.prototype.setTextureImageData = function(imageData)
+{
+	if (this.texture!=null)
+	{
+		var texture=this.texture;
+		var format = texture.getGLTextureFormat_();
+		texture.gl.bindTexture(texture.texture_target_, texture.texture_);
+		var myGL=texture.gl;
+		myGL.texImage2D ( texture.getTexImage2DTarget_(null), 0, myGL.RGBA, myGL.RGBA,
+                                      myGL.UNSIGNED_BYTE, imageData);
+	}
+	else
+		console.log("warning : trying to set texture pixels while no texture was created");
+}
 
 o3djs.mesh.createSquare = function(scene, width, height)
 {
