@@ -523,10 +523,16 @@ function readVTKFile3(text,vertexInfo ,positionStream , boundingBox){
 		var number;
 		while (1)
 		{
-			var readstring=readNextString();
-			if (readstring.length==0)
-				return (false);
-			number=parseInt(readstring);
+			number=parseInt(line[columnIndex]);
+			columnIndex++;
+			if (columnIndex==line.length)
+			{
+				lineIndex++;
+				columnIndex=0;
+				if (lineIndex>lines.length)
+					return (false);
+				line=lines[lineIndex].split(" ");
+			}
 			if (!isNaN(number))
 				break;
 		}
