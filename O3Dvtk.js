@@ -454,7 +454,6 @@ function readVTKFile3(text,vertexInfo ,positionStream , boundingBox){
 	}
 
 	var numberOfPoints=readNextString();
-	console.log(numberOfPoints+" points");
 	if (numberOfPoints>200000)
 	{
 		return ("mesh is too big : "+numberOfPoints+" vertices");
