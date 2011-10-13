@@ -799,7 +799,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		}
 
 		var numberOfPoints=parseInt(readNextString());
-		var vertexArray=new Float32Array(numberOfPoints*3);
+//		var vertexArray=new Float32Array(numberOfPoints*3);
 
 		if (numberOfPoints>200000)
 		{
@@ -866,8 +866,8 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		var triangle=[0,0,0];
 		var numberOfPolygons=parseInt(readNextString());
 		var numberOfPolygonElements=parseInt(readNextString());
-		var PolysArray=new Uint32Array(numberOfPolygonElements);
-		console.log(PolysArray);
+//		var PolysArray=new Uint32Array(numberOfPolygonElements);
+//		console.log(PolysArray);
 
 		index2=0;
 		while (1)
