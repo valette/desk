@@ -239,6 +239,9 @@ qx.Class.define("desk.volView",
 		// the image pixels after brightness/contrast processing
 		__pixels : null,
 
+		// the imageData after brightness/contrast processing
+		__imageData : null,
+
 		__eraserCursor : null,
 		__brghtnssCntrstButton : null,
 
@@ -1796,6 +1799,7 @@ qx.Class.define("desk.volView",
 					}
                     dataDesc.data = data;
                     volView.__pixels=data;
+                    volView.__imageData=dataDesc;
 					volView.fireEvent("changeSlice");
                 }
                 return dataDesc;
@@ -2332,6 +2336,11 @@ qx.Class.define("desk.volView",
 		getSlicePixels : function()
 		{
 			return this.__pixels;
+		},
+
+		getSliceImageData : function()
+		{
+			return this.__imageData;
 		},
 
 		getSeedFileName : function(sliceId)

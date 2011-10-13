@@ -439,24 +439,22 @@ qx.Class.define("desk.meshView",
 						var width=dimensions[0];
 						var height=dimensions[1];
 						var square=this.__iframe.getWindow().o3djs.mesh.createSquare(scene, width, height);
-						var coords=volView.getCornersCoordinates();
-						for (var i=0;i<4;i++)
-							square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);
 
 						function updateTexture()
 						{
-							var pixels = volView.getSlicePixels();
-							square.setTexturePixels(pixels);
-							scene.render();
-						}
-						updateTexture();
-						var listenerId=volView.addListener('changeSlice',function(e)
-							{
 							var coords=volView.getCornersCoordinates();
-							updateTexture();
 							for (var i=0;i<4;i++)
 								square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);
-							scene.render();});
+							square.setTextureImageData(volView.getSliceImageData());
+							scene.render();
+						}
+
+						updateTexture();
+
+						var listenerId=volView.addListener('changeSlice',function(e)
+							{
+								updateTexture();
+								scene.render();});
 
 						if (meshViewer.__volumes==null)
 							meshViewer.__volumes=[];
