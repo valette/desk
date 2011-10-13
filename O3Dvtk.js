@@ -793,7 +793,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 
 		var vertexInfoArray=[];
 		var new2oldArray=[];
-		
+		var positionStreamArray=[];
 
 
 		var numberOfPoints=parseInt(readNextString());
@@ -801,23 +801,23 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		var normalArray=new Float32Array(numberOfPoints*3);
 		var old2new=new Int32Array(numberOfPoints);
 
-
 		function createPrimitives() {
 			vertexInfo = o3djs.primitives.createVertexInfo();
+			vertexInfoArray.push(vertexInfo);
+
 			positionStream = vertexInfo.addStream(
 				3, o3djs.base.o3d.Stream.POSITION);
-			vertexInfoArray.push(vertexInfo);
+			positionStreamArray.push(positionStream);
 
 			new2old=new Int32Array(65500);
 			new2oldArray.push(new2old);
+
 			newIndex=0;
 			for (var i=0;i<numberOfPoints;i++)
 				old2new[i]=-1;
 		}
 
-
 		createPrimitives();
-
 
 		if (numberOfPoints>200000)
 		{
@@ -990,25 +990,31 @@ function createFromFile3(xmlhttp, scene, file,color) {
 			}
 		}
 
-
-	var numberOfPoints=positionStream.numElements();
-	var normalStream = vertexInfo.addStream(
-		3, o3djs.base.o3d.Stream.NORMAL);
-
-	for (var i=0;i<numberOfPoints;i++)
+	for (var i=0;i<vertexInfoArray.length;i++)
 	{
-		var oldVertex=new2old[i];
-		var subIndex=oldVertex*3;
+		positionStream=positionStreamArray[i];
+		var numberOfPoints=positionStream.numElements();
 
-		var normal=myMath.normalize([normalArray[subIndex],normalArray[subIndex+1],normalArray[subIndex+2]]);
-		normalStream.addElementVector(normal);
+		vertexInfo=vertexInfoArray[i];
+		var normalStream = vertexInfo.addStream(
+			3, o3djs.base.o3d.Stream.NORMAL);
+
+		new2old=new2oldArray[i];
+		for (var i=0;i<numberOfPoints;i++)
+		{
+			var oldVertex=new2old[i];
+			var subIndex=oldVertex*3;
+
+			var normal=myMath.normalize([normalArray[subIndex],normalArray[subIndex+1],normalArray[subIndex+2]]);
+			normalStream.addElementVector(normal);
+		}
+
+		var shape=vertexInfo.createShape(scene.pack, material);
+
+		scene.transform.addShape(shape);
+
+		mesh.addShape(shape);
 	}
-
-	var shape=vertexInfo.createShape(scene.pack, material);
-
-	scene.transform.addShape(shape);
-
-	mesh.addShape(shape);
 
 	return (mesh);
 }
