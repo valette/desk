@@ -750,7 +750,9 @@ function createFromFile3(xmlhttp, scene, file,color) {
 	{
 		alert ("extension "+extension+" not supported vor meshView");
 	}
-	
+
+	var myMath=o3djs.math;
+
 	{
 		var boundingBox=scene.meshesBoundingBox;
 		var lines=xmlhttp.responseText.split("\n");
@@ -799,7 +801,13 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		}
 
 		var numberOfPoints=parseInt(readNextString());
-//		var vertexArray=new Float32Array(numberOfPoints*3);
+		var vertexArray=new Float32Array(numberOfPoints*3);
+		var normalArray=new Float32Array(numberOfPoints*3);
+
+		// compute normals
+			for (var i=0;i<numberOfPoints;i++)
+				normalStream.addElement(0,0,0);
+
 
 		if (numberOfPoints>200000)
 		{
@@ -900,10 +908,31 @@ function createFromFile3(xmlhttp, scene, file,color) {
 				index2=0;
 				var numberOfTrianglesInCell=connectivity[0]-2;
 				triangle[0]=connectivity[1];
+				var P1=positionStream.getElementVector(connectivity[1]);
+
 				for (var i=0;i<numberOfTrianglesInCell;i++)
 				{
+					var P2=positionStream.getElementVector(connectivity[i+2]);
+					var P3=positionStream.getElementVector(connectivity[i+3]);
+
 					triangle[1]=connectivity[i+2];
 					triangle[2]=connectivity[i+3];
+
+					var v0 = myMath.subVector(P2,P1);
+					var v1 = myMath.subVector(P3,P2);
+					var normal=myMath.normalize(myMath.cross(v0, v1));
+					var norm=normal[0]*normal[0]+normal[1]*normal[1]+normal[2]*normal[2];
+					if ((norm>0.98)&&(norm<1.01))
+					{
+						for (var iii=0;iii<3;iii++)
+						{
+							var currentPoint=triangle[iii];
+							var normal2=normalStream.getElementVector(currentPoint);
+							normalStream.setElementVector(currentPoint,
+								myMath.addVector(normal,normal2));
+						}
+					}
+
 					vertexInfo.addTriangle(triangle[0],triangle[1],triangle[2]);
 				}
 			
@@ -920,10 +949,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 	var numberOfTriangles=vertexInfo.numTriangles();
 
 
-// compute normals
-	for (var i=0;i<numberOfPoints;i++)
-		normalStream.addElement(0,0,0);
-
+/*
 	for (var i=0;i<numberOfTriangles;i++)
 	{
 		var triangle=vertexInfo.getTriangle(i);
@@ -933,9 +959,11 @@ function createFromFile3(xmlhttp, scene, file,color) {
 			positions[ii] = positionStream.getElementVector(triangle[ii]);
 		}
 
-		var v0 = o3djs.math.normalize(o3djs.math.subVector(positions[1],positions[0]));
-		var v1 = o3djs.math.normalize(o3djs.math.subVector(positions[2],positions[1]));
-		var normal=o3djs.math.normalize(o3djs.math.cross(v0, v1));
+//		var v0 = myMath.normalize(myMath.subVector(positions[1],positions[0]));
+//		var v1 = myMath.normalize(myMath.subVector(positions[2],positions[1]));
+		var v0 = myMath.subVector(positions[1],positions[0]);
+		var v1 = myMath.subVector(positions[2],positions[1]);
+		var normal=myMath.normalize(myMath.cross(v0, v1));
 		var norm=normal[0]*normal[0]+normal[1]*normal[1]+normal[2]*normal[2];
 		if ((norm>0.98)&&(norm<1.01))
 		{
@@ -944,15 +972,15 @@ function createFromFile3(xmlhttp, scene, file,color) {
 				var currentPoint=triangle[iii];
 				var normal2=normalStream.getElementVector(currentPoint);
 				normalStream.setElementVector(currentPoint,
-					o3djs.math.addVector(normal,normal2));
+					myMath.addVector(normal,normal2));
 			}
 		}
 	}
-
+*/
 	for (var i=0;i<numberOfPoints;i++)
 	{
 		var normal=normalStream.getElementVector(i);
-		normalStream.setElementVector(i,o3djs.math.normalize(normal));
+		normalStream.setElementVector(i,myMath.normalize(normal));
 	}
 
 	var shape=vertexInfo.createShape(scene.pack, material);
