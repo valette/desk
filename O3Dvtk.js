@@ -743,6 +743,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		var lineIndex=0;
 
 		var line=lines[0].split(" ");
+		var lineLength=line.length;
 		var columnIndex=-1;
 
 
@@ -752,13 +753,14 @@ function createFromFile3(xmlhttp, scene, file,color) {
 			{
 				var nextWord=line[columnIndex];
 				columnIndex++;
-				if (columnIndex==line.length)
+				if (columnIndex==lineLength)
 				{
 					lineIndex++;
 					columnIndex=0;
 					if (lineIndex>lines.length)
 						return ("");
 					line=lines[lineIndex].split(" ");
+					lineLength=line.length;
 				}
 				if (nextWord!=null)
 					if (nextWord.length>0)
@@ -810,6 +812,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 			positionStreamArray.push(positionStream);
 
 			new2old=new Int32Array(65500);
+			
 			new2oldArray.push(new2old);
 
 			newIndex=0;
@@ -828,43 +831,35 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		var index2=0;
 
 		var vertexArrayIndex=0;
-		while (1)
+		var number;
+		var coordIndex;
+		for (var j=0;j!=numberOfPoints;j++)
 		{
-			var number;
-			while (1)
+			for (coordIndex=0;coordIndex<3;coordIndex++)
 			{
-				number=parseFloat(line[columnIndex]);
-				columnIndex++;
-				if (columnIndex==line.length)
+				while (1)
 				{
-					lineIndex++;
-					columnIndex=0;
-					if (lineIndex>lines.length)
+					number=parseFloat(line[columnIndex]);
+					columnIndex++;
+					if (columnIndex==lineLength)
 					{
-						alert ("error while reading "+file+" : \n"+returnValue);
-						return;
+						lineIndex++;
+						columnIndex=0;
+						if (lineIndex>lines.length)
+						{
+							alert ("error while reading "+file+" : \n"+returnValue);
+							return;
+						}
+						line=lines[lineIndex].split(" ");
+						lineLength=line.length;
 					}
-					line=lines[lineIndex].split(" ");
+					if (!isNaN(number))
+						break;
 				}
-				if (!isNaN(number))
-					break;
+				coord[coordIndex]=number;
+				vertexArray[vertexArrayIndex++]=number;
 			}
-			coord[index2]=number;
-			index2++;
-
-			vertexArray[vertexArrayIndex++]=number;
-
-			if (index2==3)
-			{
-				index2=0;
-				boundingBox.addPoint(coord);
-
-				numberOfPoints--;
-				if (numberOfPoints==0)
-				{
-					break;
-				}
-			}
+			boundingBox.addPoint(coord);
 		}
 
 		found=false;
@@ -885,18 +880,17 @@ function createFromFile3(xmlhttp, scene, file,color) {
 
 		var connectivity=[0,0,0,0];
 		var numberOfPolygons=parseInt(readNextString());
-		console.log(numberOfPolygons+" polygons");
-		readNextString();
+		var numberOfpolygonElements=parseInt(readNextString());
 
 		index2=0;
-		while (1)
+		for (var p=0;p!=numberOfpolygonElements;p++)
 		{
 			var number;
 			while (1)
 			{
 				number=parseInt(line[columnIndex]);
 				columnIndex++;
-				if (columnIndex==line.length)
+				if (columnIndex==lineLength)
 				{
 					lineIndex++;
 					columnIndex=0;
@@ -906,6 +900,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 						return;
 					}
 					line=lines[lineIndex].split(" ");
+					lineLength=line.length;
 				}
 				if (!isNaN(number))
 					break;
@@ -926,7 +921,6 @@ function createFromFile3(xmlhttp, scene, file,color) {
 				if (newVertex1==-1)
 				{
 					positionStream.addElement(P1[0],P1[1],P1[2]);
-//					console.log(P1);
 					newVertex1=newIndex++;
 					old2new[vertex1]=newVertex1;
 					new2old[newVertex1]=vertex1;
@@ -942,7 +936,6 @@ function createFromFile3(xmlhttp, scene, file,color) {
 					if (newVertex2==-1)
 					{
 						positionStream.addElement(P2[0],P2[1],P2[2]);
-//						console.log(P2);
 						newVertex2=newIndex++;
 						old2new[vertex2]=newVertex2;
 						new2old[newVertex2]=vertex2;
@@ -956,7 +949,6 @@ function createFromFile3(xmlhttp, scene, file,color) {
 					if (newVertex3==-1)
 					{
 						positionStream.addElement(P3[0],P3[1],P3[2]);
-//						console.log(P3);
 						newVertex3=newIndex++;
 						old2new[vertex3]=newVertex3;
 						new2old[newVertex3]=vertex3;
@@ -979,27 +971,24 @@ function createFromFile3(xmlhttp, scene, file,color) {
 						}
 					}
 					vertexInfo.addTriangle(newVertex1,newVertex2,newVertex3);
-//					console.log(vertex1+" "+vertex2+" "+vertex3);
-//					console.log(newVertex1+" "+newVertex2+" "+newVertex3);
 				}
-				numberOfPolygons--;
-				if (numberOfPolygons==0)
+				if (newIndex==65000)
 				{
-					break;
+					createPrimitives();
 				}
 			}
 		}
 
-	for (var i=0;i<vertexInfoArray.length;i++)
+	for (var j=0;j<vertexInfoArray.length;j++)
 	{
-		positionStream=positionStreamArray[i];
+		positionStream=positionStreamArray[j];
 		var numberOfPoints=positionStream.numElements();
 
-		vertexInfo=vertexInfoArray[i];
+		vertexInfo=vertexInfoArray[j];
 		var normalStream = vertexInfo.addStream(
 			3, o3djs.base.o3d.Stream.NORMAL);
 
-		new2old=new2oldArray[i];
+		new2old=new2oldArray[j];
 		for (var i=0;i<numberOfPoints;i++)
 		{
 			var oldVertex=new2old[i];
