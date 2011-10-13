@@ -265,7 +265,7 @@ o3djs.renderscene.RenderScene.prototype.render = function()
 	this.client.render();
 }
 
-function readVTKFile(text,vertexInfo ,positionStream , boundingBox){
+function readVTKFile2(text,vertexInfo ,positionStream , boundingBox){
 
 	var httpIndex=0;
 	var httpLength=text.length;
@@ -403,7 +403,159 @@ function readVTKFile(text,vertexInfo ,positionStream , boundingBox){
 	}
 }
 
-function readVTKFile2(text,vertexInfo ,positionStream , boundingBox){
+
+function readVTKFile3(text,vertexInfo ,positionStream , boundingBox){
+
+//	var httpIndex=0;
+//	var httpLength=text.length;
+
+
+	var lines=text.split("\n");
+	var lineIndex=0;
+
+	var line=lines[0].split(" ");
+	var columnIndex=-1;
+
+	function readNextString ()
+	{
+		while (1)
+		{
+			var nextWord=line[columnIndex];
+			columnIndex++;
+			if (columnIndex==line.length)
+			{
+				lineIndex++;
+				columnIndex=0;
+				if (lineIndex>lines.length)
+					return ("");
+				line=lines[lineIndex].split(" ");
+			}
+			if (nextWord!=null)
+				if (nextWord.length>0)
+					return (nextWord);
+		}
+	}
+
+	// read point data
+	var found=false;
+	while (!found)
+	{
+		var readString=readNextString();
+		switch (readString.toUpperCase())
+		{
+			case "POINTS":
+				found=true;
+				break;
+			case "":
+				return (false);
+			default:
+		}
+		
+	}
+
+	var numberOfPoints=readNextString();
+	console.log(numberOfPoints+" points");
+	if (numberOfPoints>200000)
+	{
+		return ("mesh is too big : "+numberOfPoints+" vertices");
+	}
+
+	var coord=[0,0,0];
+	var index2=0;
+	while (1)
+	{
+		var number;
+		while (1)
+		{
+			number=parseFloat(line[columnIndex]);
+			columnIndex++;
+			if (columnIndex==line.length)
+			{
+				lineIndex++;
+				columnIndex=0;
+				if (lineIndex>lines.length)
+					return (false);
+				line=lines[lineIndex].split(" ");
+			}
+			if (!isNaN(number))
+				break;
+		}
+		coord[index2]=number;
+		index2++;
+
+		if (index2==3)
+		{
+			index2=0;
+			positionStream.addElement(coord[0],coord[1],coord[2]);
+			boundingBox.addPoint(coord);
+
+			numberOfPoints--;
+			if (numberOfPoints==0)
+			{
+				break;
+			}
+		}
+	}
+
+	found=false;
+	while (!found)
+	{
+		var readString=readNextString();
+		switch (readString)
+		{
+			case "POLYGONS":
+				found=true;
+				break;
+			case "":
+				return (false);
+			default:
+		}
+	}
+
+	var connectivity=[0,0,0,0];
+	var triangle=[0,0,0];
+	var numberOfPolygons=readNextString();
+	readNextString();
+
+	index2=0;
+	while (1)
+	{
+		var number;
+		while (1)
+		{
+			var readstring=readNextString();
+			if (readstring.length==0)
+				return (false);
+			number=parseInt(readstring);
+			if (!isNaN(number))
+				break;
+		}
+
+		connectivity[index2]=number;
+		index2++;
+
+		if (index2==connectivity[0]+1)
+		{
+			index2=0;
+			var numberOfTrianglesInCell=connectivity[0]-2;
+			triangle[0]=connectivity[1];
+			for (var i=0;i<numberOfTrianglesInCell;i++)
+			{
+				triangle[1]=connectivity[i+2];
+				triangle[2]=connectivity[i+3];
+				vertexInfo.addTriangle(triangle[0],triangle[1],triangle[2]);
+			}
+			
+			numberOfPolygons--;
+			if (numberOfPolygons==0)
+			{
+				return;
+			}
+		}
+	}
+}
+
+function readVTKFile1(text,vertexInfo ,positionStream , boundingBox){
 	var reg2=new RegExp("[ \n]+", "gm");
 	var data=text.split(reg2);
 	var fileLength=data.length;
@@ -580,7 +732,7 @@ function createFromFile2(xmlhttp, scene, file,color) {
 	switch (extension)
 	{
 		case "vtk":
-			var returnValue=readVTKFile(xmlhttp.responseText,vertexInfo ,positionStream, scene.meshesBoundingBox);
+			var returnValue=readVTKFile3(xmlhttp.responseText,vertexInfo ,positionStream, scene.meshesBoundingBox);
 			if (returnValue!=null)
 			{
 				alert ("error while reading "+file+" : \n"+returnValue);
