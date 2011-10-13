@@ -827,9 +827,9 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		var coord=[0,0,0];
 		var index2=0;
 
+		var vertexArrayIndex=0;
 		while (1)
 		{
-			var vertexArrayIndex=0;
 			var number;
 			while (1)
 			{
@@ -926,6 +926,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 				if (newVertex1==-1)
 				{
 					positionStream.addElement(P1[0],P1[1],P1[2]);
+//					console.log(P1);
 					newVertex1=newIndex++;
 					old2new[vertex1]=newVertex1;
 					new2old[newVertex1]=vertex1;
@@ -941,6 +942,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 					if (newVertex2==-1)
 					{
 						positionStream.addElement(P2[0],P2[1],P2[2]);
+//						console.log(P2);
 						newVertex2=newIndex++;
 						old2new[vertex2]=newVertex2;
 						new2old[newVertex2]=vertex2;
@@ -954,6 +956,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 					if (newVertex3==-1)
 					{
 						positionStream.addElement(P3[0],P3[1],P3[2]);
+//						console.log(P3);
 						newVertex3=newIndex++;
 						old2new[vertex3]=newVertex3;
 						new2old[newVertex3]=vertex3;
@@ -976,6 +979,8 @@ function createFromFile3(xmlhttp, scene, file,color) {
 						}
 					}
 					vertexInfo.addTriangle(newVertex1,newVertex2,newVertex3);
+//					console.log(vertex1+" "+vertex2+" "+vertex3);
+//					console.log(newVertex1+" "+newVertex2+" "+newVertex3);
 				}
 				numberOfPolygons--;
 				if (numberOfPolygons==0)
