@@ -726,11 +726,8 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		state.getStateParam('PolygonOffset2').value = 1;
 	}
 
-	var vertexInfo = o3djs.primitives.createVertexInfo();
-	var positionStream = vertexInfo.addStream(
-		3, o3djs.base.o3d.Stream.POSITION);
-	var normalStream = vertexInfo.addStream(
-		3, o3djs.base.o3d.Stream.NORMAL);
+	var vertexInfo;
+	var positionStream;
 
 	var filename=file.split(".");
 	var extension=filename[filename.length-1].toLowerCase();
@@ -792,15 +789,17 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		}
 
 		var numberOfPoints=parseInt(readNextString());
+
+		vertexInfo = o3djs.primitives.createVertexInfo();
+		positionStream = vertexInfo.addStream(
+			3, o3djs.base.o3d.Stream.POSITION);
+
 		var vertexArray=new Float32Array(numberOfPoints*3);
 		var vertexArrayIndex=0;
 		var normalArray=new Float32Array(numberOfPoints*3);
 		var newIndex=0;
 		var old2new=new Int32Array(numberOfPoints);
 		var new2old=new Int32Array(65500);
-
-//		for (var i=0;i<numberOfPoints;i++)
-//			normalStream.addElement(0,0,0);
 
 		for (var i=0;i<numberOfPoints;i++)
 			old2new[i]=-1;
@@ -841,7 +840,6 @@ function createFromFile3(xmlhttp, scene, file,color) {
 			if (index2==3)
 			{
 				index2=0;
-//				positionStream.addElement(coord[0],coord[1],coord[2]);
 				boundingBox.addPoint(coord);
 
 				numberOfPoints--;
@@ -870,9 +868,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 
 		var connectivity=[0,0,0,0];
 		var numberOfPolygons=parseInt(readNextString());
-		var numberOfPolygonElements=parseInt(readNextString());
-//		var PolysArray=new Uint32Array(numberOfPolygonElements);
-//		console.log(PolysArray);
+		readNextString();
 
 		index2=0;
 		while (1)
@@ -961,10 +957,8 @@ function createFromFile3(xmlhttp, scene, file,color) {
 							normalArray[currentSubIndex+2]+=normal[2];
 						}
 					}
-
 					vertexInfo.addTriangle(newVertex1,newVertex2,newVertex3);
 				}
-			
 				numberOfPolygons--;
 				if (numberOfPolygons==0)
 				{
@@ -975,66 +969,25 @@ function createFromFile3(xmlhttp, scene, file,color) {
 	}
 
 	var numberOfPoints=positionStream.numElements();
-	var numberOfTriangles=vertexInfo.numTriangles();
+	var normalStream = vertexInfo.addStream(
+		3, o3djs.base.o3d.Stream.NORMAL);
 
-
-/*
-	for (var i=0;i<numberOfTriangles;i++)
-	{
-		var triangle=vertexInfo.getTriangle(i);
-		var positions = [];
-		for (var ii = 0; ii < 3; ++ii)
-		{
-			positions[ii] = positionStream.getElementVector(triangle[ii]);
-		}
-
-//		var v0 = myMath.normalize(myMath.subVector(positions[1],positions[0]));
-//		var v1 = myMath.normalize(myMath.subVector(positions[2],positions[1]));
-		var v0 = myMath.subVector(positions[1],positions[0]);
-		var v1 = myMath.subVector(positions[2],positions[1]);
-		var normal=myMath.normalize(myMath.cross(v0, v1));
-		var norm=normal[0]*normal[0]+normal[1]*normal[1]+normal[2]*normal[2];
-		if ((norm>0.98)&&(norm<1.01))
-		{
-			for (var iii=0;iii<3;iii++)
-			{
-				var currentPoint=triangle[iii];
-				var normal2=normalStream.getElementVector(currentPoint);
-				normalStream.setElementVector(currentPoint,
-					myMath.addVector(normal,normal2));
-			}
-		}
-	}
-*/
 	for (var i=0;i<numberOfPoints;i++)
 	{
 		var oldVertex=new2old[i];
 		var subIndex=oldVertex*3;
 
 		var normal=myMath.normalize([normalArray[subIndex],normalArray[subIndex+1],normalArray[subIndex+2]]);
-//		normalStream.setElementVector(i,myMath.normalize(normal));
 		normalStream.addElementVector(normal);
 	}
 
 	var shape=vertexInfo.createShape(scene.pack, material);
-
-//	o3djs.shape.setBoundingBoxesAndZSortPoints(shape); // Maybe usefull to replace bounding box computing by hand
-//	var shape2=o3djs.shape.duplicateShape(scene.pack, shape);
 
 	scene.transform.addShape(shape);
 
 	mesh.addShape(shape);
 
 	return (mesh);
-
-/*	var normalStream2 = vertexInfo.addStream(3, o3djs.base.o3d.Stream.NORMAL);
-	for (var i=0;i<numberOfPoints;i++)
-	{
-		var normal=normalStream.getElementVector(i);
-		normalStream2.addElementVector(o3djs.math.negativeVector(normal));
-	}
-	var shape2=vertexInfo.createShape(scene.pack, material);
-	scene.transform.addShape(shape2);*/
 }
 
 function createFromFile2(xmlhttp, scene, file,color) {
