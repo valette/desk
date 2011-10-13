@@ -30,7 +30,7 @@ qx.Class.define("desk.volViewSimple",
 
 			var parameterMap={
 				"action" : "slice_volume",
-				"input_file" : file,
+				"input_volume" : file,
 				"output_directory" : "cache\/"};
 			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 

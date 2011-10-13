@@ -320,9 +320,9 @@ foreach ($actions->children() as $action)
 				if (($newAction==false)&&($forceUpdate!="true"))
 				{
 					$oldParameters=readParameters("$parametersFileName");
-					$outputMtime=filemtime('.');
 					if (isset($oldParameters['hash']))
 					{
+						$outputMtime=filemtime($parametersFileName);
 						if (($inputFilesLastMtime<= $outputMtime)&&
 								($oldParameters['hash']==$commandHash))
 						{
@@ -385,10 +385,6 @@ foreach ($actions->children() as $action)
 					$duration=time()-$startTime;
 					if ($voidAction==false)
 					{
-						touch ('.');
-						clearstatcache();
-						$omtime=filemtime('.');
-						fwrite($flog, "$logHeader : output directory mtime : $omtime\n");
 						$fp = fopen($parametersFileName, 'w+') or die("Could not open $parametersFileName");
 						$parametersList2=array();
 						foreach ($parametersList as $parameter => $value)

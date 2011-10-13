@@ -1118,7 +1118,10 @@ qx.Class.define("desk.volView",
 			var settingsPage = new qx.ui.tabview.Page("settings");
             settingsPage.setLayout(new qx.ui.layout.VBox());
 			colorsTabView.add(settingsPage);
+			settingsPage.add(new qx.ui.basic.Label("Segmentation :"));
 			settingsPage.add(segmentationWidgets[1]);
+			settingsPage.add(segmentationWidgets[2]);
+			settingsPage.add(new qx.ui.basic.Label("Mesh generation :"));
 			settingsPage.add(extractMeshesWidgets[1]);
 			settingsPage.add(extractMeshesWidgets[2]);
 
@@ -2362,7 +2365,22 @@ qx.Class.define("desk.volView",
 			var button=new qx.ui.form.ToggleButton("extract meshes");
 			var volView=this;
 			var meshesViewer=null;
-			button.setEnabled(true);
+
+			var numberOfVerticesField=new qx.ui.form.TextField("5000");
+			var numberOfVerticesLayout=new qx.ui.layout.HBox();
+			numberOfVerticesLayout.setSpacing(5);
+			var numberOfVerticesContainer = new qx.ui.container.Composite(numberOfVerticesLayout);
+			numberOfVerticesContainer.add(new qx.ui.core.Spacer(),{flex : 1});
+			numberOfVerticesContainer.add(new qx.ui.basic.Label("Number of vertices max"));
+			numberOfVerticesContainer.add(numberOfVerticesField);
+
+			var numberOfSmoothingStepsField=new qx.ui.form.TextField("5");
+			var numberOfSmoothingStepsLayout=new qx.ui.layout.HBox();
+			numberOfSmoothingStepsLayout.setSpacing(5);
+			var numberOfSmoothingStepsContainer = new qx.ui.container.Composite(numberOfSmoothingStepsLayout);
+			numberOfSmoothingStepsContainer.add(new qx.ui.core.Spacer(),{flex : 1});
+			numberOfSmoothingStepsContainer.add(new qx.ui.basic.Label("Smoothing steps"));
+			numberOfSmoothingStepsContainer.add(numberOfSmoothingStepsField);
 
 			button.addListener("execute", function (e){
 				function afterDirectoryCreated() {
@@ -2374,8 +2392,8 @@ qx.Class.define("desk.volView",
 					}
 					volView.__fileBrowser.getActions().launchAction({
 						"action" : "extract_meshes",
-						"max_number_of_vertices" : numberOfVerticesForm.getValue(),
-						"number_of_smoothing_steps" : numberOfSmoothingStepsForm.getValue(),
+						"max_number_of_vertices" : numberOfVerticesField.getValue(),
+						"number_of_smoothing_steps" : numberOfSmoothingStepsField.getValue(),
 						"input_volume" : volView.__sessionDirectory+"/segmentation/seg-cvtgcmultiseg.mhd",
 						"output_directory" : volView.__sessionDirectory+"/meshes"}, afterExtractionExecuted);
 					}
@@ -2384,9 +2402,9 @@ qx.Class.define("desk.volView",
 					"subdirectory_name" : "meshes",
 					"output_directory" : volView.__sessionDirectory}, afterDirectoryCreated);
 				});
-			var numberOfVerticesForm=new qx.ui.form.TextField("5000");
-			var numberOfSmoothingStepsForm=new qx.ui.form.TextField("5");
-			return [button, numberOfVerticesForm, numberOfSmoothingStepsForm];
+
+			var balancingField=new qx.ui.form.TextField("0.1");
+			return [button, numberOfVerticesContainer, numberOfSmoothingStepsContainer];
 
 		},
 		__getSegmentationWidgets : function () {
@@ -2394,10 +2412,27 @@ qx.Class.define("desk.volView",
 			var volView=this;
 			var segmentationViewer=null;
 			button.setEnabled(false);
-//			var percentageLayout=new qx.ui.layout.HBox();
-//			this.__topLeftContainer = new qx.ui.container.Composite(tLCL);
+			var percentageLayout=new qx.ui.layout.HBox();
+			percentageLayout.setSpacing(5);
+			var percentageContainer = new qx.ui.container.Composite(percentageLayout);
 			var clusteringPercentageField=new qx.ui.form.TextField("0.01");
-//			var temperatureField=new qx.ui.form.TextField("0.1");
+
+			percentageContainer.add(new qx.ui.core.Spacer(),{flex : 1});
+			percentageContainer.add(new qx.ui.basic.Label("Clustering ratio"));
+			percentageContainer.add(clusteringPercentageField);
+
+
+			var balancingLayout=new qx.ui.layout.HBox();
+			balancingLayout.setSpacing(5);
+			var balancingContainer = new qx.ui.container.Composite(balancingLayout);
+			var balancingField=new qx.ui.form.TextField("0.1");
+			
+			balancingContainer.add(new qx.ui.core.Spacer(),{flex : 1});
+			balancingContainer.add(new qx.ui.basic.Label("Unary/Binary weight"));
+			balancingContainer.add(balancingField);
+
+
+			var temperatureField=new qx.ui.form.TextField("0.1");
 
 			this.__seedsList.addListener("removeItem",function(e){
 				if (this.getChildren().length==0)
@@ -2432,6 +2467,7 @@ qx.Class.define("desk.volView",
 								"input_volume" : volView.__file,
 								"seeds" : volView.__sessionDirectory+"/seeds.xml",
 								"clustering" : clusteringDirectory+"/clustering-index.mhd",
+								"unary_binary_weight" : balancingField.getValue(),
 								"output_directory" : volView.__sessionDirectory+"/segmentation"};
 
 							function afterSegmentationComputed(e)
@@ -2462,7 +2498,7 @@ qx.Class.define("desk.volView",
 					"subdirectory_name" : "segmentation",
 					"output_directory" : volView.__sessionDirectory}, afterDirectoryCreated);
 			});
-			return [button,clusteringPercentageField];
+			return [button, percentageContainer, balancingContainer];
 		}
 	}
 });

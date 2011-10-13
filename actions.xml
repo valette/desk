@@ -22,7 +22,7 @@
 <action name="extract_meshes" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeAnalysis">
 <description>extract meshes from labeled volume data</description>
 <parameter name="input_volume" type="file" required="true"/>
-<parameter name="max_number_of_vertices" type="int" min="0" default="10000" prefix="-n "/>
+<parameter name="max_number_of_vertices" type="int" min="-1" default="10000" prefix="-n "/>
 <parameter name="simlification_method" type="int" min="0" max="1" default="0" prefix="-s "/>
 <parameter name="number_of_smoothing_steps" type="int" min="0" default="0" prefix="-sm "/>
 </action>
@@ -78,7 +78,8 @@
 <parameter prefix="-i " name="input_volume" type="file" required="true"/>
 <parameter prefix="-x " name="seeds" type="file" required="true"/>
 <parameter prefix="-cf " name="clustering" type="file" required="true"/>
-<anchor text="-op seg -t 0.1"/>
+<parameter prefix="-t " name="unary_binary_weight" type="float" required="true"/>
+<anchor text="-op seg"/>
 </action>
 
 <action name="sleep" executable="sleep" void="true">
