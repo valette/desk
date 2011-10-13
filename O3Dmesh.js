@@ -129,10 +129,15 @@ o3djs.mesh.Mesh.prototype.setTexturePixels = function(inPixels)
 			pixels[i]=inPixels[i];
 
 		var format = texture.getGLTextureFormat_();
+		texture.gl.bindTexture(texture.texture_target_, texture.texture_);
 
+//		this could be optimized, look at :		http://www.khronos.org/registry/webgl/specs/latest/#2.4
 		texture.gl.texSubImage2D(texture.getTexImage2DTarget_(null),
 		0, 0, 0, texture.texture_width_, texture.texture_height_,
 		format, texture.gl.UNSIGNED_BYTE, pixels);
+		
+//		texImage2D(texture.getTexImage2DTarget_(null), 0, format,
+//                    format, texture.gl.UNSIGNED_BYTE, pixels);
 	}
 	else
 		console.log("warning : trying to set texture pixels while no texture was created");
@@ -206,7 +211,6 @@ o3djs.mesh.createSquare = function(scene, width, height)
 	mesh.textureWidth=width;
 	mesh.textureHeight=height;
 	mesh.pixels=pixels;
-	texture.gl.bindTexture(texture.texture_target_, texture.texture_);
 
 	mesh.setTexturePixels(pixels);
 	return (mesh);
