@@ -726,9 +726,6 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		state.getStateParam('PolygonOffset2').value = 1;
 	}
 
-	var vertexInfo;
-	var positionStream;
-
 	var filename=file.split(".");
 	var extension=filename[filename.length-1].toLowerCase();
 
@@ -741,7 +738,6 @@ function createFromFile3(xmlhttp, scene, file,color) {
 
 	var myMath=o3djs.math;
 
-	{
 		var boundingBox=scene.meshesBoundingBox;
 		var lines=xmlhttp.responseText.split("\n");
 		var lineIndex=0;
@@ -788,21 +784,40 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		
 		}
 
+
+
+		var vertexInfo;
+		var positionStream;
+		var newIndex;
+		var new2old;
+
+		var vertexInfoArray=[];
+		var new2oldArray=[];
+		
+
+
 		var numberOfPoints=parseInt(readNextString());
-
-		vertexInfo = o3djs.primitives.createVertexInfo();
-		positionStream = vertexInfo.addStream(
-			3, o3djs.base.o3d.Stream.POSITION);
-
 		var vertexArray=new Float32Array(numberOfPoints*3);
-		var vertexArrayIndex=0;
 		var normalArray=new Float32Array(numberOfPoints*3);
-		var newIndex=0;
 		var old2new=new Int32Array(numberOfPoints);
-		var new2old=new Int32Array(65500);
 
-		for (var i=0;i<numberOfPoints;i++)
-			old2new[i]=-1;
+
+		function createPrimitives() {
+			vertexInfo = o3djs.primitives.createVertexInfo();
+			positionStream = vertexInfo.addStream(
+				3, o3djs.base.o3d.Stream.POSITION);
+			vertexInfoArray.push(vertexInfo);
+
+			new2old=new Int32Array(65500);
+			new2oldArray.push(new2old);
+			newIndex=0;
+			for (var i=0;i<numberOfPoints;i++)
+				old2new[i]=-1;
+		}
+
+
+		createPrimitives();
+
 
 		if (numberOfPoints>200000)
 		{
@@ -811,8 +826,10 @@ function createFromFile3(xmlhttp, scene, file,color) {
 
 		var coord=[0,0,0];
 		var index2=0;
+
 		while (1)
 		{
+			var vertexArrayIndex=0;
 			var number;
 			while (1)
 			{
@@ -868,6 +885,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 
 		var connectivity=[0,0,0,0];
 		var numberOfPolygons=parseInt(readNextString());
+		console.log(numberOfPolygons+" polygons");
 		readNextString();
 
 		index2=0;
@@ -966,7 +984,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 				}
 			}
 		}
-	}
+
 
 	var numberOfPoints=positionStream.numElements();
 	var normalStream = vertexInfo.addStream(
