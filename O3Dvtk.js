@@ -795,12 +795,13 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		var vertexArray=new Float32Array(numberOfPoints*3);
 		var normalArray=new Float32Array(numberOfPoints*3);
 		var vertexArrayIndex=0;
-		var currentVerticesArray=new Uint32Array(65000);
+		var currentVerticesArray=new Int32Array(numberOfPoints);
 
-		// compute normals
-			for (var i=0;i<numberOfPoints;i++)
-				normalStream.addElement(0,0,0);
+		for (var i=0;i<numberOfPoints;i++)
+			normalStream.addElement(0,0,0);
 
+		for (var i=0;i<numberOfPoints;i++)
+			currentVerticesArray[i]=-1;
 
 		if (numberOfPoints>200000)
 		{
