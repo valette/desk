@@ -686,12 +686,294 @@ function createFromFile(scene, file,color, opt_callback, opt_mtime) {
 				alert("Could not read file "+file+": error"+xmlhttp.status);
 				return;
 			}
-			var shape=createFromFile2(xmlhttp, scene, file,color);
+			var mesh=createFromFile3(xmlhttp, scene, file,color);
 			if (opt_callback)
-				opt_callback(shape);
+				opt_callback(mesh);
 			return;
 		}
 	}
+}
+
+function readVTKFileElements(text,vertexInfo ,positionStream , boundingBox){
+
+//	var httpIndex=0;
+//	var httpLength=text.length;
+
+
+
+}
+
+
+function createFromFile3(xmlhttp, scene, file,color) {
+
+	var transparency=0;
+	if ((color[3]<0.99)&&(color[3]>0))
+		transparency=1;
+
+	var material=o3djs.material.createBasicMaterial(scene.pack, scene.viewInfo, color, transparency);
+
+	material.getParam('lightWorldPos').value=[2000,2000,10000];
+	material.getParam('emissive').value = [0.1, 0.1, 0.1 , 0.08];
+	material.getParam('ambient').value = [0.1, 0.1, 0.1, 0.005];
+	material.getParam('specular').value = [0.1, 0.1, 0.1, 0.01];
+	material.getParam('shininess').value=0.02;
+	material.getParam('specularFactor').value = 0.1;
+	material.getParam('lightColor').value = [0.8, 0.8, 0.8, 0.5];
+
+	if (color[3]<0)
+	{
+		var state = scene.pack.createObject('State'); 
+		material.state = state; 
+		state.getStateParam('FillMode').value = scene.o3dElement.o3d.State.WIREFRAME;
+	}
+	else
+	{
+		// add polygonoffset to z coordinate to make edges display cleaner
+		var state = scene.pack.createObject('State'); 
+		material.state = state; 
+		state.getStateParam('PolygonOffset1').value = 1;
+		state.getStateParam('PolygonOffset2').value = 1;
+	}
+
+	var vertexInfo = o3djs.primitives.createVertexInfo();
+	var positionStream = vertexInfo.addStream(
+		3, o3djs.base.o3d.Stream.POSITION);
+	var normalStream = vertexInfo.addStream(
+		3, o3djs.base.o3d.Stream.NORMAL);
+
+	var filename=file.split(".");
+	var extension=filename[filename.length-1].toLowerCase();
+
+	var mesh=o3djs.mesh.createMesh(file, null, material, scene);
+
+	if (extension!="vtk")
+	{
+		alert ("extension "+extension+" not supported vor meshView");
+	}
+	
+	{
+		var boundingBox=scene.meshesBoundingBox;
+		var lines=xmlhttp.responseText.split("\n");
+		var lineIndex=0;
+
+		var line=lines[0].split(" ");
+		var columnIndex=-1;
+
+
+		function readNextString ()
+		{
+			while (1)
+			{
+				var nextWord=line[columnIndex];
+				columnIndex++;
+				if (columnIndex==line.length)
+				{
+					lineIndex++;
+					columnIndex=0;
+					if (lineIndex>lines.length)
+						return ("");
+					line=lines[lineIndex].split(" ");
+				}
+				if (nextWord!=null)
+					if (nextWord.length>0)
+						return (nextWord);
+			}
+		}
+
+		// read point data
+		var found=false;
+		while (!found)
+		{
+			var readString=readNextString();
+			switch (readString.toUpperCase())
+			{
+				case "POINTS":
+					found=true;
+					break;
+				case "":
+					alert ("error while reading "+file+" : \n"+returnValue);
+					return;
+				default:
+			}
+		
+		}
+
+		var numberOfPoints=parseInt(readNextString());
+		var vertexArray=new Float32Array(numberOfPoints*3);
+
+		if (numberOfPoints>200000)
+		{
+			return ("mesh is too big : "+numberOfPoints+" vertices");
+		}
+
+		var coord=[0,0,0];
+		var index2=0;
+		while (1)
+		{
+			var number;
+			while (1)
+			{
+				number=parseFloat(line[columnIndex]);
+				columnIndex++;
+				if (columnIndex==line.length)
+				{
+					lineIndex++;
+					columnIndex=0;
+					if (lineIndex>lines.length)
+					{
+						alert ("error while reading "+file+" : \n"+returnValue);
+						return;
+					}
+					line=lines[lineIndex].split(" ");
+				}
+				if (!isNaN(number))
+					break;
+			}
+			coord[index2]=number;
+			index2++;
+
+			if (index2==3)
+			{
+				index2=0;
+				positionStream.addElement(coord[0],coord[1],coord[2]);
+				boundingBox.addPoint(coord);
+
+				numberOfPoints--;
+				if (numberOfPoints==0)
+				{
+					break;
+				}
+			}
+		}
+
+		found=false;
+		while (!found)
+		{
+			var readString=readNextString();
+			switch (readString)
+			{
+				case "POLYGONS":
+					found=true;
+					break;
+				case "":
+					alert ("error while reading "+file+" : \n"+returnValue);
+					return;
+				default:
+			}
+		}
+
+		var connectivity=[0,0,0,0];
+		var triangle=[0,0,0];
+		var numberOfPolygons=parseInt(readNextString());
+		var numberOfPolygonElements=parseInt(readNextString());
+		var PolysArray=new Uint32Array(numberOfPolygonElements);
+		console.log(PolysArray);
+
+		index2=0;
+		while (1)
+		{
+			var number;
+			while (1)
+			{
+				number=parseInt(line[columnIndex]);
+				columnIndex++;
+				if (columnIndex==line.length)
+				{
+					lineIndex++;
+					columnIndex=0;
+					if (lineIndex>lines.length)
+					{
+						alert ("error while reading "+file+" : \n"+returnValue);
+						return;
+					}
+					line=lines[lineIndex].split(" ");
+				}
+				if (!isNaN(number))
+					break;
+			}
+
+			connectivity[index2]=number;
+			index2++;
+
+			if (index2==connectivity[0]+1)
+			{
+				index2=0;
+				var numberOfTrianglesInCell=connectivity[0]-2;
+				triangle[0]=connectivity[1];
+				for (var i=0;i<numberOfTrianglesInCell;i++)
+				{
+					triangle[1]=connectivity[i+2];
+					triangle[2]=connectivity[i+3];
+					vertexInfo.addTriangle(triangle[0],triangle[1],triangle[2]);
+				}
+			
+				numberOfPolygons--;
+				if (numberOfPolygons==0)
+				{
+					break;
+				}
+			}
+		}
+	}
+
+	var numberOfPoints=positionStream.numElements();
+	var numberOfTriangles=vertexInfo.numTriangles();
+
+
+// compute normals
+	for (var i=0;i<numberOfPoints;i++)
+		normalStream.addElement(0,0,0);
+
+	for (var i=0;i<numberOfTriangles;i++)
+	{
+		var triangle=vertexInfo.getTriangle(i);
+		var positions = [];
+		for (var ii = 0; ii < 3; ++ii)
+		{
+			positions[ii] = positionStream.getElementVector(triangle[ii]);
+		}
+
+		var v0 = o3djs.math.normalize(o3djs.math.subVector(positions[1],positions[0]));
+		var v1 = o3djs.math.normalize(o3djs.math.subVector(positions[2],positions[1]));
+		var normal=o3djs.math.normalize(o3djs.math.cross(v0, v1));
+		var norm=normal[0]*normal[0]+normal[1]*normal[1]+normal[2]*normal[2];
+		if ((norm>0.98)&&(norm<1.01))
+		{
+			for (var iii=0;iii<3;iii++)
+			{
+				var currentPoint=triangle[iii];
+				var normal2=normalStream.getElementVector(currentPoint);
+				normalStream.setElementVector(currentPoint,
+					o3djs.math.addVector(normal,normal2));
+			}
+		}
+	}
+
+	for (var i=0;i<numberOfPoints;i++)
+	{
+		var normal=normalStream.getElementVector(i);
+		normalStream.setElementVector(i,o3djs.math.normalize(normal));
+	}
+
+	var shape=vertexInfo.createShape(scene.pack, material);
+
+//	o3djs.shape.setBoundingBoxesAndZSortPoints(shape); // Maybe usefull to replace bounding box computing by hand
+//	var shape2=o3djs.shape.duplicateShape(scene.pack, shape);
+
+	scene.transform.addShape(shape);
+
+	mesh.addShape(shape);
+
+	return (mesh);
+
+/*	var normalStream2 = vertexInfo.addStream(3, o3djs.base.o3d.Stream.NORMAL);
+	for (var i=0;i<numberOfPoints;i++)
+	{
+		var normal=normalStream.getElementVector(i);
+		normalStream2.addElementVector(o3djs.math.negativeVector(normal));
+	}
+	var shape2=vertexInfo.createShape(scene.pack, material);
+	scene.transform.addShape(shape2);*/
 }
 
 function createFromFile2(xmlhttp, scene, file,color) {

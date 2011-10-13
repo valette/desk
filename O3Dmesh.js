@@ -25,6 +25,11 @@ o3djs.mesh.Mesh = function(fileName, shape, material, scene)
 	this.bound=null;
 };
 
+o3djs.mesh.Mesh.prototype.addShape = function(shape) 
+{
+	this.shapes.push(shape);
+}
+
 o3djs.mesh.Mesh.prototype.bind = function(mesh) 
 {
 	if (this.bound!=null)
@@ -98,6 +103,7 @@ o3djs.mesh.Mesh.prototype.isRepresentationWireframe = function()
 
 o3djs.mesh.Mesh.prototype.hide = function() 
 {
+	console.log("hide");
 	if (!this.hidden)
 	{
 		for (var i=0;i<this.shapes.length;i++)
