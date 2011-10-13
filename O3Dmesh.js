@@ -10,7 +10,10 @@ o3djs.mesh.createMesh = function(fileName, shape, material, scene) {
 
 o3djs.mesh.Mesh = function(fileName, shape, material, scene)
 {
-	this.shape=shape;
+	this.shapes=[];
+	if (shape!=null)
+		this.shapes.push(shape);
+
 	this.material=material;
 	this.scene=scene;
 	this.fileName=fileName;
@@ -96,7 +99,10 @@ o3djs.mesh.Mesh.prototype.isRepresentationWireframe = function()
 o3djs.mesh.Mesh.prototype.hide = function() 
 {
 	if (!this.hidden)
-		this.scene.transform.removeShape(this.shape);
+	{
+		for (var i=0;i<this.shapes.length;i++)
+			this.scene.transform.removeShape(this.shapes[i]);
+	}
 
 	this.hidden=true;
 }
@@ -104,14 +110,17 @@ o3djs.mesh.Mesh.prototype.hide = function()
 o3djs.mesh.Mesh.prototype.show = function()
 {
 	if (this.hidden)
-		this.scene.transform.addShape(this.shape);
+	{
+		for (var i=0;i<this.shapes.length;i++)
+			this.scene.transform.addShape(this.shapes[i]);
+	}
 
 	this.hidden=false;
 }
 
 o3djs.mesh.Mesh.prototype.setVertexCoordinates = function(Id,x,y,z)
 {
-	var primitive = this.shape.elements[0];
+	var primitive = this.shapes[0].elements[0];
 	var streambank = primitive.streamBank;
 	var stream = streambank.getVertexStream(o3d.Stream.POSITION, 0);
 	var field = stream.field;
