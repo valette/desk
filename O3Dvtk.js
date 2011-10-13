@@ -867,7 +867,6 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		}
 
 		var connectivity=[0,0,0,0];
-		var triangle=[0,0,0];
 		var numberOfPolygons=parseInt(readNextString());
 		var numberOfPolygonElements=parseInt(readNextString());
 //		var PolysArray=new Uint32Array(numberOfPolygonElements);
@@ -901,18 +900,24 @@ function createFromFile3(xmlhttp, scene, file,color) {
 
 			if (index2==connectivity[0]+1)
 			{
+				var triangle=[0,0,0];
 				index2=0;
 				var numberOfTrianglesInCell=connectivity[0]-2;
 				triangle[0]=connectivity[1];
-				var P1=positionStream.getElementVector(connectivity[1]);
+				var subIndex=triangle[0]*3;
 
+				var P1=[vertexArray[subIndex],vertexArray[subIndex+1],vertexArray[subIndex+2]];
 				for (var i=0;i<numberOfTrianglesInCell;i++)
 				{
-					var P2=positionStream.getElementVector(connectivity[i+2]);
-					var P3=positionStream.getElementVector(connectivity[i+3]);
+					var vertex2=triangle[1]=connectivity[i+2];
+					var vertex3=triangle[2]=connectivity[i+3];
 
-					triangle[1]=connectivity[i+2];
-					triangle[2]=connectivity[i+3];
+					subIndex=vertex2*3;
+					var P2=[vertexArray[subIndex],vertexArray[subIndex+1],vertexArray[subIndex+2]];
+
+
+					subIndex=vertex3*3;
+					var P3=[vertexArray[subIndex],vertexArray[subIndex+1],vertexArray[subIndex+2]];
 
 					var v0 = myMath.subVector(P2,P1);
 					var v1 = myMath.subVector(P3,P2);
