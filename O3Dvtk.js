@@ -694,15 +694,6 @@ function createFromFile(scene, file,color, opt_callback, opt_mtime) {
 	}
 }
 
-function readVTKFileElements(text,vertexInfo ,positionStream , boundingBox){
-
-//	var httpIndex=0;
-//	var httpLength=text.length;
-
-
-
-}
-
 
 function createFromFile3(xmlhttp, scene, file,color) {
 
@@ -803,6 +794,8 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		var numberOfPoints=parseInt(readNextString());
 		var vertexArray=new Float32Array(numberOfPoints*3);
 		var normalArray=new Float32Array(numberOfPoints*3);
+		var vertexArrayIndex=0;
+		var currentVerticesArray=new Uint32Array(65000);
 
 		// compute normals
 			for (var i=0;i<numberOfPoints;i++)
@@ -839,6 +832,8 @@ function createFromFile3(xmlhttp, scene, file,color) {
 			}
 			coord[index2]=number;
 			index2++;
+
+			vertexArray[vertexArrayIndex++]=number;
 
 			if (index2==3)
 			{
