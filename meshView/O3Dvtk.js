@@ -50,7 +50,7 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	this.dragging = false;
 
 	function startDragging(e) {
-		scene.startDragging(e.x, e.y, e.shiftKey, e.ctrlKey, (e.button==1))
+		scene.startDragging(e.x, e.y, e.shiftKey, e.ctrlKey, (e.button==1), (e.button==2))
 	}
 
 	function drag(e) {
@@ -89,20 +89,19 @@ o3djs.renderscene.RenderScene.prototype.mouseWheelUsed = function(x) {
 	}
 
 o3djs.renderscene.RenderScene.prototype.startDragging = function(x, y, shiftKeyPressed,
-		 ctrlKeyPressed, middleButtonPressed)
+		 ctrlKeyPressed, middleButtonPressed, rightButtonPressed)
 {
 	this.dragging = true;
 	var cameracontroller=this.cameracontroller;
 
 	if (shiftKeyPressed||middleButtonPressed)
 		cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.MOVE_CENTER_IN_VIEW_PLANE,x,y);
+	else if (ctrlKeyPressed)
+		cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.ROTATE_AROUND_Z,x,y);
+	else if (rightButtonPressed)
+		cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.DOLLY_ZOOM,x,y);
 	else
-	{
-		if (ctrlKeyPressed||middleButtonPressed)
-			cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.ROTATE_AROUND_Z,x,y);
-		else
-			cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.SPIN_ABOUT_CENTER,x,y);
-	}
+		cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.SPIN_ABOUT_CENTER,x,y);
 }
 
 o3djs.renderscene.RenderScene.prototype.drag = function(x, y)

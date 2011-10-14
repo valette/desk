@@ -365,17 +365,49 @@ qx.Class.define("desk.meshView",
 				scene=o3djs.renderscene.createRenderScene(clientElements[0]);
 				meshView.__scene=scene;
 				scene.render();
-
+				
+				var draggingInProgress=false;
+//				var zoomingWithRightClickInProgress=false;
+//				var initialMouseX;
+//				var initialMouseY;
 				htmlContainer.addListener("mousedown", function (event)	{
-					scene.startDragging(event.getDocumentLeft(),
+					draggingInProgress=true;
+/*					if (event.isRightPressed())
+					{
+						zoomingWithRightClickInProgress=true;
+						initialMouseX=event.getDocumentLeft();
+						initialMouseY=event.getDocumentTop();
+					}
+					else*/
+						scene.startDragging(event.getDocumentLeft(),
 													event.getDocumentTop(),
-													false,
-													false,
-													event.isMiddlePressed());});
+													event.isShiftPressed(),
+													event.isCtrlPressed(),
+													event.isMiddlePressed(),
+													event.isRightPressed());});
+
 				htmlContainer.addListener("mousemove", function (event)	{
-					scene.drag(event.getDocumentLeft(), event.getDocumentTop());});
+					if (draggingInProgress)
+					{
+/*						if (zoomingWithRightClickInProgress)
+						{
+							var newMouseX=event.getDocumentLeft();
+							var newMouseY=event.getDocumentTop();
+							var deltaX=newMouseX-initialMouseX;
+							var deltaY=initialMouseY-newMouseY;
+							var delta=Math.max(deltaX,deltaY);
+							initialMouseX=newMouseX;
+							initialMouseY=newMouseY;
+							scene.mouseWheelUsed(delta/100);
+						}
+						else*/
+							scene.drag(event.getDocumentLeft(), event.getDocumentTop());
+					}
+					});
 
 				htmlContainer.addListener("mouseup", function (event)	{
+//					zoomingWithRightClickInProgress=false;
+					draggingInProgress=false;
 					scene.stopDragging();});
 
 				htmlContainer.addListener("mousewheel", function (event)	{
@@ -383,7 +415,7 @@ qx.Class.define("desk.meshView",
 
 
 				meshView.__sceneReady=true;
-	//			scene.loadMesh ("http://vip.creatis.insa-lyon.fr:8080/visu/essai/build/ADAM/adam.xml", adjustViewpointAndRender);
+
 				htmlContainer.addListener("resize",function(e){
 				console.log("resize");
 				var elementSize=htmlContainer.getInnerSize();

@@ -408,7 +408,7 @@ o3djs.cameracontroller.CameraController.prototype.mouseMoved = function(x, y) {
   if (this.dragMode_ == o3djs.cameracontroller.DragMode.DOLLY_ZOOM) {
     if (this.backpedal > 0) {
       var oldWidth = Math.tan(this.fieldOfViewAngle);
-      this.fieldOfViewAngle += deltaY * this.radiansPerUnit;
+      this.fieldOfViewAngle -= deltaY * this.radiansPerUnit/5;
       this.fieldOfViewAngle = Math.min(this.fieldOfViewAngle, 0.98 * Math.PI/2);
       this.fieldOfViewAngle = Math.max(this.fieldOfViewAngle, 0.02 * Math.PI/2);
       var newWidth = Math.tan(this.fieldOfViewAngle);
