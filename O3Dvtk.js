@@ -311,7 +311,8 @@ function readVTKFile2(text,vertexInfo ,positionStream , boundingBox){
 	var numberOfPoints=readNextString();
 	if (numberOfPoints>200000)
 	{
-		return ("mesh is too big : "+numberOfPoints+" vertices");
+		console.log("mesh is too big : "+numberOfPoints+" vertices");
+		return(null);
 	}
 
 	var coord=[0,0,0];
@@ -456,7 +457,8 @@ function readVTKFile3(text,vertexInfo ,positionStream , boundingBox){
 	var numberOfPoints=readNextString();
 	if (numberOfPoints>200000)
 	{
-		return ("mesh is too big : "+numberOfPoints+" vertices");
+		console.log("mesh is too big : "+numberOfPoints+" vertices");
+		return ;
 	}
 
 	var coord=[0,0,0];
@@ -578,7 +580,8 @@ function readVTKFile1(text,vertexInfo ,positionStream , boundingBox){
 	var numberOfPoints=data[index];
 	if (numberOfPoints>200000)
 	{
-		return ("mesh is too big : "+numberOfPoints+" vertices");
+		console.log ("mesh is too big : "+numberOfPoints+" vertices");
+		return;
 	}
 	index++
 	var coord=[0,0,0];
@@ -822,9 +825,10 @@ function createFromFile3(xmlhttp, scene, file,color) {
 
 		createPrimitives();
 
-		if (numberOfPoints>200000)
+		if (numberOfPoints>500000)
 		{
-			return ("mesh is too big : "+numberOfPoints+" vertices");
+			alert ("mesh is too big : "+numberOfPoints+" vertices");
+			return;
 		}
 
 		var coord=[0,0,0];
