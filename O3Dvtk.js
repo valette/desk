@@ -825,7 +825,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 
 		createPrimitives();
 
-		if (numberOfPoints>500000)
+		if (numberOfPoints>1000000)
 		{
 			alert ("mesh is too big : "+numberOfPoints+" vertices");
 			return;
@@ -841,7 +841,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		{
 			for (coordIndex=0;coordIndex<3;coordIndex++)
 			{
-				while (1)
+				do
 				{
 					number=parseFloat(line[columnIndex]);
 					columnIndex++;
@@ -857,9 +857,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 						line=lines[lineIndex].split(" ");
 						lineLength=line.length;
 					}
-					if (!isNaN(number))
-						break;
-				}
+				} while (isNaN(number))
 				coord[coordIndex]=number;
 				vertexArray[vertexArrayIndex++]=number;
 			}
@@ -882,7 +880,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 			}
 		}
 
-		var connectivity=[0,0,0,0];
+		var connectivity=[0,0,0,0,0,0,0,0];
 		var numberOfPolygons=parseInt(readNextString());
 		var numberOfpolygonElements=parseInt(readNextString());
 
@@ -890,7 +888,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		for (var p=0;p!=numberOfpolygonElements;p++)
 		{
 			var number;
-			while (1)
+			do
 			{
 				number=parseInt(line[columnIndex]);
 				columnIndex++;
@@ -906,9 +904,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 					line=lines[lineIndex].split(" ");
 					lineLength=line.length;
 				}
-				if (!isNaN(number))
-					break;
-			}
+			} while (isNaN(number))
 
 			connectivity[index2]=number;
 			index2++;
