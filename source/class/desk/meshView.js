@@ -475,10 +475,22 @@ qx.Class.define("desk.meshView",
 					for (var i=0;i<volumes.length;i++)
 						volumes[i].volumeViewer.removeListenerById(volumes[i].listener);
 				this.__volumes=null;
+
+				//clean the scene
+				this.getScene().client.cleanup();
+				this.__shapesArray.length=0;
+				this.__shapesVisibility.length.0;
+
+
+
 				},this);
 
 			}, this);
 		},
+
+		destruct : function(){
+				this._disposeObjects("__iframe");
+				},
 
 		createPropertyWidget : function (parentWindow){
 			var meshViewer=this;
