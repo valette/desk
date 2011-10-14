@@ -9,20 +9,21 @@ qx.Class.define("desk.meshView",
 		var window=new qx.ui.window.Window();
 		window.setLayout(new qx.ui.layout.VBox());
 		window.setShowClose(true);
+		window.setWidth(600);
+		window.setHeight(400);
 		window.setShowMinimize(false);
 		window.setResizable(true,true,true,true);
 		window.setUseResizeFrame(true);
 		window.setUseMoveFrame(true);
 		window.setContentPadding(2);
 		window.setCaption(file);
-		window.setResizable(true,true,true,true);
 		this.__window=window;
 
 		var pane = new qx.ui.splitpane.Pane("horizontal")
 		window.add(pane,{flex : 1});
 
-		this.createDisplayWidget();
-		pane.add(this.__iframe, 5);
+		this.__embededHTML=this.createDisplayWidget();
+		pane.add(this.__embededHTML, 5);
 		window.open();
 
 		var elementsList = new qx.ui.container.Composite;
@@ -156,15 +157,15 @@ qx.Class.define("desk.meshView",
 	},
 
 	members : {
+		__embededHTML : null,
 		__window : null,
 		__fileBrowser : null,
-		__iframe : null,
 		__fileToOpen : null,
 		__fileToOpenMTime : null,
 		__sceneReady : null,
 		__shapesList : null,
 		__shapesArray : null,
-
+		__scene : null,
 		__shapesVisibility : null,
 
 		__volumes : null,
@@ -336,71 +337,94 @@ qx.Class.define("desk.meshView",
 		},
 
 		getScene : function() {
-				return this.__iframe.getWindow().g_scene;
+				return this.__scene;
 		},
 
 		createDisplayWidget : function(){
-			this.__iframe = new qx.ui.embed.Iframe().set({
-			width: 400,
-			height: 400,
-			minWidth: 200,
-			minHeight: 150,
-			decorator:null});
-			this.__iframe.setFrameName('o3dframe');
 
-			var meshViewer=this;
-			if (qx.core.Environment.get("browser.name")=="firefox")
+
+			var htmlContainer = new qx.ui.embed.Html();
+			htmlContainer.setHtml("<div id=\"o3d\"></div>");
+			var randomId=Math.random();
+			htmlContainer.setHtml("<div id=\"o3d"+randomId+"\"></div>");
+
+			var scene;
+
+			function adjustViewpointAndRender()
 			{
-				// quirk for firefox which oes not handle iframes correctly
-				this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/?empty=true&width=400&height=400");
-
-				this.__iframe.addListenerOnce("load", function(e) { 
-					this.__window.addListener("resize", function(event) {
-						var elementSize=this.__iframe.getInnerSize();
-						this.__iframe.getWindow().resizeClient(elementSize.width, elementSize.height);},this);
-					}, this);
+				scene.cameracontroller.viewAll(scene.meshesBoundingBox,1);
+				scene.client.root.localMatrix=scene.cameracontroller.calculateViewMatrix();
+				scene.render();
 			}
-			else
-				this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/?empty=true");
+			var canvaselement;
+			var meshView=this;
 
-			this.__iframe.addListenerOnce("load", function(e) {
-				function loadCallback()
-				{
-					meshViewer.__sceneReady=true;
-					meshViewer.__iframe.getWindow().o3djs.event.addEventListener(meshViewer.getScene().o3dElement, 'mousedown', function(){
-						var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
-						windowManager.bringToFront(meshViewer.__window);});
-					meshViewer.openFile();
-				}
-				this.__iframe.getWindow().parentCallback=loadCallback;
-				this.__iframe.getWindow().init2(loadCallback);
+			function initStep2(clientElements) {
 
-				this.__window.addListener("mouseout", function(event) {
-					var myScene=this.__iframe.getWindow().g_scene;
-					if (myScene!=null)
-						myScene.stopDragging();},this);
+				canvaselement=clientElements[0];
+				scene=o3djs.renderscene.createRenderScene(clientElements[0]);
+				meshView.__scene=scene;
+				scene.render();
 
-				this.__window.addListener("keypress", function(event) {
+				htmlContainer.addListener("mousedown", function (event)	{
+					scene.startDragging(event.getDocumentLeft(),
+													event.getDocumentTop(),
+													false,
+													false,
+													event.isMiddlePressed());});
+				htmlContainer.addListener("mousemove", function (event)	{
+					scene.drag(event.getDocumentLeft(), event.getDocumentTop());});
+
+				htmlContainer.addListener("mouseup", function (event)	{
+					scene.stopDragging();});
+
+				htmlContainer.addListener("mousewheel", function (event)	{
+					scene.mouseWheelUsed(-event.getWheelDelta());});
+
+
+				meshView.__sceneReady=true;
+	//			scene.loadMesh ("http://vip.creatis.insa-lyon.fr:8080/visu/essai/build/ADAM/adam.xml", adjustViewpointAndRender);
+				htmlContainer.addListener("resize",function(e){
+				console.log("resize");
+				var elementSize=htmlContainer.getInnerSize();
+
+				var width = elementSize.width;
+				var height = elementSize.height;
+
+				scene.client.gl.hack_canvas.width=width;
+				scene.client.gl.hack_canvas.height=height;
+
+
+				scene.client.gl.displayInfo = {width: elementSize.width, height: elementSize.height};
+
+				scene.resize();
+				scene.render();
+				});
+				meshView.openFile();
+				htmlContainer.addListener("mouseout", function(event) {
+						scene.stopDragging();},this);
+
+		/*		this.__window.addListener("keypress", function(event) {
 					this.__iframe.getWindow().keyPressed(event.getKeyIdentifier())
-					;},this);
-
-				this.__window.addListener("keypress", function(event) {
+					;},this);*/
+/*
+				meshView.__window.addListener("keypress", function(event) {
 					if (event.getKeyIdentifier()=="S")
 						desk.meshView.LINKEDWINDOW=this;
-					},this);
+					},meshView);*/
 
-				this.__window.addListener("click", function(event) {
+				meshView.__window.addListener("click", function(event) {
 					var window=desk.meshView.LINKEDWINDOW;
 					if ((window!=null)&&(window!=this))
 					{
-						this.__iframe.getWindow().g_scene.bind(window.__iframe.getWindow().g_scene);
-						window.__iframe.getWindow().g_scene.bind(this.__iframe.getWindow().g_scene);
-						this.__iframe.getWindow().g_scene.cameracontroller.onChange();
+						meshView.__scene.bind(window.__scene);
+						window.__scene.bind(meshView.__scene);
+						meshView.__scene.cameracontroller.onChange();
 						desk.meshView.LINKEDWINDOW=null;
-					}},this);
+					}});
 
-				this.__window.setDroppable(true);
-				this.__window.addListener("drop", function(e) {
+				meshView.__window.setDroppable(true);
+				meshView.__window.addListener("drop", function(e) {
 					if (e.supportsType("fileBrowser"))
 					{
 						var fileBrowser=e.getData("fileBrowser");
@@ -428,7 +452,7 @@ qx.Class.define("desk.meshView",
 									default:
 								}
 							}
-							meshViewer.__readFile(fileName, mTime, null, update);
+							meshView.__readFile(fileName, mTime, null, update);
 						}
 					}
 					if (e.supportsType("volumeSlice"))
@@ -438,7 +462,7 @@ qx.Class.define("desk.meshView",
 						var dimensions=volView.getDimensions();
 						var width=dimensions[0];
 						var height=dimensions[1];
-						var square=this.__iframe.getWindow().o3djs.mesh.createSquare(scene, width, height);
+						var square=o3djs.mesh.createSquare(scene, width, height);
 
 						function updateTexture()
 						{
@@ -456,9 +480,9 @@ qx.Class.define("desk.meshView",
 								updateTexture();
 								scene.render();});
 
-						if (meshViewer.__volumes==null)
-							meshViewer.__volumes=[];
-						meshViewer.__volumes.push({
+						if (meshView.__volumes==null)
+							meshView.__volumes=[];
+						meshView.__volumes.push({
 								volumeViewer : volView,
 								listener : listenerId});
 						scene.render();
@@ -466,9 +490,9 @@ qx.Class.define("desk.meshView",
 					// activate the window
 					var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
 					windowManager.bringToFront(this.__window);
-				}, this);
+				}, meshView);
 
-			this.__window.addListener("beforeClose", function(e) {
+			meshView.__window.addListener("beforeClose", function(e) {
 				// remove bindings from volume viewers
 				var volumes=this.__volumes;
 				if (volumes!=null)
@@ -480,16 +504,20 @@ qx.Class.define("desk.meshView",
 				this.getScene().client.cleanup();
 				this.__shapesArray.length=0;
 				this.__shapesVisibility.length.0;
+				},meshView);
+			}
 
-
-
-				},this);
-
-			}, this);
+			htmlContainer.addListener("appear",function(e){
+			globalO3DDoNotHandleKeyEvents=true;
+				o3djs.webgl.makeClients(initStep2,null,null,null,"^o3d"+randomId);
+//							htmlContainer.setHtml("<div id=\"o3d"+randomId+"\"></div>");
+				});
+	
+			return (htmlContainer);
 		},
 
 		destruct : function(){
-				this._disposeObjects("__iframe");
+//				this._disposeObjects("__");
 				},
 
 		createPropertyWidget : function (parentWindow){

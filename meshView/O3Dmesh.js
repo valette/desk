@@ -18,18 +18,18 @@ o3djs.mesh.Mesh = function(fileName, shape, material, scene)
 	this.scene=scene;
 	this.fileName=fileName;
 
-	// the list of meshes bound to this one
+/*	// the list of meshes bound to this one
 	this.linkedMeshes=[];
 
 	// the mesh to which one this mesh is bound
-	this.bound=null;
+	this.bound=null;*/
 };
 
 o3djs.mesh.Mesh.prototype.addShape = function(shape) 
 {
 	this.shapes.push(shape);
 }
-
+/*
 o3djs.mesh.Mesh.prototype.bind = function(mesh) 
 {
 	if (this.bound!=null)
@@ -41,14 +41,14 @@ o3djs.mesh.Mesh.prototype.bind = function(mesh)
 	mesh.linkedMeshes.push(this);
 	this.bound=mesh;
 }
-
+*/
 o3djs.mesh.Mesh.prototype.setColor = function(color) 
 {
-	this.__setColor(color);
+	this.__setColor(color);/*
 	for each (var mesh in this.linkedMeshes)
 	{
 		mesh.__setColor(color);
-	}
+	}*/
 }
 
 o3djs.mesh.Mesh.prototype.__setColor = function(color) 
@@ -103,7 +103,6 @@ o3djs.mesh.Mesh.prototype.isRepresentationWireframe = function()
 
 o3djs.mesh.Mesh.prototype.hide = function() 
 {
-	console.log("hide");
 	if (!this.hidden)
 	{
 		for (var i=0;i<this.shapes.length;i++)

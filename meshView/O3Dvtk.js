@@ -50,27 +50,11 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	this.dragging = false;
 
 	function startDragging(e) {
-		scene.dragging = true;
-		var cameracontroller=scene.cameracontroller
-
-		if ((e.shiftKey)||(e.button==1))
-			cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.MOVE_CENTER_IN_VIEW_PLANE,e.x,e.y);
-		else
-		{
-			if ((e.ctrlKey)||(e.button==1))
-				cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.ROTATE_AROUND_Z,e.x,e.y);
-			else
-				cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.SPIN_ABOUT_CENTER,e.x,e.y);
-		}
+		scene.startDragging(e.x, e.y, e.shiftKey, e.ctrlKey, (e.button==1))
 	}
 
 	function drag(e) {
-		if (scene.dragging==true) {
-			scene.cameracontroller.mouseMoved(e.x,e.y);
-			var matrix=scene.cameracontroller.calculateViewMatrix();
-			scene.client.root.localMatrix=matrix;
-			scene.render();
-		}
+		scene.drag(e.x,e.y);
 	}
 
 	function stopDragging(e) {
@@ -78,24 +62,58 @@ o3djs.renderscene.RenderScene = function(clientElement)
 	}
 
 	function scrollMe(e) {
-	  if (e.deltaY) {
-		scene.cameracontroller.backpedal*=(e.deltaY < 0 ? 14 : 10)/12;
-		scene.client.root.localMatrix=scene.cameracontroller.calculateViewMatrix();
-		if (scene.cameracontroller.onChange!=null)
-			scene.cameracontroller.onChange();
-		scene.render();
-	  }
+		scene.mouseWheelUsed(e.deltaY);
 	}
 
-	o3djs.event.addEventListener(this.o3dElement, 'mousedown', startDragging);
-	o3djs.event.addEventListener(this.o3dElement, 'mousemove', drag);
-	o3djs.event.addEventListener(this.o3dElement, 'mouseup', stopDragging);
-	o3djs.event.addEventListener(this.o3dElement, 'wheel', scrollMe); 
+	if (globalO3DDoNotHandleKeyEvents!=true)
+	{
+		o3djs.event.addEventListener(this.o3dElement, 'mousedown', startDragging);
+		o3djs.event.addEventListener(this.o3dElement, 'mousemove', drag);
+		o3djs.event.addEventListener(this.o3dElement, 'mouseup', stopDragging);
+		o3djs.event.addEventListener(this.o3dElement, 'wheel', scrollMe); 
+	}
 
 	this.o3dWidth = -1;
 	this.o3dHeight = -1;
 	this.resize();
 };
+
+o3djs.renderscene.RenderScene.prototype.mouseWheelUsed = function(x) {
+	  if (x) {
+		this.cameracontroller.backpedal*=(x < 0 ? 14 : 10)/12;
+		this.client.root.localMatrix=this.cameracontroller.calculateViewMatrix();
+		if (this.cameracontroller.onChange!=null)
+			this.cameracontroller.onChange();
+		this.render();
+	  }
+	}
+
+o3djs.renderscene.RenderScene.prototype.startDragging = function(x, y, shiftKeyPressed,
+		 ctrlKeyPressed, middleButtonPressed)
+{
+	this.dragging = true;
+	var cameracontroller=this.cameracontroller;
+
+	if (shiftKeyPressed||middleButtonPressed)
+		cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.MOVE_CENTER_IN_VIEW_PLANE,x,y);
+	else
+	{
+		if (ctrlKeyPressed||middleButtonPressed)
+			cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.ROTATE_AROUND_Z,x,y);
+		else
+			cameracontroller.setDragMode(o3djs.cameracontroller.DragMode.SPIN_ABOUT_CENTER,x,y);
+	}
+}
+
+o3djs.renderscene.RenderScene.prototype.drag = function(x, y)
+{
+	if (this.dragging==true) {
+		this.cameracontroller.mouseMoved(x,y);
+		var matrix=this.cameracontroller.calculateViewMatrix();
+		this.client.root.localMatrix=matrix;
+		this.render();
+	}	
+} 
 
 o3djs.renderscene.RenderScene.prototype.loadMesh = function(file, callback, mtime, color) 
 {
