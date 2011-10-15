@@ -368,9 +368,10 @@ qx.Class.define("desk.meshView",
 				
 				var draggingInProgress=false;
 				htmlContainer.addListener("mousedown", function (event)	{
+					var origin=htmlContainer.getContentLocation();
 					draggingInProgress=true;
-					scene.startDragging(event.getDocumentLeft(),
-													event.getDocumentTop(),
+					scene.startDragging(event.getDocumentLeft()-origin.left,
+													event.getDocumentTop()-origin.top,
 													event.isShiftPressed(),
 													event.isCtrlPressed(),
 													event.isMiddlePressed(),
@@ -378,8 +379,11 @@ qx.Class.define("desk.meshView",
 
 				htmlContainer.addListener("mousemove", function (event)	{
 					if (draggingInProgress)
-						scene.drag(event.getDocumentLeft(), event.getDocumentTop());
-					});
+					{
+						var origin=htmlContainer.getContentLocation();
+						scene.drag(event.getDocumentLeft()-origin.left
+								, event.getDocumentTop()-origin.top);
+					}});
 
 				htmlContainer.addListener("mouseup", function (event)	{
 					draggingInProgress=false;
@@ -407,11 +411,13 @@ qx.Class.define("desk.meshView",
 		/*		this.__window.addListener("keypress", function(event) {
 					this.__iframe.getWindow().keyPressed(event.getKeyIdentifier())
 					;},this);*/
-/*
+
 				meshView.__window.addListener("keypress", function(event) {
 					if (event.getKeyIdentifier()=="S")
 						desk.meshView.LINKEDWINDOW=this;
-					},meshView);*/
+					else if (event.getKeyIdentifier()=="R")
+						meshView.__scene.resetCamera();
+					},meshView);
 
 				meshView.__window.addListener("click", function(event) {
 					var window=desk.meshView.LINKEDWINDOW;

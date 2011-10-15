@@ -164,10 +164,10 @@ o3djs.renderscene.RenderScene.prototype.viewAll = function()
 
 o3djs.renderscene.RenderScene.prototype.resetCamera = function() 
 {
+	this.cameracontroller.thisRot_=o3djs.math.matrix4.identity();
 	this.cameracontroller.viewAll(this.meshesBoundingBox,1);
 //	this.cameracontroller.viewAll(this.transform.boundingBox,1);
 //	console.log(this.transform.boundingBox);
-	this.cameracontroller.thisRot_=o3djs.math.matrix4.identity();
 	this.client.root.localMatrix=this.cameracontroller.calculateViewMatrix();
 	this.render();
 	if (this.cameracontroller.onChange!=null)

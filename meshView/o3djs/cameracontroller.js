@@ -442,7 +442,11 @@ o3djs.cameracontroller.CameraController.prototype.mouseMoved = function(x, y) {
     {
       var cosTheta=o3djs.math.dot(p1,p2)/n12;
       var sinTheta=p2[1]*p1[0]-p2[0]*p1[1];
-      var theta=Math.acos(cosTheta);
+      var theta;
+      if (cosTheta>0.999)
+      	theta=0;
+      else
+      	theta=Math.acos(cosTheta);
       if (sinTheta>0)
         theta=-theta;
       this.thisRot_ = o3djs.math.matrix4.mul(this.thisRot_, o3djs.math.matrix4.rotationZ(theta));
