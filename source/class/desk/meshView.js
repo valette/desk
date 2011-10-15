@@ -417,6 +417,13 @@ qx.Class.define("desk.meshView",
 						desk.meshView.LINKEDWINDOW=this;
 					else if (event.getKeyIdentifier()=="R")
 						meshView.__scene.resetCamera();
+					else if (event.getKeyIdentifier()=="C")
+						{
+							scene.render();
+							var strData = scene.client.gl.hack_canvas.toDataURL("image/png");
+							var saveData=strData.replace("image/png", "image/octet-stream");
+							document.location.href = saveData;
+						}
 					},meshView);
 
 				meshView.__window.addListener("click", function(event) {
