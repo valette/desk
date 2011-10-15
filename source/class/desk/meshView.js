@@ -367,19 +367,9 @@ qx.Class.define("desk.meshView",
 				scene.render();
 				
 				var draggingInProgress=false;
-//				var zoomingWithRightClickInProgress=false;
-//				var initialMouseX;
-//				var initialMouseY;
 				htmlContainer.addListener("mousedown", function (event)	{
 					draggingInProgress=true;
-/*					if (event.isRightPressed())
-					{
-						zoomingWithRightClickInProgress=true;
-						initialMouseX=event.getDocumentLeft();
-						initialMouseY=event.getDocumentTop();
-					}
-					else*/
-						scene.startDragging(event.getDocumentLeft(),
+					scene.startDragging(event.getDocumentLeft(),
 													event.getDocumentTop(),
 													event.isShiftPressed(),
 													event.isCtrlPressed(),
@@ -388,25 +378,10 @@ qx.Class.define("desk.meshView",
 
 				htmlContainer.addListener("mousemove", function (event)	{
 					if (draggingInProgress)
-					{
-/*						if (zoomingWithRightClickInProgress)
-						{
-							var newMouseX=event.getDocumentLeft();
-							var newMouseY=event.getDocumentTop();
-							var deltaX=newMouseX-initialMouseX;
-							var deltaY=initialMouseY-newMouseY;
-							var delta=Math.max(deltaX,deltaY);
-							initialMouseX=newMouseX;
-							initialMouseY=newMouseY;
-							scene.mouseWheelUsed(delta/100);
-						}
-						else*/
-							scene.drag(event.getDocumentLeft(), event.getDocumentTop());
-					}
+						scene.drag(event.getDocumentLeft(), event.getDocumentTop());
 					});
 
 				htmlContainer.addListener("mouseup", function (event)	{
-//					zoomingWithRightClickInProgress=false;
 					draggingInProgress=false;
 					scene.stopDragging();});
 
@@ -417,21 +392,14 @@ qx.Class.define("desk.meshView",
 				meshView.__sceneReady=true;
 
 				htmlContainer.addListener("resize",function(e){
-				console.log("resize");
-				var elementSize=htmlContainer.getInnerSize();
-
-				var width = elementSize.width;
-				var height = elementSize.height;
-
-				scene.client.gl.hack_canvas.width=width;
-				scene.client.gl.hack_canvas.height=height;
-
-
-				scene.client.gl.displayInfo = {width: elementSize.width, height: elementSize.height};
-
-				scene.resize();
-				scene.render();
-				});
+					var elementSize=htmlContainer.getInnerSize();
+					var width = elementSize.width;
+					var height = elementSize.height;
+					scene.client.gl.hack_canvas.width=width;
+					scene.client.gl.hack_canvas.height=height;
+					scene.client.gl.displayInfo = {width: elementSize.width, height: elementSize.height};
+					scene.resize();
+					});
 				meshView.openFile();
 				htmlContainer.addListener("mouseout", function(event) {
 						scene.stopDragging();},this);
@@ -540,9 +508,8 @@ qx.Class.define("desk.meshView",
 			}
 
 			htmlContainer.addListener("appear",function(e){
-			globalO3DDoNotHandleKeyEvents=true;
+				globalO3DDoNotHandleKeyEvents=true;
 				o3djs.webgl.makeClients(initStep2,null,null,null,"^o3d"+randomId);
-//							htmlContainer.setHtml("<div id=\"o3d"+randomId+"\"></div>");
 				});
 	
 			return (htmlContainer);
