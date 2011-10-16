@@ -1,3 +1,10 @@
+/*
+#ignore(o3djs.renderscene)
+#ignore(o3djs.mesh)
+#ignore(globalO3DDoNotHandleKeyEvents)
+#ignore(o3djs.webgl)
+*/
+
 qx.Class.define("desk.meshView", 
 {
   extend : qx.core.Object,
@@ -29,6 +36,14 @@ qx.Class.define("desk.meshView",
 		var elementsList = new qx.ui.container.Composite;
 		elementsList.setLayout(new qx.ui.layout.VBox());
 		pane.add(elementsList, 1);
+
+
+		var topRightContainer = new qx.ui.container.Composite();
+		topRightContainer.setLayout(new qx.ui.layout.HBox());
+		elementsList.add(topRightContainer);
+		topRightContainer.add(this.__getDragLabel());
+		topRightContainer.add(this.__getResetViewButton(), {flex : 1});
+		topRightContainer.add(this.__getSnapshotButton());
 
 		this.__shapesList=new qx.ui.treevirtual.TreeVirtual(["meshes","wireframe"],
 			{initiallyHiddenColumns : [1]});
@@ -344,18 +359,10 @@ qx.Class.define("desk.meshView",
 
 
 			var htmlContainer = new qx.ui.embed.Html();
-			htmlContainer.setHtml("<div id=\"o3d\"></div>");
 			var randomId=Math.random();
 			htmlContainer.setHtml("<div id=\"o3d"+randomId+"\"></div>");
 
 			var scene;
-
-			function adjustViewpointAndRender()
-			{
-				scene.cameracontroller.viewAll(scene.meshesBoundingBox,1);
-				scene.client.root.localMatrix=scene.cameracontroller.calculateViewMatrix();
-				scene.render();
-			}
 			var canvaselement;
 			var meshView=this;
 
@@ -408,24 +415,16 @@ qx.Class.define("desk.meshView",
 				htmlContainer.addListener("mouseout", function(event) {
 						scene.stopDragging();},this);
 
-		/*		this.__window.addListener("keypress", function(event) {
-					this.__iframe.getWindow().keyPressed(event.getKeyIdentifier())
-					;},this);*/
-
-				meshView.__window.addListener("keypress", function(event) {
+				htmlContainer.addListener("keypress", function(event) {
 					if (event.getKeyIdentifier()=="S")
 						desk.meshView.LINKEDWINDOW=this;
 					else if (event.getKeyIdentifier()=="R")
 						meshView.__scene.resetCamera();
-					else if (event.getKeyIdentifier()=="C")
-						{
-							scene.render();
-							var strData = scene.client.gl.hack_canvas.toDataURL("image/png");
-							var saveData=strData.replace("image/png", "image/octet-stream");
-							document.location.href = saveData;
-						}
+//					else if (event.getKeyIdentifier()=="C")
+//						meshView.snapshot();
 					},meshView);
 
+/*
 				meshView.__window.addListener("click", function(event) {
 					var window=desk.meshView.LINKEDWINDOW;
 					if ((window!=null)&&(window!=this))
@@ -435,7 +434,7 @@ qx.Class.define("desk.meshView",
 						meshView.__scene.cameracontroller.onChange();
 						desk.meshView.LINKEDWINDOW=null;
 					}});
-
+*/
 				meshView.__window.setDroppable(true);
 				meshView.__window.addListener("drop", function(e) {
 					if (e.supportsType("fileBrowser"))
@@ -529,8 +528,69 @@ qx.Class.define("desk.meshView",
 		},
 
 		destruct : function(){
+		console.log("destructor");
 //				this._disposeObjects("__");
 				},
+
+		snapshot : function () {
+			this.__scene.render();
+			var strData = this.__scene.client.gl.hack_canvas.toDataURL("image/png");
+			var saveData=strData.replace("image/png", "image/octet-stream");
+			document.location.href = saveData;			
+		},
+
+		__getSnapshotButton : function () {
+			var button=new qx.ui.form.Button(null, "resource/desk/camera-photo.png");
+			button.addListener("execute", function(e) {
+				this.snapshot();}, this);
+			return button;
+		},
+
+		__getResetViewButton : function () {
+			var button=new qx.ui.form.Button("reset view");
+			button.addListener("execute", function(e) {
+				this.__scene.resetCamera();}, this);
+			return button;
+		},
+
+		__getDragLabel : function () {
+			var dragLabel=new qx.ui.basic.Label("Link").set({decorator: "main"});
+			// drag and drop support
+			dragLabel.setDraggable(true);
+			dragLabel.addListener("dragstart", function(e) {
+				e.addAction("alias");
+				e.addType("meshView");
+				});
+
+			dragLabel.addListener("droprequest", function(e) {
+					var type = e.getCurrentType();
+					switch (type)
+					{
+					case "meshView":
+						e.addData(type, this);
+						break;
+					default :
+						alert ("type "+type+"not supported for drag and drop");
+					}
+				}, this);
+
+		// enable linking between volume viewers by drag and drop
+			this.__window.setDroppable(true);
+			this.__window.addListener("drop", function(e) {
+				if (e.supportsType("meshView"))
+				{
+						var meshView2=e.getData("meshView");
+						this.__scene.bind(meshView2.__scene);
+						meshView2.__scene.bind(this.__scene);
+						meshView2.__scene.cameracontroller.onChange();
+				}
+			},this);
+
+			// add listener on close window event to remove bindings
+			this.__window.addListener("beforeClose", function (e){
+				},this)
+			return dragLabel;
+		},
 
 		createPropertyWidget : function (parentWindow){
 			var meshViewer=this;
