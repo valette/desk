@@ -376,6 +376,7 @@ qx.Class.define("desk.meshView",
 				
 				var draggingInProgress=false;
 				htmlContainer.addListener("mousedown", function (event)	{
+					htmlContainer.capture();
 					var origin=htmlContainer.getContentLocation();
 					draggingInProgress=true;
 					scene.startDragging(event.getDocumentLeft()-origin.left,
@@ -394,6 +395,7 @@ qx.Class.define("desk.meshView",
 					}});
 
 				htmlContainer.addListener("mouseup", function (event)	{
+					htmlContainer.releaseCapture();
 					draggingInProgress=false;
 					scene.stopDragging();});
 
@@ -412,8 +414,6 @@ qx.Class.define("desk.meshView",
 					scene.resize();
 					});
 				meshView.openFile();
-				htmlContainer.addListener("mouseout", function(event) {
-						scene.stopDragging();},this);
 
 				meshView.__window.setDroppable(true);
 				meshView.__window.addListener("drop", function(e) {
