@@ -181,7 +181,7 @@ o3djs.mesh.createSquare = function(scene, width, height)
 	effect.loadPixelShaderFromString("varying vec2 texCoord;uniform sampler2D texSampler;void main() {gl_FragColor = texture2D(texSampler, texCoord);}");
 
 	var material = o3djs.material.createMaterialFromFile(
-		scene.pack,'texture-only-glsl.shader',scene.viewInfo.performanceDrawList);
+		scene.pack,'resource/desk/texture-only-glsl.shader',scene.viewInfo.performanceDrawList);
 
 	var vertexInfo = o3djs.primitives.createVertexInfo();
 

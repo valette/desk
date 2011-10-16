@@ -167,8 +167,9 @@ qx.Class.define("desk.meshView",
 		return (this);
 	},
 
-	statics : {
-		LINKEDWINDOW : null
+	destruct : function(){
+		console.log("destructor");
+//		this._disposeObjects("__");
 	},
 
 	members : {
@@ -399,7 +400,6 @@ qx.Class.define("desk.meshView",
 				htmlContainer.addListener("mousewheel", function (event)	{
 					scene.mouseWheelUsed(-event.getWheelDelta());});
 
-
 				meshView.__sceneReady=true;
 
 				htmlContainer.addListener("resize",function(e){
@@ -415,26 +415,6 @@ qx.Class.define("desk.meshView",
 				htmlContainer.addListener("mouseout", function(event) {
 						scene.stopDragging();},this);
 
-				htmlContainer.addListener("keypress", function(event) {
-					if (event.getKeyIdentifier()=="S")
-						desk.meshView.LINKEDWINDOW=this;
-					else if (event.getKeyIdentifier()=="R")
-						meshView.__scene.resetCamera();
-//					else if (event.getKeyIdentifier()=="C")
-//						meshView.snapshot();
-					},meshView);
-
-/*
-				meshView.__window.addListener("click", function(event) {
-					var window=desk.meshView.LINKEDWINDOW;
-					if ((window!=null)&&(window!=this))
-					{
-						meshView.__scene.bind(window.__scene);
-						window.__scene.bind(meshView.__scene);
-						meshView.__scene.cameracontroller.onChange();
-						desk.meshView.LINKEDWINDOW=null;
-					}});
-*/
 				meshView.__window.setDroppable(true);
 				meshView.__window.addListener("drop", function(e) {
 					if (e.supportsType("fileBrowser"))
@@ -527,11 +507,6 @@ qx.Class.define("desk.meshView",
 			return (htmlContainer);
 		},
 
-		destruct : function(){
-		console.log("destructor");
-//				this._disposeObjects("__");
-				},
-
 		snapshot : function () {
 			this.__scene.render();
 			var strData = this.__scene.client.gl.hack_canvas.toDataURL("image/png");
@@ -574,7 +549,7 @@ qx.Class.define("desk.meshView",
 					}
 				}, this);
 
-		// enable linking between volume viewers by drag and drop
+			// enable linking between viewers by drag and drop
 			this.__window.setDroppable(true);
 			this.__window.addListener("drop", function(e) {
 				if (e.supportsType("meshView"))
