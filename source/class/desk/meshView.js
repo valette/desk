@@ -563,6 +563,7 @@ qx.Class.define("desk.meshView",
 
 			// add listener on close window event to remove bindings
 			this.__window.addListener("beforeClose", function (e){
+			this.__scene.client.cleanup();
 				},this)
 			return dragLabel;
 		},

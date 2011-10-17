@@ -122,8 +122,6 @@ qx.Class.define("desk.volView",
 		// the file browser which launched the viewer
 		__fileBrowser : null,
 
-		__seedsCacheTags : null,
-
 		// the initial volume file (.mhd)
 		__file : null,
 
@@ -150,14 +148,11 @@ qx.Class.define("desk.volView",
 		// the widget containing the defined colors for painting
 		__colorsList : null,
 
-		// the list displaying slices having seeds
-		__seedsList : null,
-
-		// array defining whether a slice contains seeds
-		__seedsArray : null,
-
 		__currentSeedsModified : false,
 
+		__seedsTypeSelectBox : null,
+
+		__hasCorrectionSeeds : false,
 
 		__mouseActionMode : 0,
 		__mouseActionActive : false,
@@ -406,7 +401,7 @@ qx.Class.define("desk.volView",
 			};
 
 			var selection=this.__formatSelectBox.getSelection()[0];
-			this.__loadImage.src=selection.getUserData("path") + "/slice" + 
+			this.__loadImage.src=selection.getUserData("path") + "/sliceXY" + 
 				(this.__slicesNameOffset+slice) + 
 				"." + selection.getLabel() + "?nocache=" + this.__timestamp;
 		},
@@ -419,7 +414,7 @@ qx.Class.define("desk.volView",
 			var selection=this.__formatSelectBox.getSelection()[0];
 
 			var seedsURL=volView.__fileBrowser.getFileURL(this.__sessionDirectory+"/"+this.getSeedFileName(sliceId))+
-				"?nocache=" + volView.__seedsCacheTags[sliceId];
+				"?nocache=" + this.__seedsTypeSelectBox.getSelection()[0].getUserData("cacheTags")[sliceId];
 
 			// test wether the seed is already loaded. If yes, we need to recreate the Image
 			if (oldSeedSlice==sliceId)
@@ -500,7 +495,7 @@ qx.Class.define("desk.volView",
 
 
 			var volView=this;
-			
+		
 		////Create pen tool
             var penSize = new qx.ui.form.Spinner().set({
                 minimum: 1,
@@ -819,6 +814,8 @@ qx.Class.define("desk.volView",
 			volView.__topLeftContainer.add(volView.__getDragAndDropLabel());	
 			volView.__topLeftContainer.add(volView.__getPaintPanelVisibilitySwitch());
 
+			volView.__seedsTypeSelectBox=volView.__getSeedsTypeSelectBox();
+			volView.__mainRightContainer.add(volView.__seedsTypeSelectBox);
 			volView.__mainRightContainer.add(volView.__getSessionsWidget());
 
 //			this.__mainRightContainer.add(new qx.ui.core.Spacer(30, 40), {flex: 5});
@@ -1086,33 +1083,10 @@ qx.Class.define("desk.volView",
 														height : volView.__imgMap.height });
 
 			this.__imageCanvas.add(imgCanvas);
-			volView.__imageContainer.add(this.__imageCanvas);
-			volView.__imageContainer.add(slider, {flex : 1});
+			this.__imageContainer.addAt(this.__imageCanvas, 0);
+			this.__imageContainer.addAt(slider, 1, {flex : 1});
 
-			var modifSlicesList = new qx.ui.form.List();
-			modifSlicesList.setWidth(30);
-			modifSlicesList.setScrollbarY("off");
-			
-			volView.__seedsList=modifSlicesList;
-			modifSlicesList.addListener("keypress", function(event)
-			{
-				if(event.getKeyIdentifier()=="Delete")
-				{
-					var selectedChild = modifSlicesList.getSelection()[0];
-					if (selectedChild!=null)
-					{
-						var sliceId = selectedChild.getUserData("slice");
-					////Erase image on the server
-						eraseFile(volView.__sessionDirectory+"/"+volView.getSeedFileName(sliceId));
-						volView.__seedsArray[sliceId]=0;
-						console.log("deleted slice "+sliceId)
-						volView.__clearDrawingCanvas();
-						modifSlicesList.remove(selectedChild);
-						volView.__saveSeedsXML();
-					}
-				}
-			}, this);
-			var segmentationWidgets=this.__getSegmentationWidgets();
+						var segmentationWidgets=this.__getSegmentationWidgets();
 			this.__startSegmentationButton=segmentationWidgets[0];
 			this.__bottomRightContainer.add(this.__startSegmentationButton);
 			var extractMeshesWidgets=this.__getextractMeshesWidgets()
@@ -1128,8 +1102,6 @@ qx.Class.define("desk.volView",
 			settingsPage.add(extractMeshesWidgets[1]);
 			settingsPage.add(extractMeshesWidgets[2]);
 
-			this.__imageContainer.add(modifSlicesList, {flex : 1});
-			modifSlicesList.setVisibility("excluded");
 
 			this.__imageCanvas.addListener("mouseout", function(event)
 			{
@@ -1804,17 +1776,16 @@ qx.Class.define("desk.volView",
                 }
                 return dataDesc;
             };
+		},
 
+		////Use a php file to remove the specified file in the server
+		eraseFile : function(file)
+        {
+			var parameterMap={
+				"action" : "delete_file",
+				"file_name" : file};
 
-		////Use a php file to remove the spceciefd file in the server
-			var eraseFile = function(file)
-            {
-				var parameterMap={
-					"action" : "delete_file",
-					"file_name" : file};
-
-				volView.__fileBrowser.getActions().launchAction(parameterMap);
-			};
+			this.__fileBrowser.getActions().launchAction(parameterMap);
 		},
 
 		__saveCurrentSeeds : function(callback)
@@ -1892,8 +1863,10 @@ qx.Class.define("desk.volView",
 						"output_directory" : this.__sessionDirectory};
 
 					this.__fileBrowser.getActions().launchAction(parameterMap, success);
-					this.__seedsCacheTags[this.__drawingCanvasParams.sliceNumber]=Math.random();
-					if(this.__seedsArray[oldSliceIndex]==0)
+					var seedsTypeSelectBoxItem=this.__seedsTypeSelectBox.getSelection()[0];
+					seedsTypeSelectBoxItem.getUserData("cacheTags")[this.__drawingCanvasParams.sliceNumber]
+								=Math.random();
+					if(seedsTypeSelectBoxItem.getUserData("seedsArray")[oldSliceIndex]==0)
 						this.__addNewSeedItemToList(oldSliceIndex);
 					this.__saveSeedsXML(success);
 				}
@@ -1988,12 +1961,20 @@ qx.Class.define("desk.volView",
 				colors+=element('color',null, this.__labelColors[i]);
 			}
 			xmlContent+=element('colors', colors)+"\n";
-			var seedsList=this.__seedsList.getChildren();
-			for(var i=0; i<seedsList.length; i++)
+
+			var seedsTypeItems=this.__seedsTypeSelectBox.getChildren();
+			for (var i=0;i<seedsTypeItems.length;i++)
 			{
-				var sliceId=seedsList[i].getUserData("slice");
-				var sliceAttributes = {slice: sliceId + ""};
-				xmlContent += element('seed', this.getSeedFileName(sliceId), sliceAttributes) + '\n';
+				var item=seedsTypeItems[i];
+				var seedsList=item.getUserData("seedsList");
+				var filePrefix=item.getUserData("filePrefix");
+				var slices=seedsList.getChildren();
+				for(var j=0; j<slices.length; j++)
+				{
+					var sliceId=slices[j].getUserData("slice");
+					var sliceAttributes = {slice: sliceId + ""};
+					xmlContent += element(filePrefix, this.getSeedFileName(sliceId, item), sliceAttributes) + '\n';
+				}
 			}
 
 			var parameterMap={
@@ -2017,16 +1998,20 @@ qx.Class.define("desk.volView",
 		__updateAll : function()
 		{
 			var currentSlice=this.__drawingCanvasParams.sliceNumber;
-			if(this.__seedsArray[currentSlice]!=0)
+			var seedsTypeListItem=this.__seedsTypeSelectBox.getSelection()[0];
+
+			var sliceItem=seedsTypeListItem.getUserData("seedsArray")[currentSlice];
+			var seedsList=seedsTypeListItem.getUserData("seedsList");
+			if(sliceItem!=0)
 			{
 				// the slice contains seeds
 				this.__updateSeeds();
-				this.__seedsList.setSelection([this.__seedsArray[currentSlice]]);
+				seedsList.setSelection([sliceItem]);
 			}
 			else
 			{
 				// current slice has no seeds
-				this.__seedsList.resetSelection();
+				seedsList.resetSelection();
 				this.__clearDrawingCanvas();
 				this.__htmlContextLabels.clearRect(-16, -16, this.__imgMap.width+32, this.__imgMap.height+32);
 			};
@@ -2043,7 +2028,6 @@ qx.Class.define("desk.volView",
 			this.__resetSeedsList();
 			var colorsParamRequest = new XMLHttpRequest();
 			var volView=this;
-
 			colorsParamRequest.onreadystatechange = function()
 			{
 				 if(this.readyState == 4 && this.status == 200)
@@ -2052,56 +2036,167 @@ qx.Class.define("desk.volView",
 					if(this.responseXML!=null)
 					{
 						var response = this.responseXML;
-						var seeds = response.getElementsByTagName("seed");
-						for(var i=0; i<seeds.length; i++)
+						var seedsTypes=volView.__seedsTypeSelectBox.getChildren();
+						for (var j=0;j<seedsTypes.length;j++)
 						{
-							var sliceId=parseInt(seeds[i].getAttribute("slice"));
-							volView.__addNewSeedItemToList(sliceId);
-						};
+							var seedsTypeSelectBoxItem=seedsTypes[j];
+							var slices;
+							if (seedsTypeSelectBoxItem.getUserData("filePrefix")=="seed")
+								slices=response.getElementsByTagName("seed");
+							else
+								slices=response.getElementsByTagName("correction");
+
+							for(var i=0; i<slices.length; i++)
+							{
+								var sliceId=parseInt(slices[i].getAttribute("slice"));
+								volView.__addNewSeedItemToList(sliceId, seedsTypeSelectBoxItem);
+							};
+						}
 						volView.__updateAll();
 					}
 					else
+					{
 						alert("no seeds found");
+						volView.__updateAll();
+					}
 				}
 				else if (this.readyState == 4 && this.status != 200)
 				{
-						// fetched the wrong page or network error...
-						alert("network error when loading seeds list");
+					alert("no seeds found");
+
+					volView.__updateAll();
 				}
 			};
-			colorsParamRequest.open("GET", volView.__fileBrowser.getFileURL(volView.__sessionDirectory+"/seeds.xml?nocache="+Math.random()), true);
+			var filePrefix=this.__seedsTypeSelectBox.getSelection()[0].getLabel();
+			colorsParamRequest.open("GET",
+				volView.__fileBrowser.getFileURL(volView.__sessionDirectory+"/seeds.xml?nocache="+Math.random()), true);
 			colorsParamRequest.send(null);
 		},
 
 		__resetSeedsList : function()
 		{
-			this.__seedsList.removeAll();
+			var seedsTypeSelectBoxItems=this.__seedsTypeSelectBox.getChildren();
 			var numberOfSlices=this.__dimensions[2];
-			this.__seedsArray=new Array(numberOfSlices);
-			this.__seedsCacheTags=new Array (numberOfSlices);
-			for (var i=0;i!=numberOfSlices;i++)
+
+			for (var i=0;i<seedsTypeSelectBoxItems.length;i++)
 			{
-				this.__seedsCacheTags[i]=Math.random();
-				this.__seedsArray[i]=0;
+				var item=seedsTypeSelectBoxItems[i];
+				item.getUserData("seedsList").removeAll();
+				var seedsArray=new Array(numberOfSlices);
+				item.setUserData("seedsArray",seedsArray);
+				var cacheTags=new Array(numberOfSlices);
+				item.setUserData("cacheTags",cacheTags);
+				for (var j=0;j!=numberOfSlices;j++)
+				{
+					cacheTags[j]=Math.random();
+					seedsArray[j]=0;
+				}
 			}
 			this.__currentSeedsSlice=null;
 		},
 
-		__addNewSeedItemToList : function (sliceId)
+		__addNewSeedItemToList : function (sliceId, seedsTypeListItem)
 		{
+			if (seedsTypeListItem==null)
+				seedsTypeListItem=this.__seedsTypeSelectBox.getSelection()[0];
+
+			var seedsList=seedsTypeListItem.getUserData("seedsList");
+			var seedsArray=seedsTypeListItem.getUserData("seedsArray");
+
 			var sliceItem = new qx.ui.form.ListItem(""+ sliceId);
 			sliceItem.setUserData("slice",sliceId);
 			var tempPos = 0;
-			var seedsList=this.__seedsList.getChildren();
-			for(var i=0; i<seedsList.length; i++)
+			var seeds=seedsList.getChildren();
+			for(var i=0; i<seeds.length; i++)
 			{
-				if(seedsList[i].getUserData("slice")>sliceId)
+				if(seeds[i].getUserData("slice")>sliceId)
 					tempPos++;
 			}
-			this.__seedsList.addAt(sliceItem, tempPos);
-			this.__seedsArray[sliceId] = sliceItem;
+			seedsList.addAt(sliceItem, tempPos);
+			seedsArray[sliceId] = sliceItem;
+
 			sliceItem.addListener("click", function(event)
 				{this.__spinner.setValue(event.getTarget().getUserData("slice"));}, this);
+		},
+
+		__getSeedsTypeSelectBox : function() {
+			var selectBox = new qx.ui.form.SelectBox();
+
+			// create seeds list
+			var seedsList=new qx.ui.form.List();
+			seedsList.setWidth(30);
+			seedsList.setScrollbarY("off");
+
+			seedsList.addListener("keypress", function(event)
+			{
+				if(event.getKeyIdentifier()=="Delete")
+				{
+					var selectedChild = seedsList.getSelection()[0];
+					if (selectedChild!=null)
+					{
+						var sliceId = selectedChild.getUserData("slice");
+					////Erase image on the server
+						this.eraseFile(this.__sessionDirectory+"/"+this.getSeedFileName(sliceId));
+						selectBox.getSelection()[0].getUserData("seedsArray")[sliceId]=0;
+						this.__clearDrawingCanvas();
+						seedsList.remove(selectedChild);
+						this.__saveSeedsXML();
+					}
+				}
+			}, this);
+
+			this.__imageContainer.add(seedsList);
+			seedsList.setVisibility("excluded");
+
+			// create corrections list
+			var correctionsList=new qx.ui.form.List();
+			correctionsList.setWidth(30);
+			correctionsList.setScrollbarY("off");
+
+			correctionsList.addListener("keypress", function(event)
+			{
+				if(event.getKeyIdentifier()=="Delete")
+				{
+					var selectedChild = correctionsList.getSelection()[0];
+					if (selectedChild!=null)
+					{
+						var sliceId = selectedChild.getUserData("slice");
+					////Erase image on the server
+						this.eraseFile(this.__sessionDirectory+"/"+this.getSeedFileName(sliceId));
+						selectBox.getSelection()[0].getUserData("seedsArray")[sliceId]=0;
+						console.log("deleted correction  "+sliceId);
+						this.__clearDrawingCanvas();
+						correctionsList.remove(selectedChild);
+						this.__saveSeedsXML();
+					}
+				}
+			}, this);
+			this.__imageContainer.add(correctionsList);
+			correctionsList.setVisibility("excluded");
+
+			var seedsItem = new qx.ui.form.ListItem("seeds");
+			seedsItem.setUserData("filePrefix", "seed");
+			seedsItem.setUserData("seedsList", seedsList);
+			seedsItem.setUserData("oppositeList", correctionsList);
+			selectBox.add(seedsItem);
+
+			var correctionsItem = new qx.ui.form.ListItem("corrections");
+			correctionsItem.setUserData("filePrefix", "correction");
+			correctionsItem.setUserData("seedsList", correctionsList);
+			correctionsItem.setUserData("oppositeList", seedsList);
+			selectBox.add(correctionsItem);
+			selectBox.addListener("changeSelection",function (e) {
+				var SelectedItem=selectBox.getSelection()[0];
+
+				var selectedOppositeList=SelectedItem.getUserData("oppositeList");
+				selectedOppositeList.setVisibility("excluded");
+				selectedOppositeList.resetSelection();
+
+				var selectedSeedsList=SelectedItem.getUserData("seedsList");
+				selectedSeedsList.setVisibility("visible");
+				this.__updateAll();
+				},this);
+			return selectBox;
 		},
 
 		__getSessionsWidget : function()
@@ -2194,10 +2289,12 @@ qx.Class.define("desk.volView",
 				if (e.getData())
 				{
 					this.__mainRightContainer.setVisibility("visible");
+					this.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList").setVisibility("visible");
 				}
 				else
 				{
 					this.__mainRightContainer.setVisibility("excluded");
+					this.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList").setVisibility("excluded");
 				}
 				}, this);
 			return paintPaneVisibilitySwitch;
@@ -2343,9 +2440,12 @@ qx.Class.define("desk.volView",
 			return this.__imageData;
 		},
 
-		getSeedFileName : function(sliceId)
+		getSeedFileName : function(sliceId, seedsTypeSelectBoxItem)
 		{
-			return 'seed', this.__slicesNamePrefix + (this.__slicesNameOffset + sliceId) +".png";
+			if (seedsTypeSelectBoxItem==null)
+				seedsTypeSelectBoxItem=this.__seedsTypeSelectBox.getSelection()[0];
+			var filePrefix=seedsTypeSelectBoxItem.getUserData("filePrefix")
+			return filePrefix +"XY"+(this.__slicesNameOffset + sliceId) +".png";
 		},
 
 		getCornersCoordinates : function () {
@@ -2442,19 +2542,6 @@ qx.Class.define("desk.volView",
 
 
 			var temperatureField=new qx.ui.form.TextField("0.1");
-
-			this.__seedsList.addListener("removeItem",function(e){
-				if (this.getChildren().length==0)
-				{
-					button.setEnabled(false);
-					this.setVisibility("exclude");
-				}
-			},this.__seedsList);
-
-			this.__seedsList.addListener("addItem",function(e){
-					button.setEnabled(true);
-					this.setVisibility("visible");
-			},this.__seedsList);
 
 			button.addListener("execute", function (e){
 				function afterDirectoryCreated() {
