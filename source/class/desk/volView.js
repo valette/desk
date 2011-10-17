@@ -2127,6 +2127,15 @@ qx.Class.define("desk.volView",
 			seedsList.setWidth(30);
 			seedsList.setScrollbarY("off");
 
+			seedsList.addListener("removeItem", function(event) {
+				if (seedsList.getChildren().length==0)
+					this._startSegmentationButton.setEnabled("false");
+				}, this);
+
+			seedsList.addListener("addItem", function(event) {
+				this._startSegmentationButton.setEnabled("true");
+				}, this);
+
 			seedsList.addListener("keypress", function(event)
 			{
 				if(event.getKeyIdentifier()=="Delete")
@@ -2164,7 +2173,6 @@ qx.Class.define("desk.volView",
 					////Erase image on the server
 						this.eraseFile(this.__sessionDirectory+"/"+this.getSeedFileName(sliceId));
 						selectBox.getSelection()[0].getUserData("seedsArray")[sliceId]=0;
-						console.log("deleted correction  "+sliceId);
 						this.__clearDrawingCanvas();
 						correctionsList.remove(selectedChild);
 						this.__saveSeedsXML();
