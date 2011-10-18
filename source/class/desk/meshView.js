@@ -413,6 +413,7 @@ qx.Class.define("desk.meshView",
 					scene.client.gl.displayInfo = {width: elementSize.width, height: elementSize.height};
 					scene.resize();
 					});
+				htmlContainer.fireEvent("resize");
 				meshView.openFile();
 
 				meshView.__window.setDroppable(true);
