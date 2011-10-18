@@ -25,6 +25,7 @@
 <parameter name="max_number_of_vertices" type="int" min="-1" default="10000" prefix="-n "/>
 <parameter name="simlification_method" type="int" min="0" max="1" default="0" prefix="-s "/>
 <parameter name="number_of_smoothing_steps" type="int" min="0" default="0" prefix="-sm "/>
+<parameter name="gradation" type="float" min="0" max="3" default="0" prefix="-g "/>
 </action>
 
 <action name="mesh2vtk" executable="/home/visu/src/vtkSurfaceBuild/bin/mesh2vtk">

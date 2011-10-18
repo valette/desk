@@ -3,7 +3,8 @@
 $DATA_ROOT_FROM_PHP="data/";
 $CACHE_ROOT_FROM_PHP="cache/";
 $ACTIONS_ROOT_FROM_PHP="actions/";
-$DIR_TO_PHP="/var/www/html/visu/desk/php/";
+//$DIR_TO_PHP="/var/www/html/visu/desk/php/";
+$DIR_TO_PHP=getcwd()."/";
 
 $parametersFileName="action.par";
 
@@ -87,8 +88,8 @@ $ACTIONS_ROOT_FROM_PHP="action";
 
 $parametersList=array();
 
-$actions = simplexml_load_file("../actions.xml")
-	or die("Fichier introuvable. L'analyse a ete suspendue");
+$actions = simplexml_load_file("actions.xml")
+	or die("Fichier actions.xml introuvable. L'analyse a ete suspendue");
 
 if (!($_POST["action"]))
 	die ("no action asked!");

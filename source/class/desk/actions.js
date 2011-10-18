@@ -6,6 +6,17 @@ qx.Class.define("desk.actions",
 	{
 		this.base(arguments);
 		desk.actions.ACTIONSHANDLER=this;
+
+		var localAdress=window.location.href;
+		console.log ("local adress : "+localAdress);
+		var slashIndex=localAdress.indexOf("/");
+		var slashIndex2=localAdress.indexOf("/", slashIndex+1);
+		var slashIndex3=localAdress.indexOf("/", slashIndex2+1);
+
+		this.__baseURL= localAdress.substring(slashIndex3,
+												localAdress.length);
+		console.log(this.__baseURL);
+
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.populateActionMenu();
 //		this.__menuButton=new qx.ui.menu.Button("Actions", null , null, this.__actionMenu);
@@ -41,7 +52,8 @@ qx.Class.define("desk.actions",
 	},
 
 	members : {
-		__actionsFile : "/visu/desk/actions.xml",
+		__actionsFile : "resource/desk/actions.xml",
+		__baseURL : null,
 		__actionMenu : null,
 		__actions : null,
 		__fileBrowser : null,
@@ -50,6 +62,10 @@ qx.Class.define("desk.actions",
 		__actionsList : null,
 
 		_currentFileBrowser : null,
+
+		getBaseURL : function () {
+			return this.__baseURL;
+		},
 
 		openActionsMenu : function(e, fileBrowser)
 		{
@@ -93,7 +109,7 @@ qx.Class.define("desk.actions",
 					}
 			}
 
-			req.setUrl("/visu/desk/php/actions.php");
+			req.setUrl("resource/desk/actions.php");
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData(actionParameters);

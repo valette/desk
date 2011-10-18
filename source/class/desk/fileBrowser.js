@@ -29,6 +29,7 @@ qx.Class.define("desk.fileBrowser",
 		var dataModel = virtualTree.getDataModel();
 
 		this.__actionsHandler=desk.actions.ACTIONSHANDLER;
+		this.__baseURL=this.__actionsHandler.getBaseURL()+"resource/desk/";
 
 		if (container==null)
 		{
@@ -135,7 +136,7 @@ qx.Class.define("desk.fileBrowser",
 
 	members : {
 		__fileHandler : null,
-		__baseURL : "/visu/desk/php/",
+		__baseURL : null,
 		__baseDir : "data",
 		__virtualTree : null,
 		__rootId : null,
@@ -213,7 +214,7 @@ qx.Class.define("desk.fileBrowser",
 
 			// Instantiate request
 			var req = new qx.io.request.Xhr();
-			req.setUrl("/visu/desk/php/listDir.php");
+			req.setUrl(this.__baseURL+"listDir.php");
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData({"dir" : directory});
@@ -342,7 +343,7 @@ qx.Class.define("desk.fileBrowser",
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 				{
 					var oIFrm = document.getElementById('myIFrm');
-					oIFrm.src = "/visu/desk/php/download.php?fileName="+myBrowser.getNodeFile(node);
+					oIFrm.src = myBrowser.__baseURL+"download.php?fileName="+myBrowser.getNodeFile(node);
 				} 
 				else
 					alert("Cannot download a directory!");});
@@ -486,7 +487,7 @@ qx.Class.define("desk.fileBrowser",
 
 			// Instantiate request
 			var req = new qx.io.request.Xhr();
-			req.setUrl("/visu/desk/php/listDir.php");
+			req.setUrl(this.__baseURL+"listDir.php");
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData({"dir" : this.getNodeFile(node)});
