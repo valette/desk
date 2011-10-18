@@ -864,7 +864,7 @@ qx.Class.define("desk.volView",
 				}
 				getPosition(event,true);
 			////Draw at cursor position, activate drawing, activate brightness/contrast fixing
-				if(event.isLeftPressed())
+				if ((event.isLeftPressed())&&(!event.isShiftPressed()))
                 {
        				volView.__mouseActionActive=true;
 					switch (volView.__mouseActionMode)
@@ -899,7 +899,7 @@ qx.Class.define("desk.volView",
                     volView.__htmlContextLabels.beginPath();
                 }
 			////Activate moving
-                if((event.isMiddlePressed())&&(1<volView.__drawingCanvasParams.curCtxtZoom))
+                if(((event.isShiftPressed())||(event.isMiddlePressed()))&&(1<volView.__drawingCanvasParams.curCtxtZoom))
 				{
 					drawingCanvas.set({cursor: "move"});
 					volView.__mouseData.mouseMiddleDownFlag = true;
@@ -2129,11 +2129,11 @@ qx.Class.define("desk.volView",
 
 			seedsList.addListener("removeItem", function(event) {
 				if (seedsList.getChildren().length==0)
-					this._startSegmentationButton.setEnabled("false");
+					this.__startSegmentationButton.setEnabled("false");
 				}, this);
 
 			seedsList.addListener("addItem", function(event) {
-				this._startSegmentationButton.setEnabled("true");
+				this.__startSegmentationButton.setEnabled("true");
 				}, this);
 
 			seedsList.addListener("keypress", function(event)
