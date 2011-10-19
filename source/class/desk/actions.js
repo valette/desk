@@ -10,11 +10,14 @@ qx.Class.define("desk.actions",
 		var localAdress=window.location.href;
 		console.log ("local adress : "+localAdress);
 		var slashIndex=localAdress.indexOf("/");
+		var slashIndex=localAdress.indexOf("/");
 		var slashIndex2=localAdress.indexOf("/", slashIndex+1);
 		var slashIndex3=localAdress.indexOf("/", slashIndex2+1);
-
+		var questionMarkIndex=localAdress.indexOf("?");
+		if (questionMarkIndex<0)
+			questionMarkIndex=localAdress.length;
 		this.__baseURL= localAdress.substring(slashIndex3,
-												localAdress.length);
+												questionMarkIndex);
 		console.log(this.__baseURL);
 
 		this.__actionMenu = new qx.ui.menu.Menu;
