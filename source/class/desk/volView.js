@@ -108,13 +108,14 @@ qx.Class.define("desk.volView",
 		return (this);
 	},
 
-	statics :
-	{
-		// LINKEDWINDOW : null
+	events : {
+		// the "changeSlice" event is fired whenever the slice or contrast/luminosity change
+		"changeSlice" : "qx.event.type.Event"
 	},
 
-	events : {
-		"changeSlice" : "qx.event.type.Event"
+	properties : {
+	// the "ready" property is true when the UI is ready.
+		ready : { init : false, check: "Boolean", event : "changeReady"}
 	},
 
 	members :
@@ -280,6 +281,35 @@ qx.Class.define("desk.volView",
 		__setVolume : function (file,fileBrowser) {
 			this.__fileBrowser=fileBrowser;
 			this.__file=file;
+		},
+
+		linkToVolumeViewer : function (volumeViewer) {
+			var myVolumeViewer=this;
+
+			function applyLink() {
+				volumeViewer.__spinner.bind("value", myVolumeViewer.__spinner, "value");
+				myVolumeViewer.__spinner.bind("value", volumeViewer.__spinner, "value");			
+			}
+
+			function meReady()
+			{
+				if (volumeViewer.isReady())
+					applyLink();
+				else
+					volumeViewer.addListenerOnce("changeReady", function () {
+						applyLink()});
+			}
+
+			if (volumeViewer!=this)
+			{
+				if (this.isReady())
+					meReady();
+				else
+				{
+					this.addListenerOnce("changeReady", function () {
+						meReady();});
+				}
+			}
 		},
 
 		__updateVolume : function(buildUI)
@@ -1225,12 +1255,12 @@ qx.Class.define("desk.volView",
 				(drawingCanvas.getContext2d()==null)||
 				(imgCanvas.getContext2d()==null))
 				{
-					console.log("not yet ready");
+//					console.log("not yet ready");
 					setTimeout(waitForinit, 100);
 				}
 			else
 			{
-				console.log("ready");
+//				console.log("ready");
 				volView.__htmlCanvasLabels = volView.__embedObjectLabels.getContentElement().getDomElement().firstChild;
 				volView.__htmlContextLabels = volView.__htmlCanvasLabels.getContext("2d");
 				volView.__drawingCanvasParams.drawingContext = drawingCanvas.getContext2d();
@@ -1254,6 +1284,7 @@ qx.Class.define("desk.volView",
 		        });
 
 				spinner.setValue(Math.round(volView.__dimensions[2]/2));
+				volView.setReady(true);
 			}
 		}
 		waitForinit();
@@ -2389,12 +2420,7 @@ qx.Class.define("desk.volView",
 			this.addListener("drop", function(e) {
 				if (e.supportsType("volumeSlice"))
 				{
-					var volView2=e.getData("volumeSlice");
-					if (volView2!=this)
-					{
-						volView2.__spinner.bind("value", this.__spinner, "value");
-						this.__spinner.bind("value", volView2.__spinner, "value");
-					}
+					this.linkToVolumeViewer(e.getData("volumeSlice"));
 				}
 				else
 				{
@@ -2500,12 +2526,14 @@ qx.Class.define("desk.volView",
 			numberOfSmoothingStepsContainer.add(numberOfSmoothingStepsField);
 
 			button.addListener("execute", function (e){
+				button.setEnabled(false);
 				function afterDirectoryCreated() {
 					function afterExtractionExecuted()
 					{
 					//	if (meshesViewer==null)
-							meshesViewer=new desk.meshView(volView.__sessionDirectory+"/meshes/meshes.xml",
-								volView.__fileBrowser);
+						button.setEnabled(true);
+						meshesViewer=new desk.meshView(volView.__sessionDirectory+"/meshes/meshes.xml",
+							volView.__fileBrowser);
 					}
 					volView.__fileBrowser.getActions().launchAction({
 						"action" : "extract_meshes",
@@ -2552,6 +2580,7 @@ qx.Class.define("desk.volView",
 			var temperatureField=new qx.ui.form.TextField("0.1");
 
 			button.addListener("execute", function (e){
+				button.setEnabled(false);
 				function afterDirectoryCreated() {
 					function afterSeedsSaved()
 					{	
@@ -2578,10 +2607,14 @@ qx.Class.define("desk.volView",
 							{
 								var req = e.getTarget();
 								var segmentationDirectory=req.getResponseText().split("\n")[0];
+								button.setEnabled(true);
+
 								if (segmentationViewer==null)
 								{
-									segmentationViewer=new desk.volView(segmentationDirectory+"/seg-cvtgcmultiseg.mhd",
+									segmentationViewer=new desk.volView(
+										segmentationDirectory+"/seg-cvtgcmultiseg.mhd",
 										volView.__fileBrowser);
+									segmentationViewer.linkToVolumeViewer(volView);
 									segmentationViewer.getWindow().addListener("beforeClose", function (e) {
 										segmentationViewer=null;});
 								}
