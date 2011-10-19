@@ -168,7 +168,7 @@ foreach ($actions->children() as $action)
 								$prependPHP_DIR=true;
 								break;
 							case "int":
-								if (!ctype_digit("$parameterValue"))
+								if (!(intval("$parameterValue")==floatval("$parameterValue")))
 									die ("$parameterName : value \"$parameterValue\" is not an integer value");
 								$value=floatVal($parameterValue);
 								$min=$parameter["min"];
