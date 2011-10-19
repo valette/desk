@@ -144,7 +144,9 @@ qx.Class.define("desk.volView",
 		__spinner : null,
 		__formatSelectBox : null,
 
+		__segmentationInProgress : false,
 		__startSegmentationButton : null,
+		__extractMeshesButton : null,
 
 		// the widget containing the defined colors for painting
 		__colorsList : null,
@@ -912,7 +914,9 @@ qx.Class.define("desk.volView",
                         volView.__htmlContextLabels.fill();
                         if(!eraserButton.isEnabled())
                             eraserButton.set({opacity: 1, enabled : true});
-						volView.__startSegmentationButton.setEnabled(true);
+						if (volView.__segmentationInProgress=false)
+							volView.__startSegmentationButton.setEnabled(true);
+
 		            	volView.__currentSeedsModified=true;
 						save2undoStack(event);
 
@@ -1119,7 +1123,8 @@ qx.Class.define("desk.volView",
 						var segmentationWidgets=this.__getSegmentationWidgets();
 			this.__startSegmentationButton=segmentationWidgets[0];
 			this.__bottomRightContainer.add(this.__startSegmentationButton);
-			var extractMeshesWidgets=this.__getextractMeshesWidgets()
+			var extractMeshesWidgets=this.__getextractMeshesWidgets();
+			this.__extractMeshesButton=extractMeshesWidgets[0];
 			this.__bottomRightContainer.add(extractMeshesWidgets[0]);
 
 			var settingsPage = new qx.ui.tabview.Page("settings");
@@ -2083,6 +2088,7 @@ qx.Class.define("desk.volView",
 								volView.__addNewSeedItemToList(sliceId, seedsTypeSelectBoxItem);
 							};
 						}
+						volView.__extractMeshesButton.setEnabled(true);
 						volView.__updateAll();
 					}
 					else
@@ -2506,6 +2512,7 @@ qx.Class.define("desk.volView",
 
 		__getextractMeshesWidgets : function () {
 			var button=new qx.ui.form.ToggleButton("extract meshes");
+			button.setEnabled(false);
 			var volView=this;
 			var meshesViewer=null;
 
@@ -2581,6 +2588,7 @@ qx.Class.define("desk.volView",
 
 			button.addListener("execute", function (e){
 				button.setEnabled(false);
+				volView.__segmentationInProgress=true;
 				function afterDirectoryCreated() {
 					function afterSeedsSaved()
 					{	
@@ -2608,6 +2616,7 @@ qx.Class.define("desk.volView",
 								var req = e.getTarget();
 								var segmentationDirectory=req.getResponseText().split("\n")[0];
 								button.setEnabled(true);
+								volView.__segmentationInProgress=false;
 
 								if (segmentationViewer==null)
 								{
