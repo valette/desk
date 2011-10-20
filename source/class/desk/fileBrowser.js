@@ -1,6 +1,6 @@
 qx.Class.define("desk.fileBrowser", 
 {
-  extend : qx.ui.window.Window,
+  extend : qx.ui.container.Composite,
 
 	construct : function(container, baseDir)
 	{
@@ -8,6 +8,11 @@ qx.Class.define("desk.fileBrowser",
 		if (baseDir!=null)
 			this.__baseDir=baseDir;
 
+		this.setLayout(new qx.ui.layout.VBox());
+
+/*		if (standAlone==true)
+			this.__standAlone=true;
+*/
 		qx.Class.include(qx.ui.treevirtual.TreeVirtual,
 			qx.ui.treevirtual.MNode);
 
@@ -33,12 +38,15 @@ qx.Class.define("desk.fileBrowser",
 
 		if (container==null)
 		{
-			this.setLayout(new qx.ui.layout.VBox());
-			this.setShowClose(false);
-			this.setShowMinimize(false);
-			this.setUseMoveFrame(true);
-			this.setCaption("files");
-			this.setHeight(500);
+			var window=new qx.ui.window.Window();
+			window.setLayout(new qx.ui.layout.VBox());
+			this.__window=window;
+			window.setShowClose(false);
+			window.setShowMinimize(false);
+			window.setUseMoveFrame(true);
+			window.setCaption("files");
+			window.setHeight(500);
+			window.add(this);
 
 			//create menu
 			var menu=new qx.ui.menu.Menu;
@@ -85,7 +93,7 @@ qx.Class.define("desk.fileBrowser",
 			dataModel.setFilter(filter);
 
 			this.add(virtualTree,{flex: 1});
-			this.open();
+			this.__window.open();
 		}
 		else
 			container.add(virtualTree, {flex : 1});
@@ -135,6 +143,13 @@ qx.Class.define("desk.fileBrowser",
 	},
 
 	members : {
+		// defines whether the file browser is a standalone one
+		// i.e. whether it needs to create a window
+		__standAlone : false,
+
+		// the window containing the widget when in standalone mode
+		__window : null,
+
 		__fileHandler : null,
 		__baseURL : null,
 		__baseDir : "data",
