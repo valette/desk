@@ -39,8 +39,9 @@ qx.Class.define("desk.action",
 
 		buildUI : function () {
 			var action=this.__action;
+			this.setLayout(new qx.ui.layout.VBox());
 
-			var pane = new qx.ui.splitpane.Pane("horizontal");
+			var pane = null;
 			var embededFileBrowser=null;
 
 			if (this.__standalone)
@@ -55,13 +56,11 @@ qx.Class.define("desk.action",
 				this.__window.setShowMinimize(false);
 				this.__window.setUseMoveFrame(true);
 				this.__window.setCaption(action.getAttribute("name"));
-			}
-
-			this.setLayout(new qx.ui.layout.VBox());
-
-			pane.add(this);
-			if (this.__standalone)
+				
+				pane=new qx.ui.splitpane.Pane("horizontal");
+				pane.add(this);
 				this.__window.add(pane, {flex : 1});
+			}
 
 			var logFileURL=null;
 			var showLogButton=new qx.ui.form.Button("Show console log");
@@ -76,11 +75,13 @@ qx.Class.define("desk.action",
 				outputDirectory=this.__providedParameters["output_directory"];
 				if (outputDirectory)
 				{
-					embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
-					pane.add(embededFileBrowser, {flex : 1});
 					if (this.__standalone)
+					{
 						this.__window.setWidth(600);
-					logFileURL=embededFileBrowser.getFileURL(outputDirectory+"/action.log");
+						embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
+						pane.add(embededFileBrowser, {flex : 1});
+					}
+					logFileURL=desk.actions.BASEURL+outputDirectory+"/action.log";
 					showLogButton.setVisibility("visible");
 				}
 			}
@@ -281,11 +282,13 @@ qx.Class.define("desk.action",
 							if (embededFileBrowser==null)
 							{
 								//display the results directory
-								embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
-								pane.add(embededFileBrowser, {flex : 1});
 								if (this.__standalone)
+								{
 									this.__window.setWidth(600);
-								logFileURL=embededFileBrowser.getFileURL(outputDirectory+"/action.log");
+									embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
+									pane.add(embededFileBrowser, {flex : 1});
+								}
+								logFileURL=desk.actions.BASEURL+outputDirectory+"/action.log";
 								showLogButton.setVisibility("visible");
 							}
 							embededFileBrowser.updateRoot();

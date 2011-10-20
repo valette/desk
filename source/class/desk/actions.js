@@ -18,6 +18,8 @@ qx.Class.define("desk.actions",
 			questionMarkIndex=localAdress.length;
 		this.__baseURL= localAdress.substring(slashIndex3,
 												questionMarkIndex);
+		desk.actions.BASEURL=this.__baseURL;
+
 		console.log(this.__baseURL);
 
 		this.__actionMenu = new qx.ui.menu.Menu;
@@ -51,7 +53,8 @@ qx.Class.define("desk.actions",
 	},
 
 	statics : {
-		ACTIONSHANDLER : null
+		ACTIONSHANDLER : null,
+		BASEURL : null
 	},
 
 	members : {
