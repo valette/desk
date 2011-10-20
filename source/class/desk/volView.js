@@ -2512,7 +2512,7 @@ qx.Class.define("desk.volView",
 
 		__getextractMeshesWidgets : function () {
 			var button=new qx.ui.form.ToggleButton("extract meshes");
-			button.setEnabled(false);
+			button.setEnabled(true);
 			var volView=this;
 			var meshesViewer=null;
 

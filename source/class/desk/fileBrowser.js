@@ -1,6 +1,6 @@
 qx.Class.define("desk.fileBrowser", 
 {
-  extend : qx.ui.container.Composite,
+	extend : qx.ui.container.Composite,
 
 	construct : function(baseDir, standAlone)
 	{
