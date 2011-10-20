@@ -2,11 +2,14 @@ qx.Class.define("desk.action",
 {
 	extend : qx.ui.container.Composite,
 
-	construct : function (actionName)
+	construct : function (actionName, standalone)
 	{
 		var actions=desk.actions.ACTIONSHANDLER;
 		this.__action=actions.getActionsXMLElement().getElementsByName(actionName)[0];
 		this.__actionName=actionName;
+		if (standalone==false)
+			this.__standalone=false;
+
 		return (this);
 	},
 
@@ -19,7 +22,11 @@ qx.Class.define("desk.action",
 
 		__fileBrowser : null,
 
-		setParameters : function (parameters)
+		__standalone : true,
+
+		__window : null,
+
+		setActionParameters : function (parameters)
 		{
 			this.__providedParameters=parameters;
 		},
@@ -32,22 +39,28 @@ qx.Class.define("desk.action",
 		buildUI : function () {
 			var action=this.__action;
 
-			var actionWindow=new qx.ui.window.Window();
-			actionWindow.setLayout(new qx.ui.layout.HBox());
 			var pane = new qx.ui.splitpane.Pane("horizontal");
 			var embededFileBrowser=null;
 
-	//			actionWindow.setHeight(300);
-			actionWindow.setWidth(300);
-			actionWindow.setShowClose(true);
-			actionWindow.setShowMinimize(false);
-			actionWindow.setUseMoveFrame(true);
-			actionWindow.setCaption(action.getAttribute("name"));
+			if (this.__standalone)
+			{
+				console.log("standalone");
+				this.__window=new qx.ui.window.Window();
+				this.__window.setLayout(new qx.ui.layout.HBox());
+
+		//			this.__window.setHeight(300);
+				this.__window.setWidth(300);
+				this.__window.setShowClose(true);
+				this.__window.setShowMinimize(false);
+				this.__window.setUseMoveFrame(true);
+				this.__window.setCaption(action.getAttribute("name"));
+			}
 
 			var parametersBox = new qx.ui.container.Composite;
 			parametersBox.setLayout(new qx.ui.layout.VBox());
 			pane.add(parametersBox);
-			actionWindow.add(pane, {flex : 1});
+			if (this.__standalone)
+				this.__window.add(pane, {flex : 1});
 
 			var logFileURL=null;
 			var showLogButton=new qx.ui.form.Button("Show console log");
@@ -64,7 +77,8 @@ qx.Class.define("desk.action",
 				{
 					embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
 					pane.add(embededFileBrowser, {flex : 1});
-					actionWindow.setWidth(600);
+					if (this.__standalone)
+						this.__window.setWidth(600);
 					logFileURL=embededFileBrowser.getFileURL(outputDirectory+"/action.log");
 					showLogButton.setVisibility("visible");
 				}
@@ -72,7 +86,8 @@ qx.Class.define("desk.action",
 		
 			// create the form manager
 			var manager = new qx.ui.form.validation.Manager();
-			actionWindow.open();
+			if (this.__standalone)
+				this.__window.open();
 
 			var intValidator = function(value, item) {
 				var parameterName=this.getAttribute("name");
@@ -130,7 +145,8 @@ qx.Class.define("desk.action",
 			var fileAlreadyPickedFromBrowser=false;
 
 			var parameters=action.getElementsByTagName("parameter");
-			actionWindow.setHeight(100+50*parameters.length);
+			if (this.__standalone)
+				this.__window.setHeight(100+50*parameters.length);
 			for (var i=0;i<(parameters.length);i++)
 			{
 				var parameter=parameters[i];
@@ -266,7 +282,8 @@ qx.Class.define("desk.action",
 								//display the results directory
 								embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
 								pane.add(embededFileBrowser, {flex : 1});
-								actionWindow.setWidth(600);
+								if (this.__standalone)
+									this.__window.setWidth(600);
 								logFileURL=embededFileBrowser.getFileURL(outputDirectory+"/action.log");
 								showLogButton.setVisibility("visible");
 							}

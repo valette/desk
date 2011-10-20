@@ -170,7 +170,7 @@ qx.Class.define("desk.actions",
 					parameters[splitString[0]]=splitString[1];
 				}
 				var action=new desk.action (parameters["action"]);
-				action.setParameters(parameters);
+				action.setActionParameters(parameters);
 				action.buildUI();
 			}, this);
 			req.send();
