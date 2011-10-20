@@ -277,6 +277,8 @@ qx.Class.define("desk.volView",
 		// the function which draws the canvas
 		__drawZoomedCanvas : null,
 
+		__clusteringAction : null,
+
 		getWindow : function() {
 			return this.__window;},
 
@@ -1137,6 +1139,26 @@ qx.Class.define("desk.volView",
 			settingsPage.add(extractMeshesWidgets[1]);
 			settingsPage.add(extractMeshesWidgets[2]);
 
+
+			var clusteringPage = new qx.ui.tabview.Page("clustering");
+            clusteringPage.setLayout(new qx.ui.layout.VBox());
+			colorsTabView.add(clusteringPage);
+			var clusteringAction=new desk.action("cvtseg2", false);
+			clusteringAction.setActionParameters(
+				{"input_volume" : volView.__file});
+			//	,"output_directory" : "cache/"});
+			this.__clusteringAction=clusteringAction;
+			clusteringAction.setOutputSubdirectory("clustering");
+			
+			clusteringAction.buildUI();
+			clusteringPage.add(clusteringAction);
+
+			var medianFilteringPage = new qx.ui.tabview.Page("cleaning");
+            medianFilteringPage.setLayout(new qx.ui.layout.VBox());
+			colorsTabView.add(medianFilteringPage);
+			var medianFilteringAction=new desk.action("volume_median_filtering", false);
+			medianFilteringAction.buildUI();
+			medianFilteringPage.add(medianFilteringAction);
 
 			this.__imageCanvas.addListener("mouseout", function(event)
 			{
@@ -2312,6 +2334,7 @@ qx.Class.define("desk.volView",
 						volView.__sessionDirectory=fileBrowser.getSessionDirectory(
 							volView.__file,sessionType,listItem.getLabel());
 						volView.__loadSession();
+						volView.__clusteringAction.setOutputDirectory(volView.__sessionDirectory);
 					}
 					sessionsList.close();
 				}});
@@ -2422,8 +2445,8 @@ qx.Class.define("desk.volView",
 				}, this);
 
 		// enable linking between volume viewers by drag and drop
-			this.setDroppable(true);
-			this.addListener("drop", function(e) {
+			this.__mainLeftContainer.setDroppable(true);
+			this.__mainLeftContainer.addListener("drop", function(e) {
 				if (e.supportsType("volumeSlice"))
 				{
 					this.linkToVolumeViewer(e.getData("volumeSlice"));

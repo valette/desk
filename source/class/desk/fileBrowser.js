@@ -34,7 +34,7 @@ qx.Class.define("desk.fileBrowser",
 		var dataModel = virtualTree.getDataModel();
 
 		this.__actionsHandler=desk.actions.ACTIONSHANDLER;
-		this.__baseURL=this.__actionsHandler.getBaseURL()+"resource/desk/";
+		this.__baseURL=desk.actions.BASEURL;
 
 		//create menu
 		var menu=new qx.ui.menu.Menu;

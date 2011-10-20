@@ -16,11 +16,9 @@ qx.Class.define("desk.actions",
 		var questionMarkIndex=localAdress.indexOf("?");
 		if (questionMarkIndex<0)
 			questionMarkIndex=localAdress.length;
-		this.__baseURL= localAdress.substring(slashIndex3,
-												questionMarkIndex);
-		desk.actions.BASEURL=this.__baseURL;
-
-		console.log(this.__baseURL);
+		desk.actions.BASEURL=localAdress.substring(slashIndex3,
+												questionMarkIndex)+
+									"resource/desk/";
 
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.populateActionMenu();
@@ -59,7 +57,6 @@ qx.Class.define("desk.actions",
 
 	members : {
 		__actionsFile : "resource/desk/actions.xml",
-		__baseURL : null,
 		__actionMenu : null,
 		__actions : null,
 		__fileBrowser : null,
@@ -68,10 +65,6 @@ qx.Class.define("desk.actions",
 		__actionsList : null,
 
 		_currentFileBrowser : null,
-
-		getBaseURL : function () {
-			return this.__baseURL;
-		},
 
 		getActionsXMLElement : function () {
 			return this.__actions;

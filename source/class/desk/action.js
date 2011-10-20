@@ -14,7 +14,18 @@ qx.Class.define("desk.action",
 		return (this);
 	},
 
+	properties : {
+		outputDirectory :  { init : null, event : "changeOutputDirectory"},
+
+		outputSubdirectory : { init : null},
+
+		hideProvidedParameters : {init : false, check : "Boolean"}
+	},
+
 	members : {
+
+		__dependencies : null,
+
 		__action : null,
 
 		__actionName : null,
@@ -27,6 +38,8 @@ qx.Class.define("desk.action",
 
 		__window : null,
 
+		__validationManager : null,
+
 		setActionParameters : function (parameters)
 		{
 			this.__providedParameters=parameters;
@@ -35,6 +48,11 @@ qx.Class.define("desk.action",
 		setOriginFileBrowser : function (fileBrowser)
 		{
 			this.__fileBrowser=fileBrowser;
+		},
+
+		executeAction : function()
+		{
+			this.__validationManager.validate();
 		},
 
 		buildUI : function () {
@@ -88,6 +106,7 @@ qx.Class.define("desk.action",
 		
 			// create the form manager
 			var manager = new qx.ui.form.validation.Manager();
+			this.__validationManager=manager;
 			if (this.__standalone)
 				this.__window.open();
 
@@ -221,17 +240,14 @@ qx.Class.define("desk.action",
 
 			var executeBox = new qx.ui.container.Composite;
 			executeBox.setLayout(new qx.ui.layout.HBox(10));
-			this.add(executeBox);//, {flex:1});
+			this.add(executeBox);
 
 			var send = new qx.ui.form.Button("Process");
-			executeBox.add(send);//, {left: 20, top: 215});
+			executeBox.add(send);
 			send.addListener("execute", function() {
-				// return type can not be used because of async validation
-				manager.validate()
-				}, this);
+				this.executeAction();}, this);
 
 			var forceUpdateCheckBox = new qx.ui.form.CheckBox("force");
-	//			var executionStatus=new qx.ui.basic.Label();
 			var executionStatus=new qx.ui.form.TextField().set({
 				readOnly: true});
 
@@ -279,23 +295,43 @@ qx.Class.define("desk.action",
 						executionStatus.setValue(splitResponse[splitResponse.length-2]);
 						if (action.getAttribute("void")!="true")
 						{
-							if (embededFileBrowser==null)
+							if (this.__standalone)
 							{
 								//display the results directory
-								if (this.__standalone)
+								if (embededFileBrowser==null)
 								{
 									this.__window.setWidth(600);
 									embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
 									pane.add(embededFileBrowser, {flex : 1});
 								}
-								logFileURL=desk.actions.BASEURL+outputDirectory+"/action.log";
-								showLogButton.setVisibility("visible");
+								else
+									embededFileBrowser.updateRoot();
 							}
-							embededFileBrowser.updateRoot();
+							logFileURL=desk.actions.BASEURL+outputDirectory+"/action.log";
+							showLogButton.setVisibility("visible");
 						}
 
 					}
-					desk.actions.ACTIONSHANDLER.launchAction (parameterMap, getAnswer, this)
+
+					var out=this.getOutputDirectory();
+					if (out)
+						parameterMap["output_directory"]=out;
+					
+
+					function afterDirectoryCreated()
+					{
+						parameterMap["output_directory"]=this.getOutputDirectory()+"/"+
+									this.getOutputSubdirectory();
+						desk.actions.ACTIONSHANDLER.launchAction (parameterMap, getAnswer, this);
+					}
+
+					if (this.getOutputSubdirectory()==null)
+						desk.actions.ACTIONSHANDLER.launchAction (parameterMap, getAnswer, this);
+					else
+						desk.actions.ACTIONSHANDLER.launchAction({
+							"action" : "add_subdirectory",
+							"subdirectory_name" : this.getOutputSubdirectory(),
+							"output_directory" : this.getOutputDirectory()}, afterDirectoryCreated, this);
 				} else {
 					alert(manager.getInvalidMessages().join("\n"));
 				}
