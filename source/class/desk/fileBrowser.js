@@ -2,7 +2,7 @@ qx.Class.define("desk.fileBrowser",
 {
   extend : qx.ui.container.Composite,
 
-	construct : function(container, baseDir)
+	construct : function(baseDir, standAlone)
 	{
 		this.base(arguments);
 		if (baseDir!=null)
@@ -10,9 +10,9 @@ qx.Class.define("desk.fileBrowser",
 
 		this.setLayout(new qx.ui.layout.VBox());
 
-/*		if (standAlone==true)
-			this.__standAlone=true;
-*/
+		if (standAlone==false)
+			this.__standAlone=false;
+
 		qx.Class.include(qx.ui.treevirtual.TreeVirtual,
 			qx.ui.treevirtual.MNode);
 
@@ -36,67 +36,52 @@ qx.Class.define("desk.fileBrowser",
 		this.__actionsHandler=desk.actions.ACTIONSHANDLER;
 		this.__baseURL=this.__actionsHandler.getBaseURL()+"resource/desk/";
 
-		if (container==null)
-		{
-			var window=new qx.ui.window.Window();
-			window.setLayout(new qx.ui.layout.VBox());
-			this.__window=window;
-			window.setShowClose(false);
-			window.setShowMinimize(false);
-			window.setUseMoveFrame(true);
-			window.setCaption("files");
-			window.setHeight(500);
-			window.add(this);
-
-			//create menu
-			var menu=new qx.ui.menu.Menu;
+		//create menu
+		var menu=new qx.ui.menu.Menu;
 
 /*			var uploadButton = new qx.ui.menu.Button("Upload");
-			uploadButton.addListener("execute", function (e){alert ("Not implemented!");}, this);
-			menu.add(uploadButton);
-			menu.addSeparator();
+		uploadButton.addListener("execute", function (e){alert ("Not implemented!");}, this);
+		menu.add(uploadButton);
+		menu.addSeparator();
 
-			this.__actionsMenuButton=new qx.ui.menu.Button("Actions", null , null);
-			menu.add(this.__actionsMenuButton);
+		this.__actionsMenuButton=new qx.ui.menu.Button("Actions", null , null);
+		menu.add(this.__actionsMenuButton);
 
-			var actionsButton = new qx.ui.form.MenuButton("Actions", null, menu);
-			this.add(actionsButton);*/
+		var actionsButton = new qx.ui.form.MenuButton("Actions", null, menu);
+		this.add(actionsButton);*/
 
-			// create the filter bar
-			var filterBox = new qx.ui.container.Composite;
-			filterBox.setLayout(new qx.ui.layout.HBox(10));
-			this.add(filterBox);//, {flex:1});
-			var filterText=new qx.ui.basic.Label("Filter files :");
-			filterBox.add(filterText);
-			var filterField = new qx.ui.form.TextField();
+		// create the filter bar
+		var filterBox = new qx.ui.container.Composite;
+		filterBox.setLayout(new qx.ui.layout.HBox(10));
+		this.add(filterBox);//, {flex:1});
+		var filterText=new qx.ui.basic.Label("Filter files :");
+		filterBox.add(filterText);
+		var filterField = new qx.ui.form.TextField();
+		filterField.setValue("");
+		filterField.addListener("input", function() {
+			dataModel.setData();
+			},this);
+		filterBox.add(filterField, {flex:1});
+
+		var filter = qx.lang.Function.bind(function(node)
+			{
+				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+					var label = node.label;
+					return label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1;
+				}
+				return true;
+			}, this);
+		var resetButton=new qx.ui.form.Button("Reset filter");
+		resetButton.setAllowGrowY(false);
+		resetButton.addListener("execute",function(e){
 			filterField.setValue("");
-			filterField.addListener("input", function() {
-				dataModel.setData();
-				},this);
-			filterBox.add(filterField, {flex:1});
+			dataModel.setData();
+			});
+		filterBox.add(resetButton);
+		dataModel.setFilter(filter);
 
-			var filter = qx.lang.Function.bind(function(node)
-				{
-					if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-						var label = node.label;
-						return label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1;
-					}
-					return true;
-				}, this);
-			var resetButton=new qx.ui.form.Button("Reset filter");
-			resetButton.setAllowGrowY(false);
-			resetButton.addListener("execute",function(e){
-				filterField.setValue("");
-				dataModel.setData();
-				});
-			filterBox.add(resetButton);
-			dataModel.setFilter(filter);
+		this.add(virtualTree,{flex: 1});
 
-			this.add(virtualTree,{flex: 1});
-			this.__window.open();
-		}
-		else
-			container.add(virtualTree, {flex : 1});
 
 		// add root directory
 		this.__rootId = dataModel.addBranch(null, this.__baseDir, true);
@@ -139,13 +124,29 @@ qx.Class.define("desk.fileBrowser",
 				}
 			}, this);
 
+
+		if (standAlone!=false)
+		{
+			var window=new qx.ui.window.Window();
+			window.setLayout(new qx.ui.layout.VBox());
+			this.__window=window;
+			window.setShowClose(false);
+			window.setShowMinimize(false);
+			window.setUseMoveFrame(true);
+			window.setCaption("files");
+			window.setHeight(500);
+			window.add(this);
+			this.__window.open();
+		}
+
+
 		return (this);
 	},
 
 	members : {
 		// defines whether the file browser is a standalone one
 		// i.e. whether it needs to create a window
-		__standAlone : false,
+		__standAlone : true,
 
 		// the window containing the widget when in standalone mode
 		__window : null,

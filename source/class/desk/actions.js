@@ -39,7 +39,7 @@ qx.Class.define("desk.actions",
 		if (fileBrowser!=null)
 			this.__fileBrowser=fileBrowser;
 		else
-			this.__fileBrowser=new desk.fileBrowser(null ,getParameter("rootDir"));				
+			this.__fileBrowser=new desk.fileBrowser(getParameter("rootDir"));
 
 		var ongoingActions = new qx.ui.form.List().set({
 			width: 200
@@ -202,7 +202,8 @@ qx.Class.define("desk.actions",
 				outputDirectory=providedParameters["output_directory"];
 				if (outputDirectory)
 				{
-					embededFileBrowser=new desk.fileBrowser(pane,outputDirectory);
+					embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
+					pane.add(embededFileBrowser, {flex : 1});
 					actionWindow.setWidth(600);
 					logFileURL=embededFileBrowser.getFileURL(outputDirectory+"/action.log");
 					showLogButton.setVisibility("visible");
@@ -403,7 +404,8 @@ qx.Class.define("desk.actions",
 							if (embededFileBrowser==null)
 							{
 								//display the results directory
-								embededFileBrowser=new desk.fileBrowser(pane,outputDirectory);
+								embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
+								pane.add(embededFileBrowser, {flex : 1});
 								actionWindow.setWidth(600);
 								logFileURL=embededFileBrowser.getFileURL(outputDirectory+"/action.log");
 								showLogButton.setVisibility("visible");
