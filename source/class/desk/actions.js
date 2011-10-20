@@ -51,7 +51,7 @@ qx.Class.define("desk.actions",
 	},
 
 	statics : {
-		ACTIONHANDLER : null
+		ACTIONSHANDLER : null
 	},
 
 	members : {
@@ -149,7 +149,9 @@ qx.Class.define("desk.actions",
 				}
 
 				button.addListener("click", function (e){
-					var action= new desk.action(this.getLabel(), null, actionMenu.__currentFileBrowser);});
+					var action= new desk.action(this.getLabel());
+					action.setOriginFileBrowser(actionMenu.__currentFileBrowser);
+					action.buildUI();});
 				this.__actionMenu.add(button);
 			}
 		},
@@ -167,7 +169,9 @@ qx.Class.define("desk.actions",
 					var splitString=splitParameters[i].split("=");
 					parameters[splitString[0]]=splitString[1];
 				}
-				var action=new desk.action (parameters["action"],parameters);
+				var action=new desk.action (parameters["action"]);
+				action.setParameters(parameters);
+				action.buildUI();
 			}, this);
 			req.send();
 		}
