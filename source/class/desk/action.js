@@ -4,6 +4,7 @@ qx.Class.define("desk.action",
 
 	construct : function (actionName, standalone)
 	{
+		this.base(arguments);
 		var actions=desk.actions.ACTIONSHANDLER;
 		this.__action=actions.getActionsXMLElement().getElementsByName(actionName)[0];
 		this.__actionName=actionName;
@@ -56,9 +57,9 @@ qx.Class.define("desk.action",
 				this.__window.setCaption(action.getAttribute("name"));
 			}
 
-			var parametersBox = new qx.ui.container.Composite;
-			parametersBox.setLayout(new qx.ui.layout.VBox());
-			pane.add(parametersBox);
+			this.setLayout(new qx.ui.layout.VBox());
+
+			pane.add(this);
 			if (this.__standalone)
 				this.__window.add(pane, {flex : 1});
 
@@ -151,10 +152,10 @@ qx.Class.define("desk.action",
 			{
 				var parameter=parameters[i];
 				var parameterName=parameter.getAttribute("name");
-				parametersBox.add(new qx.ui.basic.Label(parameterName));
+				this.add(new qx.ui.basic.Label(parameterName));
 				var parameterForm=new qx.ui.form.TextField();
 				parameterForm.setPlaceholder(parameterName);
-				parametersBox.add(parameterForm);
+				this.add(parameterForm);
 				var parameterType=parameter.getAttribute("type");
 
 				switch (parameterType)
@@ -219,7 +220,7 @@ qx.Class.define("desk.action",
 
 			var executeBox = new qx.ui.container.Composite;
 			executeBox.setLayout(new qx.ui.layout.HBox(10));
-			parametersBox.add(executeBox);//, {flex:1});
+			this.add(executeBox);//, {flex:1});
 
 			var send = new qx.ui.form.Button("Process");
 			executeBox.add(send);//, {left: 20, top: 215});
@@ -235,7 +236,7 @@ qx.Class.define("desk.action",
 
 			executeBox.add(forceUpdateCheckBox);
 			executeBox.add(executionStatus);
-			parametersBox.add(showLogButton, {flex : 1});
+			this.add(showLogButton, {flex : 1});
 
 			// add a listener to the form manager for the validation complete
 			manager.addListener("complete", function() {
