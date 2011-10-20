@@ -54,9 +54,9 @@ qx.Class.define("desk.Application",
 //			var myBrowser=new desk.fileBrowser();
 			var actions=new desk.actions();
 //			this.getRoot().add(myBrowser);
-/*
-			if (0)
-			{
+
+			/*
+			// Document is the application root
 			var doc = this.getRoot();
 
       		var btn = new com.zenesis.qx.upload.UploadButton("Add File(s)", "com/zenesis/qx/upload/test.png");
@@ -66,11 +66,11 @@ qx.Class.define("desk.Application",
       		// attached, and "/demoupload" is the path files will be uploaded to (i.e. it's the value used
       		// for the form's action attribute)
       		//
-//      		var uploader = new com.zenesis.qx.upload.UploadMgr(btn, "http://www.zenesis.com/demoupload");
-      		var uploader = new com.zenesis.qx.upload.UploadMgr(btn, "http://vip.creatis.insa-lyon.fr:8080/visu/desk/php/upload/php.php");
+      		var uploader = new com.zenesis.qx.upload.UploadMgr(btn, "http://vip.creatis.insa-lyon.fr:8080/visu/upload/php.php");
+      		uploader.getUploadHandler().addParam("myParam", "test");
       		uploader.addListener("addFile", function(evt) {
       			var file = evt.getData(),
-      				item = new qx.ui.form.ListItem(file.getFilename(), null, file);
+      				item = new qx.ui.form.ListItem(file.getFilename() + " (queued for upload)", null, file);
       			lst.add(item);
       			
       			// On modern browsers (ie not IE) we will get progress updates
@@ -144,7 +144,9 @@ qx.Class.define("desk.Application",
       		doc.add(comp, { top: 0, left: 0, right: 0 });
       		comp.setDecorator(new qx.ui.decoration.Background().set({
       			backgroundImage: "com/zenesis/qx/upload/banner-bg.png",
-      			backgroundPositionX: 0}));      		
+      			backgroundPositionX: 0}));
+      		doc.add(new qx.ui.basic.Label("<a href='http://www.zenesis.com' target='_blank'>http://www.zenesis.com</a>").set({ rich: true, font: new qx.bom.Font(13, ["Arial","Lucida Grande"]) }), { left: 95, top: 85 });
+      		
       		// Descriptions
       		var lbl = new qx.ui.basic.Label("This is a demo for the Qooxdoo UploadMgr contrib which can be found at <a href='http://qooxdoo.org/contrib/project/uploadmgr'>http://qooxdoo.org/contrib/project/uploadmgr</a>; " +
 				"UploadMgr supports background uploads with progress feedback for modern browsers with fallback for older browsers (eg IE6-IE8).")
@@ -153,7 +155,43 @@ qx.Class.define("desk.Application",
 	  		var lbl = new qx.ui.basic.Label("You can upload anything you like to test this (or as many as you like); the files will be deleted after the upload completes.")
 				.set({ rich: true, width: 700 });
 			doc.add(lbl, { left: 100, top: 390 });
-			}*/
+			
+	  		var lbl = new qx.ui.basic.Label("Update:: You can now have multiple upload buttons per UploadMgr instance - below are a few extra upload buttons for testing.")
+				.set({ rich: true, width: 700 });
+			doc.add(lbl, { left: 100, top: 420 });
+			
+      		btn = new com.zenesis.qx.upload.UploadButton("Add File(s)", "com/zenesis/qx/upload/test.png");
+      		uploader.addWidget(btn);
+      		doc.add(btn, { left: 100, top: 460 });
+      		btn = new com.zenesis.qx.upload.UploadButton("Add File(s)", "com/zenesis/qx/upload/test.png");
+      		uploader.addWidget(btn);
+      		doc.add(btn, { left: 250, top: 460 });
+      		btn = new com.zenesis.qx.upload.UploadButton("Add File(s)", "com/zenesis/qx/upload/test.png");
+      		uploader.addWidget(btn);
+      		doc.add(btn, { left: 400, top: 460 });
+      		
+      		var tb = new qx.ui.toolbar.ToolBar();
+      		doc.add(tb, { left: 100, top: 510 });
+      		var part = new qx.ui.toolbar.Part();
+      		tb.add(part);
+      		
+      		btn = new qx.ui.toolbar.Button("Do Nothing 1");
+      		btn.addListener("execute", function(evt) {
+      			alert("Do Nothing 1 pressed");
+      		});
+      		part.add(btn);
+      		
+      		btn = new com.zenesis.qx.upload.UploadToolbarButton("Add File(s)", "com/zenesis/qx/upload/test.png");
+      		uploader.addWidget(btn);
+      		part.add(btn);
+      		
+      		btn = new qx.ui.toolbar.Button("Do Nothing 2");
+      		btn.addListener("execute", function(evt) {
+      			alert("Do Nothing 2 pressed");
+      		});
+      		part.add(btn);
+			*/
+
 		}
 	}
 });
