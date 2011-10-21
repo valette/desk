@@ -11,6 +11,8 @@ qx.Class.define("desk.action",
 		if (standalone==false)
 			this.__standalone=false;
 
+		this.__connections=[];
+
 		return (this);
 	},
 
@@ -23,10 +25,15 @@ qx.Class.define("desk.action",
 
 	events : {
 		// the "changeOutputDirectory" event is fired whenever __outputDirectory is changed
-		"changeOutputDirectory" : "qx.event.type.Event"
+		"changeOutputDirectory" : "qx.event.type.Event",
+
+		"actionUpdated" : "qx.event.type.Event"
 	},
 
 	members : {
+
+		__connections : null,
+
 		__outputDirectory : null,
 
 		__dependencies : null,
@@ -44,6 +51,21 @@ qx.Class.define("desk.action",
 		__window : null,
 
 		__validationManager : null,
+
+		connect : function (parameterName, parentAction, fileName) {
+			if (parentAction==this)
+			{
+				console.log("error : trying to connect to myself...");
+				return;
+			}
+				
+			this.__connections.push({
+					action : parentAction,
+					parameter : parameterName,
+					file : fileName});
+			console.log("connections : ");
+			console.log(this.__connections);
+		},
 
 		setOutputDirectory : function (directory) {
 			this.__outputDirectory=directory;
@@ -186,74 +208,90 @@ qx.Class.define("desk.action",
 			var parameters=action.getElementsByTagName("parameter");
 			if (this.__standalone)
 				this.__window.setHeight(100+50*parameters.length);
+
+			var connections=this.__connections;
 			for (var i=0;i<(parameters.length);i++)
 			{
 				var parameter=parameters[i];
 				var parameterName=parameter.getAttribute("name");
-				this.add(new qx.ui.basic.Label(parameterName));
-				var parameterForm=new qx.ui.form.TextField();
-				parameterForm.setPlaceholder(parameterName);
-				this.add(parameterForm);
-				var parameterType=parameter.getAttribute("type");
 
-				switch (parameterType)
+				var found=false;
+				for (var j=0;j<connections.length;j++)
 				{
-				case "int":
-					manager.add(parameterForm, intValidator, parameter);
-					break;
-				case "string":
-					manager.add(parameterForm, stringValidator, parameter);
-					break;
-				case "float":
-					manager.add(parameterForm, floatValidator, parameter);
-					break;
-				case "file":
-					if ((!fileAlreadyPickedFromBrowser) && (this.__fileBrowser!=null))
+					if (connections[j].parameter==parameterName)
 					{
-						fileAlreadyPickedFromBrowser=true;
-						parameterForm.setValue(this.__fileBrowser.getNodeFile(
-							this.__fileBrowser.getSelectedNode()));
+						found=true;
+						break;
 					}
-					parameterForm.setDroppable(true);
-					parameterForm.addListener("drop", function(e) {
-							var origin_fileBrowser=e.getData("fileBrowser");
-							var fileNode=origin_fileBrowser.getSelectedNode();
-							this.setValue(origin_fileBrowser.getNodeFile(fileNode));
-						}, parameterForm);
-
-					manager.add(parameterForm, stringValidator, parameter);
-					break;
-				case "directory":
-					parameterForm.setDroppable(true);
-					parameterForm.addListener("drop", function(e) {
-							var origin_fileBrowser=e.getData("fileBrowser");
-							var fileNode=origin_fileBrowser.getSelectedNode();
-							this.setValue(origin_fileBrowser.getNodeFile(fileNode));
-						}, parameterForm);
-
-					manager.add(parameterForm, stringValidator, parameter);
-					break;
-				case "xmlcontent":
-					manager.add(parameterForm, dummyValidator, parameter);
-					break;
-				default :
-						alert("no validator implemented for type : "+parameterType);
 				}
 
-				//use default value if provided
-				var defaultValue=parameter.getAttribute("default");
-				if (defaultValue)
-					parameterForm.setValue(defaultValue);
-
-				if (this.__providedParameters!=null)
+				if (!found)
 				{
-					var providedParameterValue=this.__providedParameters[parameterName];
-					if (providedParameterValue!=null)
-						parameterForm.setValue(providedParameterValue);
-				}
+					this.add(new qx.ui.basic.Label(parameterName));
+					var parameterForm=new qx.ui.form.TextField();
+					parameterForm.setPlaceholder(parameterName);
+					this.add(parameterForm);
+					var parameterType=parameter.getAttribute("type");
 
-				parameterForm.addListener("input", function(e) 
-					{this.setInvalidMessage(null);},parameterForm);
+					switch (parameterType)
+					{
+					case "int":
+						manager.add(parameterForm, intValidator, parameter);
+						break;
+					case "string":
+						manager.add(parameterForm, stringValidator, parameter);
+						break;
+					case "float":
+						manager.add(parameterForm, floatValidator, parameter);
+						break;
+					case "file":
+						if ((!fileAlreadyPickedFromBrowser) && (this.__fileBrowser!=null))
+						{
+							fileAlreadyPickedFromBrowser=true;
+							parameterForm.setValue(this.__fileBrowser.getNodeFile(
+								this.__fileBrowser.getSelectedNode()));
+						}
+						parameterForm.setDroppable(true);
+						parameterForm.addListener("drop", function(e) {
+								var origin_fileBrowser=e.getData("fileBrowser");
+								var fileNode=origin_fileBrowser.getSelectedNode();
+								this.setValue(origin_fileBrowser.getNodeFile(fileNode));
+							}, parameterForm);
+
+						manager.add(parameterForm, stringValidator, parameter);
+						break;
+					case "directory":
+						parameterForm.setDroppable(true);
+						parameterForm.addListener("drop", function(e) {
+								var origin_fileBrowser=e.getData("fileBrowser");
+								var fileNode=origin_fileBrowser.getSelectedNode();
+								this.setValue(origin_fileBrowser.getNodeFile(fileNode));
+							}, parameterForm);
+
+						manager.add(parameterForm, stringValidator, parameter);
+						break;
+					case "xmlcontent":
+						manager.add(parameterForm, dummyValidator, parameter);
+						break;
+					default :
+							alert("no validator implemented for type : "+parameterType);
+					}
+
+					//use default value if provided
+					var defaultValue=parameter.getAttribute("default");
+					if (defaultValue)
+						parameterForm.setValue(defaultValue);
+
+					if (this.__providedParameters!=null)
+					{
+						var providedParameterValue=this.__providedParameters[parameterName];
+						if (providedParameterValue!=null)
+							parameterForm.setValue(providedParameterValue);
+					}
+
+					parameterForm.addListener("input", function(e) 
+						{this.setInvalidMessage(null);},parameterForm);
+				}
 			}
 
 			var executeBox = new qx.ui.container.Composite;
@@ -263,7 +301,7 @@ qx.Class.define("desk.action",
 			var send = new qx.ui.form.Button("Process");
 			executeBox.add(send);
 			send.addListener("execute", function() {
-				this.executeAction();}, this);
+				manager.validate();}, this);
 
 			var forceUpdateCheckBox = new qx.ui.form.CheckBox("force");
 			var executionStatus=new qx.ui.form.TextField().set({
@@ -279,7 +317,8 @@ qx.Class.define("desk.action",
 				if (manager.getValid()) {
 					// configure the send button
 					send.setEnabled(false);
-					send.setLabel("Processing...");
+					send.setLabel("Updating Parents...");
+
 					var parameterMap={"action" : this.__actionName};
 					var items=manager.getItems();
 					// add all parameters
@@ -299,55 +338,125 @@ qx.Class.define("desk.action",
 					parameterMap["force_update"]=forceUpdateCheckBox.getValue();
 					executionStatus.setValue("Processing...");
 
-					function getAnswer (e)
-					{
-						// configure the send button
-						send.setEnabled(true);
-						send.setLabel("Update");
 
-						var req = e.getTarget();
-						var response=req.getResponseText();
-						showLogButton.setVisibility("visible");
-						var splitResponse=response.split("\n");
-						outputDirectory=splitResponse[0];
-						executionStatus.setValue(splitResponse[splitResponse.length-2]);
-						if (action.getAttribute("void")!="true")
+					// update parent Actions
+					var parentActions=[];
+					for (var i=0;i<connections.length;i++)
+					{
+						var parentAction=connections[i].action;
+						var parentId=-1;
+						for (var j=0;j<parentActions.length;j++)
 						{
-							if (this.__standalone)
+							if (parentActions[j].action==parentAction)
 							{
-								//display the results directory
-								if (embededFileBrowser==null)
-								{
-									this.__window.setWidth(600);
-									embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
-									pane.add(embededFileBrowser, {flex : 1});
-								}
-								else
-									embededFileBrowser.updateRoot();
+								parentId=j;
+								break;
 							}
-							logFileURL=desk.actions.BASEURL+outputDirectory+"/action.log";
-							showLogButton.setVisibility("visible");
 						}
-
+						if (parentId<0)
+						{
+							parentActions.push({
+								action : parentAction,
+								parameters : [{
+								parameter : connections[i].parameter,
+								file : connections[i].file}]}):
+						}
+						else
+							parentActions[parentId].parameters.push({
+								parameter : connections[i].parameter,
+								file : connections[i].file});
 					}
-
-					var out=this.getOutputDirectory();
-					if (out)
-						parameterMap["output_directory"]=out;
+					console.log("connections before processing : ");
+					console.log(parentActions);
+					var numberOfFinishedParentActions=parentActions.length;
 					
+					function afterParentActionProcessed (event){
+						console.log("one parent action finished");
+						numberOfFinishedParentActions++;
+						if (event)
+						{
+							var finishedAction=event.getTarget();
+							//locate action in connections array
+							for (var i=0;i<connections.length;i++)
+							{
+								var currentConnection=connections[i];
+								if (currentConnection.action==finishedAction)
+								{
+									var currentParameter=currentConnection.parameter;
+									var currentFile=currentConnection.file;
+									parameterMap[currentParameter]=
+										currentConnection.action.getOutputDirectory()+"/"+currentFile;
+								}
+							}
+						}
+						if (numberOfFinishedParentActions>=parentActions.length)
+						{
+							console.log("all parent actions finished");
+							send.setLabel("Processing...");
+							function getAnswer (e)
+							{
+								// configure the send button
+								send.setEnabled(true);
+								send.setLabel("Update");
 
-					function launchAction()
-					{
-						desk.actions.ACTIONSHANDLER.launchAction (parameterMap, getAnswer, this);
+								var req = e.getTarget();
+								var response=req.getResponseText();
+								showLogButton.setVisibility("visible");
+								var splitResponse=response.split("\n");
+								outputDirectory=splitResponse[0];
+								executionStatus.setValue(splitResponse[splitResponse.length-2]);
+								if (action.getAttribute("void")!="true")
+								{
+									if (this.__standalone)
+									{
+										//display the results directory
+										if (embededFileBrowser==null)
+										{
+											this.__window.setWidth(600);
+											embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
+											pane.add(embededFileBrowser, {flex : 1});
+										}
+										else
+											embededFileBrowser.updateRoot();
+									}
+									logFileURL=desk.actions.BASEURL+outputDirectory+"/action.log";
+									showLogButton.setVisibility("visible");
+								}
+								this.fireEvent("actionUpdated");
+							}
+
+							var out=this.getOutputDirectory();
+							if (out)
+								parameterMap["output_directory"]=out;
+				
+
+							function launchAction()
+							{
+								desk.actions.ACTIONSHANDLER.launchAction (parameterMap, getAnswer, this);
+							}
+
+							if (this.getOutputSubdirectory()==null)
+								launchAction();
+							else
+								desk.actions.ACTIONSHANDLER.launchAction({
+									"action" : "add_subdirectory",
+									"subdirectory_name" : this.getOutputSubdirectory(),
+									"output_directory" : this.__outputDirectory}, launchAction, this);
+						}
 					}
 
-					if (this.getOutputSubdirectory()==null)
-						launchAction();
+					if (parentActions.length>0)
+					{
+						for (var i=0;i!=parentActions.length;i++)
+						{
+							var currentParentAction=parentActions[i].action;
+							currentParentAction.addListenerOnce("actionUpdated", afterParentActionProcessed, this);
+							currentParentAction.executeAction();
+						}
+					}
 					else
-						desk.actions.ACTIONSHANDLER.launchAction({
-							"action" : "add_subdirectory",
-							"subdirectory_name" : this.getOutputSubdirectory(),
-							"output_directory" : this.__outputDirectory}, launchAction, this);
+						afterParentActionProcessed.apply(this);
+
 				} else {
 					alert(manager.getInvalidMessages().join("\n"));
 				}
