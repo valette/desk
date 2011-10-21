@@ -115,7 +115,8 @@ qx.Class.define("desk.volView",
 
 	properties : {
 	// the "ready" property is true when the UI is ready.
-		ready : { init : false, check: "Boolean", event : "changeReady"}
+		ready : { init : false, check: "Boolean", event : "changeReady"},
+		sessionDirectory : { init : null, event : "changeSessionDirectory"}
 	},
 
 	members :
@@ -125,9 +126,6 @@ qx.Class.define("desk.volView",
 
 		// the initial volume file (.mhd)
 		__file : null,
-
-		// the segmentation session (a node directory)
-		__sessionDirectory : null,
 
 		// the main window
 		__window : null,
@@ -276,8 +274,6 @@ qx.Class.define("desk.volView",
 
 		// the function which draws the canvas
 		__drawZoomedCanvas : null,
-
-		__clusteringAction : null,
 
 		getWindow : function() {
 			return this.__window;},
@@ -447,7 +443,7 @@ qx.Class.define("desk.volView",
 
 			var selection=this.__formatSelectBox.getSelection()[0];
 
-			var seedsURL=volView.__fileBrowser.getFileURL(this.__sessionDirectory+"/"+this.getSeedFileName(sliceId))+
+			var seedsURL=volView.__fileBrowser.getFileURL(this.getSessionDirectory()+"/"+this.getSeedFileName(sliceId))+
 				"?nocache=" + this.__seedsTypeSelectBox.getSelection()[0].getUserData("cacheTags")[sliceId];
 
 			// test wether the seed is already loaded. If yes, we need to recreate the Image
@@ -1146,7 +1142,6 @@ qx.Class.define("desk.volView",
 			var clusteringAction=new desk.action("cvtseg2", false);
 			clusteringAction.setActionParameters(
 				{"input_volume" : volView.__file});
-			//	,"output_directory" : "cache/"});
 			this.__clusteringAction=clusteringAction;
 			clusteringAction.setOutputSubdirectory("clustering");
 			
@@ -1157,8 +1152,15 @@ qx.Class.define("desk.volView",
             medianFilteringPage.setLayout(new qx.ui.layout.VBox());
 			colorsTabView.add(medianFilteringPage);
 			var medianFilteringAction=new desk.action("volume_median_filtering", false);
+			medianFilteringAction.setOutputSubdirectory("filtering");
 			medianFilteringAction.buildUI();
 			medianFilteringPage.add(medianFilteringAction);
+
+			this.addListener("changeSessionDirectory", function (e) {
+				var directory=e.getData();
+				medianFilteringAction.setOutputDirectory(directory);
+				clusteringAction.setOutputDirectory(directory);
+				});
 
 			this.__imageCanvas.addListener("mouseout", function(event)
 			{
@@ -1918,7 +1920,7 @@ qx.Class.define("desk.volView",
 						"action" : "save_binary_file",
 						"file_name" : this.getSeedFileName(this.__drawingCanvasParams.sliceNumber),
 						"base64Data" : base64Img,
-						"output_directory" : this.__sessionDirectory};
+						"output_directory" : this.getSessionDirectory()};
 
 					this.__fileBrowser.getActions().launchAction(parameterMap, success);
 					var seedsTypeSelectBoxItem=this.__seedsTypeSelectBox.getSelection()[0];
@@ -2039,7 +2041,7 @@ qx.Class.define("desk.volView",
 				"action" : "save_xml_file",
 				"file_name" : "seeds.xml",
 				"xmlData" : element('seeds', xmlContent),
-				"output_directory" : this.__sessionDirectory};
+				"output_directory" : this.getSessionDirectory()};
 
 			this.__fileBrowser.getActions().launchAction(parameterMap, callback);
 		},
@@ -2128,7 +2130,7 @@ qx.Class.define("desk.volView",
 			};
 			var filePrefix=this.__seedsTypeSelectBox.getSelection()[0].getLabel();
 			colorsParamRequest.open("GET",
-				volView.__fileBrowser.getFileURL(volView.__sessionDirectory+"/seeds.xml?nocache="+Math.random()), true);
+				volView.__fileBrowser.getFileURL(volView.getSessionDirectory()+"/seeds.xml?nocache="+Math.random()), true);
 			colorsParamRequest.send(null);
 		},
 
@@ -2204,7 +2206,7 @@ qx.Class.define("desk.volView",
 					{
 						var sliceId = selectedChild.getUserData("slice");
 					////Erase image on the server
-						this.eraseFile(this.__sessionDirectory+"/"+this.getSeedFileName(sliceId));
+						this.eraseFile(this.getSessionDirectory()+"/"+this.getSeedFileName(sliceId));
 						selectBox.getSelection()[0].getUserData("seedsArray")[sliceId]=0;
 						this.__clearDrawingCanvas();
 						seedsList.remove(selectedChild);
@@ -2230,7 +2232,7 @@ qx.Class.define("desk.volView",
 					{
 						var sliceId = selectedChild.getUserData("slice");
 					////Erase image on the server
-						this.eraseFile(this.__sessionDirectory+"/"+this.getSeedFileName(sliceId));
+						this.eraseFile(this.getSessionDirectory()+"/"+this.getSeedFileName(sliceId));
 						selectBox.getSelection()[0].getUserData("seedsArray")[sliceId]=0;
 						this.__clearDrawingCanvas();
 						correctionsList.remove(selectedChild);
@@ -2311,8 +2313,8 @@ qx.Class.define("desk.volView",
 					{
 						sessionsList.setSelection([sessionItemToSelect]);
 						volView.__colorsList.setVisibility("visible");
-						volView.__sessionDirectory=fileBrowser.getSessionDirectory(
-							volView.__file,sessionType,sessionIdToSelect);
+						volView.setSessionDirectory(fileBrowser.getSessionDirectory(
+							volView.__file,sessionType,sessionIdToSelect));
 						volView.__saveSeedsXML();
 					}
 					else
@@ -2331,10 +2333,9 @@ qx.Class.define("desk.volView",
 					if (listItem.getUserData("dummy")!=true)
 					{
 						volView.__colorsList.setVisibility("visible");
-						volView.__sessionDirectory=fileBrowser.getSessionDirectory(
-							volView.__file,sessionType,listItem.getLabel());
+						volView.setSessionDirectory(fileBrowser.getSessionDirectory(
+							volView.__file,sessionType,listItem.getLabel()));
 						volView.__loadSession();
-						volView.__clusteringAction.setOutputDirectory(volView.__sessionDirectory);
 					}
 					sessionsList.close();
 				}});
@@ -2562,20 +2563,20 @@ qx.Class.define("desk.volView",
 					{
 					//	if (meshesViewer==null)
 						button.setEnabled(true);
-						meshesViewer=new desk.meshView(volView.__sessionDirectory+"/meshes/meshes.xml",
+						meshesViewer=new desk.meshView(volView.getSessionDirectory()+"/meshes/meshes.xml",
 							volView.__fileBrowser);
 					}
 					volView.__fileBrowser.getActions().launchAction({
 						"action" : "extract_meshes",
 						"max_number_of_vertices" : numberOfVerticesField.getValue(),
 						"number_of_smoothing_steps" : numberOfSmoothingStepsField.getValue(),
-						"input_volume" : volView.__sessionDirectory+"/segmentation/seg-cvtgcmultiseg.mhd",
-						"output_directory" : volView.__sessionDirectory+"/meshes"}, afterExtractionExecuted);
+						"input_volume" : volView.getSessionDirectory()+"/segmentation/seg-cvtgcmultiseg.mhd",
+						"output_directory" : volView.getSessionDirectory()+"/meshes"}, afterExtractionExecuted);
 					}
 				volView.__fileBrowser.getActions().launchAction({
 					"action" : "add_subdirectory",
 					"subdirectory_name" : "meshes",
-					"output_directory" : volView.__sessionDirectory}, afterDirectoryCreated);
+					"output_directory" : volView.getSessionDirectory()}, afterDirectoryCreated);
 				});
 
 			var balancingField=new qx.ui.form.TextField("0.1");
@@ -2629,10 +2630,10 @@ qx.Class.define("desk.volView",
 							var parameterMap2={
 								"action" : "cvtgcmultiseg",
 								"input_volume" : volView.__file,
-								"seeds" : volView.__sessionDirectory+"/seeds.xml",
+								"seeds" : volView.getSessionDirectory()+"/seeds.xml",
 								"clustering" : clusteringDirectory+"/clustering-index.mhd",
 								"unary_binary_weight" : balancingField.getValue(),
-								"output_directory" : volView.__sessionDirectory+"/segmentation"};
+								"output_directory" : volView.getSessionDirectory()+"/segmentation"};
 
 							function afterSegmentationComputed(e)
 							{
@@ -2665,7 +2666,7 @@ qx.Class.define("desk.volView",
 				volView.__fileBrowser.getActions().launchAction({
 					"action" : "add_subdirectory",
 					"subdirectory_name" : "segmentation",
-					"output_directory" : volView.__sessionDirectory}, afterDirectoryCreated);
+					"output_directory" : volView.getSessionDirectory()}, afterDirectoryCreated);
 			});
 			return [button, percentageContainer, balancingContainer];
 		}
