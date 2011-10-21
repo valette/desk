@@ -52,6 +52,8 @@ qx.Class.define("desk.action",
 
 		__validationManager : null,
 
+		__embededFileBrowser : null,
+
 		connect : function (parameterName, parentAction, fileName) {
 			if (parentAction==this)
 			{
@@ -99,8 +101,8 @@ qx.Class.define("desk.action",
 			var action=this.__action;
 			this.setLayout(new qx.ui.layout.VBox());
 
+			var myAction=this;
 			var pane = null;
-			var embededFileBrowser=null;
 
 			if (this.__standalone)
 			{
@@ -136,8 +138,8 @@ qx.Class.define("desk.action",
 					if (this.__standalone)
 					{
 						this.__window.setWidth(600);
-						embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
-						pane.add(embededFileBrowser, {flex : 1});
+						this.__embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
+						pane.add(this.__embededFileBrowser, {flex : 1});
 					}
 					logFileURL=desk.actions.BASEURL+outputDirectory+"/action.log";
 					showLogButton.setVisibility("visible");
@@ -410,14 +412,14 @@ qx.Class.define("desk.action",
 									if (this.__standalone)
 									{
 										//display the results directory
-										if (embededFileBrowser==null)
+										if (this.__embededFileBrowser==null)
 										{
 											this.__window.setWidth(600);
-											embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
-											pane.add(embededFileBrowser, {flex : 1});
+											this.__embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
+											pane.add(this.__embededFileBrowser, {flex : 1});
 										}
 										else
-											embededFileBrowser.updateRoot();
+											this.__embededFileBrowser.updateRoot();
 									}
 									logFileURL=desk.actions.BASEURL+outputDirectory+"/action.log";
 									showLogButton.setVisibility("visible");
@@ -432,7 +434,7 @@ qx.Class.define("desk.action",
 
 							function launchAction()
 							{
-								desk.actions.ACTIONSHANDLER.launchAction (parameterMap, getAnswer, this);
+								desk.actions.ACTIONSHANDLER.launchAction (parameterMap, getAnswer, myAction);
 							}
 
 							if (this.getOutputSubdirectory()==null)
@@ -441,7 +443,7 @@ qx.Class.define("desk.action",
 								desk.actions.ACTIONSHANDLER.launchAction({
 									"action" : "add_subdirectory",
 									"subdirectory_name" : this.getOutputSubdirectory(),
-									"output_directory" : this.__outputDirectory}, launchAction, this);
+									"output_directory" : this.__outputDirectory}, launchAction, myAction);
 						}
 					}
 

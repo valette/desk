@@ -146,8 +146,8 @@ qx.Class.define("desk.volView",
 		__startSegmentationButton : null,
 		__extractMeshesButton : null,
 
-		// the widget containing the defined colors for painting
-		__colorsList : null,
+		// the main tabview
+		__tabView : null,
 
 		__currentSeedsModified : false,
 
@@ -640,11 +640,12 @@ qx.Class.define("desk.volView",
 			
 		////Create labels zone
 			var colorsPage = new qx.ui.tabview.Page("colors");
-			volView.__colorsList=colorsPage;
             colorsPage.setLayout(new qx.ui.layout.Grid(1,1));
 
 			var colorsTabView = new qx.ui.tabview.TabView();
+			volView.__tabView=colorsTabView;
             colorsTabView.add(colorsPage);
+			colorsTabView.setVisibility("excluded");
 
    /*         colorsTabView.addListener("mouseup", function(event)
 			{
@@ -653,7 +654,7 @@ qx.Class.define("desk.volView",
             },this);
 */
 			this.__mainRightContainer.add(colorsTabView)
-			colorsPage.setVisibility("excluded");
+
 
 		////Function creates one label box
 			var unfocusedBorder = new qx.ui.decoration.Single(2, "solid", "black");
@@ -1157,7 +1158,7 @@ qx.Class.define("desk.volView",
 
 			segmentationAction.setOutputSubdirectory("segmentation");
 			segmentationAction.connect("clustering", clusteringAction, "clustering-index.mhd");
-			clusteringAction.setActionParameters({
+			segmentationAction.setActionParameters({
 				"input_volume" : volView.__file,
 				"seeds" : volView.getSessionDirectory()+"/seeds.xml"});
 
@@ -2329,7 +2330,7 @@ qx.Class.define("desk.volView",
 					if (sessionItemToSelect!=null)
 					{
 						sessionsList.setSelection([sessionItemToSelect]);
-						volView.__colorsList.setVisibility("visible");
+						volView.__tabview.setVisibility("visible");
 						volView.setSessionDirectory(fileBrowser.getSessionDirectory(
 							volView.__file,sessionType,sessionIdToSelect));
 						volView.__saveSeedsXML();
@@ -2349,7 +2350,7 @@ qx.Class.define("desk.volView",
 					var listItem=sessionsList.getSelection()[0];
 					if (listItem.getUserData("dummy")!=true)
 					{
-						volView.__colorsList.setVisibility("visible");
+						volView.__tabView.setVisibility("visible");
 						volView.setSessionDirectory(fileBrowser.getSessionDirectory(
 							volView.__file,sessionType,listItem.getLabel()));
 						volView.__loadSession();
