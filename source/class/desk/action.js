@@ -15,14 +15,19 @@ qx.Class.define("desk.action",
 	},
 
 	properties : {
-		outputDirectory :  { init : null, event : "changeOutputDirectory"},
 
 		outputSubdirectory : { init : null},
 
 		hideProvidedParameters : {init : false, check : "Boolean"}
 	},
 
+	events : {
+		// the "changeOutputDirectory" event is fired whenever __outputDirectory is changed
+		"changeOutputDirectory" : "qx.event.type.Event"
+	},
+
 	members : {
+		__outputDirectory : null,
 
 		__dependencies : null,
 
@@ -39,6 +44,19 @@ qx.Class.define("desk.action",
 		__window : null,
 
 		__validationManager : null,
+
+		setOutputDirectory : function (directory) {
+			this.__outputDirectory=directory;
+			this.fireEvent("changeOutputDirectory");
+		},
+
+		getOutputDirectory : function () {
+			var subDir=this.getOutputSubdirectory();
+			if (subDir!=null)
+				return this.__outputDirectory+"/"+subDir;
+			else
+				return this.__outputDirectory;
+		},
 
 		setActionParameters : function (parameters)
 		{
@@ -318,20 +336,18 @@ qx.Class.define("desk.action",
 						parameterMap["output_directory"]=out;
 					
 
-					function afterDirectoryCreated()
+					function launchAction()
 					{
-						parameterMap["output_directory"]=this.getOutputDirectory()+"/"+
-									this.getOutputSubdirectory();
 						desk.actions.ACTIONSHANDLER.launchAction (parameterMap, getAnswer, this);
 					}
 
 					if (this.getOutputSubdirectory()==null)
-						desk.actions.ACTIONSHANDLER.launchAction (parameterMap, getAnswer, this);
+						launchAction();
 					else
 						desk.actions.ACTIONSHANDLER.launchAction({
 							"action" : "add_subdirectory",
 							"subdirectory_name" : this.getOutputSubdirectory(),
-							"output_directory" : this.getOutputDirectory()}, afterDirectoryCreated, this);
+							"output_directory" : this.__outputDirectory}, launchAction, this);
 				} else {
 					alert(manager.getInvalidMessages().join("\n"));
 				}
