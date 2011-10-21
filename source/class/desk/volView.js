@@ -2398,7 +2398,8 @@ qx.Class.define("desk.volView",
 					{
 						var req = e.getTarget();
 						var slicesDirectory=req.getResponseText().split("\n")[0];
-						PNGFormat.setUserData("path","\/visu\/desk\/php\/"+slicesDirectory);
+						PNGFormat.setUserData("path",
+							volView.__fileBrowser.getFileURL(slicesDirectory));
 						volView.__topLeftContainer.remove(slicingLabel);
 						selectBox.setSelection([PNGFormat])
 					}
