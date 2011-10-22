@@ -517,7 +517,6 @@ qx.Class.define("desk.volView",
 			var tRCL=new qx.ui.layout.HBox();
 			tRCL.setSpacing(spacing);
 			this.__topRightContainer = new qx.ui.container.Composite(tRCL);
-			this.__mainRightContainer.add(this.__topRightContainer);
 
 			var bRCL=new qx.ui.layout.HBox();
 			bRCL.setSpacing(spacing);
@@ -639,12 +638,17 @@ qx.Class.define("desk.volView",
 			
 			
 		////Create labels zone
-			var colorsPage = new qx.ui.tabview.Page("colors");
-            colorsPage.setLayout(new qx.ui.layout.Grid(1,1));
+			var paintPage = new qx.ui.tabview.Page("paint");
+            paintPage.setLayout(new qx.ui.layout.VBox);
+			paintPage.add(this.__topRightContainer);
+
+			var colorsContainer=new qx.ui.container.Composite()
+            colorsContainer.setLayout(new qx.ui.layout.Grid(1,1));
+			paintPage.add(colorsContainer);
 
 			var colorsTabView = new qx.ui.tabview.TabView();
 			volView.__tabView=colorsTabView;
-            colorsTabView.add(colorsPage);
+            colorsTabView.add(paintPage);
 			colorsTabView.setVisibility("excluded");
 
    /*         colorsTabView.addListener("mouseup", function(event)
@@ -687,7 +691,7 @@ qx.Class.define("desk.volView",
                     volView.__drawingCanvasParams.paintFlag = true;
                     volView.setMouseActionMode(3);
                     var i = 0;
-                    var children = colorsPage.getChildren();
+                    var children = colorsContainer.getChildren();
                     while(children[i]!=this)
                     {
                         i++;
@@ -710,22 +714,22 @@ qx.Class.define("desk.volView",
                         volView.__drawingCanvasParams.paintFlag = false;
                     }
                     volView.__drawingCanvasParams.currentColor = colorBox.getBackgroundColor();
-                    colorsPage.set({opacity: 1});
+                    colorsContainer.set({opacity: 1});
                 });
 				var boxLabel = new qx.ui.basic.Label("\\" + inLabel.id + " : " + inLabel.name).set({alignX:"left"});
 				labelBox.add(boxLabel);
 				labelBox.add(colorBox);
 				if(inLabel.id<=colorCount)
 				{
-					colorsPage.add(labelBox, {column: inLabel.id-(nbLines-1)*columnLimit, row: (nbLines-1)});
+					colorsContainer.add(labelBox, {column: inLabel.id-(nbLines-1)*columnLimit, row: (nbLines-1)});
 				}
 				else
 				{
 					nbLines++;
-					colorsPage.add(labelBox, {column: inLabel.id-(nbLines-1)*columnLimit, row: (nbLines-1)});
+					colorsContainer.add(labelBox, {column: inLabel.id-(nbLines-1)*columnLimit, row: (nbLines-1)});
 					colorCount += columnLimit;
 				};
-				var tempColors = colorsPage._getChildren();
+				var tempColors = colorsContainer._getChildren();
 				if((boxWidth<boxLabel.getSizeHint().width+8)&&(0<tempColors.length))
 				{
 					boxWidth = boxLabel.getSizeHint().width + 16;	//// value returned by getSizeHint() is not enough
@@ -846,7 +850,7 @@ qx.Class.define("desk.volView",
 			volView.__topLeftContainer.add(volView.__getPaintPanelVisibilitySwitch());
 
 			volView.__seedsTypeSelectBox=volView.__getSeedsTypeSelectBox();
-			volView.__mainRightContainer.add(volView.__seedsTypeSelectBox);
+			paintPage.add(volView.__seedsTypeSelectBox);
 			volView.__mainRightContainer.add(volView.__getSessionsWidget());
 
 //			this.__mainRightContainer.add(new qx.ui.core.Spacer(30, 40), {flex: 5});
@@ -2413,7 +2417,7 @@ qx.Class.define("desk.volView",
 						"output_directory" : "cache\/",
 						"format" : "0"};
 					var slicingLabel=new qx.ui.basic.Label("computing...");
-					volView.__topRightContainer.addAfter(slicingLabel,selectBox);
+					volView.__topLeftContainer.addAfter(slicingLabel,selectBox);
 					function getAnswer(e)
 					{
 						var req = e.getTarget();
