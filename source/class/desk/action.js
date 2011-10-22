@@ -17,10 +17,7 @@ qx.Class.define("desk.action",
 	},
 
 	properties : {
-
-		outputSubdirectory : { init : null},
-
-		hideProvidedParameters : {init : false, check : "Boolean"}
+		outputSubdirectory : { init : null}
 	},
 
 	events : {
@@ -43,6 +40,8 @@ qx.Class.define("desk.action",
 		__actionName : null,
 
 		__providedParameters : null,
+
+		__loadedParameters : null,
 
 		__fileBrowser : null,
 
@@ -71,7 +70,57 @@ qx.Class.define("desk.action",
 
 		setOutputDirectory : function (directory) {
 			this.__outputDirectory=directory;
+			// try to load parameters on server
+
+			var req = new qx.io.request.Xhr(desk.actions.BASEURL+
+						this.getOutputDirectory()+"/action.par?nocache=" + Math.random());
+			req.addListener("success", function(e) {
+				var req = e.getTarget();
+				var parametersText=req.getResponseText();
+				var parameters=[];
+				var splitParameters=parametersText.split("\n");
+				for (var i=0 ; i!=splitParameters.length;i++)
+				{
+					var splitString=splitParameters[i].split("=");
+					parameters[splitString[0]]=splitString[1];
+				}
+				this.__loadedParameters=parameters;
+				this.__updateUIParameters();
+			}, this);
+			req.send();
 			this.fireEvent("changeOutputDirectory");
+		},
+
+		__updateUIParameters : function () {
+			var manager=this.__validationManager;
+			if (manager!=null) {
+				var parameters=this.__loadedParameters;
+				var items=manager.getItems();
+				var hideProvidedParameters=false;
+				function changeParameters() {
+					for (var i=0;i!=items.length;i++) {
+						var item=items[i];
+						var parameterName=item.getPlaceholder();
+						var parameterValue=parameters[parameterName];
+						if (parameterValue!=null)
+						{
+							item.setValue(parameterValue);
+							if (hideProvidedParameters)
+							{
+								item.setVisibility("excluded");
+								item.getUserData("label").setVisibility("excluded");
+							}
+						}
+					}
+				}
+				if (parameters!=null)
+					changeParameters();
+
+				hideProvidedParameters=!this.__standalone;
+				parameters=this.__providedParameters;
+				if (parameters!=null)
+					changeParameters();
+			}
 		},
 
 		getOutputDirectory : function () {
@@ -85,6 +134,7 @@ qx.Class.define("desk.action",
 		setActionParameters : function (parameters)
 		{
 			this.__providedParameters=parameters;
+			this.__updateUIParameters();
 		},
 
 		setOriginFileBrowser : function (fileBrowser)
@@ -229,8 +279,10 @@ qx.Class.define("desk.action",
 
 				if (!found)
 				{
-					this.add(new qx.ui.basic.Label(parameterName));
+					var label=new qx.ui.basic.Label(parameterName);
+					this.add(label);
 					var parameterForm=new qx.ui.form.TextField();
+					parameterForm.setUserData("label", label);
 					parameterForm.setPlaceholder(parameterName);
 					this.add(parameterForm);
 					var parameterType=parameter.getAttribute("type");
@@ -284,17 +336,12 @@ qx.Class.define("desk.action",
 					if (defaultValue)
 						parameterForm.setValue(defaultValue);
 
-					if (this.__providedParameters!=null)
-					{
-						var providedParameterValue=this.__providedParameters[parameterName];
-						if (providedParameterValue!=null)
-							parameterForm.setValue(providedParameterValue);
-					}
-
 					parameterForm.addListener("input", function(e) 
 						{this.setInvalidMessage(null);},parameterForm);
 				}
 			}
+
+			this.__updateUIParameters();
 
 			var executeBox = new qx.ui.container.Composite;
 			executeBox.setLayout(new qx.ui.layout.HBox(10));

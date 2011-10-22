@@ -1158,9 +1158,6 @@ qx.Class.define("desk.volView",
 
 			segmentationAction.setOutputSubdirectory("segmentation");
 			segmentationAction.connect("clustering", clusteringAction, "clustering-index.mhd");
-			segmentationAction.setActionParameters({
-				"input_volume" : volView.__file,
-				"seeds" : volView.getSessionDirectory()+"/seeds.xml"});
 
 			segmentationAction.buildUI();
 			segmentationPage.add(segmentationAction);
@@ -1170,6 +1167,8 @@ qx.Class.define("desk.volView",
 			colorsTabView.add(medianFilteringPage);
 			var medianFilteringAction=new desk.action("volume_median_filtering", false);
 			medianFilteringAction.setOutputSubdirectory("filtering");
+			medianFilteringAction.connect("input_volume", 
+										segmentationAction, "seg-cvtgcmultiseg.mhd");
 			medianFilteringAction.buildUI();
 			medianFilteringPage.add(medianFilteringAction);
 
@@ -1178,6 +1177,9 @@ qx.Class.define("desk.volView",
 				medianFilteringAction.setOutputDirectory(directory);
 				clusteringAction.setOutputDirectory(directory);
 				segmentationAction.setOutputDirectory(directory);
+				segmentationAction.setActionParameters({
+					"input_volume" : volView.__file,
+					"seeds" : volView.getSessionDirectory()+"/seeds.xml"});
 				});
 
 			this.__imageCanvas.addListener("mouseout", function(event)
