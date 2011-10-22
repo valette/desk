@@ -639,7 +639,9 @@ qx.Class.define("desk.volView",
 			
 		////Create labels zone
 			var paintPage = new qx.ui.tabview.Page("paint");
-            paintPage.setLayout(new qx.ui.layout.VBox);
+			var paintPageLayout=new qx.ui.layout.VBox();
+			paintPageLayout.setSpacing(5);
+            paintPage.setLayout(paintPageLayout);
 			paintPage.add(this.__topRightContainer);
 
 			var colorsContainer=new qx.ui.container.Composite()
