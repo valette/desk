@@ -49,7 +49,6 @@ qx.Class.define("desk.volView",
 			height : 0
 			};
 
-
 		// Données globales pour le canvas qx.html.Canvas des seeds (utilisé pour l'affichage)
 		this.__drawingCanvasParams = {
 			sliceNumber : 0,
@@ -272,6 +271,8 @@ qx.Class.define("desk.volView",
 		// maximal scalar value in the volume
 		__scalarMax : null,
 
+		__drawingCanvas : null,
+
 		// the function which draws the canvas
 		__drawZoomedCanvas : null,
 
@@ -473,7 +474,7 @@ qx.Class.define("desk.volView",
 	//			this.__colorsList.resetSelection();
 			}
 
-			if (mode!=4)
+			if ((mode!=4)&&(this.__eraserCursor!=null))
 				this.__eraserCursor.exclude();
 			this.__mouseActionMode = mode;
 		},
@@ -508,307 +509,21 @@ qx.Class.define("desk.volView",
 			this.__imageContainer = new qx.ui.container.Composite(iCL);
 			this.__mainLeftContainer.add(this.__imageContainer, {flex : 1});
 
-			var mRCL=new qx.ui.layout.VBox();
-			mRCL.setSpacing(spacing);
-			this.__mainRightContainer = new qx.ui.container.Composite(mRCL);
-			this.__window.add(this.__mainRightContainer);
-			this.__mainRightContainer.setVisibility("excluded");
+		////Create brightness/contrast fixing on/off button
+			this.__brghtnssCntrstButton = new qx.ui.form.ToggleButton(null, "desk/Contrast_Logo_petit.PNG");
 
-			var tRCL=new qx.ui.layout.HBox();
-			tRCL.setSpacing(spacing);
-			this.__topRightContainer = new qx.ui.container.Composite(tRCL);
+			this.__brghtnssCntrstButton.set({toolTipText : "LUMINOSITE/CONTRASTE"});
 
-			var bRCL=new qx.ui.layout.HBox();
-			bRCL.setSpacing(spacing);
-			this.__bottomRightContainer= new qx.ui.container.Composite(bRCL);
-
+			this.__brghtnssCntrstButton.addListener("click", function(event)
+			{
+				if (this.__brghtnssCntrstButton.getValue()==true)
+					this.setMouseActionMode(1);
+				else
+					this.setMouseActionMode(0);
+			}, this);
 
 			var volView=this;
-		
-		////Create pen tool
-            var penSize = new qx.ui.form.Spinner().set({
-                minimum: 1,
-                maximum: 100,
-                value: volView.__drawingCanvasParams.myLineWidth
-            });
-			
-            penSize.addListener("changeValue", function(event)
-			{
-                volView.__htmlContextLabels.lineWidth = event.getData();
-                volView.__eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*volView.__drawingCanvasParams.curCtxtZoom),
-                                    height: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*volView.__drawingCanvasParams.curCtxtZoom)});
-            });
-			
-			var penLabel = new qx.ui.basic.Label("Brush : ");
-			
-			this.__topRightContainer.add(penLabel);
-			this.__topRightContainer.add(penSize);
-			
 
-		////Create eraser
-            var eraserBorder = new qx.ui.decoration.Single(1, "solid", "black");
-			
-            volView.__eraserCursor = new qx.ui.core.Widget().set({
-										backgroundColor: "white",
-										decorator: eraserBorder,
-										width: volView.__eraserCoeff*volView.__drawingCanvasParams.myLineWidth*volView.__drawingCanvasParams.curCtxtZoom,
-										height : volView.__eraserCoeff*volView.__drawingCanvasParams.myLineWidth*volView.__drawingCanvasParams.curCtxtZoom,
-										zIndex : volView.__eraserCursorZ
-								});
-			
-            volView.__eraserCursor.addListener("mousedown", function(event)
-			{
-            ////Erase
-				if(event.isLeftPressed())
-                {
-					getPosition(event,true);
-					save2undoStack(event);
-					eraseFnct();
-                    volView.__mouseData.mouseLeftDownFlag = true;	// Activate erasing while moving
-                }
-			////Activate moving
-                if(event.isMiddlePressed())
-                {
-					volView.__eraserCursor.set({cursor: "move"});
-                    volView.__mouseData.mouseMiddleDownFlag = true;
-					volView.__mouseData.recentX = volView.__mouseData.xPos;
-					volView.__mouseData.recentY = volView.__mouseData.yPos;
-                }
-			////"Undo" (draw previous canvas)
-				undoFnct(event);
-            });
-			
-            volView.__eraserCursor.addListener("mousemove", function(event)
-			{
-				getPosition(event,false);	// No scaling so coordinates are compatible with placeEraser function
-                var tempMargin = 4/volView.__drawingCanvasParams.curCtxtZoom;
-			////Hide eraser if out of drawing zone
-                if(!((tempMargin<=volView.__mouseData.xPos)&&(volView.__mouseData.xPos<=volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom-tempMargin)&&(tempMargin<=volView.__mouseData.yPos)&&(volView.__mouseData.yPos<=volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom-tempMargin)))
-                {
-                    if(volView.__eraserCursor.getVisibility()=="visible")
-					{
-                        volView.__eraserCursor.exclude();
-					}
-                }
-			////Move eraser to mouse position
-                volView.__eraserCursor.set({marginLeft: Math.round((volView.__mouseData.xPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom),
-                                    marginTop: Math.round((volView.__mouseData.yPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom)});
-				volView.__mouseData.xPos = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.xPos;
-                volView.__mouseData.yPos = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.yPos;
-				if(volView.__mouseData.mouseLeftDownFlag)
-						eraseFnct(true);
-                if(volView.__mouseData.mouseMiddleDownFlag)
-                {
-					moveCanvas();
-                }
-            },this);
-			
-            volView.__eraserCursor.addListener("mouseup", function(event)
-			{
-                volView.__mouseData.mouseMiddleDownFlag = false;
-                volView.__mouseData.mouseLeftDownFlag = false;
-				volView.__eraserCursor.set({cursor: "default"});
-            },this);
-			
-            volView.__eraserCursor.exclude();
-
-			
-			
-			
-		////Create eraser on/off button
-            var eraserButton = new qx.ui.form.ToggleButton("Eraser");
-			
-            eraserButton.set({opacity: 0.5, enabled : false});
-			
-			eraserButton.addListener("changeValue", function(event)
-			{
-				if (event.getData()==true)
-					volView.setMouseActionMode(4);
-
-            });
-
-            eraserButton.addListener("mouseup", function(event)
-			{
-                volView.__htmlContextLabels.beginPath();
-                volView.__mouseData.mouseLeftDownFlag = false;
-            },this);
-			
-			this.__topRightContainer.add(eraserButton)
-
-			
-			
-		////Create labels zone
-			var paintPage = new qx.ui.tabview.Page("paint");
-			var paintPageLayout=new qx.ui.layout.VBox();
-			paintPageLayout.setSpacing(5);
-            paintPage.setLayout(paintPageLayout);
-			paintPage.add(this.__topRightContainer);
-
-			var colorsContainer=new qx.ui.container.Composite()
-            colorsContainer.setLayout(new qx.ui.layout.Grid(1,1));
-			paintPage.add(colorsContainer);
-
-			var colorsTabView = new qx.ui.tabview.TabView();
-			volView.__tabView=colorsTabView;
-            colorsTabView.add(paintPage);
-			colorsTabView.setVisibility("excluded");
-
-   /*         colorsTabView.addListener("mouseup", function(event)
-			{
-                volView.__htmlContextLabels.beginPath();
-                volView.__mouseData.mouseLeftDownFlag = false;
-            },this);
-*/
-			this.__mainRightContainer.add(colorsTabView)
-
-
-		////Function creates one label box
-			var unfocusedBorder = new qx.ui.decoration.Single(2, "solid", "black");
-            var focusedBorder = new qx.ui.decoration.Single(3, "solid", "red");
-			var boxWidth = 37;
-			var columnLimit = 4;
-			var colorCount = 4;
-			var nbLines = 1;
-			var createToolBox = function(inLabel)
-            {
-                var labelLayout = new qx.ui.layout.VBox();
-                labelLayout.setSpacing(4);
-				var labelBox = new qx.ui.container.Composite().set({
-                    layout : labelLayout,
-                    allowGrowX: false,
-                    allowGrowY: false,
-                    width: boxWidth,
-                    height: 53,
-                    decorator: unfocusedBorder,
-                    backgroundColor: "background-light",
-                    focusable : true
-                });
-				var colorBox = new qx.ui.container.Composite().set({
-                    maxWidth: boxWidth-12,
-                    height: 25,
-                    alignX : "center",
-					backgroundColor: inLabel.color
-                });
-				labelBox.addListener("click", function(){
-                    volView.__drawingCanvasParams.paintFlag = true;
-                    volView.setMouseActionMode(3);
-                    var i = 0;
-                    var children = colorsContainer.getChildren();
-                    while(children[i]!=this)
-                    {
-                        i++;
-                    };
-					if(!((children[i].getBackgroundColor()=="white")&&(!volView.__drawingCanvasParams.eraseFlag)))
-                    {
-                        children[i].set({decorator: focusedBorder, backgroundColor: "white"});
-                        for(var j=0; j<nbLabels; j++)
-                        {
-                            if(j!=i)
-                            {
-                                children[j].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
-                            }
-                        }
-                    }
-				////Comment to desactivate color on/off on click
-                    else
-                    {
-                        children[i].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
-                        volView.__drawingCanvasParams.paintFlag = false;
-                    }
-                    volView.__drawingCanvasParams.currentColor = colorBox.getBackgroundColor();
-                    colorsContainer.set({opacity: 1});
-                });
-				var boxLabel = new qx.ui.basic.Label("\\" + inLabel.id + " : " + inLabel.name).set({alignX:"left"});
-				labelBox.add(boxLabel);
-				labelBox.add(colorBox);
-				if(inLabel.id<=colorCount)
-				{
-					colorsContainer.add(labelBox, {column: inLabel.id-(nbLines-1)*columnLimit, row: (nbLines-1)});
-				}
-				else
-				{
-					nbLines++;
-					colorsContainer.add(labelBox, {column: inLabel.id-(nbLines-1)*columnLimit, row: (nbLines-1)});
-					colorCount += columnLimit;
-				};
-				var tempColors = colorsContainer._getChildren();
-				if((boxWidth<boxLabel.getSizeHint().width+8)&&(0<tempColors.length))
-				{
-					boxWidth = boxLabel.getSizeHint().width + 16;	//// value returned by getSizeHint() is not enough
-					for(var i=0; i<tempColors.length; i++)
-					{
-						tempColors[i].set({width:boxWidth});
-						tempColors[i]._getChildren()[1].set({maxWidth:boxWidth-12});
-					}
-				};
-				
-            };
-			
-		////Fill labels zone width data from the xml file
-			var nbLabels = 0;
-			var colorsParamRequest = new XMLHttpRequest();
-			colorsParamRequest.onreadystatechange = function()
-			{
-				 if(this.readyState == 4 && this.status == 200)
-				 {
-					// so far so good
-					if(this.responseXML!=null)
-					{
-						var response = this.responseXML;
-						nbLabels = response.getElementsByTagName("color").length;
-						volView.__labelColors=new Array(nbLabels);
-						for(var i=0; i<nbLabels; i++)
-						{
-							var color=response.getElementsByTagName("color")[i];
-							var label=parseInt(color.getAttribute("label"))
-							var colorName=color.getAttribute("name");
-							volView.__labelColors[i] = {
-								red : color.getAttribute("red"),
-								green : color.getAttribute("green"),
-								blue : color.getAttribute("blue"),
-								label : ""+label,
-								name : colorName
-							};
-							var newLabel = {
-								id : label,
-								name : colorName,
-								color : "rgb(" + volView.__labelColors[i].red + "," + volView.__labelColors[i].green + "," + volView.__labelColors[i].blue + ")"
-							};
-							newLabel.name = newLabel.name.replace(newLabel.name.charAt(0), newLabel.name.charAt(0).toUpperCase());
-							createToolBox(newLabel);
-						};
-					}
-					else
-							alert("Global Params : Failure...");
-				}
-				else if (this.readyState == 4 && this.status != 200)
-				{
-						// fetched the wrong page or network error...
-						alert('Global Params : "Fetched the wrong page" OR "Network error"');
-				}
-			};
-			colorsParamRequest.open("GET", "/visu/colors3.xml", true);
-			colorsParamRequest.send(null);
-			
-			
-			
-			
-			
-		////Create brightness/contrast fixing on/off button
-			volView.__brghtnssCntrstButton = new qx.ui.form.ToggleButton(null, "desk/Contrast_Logo_petit.PNG");
-
-			volView.__brghtnssCntrstButton.set({toolTipText : "LUMINOSITE/CONTRASTE"});
-
-			volView.__brghtnssCntrstButton.addListener("click", function(event)
-			{
-				if (volView.__brghtnssCntrstButton.getValue()==true)
-					volView.setMouseActionMode(1);
-				else
-					volView.setMouseActionMode(0);
-			});
-			
-			
-			
 		////Create reset brightness/contrast button
 			var resetBrCrButton = new qx.ui.form.Button("Reset");
             
@@ -818,7 +533,7 @@ qx.Class.define("desk.volView",
 			{
                 volView.__imgCanvasParams.brightness = 0;
                 volView.__imgCanvasParams.contrast = 0;
-				drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
+				volView.__drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
             });
 	
 
@@ -850,29 +565,6 @@ qx.Class.define("desk.volView",
 			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});			
 			volView.__topLeftContainer.add(volView.__getDragAndDropLabel());	
 			volView.__topLeftContainer.add(volView.__getPaintPanelVisibilitySwitch());
-
-			volView.__seedsTypeSelectBox=volView.__getSeedsTypeSelectBox();
-			paintPage.add(volView.__seedsTypeSelectBox);
-			volView.__mainRightContainer.add(volView.__getSessionsWidget());
-
-//			this.__mainRightContainer.add(new qx.ui.core.Spacer(30, 40), {flex: 5});
-
-
-			
-			this.__mainRightContainer.add(this.__bottomRightContainer);
-
-			
-			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
-			this.__topRightContainer.add(whileDrawingDrwngOpacityLabel);
-			
-            var whileDrawingDrwngOpacitySlider = new qx.ui.form.Slider();
-			whileDrawingDrwngOpacitySlider.setValue(100);
-			whileDrawingDrwngOpacitySlider.addListener("changeValue", function(event)
-			{
-					drawingCanvas.set({opacity: event.getData()/100});
-			},this);
-            this.__topRightContainer.add(whileDrawingDrwngOpacitySlider, {flex : 1});			
-			
 			
 			
 			var updateContext = function(event)
@@ -899,7 +591,7 @@ qx.Class.define("desk.volView",
 					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 					drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
 				}
-				getPosition(event,true);
+				volView.__getPosition(event,true);
 			////Draw at cursor position, activate drawing, activate brightness/contrast fixing
 				if ((event.isLeftPressed())&&(!event.isShiftPressed()))
                 {
@@ -917,13 +609,11 @@ qx.Class.define("desk.volView",
                                                         0, Math.PI*2, false);
                         volView.__htmlContextLabels.closePath();
                         volView.__htmlContextLabels.fill();
-                        if(!eraserButton.isEnabled())
-                            eraserButton.set({opacity: 1, enabled : true});
-						if (volView.__segmentationInProgress=false)
+						if (volView.__segmentationInProgress==false)
 							volView.__startSegmentationButton.setEnabled(true);
 
 		            	volView.__currentSeedsModified=true;
-						save2undoStack(event);
+						volView.__save2undoStack(event);
 
                         break;
                     case 1:  
@@ -946,7 +636,7 @@ qx.Class.define("desk.volView",
 				volView.__mouseData.recentX = volView.__mouseData.xPos;
                 volView.__mouseData.recentY = volView.__mouseData.yPos;
 			////"Undo" (draw previous canvas)
-				undoFnct(event);
+				volView.__undoFnct(event);
             };
 			
 			var wheelScale = 0;
@@ -1003,7 +693,7 @@ qx.Class.define("desk.volView",
 							}
 							volView.__mouseData.decaleZoomX = volView.__mouseData.decaleZoomX*zoomFactor;
 							volView.__mouseData.decaleZoomY = volView.__mouseData.decaleZoomY*zoomFactor;
-							var newCoor = changeInto05Coordinates(volView.__mouseData.decaleZoomX,volView.__mouseData.decaleZoomY);
+							var newCoor = volView.__changeInto05Coordinates(volView.__mouseData.decaleZoomX,volView.__mouseData.decaleZoomY);
 							volView.__mouseData.decaleZoomX = newCoor.newX;
 							volView.__mouseData.decaleZoomY = newCoor.newY;
 							drawZoomedCanvas(zoomFactor,true);
@@ -1018,7 +708,8 @@ qx.Class.define("desk.volView",
 						{
 							drawBrush(event,zoomFactor);
 						}
-						volView.__eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*zoomFactor)+1,
+						if (volView.__eraserCursor!=null)
+							volView.__eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*zoomFactor)+1,
 											height: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*zoomFactor)+1});
 					////Place the center of the eraser at mouse position
 						if(volView.__drawingCanvasParams.eraseFlag)
@@ -1035,9 +726,9 @@ qx.Class.define("desk.volView",
 			var mouseMoveHandler = function(event)
             {
 
-				getPosition(event,true);
+				volView.__getPosition(event,true);
                 if(volView.__mouseData.mouseMiddleDownFlag)
-					moveCanvas();
+					volView.__moveCanvas();
 				else
 					drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
 
@@ -1086,7 +777,7 @@ qx.Class.define("desk.volView",
 						break;
 					case 4 :
 						////Erase at mouse position
-						eraseFnct(true);
+						volView.__eraseFnct(true);
 						break;
 						default:
 							//do nothing
@@ -1125,69 +816,6 @@ qx.Class.define("desk.volView",
 			this.__imageContainer.addAt(this.__imageCanvas, 0);
 			this.__imageContainer.addAt(slider, 1, {flex : 1});
 
-						var segmentationWidgets=this.__getSegmentationWidgets();
-			this.__startSegmentationButton=segmentationWidgets[0];
-			this.__bottomRightContainer.add(this.__startSegmentationButton);
-			var extractMeshesWidgets=this.__getextractMeshesWidgets();
-			this.__extractMeshesButton=extractMeshesWidgets[0];
-			this.__bottomRightContainer.add(extractMeshesWidgets[0]);
-
-			var settingsPage = new qx.ui.tabview.Page("settings");
-            settingsPage.setLayout(new qx.ui.layout.VBox());
-			colorsTabView.add(settingsPage);
-			settingsPage.add(new qx.ui.basic.Label("Segmentation :"));
-			settingsPage.add(segmentationWidgets[1]);
-			settingsPage.add(segmentationWidgets[2]);
-			settingsPage.add(new qx.ui.basic.Label("Mesh generation :"));
-			settingsPage.add(extractMeshesWidgets[1]);
-			settingsPage.add(extractMeshesWidgets[2]);
-
-
-			var clusteringPage = new qx.ui.tabview.Page("clustering");
-            clusteringPage.setLayout(new qx.ui.layout.VBox());
-			colorsTabView.add(clusteringPage);
-			var clusteringAction=new desk.action("cvtseg2", false);
-			clusteringAction.setActionParameters(
-				{"input_volume" : volView.__file});
-			this.__clusteringAction=clusteringAction;
-			clusteringAction.setOutputSubdirectory("clustering");
-			
-			clusteringAction.buildUI();
-			clusteringPage.add(clusteringAction);
-
-			var segmentationPage = new qx.ui.tabview.Page("segmentation");
-            segmentationPage.setLayout(new qx.ui.layout.VBox());
-			colorsTabView.add(segmentationPage);
-			var segmentationAction=new desk.action("cvtgcmultiseg", false);
-			clusteringAction.setActionParameters({
-				"input_volume" : volView.__file});
-
-			segmentationAction.setOutputSubdirectory("segmentation");
-			segmentationAction.connect("clustering", clusteringAction, "clustering-index.mhd");
-
-			segmentationAction.buildUI();
-			segmentationPage.add(segmentationAction);
-
-			var medianFilteringPage = new qx.ui.tabview.Page("cleaning");
-            medianFilteringPage.setLayout(new qx.ui.layout.VBox());
-			colorsTabView.add(medianFilteringPage);
-			var medianFilteringAction=new desk.action("volume_median_filtering", false);
-			medianFilteringAction.setOutputSubdirectory("filtering");
-			medianFilteringAction.connect("input_volume", 
-										segmentationAction, "seg-cvtgcmultiseg.mhd");
-			medianFilteringAction.buildUI();
-			medianFilteringPage.add(medianFilteringAction);
-
-			this.addListener("changeSessionDirectory", function (e) {
-				var directory=e.getData();
-				medianFilteringAction.setOutputDirectory(directory);
-				clusteringAction.setOutputDirectory(directory);
-				segmentationAction.setOutputDirectory(directory);
-				segmentationAction.setActionParameters({
-					"input_volume" : volView.__file,
-					"seeds" : volView.getSessionDirectory()+"/seeds.xml"});
-				});
-
 			this.__imageCanvas.addListener("mouseout", function(event)
 			{
 				this.__mouseActionActive=false;
@@ -1196,7 +824,8 @@ qx.Class.define("desk.volView",
 					volView.__htmlContextLabels.beginPath();
 					volView.__mouseData.mouseLeftDownFlag = false;
 					volView.__mouseData.mouseMiddleDownFlag = false;
-					volView.__eraserCursor.set({cursor: "default"});
+					if (volView.__eraserCursor!=null)
+						volView.__eraserCursor.set({cursor: "default"});
 					drawingCanvas.set({cursor: "default"});
 				//	volView.__eraserCursor.exclude(); this should be here, but when enabled, the eraser cursor blinks
 				}
@@ -1218,7 +847,7 @@ qx.Class.define("desk.volView",
             											 zIndex: volView.__drawingCanvasZ,
             											 width : volView.__imgMap.width,
 														height : volView.__imgMap.height });
-
+			this.__drawingCanvas=drawingCanvas;
 			this.__imageCanvas.add(drawingCanvas);		
 			
             // HTML embed for background image
@@ -1275,8 +904,6 @@ qx.Class.define("desk.volView",
             containerHtmlUsedSeeds.add(embedObjectUsedSeeds);
 			this.__embedObjectUsedSeeds=embedObjectUsedSeeds;
 			this.__imageCanvas.add(containerHtmlUsedSeeds);
-
-			volView.__resetSeedsList();
 	
 			spinner.addListener("changeValue", function(event)
 			{
@@ -1299,8 +926,6 @@ qx.Class.define("desk.volView",
 
 		//	spinner.setValue(0);//Math.round(0.5*volView.__numberOfSlices));
 
-
-            volView.__imageCanvas.add(volView.__eraserCursor);
 
 		function waitForinit()
 		{
@@ -1328,7 +953,7 @@ qx.Class.define("desk.volView",
 				drawingCanvas.addListener("redraw", updateContext, volView);
 				drawingCanvas.addListener("mousedown", mouseDownHandler, volView);
 				drawingCanvas.addListener("mousewheel", mouseWheelHandler, volView);
-				volView.__eraserCursor.addListener("mousewheel", mouseWheelHandler, volView);
+
 				drawingCanvas.addListener("mousemove", mouseMoveHandler, volView);
 				drawingCanvas.addListener("mouseup", mouseUpHandler, volView);
 
@@ -1351,58 +976,7 @@ qx.Class.define("desk.volView",
 		//	F U N C T I O N S
 		//
 		/* ************************************************************************************************************************************* */
-			
-			
-			
-			
-			
-        ////Computes on image mouse position
-		////If(scaling) applies zoom factor for relative coordinates (on zoomed window)
-			var getPosition = function(mouseEvent,scaling)
-            {
-				var canvasLocation=volView.__imageCanvas.getContentLocation();
-				volView.__mouseData.xPos = (mouseEvent.getDocumentLeft()-canvasLocation.left)/volView.__drawingCanvasParams.curCtxtZoom;
-				volView.__mouseData.yPos = (mouseEvent.getDocumentTop()-canvasLocation.top)/volView.__drawingCanvasParams.curCtxtZoom;
 
-				if(scaling)
-				{
-					volView.__mouseData.xPos = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.xPos;
-					volView.__mouseData.yPos = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.yPos;
-				}
-				var newCoor = changeInto05Coordinates(volView.__mouseData.xPos,volView.__mouseData.yPos);
-				volView.__mouseData.xPos = newCoor.newX;
-				volView.__mouseData.yPos = newCoor.newY;
-			};
-			
-			
-			
-			
-			
-		////Changes int coordinates into nearest  xxx,5  value to prevent some effects of antialiasing
-			var changeInto05Coordinates = function(X,Y)
-            {
-				var newCoordinates = {
-						newX : 0,
-						newY : 0
-				};
-				var intX2middle, intY2middle;
-				if(Math.round(X)<X)
-					intX2middle = Math.round(X)+0.5;
-				else
-					intX2middle = Math.round(X)-0.5;
-				if(Math.round(Y)<Y)
-					intY2middle = Math.round(Y)+0.5;
-				else
-					intY2middle = Math.round(Y)-0.5;
-				newCoordinates.newX = intX2middle;
-				newCoordinates.newY = intY2middle;
-				return newCoordinates;
-			};
-			
-			
-			
-			
-			
 		////Function applies zoom to image and drawing cavas
 			var drawZoomedCanvas = function(zoomFactor,zooming)
             {
@@ -1498,141 +1072,6 @@ qx.Class.define("desk.volView",
                 }
 			};
 
-
-		////Save current labels image (used before any modification on the canvas)
-			var save2undoStack = function(mouseEvent)
-            {
-				if(!mouseEvent.isRightPressed())
-				{
-					var tempData = [];
-					if(volView.__ctrlZData.length==0)
-					{
-						tempData[0] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
-					}
-					else
-					{
-						if(volView.__ctrlZData.length<volView.__undoLimit)
-						{
-							for(var i=0; i<volView.__ctrlZData.length; i++)
-							{
-									tempData[volView.__ctrlZData.length-i] = volView.__ctrlZData[volView.__ctrlZData.length-i-1];
-							}
-							tempData[0] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
-						}
-						else
-						{
-							if(volView.__ctrlZData.length==volView.__undoLimit)
-							{
-								for(var i=1; i<volView.__ctrlZData.length; i++)
-								{
-									tempData[volView.__ctrlZData.length-i] = volView.__ctrlZData[volView.__ctrlZData.length-i-1];
-								}
-								tempData[0] = volView.__htmlContextLabels.getImageData(0, 0, volView.__imgMap.width, volView.__imgMap.height);
-							}
-						}
-					}
-					volView.__ctrlZData = tempData;
-				}
-			};
-			
-			
-			
-			
-			
-		////Pops out the last state in the "undo" stack and draw image on the canvas
-            var undoFnct = function(mouseEvent)
-            {
-				if(mouseEvent.isRightPressed())
-				{
-	            	volView.__currentSeedsModified=true;
-					if(0<volView.__ctrlZData.length)
-					{
-						volView.__htmlContextLabels.putImageData(volView.__ctrlZData[0], 0, 0);
-						drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
-					}
-					var tempData = [];
-					for(var i=1; i<volView.__ctrlZData.length; i++)
-					{
-						tempData[i-1] = volView.__ctrlZData[i];
-					}
-					volView.__ctrlZData = tempData;
-				}
-			};
-			
-			
-			
-			
-			
-		////Redraw image and drawing canvas when translation
-            var moveCanvas = function()
-            {
-				var tempDecaleX = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.recentX-volView.__mouseData.xPos;
-				var tempDecaleY = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.recentY-volView.__mouseData.yPos;
-				if(tempDecaleX<0)
-				{
-					volView.__mouseData.decaleZoomX = 0;
-				}
-				if(volView.__imgMap.width-volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom<tempDecaleX)
-				{
-					volView.__mouseData.decaleZoomX = volView.__imgMap.width-volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom;
-				}
-				if((0<=tempDecaleX)&&(tempDecaleX<=volView.__imgMap.width-volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom))
-				{
-					volView.__mouseData.decaleZoomX = tempDecaleX;
-				}
-				if(tempDecaleY<0)
-				{
-					volView.__mouseData.decaleZoomY = 0;
-				}
-				if(volView.__imgMap.height-volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom<tempDecaleY)
-				{
-					volView.__mouseData.decaleZoomY = volView.__imgMap.height-volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom;
-				}
-				if((0<=tempDecaleY)&&(tempDecaleY<=volView.__imgMap.height-volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom))
-				{
-					volView.__mouseData.decaleZoomY = tempDecaleY;
-				}
-				volView.__mouseData.decaleZoomX = volView.__mouseData.decaleZoomX*volView.__drawingCanvasParams.curCtxtZoom;
-				volView.__mouseData.decaleZoomY = volView.__mouseData.decaleZoomY*volView.__drawingCanvasParams.curCtxtZoom;
-				drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
-			};
-			
-			
-		////Clear labels canvas at mouse position
-            var eraseFnct = function(autoComplete)
-            {
-				volView.__currentSeedsModified=true;
-				var tempX, tempY;
-				if(autoComplete)
-				{
-					tempX = (volView.__mouseData.recentX+volView.__mouseData.xPos)/2-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
-					tempY = (volView.__mouseData.recentY+volView.__mouseData.yPos)/2-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
-					var newCoor = changeInto05Coordinates(tempX,tempY);
-					tempX = newCoor.newX;
-					tempY = newCoor.newY;
-                    volView.__htmlContextLabels.clearRect(tempX,
-                                                tempY,
-                                                    volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth,
-                                                    volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth);
-				}
-				tempX = volView.__mouseData.xPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
-				tempY = volView.__mouseData.yPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2;
-				var newCoor = changeInto05Coordinates(tempX,tempY);
-				tempX = newCoor.newX;
-				tempY = newCoor.newY;
-                volView.__htmlContextLabels.clearRect(tempX,
-											tempY,
-												volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth,
-												volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth);
-                drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,false);
-                volView.__mouseData.recentX = volView.__mouseData.xPos;
-                volView.__mouseData.recentY = volView.__mouseData.yPos;
-			};
-			
-			
-			
-			
-			
 		////Redraw image canvas at original scale
             var resetZoom = function(autoComplete)
             {
@@ -1864,6 +1303,107 @@ qx.Class.define("desk.volView",
             };
 		},
 
+		////Redraw image and drawing canvas when translation
+		__moveCanvas : function() {
+			var tempDecaleX = this.__mouseData.decaleZoomX/this.__drawingCanvasParams.curCtxtZoom + this.__mouseData.recentX-this.__mouseData.xPos;
+			var tempDecaleY = this.__mouseData.decaleZoomY/this.__drawingCanvasParams.curCtxtZoom + this.__mouseData.recentY-this.__mouseData.yPos;
+			if(tempDecaleX<0)
+			{
+				this.__mouseData.decaleZoomX = 0;
+			}
+			if(this.__imgMap.width-this.__imgMap.width/this.__drawingCanvasParams.curCtxtZoom<tempDecaleX)
+			{
+				this.__mouseData.decaleZoomX = this.__imgMap.width-this.__imgMap.width/this.__drawingCanvasParams.curCtxtZoom;
+			}
+			if((0<=tempDecaleX)&&(tempDecaleX<=this.__imgMap.width-this.__imgMap.width/this.__drawingCanvasParams.curCtxtZoom))
+			{
+				this.__mouseData.decaleZoomX = tempDecaleX;
+			}
+			if(tempDecaleY<0)
+			{
+				this.__mouseData.decaleZoomY = 0;
+			}
+			if(this.__imgMap.height-this.__imgMap.height/this.__drawingCanvasParams.curCtxtZoom<tempDecaleY)
+			{
+				this.__mouseData.decaleZoomY = this.__imgMap.height-this.__imgMap.height/this.__drawingCanvasParams.curCtxtZoom;
+			}
+			if((0<=tempDecaleY)&&(tempDecaleY<=this.__imgMap.height-this.__imgMap.height/this.__drawingCanvasParams.curCtxtZoom))
+			{
+				this.__mouseData.decaleZoomY = tempDecaleY;
+			}
+			this.__mouseData.decaleZoomX = this.__mouseData.decaleZoomX*this.__drawingCanvasParams.curCtxtZoom;
+			this.__mouseData.decaleZoomY = this.__mouseData.decaleZoomY*this.__drawingCanvasParams.curCtxtZoom;
+			this.__drawZoomedCanvas(this.__drawingCanvasParams.curCtxtZoom,true);
+		},
+
+		////Pops out the last state in the "undo" stack and draw image on the canvas
+		__undoFnct : function(mouseEvent) {
+			if(mouseEvent.isRightPressed())
+			{
+				this.__currentSeedsModified=true;
+				if(0<this.__ctrlZData.length)
+				{
+					this.__htmlContextLabels.putImageData(this.__ctrlZData[0], 0, 0);
+					this.__drawZoomedCanvas(this.__drawingCanvasParams.curCtxtZoom,false);
+				}
+				var tempData = [];
+				for(var i=1; i<this.__ctrlZData.length; i++)
+				{
+					tempData[i-1] = this.__ctrlZData[i];
+				}
+				this.__ctrlZData = tempData;
+			}
+		},
+
+
+		////Clear labels canvas at mouse position
+		__eraseFnct : function (autoComplete) {
+			this.__currentSeedsModified=true;
+			var tempX, tempY;
+			if(autoComplete)
+			{
+				tempX = (this.__mouseData.recentX+this.__mouseData.xPos)/2-this.__eraserCoeff*this.__htmlContextLabels.lineWidth/2;
+				tempY = (this.__mouseData.recentY+this.__mouseData.yPos)/2-this.__eraserCoeff*this.__htmlContextLabels.lineWidth/2;
+				var newCoor = this.__changeInto05Coordinates(tempX,tempY);
+				tempX = newCoor.newX;
+				tempY = newCoor.newY;
+				this.__htmlContextLabels.clearRect(tempX,
+						tempY,
+						this.__eraserCoeff*this.__htmlContextLabels.lineWidth,
+						this.__eraserCoeff*this.__htmlContextLabels.lineWidth);
+			}
+			tempX = this.__mouseData.xPos-this.__eraserCoeff*this.__htmlContextLabels.lineWidth/2;
+			tempY = this.__mouseData.yPos-this.__eraserCoeff*this.__htmlContextLabels.lineWidth/2;
+			var newCoor = this.__changeInto05Coordinates(tempX,tempY);
+			tempX = newCoor.newX;
+			tempY = newCoor.newY;
+			this.__htmlContextLabels.clearRect(tempX,
+					tempY,
+					this.__eraserCoeff*this.__htmlContextLabels.lineWidth,
+					this.__eraserCoeff*this.__htmlContextLabels.lineWidth);
+			this.__drawZoomedCanvas(this.__drawingCanvasParams.curCtxtZoom,false);
+			this.__mouseData.recentX = this.__mouseData.xPos;
+			this.__mouseData.recentY = this.__mouseData.yPos;
+		},
+
+        ////Computes on image mouse position
+		////If(scaling) applies zoom factor for relative coordinates (on zoomed window)
+		__getPosition : function (mouseEvent,scaling) {
+			var canvasLocation=this.__imageCanvas.getContentLocation();
+			this.__mouseData.xPos = (mouseEvent.getDocumentLeft()-canvasLocation.left)/this.__drawingCanvasParams.curCtxtZoom;
+			this.__mouseData.yPos = (mouseEvent.getDocumentTop()-canvasLocation.top)/this.__drawingCanvasParams.curCtxtZoom;
+
+			if(scaling)
+			{
+				this.__mouseData.xPos = this.__mouseData.decaleZoomX/this.__drawingCanvasParams.curCtxtZoom + this.__mouseData.xPos;
+				this.__mouseData.yPos = this.__mouseData.decaleZoomY/this.__drawingCanvasParams.curCtxtZoom + this.__mouseData.yPos;
+			}
+			var newCoor = this.__changeInto05Coordinates(this.__mouseData.xPos,this.__mouseData.yPos);
+			this.__mouseData.xPos = newCoor.newX;
+			this.__mouseData.yPos = newCoor.newY;
+		},
+
+
 		////Use a php file to remove the specified file in the server
 		eraseFile : function(file)
         {
@@ -1872,6 +1412,477 @@ qx.Class.define("desk.volView",
 				"file_name" : file};
 
 			this.__fileBrowser.getActions().launchAction(parameterMap);
+		},
+
+		////Save current labels image (used before any modification on the canvas)
+		__save2undoStack : function (mouseEvent) {
+			if(!mouseEvent.isRightPressed())
+			{
+				var tempData = [];
+				if(this.__ctrlZData.length==0)
+				{
+					tempData[0] = this.__htmlContextLabels.getImageData(0, 0, this.__imgMap.width, this.__imgMap.height);
+				}
+				else
+				{
+					if(this.__ctrlZData.length<this.__undoLimit)
+					{
+						for(var i=0; i<this.__ctrlZData.length; i++)
+						{
+							tempData[this.__ctrlZData.length-i] = this.__ctrlZData[this.__ctrlZData.length-i-1];
+						}
+						tempData[0] = this.__htmlContextLabels.getImageData(0, 0, this.__imgMap.width, this.__imgMap.height);
+					}
+					else
+					{
+						if(this.__ctrlZData.length==this.__undoLimit)
+						{
+							for(var i=1; i<this.__ctrlZData.length; i++)
+							{
+								tempData[this.__ctrlZData.length-i] = this.__ctrlZData[this.__ctrlZData.length-i-1];
+							}
+							tempData[0] = this.__htmlContextLabels.getImageData(0, 0, this.__imgMap.width, this.__imgMap.height);
+						}
+					}
+				}
+				this.__ctrlZData = tempData;
+			}
+		},
+
+
+		////Changes int coordinates into nearest  xxx,5  value to prevent some effects of antialiasing
+		__changeInto05Coordinates : function(X,Y) {
+			var newCoordinates = {
+				newX : 0,
+				newY : 0
+			};
+			var intX2middle, intY2middle;
+			if(Math.round(X)<X)
+				intX2middle = Math.round(X)+0.5;
+			else
+				intX2middle = Math.round(X)-0.5;
+			if(Math.round(Y)<Y)
+				intY2middle = Math.round(Y)+0.5;
+			else
+				intY2middle = Math.round(Y)-0.5;
+			newCoordinates.newX = intX2middle;
+			newCoordinates.newY = intY2middle;
+			return newCoordinates;
+		},
+
+		__getPaintPanelVisibilitySwitch : function () {
+			var volView=this;
+			var fileBrowser=this.__fileBrowser;
+			var paintPaneVisibilitySwitch=new qx.ui.form.ToggleButton("Paint")
+			paintPaneVisibilitySwitch.addListener("changeValue", function (e) {
+				if (e.getData())
+				{
+					if (this.__mainRightContainer==null)
+						this.__buildRightContainer();
+					this.__mainRightContainer.setVisibility("visible");
+					this.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList").setVisibility("visible");
+				}
+				else
+				{
+					this.__mainRightContainer.setVisibility("excluded");
+					this.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList").setVisibility("excluded");
+				}
+				}, this);
+			return paintPaneVisibilitySwitch;
+		},
+
+		__buildRightContainer : function()
+		{
+			var spacing=5;
+			var mRCL=new qx.ui.layout.VBox();
+			mRCL.setSpacing(spacing);
+			this.__mainRightContainer = new qx.ui.container.Composite(mRCL);
+			this.__window.add(this.__mainRightContainer);
+			this.__mainRightContainer.setVisibility("excluded");
+
+			var tRCL=new qx.ui.layout.HBox();
+			tRCL.setSpacing(spacing);
+			this.__topRightContainer = new qx.ui.container.Composite(tRCL);
+
+			var bRCL=new qx.ui.layout.HBox();
+			bRCL.setSpacing(spacing);
+			this.__bottomRightContainer= new qx.ui.container.Composite(bRCL);
+
+
+			var volView=this;
+		
+		////Create pen tool
+            var penSize = new qx.ui.form.Spinner().set({
+                minimum: 1,
+                maximum: 100,
+                value: volView.__drawingCanvasParams.myLineWidth
+            });
+			
+            penSize.addListener("changeValue", function(event)
+			{
+                volView.__htmlContextLabels.lineWidth = event.getData();
+                volView.__eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*volView.__drawingCanvasParams.curCtxtZoom),
+                                    height: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*volView.__drawingCanvasParams.curCtxtZoom)});
+            });
+			
+			var penLabel = new qx.ui.basic.Label("Brush : ");
+			
+			this.__topRightContainer.add(penLabel);
+			this.__topRightContainer.add(penSize);
+			
+
+		////Create eraser
+            var eraserBorder = new qx.ui.decoration.Single(1, "solid", "black");
+			
+            volView.__eraserCursor = new qx.ui.core.Widget().set({
+										backgroundColor: "white",
+										decorator: eraserBorder,
+										width: volView.__eraserCoeff*volView.__drawingCanvasParams.myLineWidth*volView.__drawingCanvasParams.curCtxtZoom,
+										height : volView.__eraserCoeff*volView.__drawingCanvasParams.myLineWidth*volView.__drawingCanvasParams.curCtxtZoom,
+										zIndex : volView.__eraserCursorZ
+								});
+			
+            volView.__eraserCursor.addListener("mousedown", function(event)
+			{
+            ////Erase
+				if(event.isLeftPressed())
+                {
+					volView.__getPosition(event,true);
+					volView.__save2undoStack(event);
+					volView.__eraseFnct();
+                    volView.__mouseData.mouseLeftDownFlag = true;	// Activate erasing while moving
+                }
+			////Activate moving
+                if(event.isMiddlePressed())
+                {
+//					volView.__eraserCursor.set({cursor: "move"});
+                    volView.__mouseData.mouseMiddleDownFlag = true;
+					volView.__mouseData.recentX = volView.__mouseData.xPos;
+					volView.__mouseData.recentY = volView.__mouseData.yPos;
+                }
+			////"Undo" (draw previous canvas)
+				volView.__undoFnct(event);
+            });
+			
+            volView.__eraserCursor.addListener("mousemove", function(event)
+			{
+				volView.__getPosition(event,false);	// No scaling so coordinates are compatible with placeEraser function
+                var tempMargin = 4/volView.__drawingCanvasParams.curCtxtZoom;
+			////Hide eraser if out of drawing zone
+                if(!((tempMargin<=volView.__mouseData.xPos)&&(volView.__mouseData.xPos<=volView.__imgMap.width/volView.__drawingCanvasParams.curCtxtZoom-tempMargin)&&(tempMargin<=volView.__mouseData.yPos)&&(volView.__mouseData.yPos<=volView.__imgMap.height/volView.__drawingCanvasParams.curCtxtZoom-tempMargin)))
+                {
+                    if(volView.__eraserCursor.getVisibility()=="visible")
+					{
+                        volView.__eraserCursor.exclude();
+					}
+                }
+			////Move eraser to mouse position
+                volView.__eraserCursor.set({marginLeft: Math.round((volView.__mouseData.xPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom),
+                                    marginTop: Math.round((volView.__mouseData.yPos-volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth/2)*volView.__drawingCanvasParams.curCtxtZoom)});
+				volView.__mouseData.xPos = volView.__mouseData.decaleZoomX/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.xPos;
+                volView.__mouseData.yPos = volView.__mouseData.decaleZoomY/volView.__drawingCanvasParams.curCtxtZoom + volView.__mouseData.yPos;
+				if(volView.__mouseData.mouseLeftDownFlag)
+						volView.__eraseFnct(true);
+                if(volView.__mouseData.mouseMiddleDownFlag)
+                {
+					volView.__moveCanvas();
+                }
+            },this);
+			
+            volView.__eraserCursor.addListener("mouseup", function(event)
+			{
+                volView.__mouseData.mouseMiddleDownFlag = false;
+                volView.__mouseData.mouseLeftDownFlag = false;
+				volView.__eraserCursor.set({cursor: "default"});
+            },this);
+			
+            volView.__eraserCursor.exclude();
+
+			
+			
+			
+		////Create eraser on/off button
+            var eraserButton = new qx.ui.form.ToggleButton("Eraser");
+			
+            eraserButton.set({opacity: 0.5, enabled : false});
+			
+			eraserButton.addListener("changeValue", function(event)
+			{
+				if (event.getData()==true)
+					volView.setMouseActionMode(4);
+
+            });
+
+            eraserButton.addListener("mouseup", function(event)
+			{
+                volView.__htmlContextLabels.beginPath();
+                volView.__mouseData.mouseLeftDownFlag = false;
+            },this);
+			
+			this.__topRightContainer.add(eraserButton)
+
+			
+			
+		////Create labels zone
+			var paintPage = new qx.ui.tabview.Page("paint");
+			var paintPageLayout=new qx.ui.layout.VBox();
+			paintPageLayout.setSpacing(5);
+            paintPage.setLayout(paintPageLayout);
+			paintPage.add(this.__topRightContainer);
+
+			var colorsContainer=new qx.ui.container.Composite()
+            colorsContainer.setLayout(new qx.ui.layout.Grid(1,1));
+			paintPage.add(colorsContainer);
+
+			var colorsTabView = new qx.ui.tabview.TabView();
+			volView.__tabView=colorsTabView;
+            colorsTabView.add(paintPage);
+			colorsTabView.setVisibility("excluded");
+
+   /*         colorsTabView.addListener("mouseup", function(event)
+			{
+                volView.__htmlContextLabels.beginPath();
+                volView.__mouseData.mouseLeftDownFlag = false;
+            },this);
+*/
+			this.__mainRightContainer.add(colorsTabView)
+
+
+		////Function creates one label box
+			var unfocusedBorder = new qx.ui.decoration.Single(2, "solid", "black");
+            var focusedBorder = new qx.ui.decoration.Single(3, "solid", "red");
+			var boxWidth = 37;
+			var columnLimit = 4;
+			var colorCount = 4;
+			var nbLines = 1;
+			var createToolBox = function(inLabel)
+            {
+                var labelLayout = new qx.ui.layout.VBox();
+                labelLayout.setSpacing(4);
+				var labelBox = new qx.ui.container.Composite().set({
+                    layout : labelLayout,
+                    allowGrowX: false,
+                    allowGrowY: false,
+                    width: boxWidth,
+                    height: 53,
+                    decorator: unfocusedBorder,
+                    backgroundColor: "background-light",
+                    focusable : true
+                });
+				var colorBox = new qx.ui.container.Composite().set({
+                    maxWidth: boxWidth-12,
+                    height: 25,
+                    alignX : "center",
+					backgroundColor: inLabel.color
+                });
+				labelBox.addListener("click", function(){
+                    volView.__drawingCanvasParams.paintFlag = true;
+                    volView.setMouseActionMode(3);
+                    var i = 0;
+                    var children = colorsContainer.getChildren();
+                    while(children[i]!=this)
+                    {
+                        i++;
+                    };
+					if(!((children[i].getBackgroundColor()=="white")&&(!volView.__drawingCanvasParams.eraseFlag)))
+                    {
+                        children[i].set({decorator: focusedBorder, backgroundColor: "white"});
+                        for(var j=0; j<nbLabels; j++)
+                        {
+                            if(j!=i)
+                            {
+                                children[j].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
+                            }
+                        }
+                    }
+				////Comment to desactivate color on/off on click
+                    else
+                    {
+                        children[i].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
+                        volView.__drawingCanvasParams.paintFlag = false;
+                    }
+                    volView.__drawingCanvasParams.currentColor = colorBox.getBackgroundColor();
+                    colorsContainer.set({opacity: 1});
+                });
+				var boxLabel = new qx.ui.basic.Label("\\" + inLabel.id + " : " + inLabel.name).set({alignX:"left"});
+				labelBox.add(boxLabel);
+				labelBox.add(colorBox);
+				if(inLabel.id<=colorCount)
+				{
+					colorsContainer.add(labelBox, {column: inLabel.id-(nbLines-1)*columnLimit, row: (nbLines-1)});
+				}
+				else
+				{
+					nbLines++;
+					colorsContainer.add(labelBox, {column: inLabel.id-(nbLines-1)*columnLimit, row: (nbLines-1)});
+					colorCount += columnLimit;
+				};
+				var tempColors = colorsContainer._getChildren();
+				if((boxWidth<boxLabel.getSizeHint().width+8)&&(0<tempColors.length))
+				{
+					boxWidth = boxLabel.getSizeHint().width + 16;	//// value returned by getSizeHint() is not enough
+					for(var i=0; i<tempColors.length; i++)
+					{
+						tempColors[i].set({width:boxWidth});
+						tempColors[i]._getChildren()[1].set({maxWidth:boxWidth-12});
+					}
+				};
+				
+            };
+			
+		////Fill labels zone width data from the xml file
+			var nbLabels = 0;
+			var colorsParamRequest = new XMLHttpRequest();
+			colorsParamRequest.onreadystatechange = function()
+			{
+				 if(this.readyState == 4 && this.status == 200)
+				 {
+					// so far so good
+					if(this.responseXML!=null)
+					{
+						var response = this.responseXML;
+						nbLabels = response.getElementsByTagName("color").length;
+						volView.__labelColors=new Array(nbLabels);
+						for(var i=0; i<nbLabels; i++)
+						{
+							var color=response.getElementsByTagName("color")[i];
+							var label=parseInt(color.getAttribute("label"))
+							var colorName=color.getAttribute("name");
+							volView.__labelColors[i] = {
+								red : color.getAttribute("red"),
+								green : color.getAttribute("green"),
+								blue : color.getAttribute("blue"),
+								label : ""+label,
+								name : colorName
+							};
+							var newLabel = {
+								id : label,
+								name : colorName,
+								color : "rgb(" + volView.__labelColors[i].red + "," + volView.__labelColors[i].green + "," + volView.__labelColors[i].blue + ")"
+							};
+							newLabel.name = newLabel.name.replace(newLabel.name.charAt(0), newLabel.name.charAt(0).toUpperCase());
+							createToolBox(newLabel);
+						};
+					}
+					else
+							alert("Global Params : Failure...");
+				}
+				else if (this.readyState == 4 && this.status != 200)
+				{
+						// fetched the wrong page or network error...
+						alert('Global Params : "Fetched the wrong page" OR "Network error"');
+				}
+			};
+			colorsParamRequest.open("GET", "/visu/colors3.xml", true);
+			colorsParamRequest.send(null);
+
+			volView.__seedsTypeSelectBox=volView.__getSeedsTypeSelectBox();
+			paintPage.add(volView.__seedsTypeSelectBox);
+			volView.__mainRightContainer.add(volView.__getSessionsWidget());
+
+//			this.__mainRightContainer.add(new qx.ui.core.Spacer(30, 40), {flex: 5});
+
+
+			
+			this.__mainRightContainer.add(this.__bottomRightContainer);
+
+			
+			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
+			this.__topRightContainer.add(whileDrawingDrwngOpacityLabel);
+			
+            var whileDrawingDrwngOpacitySlider = new qx.ui.form.Slider();
+			whileDrawingDrwngOpacitySlider.setValue(100);
+			whileDrawingDrwngOpacitySlider.addListener("changeValue", function(event)
+			{
+					this.__drawingCanvas.set({opacity: event.getData()/100});
+			},this);
+            this.__topRightContainer.add(whileDrawingDrwngOpacitySlider, {flex : 1});
+
+			var segmentationWidgets=this.__getSegmentationWidgets();
+			this.__startSegmentationButton=segmentationWidgets[0];
+			this.__bottomRightContainer.add(this.__startSegmentationButton);
+			var extractMeshesWidgets=this.__getextractMeshesWidgets();
+			this.__extractMeshesButton=extractMeshesWidgets[0];
+			this.__bottomRightContainer.add(extractMeshesWidgets[0]);
+
+			var settingsPage = new qx.ui.tabview.Page("settings");
+            settingsPage.setLayout(new qx.ui.layout.VBox());
+			colorsTabView.add(settingsPage);
+			settingsPage.add(new qx.ui.basic.Label("Segmentation :"));
+			settingsPage.add(segmentationWidgets[1]);
+			settingsPage.add(segmentationWidgets[2]);
+			settingsPage.add(new qx.ui.basic.Label("Mesh generation :"));
+			settingsPage.add(extractMeshesWidgets[1]);
+			settingsPage.add(extractMeshesWidgets[2]);
+
+
+			var clusteringPage = new qx.ui.tabview.Page("clustering");
+            clusteringPage.setLayout(new qx.ui.layout.VBox());
+			colorsTabView.add(clusteringPage);
+			var clusteringAction=new desk.action("cvtseg2", false);
+			clusteringAction.setActionParameters(
+				{"input_volume" : volView.__file});
+			this.__clusteringAction=clusteringAction;
+			clusteringAction.setOutputSubdirectory("clustering");
+			
+			clusteringAction.buildUI();
+			clusteringPage.add(clusteringAction);
+
+			var segmentationPage = new qx.ui.tabview.Page("segmentation");
+            segmentationPage.setLayout(new qx.ui.layout.VBox());
+			colorsTabView.add(segmentationPage);
+			var segmentationAction=new desk.action("cvtgcmultiseg", false);
+			clusteringAction.setActionParameters({
+				"input_volume" : volView.__file});
+
+			segmentationAction.setOutputSubdirectory("segmentation");
+			segmentationAction.connect("clustering", clusteringAction, "clustering-index.mhd");
+
+			segmentationAction.buildUI();
+			segmentationPage.add(segmentationAction);
+
+			var medianFilteringPage = new qx.ui.tabview.Page("cleaning");
+            medianFilteringPage.setLayout(new qx.ui.layout.VBox());
+			colorsTabView.add(medianFilteringPage);
+			var medianFilteringAction=new desk.action("volume_median_filtering", false);
+			medianFilteringAction.setOutputSubdirectory("filtering");
+			medianFilteringAction.connect("input_volume", 
+										segmentationAction, "seg-cvtgcmultiseg.mhd");
+			medianFilteringAction.buildUI();
+			medianFilteringPage.add(medianFilteringAction);
+
+			this.addListener("changeSessionDirectory", function (e) {
+				var directory=e.getData();
+				medianFilteringAction.setOutputDirectory(directory);
+				clusteringAction.setOutputDirectory(directory);
+				segmentationAction.setOutputDirectory(directory);
+				segmentationAction.setActionParameters({
+					"input_volume" : volView.__file,
+					"seeds" : volView.getSessionDirectory()+"/seeds.xml"});
+				});
+
+			var segmentationViewer=null;
+			medianFilteringAction.addListener("actionUpdated", function (){
+				if (segmentationViewer==null)
+				{
+					segmentationViewer=new desk.volView(
+						medianFilteringAction.getOutputDirectory()+"/output.mhd",
+						volView.__fileBrowser);
+					segmentationViewer.linkToVolumeViewer(volView);
+					segmentationViewer.getWindow().addListener("beforeClose", function (e) {
+						segmentationViewer=null;});
+				}
+				else
+				{
+					segmentationViewer.__updateVolume();
+				}
+				});
+
+
+
+			this.__resetSeedsList();
+            this.__imageCanvas.add(this.__eraserCursor);
+	//		this.__eraserCursor.addListener("mousewheel", mouseWheelHandler, volView);
 		},
 
 		__saveCurrentSeeds : function(callback)
@@ -2084,23 +2095,27 @@ qx.Class.define("desk.volView",
 		__updateAll : function()
 		{
 			var currentSlice=this.__drawingCanvasParams.sliceNumber;
-			var seedsTypeListItem=this.__seedsTypeSelectBox.getSelection()[0];
+			
+			if (this.__seedsTypeSelectBox!=null)
+			{
+				var seedsTypeListItem=this.__seedsTypeSelectBox.getSelection()[0];
 
-			var sliceItem=seedsTypeListItem.getUserData("seedsArray")[currentSlice];
-			var seedsList=seedsTypeListItem.getUserData("seedsList");
-			if(sliceItem!=0)
-			{
-				// the slice contains seeds
-				this.__updateSeeds();
-				seedsList.setSelection([sliceItem]);
+				var sliceItem=seedsTypeListItem.getUserData("seedsArray")[currentSlice];
+				var seedsList=seedsTypeListItem.getUserData("seedsList");
+				if(sliceItem!=0)
+				{
+					// the slice contains seeds
+					this.__updateSeeds();
+					seedsList.setSelection([sliceItem]);
+				}
+				else
+				{
+					// current slice has no seeds
+					seedsList.resetSelection();
+					this.__clearDrawingCanvas();
+					this.__htmlContextLabels.clearRect(-16, -16, this.__imgMap.width+32, this.__imgMap.height+32);
+				}
 			}
-			else
-			{
-				// current slice has no seeds
-				seedsList.resetSelection();
-				this.__clearDrawingCanvas();
-				this.__htmlContextLabels.clearRect(-16, -16, this.__imgMap.width+32, this.__imgMap.height+32);
-			};
 			////Update image canvas
 			this.__updateImage();
 
@@ -2374,25 +2389,6 @@ qx.Class.define("desk.volView",
 
 			updateList();
 			return sessionsListContainer;
-		},
-
-		__getPaintPanelVisibilitySwitch : function () {
-			var volView=this;
-			var fileBrowser=this.__fileBrowser;
-			var paintPaneVisibilitySwitch=new qx.ui.form.ToggleButton("Paint")
-			paintPaneVisibilitySwitch.addListener("changeValue", function (e) {
-				if (e.getData())
-				{
-					this.__mainRightContainer.setVisibility("visible");
-					this.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList").setVisibility("visible");
-				}
-				else
-				{
-					this.__mainRightContainer.setVisibility("excluded");
-					this.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList").setVisibility("excluded");
-				}
-				}, this);
-			return paintPaneVisibilitySwitch;
 		},
 
        ////Create and add the jpeg/png format select box
