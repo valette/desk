@@ -8,7 +8,6 @@ qx.Class.define("desk.actions",
 		desk.actions.ACTIONSHANDLER=this;
 
 		var localAdress=window.location.href;
-		console.log ("local adress : "+localAdress);
 		var slashIndex=localAdress.indexOf("/");
 		var slashIndex=localAdress.indexOf("/");
 		var slashIndex2=localAdress.indexOf("/", slashIndex+1);
@@ -63,11 +62,22 @@ qx.Class.define("desk.actions",
 		__ongoingActions : null,
 
 		__actionsList : null,
-
+		__actionsArray : null,
 		_currentFileBrowser : null,
 
 		getActionsXMLElement : function () {
 			return this.__actions;
+		},
+
+		getActionXMLElement : function (actionName) {
+			var actions=this.__actionsArray;
+			for (var i=0;i!=actions.length;i++)
+			{
+				var actionElement=actions[i];
+				if (actionElement.getAttribute("name")==actionName)
+					return actionElement;
+			}
+			console.log("action "+actionName+" not found");
 		},
 
 		openActionsMenu : function(e, fileBrowser)
@@ -127,6 +137,7 @@ qx.Class.define("desk.actions",
 			xmlhttp.send();
 			this.__actions=xmlhttp.responseXML;
 			var actions=this.__actions.getElementsByTagName("action");
+			this.__actionsArray=actions;
 			var actionMenu=this;
 
 			for (var n=0;n<actions.length;n++)

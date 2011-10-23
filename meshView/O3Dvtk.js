@@ -694,9 +694,6 @@ function createFromFile(scene, file,color, opt_callback, opt_mtime) {
 	else
 		xmlhttp.open("GET",file+"?nocache=" + opt_mtime,true);
 
-	xmlhttp.onreadystatechange=handler;
-	xmlhttp.send();
-
 	function handler()
 	{
 		if(xmlhttp.readyState == 4)
@@ -712,6 +709,9 @@ function createFromFile(scene, file,color, opt_callback, opt_mtime) {
 			return;
 		}
 	}
+
+	xmlhttp.onreadystatechange=handler;
+	xmlhttp.send();
 }
 
 

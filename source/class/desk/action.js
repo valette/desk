@@ -6,11 +6,10 @@ qx.Class.define("desk.action",
 	{
 		this.base(arguments);
 		var actions=desk.actions.ACTIONSHANDLER;
-		this.__action=actions.getActionsXMLElement().getElementsByName(actionName)[0];
+		this.__action=actions.getActionXMLElement(actionName);
 		this.__actionName=actionName;
 		if (standalone==false)
 			this.__standalone=false;
-
 		this.__connections=[];
 
 		return (this);
