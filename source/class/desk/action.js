@@ -63,8 +63,6 @@ qx.Class.define("desk.action",
 					action : parentAction,
 					parameter : parameterName,
 					file : fileName});
-			console.log("connections : ");
-			console.log(this.__connections);
 		},
 
 		setOutputDirectory : function (directory) {
@@ -155,7 +153,6 @@ qx.Class.define("desk.action",
 
 			if (this.__standalone)
 			{
-				console.log("standalone");
 				this.__window=new qx.ui.window.Window();
 				this.__window.setLayout(new qx.ui.layout.HBox());
 
@@ -414,12 +411,9 @@ qx.Class.define("desk.action",
 								parameter : connections[i].parameter,
 								file : connections[i].file});
 					}
-					console.log("connections before processing : ");
-					console.log(parentActions);
 					var numberOfFinishedParentActions=parentActions.length;
 					
 					function afterParentActionProcessed (event){
-						console.log("one parent action finished");
 						numberOfFinishedParentActions++;
 						if (event)
 						{
@@ -439,7 +433,6 @@ qx.Class.define("desk.action",
 						}
 						if (numberOfFinishedParentActions>=parentActions.length)
 						{
-							console.log("all parent actions finished");
 							send.setLabel("Processing...");
 							function getAnswer (e)
 							{

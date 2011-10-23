@@ -1604,8 +1604,6 @@ qx.Class.define("desk.volView",
 		////Create eraser on/off button
             var eraserButton = new qx.ui.form.ToggleButton("Eraser");
 			
-            eraserButton.set({opacity: 0.5, enabled : false});
-			
 			eraserButton.addListener("changeValue", function(event)
 			{
 				if (event.getData()==true)
@@ -1777,14 +1775,10 @@ qx.Class.define("desk.volView",
 			colorsParamRequest.send(null);
 
 			volView.__seedsTypeSelectBox=volView.__getSeedsTypeSelectBox();
-			paintPage.add(volView.__seedsTypeSelectBox);
+			paintPage.addAt(volView.__seedsTypeSelectBox,0);
 			volView.__mainRightContainer.add(volView.__getSessionsWidget());
 
 //			this.__mainRightContainer.add(new qx.ui.core.Spacer(30, 40), {flex: 5});
-
-
-			
-			this.__mainRightContainer.add(this.__bottomRightContainer);
 
 			
 			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
@@ -1798,23 +1792,7 @@ qx.Class.define("desk.volView",
 			},this);
             this.__topRightContainer.add(whileDrawingDrwngOpacitySlider, {flex : 1});
 
-			var segmentationWidgets=this.__getSegmentationWidgets();
-			this.__startSegmentationButton=segmentationWidgets[0];
-			this.__bottomRightContainer.add(this.__startSegmentationButton);
-			var extractMeshesWidgets=this.__getextractMeshesWidgets();
-			this.__extractMeshesButton=extractMeshesWidgets[0];
-			this.__bottomRightContainer.add(extractMeshesWidgets[0]);
-
-			var settingsPage = new qx.ui.tabview.Page("settings");
-            settingsPage.setLayout(new qx.ui.layout.VBox());
-			colorsTabView.add(settingsPage);
-			settingsPage.add(new qx.ui.basic.Label("Segmentation :"));
-			settingsPage.add(segmentationWidgets[1]);
-			settingsPage.add(segmentationWidgets[2]);
-			settingsPage.add(new qx.ui.basic.Label("Mesh generation :"));
-			settingsPage.add(extractMeshesWidgets[1]);
-			settingsPage.add(extractMeshesWidgets[2]);
-
+			paintPage.add(this.__bottomRightContainer);
 
 			var clusteringPage = new qx.ui.tabview.Page("clustering");
             clusteringPage.setLayout(new qx.ui.layout.VBox());
@@ -1851,18 +1829,53 @@ qx.Class.define("desk.volView",
 			medianFilteringAction.buildUI();
 			medianFilteringPage.add(medianFilteringAction);
 
+
+			var meshingPage = new qx.ui.tabview.Page("meshing");
+            meshingPage.setLayout(new qx.ui.layout.VBox());
+			colorsTabView.add(meshingPage);
+			var meshingAction=new desk.action("extract_meshes", false);
+			meshingAction.setOutputSubdirectory("meshes");
+//			meshingAction.connect("input_volume", 
+//										medianFilteringAction, "output.mhd");
+			meshingAction.buildUI();
+			meshingPage.add(meshingAction);
+
 			this.addListener("changeSessionDirectory", function (e) {
 				var directory=e.getData();
 				medianFilteringAction.setOutputDirectory(directory);
 				clusteringAction.setOutputDirectory(directory);
 				segmentationAction.setOutputDirectory(directory);
+				meshingAction.setOutputDirectory(directory);
 				segmentationAction.setActionParameters({
 					"input_volume" : volView.__file,
 					"seeds" : volView.getSessionDirectory()+"/seeds.xml"});
+				clusteringAction.setActionParameters({
+					"input_volume" : volView.__file});
+				meshingAction.setActionParameters({
+					"input_volume" : volView.getSessionDirectory()+"/filtering/output.mhd"});
 				});
+
+			this.__startSegmentationButton=new qx.ui.form.ToggleButton("Start segmentation");
+			this.__startSegmentationButton.addListener("execute", function () {
+				this.__startSegmentationButton.setEnabled(false);
+				volView.__segmentationInProgress=true;
+				volView.__saveCurrentSeeds(function() {
+					medianFilteringAction.executeAction();});
+				}, this);
+			this.__bottomRightContainer.add(this.__startSegmentationButton);
+
+			var meshingButton=new qx.ui.form.ToggleButton("extract meshes");
+			this.__extractMeshesButton=meshingButton;
+			meshingButton.addListener("execute", function () {
+				this.__startSegmentationButton.setEnabled(false);
+				meshingButton.setEnabled(false);
+				meshingAction.executeAction();
+				}, this);
+			this.__bottomRightContainer.add(meshingButton);
 
 			var segmentationViewer=null;
 			medianFilteringAction.addListener("actionUpdated", function (){
+				this.__startSegmentationButton.setEnabled(true);
 				if (segmentationViewer==null)
 				{
 					segmentationViewer=new desk.volView(
@@ -1876,9 +1889,13 @@ qx.Class.define("desk.volView",
 				{
 					segmentationViewer.__updateVolume();
 				}
-				});
+				}, this);
 
-
+			meshingAction.addListener("actionUpdated", function (){
+				meshingButton.setEnabled(true);
+				this.__startSegmentationButton.setEnabled(true);
+				var meshesViewer=new desk.meshView(volView.getSessionDirectory()+"/meshes/meshes.xml",
+						volView.__fileBrowser);}, this);
 
 			this.__resetSeedsList();
             this.__imageCanvas.add(this.__eraserCursor);
@@ -2555,143 +2572,6 @@ qx.Class.define("desk.volView",
 			coordinates[10]=ymax;
 			coordinates[11]=z;
 			return (coordinates);
-		},
-
-		__getextractMeshesWidgets : function () {
-			var button=new qx.ui.form.ToggleButton("extract meshes");
-			button.setEnabled(true);
-			var volView=this;
-			var meshesViewer=null;
-
-			var numberOfVerticesField=new qx.ui.form.TextField("5000");
-			var numberOfVerticesLayout=new qx.ui.layout.HBox();
-			numberOfVerticesLayout.setSpacing(5);
-			var numberOfVerticesContainer = new qx.ui.container.Composite(numberOfVerticesLayout);
-			numberOfVerticesContainer.add(new qx.ui.core.Spacer(),{flex : 1});
-			numberOfVerticesContainer.add(new qx.ui.basic.Label("Number of vertices max"));
-			numberOfVerticesContainer.add(numberOfVerticesField);
-
-			var numberOfSmoothingStepsField=new qx.ui.form.TextField("5");
-			var numberOfSmoothingStepsLayout=new qx.ui.layout.HBox();
-			numberOfSmoothingStepsLayout.setSpacing(5);
-			var numberOfSmoothingStepsContainer = new qx.ui.container.Composite(numberOfSmoothingStepsLayout);
-			numberOfSmoothingStepsContainer.add(new qx.ui.core.Spacer(),{flex : 1});
-			numberOfSmoothingStepsContainer.add(new qx.ui.basic.Label("Smoothing steps"));
-			numberOfSmoothingStepsContainer.add(numberOfSmoothingStepsField);
-
-			button.addListener("execute", function (e){
-				button.setEnabled(false);
-				function afterDirectoryCreated() {
-					function afterExtractionExecuted()
-					{
-					//	if (meshesViewer==null)
-						button.setEnabled(true);
-						meshesViewer=new desk.meshView(volView.getSessionDirectory()+"/meshes/meshes.xml",
-							volView.__fileBrowser);
-					}
-					volView.__fileBrowser.getActions().launchAction({
-						"action" : "extract_meshes",
-						"max_number_of_vertices" : numberOfVerticesField.getValue(),
-						"number_of_smoothing_steps" : numberOfSmoothingStepsField.getValue(),
-						"input_volume" : volView.getSessionDirectory()+"/segmentation/seg-cvtgcmultiseg.mhd",
-						"output_directory" : volView.getSessionDirectory()+"/meshes"}, afterExtractionExecuted);
-					}
-				volView.__fileBrowser.getActions().launchAction({
-					"action" : "add_subdirectory",
-					"subdirectory_name" : "meshes",
-					"output_directory" : volView.getSessionDirectory()}, afterDirectoryCreated);
-				});
-
-			var balancingField=new qx.ui.form.TextField("0.1");
-			return [button, numberOfVerticesContainer, numberOfSmoothingStepsContainer];
-
-		},
-		__getSegmentationWidgets : function () {
-			var button=new qx.ui.form.ToggleButton("Start segmentation");
-			var volView=this;
-			var segmentationViewer=null;
-			button.setEnabled(false);
-			var percentageLayout=new qx.ui.layout.HBox();
-			percentageLayout.setSpacing(5);
-			var percentageContainer = new qx.ui.container.Composite(percentageLayout);
-			var clusteringPercentageField=new qx.ui.form.TextField("0.01");
-
-			percentageContainer.add(new qx.ui.core.Spacer(),{flex : 1});
-			percentageContainer.add(new qx.ui.basic.Label("Clustering ratio"));
-			percentageContainer.add(clusteringPercentageField);
-
-
-			var balancingLayout=new qx.ui.layout.HBox();
-			balancingLayout.setSpacing(5);
-			var balancingContainer = new qx.ui.container.Composite(balancingLayout);
-			var balancingField=new qx.ui.form.TextField("0.1");
-			
-			balancingContainer.add(new qx.ui.core.Spacer(),{flex : 1});
-			balancingContainer.add(new qx.ui.basic.Label("Unary/Binary weight"));
-			balancingContainer.add(balancingField);
-
-
-			var temperatureField=new qx.ui.form.TextField("0.1");
-
-			button.addListener("execute", function (e){
-				button.setEnabled(false);
-				volView.__segmentationInProgress=true;
-				function afterDirectoryCreated() {
-					function afterSeedsSaved()
-					{	
-						var parameterMap={
-							"action" : "cvtseg2",
-							"input_volume" : volView.__file,
-							"clusters_percentage" : clusteringPercentageField.getValue(),
-							"output_directory" : "cache/"};
-
-						function afterClusteringComputed(e)
-						{
-							var req = e.getTarget();
-							var clusteringDirectory=req.getResponseText().split("\n")[0];
-
-							var parameterMap2={
-								"action" : "cvtgcmultiseg",
-								"input_volume" : volView.__file,
-								"seeds" : volView.getSessionDirectory()+"/seeds.xml",
-								"clustering" : clusteringDirectory+"/clustering-index.mhd",
-								"unary_binary_weight" : balancingField.getValue(),
-								"output_directory" : volView.getSessionDirectory()+"/segmentation"};
-
-							function afterSegmentationComputed(e)
-							{
-								var req = e.getTarget();
-								var segmentationDirectory=req.getResponseText().split("\n")[0];
-								button.setEnabled(true);
-								volView.__segmentationInProgress=false;
-
-								if (segmentationViewer==null)
-								{
-									segmentationViewer=new desk.volView(
-										segmentationDirectory+"/seg-cvtgcmultiseg.mhd",
-										volView.__fileBrowser);
-									segmentationViewer.linkToVolumeViewer(volView);
-									segmentationViewer.getWindow().addListener("beforeClose", function (e) {
-										segmentationViewer=null;});
-								}
-								else
-								{
-									segmentationViewer.__updateVolume();
-								}
-							}
-
-							volView.__fileBrowser.getActions().launchAction(parameterMap2, afterSegmentationComputed);
-						}
-						volView.__fileBrowser.getActions().launchAction(parameterMap, afterClusteringComputed);
-					}
-					volView.__saveCurrentSeeds(afterSeedsSaved);
-				}
-				volView.__fileBrowser.getActions().launchAction({
-					"action" : "add_subdirectory",
-					"subdirectory_name" : "segmentation",
-					"output_directory" : volView.getSessionDirectory()}, afterDirectoryCreated);
-			});
-			return [button, percentageContainer, balancingContainer];
 		}
 	}
 });
