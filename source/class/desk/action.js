@@ -185,7 +185,7 @@ qx.Class.define("desk.action",
 					{
 						this.__window.setWidth(600);
 						this.__embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
-						pane.add(this.__embededFileBrowser, {flex : 1});
+						pane.add(this.__embededFileBrowser, 1);
 					}
 					logFileURL=desk.actions.BASEURL+outputDirectory+"/action.log";
 					showLogButton.setVisibility("visible");
@@ -333,7 +333,7 @@ qx.Class.define("desk.action",
 						parameterForm.setValue(defaultValue);
 
 					parameterForm.addListener("input", function(e) 
-						{this.setInvalidMessage(null);},parameterForm);
+						{this.setInvalidMessage("");},parameterForm);
 				}
 			}
 
@@ -445,7 +445,7 @@ qx.Class.define("desk.action",
 										{
 											this.__window.setWidth(600);
 											this.__embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
-											pane.add(this.__embededFileBrowser, {flex : 1});
+											pane.add(this.__embededFileBrowser, 1);
 										}
 										else
 											this.__embededFileBrowser.updateRoot();

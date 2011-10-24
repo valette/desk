@@ -12,6 +12,7 @@
 <parameter name="input_mesh" type="file" required="true"/>
 <parameter name="number_of_desired_vertices" type="int" min="0" required="true" />
 <parameter name="gradation" type="float" required="true" min="0" max="30" default="0" />
+<anchor text="-d 0"/>
 </action>
 
 <action name="rgb2gray" executable="/home/visu/src/gcBuild/rgb2gray">
