@@ -404,16 +404,18 @@ qx.Class.define("desk.meshView",
 
 				meshView.__sceneReady=true;
 
-				htmlContainer.addListener("resize",function(e){
+				function resizeHTML(){
 					var elementSize=htmlContainer.getInnerSize();
-					var width = elementSize.width;
-					var height = elementSize.height;
-					scene.client.gl.hack_canvas.width=width;
-					scene.client.gl.hack_canvas.height=height;
-					scene.client.gl.displayInfo = {width: elementSize.width, height: elementSize.height};
+					var myWidth = elementSize.width;
+					var myHeight = elementSize.height;
+					scene.client.gl.hack_canvas.width=myWidth;
+					scene.client.gl.hack_canvas.height=myHeight;
+					scene.client.gl.displayInfo = {width: myWidth, height: myHeight};
 					scene.resize();
-					});
-				htmlContainer.fireEvent("resize");
+					}
+
+				htmlContainer.addListener("resize",resizeHTML);
+//				resizeHTML();
 				meshView.openFile();
 
 				meshView.__window.setDroppable(true);
@@ -496,7 +498,7 @@ qx.Class.define("desk.meshView",
 				//clean the scene
 				this.getScene().client.cleanup();
 				this.__shapesArray.length=0;
-				this.__shapesVisibility.length.0;
+				this.__shapesVisibility.length=0;
 				},meshView);
 			}
 

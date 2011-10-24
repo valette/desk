@@ -389,27 +389,17 @@ qx.Class.define("desk.action",
 					for (var i=0;i<connections.length;i++)
 					{
 						var parentAction=connections[i].action;
-						var parentId=-1;
+						var found=false;
 						for (var j=0;j<parentActions.length;j++)
 						{
-							if (parentActions[j].action==parentAction)
+							if (parentActions[j]==parentAction)
 							{
-								parentId=j;
+								found=true;
 								break;
 							}
 						}
-						if (parentId<0)
-						{
-							parentActions.push({
-								action : parentAction,
-								parameters : [{
-								parameter : connections[i].parameter,
-								file : connections[i].file}]}):
-						}
-						else
-							parentActions[parentId].parameters.push({
-								parameter : connections[i].parameter,
-								file : connections[i].file});
+						if (!found)
+							parentActions.push(parentAction);
 					}
 					var numberOfFinishedParentActions=parentActions.length;
 					
@@ -490,7 +480,7 @@ qx.Class.define("desk.action",
 					{
 						for (var i=0;i!=parentActions.length;i++)
 						{
-							var currentParentAction=parentActions[i].action;
+							var currentParentAction=parentActions[i];
 							currentParentAction.addListenerOnce("actionUpdated", afterParentActionProcessed, this);
 							currentParentAction.executeAction();
 						}

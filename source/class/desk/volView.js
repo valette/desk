@@ -320,7 +320,7 @@ qx.Class.define("desk.volView",
 				var label = new qx.ui.basic.Label("Computing slices, wait...").set({
 					font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
 					});
-				this.add(label, {flex : 1});
+				this.add(label);
 			}
 			else
 				this.setCaption("computing slices, wait...");
@@ -2248,11 +2248,11 @@ qx.Class.define("desk.volView",
 
 			seedsList.addListener("removeItem", function(event) {
 				if (seedsList.getChildren().length==0)
-					this.__startSegmentationButton.setEnabled("false");
+					this.__startSegmentationButton.setEnabled(false);
 				}, this);
 
 			seedsList.addListener("addItem", function(event) {
-				this.__startSegmentationButton.setEnabled("true");
+				this.__startSegmentationButton.setEnabled(true);
 				}, this);
 
 			seedsList.addListener("keypress", function(event)
@@ -2370,7 +2370,7 @@ qx.Class.define("desk.volView",
 					if (sessionItemToSelect!=null)
 					{
 						sessionsList.setSelection([sessionItemToSelect]);
-						volView.__tabview.setVisibility("visible");
+						volView.__tabView.setVisibility("visible");
 						volView.setSessionDirectory(fileBrowser.getSessionDirectory(
 							volView.__file,sessionType,sessionIdToSelect));
 						volView.__saveSeedsXML();
