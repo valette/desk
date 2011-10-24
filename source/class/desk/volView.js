@@ -136,7 +136,7 @@ qx.Class.define("desk.volView",
 
 		__mainRightContainer : null,
 		__topRightContainer : null,
-
+		__bottomRightContainer : null,
 		__slider : null,
 		__spinner : null,
 		__formatSelectBox : null,
@@ -1800,7 +1800,7 @@ qx.Class.define("desk.volView",
 			var clusteringAction=new desk.action("cvtseg2", false);
 			clusteringAction.setActionParameters(
 				{"input_volume" : volView.__file});
-			this.__clusteringAction=clusteringAction;
+
 			clusteringAction.setOutputSubdirectory("clustering");
 			
 			clusteringAction.buildUI();

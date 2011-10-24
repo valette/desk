@@ -171,7 +171,7 @@ qx.Class.define("desk.action",
 			var logFileURL=null;
 			var showLogButton=new qx.ui.form.Button("Show console log");
 			showLogButton.addListener("execute",function (e) {
-				var logViewer=new desk.textEditor(logFileURL);
+				new desk.textEditor(logFileURL);
 				})
 			showLogButton.setVisibility("excluded");
 

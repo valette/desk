@@ -415,7 +415,8 @@ qx.Class.define("desk.meshView",
 					}
 
 				htmlContainer.addListener("resize",resizeHTML);
-				resizeHTML();
+				scene.resize();
+//				resizeHTML();
 				meshView.openFile();
 
 				meshView.__window.setDroppable(true);

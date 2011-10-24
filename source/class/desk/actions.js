@@ -63,7 +63,7 @@ qx.Class.define("desk.actions",
 
 		__actionsList : null,
 		__actionsArray : null,
-		_currentFileBrowser : null,
+		__currentFileBrowser : null,
 
 		getActionsXMLElement : function () {
 			return this.__actions;
@@ -95,7 +95,6 @@ qx.Class.define("desk.actions",
 					var req = e.getTarget();
 					var response=req.getResponseText();
 					var splitResponse=response.split("\n");
-					var actionOK=true;
 					if (splitResponse.length<2)
 						alert ("error for action "+actionParameters.action+": \n"+splitResponse[0]);
 					else

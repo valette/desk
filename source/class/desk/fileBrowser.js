@@ -35,11 +35,11 @@ qx.Class.define("desk.fileBrowser",
 
 		this.__actionsHandler=desk.actions.ACTIONSHANDLER;
 		this.__baseURL=desk.actions.BASEURL;
-
+/*
 		//create menu
 		var menu=new qx.ui.menu.Menu;
 
-/*			var uploadButton = new qx.ui.menu.Button("Upload");
+		var uploadButton = new qx.ui.menu.Button("Upload");
 		uploadButton.addListener("execute", function (e){alert ("Not implemented!");}, this);
 		menu.add(uploadButton);
 		menu.addSeparator();
@@ -292,7 +292,7 @@ qx.Class.define("desk.fileBrowser",
 				switch (extension)
 				{
 				case ".vtk":
-					var meshView=new desk.meshView(file, myBrowser,modificationTime);
+					new desk.meshView(file, myBrowser,modificationTime);
 //					qx.core.Init.getApplication().getRoot().add(meshView);
 					break;
 				case ".ply":
