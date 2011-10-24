@@ -17,7 +17,7 @@ qx.Class.define("desk.actions",
 			questionMarkIndex=localAdress.length;
 		desk.actions.BASEURL=localAdress.substring(slashIndex3,
 												questionMarkIndex)+
-									"resource/desk/";
+									"php/";
 
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.populateActionMenu();
@@ -55,7 +55,7 @@ qx.Class.define("desk.actions",
 	},
 
 	members : {
-		__actionsFile : "resource/desk/actions.xml",
+		__actionsFile : "php/actions.xml",
 		__actionMenu : null,
 		__actions : null,
 		__fileBrowser : null,
@@ -80,12 +80,9 @@ qx.Class.define("desk.actions",
 			console.log("action "+actionName+" not found");
 		},
 
-		openActionsMenu : function(e, fileBrowser)
-		{
+		getActionsMenu : function (fileBrowser) {
 			this.__currentFileBrowser=fileBrowser;
-			this.__actionMenu.open();
-			this.__actionMenu.placeToMouse(e);
-			this.__actionMenu.show();
+			return this.__actionMenu;
 		},
 
 		launchAction : function (actionParameters, successCallback, context)
@@ -122,7 +119,7 @@ qx.Class.define("desk.actions",
 					}
 			}
 
-			req.setUrl("resource/desk/actions.php");
+			req.setUrl("php/actions.php");
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData(actionParameters);
@@ -155,7 +152,7 @@ qx.Class.define("desk.actions",
 		//				alert (descriptions[0]);
 				}
 
-				button.addListener("click", function (e){
+				button.addListener("execute", function (e){
 					var action= new desk.action(this.getLabel());
 					action.setOriginFileBrowser(actionMenu.__currentFileBrowser);
 					action.buildUI();});

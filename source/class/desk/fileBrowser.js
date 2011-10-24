@@ -466,10 +466,6 @@ qx.Class.define("desk.fileBrowser",
 
 			var actionsButton=new qx.ui.menu.Button("Actions");
 			menu.add(actionsButton);
-			actionsButton.addListener("click", function (e) {
-				this.__actionsHandler.openActionsMenu(e, this);
-					}, this);
-
 			menu.addSeparator();
 			// other actions buttons
 			for (var i=0;i<this.__actionNames.length;i++)
@@ -487,8 +483,13 @@ qx.Class.define("desk.fileBrowser",
 					}, button);
 				menu.add(button);
 			}
+
 			this.__virtualTree.setContextMenu(menu);
+			this.__virtualTree.addListener("contextmenu", function (e) {
+				actionsButton.setMenu(this.__actionsHandler.getActionsMenu(this));
+				}, this);
 		},
+		
 
 		expandDirectoryListing : function(node) {
 			if (this.__updateDirectoryInProgress==true)
