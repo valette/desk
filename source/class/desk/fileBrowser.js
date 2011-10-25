@@ -135,7 +135,7 @@ qx.Class.define("desk.fileBrowser",
 			window.setUseMoveFrame(true);
 			window.setCaption("files");
 			window.setHeight(500);
-			window.add(this);
+			window.add(this, {flex : 1});
 			this.__window.open();
 		}
 
