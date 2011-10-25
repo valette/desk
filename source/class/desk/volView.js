@@ -2411,16 +2411,16 @@ qx.Class.define("desk.volView",
        ////Create and add the jpeg/png format select box
        __getFormatSelectBox : function()
 		{
-			var volView=this;
 			var selectBox= new qx.ui.form.SelectBox();
 			selectBox.set({width: 52});
 			var JPGFormat = new qx.ui.form.ListItem("jpg");
-			JPGFormat.setUserData("path",volView.__pathJPG);
+			JPGFormat.setUserData("path",this.__pathJPG);
 			selectBox.add(JPGFormat);
 			var PNGFormat = new qx.ui.form.ListItem("png");
 			selectBox.add(PNGFormat);
 
 			selectBox.addListener('changeSelection', function (e){
+			//console.log("change...");
 				var path=selectBox.getSelection()[0].getUserData("path");
 				switch(path)
 				{
@@ -2428,18 +2428,18 @@ qx.Class.define("desk.volView",
 					//we need to compute png slices : launch action
 					var parameterMap={
 						"action" : "slice_volume",
-						"input_volume" : volView.__file,
+						"input_volume" : this.__file,
 						"output_directory" : "cache\/",
 						"format" : "0"};
 					var slicingLabel=new qx.ui.basic.Label("computing...");
-					volView.__topLeftContainer.addAfter(slicingLabel,selectBox);
+					this.__topLeftContainer.addAfter(slicingLabel,selectBox);
 					function getAnswer(e)
 					{
 						var req = e.getTarget();
 						var slicesDirectory=req.getResponseText().split("\n")[0];
 						PNGFormat.setUserData("path",
-							volView.__fileBrowser.getFileURL(slicesDirectory));
-						volView.__topLeftContainer.remove(slicingLabel);
+							this.__fileBrowser.getFileURL(slicesDirectory));
+						this.__topLeftContainer.remove(slicingLabel);
 						selectBox.setSelection([PNGFormat])
 					}
 
@@ -2447,8 +2447,8 @@ qx.Class.define("desk.volView",
 					// switch back to before computing is done png
 					selectBox.setSelection([JPGFormat]);
 					selectBox.close();
-					volView.__topLeftContainer.addAfter(slicingLabel,selectBox);
-					volView.__fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
+					this.__topLeftContainer.addAfter(slicingLabel,selectBox);
+					this.__fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 					break;
 				case "computing":
 					// slices are being computed. re-switch to jpg
@@ -2458,7 +2458,7 @@ qx.Class.define("desk.volView",
 				default :
 					// slices are ready (PNG or JPG)
 					this.__updateImage();
-				}}, volView);
+				}}, this);
 			return (selectBox);
 		},
 
