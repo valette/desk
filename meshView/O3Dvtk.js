@@ -989,7 +989,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 					}
 					vertexInfo.addTriangle(newVertex1,newVertex2,newVertex3);
 				}
-				if (newIndex==65000)
+				if (newIndex>=65000)
 				{
 					createPrimitives();
 				}
