@@ -498,8 +498,10 @@ qx.Class.define("desk.meshView",
 
 				//clean the scene
 				this.getScene().client.cleanup();
+				this.getScene().pack.destroy(); 
 				this.__shapesArray.length=0;
 				this.__shapesVisibility.length=0;
+				this.dispose();
 				},meshView);
 			}
 

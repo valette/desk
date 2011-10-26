@@ -49,7 +49,7 @@
 <action name="volume_median_filtering" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeMedian">
 <description>compute median filtering on input volume</description>
 <parameter name="input_volume" type="file" required="true"/>
-<parameter name="kernel_size" type="int" required="true" min="1"/>
+<parameter name="kernel_size" type="int" required="true" default="1" min="1" max="10"/>
 </action>
 
 <action name="volume_anisotropic_diffusion" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeAnisotropicDiffusion">
@@ -63,7 +63,7 @@
 <action name="cvtseg2" executable="/home/visu/src/vtkSurfaceBuild/bin/cvtseg2">
 <description>compute an image-based clustering of the input volume</description>
 <parameter name="input_volume" type="file" required="true"/>
-<parameter prefix="-cn " name="clusters_percentage" type="float"/>
+<parameter prefix="-cn " name="clusters_percentage" type="float" min="0.0001" max="1" default="0.01"/>
 <anchor text="-cs 50 -gfn 1 -n 1"/>
 </action>
 
@@ -80,7 +80,7 @@
 <parameter prefix="-i " name="input_volume" type="file" required="true"/>
 <parameter prefix="-x " name="seeds" type="file" required="true"/>
 <parameter prefix="-cf " name="clustering" type="file" required="true"/>
-<parameter prefix="-t " name="unary_binary_weight" type="float" required="true"/>
+<parameter prefix="-t " name="unary_binary_weight" type="float" required="true" min="0" max="1" default="0.2"/>
 <anchor text="-op seg"/>
 </action>
 
