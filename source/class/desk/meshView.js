@@ -408,15 +408,18 @@ qx.Class.define("desk.meshView",
 					var elementSize=htmlContainer.getInnerSize();
 					var myWidth = elementSize.width;
 					var myHeight = elementSize.height;
-					scene.client.gl.hack_canvas.width=myWidth;
-					scene.client.gl.hack_canvas.height=myHeight;
+					scene.o3dElement.width=myWidth;
+					scene.o3dElement.height=myHeight;
+//					scene.client.gl.hack_canvas.width=myWidth;
+//					scene.client.gl.hack_canvas.height=myHeight;
 					scene.client.gl.displayInfo = {width: myWidth, height: myHeight};
 					scene.resize();
 					}
 
 				htmlContainer.addListener("resize",resizeHTML);
+
+				resizeHTML();
 				scene.resize();
-//				resizeHTML();
 				meshView.openFile();
 
 				meshView.__window.setDroppable(true);
