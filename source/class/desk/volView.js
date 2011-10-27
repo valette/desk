@@ -1632,18 +1632,20 @@ qx.Class.define("desk.volView",
             colorsContainer.setLayout(new qx.ui.layout.Grid(1,1));
 			paintPage.add(colorsContainer);
 
-			var colorsTabView = new qx.ui.tabview.TabView();
-			volView.__tabView=colorsTabView;
-            colorsTabView.add(paintPage);
-			colorsTabView.setVisibility("excluded");
+			var tabView = new qx.ui.tabview.TabView();
+			volView.__tabView=tabView;
+            tabView.add(paintPage);
+			tabView.setVisibility("excluded");
 
-   /*         colorsTabView.addListener("mouseup", function(event)
+   /*         tabView.addListener("mouseup", function(event)
 			{
                 volView.__htmlContextLabels.beginPath();
                 volView.__mouseData.mouseLeftDownFlag = false;
             },this);
 */
-			this.__mainRightContainer.add(colorsTabView)
+			this.__mainRightContainer.add(this.__getSessionsWidget());
+
+			this.__mainRightContainer.add(tabView)
 
 
 		////Function creates one label box
@@ -1776,9 +1778,6 @@ qx.Class.define("desk.volView",
 
 			volView.__seedsTypeSelectBox=volView.__getSeedsTypeSelectBox();
 			paintPage.addAt(volView.__seedsTypeSelectBox,0);
-			volView.__mainRightContainer.add(volView.__getSessionsWidget());
-
-//			this.__mainRightContainer.add(new qx.ui.core.Spacer(30, 40), {flex: 5});
 
 			
 			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
@@ -1796,7 +1795,7 @@ qx.Class.define("desk.volView",
 
 			var clusteringPage = new qx.ui.tabview.Page("clustering");
             clusteringPage.setLayout(new qx.ui.layout.VBox());
-			colorsTabView.add(clusteringPage);
+			tabView.add(clusteringPage);
 			var clusteringAction=new desk.action("cvtseg2", false);
 			clusteringAction.setActionParameters(
 				{"input_volume" : volView.__file});
@@ -1808,7 +1807,7 @@ qx.Class.define("desk.volView",
 
 			var segmentationPage = new qx.ui.tabview.Page("segmentation");
             segmentationPage.setLayout(new qx.ui.layout.VBox());
-			colorsTabView.add(segmentationPage);
+			tabView.add(segmentationPage);
 			var segmentationAction=new desk.action("cvtgcmultiseg", false);
 			clusteringAction.setActionParameters({
 				"input_volume" : volView.__file});
@@ -1821,7 +1820,7 @@ qx.Class.define("desk.volView",
 
 			var medianFilteringPage = new qx.ui.tabview.Page("cleaning");
             medianFilteringPage.setLayout(new qx.ui.layout.VBox());
-			colorsTabView.add(medianFilteringPage);
+			tabView.add(medianFilteringPage);
 			var medianFilteringAction=new desk.action("volume_median_filtering", false);
 			medianFilteringAction.setOutputSubdirectory("filtering");
 			medianFilteringAction.connect("input_volume", 
@@ -1832,7 +1831,7 @@ qx.Class.define("desk.volView",
 
 			var meshingPage = new qx.ui.tabview.Page("meshing");
             meshingPage.setLayout(new qx.ui.layout.VBox());
-			colorsTabView.add(meshingPage);
+			tabView.add(meshingPage);
 			var meshingAction=new desk.action("extract_meshes", false);
 			meshingAction.setOutputSubdirectory("meshes");
 //			meshingAction.connect("input_volume", 
