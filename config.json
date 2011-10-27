@@ -38,6 +38,7 @@
   {
     "APPLICATION"  : "desk",
     "QOOXDOO_PATH" : "../qooxdoo-1.5-sdk",
+//    "QOOXDOO_PATH" : "../qooxdoo-git",
     "QXTHEME"      : "desk.theme.Theme",
     "API_EXCLUDE"  : ["qx.test.*", "${APPLICATION}.theme.*", "${APPLICATION}.test.*", "${APPLICATION}.simulation.*"],
     "LOCALES"      : [ "en" ],
@@ -69,17 +70,16 @@
     // If you want to tweak a job setting, see the following sample where
     // the "format" feature of the "build-script" job is overridden.
     // To see a list of available jobs, invoke 'generate.py x'.
-	/*
-    ,"build-script" :
+/*
+    "build" :
     {
       "compile-options" : 
       {
-        "code" :
-        {
-          "format" : false
-        }
+	      "paths" :
+		  {
+			"gzip"   : true
+		  }
       }
-    }
-    */
+    }*/
   }
 }

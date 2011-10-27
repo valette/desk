@@ -6,6 +6,19 @@ qx.Class.define("desk.actions",
 	{
 		this.base(arguments);
 		desk.actions.ACTIONSHANDLER=this;
+
+		var localAdress=window.location.href;
+		var slashIndex=localAdress.indexOf("/");
+		var slashIndex=localAdress.indexOf("/");
+		var slashIndex2=localAdress.indexOf("/", slashIndex+1);
+		var slashIndex3=localAdress.indexOf("/", slashIndex2+1);
+		var questionMarkIndex=localAdress.indexOf("?");
+		if (questionMarkIndex<0)
+			questionMarkIndex=localAdress.length;
+		desk.actions.BASEURL=localAdress.substring(slashIndex3,
+												questionMarkIndex)+
+									"php/";
+
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.populateActionMenu();
 //		this.__menuButton=new qx.ui.menu.Button("Actions", null , null, this.__actionMenu);
@@ -25,7 +38,7 @@ qx.Class.define("desk.actions",
 		if (fileBrowser!=null)
 			this.__fileBrowser=fileBrowser;
 		else
-			this.__fileBrowser=new desk.fileBrowser(null ,getParameter("rootDir"));				
+			this.__fileBrowser=new desk.fileBrowser(getParameter("rootDir"));
 
 		var ongoingActions = new qx.ui.form.List().set({
 			width: 200
@@ -37,26 +50,39 @@ qx.Class.define("desk.actions",
 	},
 
 	statics : {
-		ACTIONHANDLER : null
+		ACTIONSHANDLER : null,
+		BASEURL : null
 	},
 
 	members : {
-		__actionsFile : "/visu/desk/actions.xml",
+		__actionsFile : "php/actions.xml",
 		__actionMenu : null,
 		__actions : null,
 		__fileBrowser : null,
 		__ongoingActions : null,
 
 		__actionsList : null,
+		__actionsArray : null,
+		__currentFileBrowser : null,
 
-		_currentFileBrowser : null,
+		getActionsXMLElement : function () {
+			return this.__actions;
+		},
 
-		openActionsMenu : function(e, fileBrowser)
-		{
+		getActionXMLElement : function (actionName) {
+			var actions=this.__actionsArray;
+			for (var i=0;i!=actions.length;i++)
+			{
+				var actionElement=actions[i];
+				if (actionElement.getAttribute("name")==actionName)
+					return actionElement;
+			}
+			console.log("action "+actionName+" not found");
+		},
+
+		getActionsMenu : function (fileBrowser) {
 			this.__currentFileBrowser=fileBrowser;
-			this.__actionMenu.open();
-			this.__actionMenu.placeToMouse(e);
-			this.__actionMenu.show();
+			return this.__actionMenu;
 		},
 
 		launchAction : function (actionParameters, successCallback, context)
@@ -69,24 +95,30 @@ qx.Class.define("desk.actions",
 					var req = e.getTarget();
 					var response=req.getResponseText();
 					var splitResponse=response.split("\n");
-					
-					var executionStatus=splitResponse[splitResponse.length-2].split(" ")[0];
-					if ((executionStatus!="OK")&&(executionStatus!="CACHED"))
-					{
+					if (splitResponse.length<2)
 						alert ("error for action "+actionParameters.action+": \n"+splitResponse[0]);
-					}
-
-				this.__ongoingActions.remove(actionNotification);
-				if (successCallback!=null)
-				{
-					if (context!=null)
-						successCallback.call(context,e);
 					else
-						successCallback(e);
-				}
+					{
+						var executionStatus=splitResponse[splitResponse.length-2].split(" ")[0];
+						if ((executionStatus!="OK")&&(executionStatus!="CACHED"))
+						{
+							alert ("error for action "+actionParameters.action+": \n"+splitResponse[0]);
+						}
+						else
+						{
+							this.__ongoingActions.remove(actionNotification);
+							if (successCallback!=null)
+							{
+								if (context!=null)
+									successCallback.call(context,e);
+								else
+									successCallback(e);
+							}
+						}
+					}
 			}
 
-			req.setUrl("/visu/desk/php/actions.php");
+			req.setUrl("php/actions.php");
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData(actionParameters);
@@ -101,6 +133,7 @@ qx.Class.define("desk.actions",
 			xmlhttp.send();
 			this.__actions=xmlhttp.responseXML;
 			var actions=this.__actions.getElementsByTagName("action");
+			this.__actionsArray=actions;
 			var actionMenu=this;
 
 			for (var n=0;n<actions.length;n++)
@@ -118,8 +151,10 @@ qx.Class.define("desk.actions",
 		//				alert (descriptions[0]);
 				}
 
-				button.addListener("click", function (e){
-					actionMenu.createActionWindow(this.getLabel(), null, actionMenu.__currentFileBrowser);});
+				button.addListener("execute", function (e){
+					var action= new desk.action(this.getLabel());
+					action.setOriginFileBrowser(actionMenu.__currentFileBrowser);
+					action.buildUI();});
 				this.__actionMenu.add(button);
 			}
 		},
@@ -137,260 +172,11 @@ qx.Class.define("desk.actions",
 					var splitString=splitParameters[i].split("=");
 					parameters[splitString[0]]=splitString[1];
 				}
-				this.createActionWindow(parameters["action"],parameters);
+				var action=new desk.action (parameters["action"]);
+				action.setActionParameters(parameters);
+				action.buildUI();
 			}, this);
 			req.send();
-		},
-
-		createActionWindow : function (actionName, providedParameters, fileBrowser)
-		{
-			var action=this.__actions.getElementsByName(actionName)[0];
-
-			var actionWindow=new qx.ui.window.Window();
-			actionWindow.setLayout(new qx.ui.layout.HBox());
-			var pane = new qx.ui.splitpane.Pane("horizontal");
-			var embededFileBrowser=null;
-
-//			actionWindow.setHeight(300);
-			actionWindow.setWidth(300);
-			actionWindow.setShowClose(true);
-			actionWindow.setShowMinimize(false);
-			actionWindow.setUseMoveFrame(true);
-			actionWindow.setCaption(action.getAttribute("name"));
-
-			var parametersBox = new qx.ui.container.Composite;
-			parametersBox.setLayout(new qx.ui.layout.VBox());
-			pane.add(parametersBox);
-			actionWindow.add(pane, {flex : 1});
-
-			var logFileURL=null;
-			var showLogButton=new qx.ui.form.Button("Show console log");
-			showLogButton.addListener("execute",function (e) {
-				var logViewer=new desk.textEditor(logFileURL);
-				})
-			showLogButton.setVisibility("excluded");
-
-			var outputDirectory=null;
-			if (providedParameters)
-			{
-				outputDirectory=providedParameters["output_directory"];
-				if (outputDirectory)
-				{
-					embededFileBrowser=new desk.fileBrowser(pane,outputDirectory);
-					actionWindow.setWidth(600);
-					logFileURL=embededFileBrowser.getFileURL(outputDirectory+"/action.log");
-					showLogButton.setVisibility("visible");
-				}
-			}
-			
-			// create the form manager
-			var manager = new qx.ui.form.validation.Manager();
-			actionWindow.open();
-
-			var intValidator = function(value, item) {
-				var parameterName=this.getAttribute("name");
-				if ((value==null) || (value==""))
-				{
-					if (this.getAttribute("required")=="true")
-					{
-						item.setInvalidMessage("\""+parameterName+"\" is empty");
-						return (false);
-					}
-				}
-				else if ( (parseInt(value)!=parseFloat(value))||
-						 isNaN(value)){
-					item.setInvalidMessage("\""+parameterName+"\" should be an integer");
-					return (false);
-				}
-				return (true);
-				};
-
-			var floatValidator = function(value, item) {
-				var parameterName=this.getAttribute("name");
-				if ((value==null) || (value==""))
-				{
-					if (this.getAttribute("required")=="true")
-					{
-						item.setInvalidMessage("\""+parameterName+"\" is empty");
-						return (false);
-					}
-				}
-				else if (isNaN(value)){
-					item.setInvalidMessage("\""+parameterName+"\" should be a number");
-					return (false);
-				}
-				return (true);
-				};
-
-			var stringValidator = function(value, item) {
-				var parameterName=this.getAttribute("name");
-				if ((value==null) || (value==""))
-				{
-					if (this.getAttribute("required")=="true")
-					{
-						item.setInvalidMessage("\""+parameterName+"\" is empty");
-						return (false);
-					}
-				}
-				else if (value.split(" ").length!=1){
-					item.setInvalidMessage("\""+parameterName+"\" should contain no space characters");
-					return (false);
-				}
-				return (true);
-				};
-				var dummyValidator = function(value, item) {return (true)};
-
-			var fileAlreadyPickedFromBrowser=false;
-
-			var parameters=action.getElementsByTagName("parameter");
-			actionWindow.setHeight(100+50*parameters.length);
-			for (var i=0;i<(parameters.length);i++)
-			{
-				var parameter=parameters[i];
-				var parameterName=parameter.getAttribute("name");
-				parametersBox.add(new qx.ui.basic.Label(parameterName));
-				var parameterForm=new qx.ui.form.TextField();
-				parameterForm.setPlaceholder(parameterName);
-				parametersBox.add(parameterForm);
-				var parameterType=parameter.getAttribute("type");
-
-				switch (parameterType)
-				{
-				case "int":
-					manager.add(parameterForm, intValidator, parameter);
-					break;
-				case "string":
-					manager.add(parameterForm, stringValidator, parameter);
-					break;
-				case "float":
-					manager.add(parameterForm, floatValidator, parameter);
-					break;
-				case "file":
-					if ((!fileAlreadyPickedFromBrowser) && (fileBrowser!=null))
-					{
-						fileAlreadyPickedFromBrowser=true;
-						parameterForm.setValue(fileBrowser.getNodeFile(
-							fileBrowser.getSelectedNode()));
-					}
-					parameterForm.setDroppable(true);
-					parameterForm.addListener("drop", function(e) {
-							var fileBrowser=e.getData("fileBrowser");
-							var fileNode=fileBrowser.getSelectedNode();
- 							this.setValue(fileBrowser.getNodeFile(fileNode));
-						}, parameterForm);
-
-					manager.add(parameterForm, stringValidator, parameter);
-					break;
-				case "directory":
-					parameterForm.setDroppable(true);
-					parameterForm.addListener("drop", function(e) {
-							var fileBrowser=e.getData("fileBrowser");
-							var fileNode=fileBrowser.getSelectedNode();
- 							this.setValue(fileBrowser.getNodeFile(fileNode));
-						}, parameterForm);
-
-					manager.add(parameterForm, stringValidator, parameter);
-					break;
-				case "xmlcontent":
-					manager.add(parameterForm, dummyValidator, parameter);
-					break;
-				default :
-						alert("no validator implemented for type : "+parameterType);
-				}
-
-				//use default value if provided
-				var defaultValue=parameter.getAttribute("default");
-				if (defaultValue)
-					parameterForm.setValue(defaultValue);
-
-				if (providedParameters!=null)
-				{
-					var providedParameterValue=providedParameters[parameterName];
-					if (providedParameterValue!=null)
-						parameterForm.setValue(providedParameterValue);
-				}
-
-				parameterForm.addListener("input", function(e) 
-					{this.setInvalidMessage(null);},parameterForm);
-			}
-
-			var executeBox = new qx.ui.container.Composite;
-			executeBox.setLayout(new qx.ui.layout.HBox(10));
-			parametersBox.add(executeBox);//, {flex:1});
-
-			var send = new qx.ui.form.Button("Process");
-			executeBox.add(send);//, {left: 20, top: 215});
-			send.addListener("execute", function() {
-				// return type can not be used because of async validation
-				manager.validate()
-				}, this);
-
-			var forceUpdateCheckBox = new qx.ui.form.CheckBox("force");
-//			var executionStatus=new qx.ui.basic.Label();
-			var executionStatus=new qx.ui.form.TextField().set({
-				readOnly: true});
-
-			executeBox.add(forceUpdateCheckBox);
-			executeBox.add(executionStatus);
-			parametersBox.add(showLogButton, {flex : 1});
-
-			// add a listener to the form manager for the validation complete
-			manager.addListener("complete", function() {
-				// check the validation status
-				if (manager.getValid()) {
-					// configure the send button
-					send.setEnabled(false);
-					send.setLabel("Processing...");
-					var parameterMap={"action" : actionName};
-					var items=manager.getItems();
-					// add all parameters
-					for (var i=0;i<items.length;i++)
-					{
-						var currentItem=items[i];
-						var value=currentItem.getValue();
-						if (value!=null)
-							parameterMap[currentItem.getPlaceholder()]=value;
-					}
-
-					// add output directory if provided
-					if (outputDirectory!=null)
-						parameterMap["output_directory"]=outputDirectory;
-
-					// add the value of the "force update" checkbox
-					parameterMap["force_update"]=forceUpdateCheckBox.getValue();
-					executionStatus.setValue("Processing...");
-
-					function getAnswer (e)
-					{
-						// configure the send button
-						send.setEnabled(true);
-						send.setLabel("Update");
-
-						var req = e.getTarget();
-						var response=req.getResponseText();
-						showLogButton.setVisibility("visible");
-						var splitResponse=response.split("\n");
-						outputDirectory=splitResponse[0];
-						executionStatus.setValue(splitResponse[splitResponse.length-2]);
-						if (action.getAttribute("void")!="true")
-						{
-							if (embededFileBrowser==null)
-							{
-								//display the results directory
-								embededFileBrowser=new desk.fileBrowser(pane,outputDirectory);
-								actionWindow.setWidth(600);
-								logFileURL=embededFileBrowser.getFileURL(outputDirectory+"/action.log");
-								showLogButton.setVisibility("visible");
-							}
-							embededFileBrowser.updateRoot();
-						}
-
-					}
-					this.launchAction (parameterMap, getAnswer, this)
-				} else {
-					alert(manager.getInvalidMessages().join("\n"));
-				}
-				}, this);
 		}
 	}
 });

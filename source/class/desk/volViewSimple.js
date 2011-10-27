@@ -25,12 +25,12 @@ qx.Class.define("desk.volViewSimple",
 				{
 					var req = e.getTarget();
 					var slicesDirectory=req.getResponseText().split("\n")[0];
-					volView.openFile("\/visu\/desk\/php\/"+slicesDirectory+"\/"+"volume.xml");
+					volView.openFile(fileBrowser.getFileURL(slicesDirectory)+"/volume.xml");
 				}
 
 			var parameterMap={
-				"action" : "Slice_Volume",
-				"input_file" : file,
+				"action" : "slice_volume",
+				"input_volume" : file,
 				"output_directory" : "cache\/"};
 			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 
@@ -246,7 +246,7 @@ qx.Class.define("desk.volViewSimple",
 				volView.redraw();
 				volView.setSlice(slice);
 				};
-			this.__image.src=this.__path+this.__prefix+(this.__offset+this.__maxZ-this.__slider.getValue())
+			this.__image.src=this.__path+this.__prefix+"XY"+(this.__offset+this.__maxZ-this.__slider.getValue())
 				+"."+this.__fileFormatBox.getSelection()[0].getLabel()+"?nocache="+this.__timestamp;
 		}
 	}

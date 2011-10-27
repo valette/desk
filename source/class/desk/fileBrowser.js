@@ -1,12 +1,17 @@
 qx.Class.define("desk.fileBrowser", 
 {
-  extend : qx.ui.window.Window,
+	extend : qx.ui.container.Composite,
 
-	construct : function(container, baseDir)
+	construct : function(baseDir, standAlone)
 	{
 		this.base(arguments);
 		if (baseDir!=null)
 			this.__baseDir=baseDir;
+
+		this.setLayout(new qx.ui.layout.VBox());
+
+		if (standAlone==false)
+			this.__standAlone=false;
 
 		qx.Class.include(qx.ui.treevirtual.TreeVirtual,
 			qx.ui.treevirtual.MNode);
@@ -29,65 +34,54 @@ qx.Class.define("desk.fileBrowser",
 		var dataModel = virtualTree.getDataModel();
 
 		this.__actionsHandler=desk.actions.ACTIONSHANDLER;
+		this.__baseURL=desk.actions.BASEURL;
+/*
+		//create menu
+		var menu=new qx.ui.menu.Menu;
 
-		if (container==null)
-		{
-			this.setLayout(new qx.ui.layout.VBox());
-			this.setShowClose(false);
-			this.setShowMinimize(false);
-			this.setUseMoveFrame(true);
-			this.setCaption("files");
-			this.setHeight(500);
+		var uploadButton = new qx.ui.menu.Button("Upload");
+		uploadButton.addListener("execute", function (e){alert ("Not implemented!");}, this);
+		menu.add(uploadButton);
+		menu.addSeparator();
 
-			//create menu
-			var menu=new qx.ui.menu.Menu;
+		this.__actionsMenuButton=new qx.ui.menu.Button("Actions", null , null);
+		menu.add(this.__actionsMenuButton);
 
-/*			var uploadButton = new qx.ui.menu.Button("Upload");
-			uploadButton.addListener("execute", function (e){alert ("Not implemented!");}, this);
-			menu.add(uploadButton);
-			menu.addSeparator();
+		var actionsButton = new qx.ui.form.MenuButton("Actions", null, menu);
+		this.add(actionsButton);*/
 
-			this.__actionsMenuButton=new qx.ui.menu.Button("Actions", null , null);
-			menu.add(this.__actionsMenuButton);
+		// create the filter bar
+		var filterBox = new qx.ui.container.Composite;
+		filterBox.setLayout(new qx.ui.layout.HBox(10));
+		this.add(filterBox);//, {flex:1});
+		var filterText=new qx.ui.basic.Label("Filter files :");
+		filterBox.add(filterText);
+		var filterField = new qx.ui.form.TextField();
+		filterField.setValue("");
+		filterField.addListener("input", function() {
+			dataModel.setData();
+			},this);
+		filterBox.add(filterField, {flex:1});
 
-			var actionsButton = new qx.ui.form.MenuButton("Actions", null, menu);
-			this.add(actionsButton);*/
-
-			// create the filter bar
-			var filterBox = new qx.ui.container.Composite;
-			filterBox.setLayout(new qx.ui.layout.HBox(10));
-			this.add(filterBox);//, {flex:1});
-			var filterText=new qx.ui.basic.Label("Filter files :");
-			filterBox.add(filterText);
-			var filterField = new qx.ui.form.TextField();
+		var filter = qx.lang.Function.bind(function(node)
+			{
+				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+					var label = node.label;
+					return label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1;
+				}
+				return true;
+			}, this);
+		var resetButton=new qx.ui.form.Button("Reset filter");
+		resetButton.setAllowGrowY(false);
+		resetButton.addListener("execute",function(e){
 			filterField.setValue("");
-			filterField.addListener("input", function() {
-				dataModel.setData();
-				},this);
-			filterBox.add(filterField, {flex:1});
+			dataModel.setData();
+			});
+		filterBox.add(resetButton);
+		dataModel.setFilter(filter);
 
-			var filter = qx.lang.Function.bind(function(node)
-				{
-					if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-						var label = node.label;
-						return label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1;
-					}
-					return true;
-				}, this);
-			var resetButton=new qx.ui.form.Button("Reset filter");
-			resetButton.setAllowGrowY(false);
-			resetButton.addListener("execute",function(e){
-				filterField.setValue("");
-				dataModel.setData();
-				});
-			filterBox.add(resetButton);
-			dataModel.setFilter(filter);
+		this.add(virtualTree,{flex: 1});
 
-			this.add(virtualTree,{flex: 1});
-			this.open();
-		}
-		else
-			container.add(virtualTree, {flex : 1});
 
 		// add root directory
 		this.__rootId = dataModel.addBranch(null, this.__baseDir, true);
@@ -130,12 +124,35 @@ qx.Class.define("desk.fileBrowser",
 				}
 			}, this);
 
+
+		if (standAlone!=false)
+		{
+			var window=new qx.ui.window.Window();
+			window.setLayout(new qx.ui.layout.VBox());
+			this.__window=window;
+//			window.setShowClose(false);
+			window.setShowMinimize(false);
+			window.setUseMoveFrame(true);
+			window.setCaption("files");
+			window.setHeight(500);
+			window.add(this, {flex : 1});
+			this.__window.open();
+		}
+
+
 		return (this);
 	},
 
 	members : {
+		// defines whether the file browser is a standalone one
+		// i.e. whether it needs to create a window
+		__standAlone : true,
+
+		// the window containing the widget when in standalone mode
+		__window : null,
+
 		__fileHandler : null,
-		__baseURL : "/visu/desk/php/",
+		__baseURL : null,
 		__baseDir : "data",
 		__virtualTree : null,
 		__rootId : null,
@@ -213,7 +230,7 @@ qx.Class.define("desk.fileBrowser",
 
 			// Instantiate request
 			var req = new qx.io.request.Xhr();
-			req.setUrl("/visu/desk/php/listDir.php");
+			req.setUrl(this.__baseURL+"listDir.php");
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData({"dir" : directory});
@@ -246,7 +263,7 @@ qx.Class.define("desk.fileBrowser",
 
 				var newDir=file+"."+sessionType+"."+newSessionId;
 				var parameterMap={
-					"action" : "Create_directory",
+					"action" : "create_directory",
 					"directory_name" : newDir};
 				fileBrowser.getActions().launchAction(parameterMap, getAnswer);
 			}
@@ -275,7 +292,7 @@ qx.Class.define("desk.fileBrowser",
 				switch (extension)
 				{
 				case ".vtk":
-					var meshView=new desk.meshView(file, myBrowser,modificationTime);
+					new desk.meshView(file, myBrowser,modificationTime);
 //					qx.core.Init.getApplication().getRoot().add(meshView);
 					break;
 				case ".ply":
@@ -342,7 +359,7 @@ qx.Class.define("desk.fileBrowser",
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 				{
 					var oIFrm = document.getElementById('myIFrm');
-					oIFrm.src = "/visu/desk/php/download.php?fileName="+myBrowser.getNodeFile(node);
+					oIFrm.src = myBrowser.__baseURL+"download.php?fileName="+myBrowser.getNodeFile(node);
 				} 
 				else
 					alert("Cannot download a directory!");});
@@ -449,10 +466,6 @@ qx.Class.define("desk.fileBrowser",
 
 			var actionsButton=new qx.ui.menu.Button("Actions");
 			menu.add(actionsButton);
-			actionsButton.addListener("click", function (e) {
-				this.__actionsHandler.openActionsMenu(e, this);
-					}, this);
-
 			menu.addSeparator();
 			// other actions buttons
 			for (var i=0;i<this.__actionNames.length;i++)
@@ -470,8 +483,13 @@ qx.Class.define("desk.fileBrowser",
 					}, button);
 				menu.add(button);
 			}
+
 			this.__virtualTree.setContextMenu(menu);
+			this.__virtualTree.addListener("contextmenu", function (e) {
+				actionsButton.setMenu(this.__actionsHandler.getActionsMenu(this));
+				}, this);
 		},
+		
 
 		expandDirectoryListing : function(node) {
 			if (this.__updateDirectoryInProgress==true)
@@ -486,7 +504,7 @@ qx.Class.define("desk.fileBrowser",
 
 			// Instantiate request
 			var req = new qx.io.request.Xhr();
-			req.setUrl("/visu/desk/php/listDir.php");
+			req.setUrl(this.__baseURL+"listDir.php");
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData({"dir" : this.getNodeFile(node)});

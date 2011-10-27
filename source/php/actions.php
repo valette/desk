@@ -3,7 +3,8 @@
 $DATA_ROOT_FROM_PHP="data/";
 $CACHE_ROOT_FROM_PHP="cache/";
 $ACTIONS_ROOT_FROM_PHP="actions/";
-$DIR_TO_PHP="/var/www/html/visu/desk/php/";
+//$DIR_TO_PHP="/var/www/html/visu/desk/php/";
+$DIR_TO_PHP=getcwd()."/";
 
 $parametersFileName="action.par";
 
@@ -87,8 +88,8 @@ $ACTIONS_ROOT_FROM_PHP="action";
 
 $parametersList=array();
 
-$actions = simplexml_load_file("../actions.xml")
-	or die("Fichier introuvable. L'analyse a ete suspendue");
+$actions = simplexml_load_file("actions.xml")
+	or die("Fichier actions.xml introuvable. L'analyse a ete suspendue");
 
 if (!($_POST["action"]))
 	die ("no action asked!");
@@ -167,7 +168,7 @@ foreach ($actions->children() as $action)
 								$prependPHP_DIR=true;
 								break;
 							case "int":
-								if (!ctype_digit("$parameterValue"))
+								if (!(intval("$parameterValue")==floatval("$parameterValue")))
 									die ("$parameterName : value \"$parameterValue\" is not an integer value");
 								$value=floatVal($parameterValue);
 								$min=$parameter["min"];
@@ -320,9 +321,9 @@ foreach ($actions->children() as $action)
 				if (($newAction==false)&&($forceUpdate!="true"))
 				{
 					$oldParameters=readParameters("$parametersFileName");
-					$outputMtime=filemtime('.');
 					if (isset($oldParameters['hash']))
 					{
+						$outputMtime=filemtime($parametersFileName);
 						if (($inputFilesLastMtime<= $outputMtime)&&
 								($oldParameters['hash']==$commandHash))
 						{
@@ -365,7 +366,7 @@ foreach ($actions->children() as $action)
 				fwrite($flog, "$logHeader : wrote binary data into $binaryFileName\n");
 				echo("\nOK");
 				break;
-			case "save_XML_file":
+			case "save_xml_file":
 				$xmlData=$parametersList['xmlData'];
 				$xmlFileName=$parametersList['file_name'];
 				$xmlFile = fopen( "$xmlFileName", 'wb' );
@@ -385,10 +386,6 @@ foreach ($actions->children() as $action)
 					$duration=time()-$startTime;
 					if ($voidAction==false)
 					{
-						touch ('.');
-						clearstatcache();
-						$omtime=filemtime('.');
-						fwrite($flog, "$logHeader : output directory mtime : $omtime\n");
 						$fp = fopen($parametersFileName, 'w+') or die("Could not open $parametersFileName");
 						$parametersList2=array();
 						foreach ($parametersList as $parameter => $value)

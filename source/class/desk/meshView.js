@@ -1,3 +1,10 @@
+/*
+#ignore(o3djs.renderscene)
+#ignore(o3djs.mesh)
+#ignore(globalO3DDoNotHandleKeyEvents)
+#ignore(o3djs.webgl)
+*/
+
 qx.Class.define("desk.meshView", 
 {
   extend : qx.core.Object,
@@ -9,25 +16,34 @@ qx.Class.define("desk.meshView",
 		var window=new qx.ui.window.Window();
 		window.setLayout(new qx.ui.layout.VBox());
 		window.setShowClose(true);
+		window.setWidth(600);
+		window.setHeight(400);
 		window.setShowMinimize(false);
 		window.setResizable(true,true,true,true);
 		window.setUseResizeFrame(true);
 		window.setUseMoveFrame(true);
 		window.setContentPadding(2);
 		window.setCaption(file);
-		window.setResizable(true,true,true,true);
 		this.__window=window;
 
 		var pane = new qx.ui.splitpane.Pane("horizontal")
 		window.add(pane,{flex : 1});
 
-		this.createDisplayWidget();
-		pane.add(this.__iframe, 5);
+		this.__embededHTML=this.createDisplayWidget();
+		pane.add(this.__embededHTML, 5);
 		window.open();
 
 		var elementsList = new qx.ui.container.Composite;
 		elementsList.setLayout(new qx.ui.layout.VBox());
 		pane.add(elementsList, 1);
+
+
+		var topRightContainer = new qx.ui.container.Composite();
+		topRightContainer.setLayout(new qx.ui.layout.HBox());
+		elementsList.add(topRightContainer);
+		topRightContainer.add(this.__getDragLabel());
+		topRightContainer.add(this.__getResetViewButton(), {flex : 1});
+		topRightContainer.add(this.__getSnapshotButton());
 
 		this.__shapesList=new qx.ui.treevirtual.TreeVirtual(["meshes","wireframe"],
 			{initiallyHiddenColumns : [1]});
@@ -65,7 +81,12 @@ qx.Class.define("desk.meshView",
 					if (label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1)
 					{
 						if (shape)
-							shape.show();
+						{
+							if (meshView.__shapesVisibility[node.nodeId])
+								shape.show();
+							else
+								shape.hide();
+						}
 						return true;
 					}
 					else
@@ -89,18 +110,56 @@ qx.Class.define("desk.meshView",
 
 		elementsList.add(this.__shapesList,{flex : 1});
 		this.__shapesArray=[];
+		this.__shapesVisibility = [];
 
 
 		//context menu to edit meshes appearance
 		var menu = new qx.ui.menu.Menu;
-		var openButton = new qx.ui.menu.Button("Change Colors");
-		openButton.addListener("execute", function (){
+		var propertiesButton = new qx.ui.menu.Button("properties");
+		propertiesButton.addListener("execute", function (){
+			var selectedShapeId=this.__shapesList.getSelectedNodes()[0].nodeId;
+			var shape=this.__shapesArray[selectedShapeId];
+			alert ("Mesh with "+shape.getNumberOfVertices()+" vertices and "+shape.getNumberOfPolygons()
+				+" polygons");
+			},this);
+		menu.add(propertiesButton);
+
+		var appearanceButton = new qx.ui.menu.Button("appearance");
+		appearanceButton.addListener("execute", function (){
 			var propertyWindow=new qx.ui.window.Window();
 			propertyWindow.setLayout(new qx.ui.layout.HBox());
 			propertyWindow.add(meshView.createPropertyWidget(propertyWindow));
 			propertyWindow.open();			
 			}, this);
-		menu.add(openButton);
+		menu.add(appearanceButton);
+
+		var showButton = new qx.ui.menu.Button("show");
+		showButton.addListener("execute", function (){
+			var shapesArray=this.__shapesList.getSelectedNodes();
+			for (var i=0;i<shapesArray.length;i++)
+			{
+				var shapeId=shapesArray[i].nodeId;
+				var shape=this.__shapesArray[shapeId];
+				shape.show();
+				this.__shapesVisibility[shapeId]=true;
+			}
+			this.getScene().render();		
+			},this);
+		menu.add(showButton);
+
+		var hideButton = new qx.ui.menu.Button("hide");
+		hideButton.addListener("execute", function (){
+			var shapesArray=this.__shapesList.getSelectedNodes();
+			for (var i=0;i<shapesArray.length;i++)
+			{
+				var shapeId=shapesArray[i].nodeId;
+				var shape=this.__shapesArray[shapeId];
+				shape.hide();
+				this.__shapesVisibility[shapeId]=false;
+			}
+			this.getScene().render();		
+			},this);
+		menu.add(hideButton);
 		this.__shapesList.setContextMenu(menu);
 
 
@@ -117,19 +176,22 @@ qx.Class.define("desk.meshView",
 		return (this);
 	},
 
-	statics : {
-		LINKEDWINDOW : null
+	destruct : function(){
+		console.log("destructor");
+//		this._disposeObjects("__");
 	},
 
 	members : {
+		__embededHTML : null,
 		__window : null,
 		__fileBrowser : null,
-		__iframe : null,
 		__fileToOpen : null,
 		__fileToOpenMTime : null,
 		__sceneReady : null,
 		__shapesList : null,
 		__shapesArray : null,
+		__scene : null,
+		__shapesVisibility : null,
 
 		__volumes : null,
 
@@ -158,7 +220,8 @@ qx.Class.define("desk.meshView",
 			{
 				scene.loadMesh(fileBrowser.getFileURL(file), function (shape)
 					{
-						myMeshViewer.__shapesArray[leaf]=shape;		
+						myMeshViewer.__shapesArray[leaf]=shape;	
+						myMeshViewer.__shapesVisibility[leaf]=true;
 						if (update==true)
 							scene.viewAll();
 						else if ((update!=null)&&(update!=false))
@@ -174,7 +237,7 @@ qx.Class.define("desk.meshView",
 			case ".stl":
 				var parameterMap={
 					"action" : "mesh2vtk",
-					"input_file" : file,
+					"input_mesh" : file,
 					"output_directory" : "cache\/"};
 
 				function getAnswer(e)
@@ -299,71 +362,77 @@ qx.Class.define("desk.meshView",
 		},
 
 		getScene : function() {
-				return this.__iframe.getWindow().g_scene;
+				return this.__scene;
 		},
 
 		createDisplayWidget : function(){
-			this.__iframe = new qx.ui.embed.Iframe().set({
-			width: 400,
-			height: 400,
-			minWidth: 200,
-			minHeight: 150,
-			decorator:null});
-			this.__iframe.setFrameName('o3dframe');
 
-			var meshViewer=this;
-			if (qx.core.Environment.get("browser.name")=="firefox")
-			{
-				// quirk for firefox which oes not handle iframes correctly
-				this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/?empty=true&width=400&height=400");
 
-				this.__iframe.addListenerOnce("load", function(e) { 
-					this.__window.addListener("resize", function(event) {
-						var elementSize=this.__iframe.getInnerSize();
-						this.__iframe.getWindow().resizeClient(elementSize.width, elementSize.height);},this);
-					}, this);
-			}
-			else
-				this.__iframe.setSource("http://vip.creatis.insa-lyon.fr:8080/visu/meshView/?empty=true");
+			var htmlContainer = new qx.ui.embed.Html();
+			var randomId=Math.random();
+			htmlContainer.setHtml("<div id=\"o3d"+randomId+"\"></div>");
 
-			this.__iframe.addListenerOnce("load", function(e) {
-				function loadCallback()
-				{
-					meshViewer.__sceneReady=true;
-					meshViewer.__iframe.getWindow().o3djs.event.addEventListener(meshViewer.getScene().o3dElement, 'mousedown', function(){
-						var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
-						windowManager.bringToFront(meshViewer.__window);});
-					meshViewer.openFile();
-				}
-				this.__iframe.getWindow().parentCallback=loadCallback;
-				this.__iframe.getWindow().init2(loadCallback);
+			var scene;
+			var canvaselement;
+			var meshView=this;
 
-				this.__window.addListener("mouseout", function(event) {
-					var myScene=this.__iframe.getWindow().g_scene;
-					if (myScene!=null)
-						myScene.stopDragging();},this);
+			function initStep2(clientElements) {
 
-				this.__window.addListener("keypress", function(event) {
-					this.__iframe.getWindow().keyPressed(event.getKeyIdentifier())
-					;},this);
+				canvaselement=clientElements[0];
+				scene=o3djs.renderscene.createRenderScene(clientElements[0]);
+				meshView.__scene=scene;
+				scene.render();
+				
+				var draggingInProgress=false;
+				htmlContainer.addListener("mousedown", function (event)	{
+					htmlContainer.capture();
+					var origin=htmlContainer.getContentLocation();
+					draggingInProgress=true;
+					scene.startDragging(event.getDocumentLeft()-origin.left,
+													event.getDocumentTop()-origin.top,
+													event.isShiftPressed(),
+													event.isCtrlPressed(),
+													event.isMiddlePressed(),
+													event.isRightPressed());});
 
-				this.__window.addListener("keypress", function(event) {
-					if (event.getKeyIdentifier()=="S")
-						desk.meshView.LINKEDWINDOW=this;
-					},this);
-
-				this.__window.addListener("click", function(event) {
-					var window=desk.meshView.LINKEDWINDOW;
-					if ((window!=null)&&(window!=this))
+				htmlContainer.addListener("mousemove", function (event)	{
+					if (draggingInProgress)
 					{
-						this.__iframe.getWindow().g_scene.bind(window.__iframe.getWindow().g_scene);
-						window.__iframe.getWindow().g_scene.bind(this.__iframe.getWindow().g_scene);
-						this.__iframe.getWindow().g_scene.cameracontroller.onChange();
-						desk.meshView.LINKEDWINDOW=null;
-					}},this);
+						var origin=htmlContainer.getContentLocation();
+						scene.drag(event.getDocumentLeft()-origin.left
+								, event.getDocumentTop()-origin.top);
+					}});
 
-				this.__window.setDroppable(true);
-				this.__window.addListener("drop", function(e) {
+				htmlContainer.addListener("mouseup", function (event)	{
+					htmlContainer.releaseCapture();
+					draggingInProgress=false;
+					scene.stopDragging();});
+
+				htmlContainer.addListener("mousewheel", function (event)	{
+					scene.mouseWheelUsed(-event.getWheelDelta());});
+
+				meshView.__sceneReady=true;
+
+				function resizeHTML(){
+					var elementSize=htmlContainer.getInnerSize();
+					var myWidth = elementSize.width;
+					var myHeight = elementSize.height;
+					scene.o3dElement.width=myWidth;
+					scene.o3dElement.height=myHeight;
+//					scene.client.gl.hack_canvas.width=myWidth;
+//					scene.client.gl.hack_canvas.height=myHeight;
+					scene.client.gl.displayInfo = {width: myWidth, height: myHeight};
+					scene.resize();
+					}
+
+				htmlContainer.addListener("resize",resizeHTML);
+
+				resizeHTML();
+				scene.resize();
+				meshView.openFile();
+
+				meshView.__window.setDroppable(true);
+				meshView.__window.addListener("drop", function(e) {
 					if (e.supportsType("fileBrowser"))
 					{
 						var fileBrowser=e.getData("fileBrowser");
@@ -391,7 +460,7 @@ qx.Class.define("desk.meshView",
 									default:
 								}
 							}
-							meshViewer.__readFile(fileName, mTime, null, update);
+							meshView.__readFile(fileName, mTime, null, update);
 						}
 					}
 					if (e.supportsType("volumeSlice"))
@@ -401,37 +470,27 @@ qx.Class.define("desk.meshView",
 						var dimensions=volView.getDimensions();
 						var width=dimensions[0];
 						var height=dimensions[1];
-						var square=this.__iframe.getWindow().o3djs.mesh.createSquare(scene, width, height);
-						var coords=volView.getCornersCoordinates();
-						for (var i=0;i<4;i++)
-							square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);
+						var square=o3djs.mesh.createSquare(scene, width, height);
 
 						function updateTexture()
 						{
-							var pixels = volView.getSlicePixels();
-							square.setTexturePixels(pixels);
+							var coords=volView.getCornersCoordinates();
+							for (var i=0;i<4;i++)
+								square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);
+							square.setTextureImageData(volView.getSliceImageData());
 							scene.render();
 						}
+
 						updateTexture();
+
 						var listenerId=volView.addListener('changeSlice',function(e)
-						{
-							var slice=volView.getSlice();
-							while (1)
 							{
-								var coords=volView.getCornersCoordinates();
 								updateTexture();
-								for (var i=0;i<4;i++)
-									square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);
-								scene.render();
-								if (slice==volView.getSlice())
-									break;
-								else
-									console.log("skew detected...");
-							}
-						});
-						if (meshViewer.__volumes==null)
-							meshViewer.__volumes=[];
-						meshViewer.__volumes.push({
+								scene.render();});
+
+						if (meshView.__volumes==null)
+							meshView.__volumes=[];
+						meshView.__volumes.push({
 								volumeViewer : volView,
 								listener : listenerId});
 						scene.render();
@@ -439,18 +498,92 @@ qx.Class.define("desk.meshView",
 					// activate the window
 					var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
 					windowManager.bringToFront(this.__window);
-				}, this);
+				}, meshView);
 
-			this.__window.addListener("beforeClose", function(e) {
+			meshView.__window.addListener("beforeClose", function(e) {
 				// remove bindings from volume viewers
 				var volumes=this.__volumes;
 				if (volumes!=null)
 					for (var i=0;i<volumes.length;i++)
 						volumes[i].volumeViewer.removeListenerById(volumes[i].listener);
 				this.__volumes=null;
-				},this);
 
-			}, this);
+				//clean the scene
+				this.getScene().client.cleanup();
+				this.getScene().pack.destroy(); 
+				this.__shapesArray.length=0;
+				this.__shapesVisibility.length=0;
+				this.dispose();
+				},meshView);
+			}
+
+			htmlContainer.addListener("appear",function(e){
+				globalO3DDoNotHandleKeyEvents=true;
+				o3djs.webgl.makeClients(initStep2,null,null,null,"^o3d"+randomId);
+				});
+	
+			return (htmlContainer);
+		},
+
+		snapshot : function () {
+			this.__scene.render();
+			var strData = this.__scene.client.gl.hack_canvas.toDataURL("image/png");
+			var saveData=strData.replace("image/png", "image/octet-stream");
+			document.location.href = saveData;			
+		},
+
+		__getSnapshotButton : function () {
+			var button=new qx.ui.form.Button(null, "resource/desk/camera-photo.png");
+			button.addListener("execute", function(e) {
+				this.snapshot();}, this);
+			return button;
+		},
+
+		__getResetViewButton : function () {
+			var button=new qx.ui.form.Button("reset view");
+			button.addListener("execute", function(e) {
+				this.__scene.resetCamera();}, this);
+			return button;
+		},
+
+		__getDragLabel : function () {
+			var dragLabel=new qx.ui.basic.Label("Link").set({decorator: "main"});
+			// drag and drop support
+			dragLabel.setDraggable(true);
+			dragLabel.addListener("dragstart", function(e) {
+				e.addAction("alias");
+				e.addType("meshView");
+				});
+
+			dragLabel.addListener("droprequest", function(e) {
+					var type = e.getCurrentType();
+					switch (type)
+					{
+					case "meshView":
+						e.addData(type, this);
+						break;
+					default :
+						alert ("type "+type+"not supported for drag and drop");
+					}
+				}, this);
+
+			// enable linking between viewers by drag and drop
+			this.__window.setDroppable(true);
+			this.__window.addListener("drop", function(e) {
+				if (e.supportsType("meshView"))
+				{
+						var meshView2=e.getData("meshView");
+						this.__scene.bind(meshView2.__scene);
+						meshView2.__scene.bind(this.__scene);
+						meshView2.__scene.cameracontroller.onChange();
+				}
+			},this);
+
+			// add listener on close window event to remove bindings
+			this.__window.addListener("beforeClose", function (e){
+			this.__scene.client.cleanup();
+				},this)
+			return dragLabel;
 		},
 
 		createPropertyWidget : function (parentWindow){
