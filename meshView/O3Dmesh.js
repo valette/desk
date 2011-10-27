@@ -18,12 +18,25 @@ o3djs.mesh.Mesh = function(fileName, shape, material, scene)
 	this.scene=scene;
 	this.fileName=fileName;
 
+	this.numberOfVertices=0;
+	this.numberOfPolygons=0;
+
 /*	// the list of meshes bound to this one
 	this.linkedMeshes=[];
 
 	// the mesh to which one this mesh is bound
 	this.bound=null;*/
 };
+
+o3djs.mesh.Mesh.prototype.getNumberOfVertices = function() 
+{
+	return this.numberOfVertices;
+}
+
+o3djs.mesh.Mesh.prototype.getNumberOfPolygons = function() 
+{
+	return this.numberOfPolygons;
+}
 
 o3djs.mesh.Mesh.prototype.addShape = function(shape) 
 {
@@ -243,5 +256,7 @@ o3djs.mesh.createSquare = function(scene, width, height)
 	mesh.pixels=pixels;
 
 	mesh.setTexturePixels(pixels);
+	mesh.numberOfVertices=4;
+	mesh.numberOfPolygons=2;
 	return (mesh);
 }

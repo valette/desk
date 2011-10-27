@@ -130,7 +130,7 @@ qx.Class.define("desk.fileBrowser",
 			var window=new qx.ui.window.Window();
 			window.setLayout(new qx.ui.layout.VBox());
 			this.__window=window;
-			window.setShowClose(false);
+//			window.setShowClose(false);
 			window.setShowMinimize(false);
 			window.setUseMoveFrame(true);
 			window.setCaption("files");

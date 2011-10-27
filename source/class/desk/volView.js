@@ -1854,7 +1854,7 @@ qx.Class.define("desk.volView",
 					"input_volume" : volView.getSessionDirectory()+"/filtering/output.mhd"});
 				});
 
-			this.__startSegmentationButton=new qx.ui.form.ToggleButton("Start segmentation");
+			this.__startSegmentationButton=new qx.ui.form.Button("Start segmentation");
 			this.__startSegmentationButton.addListener("execute", function () {
 				this.__startSegmentationButton.setEnabled(false);
 				volView.__segmentationInProgress=true;
@@ -1863,7 +1863,7 @@ qx.Class.define("desk.volView",
 				}, this);
 			this.__bottomRightContainer.add(this.__startSegmentationButton);
 
-			var meshingButton=new qx.ui.form.ToggleButton("extract meshes");
+			var meshingButton=new qx.ui.form.Button("extract meshes");
 			this.__extractMeshesButton=meshingButton;
 			meshingButton.addListener("execute", function () {
 				this.__startSegmentationButton.setEnabled(false);
@@ -2333,7 +2333,7 @@ qx.Class.define("desk.volView",
 			var sessionsListLabel=new qx.ui.basic.Label("Sessions : ");
 			sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});
 			sessionsListContainer.add(sessionsListLabel);
-			var button=new qx.ui.form.ToggleButton("new session");
+			var button=new qx.ui.form.Button("new session");
 			sessionsListContainer.add(button);
 
 			var sessionType="gcSegmentation";

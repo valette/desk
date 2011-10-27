@@ -4,6 +4,8 @@
 <parameter name="input_mesh" type="file" required="true"/>
 <parameter name="number_of_desired_vertices" type="int" min="0" required="true" />
 <parameter name="gradation" type="float" required="true" min="0" max="30" default="0"/>
+<parameter prefix="-m " name="force_manifold" type="int" required="false" min="0" max="1"/>
+<parameter prefix="-r " name="vertex_reserve" type="int" required="false" min="0"/>
 <anchor text="-d 0"/>
 </action>
 
@@ -27,6 +29,9 @@
 <parameter name="simlification_method" type="int" min="0" max="1" default="0" prefix="-s "/>
 <parameter name="number_of_smoothing_steps" type="int" min="0" default="0" prefix="-sm "/>
 <parameter name="gradation" type="float" min="0" max="3" default="0" prefix="-g "/>
+<parameter name="format" type="string" default="vtk" prefix="-f "/>
+<parameter name="manifold_output" type="int" default="0" min="0" max="1" prefix="-m "/>
+<parameter name="anisotropy" type="int" default="0" min="0" max="1" prefix="-a "/>
 </action>
 
 <action name="mesh2vtk" executable="/home/visu/src/vtkSurfaceBuild/bin/mesh2vtk">

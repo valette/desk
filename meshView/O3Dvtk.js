@@ -842,7 +842,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 
 		createPrimitives();
 
-		if (numberOfPoints>1000000)
+		if (numberOfPoints>5000000)
 		{
 			alert ("mesh is too big : "+numberOfPoints+" vertices");
 			return;
@@ -1021,6 +1021,9 @@ function createFromFile3(xmlhttp, scene, file,color) {
 
 		mesh.addShape(shape);
 	}
+
+	mesh.numberOfVertices=numberOfPoints;
+	mesh.numberOfPolygons=numberOfPolygons;
 
 	return (mesh);
 }

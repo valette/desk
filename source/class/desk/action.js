@@ -192,6 +192,26 @@ qx.Class.define("desk.action",
 					showLogButton.setVisibility("visible");
 				}
 			}
+
+			if (!this.__standalone)
+			{
+				// add context menu to get a filebrowser
+				var menu = new qx.ui.menu.Menu;
+				var fileButton = new qx.ui.menu.Button("open output directory");
+				fileButton.addListener("execute", function (){
+					var outputDir=this.getOutputDirectory();
+					if (outputDir==null)
+					{
+						alert ("There is no output yet. You need to execute the action first");
+					}
+					else
+					{
+						var newFileBrowser=new desk.fileBrowser(outputDir);
+						newFileBrowser.setUserData("action",this);
+					}},this);
+				menu.add(fileButton);
+				this.setContextMenu(menu);
+			}
 		
 			// create the form manager
 			var manager = new qx.ui.form.validation.Manager();

@@ -115,14 +115,23 @@ qx.Class.define("desk.meshView",
 
 		//context menu to edit meshes appearance
 		var menu = new qx.ui.menu.Menu;
-		var openButton = new qx.ui.menu.Button("color");
-		openButton.addListener("execute", function (){
+		var propertiesButton = new qx.ui.menu.Button("properties");
+		propertiesButton.addListener("execute", function (){
+			var selectedShapeId=this.__shapesList.getSelectedNodes()[0].nodeId;
+			var shape=this.__shapesArray[selectedShapeId];
+			alert ("Mesh with "+shape.getNumberOfVertices()+" vertices and "+shape.getNumberOfPolygons()
+				+" polygons");
+			},this);
+		menu.add(propertiesButton);
+
+		var appearanceButton = new qx.ui.menu.Button("appearance");
+		appearanceButton.addListener("execute", function (){
 			var propertyWindow=new qx.ui.window.Window();
 			propertyWindow.setLayout(new qx.ui.layout.HBox());
 			propertyWindow.add(meshView.createPropertyWidget(propertyWindow));
 			propertyWindow.open();			
 			}, this);
-		menu.add(openButton);
+		menu.add(appearanceButton);
 
 		var showButton = new qx.ui.menu.Button("show");
 		showButton.addListener("execute", function (){
