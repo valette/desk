@@ -178,6 +178,25 @@ qx.Class.define("desk.meshView",
 
 	destruct : function(){
 		console.log("destructor");
+		// remove bindings from volume viewers
+		var volumes=this.__volumes;
+		if (volumes!=null)
+			for (var i=0;i<volumes.length;i++)
+				volumes[i].volumeViewer.removeListenerById(volumes[i].listener);
+		this.__volumes=null;
+
+		//clean the scene
+		var shapes=this.__shapesArray;
+		for (var i=0;i<shapes.kength;i++)
+		{
+			if (shapes[i]!=null)
+				shapes[i].destroy();
+		}
+		this.__shapesArray.length=0;
+		this.getScene().client.cleanup();
+		this.getScene().pack.destroy(); 
+
+		this.__shapesVisibility.length=0;
 //		this._disposeObjects("__");
 	},
 
@@ -501,18 +520,6 @@ qx.Class.define("desk.meshView",
 				}, meshView);
 
 			meshView.__window.addListener("beforeClose", function(e) {
-				// remove bindings from volume viewers
-				var volumes=this.__volumes;
-				if (volumes!=null)
-					for (var i=0;i<volumes.length;i++)
-						volumes[i].volumeViewer.removeListenerById(volumes[i].listener);
-				this.__volumes=null;
-
-				//clean the scene
-				this.getScene().client.cleanup();
-				this.getScene().pack.destroy(); 
-				this.__shapesArray.length=0;
-				this.__shapesVisibility.length=0;
 				this.dispose();
 				},meshView);
 			}

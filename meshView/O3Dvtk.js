@@ -999,14 +999,14 @@ function createFromFile3(xmlhttp, scene, file,color) {
 	for (var j=0;j<vertexInfoArray.length;j++)
 	{
 		positionStream=positionStreamArray[j];
-		var numberOfPoints=positionStream.numElements();
+		var streamNumberOfPoints=positionStream.numElements();
 
 		vertexInfo=vertexInfoArray[j];
 		var normalStream = vertexInfo.addStream(
 			3, o3djs.base.o3d.Stream.NORMAL);
 
 		new2old=new2oldArray[j];
-		for (var i=0;i<numberOfPoints;i++)
+		for (var i=0;i<streamNumberOfPoints;i++)
 		{
 			var oldVertex=new2old[i];
 			var subIndex=oldVertex*3;
@@ -1021,7 +1021,8 @@ function createFromFile3(xmlhttp, scene, file,color) {
 
 		mesh.addShape(shape);
 	}
-
+	positionStreamArray=null;
+	vertexInfoArray=null;
 	mesh.numberOfVertices=numberOfPoints;
 	mesh.numberOfPolygons=numberOfPolygons;
 

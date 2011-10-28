@@ -21,12 +21,39 @@ o3djs.mesh.Mesh = function(fileName, shape, material, scene)
 	this.numberOfVertices=0;
 	this.numberOfPolygons=0;
 
+	this.transform=null;
 /*	// the list of meshes bound to this one
 	this.linkedMeshes=[];
 
 	// the mesh to which one this mesh is bound
 	this.bound=null;*/
 };
+
+o3djs.mesh.Mesh.prototype.destroy = function()
+{
+	var transform;
+	if (this.transform==null)
+		transform=this.scene.transform;
+	else
+		transform=this.transform;
+
+	var pack=this.scene.pack;
+
+	for (var i=0;i<this.shapes.length;i++)
+	{
+		transform.removeShape(this.shapes[i]);
+		pack.removeObject(this.shapes[i]);
+	}
+	pack.removeObject(this.material);
+	if (this.transform!=null)
+		pack.removeObject(this.transform);
+
+	this.fileName=null;
+	this.scene=null;
+	this.material=null;
+	this.transform=null;
+	this.shapes=null;
+}
 
 o3djs.mesh.Mesh.prototype.getNumberOfVertices = function() 
 {
