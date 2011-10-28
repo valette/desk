@@ -1102,9 +1102,10 @@ function createFromFile2(xmlhttp, scene, file,color) {
 
 		var v0 = o3djs.math.normalize(o3djs.math.subVector(positions[1],positions[0]));
 		var v1 = o3djs.math.normalize(o3djs.math.subVector(positions[2],positions[1]));
-		var normal=o3djs.math.normalize(o3djs.math.cross(v0, v1));
-		var norm=normal[0]*normal[0]+normal[1]*normal[1]+normal[2]*normal[2];
-		if ((norm>0.98)&&(norm<1.01))
+//		var normal=o3djs.math.normalize(o3djs.math.cross(v0, v1));
+		var normal=o3djs.math.cross(v0, v1);
+//		var norm=normal[0]*normal[0]+normal[1]*normal[1]+normal[2]*normal[2];
+//		if ((norm>0.98)&&(norm<1.01))
 		{
 			for (var iii=0;iii<3;iii++)
 			{
