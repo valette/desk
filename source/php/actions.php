@@ -109,7 +109,7 @@ foreach ($actions->children() as $action)
 		if ($actionToPerform==$currentActionName)
 		{
 			$parametersList["action"]="$actionToPerform";
-			$command="nice ".$action["executable"]
+			$command="ulimit -v 12000000; nice ".$action["executable"]
 				or die("no executable provided for action \"$actionToPerform\"");
 			fwrite($flog, "$logHeader :$currentActionName\n");
 			// action was found in xml file, let's parse the parameters
@@ -393,7 +393,7 @@ foreach ($actions->children() as $action)
 
 						fwrite($fp, implode("\n", $parametersList2));
 						fclose($fp);
-						echo "\n".$omtime;
+	//					echo "\n".$omtime;
 					}
 					echo "\nOK ($duration s.)";
 				}
@@ -402,8 +402,8 @@ foreach ($actions->children() as $action)
 					echo ("Cached output : \n");
 					readfile ("action.log");
 					clearstatcache();
-					$omtime=filemtime('.');
-					echo "\n".$omtime;
+		//			$omtime=filemtime('.');
+		//			echo "\n".$omtime;
 					echo "\nCACHED";
 				}
 			}
