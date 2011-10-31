@@ -1956,7 +1956,7 @@ qx.Class.define("desk.volView",
 						if ((numberOfRemainingRequests===0)&&(callback!==null))
 						{
                             volView.__currentSeedsModified=false;
-                            if (callback!==null)
+                            if (callback!=null)
                                callback();
 						}
 					};
