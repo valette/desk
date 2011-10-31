@@ -532,11 +532,29 @@ qx.Class.define("desk.meshView",
 			return (htmlContainer);
 		},
 
-		snapshot : function () {
-			this.__scene.render();
+		snapshot : function (factor) {
+			if (factor==null)
+				factor=1;
+			var elementSize=this.__embededHTML.getInnerSize();
+			var myWidth = elementSize.width*factor;
+			var myHeight = elementSize.height*factor;
+			var scene=this.getScene();
+			scene.o3dElement.width=myWidth;
+			scene.o3dElement.height=myHeight;
+			scene.client.gl.displayInfo = {width: myWidth, height: myHeight};
+			scene.resize();
+			scene.render();
 			var strData = this.__scene.client.gl.hack_canvas.toDataURL("image/png");
 			var saveData=strData.replace("image/png", "image/octet-stream");
-			document.location.href = saveData;			
+			document.location.href = saveData;
+
+			myWidth = elementSize.width;
+			myHeight = elementSize.height;
+			scene.o3dElement.width=myWidth;
+			scene.o3dElement.height=myHeight;
+			scene.client.gl.displayInfo = {width: myWidth, height: myHeight};
+			scene.resize();
+			scene.render();
 		},
 
 		__getSnapshotButton : function () {
