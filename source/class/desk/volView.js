@@ -1983,13 +1983,13 @@ qx.Class.define("desk.volView",
 				}
 				else
 				{
-                    if (callback!==null)
+                    if (callback!=null)
 						callback();
 				}
 			}
 			else
 			{
-				if (callback!==null)
+				if (callback!=null)
 					callback();
 			}
 		},
@@ -2345,7 +2345,7 @@ qx.Class.define("desk.volView",
 
 			function updateList(sessionIdToSelect) {
 				updateInProgress=true;
-				function buildSessionsItems (sessions)
+				var buildSessionsItems =function (sessions)
 				{
 					var sessionItemToSelect=null;
 					sessionsList.removeAll();
@@ -2358,7 +2358,7 @@ qx.Class.define("desk.volView",
 							sessionItemToSelect=sessionItem;
 					}
 					var dummyItem=null;
-					if (sessionIdToSelect===null)
+					if (sessionIdToSelect==null)
 					{
 						dummyItem = new qx.ui.form.ListItem("select a session");
 						sessionsList.add(dummyItem);
@@ -2375,7 +2375,7 @@ qx.Class.define("desk.volView",
 					else
 						sessionsList.setSelection([dummyItem]);					
 					updateInProgress=false;
-				}
+				};
 
 				fileBrowser.getFileSessions(file, sessionType, buildSessionsItems);
 			}
@@ -2543,7 +2543,7 @@ qx.Class.define("desk.volView",
 
 		getSeedFileName : function(sliceId, seedsTypeSelectBoxItem)
 		{
-			if (seedsTypeSelectBoxItem===null)
+			if (seedsTypeSelectBoxItem==null)
 				seedsTypeSelectBoxItem=this.__seedsTypeSelectBox.getSelection()[0];
 			var filePrefix=seedsTypeSelectBoxItem.getUserData("filePrefix");
 			return filePrefix +"XY"+(this.__slicesNameOffset + sliceId) +".png";
