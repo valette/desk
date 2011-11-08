@@ -191,13 +191,16 @@ qx.Class.define("desk.meshView",
 		{
 			if (shapes[i]!=null)
 				shapes[i].destroy();
+			shapes[i]=0;
 		}
-		this.__shapesArray.length=0;
+		this.__shapesArray=0;
 		this.getScene().client.cleanup();
 		this.getScene().pack.destroy(); 
 
 		this.__shapesVisibility.length=0;
-//		this._disposeObjects("__");
+		this._disposeObjects("__embededHTML","__shapesList");
+		this.__scene.client.cleanup();
+		this.__scene=null;
 	},
 
 	members : {
@@ -519,7 +522,7 @@ qx.Class.define("desk.meshView",
 					windowManager.bringToFront(this.__window);
 				}, meshView);
 
-			meshView.__window.addListener("beforeClose", function(e) {
+			meshView.__window.addListener("close", function(e) {
 				this.dispose();
 				},meshView);
 			}
@@ -603,11 +606,6 @@ qx.Class.define("desk.meshView",
 						meshView2.__scene.cameracontroller.onChange();
 				}
 			},this);
-
-			// add listener on close window event to remove bindings
-			this.__window.addListener("beforeClose", function (e){
-			this.__scene.client.cleanup();
-				},this)
 			return dragLabel;
 		},
 

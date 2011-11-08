@@ -1020,9 +1020,13 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		scene.transform.addShape(shape);
 
 		mesh.addShape(shape);
+		positionStreamArray[j]=0;
+		vertexInfoArray[j]=0;
+		new2oldArray[j]=0;
 	}
 	positionStreamArray=null;
 	vertexInfoArray=null;
+	new2oldArray=null;
 	mesh.numberOfVertices=numberOfPoints;
 	mesh.numberOfPolygons=numberOfPolygons;
 

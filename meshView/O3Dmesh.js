@@ -43,6 +43,7 @@ o3djs.mesh.Mesh.prototype.destroy = function()
 	{
 		transform.removeShape(this.shapes[i]);
 		pack.removeObject(this.shapes[i]);
+		this.shapes[i]=0;
 	}
 	pack.removeObject(this.material);
 	if (this.transform!=null)
