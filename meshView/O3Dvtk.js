@@ -999,14 +999,14 @@ function createFromFile3(xmlhttp, scene, file,color) {
 	for (var j=0;j<vertexInfoArray.length;j++)
 	{
 		positionStream=positionStreamArray[j];
-		var numberOfPoints=positionStream.numElements();
+		var streamNumberOfPoints=positionStream.numElements();
 
 		vertexInfo=vertexInfoArray[j];
 		var normalStream = vertexInfo.addStream(
 			3, o3djs.base.o3d.Stream.NORMAL);
 
 		new2old=new2oldArray[j];
-		for (var i=0;i<numberOfPoints;i++)
+		for (var i=0;i<streamNumberOfPoints;i++)
 		{
 			var oldVertex=new2old[i];
 			var subIndex=oldVertex*3;
@@ -1020,8 +1020,13 @@ function createFromFile3(xmlhttp, scene, file,color) {
 		scene.transform.addShape(shape);
 
 		mesh.addShape(shape);
+		positionStreamArray[j]=0;
+		vertexInfoArray[j]=0;
+		new2oldArray[j]=0;
 	}
-
+	positionStreamArray=null;
+	vertexInfoArray=null;
+	new2oldArray=null;
 	mesh.numberOfVertices=numberOfPoints;
 	mesh.numberOfPolygons=numberOfPolygons;
 
@@ -1101,9 +1106,10 @@ function createFromFile2(xmlhttp, scene, file,color) {
 
 		var v0 = o3djs.math.normalize(o3djs.math.subVector(positions[1],positions[0]));
 		var v1 = o3djs.math.normalize(o3djs.math.subVector(positions[2],positions[1]));
-		var normal=o3djs.math.normalize(o3djs.math.cross(v0, v1));
-		var norm=normal[0]*normal[0]+normal[1]*normal[1]+normal[2]*normal[2];
-		if ((norm>0.98)&&(norm<1.01))
+//		var normal=o3djs.math.normalize(o3djs.math.cross(v0, v1));
+		var normal=o3djs.math.cross(v0, v1);
+//		var norm=normal[0]*normal[0]+normal[1]*normal[1]+normal[2]*normal[2];
+//		if ((norm>0.98)&&(norm<1.01))
 		{
 			for (var iii=0;iii<3;iii++)
 			{

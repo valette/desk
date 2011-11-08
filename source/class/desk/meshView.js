@@ -178,7 +178,29 @@ qx.Class.define("desk.meshView",
 
 	destruct : function(){
 		console.log("destructor");
-//		this._disposeObjects("__");
+		// remove bindings from volume viewers
+		var volumes=this.__volumes;
+		if (volumes!=null)
+			for (var i=0;i<volumes.length;i++)
+				volumes[i].volumeViewer.removeListenerById(volumes[i].listener);
+		this.__volumes=null;
+
+		//clean the scene
+		var shapes=this.__shapesArray;
+		for (var i=0;i<shapes.kength;i++)
+		{
+			if (shapes[i]!=null)
+				shapes[i].destroy();
+			shapes[i]=0;
+		}
+		this.__shapesArray=0;
+		this.getScene().client.cleanup();
+		this.getScene().pack.destroy(); 
+
+		this.__shapesVisibility.length=0;
+		this._disposeObjects("__embededHTML","__shapesList");
+		this.__scene.client.cleanup();
+		this.__scene=null;
 	},
 
 	members : {
@@ -500,19 +522,7 @@ qx.Class.define("desk.meshView",
 					windowManager.bringToFront(this.__window);
 				}, meshView);
 
-			meshView.__window.addListener("beforeClose", function(e) {
-				// remove bindings from volume viewers
-				var volumes=this.__volumes;
-				if (volumes!=null)
-					for (var i=0;i<volumes.length;i++)
-						volumes[i].volumeViewer.removeListenerById(volumes[i].listener);
-				this.__volumes=null;
-
-				//clean the scene
-				this.getScene().client.cleanup();
-				this.getScene().pack.destroy(); 
-				this.__shapesArray.length=0;
-				this.__shapesVisibility.length=0;
+			meshView.__window.addListener("close", function(e) {
 				this.dispose();
 				},meshView);
 			}
@@ -525,11 +535,29 @@ qx.Class.define("desk.meshView",
 			return (htmlContainer);
 		},
 
-		snapshot : function () {
-			this.__scene.render();
+		snapshot : function (factor) {
+			if (factor==null)
+				factor=1;
+			var elementSize=this.__embededHTML.getInnerSize();
+			var myWidth = elementSize.width*factor;
+			var myHeight = elementSize.height*factor;
+			var scene=this.getScene();
+			scene.o3dElement.width=myWidth;
+			scene.o3dElement.height=myHeight;
+			scene.client.gl.displayInfo = {width: myWidth, height: myHeight};
+			scene.resize();
+			scene.render();
 			var strData = this.__scene.client.gl.hack_canvas.toDataURL("image/png");
 			var saveData=strData.replace("image/png", "image/octet-stream");
-			document.location.href = saveData;			
+			document.location.href = saveData;
+
+			myWidth = elementSize.width;
+			myHeight = elementSize.height;
+			scene.o3dElement.width=myWidth;
+			scene.o3dElement.height=myHeight;
+			scene.client.gl.displayInfo = {width: myWidth, height: myHeight};
+			scene.resize();
+			scene.render();
 		},
 
 		__getSnapshotButton : function () {
@@ -578,11 +606,6 @@ qx.Class.define("desk.meshView",
 						meshView2.__scene.cameracontroller.onChange();
 				}
 			},this);
-
-			// add listener on close window event to remove bindings
-			this.__window.addListener("beforeClose", function (e){
-			this.__scene.client.cleanup();
-				},this)
 			return dragLabel;
 		},
 

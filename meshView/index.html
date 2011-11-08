@@ -27,7 +27,8 @@ function getParameter( parameterName )
 // global variables
 
 var g_scene;
-var parentCallback=null;
+var g_canvas;
+var g_mesh=null;
 
 function resizeClient(width,height) {
 
@@ -45,45 +46,37 @@ function resizeClient(width,height) {
     {
     	g_scene.render();
     }
- //   var t=setTimeout(workaround_render,500);
 }
 
-function render()
-{
-	function workaround_render()
-	{
-		g_scene.render();
-	}
-	var t=setTimeout(workaround_render,500);
-}
-
-function adjustViewpointAndRender()
+function adjustViewpointAndRender(mesh)
 {
 	g_scene.cameracontroller.viewAll(g_scene.meshesBoundingBox,1);
 	g_scene.client.root.localMatrix=g_scene.cameracontroller.calculateViewMatrix();
 	g_scene.render();
+	g_mesh=mesh;
 }
 
-/**
- * Creates the client area.
- */
+
 
 function init() {
 	globalO3DDoNotHandleKeyEvents=false;
-	if (getParameter("empty")=="true")
-		return;
-	init2();
+	o3djs.webgl.makeClients(initStep2);
 }
 
-function init2() {
-	var parent=document.getElementById("o3d");
-	var height=getParameter("height")
-	if (height!=null)
-		parent.style.height=height+"px";
-	var width=getParameter("width")
-	if (width!=null)
-		parent.style.width=width+"px";
-	o3djs.webgl.makeClients(initStep2);
+function loadMesh() {
+	if (g_mesh!=null)
+		g_mesh.destroy();
+	var mesh=getParameter("mesh");
+	var mtime=getParameter("mtime");
+	if (mesh!=null)
+		g_scene.loadMesh (mesh, adjustViewpointAndRender,mtime);
+	else
+	{
+//			g_scene.loadMesh ("NCAT/output_full.xml", adjustViewpointAndRender,mtime);
+//			g_scene.loadMesh ("mesh.vtk", adjustViewpointAndRender,mtime);
+		g_scene.loadMesh ("coeurThorax/coeurthorax.xml", adjustViewpointAndRender,mtime);
+//			o3djs.mesh.createSquare(g_scene);
+	}
 }
 /**
  * Initializes O3D, creates the object and sets up the transform and
@@ -93,26 +86,12 @@ function init2() {
 
 function initStep2(clientElements) {
 
-	canvaselement=clientElements[0];
+	g_canvas=clientElements[0];
 	g_scene=o3djs.renderscene.createRenderScene(clientElements[0]);
    	g_scene.render();
 	window.onresize = resizeClient;
-	if (parentCallback!=null)
-		parentCallback();
-	else
-	{
-		var mesh=getParameter("mesh");
-		var mtime=getParameter("mtime");
-		if (mesh!=null)
-			g_scene.loadMesh (mesh, adjustViewpointAndRender,mtime);
-		else
-		{
-//			g_scene.loadMesh ("NCAT/output_full.xml", adjustViewpointAndRender,mtime);
-//			g_scene.loadMesh ("mesh.vtk", adjustViewpointAndRender,mtime);
-			g_scene.loadMesh ("coeurThorax/coeurthorax.xml", adjustViewpointAndRender,mtime);
-//			o3djs.mesh.createSquare(g_scene);
-		}
-	}
+	loadMesh();
+
 }
 
 /**
@@ -124,42 +103,43 @@ function uninit() {
   }
 }
 
-var canvaselement=0;
 
 function keyPressedEvent(e)
 {
-	keyPressed(e.which);
-}
-function keyPressed(pressedKey)
-{
-	console.log("pressed Key : "+pressedKey)
-//	alert (pressedKey);
-	if (pressedKey=='C')
+	var keyCode=window.event.keyCode;
+	console.log("pressed code : "+keyCode);
+	var pressedKey=String.fromCharCode(keyCode);
+	console.log("pressed key : "+pressedKey);
+	if ((pressedKey=='C')||(pressedKey=="c"))
 	{
-//		var myCanvas=document.getElementsByTagName('canvas')[0];
-//		alert(document.getElementsByTagName('canvas').length);
-//		//alert(myCanvas);
-
-
-        var context = canvaselement.getContext('2d');
-
-
-//		var context = canvaselement.getContext("experimental-webgl", {preserveDrawingBuffer: true});
-
-		var strData = canvaselement.toDataURL("image/png");
-//		var strData = client.toDataURL("image/png");
+		g_scene.render();
+		var strData = g_canvas.toDataURL("image/png");
 		var saveData=strData.replace("image/png", "image/octet-stream");
 		document.location.href = saveData;
+	}
+	if ((pressedKey=='H')||(pressedKey=="h"))
+	{
+		g_mesh.hide();
+		g_scene.render();
+	}
+	if ((pressedKey=='S')||(pressedKey=="s"))
+	{
+		g_mesh.show();
+		g_scene.render();
+	}
+	if ((pressedKey=='L')||(pressedKey=="l"))
+	{
+		loadMesh();
 	}
 	if ((pressedKey=="r")||(pressedKey=="R"))
 	{
 		g_scene.resetCamera();
-//		alert("Reset Camera");
+		console.log("Reset Camera");
 		g_scene.render();
 	}
 	if ((pressedKey=="b")||(pressedKey=="B"))
 	{
-		alert ("Bounding Box :\n"+g_scene.meshesBoundingBox.minExtent+"\n"+g_scene.meshesBoundingBox.maxExtent);
+		console.log ("Bounding Box :\n"+g_scene.meshesBoundingBox.minExtent+"\n"+g_scene.meshesBoundingBox.maxExtent);
 	}
 }
 
