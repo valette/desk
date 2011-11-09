@@ -290,7 +290,6 @@ qx.Class.define("desk.meshView",
 							if (slashIndex>0)
 								path=file.substring(0,slashIndex);
 
-							var meshIndex=0;
 							var numberOfMeshes=meshes.length;
 							var scene=this.getScene();
 							var numberOfRemainingMeshes=numberOfMeshes;
