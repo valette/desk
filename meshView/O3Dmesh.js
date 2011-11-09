@@ -31,6 +31,7 @@ o3djs.mesh.Mesh = function(fileName, shape, material, scene)
 
 o3djs.mesh.Mesh.prototype.destroy = function()
 {
+	this.hide();
 	var transform;
 	if (this.transform==null)
 		transform=this.scene.transform;
