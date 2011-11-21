@@ -242,7 +242,13 @@ qx.Class.define("desk.volView",
 		__eraserCursor : null,
 		__colorsContainer : null,
 		__brghtnssCntrstButton : null,
+		__wheelScale : null,
+		__updateContext : null,
+		__mouseDownHandler : null,
 		__mouseWheelHandler : null,
+		__mouseMoveHandler : null,
+		__mouseUpHandler : null,
+		__mouseOverHandler : null,
 
 		// the image used to load volume slices
 		__loadImage : null,
@@ -292,8 +298,75 @@ qx.Class.define("desk.volView",
 			var myVolumeViewer=this;
 
 			function applyLink() {
+				var zoomControl = false;
+				var moveControl = false;
 				volumeViewer.__spinner.bind("value", myVolumeViewer.__spinner, "value");
-				myVolumeViewer.__spinner.bind("value", volumeViewer.__spinner, "value");			
+				volumeViewer.__drawingCanvas.addListener('redraw', function(event) {
+					myVolumeViewer.fireDataEvent('redraw', myVolumeViewer.__updateContext(event));
+				}, this);
+				volumeViewer.__drawingCanvas.addListener('mousedown', function(event) {
+					myVolumeViewer.fireDataEvent('mousedown', myVolumeViewer.__mouseDownHandler(event));
+				}, this);
+				volumeViewer.__drawingCanvas.addListener('mousewheel', function(event) {
+					if(zoomControl==false)
+					{
+						myVolumeViewer.__mouseData.xPos = volumeViewer.__mouseData.xPos;
+						myVolumeViewer.__mouseData.yPos = volumeViewer.__mouseData.yPos;
+						zoomControl = true;
+						myVolumeViewer.fireDataEvent('mousewheel', myVolumeViewer.__mouseWheelHandler(event,false));
+					}
+					zoomControl = false;
+				}, this);
+				volumeViewer.__drawingCanvas.addListener('mousemove', function(event) {
+					if(moveControl==false)
+					{
+						moveControl = true;
+						myVolumeViewer.fireDataEvent('mousemove', myVolumeViewer.__mouseMoveHandler(event));
+					}
+					moveControl = false;
+				}, this);
+				volumeViewer.__drawingCanvas.addListener('mouseup', function(event) {
+					myVolumeViewer.fireDataEvent('mouseup', myVolumeViewer.__mouseUpHandler(event));
+				}, this);
+				volumeViewer.__drawingCanvas.addListener('mouseover', function(event) {
+					myVolumeViewer.fireDataEvent('mouseover', myVolumeViewer.__mouseOverHandler(event));
+				}, this);
+				myVolumeViewer.__spinner.bind("value", volumeViewer.__spinner, "value");
+				myVolumeViewer.__drawingCanvas.addListener('redraw', function(event) {
+					volumeViewer.fireDataEvent('redraw', volumeViewer.__updateContext(event));
+				}, this);
+				myVolumeViewer.__drawingCanvas.addListener('mousedown', function(event) {
+					volumeViewer.fireDataEvent('mousedown', volumeViewer.__mouseDownHandler(event));
+				}, this);
+				myVolumeViewer.__drawingCanvas.addListener('mousewheel', function(event) {
+					if(zoomControl==false)
+					{
+						volumeViewer.__mouseData.xPos = myVolumeViewer.__mouseData.xPos;
+						volumeViewer.__mouseData.yPos = myVolumeViewer.__mouseData.yPos;
+						zoomControl = true;
+						volumeViewer.fireDataEvent('mousewheel', volumeViewer.__mouseWheelHandler(event,false));
+					}
+					zoomControl = false;
+				}, this);
+				myVolumeViewer.__drawingCanvas.addListener('mousemove', function(event) {
+					if(moveControl==false)
+					{
+						moveControl = true;
+						volumeViewer.fireDataEvent('mousemove', volumeViewer.__mouseMoveHandler(event));
+					}
+					moveControl = false;
+				}, this);
+				myVolumeViewer.__drawingCanvas.addListener('mouseup', function(event) {
+					volumeViewer.fireDataEvent('mouseup', volumeViewer.__mouseUpHandler(event));
+				}, this);
+				myVolumeViewer.__drawingCanvas.addListener('mouseover', function(event) {
+					volumeViewer.fireDataEvent('mouseover', volumeViewer.__mouseOverHandler(event));
+				}, this);
+				myVolumeViewer.__mouseData.decaleZoomX = volumeViewer.__mouseData.decaleZoomX;
+				myVolumeViewer.__mouseData.decaleZoomY = volumeViewer.__mouseData.decaleZoomY;
+				myVolumeViewer.__wheelScale = volumeViewer.__wheelScale;
+				myVolumeViewer.__drawingCanvasParams.curCtxtZoom = volumeViewer.__drawingCanvasParams.curCtxtZoom;
+				myVolumeViewer.__drawZoomedCanvas(myVolumeViewer.__drawingCanvasParams.curCtxtZoom,false);
 			}
 
 			function meReady()
@@ -595,7 +668,7 @@ qx.Class.define("desk.volView",
 			volView.__topLeftContainer.add(volView.__getPaintPanelVisibilitySwitch());
 			
 			
-			var updateContext = function(event)
+			volView.__updateContext = function(event)
 			{
 				var data = event.getData();
 
@@ -612,7 +685,7 @@ qx.Class.define("desk.volView",
 				volView.__htmlContextLabels.mozImageSmoothingEnabled = false;
 			};
 			
-			var mouseDownHandler = function(event)
+			volView.__mouseDownHandler = function(event)
             {
 				if(typeof drawingCanvas != "undefined")
 						drawingCanvas.resetCursor();
@@ -704,10 +777,10 @@ qx.Class.define("desk.volView",
                 volView.__mouseData.recentY = volView.__mouseData.yPos;
             };
 			
-			var wheelScale = 0;
-            volView.__mouseWheelHandler = function(event)
+			volView.__wheelScale = 0;
+            volView.__mouseWheelHandler = function(event, isMasterWindow)
             {
-				var tempScale = wheelScale;
+				var tempScale = volView.__wheelScale;
 				tempScale += -event.getWheelDelta()/8;
 				volView.__drawingCanvasParams.drawingContext.setTransform(1,0,0,1,0,0);
 				volView.__imgCanvasParams.imgContext.setTransform(1,0,0,1,0,0);
@@ -718,10 +791,23 @@ qx.Class.define("desk.volView",
 				{
 					volView.debug(" zoom = x" + zoomFactor);
 					var location=volView.__imageCanvas.getContentLocation();
+					volView.debug("event.getDocumentLeft() : " + event.getDocumentLeft());
+					volView.debug("event.getDocumentTop() : " + event.getDocumentTop());
+					volView.debug("location.left : " + location.left);
+					volView.debug("location.top : " + location.top);
+					if(isMasterWindow)
+					{
 					volView.__mouseData.xPos = event.getDocumentLeft()-location.left;
 					volView.__mouseData.yPos = event.getDocumentTop()-location.top;
+					}
+					volView.debug("volView.__mouseData.decaleZoomX : " + volView.__mouseData.decaleZoomX);
+					volView.debug("volView.__mouseData.decaleZoomY : " + volView.__mouseData.decaleZoomY);
+					volView.debug("volView.__mouseData.xPos : " + volView.__mouseData.xPos);
+					volView.debug("volView.__mouseData.yPos : " + volView.__mouseData.yPos);
 					var onImageX = volView.__mouseData.decaleZoomX + volView.__mouseData.xPos;
 					var onImageY = volView.__mouseData.decaleZoomY + volView.__mouseData.yPos;
+					volView.debug("onImageX : " + onImageX);
+					volView.debug("onImageY : " + onImageY);
 					volView.__imgCanvasParams.imgContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
 					volView.__drawingCanvasParams.drawingContext.clearRect(-16,-16,volView.__imgMap.width+32, volView.__imgMap.height+32);
 				////Zoom in
@@ -794,12 +880,12 @@ qx.Class.define("desk.volView",
 							volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__penSize.getValue()/2)*volView.__drawingCanvasParams.curCtxtZoom),
 														marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__penSize.getValue()/2)*volView.__drawingCanvasParams.curCtxtZoom)});
 					}
-					wheelScale = tempScale;
+					volView.__wheelScale = tempScale;
 					volView.__drawingCanvasParams.curCtxtZoom = zoomFactor;
 				}
             };
 			
-			var mouseMoveHandler = function(event)
+			volView.__mouseMoveHandler = function(event)
             {
 				volView.__getPosition(event,true);
                 if(volView.__mouseData.mouseMiddleDownFlag)
@@ -887,31 +973,31 @@ qx.Class.define("desk.volView",
 						volView.__mouseData.mouseLeftDownFlag = true;
 						if(volView.__eraserCursor.getVisibility()=="excluded")
 							volView.__eraserCursor.show();
-						//~ ////Set eraser cursor position
-						//~ var canvasLocation=volView.__imageCanvas.getContentLocation();
-						//~ var tempX = (event.getDocumentLeft()-canvasLocation.left)/volView.__drawingCanvasParams.curCtxtZoom;
-						//~ var tempY = (event.getDocumentTop()-canvasLocation.top)/volView.__drawingCanvasParams.curCtxtZoom;
-						//~ volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__penSize.getValue()/2)*volView.__drawingCanvasParams.curCtxtZoom),
-													//~ marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__penSize.getValue()/2)*volView.__drawingCanvasParams.curCtxtZoom)});
+						////Set eraser cursor position
+						var canvasLocation=volView.__imageCanvas.getContentLocation();
+						var tempX = (event.getDocumentLeft()-canvasLocation.left)/volView.__drawingCanvasParams.curCtxtZoom;
+						var tempY = (event.getDocumentTop()-canvasLocation.top)/volView.__drawingCanvasParams.curCtxtZoom;
+						volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__penSize.getValue()/2)*volView.__drawingCanvasParams.curCtxtZoom),
+													marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__penSize.getValue()/2)*volView.__drawingCanvasParams.curCtxtZoom)});
 						////Erase at mouse position
 						volView.__eraseFnct(true);
 						if(volView.__eraserCursor != null)
 								volView.__eraserCursor.resetCursor();
 						break;
 					default:
-					if(typeof drawingCanvas != "undefined")
-							drawingCanvas.resetCursor();
-					if(volView.__drawingCanvas != null)
-							volView.__drawingCanvas.resetCursor();
-					if(volView.__imageCanvas != null)
-							volView.__imageCanvas.resetCursor();
-					if(volView.__htmlContextLabels != null)
-							volView.__htmlContextLabels.cursor = "default";
+						if(typeof drawingCanvas != "undefined")
+								drawingCanvas.resetCursor();
+						if(volView.__drawingCanvas != null)
+								volView.__drawingCanvas.resetCursor();
+						if(volView.__imageCanvas != null)
+								volView.__imageCanvas.resetCursor();
+						if(volView.__htmlContextLabels != null)
+								volView.__htmlContextLabels.cursor = "default";
 					}
                 }
             };
 			
-			var mouseUpHandler = function(event)
+			volView.__mouseUpHandler = function(event)
             {
                     volView.__mouseData.mouseLeftDownFlag = false;
 					volView.__mouseData.mouseMiddleDownFlag = false;
@@ -930,7 +1016,7 @@ qx.Class.define("desk.volView",
 							volView.__save2undoStack(event);
             };
             
-			var mouseOverHandler = function(event)
+			volView.__mouseOverHandler = function(event)
 			{
 					if(typeof drawingCanvas != "undefined")
 							drawingCanvas.resetCursor();
@@ -970,8 +1056,6 @@ qx.Class.define("desk.volView",
 				this.__mouseActionActive = false;
 	//			if(((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.brCrFixingFlag))&&(!volView.__drawingCanvasParams.eraseFlag))
 //				{
-					if((volView.__mouseData.mouseLeftDownFlag)||(volView.__mouseActionActive==4))
-							volView.__eraseFnct(true);
 					volView.__htmlContextLabels.cursor = "default";
 					volView.__htmlContextLabels.beginPath();
 					volView.__mouseData.mouseLeftDownFlag = false;
@@ -1148,12 +1232,12 @@ qx.Class.define("desk.volView",
 				volView.__htmlContextImage = volView.__htmlCanvasImage.getContext("2d");
 
 
-				drawingCanvas.addListener("redraw", updateContext, volView);
-				drawingCanvas.addListener("mousedown", mouseDownHandler, volView);
+				drawingCanvas.addListener("redraw", volView.__updateContext, volView);
+				drawingCanvas.addListener("mousedown", volView.__mouseDownHandler, volView);
 				drawingCanvas.addListener("mousewheel", volView.__mouseWheelHandler, volView);
-				drawingCanvas.addListener("mousemove", mouseMoveHandler, volView);
-				drawingCanvas.addListener("mouseup", mouseUpHandler, volView);
-				drawingCanvas.addListener("mouseover", mouseOverHandler, volView);
+				drawingCanvas.addListener("mousemove", volView.__mouseMoveHandler, volView);
+				drawingCanvas.addListener("mouseup", volView.__mouseUpHandler, volView);
+				drawingCanvas.addListener("mouseover", volView.__mouseOverHandler, volView);
 
 				imgCanvas.addListener("redraw", function(event)
 				{
@@ -1283,7 +1367,7 @@ qx.Class.define("desk.volView",
 				volView.__drawingCanvasParams.drawingContext.drawImage(volView.__htmlCanvasLabels,0,0);
 				volView.__mouseData.decaleZoomX = 0;
 				volView.__mouseData.decaleZoomY = 0;
-				wheelScale = 0;
+				volView.__wheelScale = 0;
 				volView.__drawingCanvasParams.curCtxtZoom = 1;
 			};
 
