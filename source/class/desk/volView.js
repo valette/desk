@@ -38,17 +38,6 @@ qx.Class.define("desk.volView",
 			height : 444
 		};
 
-// Données pour la position de la zone image dans l'interface
-// Les champs width et height sont remplis à partir du fichier xml
-// Ils sont utilisés pour réaliser différents calculs pour le dessin
-// et l'affichage
-		this.__imgMap = {
-			left : 40,
-			top : 4,
-			width : 0,
-			height : 0
-			};
-
 		// Données globales pour le canvas qx.html.Canvas des seeds (utilisé pour l'affichage)
 		this.__drawingCanvasParams = {
 			sliceNumber : 0,
@@ -176,12 +165,6 @@ qx.Class.define("desk.volView",
 // d'elle-même...normalement...
 		__winMap : null,
 
-// Données pour la position de la zone image dans l'interface
-// Les champs width et height sont remplis à partir du fichier xml
-// Ils sont utilisés pour réaliser différents calculs pour le dessin
-// et l'affichage
-		__imgMap : null,
-
 // Variable pour le canvas HTMLCanvasElement des seeds (utilisé pour les calculs
 // en arrière plan: changement de slide, zoom, annuler<-click droit)
 		__htmlCanvasLabels : null,
@@ -293,6 +276,15 @@ qx.Class.define("desk.volView",
 		// maximal scalar value in the volume
 		__scalarMax : null,
 
+		// display size scale
+		__scale : null,
+		
+		// display size scale
+		__scaledWidth : null,
+
+		// display size scale
+		__scaledHeight : null,
+
 		// space coordinates of the center of the volume
 		__centerVolPos : null,
 		
@@ -400,8 +392,6 @@ qx.Class.define("desk.volView",
 							if (volume===null)
 								return;
 
-							volView.__imgMap.width = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("x"),10);
-							volView.__imgMap.height = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("y"),10);
 							volView.__numberOfSlices = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("z"),10);
 							volView.__slicesNameOffset = parseInt(response.getElementsByTagName("slicesprefix")[0].getAttribute("offset"),10);
 							volView.__slicesNamePrefix = response.getElementsByTagName("slicesprefix")[0].firstChild.nodeValue;
@@ -429,25 +419,24 @@ qx.Class.define("desk.volView",
 														parseFloat(XMLspacing.getAttribute("z")));
 														
 							//~  Faire test sur l'orientation pour choisir le bon spacing[i]							
-							volView.debug("B: volView.__imgMap.width : " + volView.__imgMap.width);
-							volView.debug("B: volView.__imgMap.height : " + volView.__imgMap.height);
-							
-					////	FIX UNEVEN IMAGE SPACING PROBLEM (SEEDS DISPLAY) !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!		
-							
 							volView.debug("volView.__spacing[0] : " + volView.__spacing[0]);
 							volView.debug("volView.__spacing[1] : " + volView.__spacing[1]);
-							volView.debug("volView.__spacing[2] : " + volView.__spacing[2]);
+							//~ volView.debug("volView.__spacing[2] : " + volView.__spacing[2]);
 							//~ volView.__spacing[0] = 1;
 							//~ volView.__spacing[1] = 1;
 							//~ volView.__spacing[2] = 1;
-							volView.__spacing[1] = volView.__spacing[1]/0.73; //~ when resizing window dimensions
-							volView.__spacing[0] = volView.__spacing[0]/0.73; //~ when resizing window dimensions
-							//~ volView.__imgMap.width = Math.floor(volView.__imgMap.width/volView.__spacing[1]);
-							//~ volView.__imgMap.height = Math.floor(volView.__imgMap.height/volView.__spacing[0]);
-							volView.__imgMap.width = volView.__imgMap.width/volView.__spacing[1];
-							volView.__imgMap.height = volView.__imgMap.height/volView.__spacing[0];
-							volView.debug("A: volView.__imgMap.width : " + volView.__imgMap.width);
-							volView.debug("A: volView.__imgMap.height : " + volView.__imgMap.height);
+							var testScale = 0.37;
+							volView.__scale = [];
+							volView.__scale[0] = volView.__spacing[1]/testScale; //~ when resizing window dimensions
+							volView.__scale[1] = volView.__spacing[0]/testScale; //~ when resizing window dimensions
+							volView.__scale[2] = volView.__spacing[2]/testScale; //~ when resizing window dimensions
+							volView.debug("volView.__dimensions[0] : " + volView.__dimensions[0]);
+							volView.debug("volView.__dimensions[1] : " + volView.__dimensions[1]);
+							//~ volView.debug("volView.__dimensions[2] : " + volView.__dimensions[2]);
+							volView.__scaledWidth = volView.__dimensions[0]/volView.__scale[0];
+							volView.__scaledHeight = volView.__dimensions[1]/volView.__scale[1];
+							volView.debug("volView.__scaledWidth : " + volView.__scaledWidth);
+							volView.debug("volView.__scaledHeight : " + volView.__scaledHeight);
 
 							var XMLorigin=volume.getElementsByTagName("origin")[0];
 							volView.__origin=new Array(parseFloat(XMLorigin.getAttribute("x")),
@@ -523,14 +512,9 @@ qx.Class.define("desk.volView",
 			this.__loadSeeds.onload = function (){
 				if(volView.__drawingCanvasParams.drawingContext!==null)
 				{
-					//~ volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width/volView.__spacing[1]+32, volView.__imgMap.height/volView.__spacing[0]+32);
-					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width*2+32, volView.__imgMap.height*2+32); //~ resizing test //~ pikachu success
-					//~ volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__dimensions[0]+32, volView.__dimensions[1]+32); //~ normalisation
-					//~ volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width/volView.__spacing[1]+32, volView.__imgMap.height/volView.__spacing[0]+32);
-					volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width*2+32, volView.__imgMap.height*2+32); //~ resizing test //~ pikachu success
-					//~ volView.__htmlContextLabels.clearRect(-16, -16, volView.__dimensions[0]+32, volView.__dimensions[1]+32); //~ normalisation
+					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__dimensions[0]+32, volView.__dimensions[1]+32);
+					volView.__htmlContextLabels.clearRect(-16, -16, volView.__dimensions[0]+32, volView.__dimensions[1]+32);
 					volView.__htmlContextLabels.drawImage(volView.__loadSeeds, 0, 0);
-					//~ volView.__htmlContextLabels.drawImage(volView.__loadSeeds, 0, 0, volView.__imgMap.width, volView.__imgMap.height, 0, 0, volView.__imgMap.width/volView.__spacing[1], volView.__imgMap.height/volView.__spacing[0]);
 					volView.__drawZoomedCanvas(volView.__display.curCtxtZoom,true);
 					//~ volView.__currentSeedsSlice=sliceId;
 					volView.__display.displayDpthShift = sliceId;
@@ -697,14 +681,6 @@ qx.Class.define("desk.volView",
 						volView.__imageCanvas.resetCursor();
 				if(volView.__htmlContextLabels != null)
 						volView.__htmlContextLabels.cursor = "default";
-				////Update image
-				if(!((volView.__mouseData.brCrFixingFlag)&&(volView.__mouseData.mouseLeftDownFlag)))
-				{
-					//~ volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width/volView.__spacing[1]+32, volView.__imgMap.height/volView.__spacing[0]+32);
-					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width*2+32, volView.__imgMap.height*2+32); //~ resizing test //~ pikachu success
-					//~ volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__dimensions[0]+32, volView.__dimensions[1]+32); //~ normalisation
-					drawZoomedCanvas(volView.__display.curCtxtZoom,false);
-				}
 			////"Undo" (draw previous canvas)
 				volView.__undoFnct(event);
 			////Locate mouse
@@ -732,12 +708,8 @@ qx.Class.define("desk.volView",
 							volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
 							volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
 							volView.__htmlContextLabels.beginPath();
-							//~ volView.__htmlContextLabels.arc(volView.__display.onDispMouseHrzPos,
-													//~ volView.__display.onDispMouseVrtPos,
-															//~ volView.__penSize.getValue()/2,
-															//~ 0, Math.PI*2, false);
-							volView.__htmlContextLabels.arc(volView.__display.onDispMouseHrzPos*volView.__spacing[1], //~ pikachu success
-													volView.__display.onDispMouseVrtPos*volView.__spacing[0],
+							volView.__htmlContextLabels.arc(volView.__display.onDispMouseHrzPos*volView.__scale[0],
+													volView.__display.onDispMouseVrtPos*volView.__scale[1],
 															volView.__penSize.getValue()/2,
 															0, Math.PI*2, false);
 							volView.__htmlContextLabels.closePath();
@@ -775,6 +747,17 @@ qx.Class.define("desk.volView",
 				}
 				volView.__mouseData.recentX = volView.__display.onDispMouseHrzPos;
                 volView.__mouseData.recentY = volView.__display.onDispMouseVrtPos;
+			////Update image
+				if(!((volView.__mouseData.brCrFixingFlag)&&(volView.__mouseData.mouseLeftDownFlag)))
+				{
+					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__dimensions[0]+32, volView.__dimensions[1]+32);
+					drawZoomedCanvas(volView.__display.curCtxtZoom,false);
+				}
+			////Draw cursor
+				if(volView.__mouseActionMode==3)
+				{
+					drawBrush(event,volView.__display.curCtxtZoom);
+				}
             };
 			
 			volView.__display.wheelScale = 0;
@@ -791,29 +774,21 @@ qx.Class.define("desk.volView",
 				{
 					volView.debug(" zoom = x" + zoomFactor);
 					var location=volView.__imageCanvas.getContentLocation();
-					//~ if(isMasterWindow)
-					//~ {
 					volView.__display.onDispMouseHrzPos = event.getDocumentLeft()-location.left;
 					volView.__display.onDispMouseVrtPos = event.getDocumentTop()-location.top;
-					//~ }
 					var onImageX = volView.__display.displayHrzShift + volView.__display.onDispMouseHrzPos;
 					var onImageY = volView.__display.displayVrtShift + volView.__display.onDispMouseVrtPos;
-					volView.__imgCanvasParams.imgContext.clearRect(-16,-16,volView.__imgMap.width/volView.__spacing[1]+32, volView.__imgMap.height/volView.__spacing[0]+32);
-					//~ volView.__drawingCanvasParams.drawingContext.clearRect(-16,-16,volView.__imgMap.width/volView.__spacing[1]+32, volView.__imgMap.height/volView.__spacing[0]+32);
-					volView.__drawingCanvasParams.drawingContext.clearRect(-16,-16,volView.__imgMap.width*2+32, volView.__imgMap.height*2+32); //~ resizing test //~ pikachu success
-					//~ volView.__drawingCanvasParams.drawingContext.clearRect(-16,-16,volView.__dimensions[0]+32, volView.__dimensions[0]+32); //~ normalisation
+					volView.__imgCanvasParams.imgContext.clearRect(-16,-16,volView.__scaledWidth/volView.__scale[0]+32, volView.__scaledHeight/volView.__scale[1]+32);
+					volView.__drawingCanvasParams.drawingContext.clearRect(-16,-16,volView.__dimensions[0]+32, volView.__dimensions[1]+32);
 				////Zoom in
-					//~ if(zoomFactor>=1)
-					//~ {
-						volView.__drawingCanvasParams.drawingContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
-						volView.__imgCanvasParams.imgContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
-						volView.__display.displayHrzShift = onImageX*zoomFactor/curentZoom-volView.__display.onDispMouseHrzPos;
-						volView.__display.displayVrtShift = onImageY*zoomFactor/curentZoom-volView.__display.onDispMouseVrtPos;
-						var newCoor = volView.__changeInto05Coordinates(volView.__display.displayHrzShift,volView.__display.displayVrtShift);
-						volView.__display.displayHrzShift = newCoor.newX;
-						volView.__display.displayVrtShift = newCoor.newY;
-						drawZoomedCanvas(zoomFactor,true);
-					//~ }
+					volView.__drawingCanvasParams.drawingContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
+					volView.__imgCanvasParams.imgContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
+					volView.__display.displayHrzShift = onImageX*zoomFactor/curentZoom-volView.__display.onDispMouseHrzPos;
+					volView.__display.displayVrtShift = onImageY*zoomFactor/curentZoom-volView.__display.onDispMouseVrtPos;
+					var newCoor = volView.__changeInto05Coordinates(volView.__display.displayHrzShift,volView.__display.displayVrtShift);
+					volView.__display.displayHrzShift = newCoor.newX;
+					volView.__display.displayVrtShift = newCoor.newY;
+					drawZoomedCanvas(zoomFactor,true);
 					if(typeof drawingCanvas != "undefined")
 							drawingCanvas.resetCursor();
 					if(volView.__drawingCanvas != null)
@@ -825,16 +800,16 @@ qx.Class.define("desk.volView",
 					if(volView.__htmlContextLabels != null)
 							volView.__htmlContextLabels.cursor = "default";
 					if (volView.__eraserCursor!==null)
-							volView.__eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__penSize.getValue()*zoomFactor)+1,
-														height: Math.ceil(volView.__eraserCoeff*volView.__penSize.getValue()*zoomFactor)+1});
+							volView.__eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__penSize.getValue()*zoomFactor/volView.__scale[0])+1,
+														height: Math.ceil(volView.__eraserCoeff*volView.__penSize.getValue()*zoomFactor/volView.__scale[1])+1});
 				////Place the center of the eraser at mouse position
 					if((volView.__drawingCanvasParams.eraseFlag)||(volView.__mouseActionMode==4))
 					{
 							var canvasLocation=volView.__imageCanvas.getContentLocation();
 							var tempX = (event.getDocumentLeft()-canvasLocation.left)/volView.__display.curCtxtZoom;
 							var tempY = (event.getDocumentTop()-canvasLocation.top)/volView.__display.curCtxtZoom;
-							volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__penSize.getValue()/2)*volView.__display.curCtxtZoom),
-														marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__penSize.getValue()/2)*volView.__display.curCtxtZoom)});
+							volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__penSize.getValue()/(2*volView.__scale[0]))*volView.__display.curCtxtZoom),
+														marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__penSize.getValue()/(2*volView.__scale[1]))*volView.__display.curCtxtZoom)});
 					}
 					volView.__display.wheelScale = tempScale;
 					volView.__display.curCtxtZoom = zoomFactor;
@@ -878,13 +853,13 @@ qx.Class.define("desk.volView",
 						var canvasLocation=volView.__imageCanvas.getContentLocation();
 						var tempX = (event.getDocumentLeft()-canvasLocation.left)/volView.__display.curCtxtZoom;
 						var tempY = (event.getDocumentTop()-canvasLocation.top)/volView.__display.curCtxtZoom;
-						volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__penSize.getValue()/2)*volView.__display.curCtxtZoom),
-													marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__penSize.getValue()/2)*volView.__display.curCtxtZoom)});
-						//~ if(volView.__mouseData.mouseLeftDownFlag)
-						//~ {
-							//~ ////Erase at mouse position
-							//~ volView.__eraseFnct(true);
-						//~ }
+						volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__penSize.getValue()/(2*volView.__scale[0]))*volView.__display.curCtxtZoom),
+													marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__penSize.getValue()/(2*volView.__scale[1]))*volView.__display.curCtxtZoom)});
+						if(volView.__mouseData.mouseLeftDownFlag)
+						{
+							////Erase at mouse position
+							volView.__eraseFnct(true);
+						}
 						volView.__eraserButton.setValue(true);
 						if(volView.__eraserCursor != null)
 								volView.__eraserCursor.resetCursor();
@@ -920,8 +895,8 @@ qx.Class.define("desk.volView",
 					{
 					case 1 :
 						////Use mouse mouvement to set brightness/contrast
-						var tempBrightness = volView.__imgCanvasParams.brightness + (volView.__display.onDispMouseVrtPos-volView.__mouseData.recentY)*150/volView.__imgMap.height;
-						var tempContrast = volView.__imgCanvasParams.contrast + (volView.__display.onDispMouseHrzPos-volView.__mouseData.recentX)*5/volView.__imgMap.width;
+						var tempBrightness = volView.__imgCanvasParams.brightness + (volView.__display.onDispMouseVrtPos-volView.__mouseData.recentY)*150/volView.__scaledHeight;
+						var tempContrast = volView.__imgCanvasParams.contrast + (volView.__display.onDispMouseHrzPos-volView.__mouseData.recentX)*5/volView.__scaledWidth;
 						if((0<tempBrightness+150)&&(tempBrightness<150))
 							volView.__imgCanvasParams.brightness = tempBrightness;
 						if((0<tempContrast+1)&&(tempContrast<20))
@@ -939,8 +914,8 @@ qx.Class.define("desk.volView",
 						volView.__htmlContextLabels.lineWidth = volView.__penSize.getValue();
 						volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
 						volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
-						//~ volView.__htmlContextLabels.lineTo(volView.__display.onDispMouseHrzPos,volView.__display.onDispMouseVrtPos);
-						volView.__htmlContextLabels.lineTo(volView.__display.onDispMouseHrzPos*volView.__spacing[1],volView.__display.onDispMouseVrtPos*volView.__spacing[0]); //~ pikachu success
+						var newCoor = this.__changeInto05Coordinates(volView.__display.onDispMouseHrzPos*volView.__scale[0],volView.__display.onDispMouseVrtPos*volView.__scale[1]);
+						volView.__htmlContextLabels.lineTo(newCoor.newX,newCoor.newY);
 						volView.__htmlContextLabels.stroke();
 						break;
 					case 4 :
@@ -952,8 +927,8 @@ qx.Class.define("desk.volView",
 						var canvasLocation=volView.__imageCanvas.getContentLocation();
 						var tempX = (event.getDocumentLeft()-canvasLocation.left)/volView.__display.curCtxtZoom;
 						var tempY = (event.getDocumentTop()-canvasLocation.top)/volView.__display.curCtxtZoom;
-						volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__penSize.getValue()/2)*volView.__display.curCtxtZoom),
-													marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__penSize.getValue()/2)*volView.__display.curCtxtZoom)});
+						volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__penSize.getValue()/(2*volView.__scale[0]))*volView.__display.curCtxtZoom),
+													marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__penSize.getValue()/(2*volView.__scale[1]))*volView.__display.curCtxtZoom)});
 						////Erase at mouse position
 						volView.__eraseFnct(true);
 						if(volView.__eraserCursor != null)
@@ -981,12 +956,8 @@ qx.Class.define("desk.volView",
 							volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
 							volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
 							volView.__htmlContextLabels.beginPath();
-							//~ volView.__htmlContextLabels.arc(volView.__display.onDispMouseHrzPos,
-													//~ volView.__display.onDispMouseVrtPos,
-															//~ volView.__penSize.getValue()/2,
-															//~ 0, Math.PI*2, false);
-							volView.__htmlContextLabels.arc(volView.__display.onDispMouseHrzPos*volView.__spacing[1], //~ pikachu success
-													volView.__display.onDispMouseVrtPos*volView.__spacing[0],
+							volView.__htmlContextLabels.arc(volView.__display.onDispMouseHrzPos*volView.__scale[0],
+													volView.__display.onDispMouseVrtPos*volView.__scale[1],
 															volView.__penSize.getValue()/2,
 															0, Math.PI*2, false);
 							volView.__htmlContextLabels.closePath();
@@ -1010,19 +981,19 @@ qx.Class.define("desk.volView",
 					volView.__saveDisplay();
             };
             
-			volView.__mouseOverHandler = function(event)
-			{
-					if(typeof drawingCanvas != "undefined")
-							drawingCanvas.resetCursor();
-					if(volView.__drawingCanvas != null)
-							volView.__drawingCanvas.resetCursor();
-					if(volView.__imageCanvas != null)
-							volView.__imageCanvas.resetCursor();
-					if(volView.__eraserCursor != null)
-							volView.__eraserCursor.resetCursor();
-					if(volView.__htmlContextLabels != null)
-							volView.__htmlContextLabels.cursor = "default";
-			};
+			//~ volView.__mouseOverHandler = function(event)
+			//~ {
+					//~ if(typeof drawingCanvas != "undefined")
+							//~ drawingCanvas.resetCursor();
+					//~ if(volView.__drawingCanvas != null)
+							//~ volView.__drawingCanvas.resetCursor();
+					//~ if(volView.__imageCanvas != null)
+							//~ volView.__imageCanvas.resetCursor();
+					//~ if(volView.__eraserCursor != null)
+							//~ volView.__eraserCursor.resetCursor();
+					//~ if(volView.__htmlContextLabels != null)
+							//~ volView.__htmlContextLabels.cursor = "default";
+			//~ };
 			
 			
 			
@@ -1038,10 +1009,8 @@ qx.Class.define("desk.volView",
 			this.__imageCanvas = new qx.ui.container.Composite(new qx.ui.layout.Canvas());
 			var imgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true,
 														zIndex: volView.__imageZ,
-														//~ width : volView.__imgMap.width,
-														//~ height : volView.__imgMap.height });
-														width : Math.floor(volView.__imgMap.width),
-														height : Math.floor(volView.__imgMap.height) }); //~ normalisation
+														width : Math.floor(volView.__scaledWidth),
+														height : Math.floor(volView.__scaledHeight) });
 
 			this.__imageCanvas.add(imgCanvas);
 			this.__imageContainer.addAt(this.__imageCanvas, 0);
@@ -1113,19 +1082,15 @@ qx.Class.define("desk.volView",
 			
             var drawingCanvas = new qx.ui.embed.Canvas().set({syncDimension: true,
                                                         zIndex: volView.__drawingCanvasZ,
-                                                        width : Math.floor(volView.__imgMap.width),
-														height : Math.floor(volView.__imgMap.height) }); //~ normalisation
+                                                        width : Math.floor(volView.__scaledWidth),
+														height : Math.floor(volView.__scaledHeight) });
 			this.__drawingCanvas=drawingCanvas;
 			this.__imageCanvas.add(drawingCanvas);
 			
             // HTML embed for background image
-            //~ var embedHtmlCodeImage = '<canvas id="htmlTagCanvasImage" width="' + volView.__imgMap.width + '" height="' + volView.__imgMap.height + '" ></canvas>';
-            var embedHtmlCodeImage = '<canvas id="htmlTagCanvasImage" width="' + volView.__dimensions[0] + '" height="' + volView.__dimensions[1] + '" ></canvas>'; //~ pikachu success //~ this.__imgMap.width*this.__spacing[1] replaced
+            var embedHtmlCodeImage = '<canvas id="htmlTagCanvasImage" width="' + volView.__dimensions[0] + '" height="' + volView.__dimensions[1] + '" ></canvas>';
             var embedObjectImage = new qx.ui.embed.Html(embedHtmlCodeImage);
             embedObjectImage.setDecorator("main");
-            //~ DOESN'T WORK !
-            //~ embedObjectImage.setWidth(volView.__imgMap.width);
-            //~ embedObjectImage.setHeight(volView.__imgMap.height);
 			
             var containerLayoutImage = new qx.ui.layout.VBox();
             var containerHtmlImage = new qx.ui.container.Composite(containerLayoutImage);
@@ -1135,13 +1100,9 @@ qx.Class.define("desk.volView",
 			
 			
             // HTML embed for drawn labels
-            //~ var embedHtmlCodeLabels = '<canvas id="htmlTagCanvasLabels" width="' + volView.__imgMap.width + '" height="' + volView.__imgMap.height + '" ></canvas>';
-            var embedHtmlCodeLabels = '<canvas id="htmlTagCanvasLabels" width="' + volView.__dimensions[0] + '" height="' + volView.__dimensions[1] + '" ></canvas>'; //~ pikachu success //~ this.__imgMap.width*this.__spacing[1] replaced
+            var embedHtmlCodeLabels = '<canvas id="htmlTagCanvasLabels" width="' + volView.__dimensions[0] + '" height="' + volView.__dimensions[1] + '" ></canvas>';
             var embedObjectLabels = new qx.ui.embed.Html(embedHtmlCodeLabels);
             embedObjectLabels.setDecorator("main");
-            //~ DOESN'T WORK !
-            //~ embedObjectLabels.setWidth(volView.__imgMap.width);
-            //~ embedObjectLabels.setHeight(volView.__imgMap.height);
 			
             var containerLayoutLabels = new qx.ui.layout.VBox();
             var containerHtmlLabels = new qx.ui.container.Composite(containerLayoutLabels);
@@ -1151,11 +1112,9 @@ qx.Class.define("desk.volView",
 
 
             // HTML embed for segmented image
-            var embedHtmlCodeSegImg = '<canvas id="htmlTagCanvasSegImg" width="' + volView.__imgMap.width + '" height="' + volView.__imgMap.height + '" ></canvas>';
+            var embedHtmlCodeSegImg = '<canvas id="htmlTagCanvasSegImg" width="' + volView.__scaledWidth + '" height="' + volView.__scaledHeight + '" ></canvas>';
             var embedObjectSegImg = new qx.ui.embed.Html(embedHtmlCodeSegImg);
             embedObjectSegImg.setDecorator("main");
-            //~ embedObjectSegImg.setWidth(volView.__imgMap.width);
-            //~ embedObjectSegImg.setHeight(volView.__imgMap.height);
 			
             var containerLayoutSegImg = new qx.ui.layout.VBox();
             var containerHtmlSegImg = new qx.ui.container.Composite(containerLayoutSegImg);
@@ -1165,11 +1124,9 @@ qx.Class.define("desk.volView",
 			this.__imageCanvas.add(containerHtmlSegImg);
 			
             // HTML embed for seeds used for segmentation
-            var embedHtmlCodeUsedSeeds = '<canvas id="htmlTagCanvasUsedSeeds" width="' + volView.__imgMap.width + '" height="' + volView.__imgMap.height + '" ></canvas>';
+            var embedHtmlCodeUsedSeeds = '<canvas id="htmlTagCanvasUsedSeeds" width="' + volView.__scaledWidth + '" height="' + volView.__scaledHeight + '" ></canvas>';
             var embedObjectUsedSeeds = new qx.ui.embed.Html(embedHtmlCodeUsedSeeds);
             embedObjectUsedSeeds.setDecorator("main");
-            //~ embedObjectUsedSeeds.setWidth(volView.__imgMap.width);
-            //~ embedObjectUsedSeeds.setHeight(volView.__imgMap.height);
 			
             var containerLayoutUsedSeeds = new qx.ui.layout.VBox();
             var containerHtmlUsedSeeds = new qx.ui.container.Composite(containerLayoutUsedSeeds);
@@ -1237,14 +1194,12 @@ qx.Class.define("desk.volView",
 				drawingCanvas.addListener("mousewheel", volView.__mouseWheelHandler, volView);
 				drawingCanvas.addListener("mousemove", volView.__mouseMoveHandler, volView);
 				drawingCanvas.addListener("mouseup", volView.__mouseUpHandler, volView);
-				drawingCanvas.addListener("mouseover", volView.__mouseOverHandler, volView);
+				//~ drawingCanvas.addListener("mouseover", volView.__mouseOverHandler, volView);
 
 				imgCanvas.addListener("redraw", function(event)
 				{
-					//~ volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
-					//~ volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height);
-					volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height, 0, 0, canvasImage.width/volView.__spacing[1], canvasImage.height/volView.__spacing[0]);
-					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height, 0, 0, canvasImage.width/volView.__spacing[1], canvasImage.height/volView.__spacing[0]);
+					volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height, 0, 0, volView.__scaledWidth, volView.__scaledHeight);
+					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height, 0, 0, volView.__scaledWidth, volView.__scaledHeight);
 		        });
 
 				spinner.setValue(Math.round(volView.__dimensions[2]/2));
@@ -1266,34 +1221,34 @@ qx.Class.define("desk.volView",
             {
 				var sx = volView.__display.displayHrzShift/zoomFactor;
 				var sy = volView.__display.displayVrtShift/zoomFactor;
-                var sdw = volView.__imgMap.width/zoomFactor;
-                var sdh = volView.__imgMap.height/zoomFactor;
+                var sdw = volView.__scaledWidth/zoomFactor;
+                var sdh = volView.__scaledHeight/zoomFactor;
 				var dx = 0;
 				var dy = 0;
 				if(volView.__display.displayHrzShift<0)
 				{
 					dx =  - volView.__display.displayHrzShift/zoomFactor;
 				}
-				if(volView.__imgMap.width<volView.__display.displayHrzShift/zoomFactor+volView.__imgMap.width/zoomFactor)
+				if(volView.__scaledWidth<volView.__display.displayHrzShift/zoomFactor+volView.__scaledWidth/zoomFactor)
 				{
-					sdw = sdw - (volView.__display.displayHrzShift/zoomFactor+volView.__imgMap.width/zoomFactor - volView.__imgMap.width);
+					sdw = sdw - (volView.__display.displayHrzShift/zoomFactor+volView.__scaledWidth/zoomFactor - volView.__scaledWidth);
 				}
 				if(volView.__display.displayVrtShift<0)
 				{
 					dy =  - volView.__display.displayVrtShift/zoomFactor;
 				}
-				if(volView.__imgMap.height<volView.__display.displayVrtShift/zoomFactor+volView.__imgMap.height/zoomFactor)
+				if(volView.__scaledHeight<volView.__display.displayVrtShift/zoomFactor+volView.__scaledHeight/zoomFactor)
 				{
-					sdh = sdh - (volView.__display.displayVrtShift/zoomFactor+volView.__imgMap.height/zoomFactor - volView.__imgMap.height);
+					sdh = sdh - (volView.__display.displayVrtShift/zoomFactor+volView.__scaledHeight/zoomFactor - volView.__scaledHeight);
 				}
 			////Make sure all variables respect their allowed value range
 				if(sx<0)
 				{
 					sx = 0;
 				}
-				if(volView.__imgMap.width-1<sx)
+				if(volView.__scaledWidth-1<sx)
 				{
-					sx = volView.__imgMap.width-1;
+					sx = volView.__scaledWidth-1;
 				}
 				if(sdw<2)
 				{
@@ -1303,9 +1258,9 @@ qx.Class.define("desk.volView",
 				{
 					sy = 0;
 				}
-				if(volView.__imgMap.height-1<sy)
+				if(volView.__scaledHeight-1<sy)
 				{
-					sy = volView.__imgMap.height-1;
+					sy = volView.__scaledHeight-1;
 				}
 				if(sdh<2)
 				{
@@ -1317,27 +1272,41 @@ qx.Class.define("desk.volView",
 				sdh = Math.floor(sdh);
 				dx = Math.floor(dx);
 				dy = Math.floor(dy);
-				if(!movement)
-				{
+				//~ if(!movement)
+				//~ {
+					//~ volView.debug("<<<<<<<   drawZoomedCanvas   >>>>>>>");
 					//~ volView.debug("sx : " + sx);
 					//~ volView.debug("sy : " + sy);
 					//~ volView.debug("dx : " + dx);
 					//~ volView.debug("dy : " + dy);
 					//~ volView.debug("sdw : " + sdw);
 					//~ volView.debug("sdh : " + sdh);
-					//~ volView.debug("sx*volView.__spacing[1] : " + sx*volView.__spacing[1]);
-					//~ volView.debug("sy*volView.__spacing[0] : " + sy*volView.__spacing[0]);
-					//~ volView.debug("dx*volView.__spacing[1] : " + dx*volView.__spacing[1]);
-					//~ volView.debug("dy*volView.__spacing[0] : " + dy*volView.__spacing[0]);
-					//~ volView.debug("sdw*volView.__spacing[1] : " + sdw*volView.__spacing[1]);
-					//~ volView.debug("sdh*volView.__spacing[0] : " + sdh*volView.__spacing[0]);
-					//~ volView.debug("sx/volView.__spacing[1] : " + sx/volView.__spacing[1]);
-					//~ volView.debug("sy/volView.__spacing[0] : " + sy/volView.__spacing[0]);
-					//~ volView.debug("dx/volView.__spacing[1] : " + dx/volView.__spacing[1]);
-					//~ volView.debug("dy/volView.__spacing[0] : " + dy/volView.__spacing[0]);
-					//~ volView.debug("sdw/volView.__spacing[1] : " + sdw/volView.__spacing[1]);
-					//~ volView.debug("sdh/volView.__spacing[0] : " + sdh/volView.__spacing[0]);
-				}
+					//~ volView.debug("sx*volView.__scale[0] : " + sx*volView.__scale[0]);
+					//~ volView.debug("sy*volView.__scale[1] : " + sy*volView.__scale[1]);
+					//~ volView.debug("dx*volView.__scale[0] : " + dx*volView.__scale[0]);
+					//~ volView.debug("dy*volView.__scale[1] : " + dy*volView.__scale[1]);
+					//~ volView.debug("sdw*volView.__scale[0] : " + sdw*volView.__scale[0]);
+					//~ volView.debug("sdh*volView.__scale[1] : " + sdh*volView.__scale[1]);
+					//~ volView.debug("sx/volView.__scale[0] : " + sx/volView.__scale[0]);
+					//~ volView.debug("sy/volView.__scale[1] : " + sy/volView.__scale[1]);
+					//~ volView.debug("dx/volView.__scale[0] : " + dx/volView.__scale[0]);
+					//~ volView.debug("dy/volView.__scale[1] : " + dy/volView.__scale[1]);
+					//~ volView.debug("sdw/volView.__scale[0] : " + sdw/volView.__scale[0]);
+					//~ volView.debug("sdh/volView.__scale[1] : " + sdh/volView.__scale[1]);
+					//~ volView.debug("volView.__dimensions[0] : " + volView.__dimensions[0]);
+					//~ volView.debug("volView.__dimensions[1] : " + volView.__dimensions[1]);
+					//~ volView.debug("volView.__scale[0] : " + volView.__scale[0]);
+					//~ volView.debug("volView.__scale[1] : " + volView.__scale[1]);
+					//~ volView.debug("volView.__scaledWidth : " + volView.__scaledWidth);
+					//~ volView.debug("volView.__scaledHeight : " + volView.__scaledHeight);
+					//~ volView.debug("volView.__scaledWidth*volView.__scale[0] : " + volView.__scaledWidth*volView.__scale[0]);
+					//~ volView.debug("volView.__scaledHeight*volView.__scale[1] : " + volView.__scaledHeight*volView.__scale[1]);
+					//~ volView.debug("volView.__htmlCanvasLabels.width : " + volView.__htmlCanvasLabels.width);
+					//~ volView.debug("volView.__htmlCanvasLabels.height : " + volView.__htmlCanvasLabels.height);
+					//~ volView.debug("volView.__drawingCanvas.width : " + volView.__drawingCanvas.getWidth());
+					//~ volView.debug("volView.__drawingCanvas.height : " + volView.__drawingCanvas.getHeight());
+					//~ volView.debug("<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>");
+				//~ }
 				volView.__drawingCanvasParams.drawingContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
 				volView.__imgCanvasParams.imgContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
 			////Refresh image while drawing
@@ -1346,81 +1315,41 @@ qx.Class.define("desk.volView",
 					if(canvasImage.complete)
 					{
 						volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
-						//~ volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height, 0, 0, canvasImage.width/volView.__spacing[1], canvasImage.height/volView.__spacing[0]);
 						var outImg = processBrCr(volView.__imgCanvasParams.brightness, volView.__imgCanvasParams.contrast, true);
 						volView.__htmlContextImage.putImageData(outImg, 0, 0);
-						//~ volView.__htmlContextImage.putImageData(outImg, 0, 0, 0, 0, canvasImage.width/volView.__spacing[1], canvasImage.height/volView.__spacing[0]);
 						var tempFill = volView.__imgCanvasParams.imgContext.fillStyle;
 						volView.__imgCanvasParams.imgContext.fillStyle = '#4682B4';
-						//~ volView.__imgCanvasParams.imgContext.fillRect(0, 0, canvasImage.width, canvasImage.height); //~ when pikachu test
-						volView.__imgCanvasParams.imgContext.fillRect(0, 0, canvasImage.width/volView.__spacing[1], canvasImage.height/volView.__spacing[0]);
+						volView.__imgCanvasParams.imgContext.fillRect(0, 0, volView.__scaledWidth, volView.__scaledHeight);
 						volView.__imgCanvasParams.imgContext.fillStyle = tempFill;
 						volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage,
-																		//~ sx,
-																		//~ sy,
-																		Math.floor(sx*volView.__spacing[1]), //~ pikachu success
-																		Math.floor(sy*volView.__spacing[0]), //~ pikachu success
-																		//~ Math.floor(sx/volView.__spacing[1]), //~ when pikachu test ?
-																		//~ Math.floor(sy/volView.__spacing[0]), //~ when pikachu test ?
-																		//~ sdw,
-																		//~ sdh,
-																		Math.floor(sdw*volView.__spacing[1]), //~ pikachu success
-																		Math.floor(sdh*volView.__spacing[0]), //~ pikachu success
-																		//~ Math.floor(sdw/volView.__spacing[1]), //~ when pikachu test ?
-																		//~ Math.floor(sdh/volView.__spacing[0]), //~ when pikachu test ?
+																		Math.floor(sx*volView.__scale[0]),
+																		Math.floor(sy*volView.__scale[1]),
+																		Math.floor(sdw*volView.__scale[0]),
+																		Math.floor(sdh*volView.__scale[1]),
 																		dx,
 																		dy,
-																		//~ Math.floor(dx*volView.__spacing[1]), //~ when pikachu test ?
-																		//~ Math.floor(dy*volView.__spacing[0]), //~ when pikachu test ?
-																		//~ Math.floor(dx/volView.__spacing[1]), //~ when pikachu test ?
-																		//~ Math.floor(dy/volView.__spacing[0]), //~ when pikachu test ?
 																		sdw,
 																		sdh);
-																		//~ Math.floor(sdw*volView.__spacing[1]), //~ when pikachu test ?
-																		//~ Math.floor(sdh*volView.__spacing[0])); //~ when pikachu test ?
-																		//~ Math.floor(sdw/volView.__spacing[1]), //~ when pikachu test ?
-																		//~ Math.floor(sdh/volView.__spacing[0])); //~ when pikachu test ?
 					}
 					else
 					{
-							volView.__htmlContextImage.clearRect(-16, -16, volView.__imgMap.width/volView.__spacing[1]+32, volView.__imgMap.height/volView.__spacing[0]+32);
+							volView.__htmlContextImage.clearRect(-16, -16, volView.__scaledWidth/volView.__scale[0]+32, volView.__scaledHeight/volView.__scale[1]+32);
 							volView.__htmlContextImage.font = 'bold 21px sans-serif';
 							volView.__htmlContextImage.textBaseLine = 'bottom';
-							volView.__htmlContextImage.fillText('Image not yet loaded', (volView.__imgMap.width-volView.__imgMap.height)/2, volView.__imgMap.height/2);
-							volView.__imgCanvasParams.imgContext.clearRect(-16, -16, volView.__imgMap.width/volView.__spacing[1]+32, volView.__imgMap.height/volView.__spacing[0]+32);
+							volView.__htmlContextImage.fillText('Image not yet loaded', (volView.__scaledWidth-volView.__scaledHeight)/2, volView.__scaledHeight/2);
+							volView.__imgCanvasParams.imgContext.clearRect(-16, -16, volView.__scaledWidth/volView.__scale[0]+32, volView.__scaledHeight/volView.__scale[1]+32);
 					}
 				}
-			////Refresh drawing canvas at all times but when only moving cursor
-				//~ if(!((volView.__mouseData.brCrFixingFlag)&&(volView.__mouseData.mouseLeftDownFlag)&&(volView.__drawingCanvasParams.eraseFlag)))
-				//~ {
-						//~ volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width/volView.__spacing[1]+32, volView.__imgMap.height/volView.__spacing[0]+32);
-						volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width*2+32, volView.__imgMap.height*2+32); //~ resizing test //~ pikachu success
-						volView.__drawingCanvasParams.drawingContext.drawImage(volView.__htmlCanvasLabels,
-																				//~ sx,
-																				//~ sy,
-																				Math.floor(sx*volView.__spacing[1]), //~ pikachu success
-																				Math.floor(sy*volView.__spacing[0]), //~ pikachu success
-																				//~ Math.floor(sx/volView.__spacing[1]), //~ when pikachu test ?
-																				//~ Math.floor(sy/volView.__spacing[0]), //~ when pikachu test ?
-																				//~ sdw,
-																				//~ sdh,
-																				Math.floor(sdw*volView.__spacing[1]), //~ pikachu success
-																				Math.floor(sdh*volView.__spacing[0]), //~ pikachu success
-																				//~ Math.floor(sdw/volView.__spacing[1]), //~ when pikachu test ?
-																				//~ Math.floor(sdh/volView.__spacing[0]), //~ when pikachu test ?
-																				dx, //~ pikachu success
-																				dy, //~ pikachu success
-																				//~ Math.floor(dx*volView.__spacing[1]), //~ when pikachu test ?
-																				//~ Math.floor(dy*volView.__spacing[0]), //~ when pikachu test ?
-																				//~ Math.floor(dx/volView.__spacing[1]), //~ when pikachu test ?
-																				//~ Math.floor(dy/volView.__spacing[0]), //~ when pikachu test ?
-																				sdw, //~ pikachu success
-																				sdh); //~ pikachu success
-																				//~ Math.floor(sdw*volView.__spacing[1]), //~ when pikachu test ?
-																				//~ Math.floor(sdh*volView.__spacing[0])); //~ when pikachu test ?
-																				//~ Math.floor(sdw/volView.__spacing[1]), //~ when pikachu test
-																				//~ Math.floor(sdh/volView.__spacing[0])); //~ when pikachu test
-				//~ }
+				volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__dimensions[0]+32, volView.__dimensions[1]+32);
+				volView.__drawingCanvasParams.drawingContext.drawImage(volView.__htmlCanvasLabels,
+																		Math.floor(sx*volView.__scale[0]),
+																		Math.floor(sy*volView.__scale[1]),
+																		Math.floor(sdw*volView.__scale[0]),
+																		Math.floor(sdh*volView.__scale[1]),
+																		dx,
+																		dy,
+																		sdw,
+																		sdh);
 			};
 			
 			this.__drawZoomedCanvas = drawZoomedCanvas;
@@ -1435,58 +1364,37 @@ qx.Class.define("desk.volView",
                 var tempX = (mouseEvent.getDocumentLeft()-canvasLocation.left)/scale;
                 var tempY = (mouseEvent.getDocumentTop()-canvasLocation.top)/scale;
                 var tempMargin = 4/scale;
-                if((tempMargin<tempX)&&(tempX<volView.__imgMap.width/scale-tempMargin)&&(tempMargin<tempY)&&(tempY<volView.__imgMap.height/scale-tempMargin))
+                if((tempMargin<tempX)&&(tempX<volView.__scaledWidth/scale-tempMargin)&&(tempMargin<tempY)&&(tempY<volView.__scaledHeight/scale-tempMargin))
                 {
+					volView.__drawingCanvasParams.drawingContext.setTransform(volView.__display.curCtxtZoom/volView.__scale[0],0,0,volView.__display.curCtxtZoom/volView.__scale[1],0,0);
 					volView.__drawingCanvasParams.drawingContext.strokeStyle = volView.__penSize.getValue()*volView.__display.curCtxtZoom;
                     volView.__drawingCanvasParams.drawingContext.strokeStyle = volView.__drawingCanvasParams.currentColor;
                     volView.__drawingCanvasParams.drawingContext.fillStyle = volView.__drawingCanvasParams.currentColor;
                     volView.__drawingCanvasParams.drawingContext.beginPath();
-                    volView.__drawingCanvasParams.drawingContext.arc(tempX,
-																	tempY,
+                    volView.__drawingCanvasParams.drawingContext.arc(tempX*volView.__scale[0],
+																	tempY*volView.__scale[1],
 																	Math.ceil(volView.__penSize.getValue()/2),
                                                                     0, Math.PI * 2, false);
                     volView.__drawingCanvasParams.drawingContext.closePath();
                     volView.__drawingCanvasParams.drawingContext.fill();
+					volView.__drawingCanvasParams.drawingContext.setTransform(1,0,0,1,0,0);
                 }
 			};
 
 		////Redraw image canvas at original scale
             var resetZoom = function(autoComplete)
             {
-						volView.debug("<<<<<<<   resetZoom   >>>>>>>>");
-						for (var key  in volView.__display)
-						{
-							if (key === 'length' || !volView.__display.hasOwnProperty(key))
-								continue;
-								volView.debug(key + " : " + volView.__display[key]);
-						}
 				volView.__imgCanvasParams.imgContext.setTransform(1,0,0,1,0,0);
-		volView.__htmlContextImage.drawImage(canvasImage, 0, 0); //~ pikachu success
-		//~ volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height, 0, 0, canvasImage.width/volView.__spacing[1], canvasImage.height/volView.__spacing[0]);
+				volView.__htmlContextImage.drawImage(canvasImage, 0, 0);
 				var outImg = processBrCr(volView.__imgCanvasParams.brightness, volView.__imgCanvasParams.contrast, true);
-		//~ volView.__htmlContextImage.putImageData(outImg, 0, 0);
-		volView.__htmlContextImage.putImageData(outImg, 0, 0, canvasImage.width, canvasImage.height, 0, 0, canvasImage.width/volView.__spacing[1], canvasImage.height/volView.__spacing[0]); //~ pikachu success
-						volView.debug(">>> canvasImage.width : " + canvasImage.width);
-						volView.debug(">>> canvasImage.height : " + canvasImage.height);
-						volView.debug(">>> canvasImage.width/volView.__spacing[1] : " + canvasImage.width/volView.__spacing[1]);
-						volView.debug(">>> canvasImage.height/volView.__spacing[0] : " + canvasImage.height/volView.__spacing[0]);
-						volView.debug(">>> volView.__htmlCanvasImage : " + volView.__htmlCanvasImage);
-		//~ volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0);
-		volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height, 0, 0, canvasImage.width/volView.__spacing[1], canvasImage.height/volView.__spacing[0]); //~ pikachu success
+				volView.__htmlContextImage.putImageData(outImg, 0, 0, canvasImage.width, canvasImage.height, 0, 0, volView.__scaledWidth, volView.__scaledHeight);
+				volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height, 0, 0, volView.__scaledWidth, volView.__scaledHeight);
 				volView.__drawingCanvasParams.drawingContext.setTransform(1,0,0,1,0,0);
-		//~ volView.__drawingCanvasParams.drawingContext.drawImage(volView.__htmlCanvasLabels,0,0);
-		volView.__drawingCanvasParams.drawingContext.drawImage(volView.__htmlCanvasLabels,0,0,canvasImage.width/volView.__spacing[1],canvasImage.height/volView.__spacing[0]); //~ pikachu success
+				volView.__drawingCanvasParams.drawingContext.drawImage(volView.__htmlCanvasLabels,0,0,volView.__scaledWidth,volView.__scaledHeight);
 				volView.__display.displayHrzShift = 0;
 				volView.__display.displayVrtShift = 0;
 				volView.__display.wheelScale = 0;
 				volView.__display.curCtxtZoom = 1;
-						for (var key  in volView.__display)
-						{
-								if (key === 'length' || !volView.__display.hasOwnProperty(key))
-										continue;
-								volView.debug(key + " : " + volView.__display[key]);
-						}
-						volView.debug("<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>");
 			};
 
 
@@ -1725,8 +1633,6 @@ qx.Class.define("desk.volView",
 				if(0<this.__ctrlZData.length)
 				{
 					this.__htmlContextLabels.putImageData(this.__ctrlZData[0], 0, 0);
-					//~ this.__htmlContextLabels.putImageData(this.__ctrlZData[0], 0, 0, 0, 0, this.__imgMap.width/this.__spacing[1], this.__imgMap.height/this.__spacing[0]);
-					//~ this.__htmlContextLabels.putImageData(this.__ctrlZData[0], 0, 0, 0, 0,  Math.floor(this.__imgMap.width*this.__spacing[1]),  Math.floor(this.__imgMap.height*this.__spacing[0])); //~ resizing test //~ pikachu success
 					this.__drawZoomedCanvas(this.__display.curCtxtZoom,false);
 				}
 				var tempData = [];
@@ -1746,33 +1652,29 @@ qx.Class.define("desk.volView",
 			var tempX, tempY;
 			if(autoComplete)
 			{
-				tempX = (this.__mouseData.recentX+this.__display.onDispMouseHrzPos)/2-this.__eraserCoeff*this.__penSize.getValue()/2;
-				tempY = (this.__mouseData.recentY+this.__display.onDispMouseVrtPos)/2-this.__eraserCoeff*this.__penSize.getValue()/2;
-				var newCoor = this.__changeInto05Coordinates(tempX,tempY);
+				tempX = (this.__mouseData.recentX+this.__display.onDispMouseHrzPos)/2-this.__eraserCoeff*this.__penSize.getValue()/(2*this.__scale[0]);
+				tempY = (this.__mouseData.recentY+this.__display.onDispMouseVrtPos)/2-this.__eraserCoeff*this.__penSize.getValue()/(2*this.__scale[1]);
+				var newCoor = this.__changeInto05Coordinates(tempX*this.__scale[0],tempY*this.__scale[1]);
 				tempX = newCoor.newX;
 				tempY = newCoor.newY;
-				//~ this.__htmlContextLabels.clearRect(tempX,
-													//~ tempY,
-													//~ this.__eraserCoeff*this.__penSize.getValue(),
-													//~ this.__eraserCoeff*this.__penSize.getValue());
-				this.__htmlContextLabels.clearRect(tempX*volView.__spacing[1],
-													tempY*volView.__spacing[0],
-													this.__eraserCoeff*this.__penSize.getValue(),
-													this.__eraserCoeff*this.__penSize.getValue()); //~ pikachu success
+				var newDims = this.__changeInto05Coordinates(this.__eraserCoeff*this.__penSize.getValue(),this.__eraserCoeff*this.__penSize.getValue());
+				var tempDim = newDims.newX;
+				this.__htmlContextLabels.clearRect(tempX,
+													tempY,
+													tempDim,
+													tempDim);
 			}
-			tempX = this.__display.onDispMouseHrzPos-this.__eraserCoeff*this.__penSize.getValue()/2;
-			tempY = this.__display.onDispMouseVrtPos-this.__eraserCoeff*this.__penSize.getValue()/2;
-			var newCoor = this.__changeInto05Coordinates(tempX,tempY);
+			tempX = this.__display.onDispMouseHrzPos-this.__eraserCoeff*this.__penSize.getValue()/(2*this.__scale[0]);
+			tempY = this.__display.onDispMouseVrtPos-this.__eraserCoeff*this.__penSize.getValue()/(2*this.__scale[1]);
+			var newCoor = this.__changeInto05Coordinates(tempX*this.__scale[0],tempY*this.__scale[1]);
 			tempX = newCoor.newX;
 			tempY = newCoor.newY;
-			//~ this.__htmlContextLabels.clearRect(tempX,
-												//~ tempY,
-												//~ this.__eraserCoeff*this.__penSize.getValue(),
-												//~ this.__eraserCoeff*this.__penSize.getValue());
-			this.__htmlContextLabels.clearRect(tempX*volView.__spacing[1],
-												tempY*volView.__spacing[0],
-												this.__eraserCoeff*this.__penSize.getValue(),
-												this.__eraserCoeff*this.__penSize.getValue()); //~ pikachu success
+			var newDims = this.__changeInto05Coordinates(this.__eraserCoeff*this.__penSize.getValue(),this.__eraserCoeff*this.__penSize.getValue());
+			var tempDim = newDims.newX;
+			this.__htmlContextLabels.clearRect(tempX,
+												tempY,
+												tempDim,
+												tempDim);
 			this.__drawZoomedCanvas(this.__display.curCtxtZoom,false);
 			this.__mouseData.recentX = this.__display.onDispMouseHrzPos;
 			this.__mouseData.recentY = this.__display.onDispMouseVrtPos;
@@ -1784,7 +1686,7 @@ qx.Class.define("desk.volView",
 			var canvasLocation=this.__imageCanvas.getContentLocation();
 			this.__display.onDispMouseHrzPos = (mouseEvent.getDocumentLeft()-canvasLocation.left)/this.__display.curCtxtZoom;
 			this.__display.onDispMouseVrtPos = (mouseEvent.getDocumentTop()-canvasLocation.top)/this.__display.curCtxtZoom;
-
+			
 			if(scaling)
 			{
 				this.__display.onDispMouseHrzPos = this.__display.displayHrzShift/this.__display.curCtxtZoom + this.__display.onDispMouseHrzPos;
@@ -1813,9 +1715,7 @@ qx.Class.define("desk.volView",
 				var tempData = [];
 				if(this.__ctrlZData.length===0)
 				{
-					//~ tempData[0] = this.__htmlContextLabels.getImageData(0, 0, this.__imgMap.width, this.__imgMap.height);
-					//~ tempData[0] = this.__htmlContextLabels.getImageData(0, 0, this.__imgMap.width/this.__spacing[1], this.__imgMap.height/this.__spacing[0]);
-					tempData[0] = this.__htmlContextLabels.getImageData(0, 0,  this.__dimensions[0],  this.__dimensions[1]); //~ resizing test //~ pikachu success //~ this.__imgMap.width*this.__spacing[1] replaced
+					tempData[0] = this.__htmlContextLabels.getImageData(0, 0,  this.__dimensions[0],  this.__dimensions[1]);
 				}
 				else
 				{
@@ -1825,9 +1725,7 @@ qx.Class.define("desk.volView",
 						{
 							tempData[this.__ctrlZData.length-i] = this.__ctrlZData[this.__ctrlZData.length-i-1];
 						}
-						//~ tempData[0] = this.__htmlContextLabels.getImageData(0, 0, this.__imgMap.width, this.__imgMap.height);
-						//~ tempData[0] = this.__htmlContextLabels.getImageData(0, 0, this.__imgMap.width/this.__spacing[1], this.__imgMap.height/this.__spacing[0]);
-						tempData[0] = this.__htmlContextLabels.getImageData(0, 0,  this.__dimensions[0],  this.__dimensions[1]); //~ resizing test //~ pikachu success //~ this.__imgMap.width*this.__spacing[1] replaced
+						tempData[0] = this.__htmlContextLabels.getImageData(0, 0,  this.__dimensions[0],  this.__dimensions[1]);
 					}
 					else
 					{
@@ -1837,9 +1735,7 @@ qx.Class.define("desk.volView",
 							{
 								tempData[this.__ctrlZData.length-i] = this.__ctrlZData[this.__ctrlZData.length-i-1];
 							}
-							//~ tempData[0] = this.__htmlContextLabels.getImageData(0, 0, this.__imgMap.width, this.__imgMap.height);
-							//~ tempData[0] = this.__htmlContextLabels.getImageData(0, 0, this.__imgMap.width/this.__spacing[1], this.__imgMap.height/this.__spacing[0]);
-							tempData[0] = this.__htmlContextLabels.getImageData(0, 0, this.__dimensions[0], this.__dimensions[1]); //~ resizing test //~ pikachu success //~ this.__imgMap.width*this.__spacing[1] replaced
+							tempData[0] = this.__htmlContextLabels.getImageData(0, 0, this.__dimensions[0], this.__dimensions[1]);
 						}
 					}
 				}
@@ -1865,6 +1761,8 @@ qx.Class.define("desk.volView",
 				intY2middle = Math.round(Y)-0.5;
 			newCoordinates.newX = intX2middle;
 			newCoordinates.newY = intY2middle;
+			//~ newCoordinates.newX = X;
+			//~ newCoordinates.newY = Y;
 			return newCoordinates;
 		},
 
@@ -1918,9 +1816,9 @@ qx.Class.define("desk.volView",
 			
             volView.__penSize.addListener("changeValue", function(event)
 			{
-                volView.__htmlContextLabels.lineWidth = event.getData();
-                volView.__eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__penSize.getValue()*volView.__display.curCtxtZoom+1),
-											height: Math.ceil(volView.__eraserCoeff*volView.__penSize.getValue()*volView.__display.curCtxtZoom+1)});
+                volView.__htmlContextLabels.lineWidth = event.getData()*Math.sqrt(volView.__scale[0]*volView.__scale[1]);
+                volView.__eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__penSize.getValue()*volView.__display.curCtxtZoom/volView.__scale[0]+1),
+											height: Math.ceil(volView.__eraserCoeff*volView.__penSize.getValue()*volView.__display.curCtxtZoom/volView.__scale[1]+1)});
 				if(typeof drawingCanvas != "undefined")
 						drawingCanvas.resetCursor();
 				if(volView.__drawingCanvas != null)
@@ -1974,6 +1872,7 @@ qx.Class.define("desk.volView",
 			////Activate moving
                 if(event.isMiddlePressed())
                 {
+					volView.__getPosition(event,true);
 					if(volView.__eraserCursor != null)
 							volView.__eraserCursor.set({cursor: "move"});
                     volView.__mouseData.mouseMiddleDownFlag = true;
@@ -1982,6 +1881,11 @@ qx.Class.define("desk.volView",
                  }
 			////"Undo" (draw previous canvas)
 				volView.__undoFnct(event);
+			////Draw cursor
+				if(volView.__mouseActionMode==3)
+				{
+					drawBrush(event,volView.__display.curCtxtZoom);
+				}
             });
 			
             volView.__eraserCursor.addListener("mousemove", function(event)
@@ -1989,7 +1893,7 @@ qx.Class.define("desk.volView",
 				volView.__getPosition(event,false);	// No scaling so coordinates are compatible with placeEraser function
                 var tempMargin = 4/volView.__display.curCtxtZoom;
 			////Hide eraser if out of drawing zone
-                if(!((tempMargin<=volView.__display.onDispMouseHrzPos)&&(volView.__display.onDispMouseHrzPos<=volView.__imgMap.width/volView.__display.curCtxtZoom-tempMargin)&&(tempMargin<=volView.__display.onDispMouseVrtPos)&&(volView.__display.onDispMouseVrtPos<=volView.__imgMap.height/volView.__display.curCtxtZoom-tempMargin)))
+                if(!((tempMargin<=volView.__display.onDispMouseHrzPos)&&(volView.__display.onDispMouseHrzPos<=volView.__scaledWidth/volView.__display.curCtxtZoom-tempMargin)&&(tempMargin<=volView.__display.onDispMouseVrtPos)&&(volView.__display.onDispMouseVrtPos<=volView.__scaledHeight/volView.__display.curCtxtZoom-tempMargin)))
                 {
                     if(volView.__eraserCursor.getVisibility()=="visible")
 					{
@@ -1997,8 +1901,8 @@ qx.Class.define("desk.volView",
 					}
                 }
 			////Move eraser to mouse position
-                volView.__eraserCursor.set({marginLeft: Math.round((volView.__display.onDispMouseHrzPos-volView.__eraserCoeff*volView.__penSize.getValue()/2)*volView.__display.curCtxtZoom),
-											marginTop: Math.round((volView.__display.onDispMouseVrtPos-volView.__eraserCoeff*volView.__penSize.getValue()/2)*volView.__display.curCtxtZoom)});
+                volView.__eraserCursor.set({marginLeft: Math.round((volView.__display.onDispMouseHrzPos-volView.__eraserCoeff*volView.__penSize.getValue()/(2*volView.__scale[0]))*volView.__display.curCtxtZoom),
+											marginTop: Math.round((volView.__display.onDispMouseVrtPos-volView.__eraserCoeff*volView.__penSize.getValue()/(2*volView.__scale[1]))*volView.__display.curCtxtZoom)});
 				volView.__display.onDispMouseHrzPos = volView.__display.displayHrzShift/volView.__display.curCtxtZoom + volView.__display.onDispMouseHrzPos;
                 volView.__display.onDispMouseVrtPos = volView.__display.displayVrtShift/volView.__display.curCtxtZoom + volView.__display.onDispMouseVrtPos;
 				if((volView.__mouseData.mouseLeftDownFlag)||(volView.__mouseActionActive==4))
@@ -2031,21 +1935,21 @@ qx.Class.define("desk.volView",
 							volView.__htmlContextLabels.cursor = "default";
 			}, this);
 			
-			volView.__eraserCursor.addListener("mouseout", function(event)
-			{
-					if((volView.__mouseData.mouseLeftDownFlag)||(volView.__mouseActionActive==4))
-							volView.__eraseFnct(true);
-					if(typeof drawingCanvas != "undefined")
-							drawingCanvas.resetCursor();
-					if(volView.__drawingCanvas != null)
-							volView.__drawingCanvas.resetCursor();
-					if(volView.__imageCanvas != null)
-							volView.__imageCanvas.resetCursor();
-					if(volView.__eraserCursor != null)
-							volView.__eraserCursor.resetCursor();
-					if(volView.__htmlContextLabels != null)
-							volView.__htmlContextLabels.cursor = "default";
-			}, this);
+			//~ volView.__eraserCursor.addListener("mouseout", function(event)
+			//~ {
+					//~ if((volView.__mouseData.mouseLeftDownFlag)||(volView.__mouseActionActive==4))
+							//~ volView.__eraseFnct(true);
+					//~ if(typeof drawingCanvas != "undefined")
+							//~ drawingCanvas.resetCursor();
+					//~ if(volView.__drawingCanvas != null)
+							//~ volView.__drawingCanvas.resetCursor();
+					//~ if(volView.__imageCanvas != null)
+							//~ volView.__imageCanvas.resetCursor();
+					//~ if(volView.__eraserCursor != null)
+							//~ volView.__eraserCursor.resetCursor();
+					//~ if(volView.__htmlContextLabels != null)
+							//~ volView.__htmlContextLabels.cursor = "default";
+			//~ }, this);
 			
 			volView.__eraserCursor.addListener("mousewheel", volView.__mouseWheelHandler, this);
 
@@ -2071,33 +1975,33 @@ qx.Class.define("desk.volView",
                 volView.__mouseData.mouseLeftDownFlag = false;
             });
 			
-			volView.__eraserButton.addListener("mouseover", function(event)
-			{
-					if(typeof drawingCanvas != "undefined")
-							drawingCanvas.resetCursor();
-					if(volView.__drawingCanvas != null)
-							volView.__drawingCanvas.resetCursor();
-					if(volView.__imageCanvas != null)
-							volView.__imageCanvas.resetCursor();
-					if(volView.__eraserCursor != null)
-							volView.__eraserCursor.resetCursor();
-					if(volView.__htmlContextLabels != null)
-							volView.__htmlContextLabels.cursor = "default";
-			}, this);
+			//~ volView.__eraserButton.addListener("mouseover", function(event)
+			//~ {
+					//~ if(typeof drawingCanvas != "undefined")
+							//~ drawingCanvas.resetCursor();
+					//~ if(volView.__drawingCanvas != null)
+							//~ volView.__drawingCanvas.resetCursor();
+					//~ if(volView.__imageCanvas != null)
+							//~ volView.__imageCanvas.resetCursor();
+					//~ if(volView.__eraserCursor != null)
+							//~ volView.__eraserCursor.resetCursor();
+					//~ if(volView.__htmlContextLabels != null)
+							//~ volView.__htmlContextLabels.cursor = "default";
+			//~ }, this);
 			
-			volView.__eraserButton.addListener("mouseout", function(event)
-			{
-					if(typeof drawingCanvas != "undefined")
-							drawingCanvas.resetCursor();
-					if(volView.__drawingCanvas != null)
-							volView.__drawingCanvas.resetCursor();
-					if(volView.__imageCanvas != null)
-							volView.__imageCanvas.resetCursor();
-					if(volView.__eraserCursor != null)
-							volView.__eraserCursor.resetCursor();
-					if(volView.__htmlContextLabels != null)
-							volView.__htmlContextLabels.cursor = "default";
-			}, this);
+			//~ volView.__eraserButton.addListener("mouseout", function(event)
+			//~ {
+					//~ if(typeof drawingCanvas != "undefined")
+							//~ drawingCanvas.resetCursor();
+					//~ if(volView.__drawingCanvas != null)
+							//~ volView.__drawingCanvas.resetCursor();
+					//~ if(volView.__imageCanvas != null)
+							//~ volView.__imageCanvas.resetCursor();
+					//~ if(volView.__eraserCursor != null)
+							//~ volView.__eraserCursor.resetCursor();
+					//~ if(volView.__htmlContextLabels != null)
+							//~ volView.__htmlContextLabels.cursor = "default";
+			//~ }, this);
 			
 			volView.__topRightContainer.add(volView.__eraserButton);
 
@@ -2389,11 +2293,9 @@ qx.Class.define("desk.volView",
 			
 			if (this.__currentSeedsModified!==false)
 			{
-				//~ var sliceData = this.__htmlContextImage.getImageData(0, 0, this.__imgMap.width, this.__imgMap.height); //~ pikachu test
-				var sliceData = this.__htmlContextImage.getImageData(0, 0, this.__dimensions[0], this.__dimensions[1]); //~ this.__imgMap.width*this.__spacing[1] replaced
+				var sliceData = this.__htmlContextImage.getImageData(0, 0, this.__dimensions[0], this.__dimensions[1]);
 				var pixels = sliceData.data;
-				//~ var seeds=this.__htmlContextLabels.getImageData(0, 0, this.__imgMap.width, this.__imgMap.height).data; //~ pikachu test
-				var seeds = this.__htmlContextLabels.getImageData(0, 0, this.__dimensions[0], this.__dimensions[1]).data; //~ this.__imgMap.width*this.__spacing[1] replaced
+				var seeds = this.__htmlContextLabels.getImageData(0, 0, this.__dimensions[0], this.__dimensions[1]).data;
 				var isAllBlack = true;
 				var labelColors=this.__labelColors;
 				for(var i=0; i<seeds.length; i+=4)
@@ -2451,8 +2353,6 @@ qx.Class.define("desk.volView",
 					////Send png image to server
 					sliceData.data = pixels;
 					this.__htmlContextLabels.putImageData(sliceData, 0, 0);
-					//~ this.__htmlContextLabels.putImageData(sliceData, 0, 0, 0, 0, Math.floor(this.__imgMap.width*this.__spacing[1]), Math.floor(this.__imgMap.height*this.__spacing[0])); //~ pikachu success
-					//~ this.__htmlContextLabels.putImageData(sliceData, 0, 0, 0, 0, this.__imgMap.width/this.__spacing[1], this.__imgMap.height/this.__spacing[0]);
 					var pngImg = this.__htmlCanvasLabels.toDataURL("image/png");
 					var commaIndex=pngImg.lastIndexOf(",");
 					var base64Img = pngImg.substring(commaIndex+1,pngImg.length);
@@ -2593,10 +2493,8 @@ qx.Class.define("desk.volView",
 
 		__clearDrawingCanvas : function()
 		{
-			//~ this.__drawingCanvasParams.drawingContext.clearRect(-16, -16, this.__imgMap.width/this.__spacing[1]+32, this.__imgMap.height/this.__spacing[0]+32);
-			this.__drawingCanvasParams.drawingContext.clearRect(-16, -16, this.__imgMap.width*2+32, this.__imgMap.height*2+32); //~ resizing test //~ pikachu success
-			//~ this.__htmlContextLabels.clearRect(-16, -16, this.__imgMap.width/this.__spacing[1]+32, this.__imgMap.height/this.__spacing[0]+32);
-			this.__htmlContextLabels.clearRect(-16, -16, this.__imgMap.width*2+32, this.__imgMap.height*2+32); //~ resizing test //~ pikachu success
+			this.__drawingCanvasParams.drawingContext.clearRect(-16, -16, this.__dimensions[0]+32, this.__dimensions[1]+32);
+			this.__htmlContextLabels.clearRect(-16, -16, this.__dimensions[0]+32, this.__dimensions[1]+32);
 			this.__htmlContextLabels.cursor = "default";
 			this.__htmlContextLabels.beginPath();
 			this.__eraserCursor.exclude();
@@ -2635,6 +2533,17 @@ qx.Class.define("desk.volView",
 								tempVolView.__display[key] = parseFloat(response.getElementsByTagName(key)[0].getAttribute("value"),10);
 								//~ tempVolView.debug(key + " : " + tempVolView.__display[key]);
 						}
+						if(tempVolView.__eraserCursor!=null)
+						{
+							tempVolView.__eraserCursor.set({width: Math.ceil(tempVolView.__eraserCoeff*tempVolView.__penSize.getValue()*tempVolView.__display.curCtxtZoom/tempVolView.__scale[0]+1),
+															height: Math.ceil(tempVolView.__eraserCoeff*tempVolView.__penSize.getValue()*tempVolView.__display.curCtxtZoom/tempVolView.__scale[1]+1)});
+						}
+						if((tempVolView.__drawingCanvasParams.eraseFlag)||(tempVolView.__mouseActionMode==4))
+						{
+						////Move eraser to mouse position
+							tempVolView.__eraserCursor.set({marginLeft: Math.round((tempVolView.__display.onDispMouseHrzPos-tempVolView.__eraserCoeff*tempVolView.__penSize.getValue()/(2*tempVolView.__scale[0]))*tempVolView.__display.curCtxtZoom),
+														marginTop: Math.round((tempVolView.__display.onDispMouseVrtPos-tempVolView.__eraserCoeff*tempVolView.__penSize.getValue()/(2*tempVolView.__scale[1]))*tempVolView.__display.curCtxtZoom)});
+						}
 						tempVolView.__spinner.setValue(tempVolView.__display.displayDpthShift);
 						tempVolView.__drawZoomedCanvas(tempVolView.__display.curCtxtZoom,true);
 						tempVolView.fireEvent("changeDisplay");
@@ -2661,9 +2570,9 @@ qx.Class.define("desk.volView",
 			{
 				var volDirectory = this.__file.substring(0,this.__file.lastIndexOf('/'));
 				loadDispRequest.open("GET", this.__fileBrowser.getFileURL(volDirectory + "/savedDisplay.xml?nocache="+Math.random()), false);
+				//~ loadDispRequest.send(null);
 			}
 			
-			//~ loadDispRequest.send(null);
 		},
 		
 		////Write xml with display parameters
@@ -2716,9 +2625,9 @@ qx.Class.define("desk.volView",
 						"xmlData" : this.__element('display', xmlContent),
 						"output_directory" : volDirectory
 					};
+				//~ this.__fileBrowser.getActions().launchAction(parameterMap, callback);
 			}
-
-			//~ this.__fileBrowser.getActions().launchAction(parameterMap, callback);
+			
 		},
 		
 		
@@ -2744,8 +2653,7 @@ qx.Class.define("desk.volView",
 					// current slice has no seeds
 					seedsList.resetSelection();
 					this.__clearDrawingCanvas();
-					//~ this.__htmlContextLabels.clearRect(-16, -16, this.__imgMap.width/this.__spacing[1]+32, this.__imgMap.height/this.__spacing[0]+32);
-					this.__htmlContextLabels.clearRect(-16, -16, this.__imgMap.width*2+32, this.__imgMap.height*2+32); //~ resizing test //~ pikachu success
+					this.__htmlContextLabels.clearRect(-16, -16, this.__dimensions[0]+32, this.__dimensions[1]+32);
 				}
 			}
 			
