@@ -86,7 +86,7 @@ qx.Class.define("desk.volView",
 		
 		this.set({
 			showMinimize: false,
-			showMaximize: false,
+			showMaximize: true,
 			showClose: true,
 			resizable: true,
 			movable : true
@@ -443,6 +443,10 @@ qx.Class.define("desk.volView",
 							volView.debug("volView.__scaledWidth : " + volView.__scaledWidth);
 							volView.debug("volView.__scaledHeight : " + volView.__scaledHeight);
 
+							volView.debug("volView.__dimensions[0]/volView.__scale[0] : " + volView.__dimensions[0]/volView.__scale[0]);
+							volView.debug("volView.__dimensions[1]/volView.__scale[1] : " + volView.__dimensions[1]/volView.__scale[1]);
+							volView.debug("volView.__dimensions[0]*volView.__scale[0] : " + volView.__dimensions[0]*volView.__scale[0]);
+							volView.debug("volView.__dimensions[1]*volView.__scale[1] : " + volView.__dimensions[1]*volView.__scale[1]);
 							var XMLorigin=volume.getElementsByTagName("origin")[0];
 							volView.__origin=new Array(parseFloat(XMLorigin.getAttribute("x")),
 														parseFloat(XMLorigin.getAttribute("y")),
@@ -517,10 +521,8 @@ qx.Class.define("desk.volView",
 			this.__loadSeeds.onload = function (){
 				if(volView.__drawingCanvasParams.drawingContext!==null)
 				{
-					//~ volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__dimensions[0]/volView.__scale[0]+32, volView.__dimensions[1]/volView.__scale[1]+32);
-					//~ volView.__htmlContextLabels.clearRect(-16, -16, volView.__dimensions[0]/volView.__scale[0]+32, volView.__dimensions[1]/volView.__scale[1]+32);
-					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__dimensions[0]+32, volView.__dimensions[1]+32);
-					volView.__htmlContextLabels.clearRect(-16, -16, volView.__dimensions[0]+32, volView.__dimensions[1]+32);
+					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, 2*volView.__scaledWidth+32, 2*volView.__scaledHeight+32);
+					volView.__htmlContextLabels.clearRect(-16, -16, 2*volView.__scaledWidth+32, 2*volView.__scaledHeight+32);
 					volView.__htmlContextLabels.drawImage(volView.__loadSeeds, 0, 0);
 					volView.__drawZoomedCanvas(volView.__display.curCtxtZoom,true);
 					//~ volView.__currentSeedsSlice=sliceId;
@@ -550,27 +552,21 @@ qx.Class.define("desk.volView",
 							this.__drawingCanvasParams.paintFlag = false;
 						}
 					}
+					this.__drawingCanvas.releaseCapture();
 			}
 
 			if ((mode!=4)&&(this.__eraserCursor!==null))
 			{
+					this.__eraserCursor.releaseCapture();
 					this.__eraserCursor.exclude();
 					this.__eraserButton.setValue(false);
 			}
 			
-			if(typeof drawingCanvas != "undefined")
-					drawingCanvas.resetCursor();
 			if(this.__drawingCanvas != null)
 					this.__drawingCanvas.resetCursor();
-			if(this.__imageCanvas != null)
-					this.__imageCanvas.resetCursor();
 			if(this.__eraserCursor != null)
 					this.__eraserCursor.resetCursor();
-			if(this.__htmlContextLabels != null)
-					this.__htmlContextLabels.cursor = "default";
-			if(this.__htmlContextImage != null)
-					this.__htmlContextImage.cursor = "default";
-							
+			
 			this.__mouseActionMode = mode;
 		},
 		
@@ -588,8 +584,7 @@ qx.Class.define("desk.volView",
 			var mLCL=new qx.ui.layout.VBox();
 			mLCL.setSpacing(spacing);
 			volView.__mainLeftContainer = new qx.ui.container.Composite(mLCL);
-			//~ volView.__window.add(volView.__mainLeftContainer);
-			volView.__window.add(volView.__mainLeftContainer, {flex:1}); //~ Vileplume test
+			volView.__window.add(volView.__mainLeftContainer, {flex:1});
 		
 			var tLCL=new qx.ui.layout.HBox();
 			tLCL.setSpacing(spacing);
@@ -601,7 +596,7 @@ qx.Class.define("desk.volView",
 			volView.__imageContainer = new qx.ui.container.Composite(iCL);
 			volView.__imageContainer.setMinWidth(Math.floor(this.__scaledWidth)); //~ Set min window
 			volView.__imageContainer.setMinHeight(Math.floor(this.__scaledHeight)); //~ Set min window
-			volView.__mainLeftContainer.add(volView.__imageContainer, {flex : 3}); //~ Vileplume test
+			volView.__mainLeftContainer.add(volView.__imageContainer, {flex : 3});
 			//~ volView.__mainLeftContainer.add(volView.__imageContainer);
 			
 		////Create brightness/contrast fixing on/off button
@@ -636,8 +631,6 @@ qx.Class.define("desk.volView",
 		////Create slider
             var slider = new qx.ui.form.Slider();
             slider.setWidth(30);
-            //~ slider.setHeight(Math.floor(this.__scaledHeight)); //~ Vileplume test
-            //~ slider.setMinHeight(Math.floor(this.__scaledHeight)); //~ Vileplume test
             slider.setMaximum(volView.__dimensions[2]-1);
             slider.setMinimum(0);
             slider.setOrientation("vertical");
@@ -666,22 +659,6 @@ qx.Class.define("desk.volView",
 			
 			volView.__updateContext = function(event)
 			{
-				//~ var data = event.getData();
-
-				//~ volView.__drawingCanvasParams.drawingContext.setTransform(volView.__display.curCtxtZoom,0,0,volView.__display.curCtxtZoom,0,0);
-				//~ volView.__drawingCanvasParams.drawingContext.mozImageSmoothingEnabled = false;
-				//~ volView.__htmlContextLabels.cursor = "default";
-				//~ volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
-				//~ volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
-				//~ volView.__htmlContextLabels.lineWidth = volView.__drawingCanvasParams.myLineWidth*volView.__display.curCtxtZoom;
-				//~ volView.__htmlContextLabels.lineCap = volView.__drawingCanvasParams.myLineCap;
-				//~ volView.__htmlContextLabels.lineJoin = volView.__drawingCanvasParams.myLineJoin;
-				//~ volView.__htmlContextLabels.miterLimit = volView.__drawingCanvasParams.myMiterLimit;
-				//~ volView.__htmlContextLabels.setTransform(volView.__display.curCtxtZoom,0,0,volView.__display.curCtxtZoom,0,0);
-				//~ volView.__htmlContextLabels.mozImageSmoothingEnabled = false;
-				//~ volView.__loadDisplay();
-				//~ volView.__drawZoomedCanvas(1,false);
-				//~ volView.__drawZoomedCanvas(volView.__display.curCtxtZoom,false);
 				if((this.__imageCanvas != null)&&(this.__drawingCanvas != null)&&(this.__htmlContextImage != null)&&(this.__htmlContextLabels != null))
 					this.__drawZoomedCanvas(this.__display.curCtxtZoom,true);
 				volView.fireEvent("changeDisplay");
@@ -689,14 +666,6 @@ qx.Class.define("desk.volView",
 			
 			volView.__mouseDownHandler = function(event)
             {
-				if(typeof drawingCanvas != "undefined")
-						drawingCanvas.resetCursor();
-				if(volView.__drawingCanvas != null)
-						volView.__drawingCanvas.resetCursor();
-				if(volView.__imageCanvas != null)
-						volView.__imageCanvas.resetCursor();
-				if(volView.__htmlContextLabels != null)
-						volView.__htmlContextLabels.cursor = "default";
 			////"Undo" (draw previous canvas)
 				volView.__undoFnct(event);
 			////Locate mouse
@@ -710,16 +679,14 @@ qx.Class.define("desk.volView",
 					switch (volView.__mouseActionMode)
                     {
 						case 4:
+							volView.__eraserCursor.capture();
 							volView.__eraserButton.setValue(true);
 							if(volView.__eraserCursor.getVisibility()=="excluded")
 								volView.__eraserCursor.show();
-							if(volView.__eraserCursor != null)
-									volView.__eraserCursor.resetCursor();
 							break;
 						case 3:
 							if(!volView.__mouseData.mouseMiddleDownFlag)
 								drawBrush(event,volView.__display.curCtxtZoom);
-							volView.__htmlContextLabels.cursor = "default";
 							volView.__htmlContextLabels.lineWidth = volView.__penSize.getValue();
 							volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
 							volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
@@ -740,21 +707,14 @@ qx.Class.define("desk.volView",
 							break;
 						case 1:
 							volView.__brghtnssCntrstButton.setValue(true);
-							volView.__mouseData.recentX = volView.__display.onDispMouseHrzPos;
-							volView.__mouseData.recentY = volView.__display.onDispMouseVrtPos;
 							break;
 						default :
-							if(typeof drawingCanvas != "undefined")
-									drawingCanvas.resetCursor();
-							if(volView.__drawingCanvas != null)
-									volView.__drawingCanvas.resetCursor();
-							if(volView.__imageCanvas != null)
-									volView.__imageCanvas.resetCursor();
-							if(volView.__htmlContextLabels != null)
-									volView.__htmlContextLabels.cursor = "default";
                     }
-                    volView.__htmlContextLabels.cursor = "default";
                     volView.__htmlContextLabels.beginPath();
+					if(this.__drawingCanvas != null)
+							this.__drawingCanvas.resetCursor();
+					if(this.__eraserCursor != null)
+							this.__eraserCursor.resetCursor();
                 }
 			////Activate moving
                 if(((event.isShiftPressed())||(event.isMiddlePressed()))&&(1<=volView.__display.curCtxtZoom))
@@ -764,13 +724,10 @@ qx.Class.define("desk.volView",
 							volView.__eraserCursor.set({cursor: "move"});
 					volView.__mouseData.mouseMiddleDownFlag = true;
 				}
-				volView.__mouseData.recentX = volView.__display.onDispMouseHrzPos;
-                volView.__mouseData.recentY = volView.__display.onDispMouseVrtPos;
 			////Update image
 				if(!((volView.__mouseData.brCrFixingFlag)&&(volView.__mouseData.mouseLeftDownFlag)))
 				{
-					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__dimensions[0]/volView.__scale[0]+32, volView.__dimensions[1]/volView.__scale[1]+32);
-					//~ volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__dimensions[0]+32, volView.__dimensions[1]+32);
+					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, 2*volView.__scaledWidth+32, 2*volView.__scaledHeight+32);
 					drawZoomedCanvas(volView.__display.curCtxtZoom,false);
 				}
 			////Draw cursor
@@ -778,6 +735,8 @@ qx.Class.define("desk.volView",
 				{
 					drawBrush(event,volView.__display.curCtxtZoom);
 				}
+				volView.__mouseData.recentX = volView.__display.onDispMouseHrzPos;
+                volView.__mouseData.recentY = volView.__display.onDispMouseVrtPos;
             };
 			
 			volView.__display.wheelScale = 0;
@@ -792,15 +751,14 @@ qx.Class.define("desk.volView",
 			////Apply zoom
 				if((1<=zoomFactor)&&(zoomFactor<=volView.__MaxZoom))	////Only zoom no shrinking and not more than Max zoom
 				{
-					volView.debug(" zoom = x" + zoomFactor);
+					//~ volView.debug(" zoom = x" + zoomFactor);
 					var location=volView.__imageCanvas.getContentLocation();
 					volView.__display.onDispMouseHrzPos = event.getDocumentLeft()-location.left;
 					volView.__display.onDispMouseVrtPos = event.getDocumentTop()-location.top;
 					var onImageX = volView.__display.hrzntlShift + volView.__display.onDispMouseHrzPos;
 					var onImageY = volView.__display.vrtclShift + volView.__display.onDispMouseVrtPos;
 					volView.__imgCanvasParams.imgContext.clearRect(-16,-16,volView.__scaledWidth/volView.__scale[0]+32, volView.__scaledHeight/volView.__scale[1]+32);
-					volView.__drawingCanvasParams.drawingContext.clearRect(-16,-16,volView.__dimensions[0]/volView.__scale[0]+32, volView.__dimensions[1]/volView.__scale[1]+32);
-					//~ volView.__drawingCanvasParams.drawingContext.clearRect(-16,-16,volView.__dimensions[0]+32, volView.__dimensions[1]+32);
+					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, 2*volView.__scaledWidth+32, 2*volView.__scaledHeight+32);
 				////Zoom in
 					volView.__drawingCanvasParams.drawingContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
 					volView.__imgCanvasParams.imgContext.setTransform(zoomFactor,0,0,zoomFactor,0,0);
@@ -810,27 +768,17 @@ qx.Class.define("desk.volView",
 					//~ volView.__display.hrzntlShift = newCoor.newX;
 					//~ volView.__display.vrtclShift = newCoor.newY;
 					drawZoomedCanvas(zoomFactor,true);
-					if(typeof drawingCanvas != "undefined")
-							drawingCanvas.resetCursor();
-					if(volView.__drawingCanvas != null)
-							volView.__drawingCanvas.resetCursor();
-					if(volView.__imageCanvas != null)
-							volView.__imageCanvas.resetCursor();
-					if(volView.__eraserCursor != null)
-							volView.__eraserCursor.resetCursor();
-					if(volView.__htmlContextLabels != null)
-							volView.__htmlContextLabels.cursor = "default";
 					if (volView.__eraserCursor!==null)
 							volView.__eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__penSize.getValue()*zoomFactor/volView.__scale[0])+1,
 														height: Math.ceil(volView.__eraserCoeff*volView.__penSize.getValue()*zoomFactor/volView.__scale[1])+1});
 				////Place the center of the eraser at mouse position
-					if((volView.__drawingCanvasParams.eraseFlag)||(volView.__mouseActionMode==4))
+					if((volView.__drawingCanvasParams.eraseFlag)&&(volView.__mouseActionMode==4))
 					{
-							var canvasLocation=volView.__imageCanvas.getContentLocation();
-							var tempX = (event.getDocumentLeft()-canvasLocation.left)/volView.__display.curCtxtZoom;
-							var tempY = (event.getDocumentTop()-canvasLocation.top)/volView.__display.curCtxtZoom;
-							volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__penSize.getValue()/(2*volView.__scale[0]))*volView.__display.curCtxtZoom),
-														marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__penSize.getValue()/(2*volView.__scale[1]))*volView.__display.curCtxtZoom)});
+						var canvasLocation=volView.__imageCanvas.getContentLocation();
+						var tempX = (event.getDocumentLeft()-canvasLocation.left)/volView.__display.curCtxtZoom;
+						var tempY = (event.getDocumentTop()-canvasLocation.top)/volView.__display.curCtxtZoom;
+						volView.__eraserCursor.set({marginLeft: Math.round((tempX-volView.__eraserCoeff*volView.__penSize.getValue()/(2*volView.__scale[0]))*volView.__display.curCtxtZoom),
+													marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__penSize.getValue()/(2*volView.__scale[1]))*volView.__display.curCtxtZoom)});
 					}
 					volView.__display.wheelScale = tempScale;
 					volView.__display.curCtxtZoom = zoomFactor;
@@ -857,9 +805,9 @@ qx.Class.define("desk.volView",
 			volView.__mouseMoveHandler = function(event)
             {
 				volView.__getPosition(event,true);
+                //~ if((volView.__mouseData.mouseMiddleDownFlag)&&(volView.__mouseActionMode!=4))
                 if(volView.__mouseData.mouseMiddleDownFlag)
                 {
-					drawingCanvas.set({cursor:"move"});
 					volView.__moveCanvas();
 				}
 				else
@@ -868,6 +816,7 @@ qx.Class.define("desk.volView",
 				switch (volView.__mouseActionMode)
 				{
 					case 4 :
+						volView.__eraserCursor.capture();
 						if(volView.__eraserCursor.getVisibility()=="excluded")
 							volView.__eraserCursor.show();
 						////Set eraser cursor position
@@ -882,36 +831,19 @@ qx.Class.define("desk.volView",
 							volView.__eraseFnct(true);
 						}
 						volView.__eraserButton.setValue(true);
-						if(volView.__eraserCursor != null)
-								volView.__eraserCursor.resetCursor();
 						break;
 					case 3 :
+						volView.__drawingCanvas.capture();
 						if(!volView.__mouseData.mouseMiddleDownFlag)
 							drawBrush(event,volView.__display.curCtxtZoom);
 						break;
 					case 1 :
 						volView.__brghtnssCntrstButton.setValue(true);
 					default:
-						if(typeof drawingCanvas != "undefined")
-								drawingCanvas.resetCursor();
-						if(volView.__drawingCanvas != null)
-								volView.__drawingCanvas.resetCursor();
-						if(volView.__imageCanvas != null)
-								volView.__imageCanvas.resetCursor();
-						if(volView.__htmlContextLabels != null)
-								volView.__htmlContextLabels.cursor = "default";
 				}
 
 				if (volView.__mouseActionActive)
 				{
-					if(typeof drawingCanvas != "undefined")
-							drawingCanvas.resetCursor();
-					if(volView.__drawingCanvas != null)
-							volView.__drawingCanvas.resetCursor();
-					if(volView.__imageCanvas != null)
-							volView.__imageCanvas.resetCursor();
-					if(volView.__htmlContextLabels != null)
-							volView.__htmlContextLabels.cursor = "default";
 					switch (volView.__mouseActionMode)
 					{
 					case 1 :
@@ -925,13 +857,11 @@ qx.Class.define("desk.volView",
 						drawZoomedCanvas(volView.__display.curCtxtZoom,false);
 						resetBrCrButton.set({opacity: 1, enabled : true});
 						volView.__brghtnssCntrstButton.setValue(true);
-						volView.__mouseData.recentX = volView.__display.onDispMouseHrzPos;
-						volView.__mouseData.recentY = volView.__display.onDispMouseVrtPos;
 						drawZoomedCanvas(volView.__display.curCtxtZoom,true);
 						break;
 					case 3 : 
 						////Draw to mouse position
-						volView.__htmlContextLabels.cursor = "default";
+						volView.__drawingCanvas.capture();
 						volView.__htmlContextLabels.lineWidth = volView.__penSize.getValue();
 						volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
 						volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
@@ -940,6 +870,7 @@ qx.Class.define("desk.volView",
 						volView.__htmlContextLabels.stroke();
 						break;
 					case 4 :
+						volView.__eraserCursor.capture();
 						volView.__eraserButton.setValue(true);
 						volView.__mouseData.mouseLeftDownFlag = true;
 						if(volView.__eraserCursor.getVisibility()=="excluded")
@@ -952,55 +883,35 @@ qx.Class.define("desk.volView",
 													marginTop: Math.round((tempY-volView.__eraserCoeff*volView.__penSize.getValue()/(2*volView.__scale[1]))*volView.__display.curCtxtZoom)});
 						////Erase at mouse position
 						volView.__eraseFnct(true);
-						if(volView.__eraserCursor != null)
-								volView.__eraserCursor.resetCursor();
 						break;
 					default:
-						if(typeof drawingCanvas != "undefined")
-								drawingCanvas.resetCursor();
-						if(volView.__drawingCanvas != null)
-								volView.__drawingCanvas.resetCursor();
-						if(volView.__imageCanvas != null)
-								volView.__imageCanvas.resetCursor();
-						if(volView.__htmlContextLabels != null)
-								volView.__htmlContextLabels.cursor = "default";
 					}
                 }
+				volView.__mouseData.recentX = volView.__display.onDispMouseHrzPos;
+				volView.__mouseData.recentY = volView.__display.onDispMouseVrtPos;
             };
 			
 			volView.__mouseUpHandler = function(event)
             {
-                    volView.__mouseData.mouseLeftDownFlag = false;
-					volView.__mouseData.mouseMiddleDownFlag = false;
-					if (!event.isLeftPressed())
-							volView.__save2undoStack(event);
-					volView.__saveDisplay();
-					volView.__mouseActionActive = false;
-					if(typeof drawingCanvas != "undefined")
-							drawingCanvas.resetCursor();
-					if(volView.__drawingCanvas != null)
-							volView.__drawingCanvas.resetCursor();
-					if(volView.__imageCanvas != null)
-							volView.__imageCanvas.resetCursor();
-					if(volView.__eraserCursor != null)
-							volView.__eraserCursor.resetCursor();
-					if(volView.__htmlContextLabels != null)
-							volView.__htmlContextLabels.cursor = "default";
+                volView.__mouseData.mouseLeftDownFlag = false;
+				volView.__mouseData.mouseMiddleDownFlag = false;
+				if (!event.isLeftPressed())
+					volView.__save2undoStack(event);
+				volView.__saveDisplay();
+				volView.__mouseActionActive = false;
+				if(volView.__eraserCursor!=null)
+					volView.__eraserCursor.releaseCapture();
             };
             
-			//~ volView.__mouseOverHandler = function(event)
-			//~ {
-					//~ if(typeof drawingCanvas != "undefined")
-							//~ drawingCanvas.resetCursor();
-					//~ if(volView.__drawingCanvas != null)
-							//~ volView.__drawingCanvas.resetCursor();
-					//~ if(volView.__imageCanvas != null)
-							//~ volView.__imageCanvas.resetCursor();
-					//~ if(volView.__eraserCursor != null)
-							//~ volView.__eraserCursor.resetCursor();
-					//~ if(volView.__htmlContextLabels != null)
-							//~ volView.__htmlContextLabels.cursor = "default";
-			//~ };
+			volView.__mouseOverHandler = function(event)
+			{
+				if((volView.__mouseData.mouseLeftDownFlag)&&(volView.__mouseActionMode==4))
+					volView.__eraseFnct(true);
+				if(this.__drawingCanvas != null)
+					this.__drawingCanvas.resetCursor();
+				if(this.__eraserCursor != null)
+					this.__eraserCursor.resetCursor();
+			};
 			
 			
 			
@@ -1014,44 +925,79 @@ qx.Class.define("desk.volView",
 			
 			this.__imageCanvas = new qx.ui.container.Composite(new qx.ui.layout.Canvas());
 			var imgCanvas = new qx.ui.embed.Canvas().set({syncDimension: true,
-														zIndex: volView.__imageZ,
-														width : Math.floor(volView.__scaledWidth),
-														height : Math.floor(volView.__scaledHeight) }); //~ Vileplume test
+															zIndex: volView.__imageZ,
+															width : Math.floor(volView.__scaledWidth),
+															height : Math.floor(volView.__scaledHeight) });
 
 			this.__imageCanvas.add(imgCanvas);
-			//~ this.__imageContainer.addAt(this.__imageCanvas, 0);
-			this.__imageContainer.addAt(this.__imageCanvas, 0, {flex:2}); //~ Vileplume test
-			this.__imageContainer.addAt(slider, 1, {flex : 1}); //~ Vileplume test
-			//~ this.__imageContainer.addAt(slider, 1);
+			this.__imageContainer.addAt(this.__imageCanvas, 0, {flex:2});
+			this.__imageContainer.addAt(slider, 1, {flex : 1});
 			
 			
 			var widthHeightRatio = this.__scaledWidth/this.__scaledHeight;
+			//~ var simpleViewWidth = this.__scaledWidth;
+			//~ var segmentationViewWidth = this.__scaledWidth;
 			this.__imageCanvas.addListener("resize", function(event)
 			{
-				this.debug("Resize !");
-				
-				this.__scaledWidth = event.getData().width;
-				//~ this.__scaledHeight = event.getData().height;
-				this.__scaledHeight = Math.round(this.__scaledWidth/widthHeightRatio);
-				
-				this.__imageContainer.setMinHeight(this.__scaledHeight); //~ Set min window
-				this.setHeight(this.__scaledHeight);
-				
-				imgCanvas.set({width : this.__scaledWidth,
-								height : this.__scaledHeight });
-				drawingCanvas.set({width : this.__scaledWidth,
-									height : this.__scaledHeight }); //~ Vileplume test
-				
-				var oldS0 = this.__scale[0];
-				var oldS1 = this.__scale[1];
-				this.__scale[0] = this.__dimensions[0]/this.__scaledWidth;
-				this.__scale[1] = this.__dimensions[1]/this.__scaledHeight;
-				
-				this.__display.hrzntlShift = this.__display.hrzntlShift*oldS0/this.__scale[0];
-				this.__display.vrtclShift = this.__display.vrtclShift*oldS1/this.__scale[1];
-				
+				var eraserTest = false;
+				if(this.__eraserButton!=null)
+					eraserTest = this.__eraserButton.getValue();
+				if(!eraserTest)
+				{
+					this.debug("Resize !");
+					//~ if(this.__mainRightContainer==null)
+						//~ this.debug("only viewer (Paint button has NOT been pressed)");
+					//~ else
+						//~ if(!this.__mainRightContainer.isVisible())
+							//~ this.debug("only viewer (Paint button HAS been pressed)");
+						//~ else
+							//~ this.debug("Paint ON");
+					
+					//~ this.debug("B: this.__scaledWidth : " + this.__scaledWidth);
+					this.__scaledWidth = event.getData().width;
+					//~ this.debug("A: this.__scaledWidth : " + this.__scaledWidth);
+					//~ this.__scaledHeight = event.getData().height;
+					this.__scaledHeight = Math.round(this.__scaledWidth/widthHeightRatio);
+					
+					this.__imageContainer.setMinHeight(this.__scaledHeight); //~ Set min window
+					this.setHeight(this.__scaledHeight);
+					
+					imgCanvas.set({width : this.__scaledWidth,
+									height : this.__scaledHeight });
+					drawingCanvas.set({width : this.__scaledWidth,
+										height : this.__scaledHeight });
+										
+					if(this.__eraserCursor!=null)
+						this.__eraserCursor.set({width: Math.ceil(this.__eraserCoeff*this.__penSize.getValue()*this.__display.curCtxtZoom/this.__scale[0]+1),
+												height: Math.ceil(this.__eraserCoeff*this.__penSize.getValue()*this.__display.curCtxtZoom/this.__scale[1]+1)});
+					
+					var oldS0 = this.__scale[0];
+					var oldS1 = this.__scale[1];
+					this.__scale[0] = this.__dimensions[0]/this.__scaledWidth;
+					this.__scale[1] = this.__dimensions[1]/this.__scaledHeight;
+					
+					this.__display.hrzntlShift = this.__display.hrzntlShift*oldS0/this.__scale[0];
+					this.__display.vrtclShift = this.__display.vrtclShift*oldS1/this.__scale[1];
+				}
 			},this);
-
+			var tempWidth = this.__scaledWidth;
+			this.addListener("beforeMaximize", function(event)
+			{
+				//~ this.debug("event.getEventPhase() : " + event.getEventPhase());
+				//~ this.debug("event.getType() : " + event.getType());
+				//~ this.debug("event.getOriginalTarget() : " + event.getOriginalTarget());
+				//~ this.debug("event.getRelatedTarget() : " + event.getRelatedTarget());
+				//~ this.debug("event.getTarget() : " + event.getTarget());
+				tempWidth = this.__scaledWidth;
+			},this);
+			this.addListener("maximize", function(event)
+			{
+				//~ this.debug("event.getEventPhase() : " + event.getEventPhase());
+				//~ this.debug("event.getType() : " + event.getType());
+				//~ this.debug("event.getOriginalTarget() : " + event.getOriginalTarget());
+				//~ this.debug("event.getRelatedTarget() : " + event.getRelatedTarget());
+				//~ this.debug("event.getTarget() : " + event.getTarget());
+			},this);
 			
 			
 			this.__imageCanvas.addListener("mouseout", function(event)
@@ -1062,54 +1008,46 @@ qx.Class.define("desk.volView",
 					volView.__htmlContextLabels.beginPath();
 					volView.__mouseData.mouseLeftDownFlag = false;
 					volView.__mouseData.mouseMiddleDownFlag = false;
-					if(typeof drawingCanvas != "undefined")
-							drawingCanvas.resetCursor();
-					if(volView.__drawingCanvas != null)
-							volView.__drawingCanvas.resetCursor();
-					if(volView.__imageCanvas != null)
-							volView.__imageCanvas.resetCursor();
-					if(volView.__eraserCursor != null)
-							volView.__eraserCursor.resetCursor();
-					if(volView.__htmlContextLabels != null)
-							volView.__htmlContextLabels.cursor = "default";
-					//~ if(volView.__eraserCursor != null)			//this should be here, but when enabled, the eraser cursor blinks
-							//~ volView.__eraserCursor.exclude();
 //				}
 			},this);
 
 			this.__imageCanvas.addListener("mouseover", function(event)
 			{
-					if((volView.__mouseData.mouseLeftDownFlag)||(volView.__mouseActionActive==4))
-							volView.__eraseFnct(true);
-					if(typeof drawingCanvas != "undefined")
-							drawingCanvas.resetCursor();
-					if(volView.__drawingCanvas != null)
-							volView.__drawingCanvas.resetCursor();
-					if(volView.__imageCanvas != null)
-							volView.__imageCanvas.resetCursor();
-					if(volView.__eraserCursor != null)
-							volView.__eraserCursor.resetCursor();
-					if(volView.__htmlContextLabels != null)
-							volView.__htmlContextLabels.cursor = "default";
+				if((volView.__mouseData.mouseLeftDownFlag)&&(volView.__mouseActionMode==4))
+					volView.__eraseFnct(true);
+				if(this.__drawingCanvas != null)
+					this.__drawingCanvas.resetCursor();
+				if(this.__eraserCursor != null)
+					this.__eraserCursor.resetCursor();
 			},this);
 			
-			this.__imageCanvas.addListener("click", function(event)
+			this.__imageCanvas.addListener("mousemove", function(event)
 			{
-				volView.__winMap.left = volView.getBounds().left;
-				volView.__winMap.top = volView.getBounds().top;
-				if((volView.__mouseData.mouseLeftDownFlag)||(volView.__mouseActionActive==4))
+				if(event.isLeftPressed())
+				{
+					if(volView.__eraserCursor!=null)
+						volView.__eraserCursor.capture();
+					if((volView.__mouseData.mouseLeftDownFlag)&&(volView.__mouseActionMode==4))
 						volView.__eraseFnct(true);
-				if(typeof drawingCanvas != "undefined")
-						drawingCanvas.resetCursor();
-				if(volView.__drawingCanvas != null)
-						volView.__drawingCanvas.resetCursor();
-				if(volView.__imageCanvas != null)
-						volView.__imageCanvas.resetCursor();
-				if(volView.__eraserCursor != null)
-						volView.__eraserCursor.resetCursor();
-				if(volView.__htmlContextLabels != null)
-						volView.__htmlContextLabels.cursor = "default";
-			},this);			
+				}
+			},this);
+			
+			this.__imageCanvas.addListener("mousedown", function(event)
+			{
+				if((this.__mouseData.mouseLeftDownFlag)&&(this.__mouseActionMode==4))
+					if(volView.__eraserCursor!=null)
+						this.__eraserCursor.capture();
+				if(this.__drawingCanvas != null)
+					this.__drawingCanvas.resetCursor();
+				if(this.__eraserCursor != null)
+					this.__eraserCursor.resetCursor();
+			},this);
+			
+			//~ this.__imageCanvas.addListener("click", function(event)
+			//~ {
+				//~ volView.__winMap.left = volView.getBounds().left;
+				//~ volView.__winMap.top = volView.getBounds().top;
+			//~ },this);			
 			
 			var canvasImage = new Image();
 
@@ -1118,9 +1056,9 @@ qx.Class.define("desk.volView",
 			volView.__loadSeeds=new Image();
 			
             var drawingCanvas = new qx.ui.embed.Canvas().set({syncDimension: true,
-                                                        zIndex: volView.__drawingCanvasZ,
-                                                        width : Math.floor(volView.__scaledWidth),
-														height : Math.floor(volView.__scaledHeight) });
+																zIndex: volView.__drawingCanvasZ,
+																width : Math.floor(volView.__scaledWidth),
+																height : Math.floor(volView.__scaledHeight) });
 			this.__drawingCanvas=drawingCanvas;
 			this.__imageCanvas.add(drawingCanvas);
 			
@@ -1175,17 +1113,8 @@ qx.Class.define("desk.volView",
 	
 			spinner.addListener("changeValue", function(event)
 			{
-				volView.__htmlContextLabels.cursor = "default";
 				volView.__htmlContextLabels.beginPath(); // seb : why???
 				volView.__mouseData.mouseLeftDownFlag = false;
-				if(typeof drawingCanvas != "undefined")
-						drawingCanvas.resetCursor();
-				if(volView.__drawingCanvas != null)
-						volView.__drawingCanvas.resetCursor();
-				if(volView.__eraserCursor != null)
-						volView.__eraserCursor.resetCursor();
-				if(volView.__htmlContextLabels != null)
-						volView.__htmlContextLabels.cursor = "default";
 
 				volView.__saveCurrentSeeds();
 
@@ -1200,6 +1129,14 @@ qx.Class.define("desk.volView",
 				volView.__display.depthShift = newSliceIndex;
 				volView.__updateAll();
 				volView.__saveDisplay();
+			}, this);
+			
+			spinner.addListener("mouseout", function(event)
+			{
+				if(this.__drawingCanvas != null)
+					this.__drawingCanvas.resetCursor();
+				if(this.__eraserCursor != null)
+					this.__eraserCursor.resetCursor();
 			}, this);
 			
 		//	spinner.setValue(0);//Math.round(0.5*volView.__numberOfSlices));
@@ -1229,10 +1166,8 @@ qx.Class.define("desk.volView",
 				volView.__htmlContextImage = volView.__htmlCanvasImage.getContext("2d");
 				
 				
-				
 				volView.__drawingCanvasParams.drawingContext.setTransform(volView.__display.curCtxtZoom,0,0,volView.__display.curCtxtZoom,0,0);
 				volView.__drawingCanvasParams.drawingContext.mozImageSmoothingEnabled = false;
-				volView.__htmlContextLabels.cursor = "default";
 				volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
 				volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
 				volView.__htmlContextLabels.lineWidth = volView.__drawingCanvasParams.myLineWidth*volView.__display.curCtxtZoom;
@@ -1243,20 +1178,49 @@ qx.Class.define("desk.volView",
 				volView.__htmlContextLabels.mozImageSmoothingEnabled = false;
 				
 				
-				
 				drawingCanvas.addListener("redraw", volView.__updateContext, volView);
 				drawingCanvas.addListener("mousedown", volView.__mouseDownHandler, volView);
 				drawingCanvas.addListener("mousewheel", volView.__mouseWheelHandler, volView);
 				drawingCanvas.addListener("mousemove", volView.__mouseMoveHandler, volView);
 				drawingCanvas.addListener("mouseup", volView.__mouseUpHandler, volView);
-				//~ drawingCanvas.addListener("mouseover", volView.__mouseOverHandler, volView);
-
+				drawingCanvas.addListener("mouseover", volView.__mouseOverHandler, volView);
+				
+				
 				imgCanvas.addListener("redraw", function(event)
 				{
 					volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height, 0, 0, volView.__scaledWidth, volView.__scaledHeight);
 					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height, 0, 0, volView.__scaledWidth, volView.__scaledHeight);
 		        });
 
+				imgCanvas.addListener("mousemove", function(event)
+				{
+					if(volView.__eraserCursor!=null)
+						volView.__eraserCursor.capture();
+					if((volView.__mouseData.mouseLeftDownFlag)&&(volView.__mouseActionMode==4))
+						volView.__eraseFnct(true);
+				},this);
+			
+				imgCanvas.addListener("mouseover", function(event)
+				{
+					if((volView.__mouseData.mouseLeftDownFlag)&&(volView.__mouseActionMode==4))
+						volView.__eraseFnct(true);
+					if(this.__drawingCanvas != null)
+						this.__drawingCanvas.resetCursor();
+					if(this.__eraserCursor != null)
+						this.__eraserCursor.resetCursor();
+				},this);
+			
+				imgCanvas.addListener("mousedown", function(event)
+				{
+					if((this.__mouseData.mouseLeftDownFlag)&&(this.__mouseActionMode==4))
+						if(volView.__eraserCursor!=null)
+							this.__eraserCursor.capture();
+					if(this.__drawingCanvas != null)
+						this.__drawingCanvas.resetCursor();
+					if(this.__eraserCursor != null)
+						this.__eraserCursor.resetCursor();
+				},this);
+			
 				spinner.setValue(Math.round(volView.__dimensions[2]/2));
 				volView.setReady(true);
 			}
@@ -1396,15 +1360,14 @@ qx.Class.define("desk.volView",
 					}
 					else
 					{
-							volView.__htmlContextImage.clearRect(-16, -16, volView.__scaledWidth/volView.__scale[0]+32, volView.__scaledHeight/volView.__scale[1]+32);
-							volView.__htmlContextImage.font = 'bold 21px sans-serif';
-							volView.__htmlContextImage.textBaseLine = 'bottom';
-							volView.__htmlContextImage.fillText('Image not yet loaded', (volView.__scaledWidth-volView.__scaledHeight)/2, volView.__scaledHeight/2);
-							volView.__imgCanvasParams.imgContext.clearRect(-16, -16, volView.__scaledWidth/volView.__scale[0]+32, volView.__scaledHeight/volView.__scale[1]+32);
+						volView.__htmlContextImage.clearRect(-16, -16, volView.__scaledWidth/volView.__scale[0]+32, volView.__scaledHeight/volView.__scale[1]+32);
+						volView.__htmlContextImage.font = 'bold 21px sans-serif';
+						volView.__htmlContextImage.textBaseLine = 'bottom';
+						volView.__htmlContextImage.fillText('Image not yet loaded', (volView.__scaledWidth-volView.__scaledHeight)/2, volView.__scaledHeight/2);
+						volView.__imgCanvasParams.imgContext.clearRect(-16, -16, volView.__scaledWidth/volView.__scale[0]+32, volView.__scaledHeight/volView.__scale[1]+32);
 					}
 				}
-				volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__dimensions[0]/volView.__scale[0]+32, volView.__dimensions[1]/volView.__scale[1]+32);
-				//~ volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__dimensions[0]+32, volView.__dimensions[1]+32);
+				volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, 2*volView.__scaledWidth+32, 2*volView.__scaledHeight+32);
 				volView.__drawingCanvasParams.drawingContext.drawImage(volView.__htmlCanvasLabels,
 																		sx,
 																		sy,
@@ -1443,6 +1406,8 @@ qx.Class.define("desk.volView",
                     volView.__drawingCanvasParams.drawingContext.fill();
 					volView.__drawingCanvasParams.drawingContext.setTransform(1,0,0,1,0,0);
                 }
+                else
+                	volView.__drawingCanvas.releaseCapture();
 			};
 
 		////Redraw image canvas at original scale
@@ -1678,7 +1643,8 @@ qx.Class.define("desk.volView",
 		},
 
 		////Redraw image and drawing canvas when translation
-		__moveCanvas : function() {
+		__moveCanvas : function()
+		{
 			var tempDecaleX = this.__display.hrzntlShift/this.__display.curCtxtZoom + this.__mouseData.recentX-this.__display.onDispMouseHrzPos;
 			var tempDecaleY = this.__display.vrtclShift/this.__display.curCtxtZoom + this.__mouseData.recentY-this.__display.onDispMouseVrtPos;
 			this.__display.hrzntlShift = tempDecaleX;
@@ -1690,7 +1656,8 @@ qx.Class.define("desk.volView",
 		},
 
 		////Pops out the last state in the "undo" stack and draw image on the canvas
-		__undoFnct : function(mouseEvent) {
+		__undoFnct : function(mouseEvent)
+		{
 			if(mouseEvent.isRightPressed())
 			{
 				this.__currentSeedsModified=true;
@@ -1710,9 +1677,10 @@ qx.Class.define("desk.volView",
 
 
 		////Clear labels canvas at mouse position
-		__eraseFnct : function (autoComplete) {
+		__eraseFnct : function (autoComplete)
+		{
+			this.__eraserCursor.capture();
 			this.__currentSeedsModified=true;
-			this.__htmlContextLabels.cursor = "default";
 			var tempX, tempY;
 			if(autoComplete)
 			{
@@ -1746,11 +1714,11 @@ qx.Class.define("desk.volView",
 
         ////Computes on image mouse position
 		////If(scaling) applies zoom factor for relative coordinates (on zoomed window)
-		__getPosition : function (mouseEvent,scaling) {
+		__getPosition : function (mouseEvent,scaling)
+		{
 			var canvasLocation=this.__imageCanvas.getContentLocation();
 			this.__display.onDispMouseHrzPos = (mouseEvent.getDocumentLeft()-canvasLocation.left)/this.__display.curCtxtZoom;
 			this.__display.onDispMouseVrtPos = (mouseEvent.getDocumentTop()-canvasLocation.top)/this.__display.curCtxtZoom;
-			
 			if(scaling)
 			{
 				this.__display.onDispMouseHrzPos = this.__display.hrzntlShift/this.__display.curCtxtZoom + this.__display.onDispMouseHrzPos;
@@ -1770,7 +1738,8 @@ qx.Class.define("desk.volView",
 		},
 
 		////Save current labels image (used before any modification on the canvas)
-		__save2undoStack : function (mouseEvent) {
+		__save2undoStack : function (mouseEvent)
+		{
 			if(!mouseEvent.isRightPressed())
 			{
 				var tempData = [];
@@ -1806,7 +1775,8 @@ qx.Class.define("desk.volView",
 
 
 		////Changes int coordinates into nearest  xxx,5  value to prevent some effects of antialiasing
-		__changeInto05Coordinates : function(X,Y) {
+		__changeInto05Coordinates : function(X,Y)
+		{
 			var newCoordinates = {
 				newX : 0,
 				newY : 0
@@ -1825,11 +1795,13 @@ qx.Class.define("desk.volView",
 			return newCoordinates;
 		},
 
-		__getPaintPanelVisibilitySwitch : function () {
+		__getPaintPanelVisibilitySwitch : function ()
+		{
 			var volView=this;
 			var fileBrowser=this.__fileBrowser;
 			var paintPaneVisibilitySwitch=new qx.ui.form.ToggleButton("Paint");
-			paintPaneVisibilitySwitch.addListener("changeValue", function (e) {
+			paintPaneVisibilitySwitch.addListener("changeValue", function (e)
+			{
 				if (e.getData())
 				{
 					if (this.__mainRightContainer===null)
@@ -1842,7 +1814,7 @@ qx.Class.define("desk.volView",
 					this.__mainRightContainer.setVisibility("excluded");
 					this.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList").setVisibility("excluded");
 				}
-				}, this);
+			}, this);
 			return paintPaneVisibilitySwitch;
 		},
 
@@ -1863,7 +1835,6 @@ qx.Class.define("desk.volView",
 			bRCL.setSpacing(spacing);
 			this.__bottomRightContainer= new qx.ui.container.Composite(bRCL);
 
-
 			var volView=this;
 		
 		////Create pen tool
@@ -1878,18 +1849,16 @@ qx.Class.define("desk.volView",
                 volView.__htmlContextLabels.lineWidth = event.getData()*Math.sqrt(volView.__scale[0]*volView.__scale[1]);
                 volView.__eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__penSize.getValue()*volView.__display.curCtxtZoom/volView.__scale[0]+1),
 											height: Math.ceil(volView.__eraserCoeff*volView.__penSize.getValue()*volView.__display.curCtxtZoom/volView.__scale[1]+1)});
-				if(typeof drawingCanvas != "undefined")
-						drawingCanvas.resetCursor();
-				if(volView.__drawingCanvas != null)
-						volView.__drawingCanvas.resetCursor();
-				if(volView.__imageCanvas != null)
-						volView.__imageCanvas.resetCursor();
-				if(volView.__eraserCursor != null)
-						volView.__eraserCursor.resetCursor();
-				if(volView.__htmlContextLabels != null)
-						volView.__htmlContextLabels.cursor = "default";
             });
             
+			volView.__penSize.addListener("mouseout", function(event)
+			{
+				if(this.__drawingCanvas != null)
+						this.__drawingCanvas.resetCursor();
+				if(this.__eraserCursor != null)
+						this.__eraserCursor.resetCursor();
+			}, this);
+			
 			var penLabel = new qx.ui.basic.Label("Brush : ");
 			
 			this.__topRightContainer.add(penLabel);
@@ -1905,23 +1874,18 @@ qx.Class.define("desk.volView",
 										width: Math.ceil(volView.__eraserCoeff*volView.__drawingCanvasParams.myLineWidth*volView.__display.curCtxtZoom+1),
 										height : Math.ceil(volView.__eraserCoeff*volView.__drawingCanvasParams.myLineWidth*volView.__display.curCtxtZoom+1),
 										zIndex : volView.__eraserCursorZ
-								});
+									});
 			
             volView.__eraserCursor.addListener("mousedown", function(event)
 			{
-				volView.setMouseActionMode(4);
-				if(typeof drawingCanvas != "undefined")
-						drawingCanvas.resetCursor();
-				if(volView.__drawingCanvas != null)
-						volView.__drawingCanvas.resetCursor();
-				if(volView.__imageCanvas != null)
-						volView.__imageCanvas.resetCursor();
-				if(volView.__eraserCursor != null)
-						volView.__eraserCursor.resetCursor();
-				if(volView.__htmlContextLabels != null)
-						volView.__htmlContextLabels.cursor = "default";
+				volView.__eraserCursor.capture();
+				if(this.__drawingCanvas != null)
+						this.__drawingCanvas.resetCursor();
+				if(this.__eraserCursor != null)
+						this.__eraserCursor.resetCursor();
+				volView.__mouseActionActive = true;
             ////Erase
-				if((event.isLeftPressed())||(volView.__mouseActionActive==4))
+				if((event.isLeftPressed())&&(volView.__mouseActionMode==4))
                 {
 					volView.__getPosition(event,true);
 					volView.__save2undoStack(event);
@@ -1936,7 +1900,7 @@ qx.Class.define("desk.volView",
 							volView.__eraserCursor.set({cursor: "move"});
                     volView.__mouseData.mouseMiddleDownFlag = true;
 					volView.__mouseData.recentX = volView.__display.onDispMouseHrzPos;
-					volView.__mouseData.recentY = volView.__display.onDispMouseHrzPos;
+					volView.__mouseData.recentY = volView.__display.onDispMouseVrtPos;
                  }
 			////"Undo" (draw previous canvas)
 				volView.__undoFnct(event);
@@ -1944,6 +1908,7 @@ qx.Class.define("desk.volView",
 			
             volView.__eraserCursor.addListener("mousemove", function(event)
 			{
+				volView.__eraserCursor.capture();
 				volView.__getPosition(event,false);	// No scaling so coordinates are compatible with placeEraser function
                 var tempMargin = 4/volView.__display.curCtxtZoom;
 			////Hide eraser if out of drawing zone
@@ -1959,11 +1924,13 @@ qx.Class.define("desk.volView",
 											marginTop: Math.round((volView.__display.onDispMouseVrtPos-volView.__eraserCoeff*volView.__penSize.getValue()/(2*volView.__scale[1]))*volView.__display.curCtxtZoom)});
 				volView.__display.onDispMouseHrzPos = volView.__display.hrzntlShift/volView.__display.curCtxtZoom + volView.__display.onDispMouseHrzPos;
                 volView.__display.onDispMouseVrtPos = volView.__display.vrtclShift/volView.__display.curCtxtZoom + volView.__display.onDispMouseVrtPos;
-				if((volView.__mouseData.mouseLeftDownFlag)||(volView.__mouseActionActive==4))
-						volView.__eraseFnct(true);
+				if((volView.__mouseData.mouseLeftDownFlag)&&(volView.__mouseActionMode==4))
+				{
+					volView.__eraseFnct(true);
+                }
                 if(volView.__mouseData.mouseMiddleDownFlag)
                 {
-						volView.__moveCanvas();
+					volView.__moveCanvas();
                 }
             },this);
             
@@ -1971,39 +1938,28 @@ qx.Class.define("desk.volView",
 			{
                 volView.__mouseData.mouseMiddleDownFlag = false;
                 volView.__mouseData.mouseLeftDownFlag = false;
+                volView.__mouseActionActive = false;
+                this.__eraserCursor.releaseCapture();
             },this);
 			
 			volView.__eraserCursor.addListener("mouseover", function(event)
 			{
-					if((volView.__mouseData.mouseLeftDownFlag)||(volView.__mouseActionActive==4))
-							volView.__eraseFnct(true);
-					if(typeof drawingCanvas != "undefined")
-							drawingCanvas.resetCursor();
-					if(volView.__drawingCanvas != null)
-							volView.__drawingCanvas.resetCursor();
-					if(volView.__imageCanvas != null)
-							volView.__imageCanvas.resetCursor();
-					if(volView.__eraserCursor != null)
-							volView.__eraserCursor.resetCursor();
-					if(volView.__htmlContextLabels != null)
-							volView.__htmlContextLabels.cursor = "default";
+				volView.__eraserCursor.capture();
+				if((volView.__mouseData.mouseLeftDownFlag)&&(volView.__mouseActionMode==4))
+					volView.__eraseFnct(true);
+				if(this.__drawingCanvas != null)
+					this.__drawingCanvas.resetCursor();
+				if(this.__eraserCursor != null)
+					this.__eraserCursor.resetCursor();
 			}, this);
 			
-			//~ volView.__eraserCursor.addListener("mouseout", function(event)
-			//~ {
-					//~ if((volView.__mouseData.mouseLeftDownFlag)||(volView.__mouseActionActive==4))
-							//~ volView.__eraseFnct(true);
-					//~ if(typeof drawingCanvas != "undefined")
-							//~ drawingCanvas.resetCursor();
-					//~ if(volView.__drawingCanvas != null)
-							//~ volView.__drawingCanvas.resetCursor();
-					//~ if(volView.__imageCanvas != null)
-							//~ volView.__imageCanvas.resetCursor();
-					//~ if(volView.__eraserCursor != null)
-							//~ volView.__eraserCursor.resetCursor();
-					//~ if(volView.__htmlContextLabels != null)
-							//~ volView.__htmlContextLabels.cursor = "default";
-			//~ }, this);
+			volView.__eraserCursor.addListener("mouseout", function(event)
+			{
+				if((this.__mouseData.mouseLeftDownFlag)&&(this.__mouseActionMode==4))
+					this.__eraserCursor.capture();
+				if((volView.__mouseData.mouseLeftDownFlag)&&(volView.__mouseActionMode==4))
+					volView.__eraseFnct(true);
+			}, this);
 			
 			volView.__eraserCursor.addListener("mousewheel", volView.__mouseWheelHandler, this);
 
@@ -2020,42 +1976,16 @@ qx.Class.define("desk.volView",
 			volView.__eraserButton.addListener("changeValue", function(event)
 			{
 				if (event.getData()===true)
+				{
+					volView.__eraserCursor.capture();
 					volView.setMouseActionMode(4);
+				}
 				else
 					volView.setMouseActionMode(0);
 
                 volView.__htmlContextLabels.beginPath();
-                volView.__htmlContextLabels.cursor = "default";
                 volView.__mouseData.mouseLeftDownFlag = false;
             });
-			
-			//~ volView.__eraserButton.addListener("mouseover", function(event)
-			//~ {
-					//~ if(typeof drawingCanvas != "undefined")
-							//~ drawingCanvas.resetCursor();
-					//~ if(volView.__drawingCanvas != null)
-							//~ volView.__drawingCanvas.resetCursor();
-					//~ if(volView.__imageCanvas != null)
-							//~ volView.__imageCanvas.resetCursor();
-					//~ if(volView.__eraserCursor != null)
-							//~ volView.__eraserCursor.resetCursor();
-					//~ if(volView.__htmlContextLabels != null)
-							//~ volView.__htmlContextLabels.cursor = "default";
-			//~ }, this);
-			
-			//~ volView.__eraserButton.addListener("mouseout", function(event)
-			//~ {
-					//~ if(typeof drawingCanvas != "undefined")
-							//~ drawingCanvas.resetCursor();
-					//~ if(volView.__drawingCanvas != null)
-							//~ volView.__drawingCanvas.resetCursor();
-					//~ if(volView.__imageCanvas != null)
-							//~ volView.__imageCanvas.resetCursor();
-					//~ if(volView.__eraserCursor != null)
-							//~ volView.__eraserCursor.resetCursor();
-					//~ if(volView.__htmlContextLabels != null)
-							//~ volView.__htmlContextLabels.cursor = "default";
-			//~ }, this);
 			
 			volView.__topRightContainer.add(volView.__eraserButton);
 
@@ -2077,12 +2007,6 @@ qx.Class.define("desk.volView",
             tabView.add(paintPage);
 			tabView.setVisibility("excluded");
 
-   /*         tabView.addListener("mouseup", function(event)
-			{
-                volView.__htmlContextLabels.beginPath();
-                volView.__mouseData.mouseLeftDownFlag = false;
-            },this);
-*/
 			this.__mainRightContainer.add(this.__getSessionsWidget());
 
 			this.__mainRightContainer.add(tabView);
@@ -2279,7 +2203,8 @@ qx.Class.define("desk.volView",
 			meshingAction.buildUI();
 			meshingPage.add(meshingAction);
 			
-			this.addListener("changeSessionDirectory", function (e) {
+			this.addListener("changeSessionDirectory", function (e)
+			{
 				var directory=e.getData();
 				medianFilteringAction.setOutputDirectory(directory);
 				clusteringAction.setOutputDirectory(directory);
@@ -2292,15 +2217,16 @@ qx.Class.define("desk.volView",
 					"input_volume" : volView.__file});
 				meshingAction.setActionParameters({
 					"input_volume" : volView.getSessionDirectory()+"/filtering/output.mhd"});
-				});
+			});
 
 			this.__startSegmentationButton=new qx.ui.form.Button("Start segmentation");
-			this.__startSegmentationButton.addListener("execute", function () {
+			this.__startSegmentationButton.addListener("execute", function ()
+			{
 				this.__startSegmentationButton.setEnabled(false);
 				volView.__segmentationInProgress=true;
 				volView.__saveCurrentSeeds(function() {
 					medianFilteringAction.executeAction();});
-				}, this);
+			}, this);
 			this.__bottomRightContainer.add(this.__startSegmentationButton);
 
 			var meshingButton=new qx.ui.form.Button("extract meshes");
@@ -2313,28 +2239,35 @@ qx.Class.define("desk.volView",
 			this.__bottomRightContainer.add(meshingButton);
 
 			var segmentationViewer=null;
-			medianFilteringAction.addListener("actionUpdated", function (){
+			medianFilteringAction.addListener("actionUpdated", function ()
+			{
 				this.__startSegmentationButton.setEnabled(true);
 				if (segmentationViewer===null)
 				{
+					//~ segmentationViewer=new desk.volView(
+						//~ medianFilteringAction.getOutputDirectory()+"/output.mhd",
+						//~ volView.__fileBrowser);
 					segmentationViewer=new desk.volView(
-						medianFilteringAction.getOutputDirectory()+"/output.mhd",
-						volView.__fileBrowser);
+									medianFilteringAction.getOutputDirectory()+"/output.mhd", //~ lcolor test
+									volView.__fileBrowser);
 					segmentationViewer.linkToVolumeViewer(volView);
 					segmentationViewer.getWindow().addListener("beforeClose", function (e) {
-						segmentationViewer=null;});
+							segmentationViewer=null;});
 				}
 				else
 				{
-					segmentationViewer.__updateVolume();
+					//~ segmentationViewer.__updateVolume();
+					segmentationViewer.__updateVolume(); //~ lcolor test
 				}
-				}, this);
+			}, this);
 
-			meshingAction.addListener("actionUpdated", function (){
+			meshingAction.addListener("actionUpdated", function ()
+			{
 				meshingButton.setEnabled(true);
 				this.__startSegmentationButton.setEnabled(true);
 				var meshesViewer=new desk.meshView(volView.getSessionDirectory()+"/meshes/meshes.xml",
-						volView.__fileBrowser);}, this);
+								volView.__fileBrowser);
+			}, this);
 
 			this.__resetSeedsList();
             this.__imageCanvas.add(this.__eraserCursor);
@@ -2547,11 +2480,8 @@ qx.Class.define("desk.volView",
 
 		__clearDrawingCanvas : function()
 		{
-			this.__drawingCanvasParams.drawingContext.clearRect(-16, -16, this.__dimensions[0]/this.__scale[0]+32, this.__dimensions[1]/this.__scale[1]+32);
-			this.__htmlContextLabels.clearRect(-16, -16, this.__dimensions[0]/this.__scale[0]+32, this.__dimensions[1]/this.__scale[1]+32);
-			//~ this.__drawingCanvasParams.drawingContext.clearRect(-16, -16, this.__dimensions[0]+32, this.__dimensions[1]+32);
-			//~ this.__htmlContextLabels.clearRect(-16, -16, this.__dimensions[0]+32, this.__dimensions[1]+32);
-			this.__htmlContextLabels.cursor = "default";
+			this.__drawingCanvasParams.drawingContext.clearRect(-16, -16, 2*this.__scaledWidth+32, 2*this.__scaledHeight+32);
+			this.__htmlContextLabels.clearRect(-16, -16, 2*this.__scaledWidth+32, 2*this.__scaledHeight+32);
 			this.__htmlContextLabels.beginPath();
 			this.__eraserCursor.exclude();
 		},
@@ -2596,7 +2526,7 @@ qx.Class.define("desk.volView",
 							tempVolView.__eraserCursor.set({width: Math.ceil(tempVolView.__eraserCoeff*tempVolView.__penSize.getValue()*tempVolView.__display.curCtxtZoom/tempVolView.__scale[0]+1),
 															height: Math.ceil(tempVolView.__eraserCoeff*tempVolView.__penSize.getValue()*tempVolView.__display.curCtxtZoom/tempVolView.__scale[1]+1)});
 						}
-						if((tempVolView.__drawingCanvasParams.eraseFlag)||(tempVolView.__mouseActionMode==4))
+						if((tempVolView.__drawingCanvasParams.eraseFlag)&&(tempVolView.__mouseActionMode==4))
 						{
 						////Move eraser to mouse position
 							tempVolView.__eraserCursor.set({marginLeft: Math.round((tempVolView.__display.onDispMouseHrzPos-tempVolView.__eraserCoeff*tempVolView.__penSize.getValue()/(2*tempVolView.__scale[0]))*tempVolView.__display.curCtxtZoom),
@@ -2640,13 +2570,13 @@ qx.Class.define("desk.volView",
 
 			for (var key  in this.__display)
 			{
-					if (key === 'length' || !this.__display.hasOwnProperty(key))
-					{
-							continue;
-					}
-					var paramAttribute = {value : this.__display[key] + ""};
-					xmlContent += this.__element(key, "", paramAttribute) + '\n';
-					//~ this.debug(key + " : " + this.__display[key]);
+				if (key === 'length' || !this.__display.hasOwnProperty(key))
+				{
+						continue;
+				}
+				var paramAttribute = {value : this.__display[key] + ""};
+				xmlContent += this.__element(key, "", paramAttribute) + '\n';
+				//~ this.debug(key + " : " + this.__display[key]);
 			}
 			
 			if(this.getSessionDirectory()!=null)
@@ -2696,8 +2626,7 @@ qx.Class.define("desk.volView",
 					// current slice has no seeds
 					seedsList.resetSelection();
 					this.__clearDrawingCanvas();
-					this.__htmlContextLabels.clearRect(-16, -16, this.__dimensions[0]/this.__scale[0]+32, this.__dimensions[1]/this.__scale[1]+32);
-					//~ this.__htmlContextLabels.clearRect(-16, -16, this.__dimensions[0]+32, this.__dimensions[1]+32);
+					this.__htmlContextLabels.clearRect(-16, -16, 2*this.__scaledWidth+32, 2*this.__scaledHeight+32);
 				}
 			}
 			
