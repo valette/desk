@@ -65,6 +65,19 @@
 <parameter prefix="-f " name="diffusion_factor" type="float"/>
 </action>
 
+<action name="extract_tubes" executable="/home/visu/src/vtkSurfaceBuild/bin/TVCIO">
+<description>classify volume voxels into plates and rods</description>
+<parameter name="input_volume" type="file" required="true"/>
+<parameter prefix="-l " name="object_gray_level" type="int" min="0" max="100000000" default="255"/>
+<parameter prefix="-cl " name="initial_cluster_size" type="int" min="0" max="100000000" default="100"/>
+<parameter prefix="-c " name="chunks_dimension" type="int" min="0" max="100000000" default="100"/>
+<parameter prefix="-cm " name="chunks_margin" type="int" min="0" max="100000000" default="30"/>
+<parameter prefix="-n " name="max_number_of_clustering_steps" type="int" min="0" max="100000000" default="10"/>
+<parameter prefix="-nt " name="number_of_threads" type="int" min="-1" max="100000000" default="-1"/>
+<parameter prefix="-cn " name="clusters_percentage" type="float" min="0.0001"/>
+<anchor text="-cs 50 -gfn 1 -n 1"/>
+</action>
+
 <action name="cvtseg2" executable="/home/visu/src/vtkSurfaceBuild/bin/cvtseg2">
 <description>compute an image-based clustering of the input volume</description>
 <parameter name="input_volume" type="file" required="true"/>
