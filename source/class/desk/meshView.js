@@ -576,9 +576,23 @@ qx.Class.define("desk.meshView",
 			var colorSelector=new qx.ui.control.ColorSelector()
 			bottomBox.add(colorSelector);//, {flex:1});
 
-			var wireframeCheckBox=new qx.ui.form.CheckBox("wireframe      ");
+			var wireframeCheckBox=new qx.ui.form.CheckBox("wireframe");
 			topBox.add(wireframeCheckBox);
+			topBox.add(new qx.ui.core.Spacer(10, 20),{flex:1});
 
+			var cullingSpinner= new qx.ui.form.Spinner();
+			cullingSpinner.setMinimum(0);
+			cullingSpinner.setMaximum(2);
+			cullingSpinner.setValue(meshViewer.getScene().viewInfo.performanceState.getStateParam('CullMode').value)
+			cullingSpinner.addListener('changeValue',function (e){
+				meshViewer.getScene().viewInfo.performanceState.getStateParam('CullMode').value = 
+					cullingSpinner.getValue();
+				meshViewer.getScene().render();
+					});
+			topBox.add(cullingSpinner);
+			topBox.add(new qx.ui.basic.Label("backface culling"));
+			topBox.add(new qx.ui.core.Spacer(10, 20),{flex:1});
+			
 			if (parentWindow)
 			{
 				var alwaysOnTopCheckBox=new qx.ui.form.CheckBox("this window always on top");
@@ -603,12 +617,13 @@ qx.Class.define("desk.meshView",
 				enableUpdate=false;
 				var firstSelectedShape=meshViewer.__shapesArray[shapesTree.getSelectedNodes()[0].nodeId];
 				var color=firstSelectedShape.getColor();
-				colorSelector.setRed(ratio*color[0]);
-				colorSelector.setGreen(ratio*color[1]);
-				colorSelector.setBlue(ratio*color[2]);
-				colorSelector.setPreviousColor(ratio*color[0],ratio*color[1],ratio*color[2]);
+				colorSelector.setRed(Math.round(ratio*color[0]));
+				colorSelector.setGreen(Math.round(ratio*color[1]));
+				colorSelector.setBlue(Math.round(ratio*color[2]));
+				colorSelector.setPreviousColor(Math.round(ratio*color[0]),
+						Math.round(ratio*color[1]),Math.round(ratio*color[2]));
 				wireframeCheckBox.setValue(firstSelectedShape.isRepresentationWireframe());
-				slider.setValue(color[3]*ratio);
+				slider.setValue(Math.round(color[3]*ratio));
 				enableUpdate=true;
 			}
 			
