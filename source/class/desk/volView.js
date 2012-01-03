@@ -94,7 +94,7 @@ qx.Class.define("desk.volView",
 
 		this.setLayout(new qx.ui.layout.Canvas());
 
-		if (fileBrowser!==null)
+		if (fileBrowser!=null)
 		{
 			this.__setVolume(file, fileBrowser);
 			this.__updateVolume(true);
@@ -315,7 +315,7 @@ qx.Class.define("desk.volView",
 
 		__updateVolume : function(buildUI)
 		{
-			if (buildUI===true)
+			if (buildUI==true)
 			{
 				var label = new qx.ui.basic.Label("Computing slices, wait...").set({
 					font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
@@ -346,11 +346,11 @@ qx.Class.define("desk.volView",
 					if(this.readyState == 4 && this.status == 200)
 					{
 						// so far so good
-						if(this.responseXML!==null)
+						if(this.responseXML!=null)
 						{
 							var response = this.responseXML;
 							var volume=response.getElementsByTagName("volume")[0];
-							if (volume===null)
+							if (volume==null)
 								return;
 
 							volView.__imgMap.width = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("x"),10);
@@ -360,7 +360,7 @@ qx.Class.define("desk.volView",
 							volView.__slicesNamePrefix = response.getElementsByTagName("slicesprefix")[0].firstChild.nodeValue;
 							volView.__timestamp = response.getElementsByTagName("slicesprefix")[0].getAttribute("volView.__timestamp");
 
-							if (volView.__timestamp===null)
+							if (volView.__timestamp==null)
 								volView.__timestamp = (new Date()).getTime();
 
 							var XMLextent=volume.getElementsByTagName("extent")[0];
@@ -427,7 +427,7 @@ qx.Class.define("desk.volView",
 			
 			this.__loadImage.onload = function()
 			{
-				if(volView.__drawingCanvasParams.drawingContext!==null)
+				if(volView.__drawingCanvasParams.drawingContext!=null)
 					volView.__drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
 			};
 
@@ -452,7 +452,7 @@ qx.Class.define("desk.volView",
 				this.__loadSeeds=new Image();
 
 			this.__loadSeeds.onload = function (){
-				if(volView.__drawingCanvasParams.drawingContext!==null)
+				if(volView.__drawingCanvasParams.drawingContext!=null)
 				{
 					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
 					volView.__htmlContextLabels.clearRect(-16, -16, volView.__imgMap.width+32, volView.__imgMap.height+32);
@@ -474,7 +474,7 @@ qx.Class.define("desk.volView",
 	//			this.__colorsList.resetSelection();
 			}
 
-			if ((mode!=4)&&(this.__eraserCursor!==null))
+			if ((mode!=4)&&(this.__eraserCursor!=null))
 				this.__eraserCursor.exclude();
 			this.__mouseActionMode = mode;
 		},
@@ -516,7 +516,7 @@ qx.Class.define("desk.volView",
 
 			this.__brghtnssCntrstButton.addListener("click", function(event)
 			{
-				if (this.__brghtnssCntrstButton.getValue()===true)
+				if (this.__brghtnssCntrstButton.getValue()==true)
 					this.setMouseActionMode(1);
 				else
 					this.setMouseActionMode(0);
@@ -609,7 +609,7 @@ qx.Class.define("desk.volView",
                                                         0, Math.PI*2, false);
                         volView.__htmlContextLabels.closePath();
                         volView.__htmlContextLabels.fill();
-						if (volView.__segmentationInProgress===false)
+						if (volView.__segmentationInProgress==false)
 							volView.__startSegmentationButton.setEnabled(true);
 
                         volView.__currentSeedsModified=true;
@@ -707,7 +707,7 @@ qx.Class.define("desk.volView",
 					{
 						drawBrush(event,zoomFactor);
 					}
-					if (volView.__eraserCursor!==null)
+					if (volView.__eraserCursor!=null)
 						volView.__eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*zoomFactor)+1,
 										height: Math.ceil(volView.__eraserCoeff*volView.__htmlContextLabels.lineWidth*zoomFactor)+1});
 				////Place the center of the eraser at mouse position
@@ -821,7 +821,7 @@ qx.Class.define("desk.volView",
 					volView.__htmlContextLabels.beginPath();
 					volView.__mouseData.mouseLeftDownFlag = false;
 					volView.__mouseData.mouseMiddleDownFlag = false;
-					if (volView.__eraserCursor!==null)
+					if (volView.__eraserCursor!=null)
 						volView.__eraserCursor.set({cursor: "default"});
 					drawingCanvas.set({cursor: "default"});
 				//	volView.__eraserCursor.exclude(); this should be here, but when enabled, the eraser cursor blinks
@@ -927,10 +927,10 @@ qx.Class.define("desk.volView",
 		function waitForinit()
 		{
 			// wait for the canvas to really appear in the window otherwise things get bad
-			if ((volView.__embedObjectImage.getContentElement().getDomElement()===null)||
-				(volView.__embedObjectLabels.getContentElement().getDomElement()===null)||
-				(drawingCanvas.getContext2d()===null)||
-				(imgCanvas.getContext2d()===null))
+			if ((volView.__embedObjectImage.getContentElement().getDomElement()==null)||
+				(volView.__embedObjectLabels.getContentElement().getDomElement()==null)||
+				(drawingCanvas.getContext2d()==null)||
+				(imgCanvas.getContext2d()==null))
 				{
 //					console.log("not yet ready");
 					setTimeout(waitForinit, 100);
@@ -1417,7 +1417,7 @@ qx.Class.define("desk.volView",
 			if(!mouseEvent.isRightPressed())
 			{
 				var tempData = [];
-				if(this.__ctrlZData.length===0)
+				if(this.__ctrlZData.length==0)
 				{
 					tempData[0] = this.__htmlContextLabels.getImageData(0, 0, this.__imgMap.width, this.__imgMap.height);
 				}
@@ -1475,7 +1475,7 @@ qx.Class.define("desk.volView",
 			paintPaneVisibilitySwitch.addListener("changeValue", function (e) {
 				if (e.getData())
 				{
-					if (this.__mainRightContainer===null)
+					if (this.__mainRightContainer==null)
 						this.__buildRightContainer();
 					this.__mainRightContainer.setVisibility("visible");
 					this.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList").setVisibility("visible");
@@ -1604,7 +1604,7 @@ qx.Class.define("desk.volView",
 			
 			eraserButton.addListener("changeValue", function(event)
 			{
-				if (event.getData()===true)
+				if (event.getData()==true)
 					volView.setMouseActionMode(4);
 
             });
@@ -1735,7 +1735,7 @@ qx.Class.define("desk.volView",
 				 if(this.readyState == 4 && this.status == 200)
 				 {
 					// so far so good
-					if(this.responseXML!==null)
+					if(this.responseXML!=null)
 					{
 						var response = this.responseXML;
 						nbLabels = response.getElementsByTagName("color").length;
@@ -1872,7 +1872,7 @@ qx.Class.define("desk.volView",
 			var segmentationViewer=null;
 			medianFilteringAction.addListener("actionUpdated", function (){
 				this.__startSegmentationButton.setEnabled(true);
-				if (segmentationViewer===null)
+				if (segmentationViewer==null)
 				{
 					segmentationViewer=new desk.volView(
 						medianFilteringAction.getOutputDirectory()+"/output.mhd",
@@ -1902,7 +1902,7 @@ qx.Class.define("desk.volView",
 		{
 			var oldSliceIndex= this.__drawingCanvasParams.sliceNumber;
 			
-			if (this.__currentSeedsModified!==false)
+			if (this.__currentSeedsModified!=false)
 			{
 				var sliceData = this.__htmlContextImage.getImageData(0, 0, this.__imgMap.width, this.__imgMap.height);
 				var pixels = sliceData.data;
@@ -1953,7 +1953,7 @@ qx.Class.define("desk.volView",
 					var numberOfRemainingRequests=2;
 					var success=function (e) {
 						numberOfRemainingRequests--;
-						if ((numberOfRemainingRequests===0)&&(callback!==null))
+						if ((numberOfRemainingRequests==0)&&(callback!=null))
 						{
                             volView.__currentSeedsModified=false;
                             if (callback!=null)
@@ -1977,7 +1977,7 @@ qx.Class.define("desk.volView",
 					var seedsTypeSelectBoxItem=this.__seedsTypeSelectBox.getSelection()[0];
 					seedsTypeSelectBoxItem.getUserData("cacheTags")[this.__drawingCanvasParams.sliceNumber]=
                                             Math.random();
-					if(seedsTypeSelectBoxItem.getUserData("seedsArray")[oldSliceIndex]===0)
+					if(seedsTypeSelectBoxItem.getUserData("seedsArray")[oldSliceIndex]==0)
 						this.__addNewSeedItemToList(oldSliceIndex);
 					this.__saveSeedsXML(success);
 				}
@@ -2110,13 +2110,13 @@ qx.Class.define("desk.volView",
 		{
 			var currentSlice=this.__drawingCanvasParams.sliceNumber;
 			
-			if (this.__seedsTypeSelectBox!==null)
+			if (this.__seedsTypeSelectBox!=null)
 			{
 				var seedsTypeListItem=this.__seedsTypeSelectBox.getSelection()[0];
 
 				var sliceItem=seedsTypeListItem.getUserData("seedsArray")[currentSlice];
 				var seedsList=seedsTypeListItem.getUserData("seedsList");
-				if(sliceItem!==0)
+				if(sliceItem!=0)
 				{
 					// the slice contains seeds
 					this.__updateSeeds();
@@ -2148,7 +2148,7 @@ qx.Class.define("desk.volView",
 				 if(this.readyState == 4 && this.status == 200)
 				 {
 					// so far so good
-					if(this.responseXML!==null)
+					if(this.responseXML!=null)
 					{
 						var response = this.responseXML;
 						var seedsTypes=volView.__seedsTypeSelectBox.getChildren();
@@ -2213,7 +2213,7 @@ qx.Class.define("desk.volView",
 
 		__addNewSeedItemToList : function (sliceId, seedsTypeListItem)
 		{
-			if (seedsTypeListItem===null)
+			if (seedsTypeListItem==null)
 				seedsTypeListItem=this.__seedsTypeSelectBox.getSelection()[0];
 
 			var seedsList=seedsTypeListItem.getUserData("seedsList");
@@ -2244,7 +2244,7 @@ qx.Class.define("desk.volView",
 			seedsList.setScrollbarY("off");
 
 			seedsList.addListener("removeItem", function(event) {
-				if (seedsList.getChildren().length===0)
+				if (seedsList.getChildren().length==0)
 					this.__startSegmentationButton.setEnabled(false);
 				}, this);
 
@@ -2257,7 +2257,7 @@ qx.Class.define("desk.volView",
 				if(event.getKeyIdentifier()=="Delete")
 				{
 					var selectedChild = seedsList.getSelection()[0];
-					if (selectedChild!==null)
+					if (selectedChild!=null)
 					{
 						var sliceId = selectedChild.getUserData("slice");
 					////Erase image on the server
@@ -2283,7 +2283,7 @@ qx.Class.define("desk.volView",
 				if(event.getKeyIdentifier()=="Delete")
 				{
 					var selectedChild = correctionsList.getSelection()[0];
-					if (selectedChild!==null)
+					if (selectedChild!=null)
 					{
 						var sliceId = selectedChild.getUserData("slice");
 					////Erase image on the server
@@ -2364,7 +2364,7 @@ qx.Class.define("desk.volView",
 						sessionsList.add(dummyItem);
 						dummyItem.setUserData("dummy",true);
 					}
-					if (sessionItemToSelect!==null)
+					if (sessionItemToSelect!=null)
 					{
 						sessionsList.setSelection([sessionItemToSelect]);
 						volView.__tabView.setVisibility("visible");
@@ -2385,7 +2385,7 @@ qx.Class.define("desk.volView",
 				if (!updateInProgress)
 				{
 					var listItem=sessionsList.getSelection()[0];
-					if (listItem.getUserData("dummy")!==true)
+					if (listItem.getUserData("dummy")!=true)
 					{
 						volView.__tabView.setVisibility("visible");
 						volView.setSessionDirectory(fileBrowser.getSessionDirectory(
