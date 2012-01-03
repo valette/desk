@@ -928,7 +928,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 
 			if (index2==connectivity[0]+1)
 			{
-				var triangle;//=[0,0,0];
+				var triangle=[0,0,0];
 				index2=0;
 				var numberOfTrianglesInCell=connectivity[0]-2;
 				var vertex1=triangle[0]=connectivity[1];
