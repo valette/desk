@@ -94,7 +94,7 @@ qx.Class.define("desk.volView",
 
 		this.setLayout(new qx.ui.layout.Canvas());
 
-		if (fileBrowser!==null)
+		if (fileBrowser!=null)
 		{
 			this.__setVolume(file, fileBrowser);
 			this.__updateVolume(true);
@@ -386,7 +386,7 @@ qx.Class.define("desk.volView",
 		{
 			var volView=this;
 			
-			if (buildUI===true)
+			if (buildUI==true)
 			{
 				var label = new qx.ui.basic.Label("Computing slices, wait...").set({
 					font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
@@ -437,11 +437,11 @@ qx.Class.define("desk.volView",
 					if(this.readyState == 4 && this.status == 200)
 					{
 						// so far so good
-						if(this.responseXML!==null)
+						if(this.responseXML!=null)
 						{
 							var response = this.responseXML;
 							var volume=response.getElementsByTagName("volume")[0];
-							if (volume===null)
+							if (volume==null)
 								return;
 
 							//~ volView.__numberOfSlices = parseInt(response.getElementsByTagName("dimensions")[0].getAttribute("z"),10);
@@ -449,7 +449,7 @@ qx.Class.define("desk.volView",
 							volView.__slicesNamePrefix = response.getElementsByTagName("slicesprefix")[0].firstChild.nodeValue;
 							volView.__timestamp = response.getElementsByTagName("slicesprefix")[0].getAttribute("volView.__timestamp");
 
-							if (volView.__timestamp===null)
+							if (volView.__timestamp==null)
 								volView.__timestamp = (new Date()).getTime();
 
 							var XMLextent=volume.getElementsByTagName("extent")[0];
@@ -648,8 +648,8 @@ qx.Class.define("desk.volView",
 			
 			this.__loadImage.onload = function()
 			{
-				if(volView.__drawingCanvasParams.drawingContext!==null)
-					volView.__drawZoomedCanvas(volView.__display.curCtxtZoom,true);
+				if(volView.__drawingCanvasParams.drawingContext!=null)
+					volView.__drawZoomedCanvas(volView.__drawingCanvasParams.curCtxtZoom,true);
 			};
 
 			var selection=this.__formatSelectBox.getSelection()[0];
@@ -684,7 +684,7 @@ qx.Class.define("desk.volView",
 				this.__loadSeeds=new Image();
 
 			this.__loadSeeds.onload = function (){
-				if(volView.__drawingCanvasParams.drawingContext!==null)
+				if(volView.__drawingCanvasParams.drawingContext!=null)
 				{
 					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, 2*volView.__scaledWidth+32, 2*volView.__scaledHeight+32);
 					volView.__htmlContextLabels.clearRect(-16, -16, 2*volView.__scaledWidth+32, 2*volView.__scaledHeight+32);
@@ -720,12 +720,8 @@ qx.Class.define("desk.volView",
 					this.__drawingCanvas.releaseCapture();
 			}
 
-			if ((mode!=4)&&(this.__eraserCursor!==null))
-			{
-					this.__eraserCursor.releaseCapture();
-					this.__eraserCursor.exclude();
-					this.__eraserButton.setValue(false);
-			}
+			if ((mode!=4)&&(this.__eraserCursor!=null))
+				this.__eraserCursor.exclude();
 			
 			if(this.__drawingCanvas != null)
 					this.__drawingCanvas.resetCursor();
@@ -1310,10 +1306,10 @@ qx.Class.define("desk.volView",
 		function waitForinit()
 		{
 			// wait for the canvas to really appear in the window otherwise things get bad
-			if ((volView.__embedObjectImage.getContentElement().getDomElement()===null)||
-				(volView.__embedObjectLabels.getContentElement().getDomElement()===null)||
-				(drawingCanvas.getContext2d()===null)||
-				(imgCanvas.getContext2d()===null))
+			if ((volView.__embedObjectImage.getContentElement().getDomElement()==null)||
+				(volView.__embedObjectLabels.getContentElement().getDomElement()==null)||
+				(drawingCanvas.getContext2d()==null)||
+				(imgCanvas.getContext2d()==null))
 				{
 //					console.log("not yet ready");
 					setTimeout(waitForinit, 100);
@@ -1932,7 +1928,7 @@ qx.Class.define("desk.volView",
 			if(!mouseEvent.isRightPressed())
 			{
 				var tempData = [];
-				if(this.__ctrlZData.length===0)
+				if(this.__ctrlZData.length==0)
 				{
 					tempData[0] = this.__htmlContextLabels.getImageData(0, 0,  this.__dimensions[0],  this.__dimensions[1]);
 				}
@@ -1993,7 +1989,7 @@ qx.Class.define("desk.volView",
 			{
 				if (e.getData())
 				{
-					if (this.__mainRightContainer===null)
+					if (this.__mainRightContainer==null)
 						this.__buildRightContainer();
 					this.__mainRightContainer.setVisibility("visible");
 					this.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList").setVisibility("visible");
@@ -2164,7 +2160,7 @@ qx.Class.define("desk.volView",
 			
 			volView.__eraserButton.addListener("changeValue", function(event)
 			{
-				if (event.getData()===true)
+				if (event.getData()==true)
 				{
 					volView.__eraserCursor.capture();
 					volView.setMouseActionMode(4);
@@ -2291,7 +2287,7 @@ qx.Class.define("desk.volView",
 				 if(this.readyState == 4 && this.status == 200)
 				 {
 					// so far so good
-					if(this.responseXML!==null)
+					if(this.responseXML!=null)
 					{
 						var response = this.responseXML;
 						nbLabels = response.getElementsByTagName("color").length;
@@ -2431,7 +2427,7 @@ qx.Class.define("desk.volView",
 			medianFilteringAction.addListener("actionUpdated", function ()
 			{
 				this.__startSegmentationButton.setEnabled(true);
-				if (segmentationViewer===null)
+				if (segmentationViewer==null)
 				{
 					//~ segmentationViewer=new desk.volView(
 						//~ medianFilteringAction.getOutputDirectory()+"/output.mhd",
@@ -2468,7 +2464,7 @@ qx.Class.define("desk.volView",
 		{
 			var oldSliceIndex = this.__display.depthShift;
 			
-			if (this.__currentSeedsModified!==false)
+			if (this.__currentSeedsModified!=false)
 			{
 				var sliceData = this.__htmlContextImage.getImageData(0, 0, this.__dimensions[0], this.__dimensions[1]);
 				var pixels = sliceData.data;
@@ -2519,7 +2515,7 @@ qx.Class.define("desk.volView",
 					var numberOfRemainingRequests=2;
 					var success=function (e) {
 						numberOfRemainingRequests--;
-						if ((numberOfRemainingRequests===0)&&(callback!==null))
+						if ((numberOfRemainingRequests==0)&&(callback!=null))
 						{
                             volView.__currentSeedsModified=false;
                             if (callback != null)
@@ -2543,7 +2539,7 @@ qx.Class.define("desk.volView",
 					var seedsTypeSelectBoxItem=this.__seedsTypeSelectBox.getSelection()[0];
 					seedsTypeSelectBoxItem.getUserData("cacheTags")[this.__display.depthShift]=
                                             Math.random();
-					if(seedsTypeSelectBoxItem.getUserData("seedsArray")[oldSliceIndex]===0)
+					if(seedsTypeSelectBoxItem.getUserData("seedsArray")[oldSliceIndex]==0)
 						this.__addNewSeedItemToList(oldSliceIndex);
 					this.__saveSeedsXML(success);
 					
@@ -2789,13 +2785,13 @@ qx.Class.define("desk.volView",
 		{
 			var currentSlice=this.__display.depthShift;
 			
-			if (this.__seedsTypeSelectBox!==null)
+			if (this.__seedsTypeSelectBox!=null)
 			{
 				var seedsTypeListItem=this.__seedsTypeSelectBox.getSelection()[0];
 
 				var sliceItem=seedsTypeListItem.getUserData("seedsArray")[currentSlice];
 				var seedsList=seedsTypeListItem.getUserData("seedsList");
-				if(sliceItem!==0)
+				if(sliceItem!=0)
 				{
 					// the slice contains seeds
 					this.__updateSeeds();
@@ -2829,7 +2825,7 @@ qx.Class.define("desk.volView",
 				 if(this.readyState == 4 && this.status == 200)
 				 {
 					// so far so good
-					if(this.responseXML!==null)
+					if(this.responseXML!=null)
 					{
 						var response = this.responseXML;
 						var seedsTypes=volView.__seedsTypeSelectBox.getChildren();
@@ -2927,7 +2923,7 @@ qx.Class.define("desk.volView",
 			seedsList.setScrollbarY("off");
 
 			seedsList.addListener("removeItem", function(event) {
-				if (seedsList.getChildren().length===0)
+				if (seedsList.getChildren().length==0)
 					this.__startSegmentationButton.setEnabled(false);
 				}, this);
 
@@ -2940,7 +2936,7 @@ qx.Class.define("desk.volView",
 				if(event.getKeyIdentifier()=="Delete")
 				{
 					var selectedChild = seedsList.getSelection()[0];
-					if (selectedChild!==null)
+					if (selectedChild!=null)
 					{
 						var sliceId = selectedChild.getUserData("slice");
 					////Erase image on the server
@@ -2966,7 +2962,7 @@ qx.Class.define("desk.volView",
 				if(event.getKeyIdentifier()=="Delete")
 				{
 					var selectedChild = correctionsList.getSelection()[0];
-					if (selectedChild!==null)
+					if (selectedChild!=null)
 					{
 						var sliceId = selectedChild.getUserData("slice");
 					////Erase image on the server
@@ -3047,7 +3043,7 @@ qx.Class.define("desk.volView",
 						sessionsList.add(dummyItem);
 						dummyItem.setUserData("dummy",true);
 					}
-					if (sessionItemToSelect!==null)
+					if (sessionItemToSelect!=null)
 					{
 						volView.__saveDisplay();
 						sessionsList.setSelection([sessionItemToSelect]);
@@ -3070,7 +3066,7 @@ qx.Class.define("desk.volView",
 				{
 					volView.__saveDisplay();
 					var listItem=sessionsList.getSelection()[0];
-					if (listItem.getUserData("dummy")!==true)
+					if (listItem.getUserData("dummy")!=true)
 					{
 						volView.__tabView.setVisibility("visible");
 						volView.setSessionDirectory(fileBrowser.getSessionDirectory(

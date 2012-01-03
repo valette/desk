@@ -897,7 +897,7 @@ function createFromFile3(xmlhttp, scene, file,color) {
 			}
 		}
 
-		var connectivity=[0,0,0,0,0,0,0,0];
+		var connectivity=[];
 		var numberOfPolygons=parseInt(readNextString());
 		var numberOfpolygonElements=parseInt(readNextString());
 

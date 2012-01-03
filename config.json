@@ -37,7 +37,7 @@
   "let" :
   {
     "APPLICATION"  : "desk",
-    "QOOXDOO_PATH" : "../qooxdoo-1.5-sdk",
+    "QOOXDOO_PATH" : "../qooxdoo-1.6-sdk",
 //    "QOOXDOO_PATH" : "../qooxdoo-git",
     "QXTHEME"      : "desk.theme.Theme",
     "API_EXCLUDE"  : ["qx.test.*", "${APPLICATION}.theme.*", "${APPLICATION}.test.*", "${APPLICATION}.simulation.*"],

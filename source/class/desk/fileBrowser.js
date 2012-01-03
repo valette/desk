@@ -1,3 +1,8 @@
+/*
+#asset(desk/tris.png)
+#asset(desk/img.png)
+*/
+
 qx.Class.define("desk.fileBrowser", 
 {
 	extend : qx.ui.container.Composite,
