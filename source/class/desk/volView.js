@@ -102,6 +102,32 @@ qx.Class.define("desk.volView",
 		else
 			alert ("error : no filebrowser provided for volView");
 
+		this.addListener("mousemove", function(event)
+		{
+			if((this.__mouseActionActive==true)&&(this.__mouseActionMode==4))
+			{
+				if(this.__drawingCanvas != null)
+					this.__drawingCanvas.resetCursor();
+				
+				if(this.__eraserCursor != null)
+					this.__eraserCursor.resetCursor();
+			}
+			
+			
+			if(this.__eraserButton!=null)
+				if(this.__mouseActionMode==4)
+					this.__eraserButton.setValue(true);
+				else
+					this.__eraserButton.setValue(false);
+			
+			if(this.__brghtnssCntrstButton!=null)
+				if(this.__mouseActionMode==1)
+					this.__brghtnssCntrstButton.setValue(true);
+				else
+					this.__brghtnssCntrstButton.setValue(false);
+			
+		}, this);
+		
 		this.open();
 		
 		return (this);
@@ -130,6 +156,8 @@ qx.Class.define("desk.volView",
 
 		// the main window
 		__window : null,
+		
+		__isSegWindow : false,
 
 		__mainLeftContainer : null,
 		__topLeftContainer : null,
@@ -312,6 +340,7 @@ qx.Class.define("desk.volView",
 				volumeViewer.__spinner.bind("value", myVolumeViewer.__spinner, "value");
 				myVolumeViewer.__spinner.bind("value", volumeViewer.__spinner, "value");
 				myVolumeViewer.__copyDisplay(volumeViewer,myVolumeViewer);
+				myVolumeViewer.__saveDisplay();
 				myVolumeViewer.addListener("changeDisplay", function(event)
 				{
 					if(displayControl==false)
@@ -355,22 +384,44 @@ qx.Class.define("desk.volView",
 
 		__updateVolume : function(buildUI)
 		{
+			var volView=this;
+			
 			if (buildUI===true)
 			{
 				var label = new qx.ui.basic.Label("Computing slices, wait...").set({
 					font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
 					});
-				this.add(label);
+				volView.add(label);
 			}
 			else
-				this.setCaption("computing slices, wait...");
-
+				volView.setCaption("computing slices, wait...");
+			
 			var parameterMap={
 				"action" : "slice_volume",
-				"input_volume" : this.__file,
+				"input_volume" : volView.__file,
 				"output_directory" : "cache\/"};
-
-			var volView=this;
+				
+			//~ segColor test
+			if(volView.__formatSelectBox!=null)
+			{
+				//~ volView.debug("volView.__formatSelectBox : " + volView.__formatSelectBox);
+				//~ volView.debug("volView.__formatSelectBox.getSelection() : " + volView.__formatSelectBox.getSelection());
+				//~ volView.debug("volView.__formatSelectBox.getSelectables() : " + volView.__formatSelectBox.getSelectables());
+				var selection = volView.__formatSelectBox.getSelection();
+				var selectables = volView.__formatSelectBox.getSelectables();
+			}
+			if((volView.__isSegWindow)&&(selection==selectables[1]))
+			{
+				parameterMap.action = "slice_volume_color";
+				parameterMap.format = "0";
+			}
+			//~ orion test (change orientation param in volume_slice action : actions.xml)
+			if(false)
+			{
+				//~ parameterMap.slice_orientaion = "1"; //~ ZY X
+				parameterMap.slice_orientaion = "2"; //~ XZ Y
+			}
+			
 			function getAnswer(e)
 			{
 				var req = e.getTarget();
@@ -402,23 +453,94 @@ qx.Class.define("desk.volView",
 								volView.__timestamp = (new Date()).getTime();
 
 							var XMLextent=volume.getElementsByTagName("extent")[0];
-							volView.__extent=new Array(parseInt(XMLextent.getAttribute("x1"),10),
+							//~ volView.__extent=new Array(parseInt(XMLextent.getAttribute("x1"),10),
+														//~ parseInt(XMLextent.getAttribute("x2"),10),
+														//~ parseInt(XMLextent.getAttribute("y1"),10),
+														//~ parseInt(XMLextent.getAttribute("y2"),10),
+														//~ parseInt(XMLextent.getAttribute("z1"),10),
+														//~ parseInt(XMLextent.getAttribute("z2"),10));
+							var tempExtent=new Array(parseInt(XMLextent.getAttribute("x1"),10),
 														parseInt(XMLextent.getAttribute("x2"),10),
 														parseInt(XMLextent.getAttribute("y1"),10),
 														parseInt(XMLextent.getAttribute("y2"),10),
 														parseInt(XMLextent.getAttribute("z1"),10),
 														parseInt(XMLextent.getAttribute("z2"),10));
-							
+					//~ orion test (change orientation param in volume_slice action : actions.xml)
+					if(false)
+					{
+						//~ volView.__extent=new Array(tempExtent[4],
+													//~ tempExtent[5],
+													//~ tempExtent[2],
+													//~ tempExtent[3],
+													//~ tempExtent[0],
+													//~ tempExtent[1]); //~ ZY X
+						volView.__extent=new Array(tempExtent[0],
+													tempExtent[1],
+													tempExtent[4],
+													tempExtent[5],
+													tempExtent[1],
+													tempExtent[2]); //~ XZ Y
+					}
+					else
+					{
+						volView.__extent=new Array(tempExtent[0],
+													tempExtent[1],
+													tempExtent[2],
+													tempExtent[3],
+													tempExtent[4],
+													tempExtent[5]); //~ XY Z
+					}
+						
+							//~ var XMLdimensions=volume.getElementsByTagName("dimensions")[0];
+							//~ volView.__dimensions=new Array(parseInt(XMLdimensions.getAttribute("x"),10),
+															//~ parseInt(XMLdimensions.getAttribute("y"),10),
+															//~ parseInt(XMLdimensions.getAttribute("z"),10));
 							var XMLdimensions=volume.getElementsByTagName("dimensions")[0];
-							volView.__dimensions=new Array(parseInt(XMLdimensions.getAttribute("x"),10),
+							var tempDimensions=new Array(parseInt(XMLdimensions.getAttribute("x"),10),
 															parseInt(XMLdimensions.getAttribute("y"),10),
 															parseInt(XMLdimensions.getAttribute("z"),10));
-
+					//~ orion test (change orientation param in volume_slice action : actions.xml)
+					if(false)
+					{
+						//~ volView.__dimensions=new Array(tempDimensions[2],
+														//~ tempDimensions[1],
+														//~ tempDimensions[0]); //~ ZY X
+						volView.__dimensions=new Array(tempDimensions[0],
+														tempDimensions[2],
+														tempDimensions[1]); //~ XZ Y
+					}
+					else
+					{
+						volView.__dimensions=new Array(tempDimensions[0],
+														tempDimensions[1],
+														tempDimensions[2]); //~ XY Z
+					}
+							
+							//~ var XMLspacing=volume.getElementsByTagName("spacing")[0];
+							//~ volView.__spacing=new Array(parseFloat(XMLspacing.getAttribute("x")),
+														//~ parseFloat(XMLspacing.getAttribute("y")),
+														//~ parseFloat(XMLspacing.getAttribute("z")));
 							var XMLspacing=volume.getElementsByTagName("spacing")[0];
-							volView.__spacing=new Array(parseFloat(XMLspacing.getAttribute("x")),
+							var tempSpacing=new Array(parseFloat(XMLspacing.getAttribute("x")),
 														parseFloat(XMLspacing.getAttribute("y")),
 														parseFloat(XMLspacing.getAttribute("z")));
-														
+					//~ orion test (change orientation param in volume_slice action : actions.xml)
+					if(false)
+					{
+						//~ volView.__spacing=new Array(tempSpacing[2],
+													//~ tempSpacing[1],
+													//~ tempSpacing[0]); //~ ZY X
+						volView.__spacing=new Array(tempSpacing[0],
+													tempSpacing[2],
+													tempSpacing[1]); //~ XZ Y
+					}
+					else
+					{
+						volView.__spacing=new Array(tempSpacing[0],
+													tempSpacing[1],
+													tempSpacing[2]); //~ XY Z
+					}
+							
 							//~  Faire test sur l'orientation pour choisir le bon spacing[i]							
 							volView.debug("volView.__spacing[0] : " + volView.__spacing[0]);
 							volView.debug("volView.__spacing[1] : " + volView.__spacing[1]);
@@ -447,10 +569,30 @@ qx.Class.define("desk.volView",
 							volView.debug("volView.__dimensions[1]/volView.__scale[1] : " + volView.__dimensions[1]/volView.__scale[1]);
 							volView.debug("volView.__dimensions[0]*volView.__scale[0] : " + volView.__dimensions[0]*volView.__scale[0]);
 							volView.debug("volView.__dimensions[1]*volView.__scale[1] : " + volView.__dimensions[1]*volView.__scale[1]);
+							//~ var XMLorigin=volume.getElementsByTagName("origin")[0];
+							//~ volView.__origin=new Array(parseFloat(XMLorigin.getAttribute("x")),
+														//~ parseFloat(XMLorigin.getAttribute("y")),
+														//~ parseFloat(XMLorigin.getAttribute("z")));
 							var XMLorigin=volume.getElementsByTagName("origin")[0];
-							volView.__origin=new Array(parseFloat(XMLorigin.getAttribute("x")),
+							var tempOrigin=new Array(parseFloat(XMLorigin.getAttribute("x")),
 														parseFloat(XMLorigin.getAttribute("y")),
 														parseFloat(XMLorigin.getAttribute("z")));
+					//~ orion test (change orientation param in volume_slice action : actions.xml)
+					if(false)
+					{
+						//~ volView.__origin=new Array(tempOrigin[2],
+													//~ tempOrigin[1],
+													//~ tempOrigin[0]); //~ ZY X
+						volView.__origin=new Array(tempOrigin[0],
+													tempOrigin[2],
+													tempOrigin[1]); //~ XZ Y
+					}
+					else
+					{
+						volView.__origin=new Array(tempOrigin[0],
+													tempOrigin[1],
+													tempOrigin[2]); //~ XY Z
+					}
 
 							var XMLscalars=volume.getElementsByTagName("scalars")[0];
 							volView.__scalarType=parseInt(XMLscalars.getAttribute("type"),10);
@@ -484,6 +626,19 @@ qx.Class.define("desk.volView",
 			}
 
 			volView.__fileBrowser.getActions().launchAction(parameterMap, getAnswer);
+			
+			if(volView.__formatSelectBox!=null)
+			if(volView.__isSegWindow)
+			{
+				volView.__formatSelectBox.setSelection([selectables[1]]);
+				volView.__formatSelectBox.close();
+			}
+			else
+			{
+				volView.__formatSelectBox.setSelection([selectables[0]]);
+				volView.__formatSelectBox.close();
+			}
+			
 		},
 
 
@@ -501,6 +656,16 @@ qx.Class.define("desk.volView",
 			this.__loadImage.src=selection.getUserData("path") + "/sliceXY" + 
 				(this.__slicesNameOffset+slice) + 
 				"." + selection.getLabel() + "?nocache=" + this.__timestamp;
+			//~ orion test (change orientation param in volume_slice action : actions.xml)
+			if(false)
+			{
+				//~ this.__loadImage.src=selection.getUserData("path") + "/sliceZY" +
+					//~ (this.__slicesNameOffset+slice) + 
+					//~ "." + selection.getLabel() + "?nocache=" + this.__timestamp; //~ ZY X
+				this.__loadImage.src=selection.getUserData("path") + "/sliceXZ" +
+					(this.__slicesNameOffset+slice) + 
+					"." + selection.getLabel() + "?nocache=" + this.__timestamp; //~ XZ Y
+			}
 		},
 
 		__updateSeeds : function () {
@@ -625,9 +790,18 @@ qx.Class.define("desk.volView",
                 resetBrCrButton.set({opacity: 0.5, enabled : false});
                 volView.__brghtnssCntrstButton.setValue(false);
             });
-	
-
+            
+            
+            
+			var useLblsColorsCheckBox = new qx.ui.form.CheckBox("Use Label Colors");
+			useLblsColorsCheckBox.addListener("changeValue", function(event) //~ segColor test
+			{
+				volView.__isSegWindow = event.getData();
+				volView.__updateVolume();
+			},this);
 			
+            
+            
 		////Create slider
             var slider = new qx.ui.form.Slider();
             slider.setWidth(30);
@@ -648,11 +822,12 @@ qx.Class.define("desk.volView",
 			volView.__topLeftContainer.add(spinner);
 			volView.__topLeftContainer.add(volView.__brghtnssCntrstButton);
 			volView.__topLeftContainer.add(resetBrCrButton);
-
+			//~ volView.__topLeftContainer.add(useLblsColorsCheckBox); //~ segColor test
+			
 			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});
 			volView.__formatSelectBox=volView.__getFormatSelectBox();
 			volView.__topLeftContainer.add(volView.__formatSelectBox);
-			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});			
+			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});
 			volView.__topLeftContainer.add(volView.__getDragAndDropLabel());	
 			volView.__topLeftContainer.add(volView.__getPaintPanelVisibilitySwitch());
 			
@@ -680,7 +855,6 @@ qx.Class.define("desk.volView",
                     {
 						case 4:
 							volView.__eraserCursor.capture();
-							volView.__eraserButton.setValue(true);
 							if(volView.__eraserCursor.getVisibility()=="excluded")
 								volView.__eraserCursor.show();
 							break;
@@ -705,9 +879,6 @@ qx.Class.define("desk.volView",
 
 							volView.__currentSeedsModified=true;
 							break;
-						case 1:
-							volView.__brghtnssCntrstButton.setValue(true);
-							break;
 						default :
                     }
                     volView.__htmlContextLabels.beginPath();
@@ -727,7 +898,7 @@ qx.Class.define("desk.volView",
 			////Update image
 				if(!((volView.__mouseData.brCrFixingFlag)&&(volView.__mouseData.mouseLeftDownFlag)))
 				{
-					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, 2*volView.__scaledWidth+32, 2*volView.__scaledHeight+32);
+					//~ volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, 2*volView.__scaledWidth+32, 2*volView.__scaledHeight+32);
 					drawZoomedCanvas(volView.__display.curCtxtZoom,false);
 				}
 			////Draw cursor
@@ -751,7 +922,7 @@ qx.Class.define("desk.volView",
 			////Apply zoom
 				if((1<=zoomFactor)&&(zoomFactor<=volView.__MaxZoom))	////Only zoom no shrinking and not more than Max zoom
 				{
-					//~ volView.debug(" zoom = x" + zoomFactor);
+					volView.debug(" zoom = x" + zoomFactor);
 					var location=volView.__imageCanvas.getContentLocation();
 					volView.__display.onDispMouseHrzPos = event.getDocumentLeft()-location.left;
 					volView.__display.onDispMouseVrtPos = event.getDocumentTop()-location.top;
@@ -767,7 +938,6 @@ qx.Class.define("desk.volView",
 					//~ var newCoor = volView.__changeInto05Coordinates(volView.__display.hrzntlShift,volView.__display.vrtclShift);
 					//~ volView.__display.hrzntlShift = newCoor.newX;
 					//~ volView.__display.vrtclShift = newCoor.newY;
-					drawZoomedCanvas(zoomFactor,true);
 					if (volView.__eraserCursor!==null)
 							volView.__eraserCursor.set({width: Math.ceil(volView.__eraserCoeff*volView.__penSize.getValue()*zoomFactor/volView.__scale[0])+1,
 														height: Math.ceil(volView.__eraserCoeff*volView.__penSize.getValue()*zoomFactor/volView.__scale[1])+1});
@@ -799,7 +969,6 @@ qx.Class.define("desk.volView",
 				}
 			////Alert all viewers that zoom has changed
 				volView.fireEvent("changeDisplay");
-				volView.__saveDisplay();
             };
 			
 			volView.__mouseMoveHandler = function(event)
@@ -810,8 +979,6 @@ qx.Class.define("desk.volView",
                 {
 					volView.__moveCanvas();
 				}
-				else
-					drawZoomedCanvas(volView.__display.curCtxtZoom,true);
 					
 				switch (volView.__mouseActionMode)
 				{
@@ -830,15 +997,13 @@ qx.Class.define("desk.volView",
 							////Erase at mouse position
 							volView.__eraseFnct(true);
 						}
-						volView.__eraserButton.setValue(true);
 						break;
 					case 3 :
+						drawZoomedCanvas(volView.__display.curCtxtZoom,false);
 						volView.__drawingCanvas.capture();
 						if(!volView.__mouseData.mouseMiddleDownFlag)
 							drawBrush(event,volView.__display.curCtxtZoom);
 						break;
-					case 1 :
-						volView.__brghtnssCntrstButton.setValue(true);
 					default:
 				}
 
@@ -854,11 +1019,11 @@ qx.Class.define("desk.volView",
 							volView.__imgCanvasParams.brightness = tempBrightness;
 						if((0<tempContrast+1)&&(tempContrast<20))
 							volView.__imgCanvasParams.contrast = tempContrast;
-						drawZoomedCanvas(volView.__display.curCtxtZoom,false);
 						resetBrCrButton.set({opacity: 1, enabled : true});
-						volView.__brghtnssCntrstButton.setValue(true);
 						drawZoomedCanvas(volView.__display.curCtxtZoom,true);
-						break;
+						volView.__mouseData.recentX = volView.__display.onDispMouseHrzPos;
+						volView.__mouseData.recentY = volView.__display.onDispMouseVrtPos;
+ 						break;
 					case 3 : 
 						////Draw to mouse position
 						volView.__drawingCanvas.capture();
@@ -871,7 +1036,6 @@ qx.Class.define("desk.volView",
 						break;
 					case 4 :
 						volView.__eraserCursor.capture();
-						volView.__eraserButton.setValue(true);
 						volView.__mouseData.mouseLeftDownFlag = true;
 						if(volView.__eraserCursor.getVisibility()=="excluded")
 							volView.__eraserCursor.show();
@@ -887,9 +1051,7 @@ qx.Class.define("desk.volView",
 					default:
 					}
                 }
-				volView.__mouseData.recentX = volView.__display.onDispMouseHrzPos;
-				volView.__mouseData.recentY = volView.__display.onDispMouseVrtPos;
-            };
+           };
 			
 			volView.__mouseUpHandler = function(event)
             {
@@ -897,7 +1059,6 @@ qx.Class.define("desk.volView",
 				volView.__mouseData.mouseMiddleDownFlag = false;
 				if (!event.isLeftPressed())
 					volView.__save2undoStack(event);
-				volView.__saveDisplay();
 				volView.__mouseActionActive = false;
 				if(volView.__eraserCursor!=null)
 					volView.__eraserCursor.releaseCapture();
@@ -979,6 +1140,8 @@ qx.Class.define("desk.volView",
 					this.__display.hrzntlShift = this.__display.hrzntlShift*oldS0/this.__scale[0];
 					this.__display.vrtclShift = this.__display.vrtclShift*oldS1/this.__scale[1];
 				}
+				//~ this.debug("1024 : __saveDisplay !");
+				//~ this.__saveDisplay();
 			},this);
 			var tempWidth = this.__scaledWidth;
 			this.addListener("beforeMaximize", function(event)
@@ -989,6 +1152,7 @@ qx.Class.define("desk.volView",
 				//~ this.debug("event.getRelatedTarget() : " + event.getRelatedTarget());
 				//~ this.debug("event.getTarget() : " + event.getTarget());
 				tempWidth = this.__scaledWidth;
+				//~ this.__saveDisplay();
 			},this);
 			this.addListener("maximize", function(event)
 			{
@@ -997,6 +1161,7 @@ qx.Class.define("desk.volView",
 				//~ this.debug("event.getOriginalTarget() : " + event.getOriginalTarget());
 				//~ this.debug("event.getRelatedTarget() : " + event.getRelatedTarget());
 				//~ this.debug("event.getTarget() : " + event.getTarget());
+				//~ this.__saveDisplay();
 			},this);
 			
 			
@@ -1128,7 +1293,6 @@ qx.Class.define("desk.volView",
 
 				volView.__display.depthShift = newSliceIndex;
 				volView.__updateAll();
-				volView.__saveDisplay();
 			}, this);
 			
 			spinner.addListener("mouseout", function(event)
@@ -1188,8 +1352,8 @@ qx.Class.define("desk.volView",
 				
 				imgCanvas.addListener("redraw", function(event)
 				{
-					volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height, 0, 0, volView.__scaledWidth, volView.__scaledHeight);
-					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height, 0, 0, volView.__scaledWidth, volView.__scaledHeight);
+					volView.__htmlContextImage.drawImage(canvasImage, 0, 0);
+					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0);
 		        });
 
 				imgCanvas.addListener("mousemove", function(event)
@@ -1341,7 +1505,7 @@ qx.Class.define("desk.volView",
 				{
 					if(canvasImage.complete)
 					{
-						volView.__htmlContextImage.drawImage(canvasImage, 0, 0, canvasImage.width, canvasImage.height);
+						volView.__htmlContextImage.drawImage(canvasImage, 0, 0);
 						var outImg = processBrCr(volView.__imgCanvasParams.brightness, volView.__imgCanvasParams.contrast, true);
 						volView.__htmlContextImage.putImageData(outImg, 0, 0);
 						var tempFill = volView.__imgCanvasParams.imgContext.fillStyle;
@@ -1417,9 +1581,9 @@ qx.Class.define("desk.volView",
 				volView.__htmlContextImage.drawImage(canvasImage, 0, 0);
 				var outImg = processBrCr(volView.__imgCanvasParams.brightness, volView.__imgCanvasParams.contrast, true);
 				volView.__htmlContextImage.putImageData(outImg, 0, 0, canvasImage.width, canvasImage.height, 0, 0, volView.__scaledWidth, volView.__scaledHeight);
-				volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0, canvasImage.width, canvasImage.height, 0, 0, volView.__scaledWidth, volView.__scaledHeight);
+				volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0);
 				volView.__drawingCanvasParams.drawingContext.setTransform(1,0,0,1,0,0);
-				volView.__drawingCanvasParams.drawingContext.drawImage(volView.__htmlCanvasLabels,0,0,volView.__scaledWidth,volView.__scaledHeight);
+				volView.__drawingCanvasParams.drawingContext.drawImage(volView.__htmlCanvasLabels, 0, 0);
 				volView.__display.hrzntlShift = 0;
 				volView.__display.vrtclShift = 0;
 				volView.__display.wheelScale = 0;
@@ -1443,7 +1607,7 @@ qx.Class.define("desk.volView",
                 var dataDesc=null;
                 if (typeof volView.__htmlContextImage.getImageData == "function")
                 {
-                    dataDesc = volView.__htmlContextImage.getImageData(0, 0, canvasImage.width, canvasImage.height);
+                    dataDesc = volView.__htmlContextImage.getImageData(0, 0, volView.__dimensions[0], volView.__dimensions[1]);
                     var data = dataDesc.data;
                     var p = canvasImage.width * canvasImage.height;
                     var pix = p*4, pix1, pix2;
@@ -1473,6 +1637,24 @@ qx.Class.define("desk.volView",
 	                var min=volView.__scalarMin;
 	                var shift=-min;
 	                var scale=255/(max-min);
+	        if(this.__isSegWindow) //~ segColor test
+	        {
+                pix=0;
+                while (p--){
+                    c= data[pix];
+                    c=c* mul + add;
+                    if (c>255)
+						c=255;
+                    else if (c<0)
+                        c=0;
+						data[pix++]=c;
+                        data[pix++]=c;
+                        data[pix++]=c;
+						data[pix++]=255;
+                }
+			}
+	        else
+	        {
 					if (volView.__formatSelectBox.getSelection()[0].getLabel()=="png")
 					{
 						switch (volView.__scalarSize)
@@ -1633,13 +1815,20 @@ qx.Class.define("desk.volView",
                             data[pix++]=255;
                         }
 					}
+            }
                     dataDesc.data = data;
                     volView.__pixels=data;
                     volView.__imageData=dataDesc;
 					volView.fireEvent("changeSlice");
+					return dataDesc;
                 }
-                return dataDesc;
+                else
+                {
+					var virginImage = new Image();
+					return virginImage;
+				}
             };
+            
 		},
 
 		////Redraw image and drawing canvas when translation
@@ -2248,16 +2437,17 @@ qx.Class.define("desk.volView",
 						//~ medianFilteringAction.getOutputDirectory()+"/output.mhd",
 						//~ volView.__fileBrowser);
 					segmentationViewer=new desk.volView(
-									medianFilteringAction.getOutputDirectory()+"/output.mhd", //~ lcolor test
+									medianFilteringAction.getOutputDirectory()+"/output.mhd",
 									volView.__fileBrowser);
 					segmentationViewer.linkToVolumeViewer(volView);
+					segmentationViewer.__isSegWindow = true; //~ segColor test
 					segmentationViewer.getWindow().addListener("beforeClose", function (e) {
 							segmentationViewer=null;});
 				}
 				else
 				{
-					//~ segmentationViewer.__updateVolume();
-					segmentationViewer.__updateVolume(); //~ lcolor test
+					segmentationViewer.__isSegWindow = true; //~ segColor test
+					segmentationViewer.__updateVolume();
 				}
 			}, this);
 
@@ -2491,7 +2681,6 @@ qx.Class.define("desk.volView",
 		__copyDisplay : function (sourceVolViewer,targetVolViewer)
 		{
 			targetVolViewer.__display = Object.create(sourceVolViewer.__display);
-			targetVolViewer.__saveDisplay();
 			targetVolViewer.__display.hrzntlShift = targetVolViewer.__display.hrzntlShift*sourceVolViewer.__scale[0]/targetVolViewer.__scale[0];
 			targetVolViewer.__display.vrtclShift = targetVolViewer.__display.vrtclShift*sourceVolViewer.__scale[1]/targetVolViewer.__scale[1];
 			targetVolViewer.__drawZoomedCanvas(targetVolViewer.__display.curCtxtZoom,true);
@@ -2499,7 +2688,7 @@ qx.Class.define("desk.volView",
 		},
 		
 		__loadDisplay : function ()
-		{	
+		{
 			var loadDispRequest = new XMLHttpRequest();
 			var tempVolView = this ;
 			
@@ -2533,7 +2722,7 @@ qx.Class.define("desk.volView",
 														marginTop: Math.round((tempVolView.__display.onDispMouseVrtPos-tempVolView.__eraserCoeff*tempVolView.__penSize.getValue()/(2*tempVolView.__scale[1]))*tempVolView.__display.curCtxtZoom)});
 						}
 						tempVolView.__spinner.setValue(tempVolView.__display.depthShift);
-						tempVolView.__drawZoomedCanvas(tempVolView.__display.curCtxtZoom,false);
+						tempVolView.__drawZoomedCanvas(tempVolView.__display.curCtxtZoom,true);
 						tempVolView.fireEvent("changeDisplay");
 					}
 					else
@@ -2560,7 +2749,6 @@ qx.Class.define("desk.volView",
 				loadDispRequest.open("GET", this.__fileBrowser.getFileURL(volDirectory + "/savedDisplay.xml?nocache="+Math.random()), false);
 				//~ loadDispRequest.send(null);
 			}
-			
 		},
 		
 		////Write xml with display parameters
@@ -2576,31 +2764,23 @@ qx.Class.define("desk.volView",
 				}
 				var paramAttribute = {value : this.__display[key] + ""};
 				xmlContent += this.__element(key, "", paramAttribute) + '\n';
-				//~ this.debug(key + " : " + this.__display[key]);
+				this.debug(key + " : " + this.__display[key]);
 			}
 			
+			var parameterMap = {
+					"action" : "save_xml_file",
+					"file_name" : "savedDisplay.xml",
+					"xmlData" : this.__element('display', xmlContent)
+				};
 			if(this.getSessionDirectory()!=null)
 			{
-				var parameterMap = {
-						"action" : "save_xml_file",
-						"file_name" : "savedDisplay.xml",
-						"xmlData" : this.__element('display', xmlContent),
-						"output_directory" : this.getSessionDirectory()
-					};
-				this.__fileBrowser.getActions().launchAction(parameterMap, callback);
+				parameterMap.output_directory = this.getSessionDirectory();
 			}
 			else
 			{
-				var volDirectory = this.__file.substring(0,this.__file.lastIndexOf('/'));
-				var parameterMap = {
-						"action" : "save_xml_file",
-						"file_name" : "savedDisplay.xml",
-						"xmlData" : this.__element('display', xmlContent),
-						"output_directory" : volDirectory
-					};
-				//~ this.__fileBrowser.getActions().launchAction(parameterMap, callback);
+				parameterMap.output_directory = this.__file.substring(0,this.__file.lastIndexOf('/'));
 			}
-			
+			this.__fileBrowser.getActions().launchAction(parameterMap, callback);
 		},
 		
 		
@@ -2869,6 +3049,7 @@ qx.Class.define("desk.volView",
 					}
 					if (sessionItemToSelect!==null)
 					{
+						volView.__saveDisplay();
 						sessionsList.setSelection([sessionItemToSelect]);
 						volView.__tabView.setVisibility("visible");
 						volView.setSessionDirectory(fileBrowser.getSessionDirectory(
@@ -2887,6 +3068,7 @@ qx.Class.define("desk.volView",
 			sessionsList.addListener("changeSelection", function(e){
 				if (!updateInProgress)
 				{
+					volView.__saveDisplay();
 					var listItem=sessionsList.getSelection()[0];
 					if (listItem.getUserData("dummy")!==true)
 					{
@@ -2918,19 +3100,31 @@ qx.Class.define("desk.volView",
 			selectBox.add(JPGFormat);
 			var PNGFormat = new qx.ui.form.ListItem("png");
 			selectBox.add(PNGFormat);
-
+			
 			selectBox.addListener('changeSelection', function (e){
 			//console.log("change...");
 				var path=selectBox.getSelection()[0].getUserData("path");
 				switch(path)
 				{
 				case null :
-					//we need to compute png slices : launch action
+					//~ //we need to compute png slices : launch action
 					var parameterMap={
 						"action" : "slice_volume",
 						"input_volume" : this.__file,
 						"output_directory" : "cache\/",
 						"format" : "0"};
+					//~ segColor test
+					if(this.__isSegWindow)
+					{
+						parameterMap.action = "slice_volume_color";
+						parameterMap.format = "0";
+					}
+					//~ orion test (change orientation param in volume_slice action : actions.xml)
+					if(false)
+					{
+						//~ parameterMap.slice_orientaion = "1"; //~ ZY X
+						parameterMap.slice_orientaion = "2"; //~ XZ Y
+					}
 					var slicingLabel=new qx.ui.basic.Label("computing...");
 					this.__topLeftContainer.addAfter(slicingLabel,selectBox);
 					function getAnswer(e)
@@ -3000,6 +3194,7 @@ qx.Class.define("desk.volView",
 
 			// add listener on close window event to remove bindings
 			this.__window.addListener("beforeClose", function (e){
+				this.__saveDisplay();
 				var bindings=this.__spinner.getBindings();
 				// according to the documentation, getBindings returns : An array of binding informations. 
 				//Every binding information is an array itself containing 
@@ -3017,7 +3212,7 @@ qx.Class.define("desk.volView",
 					for (var j=0;j<targetBindings.length;j++)
 					{
 						var targetBinding=targetBindings[j];
-						if (this.__spinner==targetBinding[3])
+						if(this.__spinner==targetBinding[3])
 						{
 							targetObject.removeBinding(targetBinding[0]);
 							break;
@@ -3025,7 +3220,7 @@ qx.Class.define("desk.volView",
 					}
 				}
 				this.__spinner.removeAllBindings();
-				},this);
+			},this);
 				
 			return dragLabel;
 		},
@@ -3051,6 +3246,12 @@ qx.Class.define("desk.volView",
 				seedsTypeSelectBoxItem=this.__seedsTypeSelectBox.getSelection()[0];
 			var filePrefix=seedsTypeSelectBoxItem.getUserData("filePrefix");
 			return filePrefix +"XY"+(this.__slicesNameOffset + sliceId) +".png";
+			//~ orion test (change orientation param in volume_slice action : actions.xml)
+			if(false)
+			{
+				//~ return filePrefix +"ZY"+(this.__slicesNameOffset + sliceId) +".png"; //~ ZY X
+				return filePrefix +"XZ"+(this.__slicesNameOffset + sliceId) +".png"; //~ XZ Y
+			}
 		},
 
 		getCornersCoordinates : function () {

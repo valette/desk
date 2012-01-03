@@ -364,6 +364,28 @@ qx.Class.define("desk.fileBrowser",
 				else
 					alert("Cannot download a directory!");});
 
+			myBrowser.addAction("dicom2meta",function (node) {
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+				{
+					alert("Cannot convert a DICOM file alone");
+				} 
+				else
+				{
+					function getAnswer(e)
+					{
+						var req = e.getTarget();
+						var response=req.getResponseText().split("\n")[0];
+						//~ alert(response);
+					}
+					//~ alert(myBrowser.getNodeFile(node));
+					var parameterMap={
+						"action" : "dicom2meta",
+						"sourceDirectory" : myBrowser.getNodeFile(node),
+						"outputDirectory" : myBrowser.getNodeFile(node)};
+					myBrowser.getActions().launchAction(parameterMap, getAnswer, this);
+				}
+			});
+			
 			myBrowser.addAction("view/edit text", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 					var volView=new desk.textEditor(node, myBrowser);});

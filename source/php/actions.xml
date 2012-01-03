@@ -49,6 +49,27 @@
 <description>Slice a volume image into 2D images</description>
 <parameter name="input_volume" type="file" required="true"/>
 <parameter prefix="-f " name="format" type="int" min="0" max="1"/>
+<!--
+ ZY X
+-->
+<!--
+<anchor text=" -orientation 1 "/>
+-->
+<!--
+ XZ Y 
+-->
+<!--
+<anchor text=" -orientation 2 "/>
+-->
+<parameter prefix="-orientation " name="slice_orientation" type="int" min="0" max="2"/>
+</action>
+
+<action name="slice_volume_color" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeSlice">
+<description>Slice a volume image into 2D images using label colors</description>
+<parameter name="input_volume" type="file" required="true"/>
+<parameter prefix="-f " name="format" type="int" min="0" max="1"/>
+<anchor text=" -mhdcolors "/>
+<parameter prefix="-orientation " name="slice_orientation" type="int" min="0" max="2"/>
 </action>
 
 <action name="volume_median_filtering" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeMedian">
@@ -87,6 +108,46 @@
 <parameter prefix="-cf " name="clustering" type="file" required="true"/>
 <parameter prefix="-t " name="unary_binary_weight" type="float" required="true" min="0" max="1" default="0.2"/>
 <anchor text="-op seg"/>
+</action>
+
+<!--
+<action name="cvtgcmultiseg" executable="/home/visu/src/gc2/gc/cvtgcmultisegH">
+<description>(multi-objects) segments a volume using graph cuts and clustering techniques</description>
+<parameter prefix="-i " name="input_volume" type="file" required="true"/>
+<parameter prefix="-x " name="seeds" type="file" required="true"/>
+<parameter prefix="-cf " name="clustering" type="file" required="true"/>
+<parameter prefix="-t " name="unary_binary_weight" type="float" required="true" min="0" max="1" default="0.2"/>
+<anchor text="-op seg"/>
+-->
+<!--
+ ZY X
+-->
+<!--
+<anchor text=" -orientation 1 "/>
+-->
+<!--
+ XZ Y 
+-->
+<!--
+<anchor text=" -orientation 2 "/>
+-->
+<!--
+<parameter prefix="-orientation " name="slice_orientation" type="int" min="0" max="2" required="false"/>
+</action>
+-->
+
+<action name="dicom2meta" executable="/home/visu/src/bin_mcverter/mcverter">
+<description>creates  .mdh + .raw  files from DICOM files (each series in a separate folder)</description>
+<parameter name="sourceDirectory" type="directory" required="true"/>
+<anchor text=" -o "/>
+<parameter name="outputDirectory" type="directory" required="true"/>
+<anchor text=" -f meta -x -u -v"/>
+</action>
+
+<action name="set_permissions" executable="chmod a+rw" void="true">
+<description>Give write permissions to group</description>
+<parameter name="directory" type="directory" required="true"/>
+<anchor text="-R"/>
 </action>
 
 <action name="sleep" executable="sleep" void="true">
