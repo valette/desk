@@ -2322,7 +2322,7 @@ qx.Class.define("desk.volView",
 						alert('Global Params : "Fetched the wrong page" OR "Network error"');
 				}
 			};
-			colorsParamRequest.open("GET", "/visu/colors3.xml", true);
+			colorsParamRequest.open("GET", "/visu/colors3.xml?nocache="+Math.random(), true);
 			colorsParamRequest.send(null);
 
 			volView.__seedsTypeSelectBox=volView.__getSeedsTypeSelectBox();
