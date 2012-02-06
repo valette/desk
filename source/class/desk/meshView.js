@@ -1,9 +1,3 @@
-/*
-#ignore(o3djs.renderscene)
-#ignore(o3djs.mesh)
-#ignore(globalO3DDoNotHandleKeyEvents)
-#ignore(o3djs.webgl)
-*/
 
 qx.Class.define("desk.meshView", 
 {
@@ -145,13 +139,9 @@ qx.Class.define("desk.meshView",
 			shapes[i]=0;
 		}
 		this.__shapesArray=0;
-		this.getScene().client.cleanup();
-		this.getScene().pack.destroy(); 
 
 		this.__shapesVisibility.length=0;
 		this._disposeObjects("__embededHTML","__shapesList");
-		this.__scene.client.cleanup();
-		this.__scene=null;
 	},
 
 	members : {
@@ -164,6 +154,9 @@ qx.Class.define("desk.meshView",
 		__shapesList : null,
 		__shapesArray : null,
 		__scene : null,
+		__camera : null,
+		__renderer : null,
+		__controls : null,
 		__shapesVisibility : null,
 
 		__volumes : null,
@@ -342,12 +335,15 @@ qx.Class.define("desk.meshView",
 
 			var htmlContainer = new qx.ui.embed.Html();
 			var randomId=Math.random();
-			htmlContainer.setHtml("<div id=\"o3d"+randomId+"\"></div>");
+			htmlContainer.setHtml("<div id=\"three.js"+randomId+"\"></div>");
 
 			var scene;
 			var canvaselement;
 			var meshView=this;
 
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+			
+/*
 			function initStep2(clientElements) {
 
 				canvaselement=clientElements[0];
@@ -355,52 +351,6 @@ qx.Class.define("desk.meshView",
 				meshView.__scene=scene;
 				scene.render();
 				
-				var draggingInProgress=false;
-				htmlContainer.addListener("mousedown", function (event)	{
-					htmlContainer.capture();
-					var origin=htmlContainer.getContentLocation();
-					draggingInProgress=true;
-					scene.startDragging(event.getDocumentLeft()-origin.left,
-													event.getDocumentTop()-origin.top,
-													event.isShiftPressed(),
-													event.isCtrlPressed(),
-													event.isMiddlePressed(),
-													event.isRightPressed());});
-
-				htmlContainer.addListener("mousemove", function (event)	{
-					if (draggingInProgress)
-					{
-						var origin=htmlContainer.getContentLocation();
-						scene.drag(event.getDocumentLeft()-origin.left
-								, event.getDocumentTop()-origin.top);
-					}});
-
-				htmlContainer.addListener("mouseup", function (event)	{
-					htmlContainer.releaseCapture();
-					draggingInProgress=false;
-					scene.stopDragging();});
-
-				htmlContainer.addListener("mousewheel", function (event)	{
-					scene.mouseWheelUsed(-event.getWheelDelta());});
-
-				meshView.__sceneReady=true;
-
-				function resizeHTML(){
-					var elementSize=htmlContainer.getInnerSize();
-					var myWidth = elementSize.width;
-					var myHeight = elementSize.height;
-					scene.o3dElement.width=myWidth;
-					scene.o3dElement.height=myHeight;
-//					scene.client.gl.hack_canvas.width=myWidth;
-//					scene.client.gl.hack_canvas.height=myHeight;
-					scene.client.gl.displayInfo = {width: myWidth, height: myHeight};
-					scene.resize();
-					}
-
-				htmlContainer.addListener("resize",resizeHTML);
-
-				resizeHTML();
-				scene.resize();
 				meshView.openFile();
 
 				meshView.__window.setDroppable(true);
@@ -476,13 +426,133 @@ qx.Class.define("desk.meshView",
 				this.dispose();
 				},meshView);
 			}
-
+*/
 			htmlContainer.addListener("appear",function(e){
-				globalO3DDoNotHandleKeyEvents=true;
-				o3djs.webgl.makeClients(initStep2,null,null,null,"^o3d"+randomId);
-				});
+
+				// scene and camera
+				var elementSize=htmlContainer.getInnerSize();
+				var scene = new THREE.Scene();
+				var camera = new THREE.PerspectiveCamera( 60, elementSize.width / elementSize.height, 0.01, 1e10 );
+				var container = document.getElementById( "three.js"+randomId);
+				var controls = new THREE.TrackballControls2( camera,container );
+
+				this.__controls=controls;
+				this.__scene=scene;
+				this.__camera=camera;
+
+				scene.add( camera );
+
+
+				controls.rotateSpeed = 5.0;
+				controls.zoomSpeed = 5;
+				controls.panSpeed = 2;
+
+				controls.noZoom = false;
+				controls.noPan = false;
+
+				controls.staticMoving = true;
+				controls.dynamicDampingFactor = 0.3;
+
+				// lights
+
+				var dirLight = new THREE.DirectionalLight( 0xffffff );
+				dirLight.position.set( 200, 200, 1000 ).normalize();
+				camera.add( dirLight );
+				camera.add( dirLight.target );
+				var dirLight2 = new THREE.DirectionalLight( 0xffffff );
+				dirLight2.position.set( -200, -200, -1000 ).normalize();
+				camera.add( dirLight2 );
+				camera.add( dirLight2.target );
+
+				// renderer
+
+				var renderer = new THREE.WebGLRenderer( { antialias: false } );
+				this.__renderer=renderer;
+				renderer.setClearColorHex( 0xffffff, 1 );
+				resizeHTML();
+
+				container.appendChild( renderer.domElement );
+				controls.onUpdate=render;
+
+				var material =  new THREE.MeshLambertMaterial( { color:0xffffff} );
+
+				var loader=new THREE.VTKLoader();
+				loader.load ("tiger.vtk", function(geom){
+					geom.computeBoundingBox();
+					var mesh = new THREE.Mesh(geom, material );
+					mesh.doubleSided=true;
+
+					scene.addObject( mesh );
+					var bbox=geom.boundingBox;
+					var center=bbox.min.clone().addSelf(bbox.max).multiplyScalar(0.5);
+					var bbdiaglength=Math.sqrt(bbox.max.clone().subSelf(bbox.min).lengthSq());
+
+					var boundingBox=geom.boundingBox;
+					camera.position.copy(center);
+					camera.position.setZ(camera.position.z-bbdiaglength);
+					controls.target.copy(center);
+					render();
+					});
+
+				function render() {
+
+					controls.update();
+					renderer.render( scene, camera );
+
+				}
+
+				htmlContainer.addListener("resize",resizeHTML);
+				function resizeHTML(){
+					var elementSize=htmlContainer.getInnerSize();
+					renderer.setSize(  elementSize.width , elementSize.height );
+					camera.aspect=elementSize.width / elementSize.height;
+					camera.updateProjectionMatrix();
+					controls.setSize( elementSize.width , elementSize.height );
+					render();
+					}
+
+				var draggingInProgress=false;
+				htmlContainer.addListener("mousedown", function (event)	{
+					htmlContainer.capture();
+					var origin=htmlContainer.getContentLocation();
+					draggingInProgress=true;
+					var button=0;
+					if (event.isRightPressed())
+						button=1;
+					else if ((event.isMiddlePressed())||(event.isShiftPressed()))
+						button=2;
+
+					controls.mouseDown(button,
+									event.getDocumentLeft()-origin.left,
+									event.getDocumentTop()-origin.top);
+					});
+
+/*													event.isShiftPressed(),
+													event.isCtrlPressed(),
+													event.isMiddlePressed(),
+													event.isRightPressed());});
+*/
+				htmlContainer.addListener("mousemove", function (event)	{
+					if (draggingInProgress)
+					{
+						var origin=htmlContainer.getContentLocation();
+						controls.mouseMove(event.getDocumentLeft()-origin.left
+								, event.getDocumentTop()-origin.top);
+					}});
+
+				htmlContainer.addListener("mouseup", function (event)	{
+					htmlContainer.releaseCapture();
+					draggingInProgress=false;
+					controls.mouseUp();});
+			}, this);
+
 	
 			return (htmlContainer);
+		},
+
+		render : function ( ) {
+			this.__controls.update();
+			this.__renderer.render( this.__scene, this.__camera );			
 		},
 
 		snapshot : function (factor) {
