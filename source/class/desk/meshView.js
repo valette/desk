@@ -128,8 +128,6 @@ qx.Class.define("desk.meshView",
 		var shapes=this.__shapesArray;
 		for (var i=0;i<shapes.kength;i++)
 		{
-			if (shapes[i]!=null)
-				shapes[i].destroy();
 			shapes[i]=0;
 		}
 		this.__shapesArray=0;
@@ -232,6 +230,41 @@ qx.Class.define("desk.meshView",
 
 
 		viewAll : function ( ) {
+			var max=new THREE.Vector3(-1e10,-1e10,-1e10);
+			var min=new THREE.Vector3(1e10,1e10,1e10);
+			var shapes=this.__shapesArray;
+
+			for (var i=0;i<shapes.length;i++)
+			{
+				if (shapes[i]!=undefined)
+				{
+					var bbox=shapes[i].geometry.boundingBox;
+
+					var bbmin=bbox.min;
+					if (min.x>bbmin.x)
+						min.setX(bbmin.x);
+					if (min.y>bbmin.y)
+						min.setY(bbmin.y);
+					if (min.z>bbmin.z)
+						min.setZ(bbmin.z);
+
+					var bbmax=bbox.max;
+					if (max.x<bbmax.x)
+						max.setX(bbmax.x);
+					if (max.y<bbmax.y)
+						max.setY(bbmax.y);
+					if (max.z<bbmax.z)
+						max.setZ(bbmax.z);
+				}
+			}
+
+			var center=min.clone().addSelf(max).multiplyScalar(0.5);
+			var bbdiaglength=Math.sqrt(max.clone().subSelf(min).lengthSq());
+
+			var camera=this.__camera;
+			camera.position.copy(center);
+			camera.position.setZ(camera.position.z-bbdiaglength);
+			this.__controls.target.copy(center);
 			this.render();
 		},
 
