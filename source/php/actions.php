@@ -375,6 +375,45 @@ foreach ($actions->children() as $action)
 				fwrite($flog, "$logHeader : wrote XML data into $xmlFileName\n");
 				echo("\nOK");
 				break;
+			case "mesh2ctm":
+				if ($cached==false)
+				{
+					echo ("Output : \n");
+					$meshFileName=$DIR_TO_PHP.$parametersList['input_mesh'];
+					fwrite($flog, "$logHeader : converting $meshFileName to .ctm format\n");
+					$extension = strtolower(pathinfo($meshFileName, PATHINFO_EXTENSION));
+					echo("extension : $extension\n");
+					if ($extension=="vtk")
+					{
+						system("/home/visu/src/vtkSurfaceBuild/bin/vtk2ply $meshFileName | tee action.log");
+						echo("\nDone\n");
+						system("LD_LIBRARY_PATH=/home/visu/src/openCTM/tools /home/visu/src/openCTM/tools/ctmconv mesh.ply mesh.ctm| tee action.log");				
+					}
+					else
+					{
+						system("LD_LIBRARY_PATH=/home/visu/src/openCTM/tools /home/visu/src/openCTM/tools/ctmconv $meshFileName mesh.ctm | tee action.log");				
+					}
+
+					$duration=time()-$startTime;
+					$fp = fopen($parametersFileName, 'w+') or die("Could not open $parametersFileName");
+					$parametersList2=array();
+					foreach ($parametersList as $parameter => $value)
+						$parametersList2[]="$parameter=$value";
+
+					fwrite($fp, implode("\n", $parametersList2));
+					fclose($fp);
+					echo "\nOK ($duration s.)";
+				}
+				else
+				{
+					echo ("Cached output : \n");
+					readfile ("action.log");
+					clearstatcache();
+		//			$omtime=filemtime('.');
+		//			echo "\n".$omtime;
+					echo "\nCACHED";
+				}
+				break;
 			default:
 				fwrite($flog, "$logHeader : $command\n");
 

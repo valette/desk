@@ -199,5 +199,9 @@
 <parameter name="base64Data" type="base64" required="true"/>
 </action>
 
+<action name="mesh2ctm" executable="not needed">
+<description>converts a mesh to .ctm format</description>
+<parameter name="input_mesh" type="file" required="true"/>
+</action>
 
 </actions>

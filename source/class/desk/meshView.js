@@ -100,7 +100,6 @@ qx.Class.define("desk.meshView",
 		this.__shapesArray=[];
 		this.__shapesVisibility = [];
 
-
 		var menu=this.__getContextMenu();
 		this.__shapesList.setContextMenu(menu);
 
@@ -158,6 +157,8 @@ qx.Class.define("desk.meshView",
 
 		__volumes : null,
 
+		__ctmLoader : null,
+
 		SSSgetWindow : function() {
 			return this.__window;
 		},
@@ -178,10 +179,10 @@ qx.Class.define("desk.meshView",
 
 			var fileBrowser=this.__fileBrowser;
 
-			var loadMeshIntoScene=function(file, mtime)
+			var loadMeshIntoScene=function(file)
 			{
-				console.log(color[0]+" "+color[1]+" "+color[2]+" "+color[3]);
-				_this.loadVTKURL(fileBrowser.getFileURL(file), function (shape)
+				//console.log(label+" "+color[0]+" "+color[1]+" "+color[2]+" "+color[3]);
+				_this.loadCTMURL(fileBrowser.getFileURL(file)+"?nocache="+mtime, function (shape)
 					{
 						_this.__shapesArray[leaf]=shape;	
 						_this.__shapesVisibility[leaf]=true;
@@ -202,8 +203,9 @@ qx.Class.define("desk.meshView",
 			case ".ply":
 			case ".obj":
 			case ".stl":
+			case ".vtk":
 				var parameterMap={
-					"action" : "mesh2vtk",
+					"action" : "mesh2ctm",
 					"input_mesh" : file,
 					"output_directory" : "cache\/"};
 
@@ -212,14 +214,15 @@ qx.Class.define("desk.meshView",
 					var req = e.getTarget();
 					var splitResponse=req.getResponseText().split("\n");
 					var outputDir=splitResponse[0];
-					console.log(req.getResponseText());
+			//		console.log(req.getResponseText());
 					var mtime=splitResponse[splitResponse.length-3];
-					loadMeshIntoScene(outputDir+"\/"+"mesh.vtk",mtime);
+					loadMeshIntoScene(outputDir+"\/"+"mesh.ctm",mtime);
 				}
 
 				fileBrowser.getActions().launchAction(parameterMap, getAnswer);
 				break;
-			case ".vtk":
+
+			case ".ctm":
 				loadMeshIntoScene(file);
 				break;
 			default : 
@@ -244,10 +247,8 @@ qx.Class.define("desk.meshView",
 			
 			function load ()
 			{
-				console.log("ready");
-//				_this.loadVTKURL(file, mtime);
 				//open the file
-				var color=[1.0,1.0,1.0,1.0];
+
 				var extension=file.substring(file.length-4, file.length);
 				switch (extension)
 				{
@@ -255,7 +256,8 @@ qx.Class.define("desk.meshView",
 					case ".obj":
 					case ".stl":
 					case ".vtk":
-						this.__readFile (file, mtime, color, true);
+					case ".ctm":
+						this.__readFile (file, mtime, [1.0,1.0,1.0,1.0], true);
 						break;
 
 					case ".xml":
@@ -278,6 +280,7 @@ qx.Class.define("desk.meshView",
 
 						for (var n=0;n<numberOfMeshes;n++)
 						{
+							var color=[1.0,1.0,1.0,1.0];
 							var mesh=meshes[n];
 							var Label=mesh.getAttribute("Label");
 							if (mesh.hasAttribute("color"))
@@ -312,104 +315,6 @@ qx.Class.define("desk.meshView",
 				}
 
 			}
-		/*
-			if (file==null)
-			{
-				//no file is provided, maybe the iframe just finished setting up, and there is a file waiting to be loaded
-				if (this.__fileToOpen==null)
-					return;
-				else
-				{
-					var fileToTopen=this.__fileToOpen;
-					this.__fileToOpen=null;
-					var mTime=this.__fileToOpenMTime;
-					this.__fileToOpenMTime=null;
-					this.openFile(fileToTopen,mTime);
-				}
-			}
-			else
-			{
-				if (this.__sceneReady==null)
-				{
-					// the iframe is not ready : store the file name and mtime for future loading
-					if (mtime==null)
-					{
-						console.log("Warning : no file mtime was given for mesh "+file+", will set mtime as random");
-						mtime=Math.random();
-					}
-					this.__fileToOpen=file;
-					this.__fileToOpenMTime=mtime;
-				}
-				else
-				{
-					//open the file
-					var scene=this.getScene();
-					var myMeshViewer=this;
-					var extension=file.substring(file.length-4, file.length);
-					switch (extension)
-					{
-						case ".ply":
-						case ".obj":
-						case ".stl":
-						case ".vtk":
-							this.__readFile (file, mtime, null, true);
-							break;
-
-						case ".xml":
-							var xmlhttp=new XMLHttpRequest();
-							xmlhttp.open("GET",myMeshViewer.__fileBrowser.getFileURL(file)+"?nocache=" + Math.random(),false);
-							xmlhttp.send();
-							var readString=xmlhttp.responseXML;
-
-							var meshes=readString.getElementsByTagName("mesh");
-
-							var slashIndex=file.lastIndexOf("/");
-
-							var path="";
-							if (slashIndex>0)
-								path=file.substring(0,slashIndex);
-
-							var numberOfMeshes=meshes.length;
-							var scene=this.getScene();
-							var numberOfRemainingMeshes=numberOfMeshes;
-
-							for (var n=0;n<numberOfMeshes;n++)
-							{
-								var mesh=meshes[n];
-								var Label=mesh.getAttribute("Label");
-								var color=[1.0,1.0,1.0,1.0];
-								if (mesh.hasAttribute("color"))
-								{
-									var colorstring=mesh.getAttribute("color");
-									var colors=colorstring.split(" ");
-									for (var j=0;j<4;j++)
-										color[j]=parseFloat(colors[j]);
-								}
-
-								var update=function()
-								{
-									numberOfRemainingMeshes--;
-									switch (numberOfRemainingMeshes)
-									{
-										case Math.floor(numberOfMeshes/4):
-										case Math.floor(numberOfMeshes/2):
-										case Math.floor(numberOfMeshes*3/4):
-										case 0:
-											scene.viewAll();
-											myMeshViewer.__shapesList.getDataModel().setData();
-											break;
-										default:
-									}
-								}
-
-								this.__readFile(path+"/"+mesh.getAttribute("Mesh"), mtime, color, update, false);
-							}
-							break;
-						default : 
-							alert ("error : meshviewer cannot read extension "+extension);
-					}
-				}
-			}*/
 		},
 
 		createDisplayWidget : function(){
@@ -421,94 +326,83 @@ qx.Class.define("desk.meshView",
 
 			var scene;
 			var canvaselement;
-			var meshView=this;
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
-			
-/*
-			function initStep2(clientElements) {
 
-				canvaselement=clientElements[0];
-				scene=o3djs.renderscene.createRenderScene(clientElements[0]);
-				meshView.__scene=scene;
-				scene.render();
-				
-				meshView.openFile();
 
-				meshView.__window.setDroppable(true);
-				meshView.__window.addListener("drop", function(e) {
-					if (e.supportsType("fileBrowser"))
+			this.__window.setDroppable(true);
+			this.__window.addListener("drop", function(e) {
+				if (e.supportsType("fileBrowser"))
+				{
+					var fileBrowser=e.getData("fileBrowser");
+					var nodes=fileBrowser.getSelectedNodes();
+					var numberOfMeshes=nodes.length;
+					var numberOfRemainingMeshes=numberOfMeshes;
+					for (var i=0;i<nodes.length;i++)
 					{
-						var fileBrowser=e.getData("fileBrowser");
-						var nodes=fileBrowser.getSelectedNodes();
-						var scene=this.getScene();
-						var numberOfMeshes=nodes.length;
-						var numberOfRemainingMeshes=numberOfMeshes;
-						for (var i=0;i<nodes.length;i++)
-						{
-							var fileNode=nodes[i];
-							var fileName=fileBrowser.getNodeFile(fileNode);
-							var mTime=fileBrowser.getNodeMTime(fileNode);
+						var fileNode=nodes[i];
+						var fileName=fileBrowser.getNodeFile(fileNode);
+						var mTime=fileBrowser.getNodeMTime(fileNode);
 
-							var update=function()
+						var update=function()
+						{
+							numberOfRemainingMeshes--;
+							switch (numberOfRemainingMeshes)
 							{
-								numberOfRemainingMeshes--;
-								switch (numberOfRemainingMeshes)
-								{
-									case Math.floor(numberOfMeshes/4):
-									case Math.floor(numberOfMeshes/2):
-									case Math.floor(numberOfMeshes*3/4):
-									case 0:
-										scene.viewAll();
-										break;
-									default:
-								}
+								case Math.floor(numberOfMeshes/4):
+								case Math.floor(numberOfMeshes/2):
+								case Math.floor(numberOfMeshes*3/4):
+								case 0:
+									scene.viewAll();
+									break;
+								default:
 							}
-							meshView.__readFile(fileName, mTime, null, update);
 						}
+						this.__readFile(fileName, mTime, [1,1,1,1], update);
 					}
-					if (e.supportsType("volumeSlice"))
+				}
+				if (e.supportsType("volumeSlice"))
+				{
+					var volView=e.getData("volumeSlice");
+					var scene=this.getScene();
+					var dimensions=volView.getDimensions();
+					var width=dimensions[0];
+					var height=dimensions[1];
+					var square=o3djs.mesh.createSquare(scene, width, height);
+
+					function updateTexture()
 					{
-						var volView=e.getData("volumeSlice");
-						var scene=this.getScene();
-						var dimensions=volView.getDimensions();
-						var width=dimensions[0];
-						var height=dimensions[1];
-						var square=o3djs.mesh.createSquare(scene, width, height);
-
-						function updateTexture()
-						{
-							var coords=volView.getCornersCoordinates();
-							for (var i=0;i<4;i++)
-								square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);
-							square.setTextureImageData(volView.getSliceImageData());
-							scene.render();
-						}
-
-						updateTexture();
-
-						var listenerId=volView.addListener('changeSlice',function(e)
-							{
-								updateTexture();
-								scene.render();});
-
-						if (meshView.__volumes==null)
-							meshView.__volumes=[];
-						meshView.__volumes.push({
-								volumeViewer : volView,
-								listener : listenerId});
+						var coords=volView.getCornersCoordinates();
+						for (var i=0;i<4;i++)
+							square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);
+						square.setTextureImageData(volView.getSliceImageData());
 						scene.render();
 					}
-					// activate the window
-					var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
-					windowManager.bringToFront(this.__window);
-				}, meshView);
 
-			meshView.__window.addListener("close", function(e) {
+					updateTexture();
+
+					var listenerId=volView.addListener('changeSlice',function(e)
+						{
+							updateTexture();
+							scene.render();}, this);
+
+					if (this.__volumes==null)
+						this.__volumes=[];
+					this.__volumes.push({
+							volumeViewer : volView,
+							listener : listenerId});
+					scene.render();
+				}
+				// activate the window
+				var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
+				windowManager.bringToFront(this.__window);
+			}, this);
+
+			this.__window.addListener("close", function(e) {
 				this.dispose();
-				},meshView);
-			}
-*/
+				},this);
+
+
 			htmlContainer.addListener("appear",function(e){
 
 				// scene and camera
@@ -549,6 +443,7 @@ qx.Class.define("desk.meshView",
 				// renderer
 
 				var renderer = new THREE.WebGLRenderer( { antialias: false } );
+				this.__ctmLoader = new THREE.CTMLoader( renderer.context );
 				this.__renderer=renderer;
 				renderer.setClearColorHex( 0xffffff, 1 );
 				resizeHTML();
@@ -661,29 +556,59 @@ qx.Class.define("desk.meshView",
 					) ( color2 ), mtime);
 		},
 
+		loadCTMURL : function (url, callback, mtime, color) {
+			var useWorker = true
+			useBuffers = true;
+
+			var loader = this.__ctmLoader;//new THREE.CTMLoader( this.__renderer.context );
+
+			var _this=this;
+			var color2=[];
+			for (var i=0;i<4;i++)
+				color2[i]=color[i];
+
+			loader.load (url,
+				function(geom){
+						geom.computeBoundingBox();
+
+						var threecolor=new THREE.Color().setRGB(color2[0],color2[1],color2[2]);
+						var material =  new THREE.MeshLambertMaterial( {
+							 color:threecolor.getHex(),
+							 opacity: color2[3]} );
+						if (color2[3]<0.999) material.transparent=true;
+						var mesh = new THREE.Mesh(geom, material );
+						mesh.doubleSided=true;
+
+						_this.__scene.addObject( mesh );
+						var bbox=geom.boundingBox;
+						var center=bbox.min.clone().addSelf(bbox.max).multiplyScalar(0.5);
+						var bbdiaglength=Math.sqrt(bbox.max.clone().subSelf(bbox.min).lengthSq());
+
+						var boundingBox=geom.boundingBox;
+						var camera=_this.__camera;
+						camera.position.copy(center);
+						camera.position.setZ(camera.position.z-bbdiaglength);
+						_this.__controls.target.copy(center);
+						_this.render();
+
+						if(typeof callback == 'function') {
+							callback(mesh);
+							}
+					}, useWorker, useBuffers);//  mtime);
+		},
+
 		snapshot : function (factor) {
 			if (factor==null)
 				factor=1;
+
 			var elementSize=this.__embededHTML.getInnerSize();
 			var myWidth = elementSize.width*factor;
 			var myHeight = elementSize.height*factor;
 
-			scene.o3dElement.width=myWidth;
-			scene.o3dElement.height=myHeight;
-			scene.client.gl.displayInfo = {width: myWidth, height: myHeight};
-			scene.resize();
-			scene.render();
-			var strData = this.__scene.client.gl.hack_canvas.toDataURL("image/png");
+			this.render();
+			var strData = this.__renderer.domElement.toDataURL("image/png");
 			var saveData=strData.replace("image/png", "image/octet-stream");
 			document.location.href = saveData;
-
-			myWidth = elementSize.width;
-			myHeight = elementSize.height;
-			scene.o3dElement.width=myWidth;
-			scene.o3dElement.height=myHeight;
-			scene.client.gl.displayInfo = {width: myWidth, height: myHeight};
-			scene.resize();
-			scene.render();
 		},
 
 		__getSnapshotButton : function () {
@@ -803,7 +728,16 @@ qx.Class.define("desk.meshView",
 									colorSelector.getGreen()/ratio,
 									colorSelector.getBlue()/ratio);
 						shape.material.opacity=slider.getValue()/ratio;
-						shape.material.wireframe=wireframeCheckBox.getValue();
+						if (wireframeCheckBox.getValue())
+						{
+							console.log("value : ");
+							console.log(wireframeCheckBox.getValue());
+							shape.material.wireframe=true;
+						}
+						else
+						{
+							shape.material.wireframe=false;
+						}
 					}
 					_this.render();
 				}
