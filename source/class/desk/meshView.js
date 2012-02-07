@@ -155,7 +155,10 @@ qx.Class.define("desk.meshView",
 
 		__volumes : null,
 
-		__ctmLoader : null,
+		__meshesToLoad : null,
+		__numberOfLoaders : 0,
+
+		__boudingBoxDiagonalLength : 0,
 
 		SSSgetWindow : function() {
 			return this.__window;
@@ -184,6 +187,7 @@ qx.Class.define("desk.meshView",
 					{
 						_this.__shapesArray[leaf]=shape;	
 						_this.__shapesVisibility[leaf]=true;
+
 						if (update==true)
 							_this.viewAll();
 						else{
@@ -262,9 +266,32 @@ qx.Class.define("desk.meshView",
 			var bbdiaglength=Math.sqrt(max.clone().subSelf(min).lengthSq());
 
 			var camera=this.__camera;
-			camera.position.copy(center);
-			camera.position.setZ(camera.position.z-bbdiaglength);
-			this.__controls.target.copy(center);
+
+			if (this.__boudingBoxDiagonalLength==0)
+			{
+				this.__boudingBoxDiagonalLength=bbdiaglength;
+				camera.position.copy(center);
+				camera.position.setZ(camera.position.z-bbdiaglength);
+				this.__controls.target.copy(center);
+			}
+			else
+			{
+				console.log(this.__boudingBoxDiagonalLength);
+				var ratio=bbdiaglength/this.__boudingBoxDiagonalLength;
+				this.__boudingBoxDiagonalLength=bbdiaglength;
+				if (ratio>1)
+				{
+					var backPedal=camera.position.clone();
+					backPedal.subSelf(this.__controls.target);
+					backPedal.multiplyScalar(ratio);
+					console.log("target : ");
+					console.log(this.__controls.target);
+					console.log(camera.position);
+					console.log(backPedal);
+					backPedal.addSelf(this.__controls.target);
+					camera.position.copy(backPedal);
+				}
+			}
 			this.render();
 		},
 
@@ -357,7 +384,7 @@ qx.Class.define("desk.meshView",
 			var randomId=Math.random();
 			htmlContainer.setHtml("<div id=\"three.js"+randomId+"\"></div>");
 
-			var scene;
+			var _this=this;
 			var canvaselement;
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
@@ -386,7 +413,7 @@ qx.Class.define("desk.meshView",
 								case Math.floor(numberOfMeshes/2):
 								case Math.floor(numberOfMeshes*3/4):
 								case 0:
-									scene.viewAll();
+									_this.viewAll();
 									break;
 								default:
 							}
@@ -476,7 +503,7 @@ qx.Class.define("desk.meshView",
 				// renderer
 
 				var renderer = new THREE.WebGLRenderer( { antialias: false } );
-				this.__ctmLoader = new THREE.CTMLoader( renderer.context );
+
 				this.__renderer=renderer;
 				renderer.setClearColorHex( 0xffffff, 1 );
 				resizeHTML();
@@ -570,64 +597,73 @@ qx.Class.define("desk.meshView",
 						mesh.doubleSided=true;
 
 						_this.__scene.addObject( mesh );
-						var bbox=geom.boundingBox;
-						var center=bbox.min.clone().addSelf(bbox.max).multiplyScalar(0.5);
-						var bbdiaglength=Math.sqrt(bbox.max.clone().subSelf(bbox.min).lengthSq());
-
-						var boundingBox=geom.boundingBox;
-						var camera=_this.__camera;
-						camera.position.copy(center);
-						camera.position.setZ(camera.position.z-bbdiaglength);
-						_this.__controls.target.copy(center);
-						_this.render();
 
 						if(typeof callback == 'function') {
 							callback(mesh);
 							}
+						_this.viewAll();
 					}
 					}
 					) ( color2 ), mtime);
 		},
 
 		loadCTMURL : function (url, callback, mtime, color) {
-			var useWorker = true
-			useBuffers = true;
 
-			var loader = this.__ctmLoader;//new THREE.CTMLoader( this.__renderer.context );
+			var url2=url+"";
 
-			var _this=this;
 			var color2=[];
 			for (var i=0;i<4;i++)
 				color2[i]=color[i];
 
-			loader.load (url,
-				function(geom){
-						geom.computeBoundingBox();
+			if (this.__meshesToLoad==null)
+				this.__meshesToLoad=new Array();
 
-						var threecolor=new THREE.Color().setRGB(color2[0],color2[1],color2[2]);
-						var material =  new THREE.MeshLambertMaterial( {
-							 color:threecolor.getHex(),
-							 opacity: color2[3]} );
-						if (color2[3]<0.999) material.transparent=true;
-						var mesh = new THREE.Mesh(geom, material );
-						mesh.doubleSided=true;
+			var mesh={url : url2, color : color2, callback : callback};
+			this.__meshesToLoad[this.__meshesToLoad.length]=mesh;
+			this.__loadQueue();
+		},
 
-						_this.__scene.addObject( mesh );
-						var bbox=geom.boundingBox;
-						var center=bbox.min.clone().addSelf(bbox.max).multiplyScalar(0.5);
-						var bbdiaglength=Math.sqrt(bbox.max.clone().subSelf(bbox.min).lengthSq());
+		__loadQueue : function ( ) {
 
-						var boundingBox=geom.boundingBox;
-						var camera=_this.__camera;
-						camera.position.copy(center);
-						camera.position.setZ(camera.position.z-bbdiaglength);
-						_this.__controls.target.copy(center);
-						_this.render();
 
-						if(typeof callback == 'function') {
-							callback(mesh);
-							}
-					}, useWorker, useBuffers);//  mtime);
+			if (this.__meshesToLoad.length==0)
+				return;
+
+
+
+			var parameters=this.__meshesToLoad[0];
+			var _this=this;
+			var useWorker = true
+			var useBuffers = true;
+
+
+			if (this.__numberOfLoaders<30){
+				this.__meshesToLoad.shift();
+				this.__numberOfLoaders++;
+				var loader = new THREE.CTMLoader( this.__renderer.context );
+				loader.load (parameters.url,
+					function(geom){
+							geom.computeBoundingBox();
+							var color=parameters.color;
+							var threecolor=new THREE.Color().setRGB(color[0],color[1],color[2]);
+							var material =  new THREE.MeshLambertMaterial( {
+								 color:threecolor.getHex(),
+								 opacity: color[3]} );
+							if (color[3]<0.999) material.transparent=true;
+							var mesh = new THREE.Mesh(geom, material );
+							mesh.doubleSided=true;
+
+							_this.__scene.addObject( mesh );
+
+							if(typeof parameters.callback == 'function') {
+								parameters.callback(mesh);
+								}
+							_this.viewAll();
+							_this.__numberOfLoaders--;
+							_this.__loadQueue();
+						}, useWorker, useBuffers);//  mtime);
+				this.__loadQueue();
+			}
 		},
 
 		snapshot : function (factor) {
@@ -654,7 +690,8 @@ qx.Class.define("desk.meshView",
 		__getResetViewButton : function () {
 			var button=new qx.ui.form.Button("reset view");
 			button.addListener("execute", function(e) {
-				this.__scene.resetCamera();}, this);
+				this.__boudingBoxDiagonalLength=0;
+				this.viewAll();}, this);
 			return button;
 		},
 
