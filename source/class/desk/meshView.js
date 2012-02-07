@@ -60,7 +60,7 @@ qx.Class.define("desk.meshView",
 		filterField.setValue("");
 		filterField.addListener("input", function() {
 			dataModel.setData();
-			meshView.getScene().render();
+			meshView.render();
 			});
 		filterBox.add(filterField);
 		elementsList.add(filterBox);//, {flex:1});
@@ -73,18 +73,13 @@ qx.Class.define("desk.meshView",
 					if (label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1)
 					{
 						if (shape)
-						{
-							if (meshView.__shapesVisibility[node.nodeId])
-								shape.show();
-							else
-								shape.hide();
-						}
+							shape.visible=meshView.__shapesVisibility[node.nodeId];
 						return true;
 					}
 					else
 					{
 						if (shape)
-							shape.hide();
+							shape.visible=false;
 						return false;
 					}						
 				}
@@ -96,7 +91,7 @@ qx.Class.define("desk.meshView",
 		resetButton.addListener("execute",function(e){
 			filterField.setValue("");
 			dataModel.setData();
-			meshView.getScene().render();
+			meshView.render();
 			});
 		filterBox.add(resetButton);
 		dataModel.setFilter(filter);
@@ -144,13 +139,15 @@ qx.Class.define("desk.meshView",
 		this._disposeObjects("__embededHTML","__shapesList");
 	},
 
+	properties : {
+	// the "ready" property is true when the UI is ready.
+		ready : { init : false, check: "Boolean", event : "changeReady"}
+	},
+
 	members : {
 		__embededHTML : null,
 		__window : null,
 		__fileBrowser : null,
-		__fileToOpen : null,
-		__fileToOpenMTime : null,
-		__sceneReady : null,
 		__shapesList : null,
 		__shapesArray : null,
 		__scene : null,
@@ -161,7 +158,7 @@ qx.Class.define("desk.meshView",
 
 		__volumes : null,
 
-		getWindow : function() {
+		SSSgetWindow : function() {
 			return this.__window;
 		},
 
@@ -173,25 +170,29 @@ qx.Class.define("desk.meshView",
 			else
 				label=file.substring(lastSlashIndex+1, file.length);
 
-			var myMeshViewer=this;
+			var _this=this;
 			var dataModel=this.__shapesList.getDataModel();
 			var leaf=dataModel.addLeaf(null,label, null);
 			if (opt_updateDataModel!=false)
 				dataModel.setData();
 
-			var scene=myMeshViewer.getScene();
 			var fileBrowser=this.__fileBrowser;
 
-			var loadMeshIntoScene=function(file)
+			var loadMeshIntoScene=function(file, mtime)
 			{
-				scene.loadMesh(fileBrowser.getFileURL(file), function (shape)
+				console.log(color[0]+" "+color[1]+" "+color[2]+" "+color[3]);
+				_this.loadVTKURL(fileBrowser.getFileURL(file), function (shape)
 					{
-						myMeshViewer.__shapesArray[leaf]=shape;	
-						myMeshViewer.__shapesVisibility[leaf]=true;
+						_this.__shapesArray[leaf]=shape;	
+						_this.__shapesVisibility[leaf]=true;
 						if (update==true)
-							scene.viewAll();
-						else if ((update!=null)&&(update!=false))
-							update();
+							_this.viewAll();
+						else{
+							if ((update!=null)&&(update!=false))
+							{
+								update();
+							}
+						}
 					}, mtime, color);
 			}
 
@@ -226,7 +227,92 @@ qx.Class.define("desk.meshView",
 			}
 		},
 
+
+		viewAll : function ( ) {
+			this.render();
+		},
+
 		openFile : function (file, mtime) {
+			var _this=this;
+			if (this.isReady()) {
+				load();
+			}
+			else
+			{
+				this.addListenerOnce("changeReady", load);
+			}
+			
+			function load ()
+			{
+				console.log("ready");
+//				_this.loadVTKURL(file, mtime);
+				//open the file
+				var color=[1.0,1.0,1.0,1.0];
+				var extension=file.substring(file.length-4, file.length);
+				switch (extension)
+				{
+					case ".ply":
+					case ".obj":
+					case ".stl":
+					case ".vtk":
+						this.__readFile (file, mtime, color, true);
+						break;
+
+					case ".xml":
+						var xmlhttp=new XMLHttpRequest();
+						xmlhttp.open("GET",_this.__fileBrowser.getFileURL(file)+"?nocache=" + Math.random(),false);
+						xmlhttp.send();
+						var readString=xmlhttp.responseXML;
+
+						var meshes=readString.getElementsByTagName("mesh");
+
+						var slashIndex=file.lastIndexOf("/");
+
+						var path="";
+						if (slashIndex>0)
+							path=file.substring(0,slashIndex);
+
+						var numberOfMeshes=meshes.length;
+
+						var numberOfRemainingMeshes=numberOfMeshes;
+
+						for (var n=0;n<numberOfMeshes;n++)
+						{
+							var mesh=meshes[n];
+							var Label=mesh.getAttribute("Label");
+							if (mesh.hasAttribute("color"))
+							{
+								var colorstring=mesh.getAttribute("color");
+								var colors=colorstring.split(" ");
+								for (var j=0;j<4;j++)
+									color[j]=parseFloat(colors[j]);
+							}
+
+							var update=function()
+							{
+								numberOfRemainingMeshes--;
+								switch (numberOfRemainingMeshes)
+								{
+									case Math.floor(numberOfMeshes/4):
+									case Math.floor(numberOfMeshes/2):
+									case Math.floor(numberOfMeshes*3/4):
+									case 0:
+										_this.viewAll();
+										_this.__shapesList.getDataModel().setData();
+										break;
+									default:
+								}
+							}
+
+							this.__readFile(path+"/"+mesh.getAttribute("Mesh"), mtime, color, update, false);
+						}
+						break;
+					default : 
+						alert ("error : meshviewer cannot read extension "+extension);
+				}
+
+			}
+		/*
 			if (file==null)
 			{
 				//no file is provided, maybe the iframe just finished setting up, and there is a file waiting to be loaded
@@ -323,11 +409,7 @@ qx.Class.define("desk.meshView",
 							alert ("error : meshviewer cannot read extension "+extension);
 					}
 				}
-			}
-		},
-
-		getScene : function() {
-				return this.__scene;
+			}*/
 		},
 
 		createDisplayWidget : function(){
@@ -474,26 +556,6 @@ qx.Class.define("desk.meshView",
 				container.appendChild( renderer.domElement );
 				controls.onUpdate=render;
 
-				var material =  new THREE.MeshLambertMaterial( { color:0xffffff} );
-
-				var loader=new THREE.VTKLoader();
-				loader.load ("tiger.vtk", function(geom){
-					geom.computeBoundingBox();
-					var mesh = new THREE.Mesh(geom, material );
-					mesh.doubleSided=true;
-
-					scene.addObject( mesh );
-					var bbox=geom.boundingBox;
-					var center=bbox.min.clone().addSelf(bbox.max).multiplyScalar(0.5);
-					var bbdiaglength=Math.sqrt(bbox.max.clone().subSelf(bbox.min).lengthSq());
-
-					var boundingBox=geom.boundingBox;
-					camera.position.copy(center);
-					camera.position.setZ(camera.position.z-bbdiaglength);
-					controls.target.copy(center);
-					render();
-					});
-
 				function render() {
 
 					controls.update();
@@ -544,6 +606,8 @@ qx.Class.define("desk.meshView",
 					htmlContainer.releaseCapture();
 					draggingInProgress=false;
 					controls.mouseUp();});
+
+				this.setReady(true);
 			}, this);
 
 	
@@ -555,13 +619,55 @@ qx.Class.define("desk.meshView",
 			this.__renderer.render( this.__scene, this.__camera );			
 		},
 
+
+		loadVTKURL : function (url, callback, mtime, color) {
+
+			var loader=new THREE.VTKLoader();
+			var _this=this;
+			var color2=[];
+			for (var i=0;i<4;i++)
+				color2[i]=color[i];
+
+			loader.load (url,					
+				(function(mycolor) {
+					return function(geom){
+						geom.computeBoundingBox();
+
+						var threecolor=new THREE.Color().setRGB(mycolor[0],mycolor[1],mycolor[2]);
+						var material =  new THREE.MeshLambertMaterial( {
+							 color:threecolor.getHex(),
+							 opacity: mycolor[3]} );
+						if (mycolor[3]<0.999) material.transparent=true;
+						var mesh = new THREE.Mesh(geom, material );
+						mesh.doubleSided=true;
+
+						_this.__scene.addObject( mesh );
+						var bbox=geom.boundingBox;
+						var center=bbox.min.clone().addSelf(bbox.max).multiplyScalar(0.5);
+						var bbdiaglength=Math.sqrt(bbox.max.clone().subSelf(bbox.min).lengthSq());
+
+						var boundingBox=geom.boundingBox;
+						var camera=_this.__camera;
+						camera.position.copy(center);
+						camera.position.setZ(camera.position.z-bbdiaglength);
+						_this.__controls.target.copy(center);
+						_this.render();
+
+						if(typeof callback == 'function') {
+							callback(mesh);
+							}
+					}
+					}
+					) ( color2 ), mtime);
+		},
+
 		snapshot : function (factor) {
 			if (factor==null)
 				factor=1;
 			var elementSize=this.__embededHTML.getInnerSize();
 			var myWidth = elementSize.width*factor;
 			var myHeight = elementSize.height*factor;
-			var scene=this.getScene();
+
 			scene.o3dElement.width=myWidth;
 			scene.o3dElement.height=myHeight;
 			scene.client.gl.displayInfo = {width: myWidth, height: myHeight};
@@ -630,7 +736,7 @@ qx.Class.define("desk.meshView",
 		},
 
 		__getPropertyWidget : function (parentWindow){
-			var meshViewer=this;
+			var _this=this;
 			var shapesTree=this.__shapesList;
 			
 			var mainContainer = new qx.ui.container.Composite;
@@ -648,19 +754,6 @@ qx.Class.define("desk.meshView",
 
 			var wireframeCheckBox=new qx.ui.form.CheckBox("wireframe");
 			topBox.add(wireframeCheckBox);
-			topBox.add(new qx.ui.core.Spacer(10, 20),{flex:1});
-
-			var cullingSpinner= new qx.ui.form.Spinner();
-			cullingSpinner.setMinimum(0);
-			cullingSpinner.setMaximum(2);
-			cullingSpinner.setValue(meshViewer.getScene().viewInfo.performanceState.getStateParam('CullMode').value)
-			cullingSpinner.addListener('changeValue',function (e){
-				meshViewer.getScene().viewInfo.performanceState.getStateParam('CullMode').value = 
-					cullingSpinner.getValue();
-				meshViewer.getScene().render();
-					});
-			topBox.add(cullingSpinner);
-			topBox.add(new qx.ui.basic.Label("backface culling"));
 			topBox.add(new qx.ui.core.Spacer(10, 20),{flex:1});
 			
 			if (parentWindow)
@@ -685,15 +778,15 @@ qx.Class.define("desk.meshView",
 			var updateWidgets=function (event)
 			{
 				enableUpdate=false;
-				var firstSelectedShape=meshViewer.__shapesArray[shapesTree.getSelectedNodes()[0].nodeId];
-				var color=firstSelectedShape.getColor();
-				colorSelector.setRed(Math.round(ratio*color[0]));
-				colorSelector.setGreen(Math.round(ratio*color[1]));
-				colorSelector.setBlue(Math.round(ratio*color[2]));
-				colorSelector.setPreviousColor(Math.round(ratio*color[0]),
-						Math.round(ratio*color[1]),Math.round(ratio*color[2]));
-				wireframeCheckBox.setValue(firstSelectedShape.isRepresentationWireframe());
-				slider.setValue(Math.round(color[3]*ratio));
+				var firstSelectedShape=_this.__shapesArray[shapesTree.getSelectedNodes()[0].nodeId];
+				var color=firstSelectedShape.material.color;
+				colorSelector.setRed(Math.round(ratio*color.r));
+				colorSelector.setGreen(Math.round(ratio*color.g));
+				colorSelector.setBlue(Math.round(ratio*color.b));
+				colorSelector.setPreviousColor(Math.round(ratio*color.r),
+						Math.round(ratio*color.g),Math.round(ratio*color.b));
+				wireframeCheckBox.setValue(firstSelectedShape.material.wireframe);
+				slider.setValue(Math.round(firstSelectedShape.material.opacity*ratio));
 				enableUpdate=true;
 			}
 			
@@ -705,14 +798,14 @@ qx.Class.define("desk.meshView",
 					var shapesArray=shapesTree.getSelectedNodes();
 					for (var i=0;i<shapesArray.length;i++)
 					{
-						var shape=meshViewer.__shapesArray[shapesArray[i].nodeId];
-						shape.setColor ([colorSelector.getRed()/ratio,
-						colorSelector.getGreen()/ratio,
-						colorSelector.getBlue()/ratio,
-						slider.getValue()/ratio]);
-						shape.setRepresentationToWireframe(wireframeCheckBox.getValue());
+						var shape=_this.__shapesArray[shapesArray[i].nodeId];
+						shape.material.color.setRGB (colorSelector.getRed()/ratio,
+									colorSelector.getGreen()/ratio,
+									colorSelector.getBlue()/ratio);
+						shape.material.opacity=slider.getValue()/ratio;
+						shape.material.wireframe=wireframeCheckBox.getValue();
 					}
-					shape.scene.render();
+					_this.render();
 				}
 			}
 
@@ -754,10 +847,10 @@ qx.Class.define("desk.meshView",
 				{
 					var shapeId=shapesArray[i].nodeId;
 					var shape=this.__shapesArray[shapeId];
-					shape.show();
+					shape.visible=true;
 					this.__shapesVisibility[shapeId]=true;
 				}
-				this.getScene().render();		
+				this.render();		
 				},this);
 			menu.add(showButton);
 
@@ -768,10 +861,10 @@ qx.Class.define("desk.meshView",
 				{
 					var shapeId=shapesArray[i].nodeId;
 					var shape=this.__shapesArray[shapeId];
-					shape.hide();
+					shape.visible=false;
 					this.__shapesVisibility[shapeId]=false;
 				}
-				this.getScene().render();		
+				this.render();		
 				},this);
 			menu.add(hideButton);
 
@@ -783,11 +876,11 @@ qx.Class.define("desk.meshView",
 					var shapeId=shapesArray[i].nodeId;
 					var dataModel=this.__shapesList.getDataModel();
 					dataModel.prune(shapeId, true);
-					this.__shapesArray[shapeId].destroy();
+					this.__scene.removeObject(this.__shapesArray[shapeId]);
 					this.__shapesArray[shapeId]=0;
 					dataModel.setData();
 				}
-				this.getScene().render();		
+				this.render();		
 				},this);
 			menu.add(removeButton);
 			return menu;
