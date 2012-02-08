@@ -692,8 +692,7 @@ qx.Class.define("desk.meshView",
 							var threecolor=new THREE.Color().setRGB(color[0],color[1],color[2]);
 							var material =  new THREE.MeshLambertMaterial( {
 								 color:threecolor.getHex(),
-								 opacity: color[3],
-								 wireframe : true} );
+								 opacity: color[3]} );
 							if (color[3]<0.999) material.transparent=true;
 							var mesh = new THREE.Mesh(geom, material );
 							mesh.doubleSided=true;
@@ -796,10 +795,10 @@ qx.Class.define("desk.meshView",
 			var colorSelector=new qx.ui.control.ColorSelector()
 			bottomBox.add(colorSelector);//, {flex:1});
 
-			var wireframeCheckBox=new qx.ui.form.CheckBox("wireframe");
+/*			var wireframeCheckBox=new qx.ui.form.CheckBox("wireframe");
 			topBox.add(wireframeCheckBox);
 			topBox.add(new qx.ui.core.Spacer(10, 20),{flex:1});
-			
+		*/	
 			if (parentWindow)
 			{
 				var alwaysOnTopCheckBox=new qx.ui.form.CheckBox("this window always on top");
@@ -829,7 +828,7 @@ qx.Class.define("desk.meshView",
 				colorSelector.setBlue(Math.round(ratio*color.b));
 				colorSelector.setPreviousColor(Math.round(ratio*color.r),
 						Math.round(ratio*color.g),Math.round(ratio*color.b));
-				wireframeCheckBox.setValue(firstSelectedShape.material.wireframe);
+		//		wireframeCheckBox.setValue(firstSelectedShape.material.wireframe);
 				opacitySlider.setValue(Math.round(firstSelectedShape.material.opacity*ratio));
 				enableUpdate=true;
 			}
@@ -867,7 +866,7 @@ qx.Class.define("desk.meshView",
 				}
 				});
 
-			wireframeCheckBox.addListener('changeValue',function(event){
+/*			wireframeCheckBox.addListener('changeValue',function(event){
 				if (enableUpdate)
 				{
 					var shapesArray=shapesTree.getSelectedNodes();
@@ -879,7 +878,7 @@ qx.Class.define("desk.meshView",
 					console.log(wireframeCheckBox.getValue());
 					_this.render();
 				}
-				});
+				});*/
 
 			return (mainContainer);
 		},
