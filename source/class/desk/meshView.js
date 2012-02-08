@@ -1,7 +1,7 @@
 
 qx.Class.define("desk.meshView", 
 {
-  extend : qx.core.Object,
+	extend : qx.core.Object,
 
 	construct : function(file, fileBrowser, mtime)
 	{
@@ -142,27 +142,38 @@ qx.Class.define("desk.meshView",
 	},
 
 	members : {
+
+		// the html element containing the 3D rendering
 		__embededHTML : null,
+
+		// qooxdoo window
 		__window : null,
+
 		__fileBrowser : null,
+
+		// arrays containing shapes
 		__shapesList : null,
 		__shapesArray : null,
+		__shapesVisibility : null,
+
+		//THREE.js objects
 		__scene : null,
 		__camera : null,
 		__renderer : null,
 		__controls : null,
-		__shapesVisibility : null,
+		
 
+		// array used to store linked volume viewers
 		__volumes : null,
 
+		// array containing the queue of meses to load 
 		__meshesToLoad : null,
+
+		// number defining the current number of loaders
 		__numberOfLoaders : 0,
 
+		// stores the scene bounding box diagonal length, usefull for updating
 		__boudingBoxDiagonalLength : 0,
-
-		SSSgetWindow : function() {
-			return this.__window;
-		},
 
 		__readFile : function (file, mtime, color, update, opt_updateDataModel) {
 			var label;
@@ -231,7 +242,6 @@ qx.Class.define("desk.meshView",
 				alert("error : file "+file+"cannot be displayed by mesh viewer");
 			}
 		},
-
 
 		viewAll : function ( ) {
 			var max=new THREE.Vector3(-1e10,-1e10,-1e10);
@@ -419,9 +429,6 @@ qx.Class.define("desk.meshView",
 				if (e.supportsType("volumeSlice"))
 				{
 					var volView=e.getData("volumeSlice");
-//					var dimensions=volView.getDimensions();
-					//var width=dimensions[0];
-//					var height=dimensions[1];
 
 					var geometry=new THREE.Geometry();
 					geometry.dynamic=true;
@@ -652,20 +659,15 @@ qx.Class.define("desk.meshView",
 		},
 
 		__loadQueue : function ( ) {
-
-
 			if (this.__meshesToLoad.length==0)
 				return;
-
-
 
 			var parameters=this.__meshesToLoad[0];
 			var _this=this;
 			var useWorker = true
 			var useBuffers = true;
 
-
-			if (this.__numberOfLoaders<30){
+			if (this.__numberOfLoaders<50){
 				this.__meshesToLoad.shift();
 				this.__numberOfLoaders++;
 				var loader = new THREE.CTMLoader( this.__renderer.context );
@@ -869,8 +871,8 @@ qx.Class.define("desk.meshView",
 			propertiesButton.addListener("execute", function (){
 				var selectedShapeId=this.__shapesList.getSelectedNodes()[0].nodeId;
 				var shape=this.__shapesArray[selectedShapeId];
-				alert ("Mesh with "+shape.getNumberOfVertices()+" vertices and "+shape.getNumberOfPolygons()
-					+" polygons");
+				alert ("Mesh with "+shape.geometry.vertexPositionBuffer.numItems/3+" vertices and "+
+						shape.geometry.vertexIndexBuffer.numItems/3+" polygons");
 				},this);
 			menu.add(propertiesButton);
 
