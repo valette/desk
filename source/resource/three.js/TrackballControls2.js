@@ -2,6 +2,10 @@
  * @author Eberhard Graether / http://egraether.com/
  */
 
+HACKSetDirtyVertices = function (geometry) {
+geometry.__dirtyVertices = true;
+}
+
 THREE.TrackballControls2 = function ( object ) {
 
 	var _this = this,
@@ -38,7 +42,7 @@ THREE.TrackballControls2 = function ( object ) {
 
 	this.keys = [ 65 /*A*/, 83 /*S*/, 68 /*D*/ ];
 
-	this.onUpdate=null;
+	this._onUpdate=null;
 
 	// internals
 
@@ -58,8 +62,32 @@ THREE.TrackballControls2 = function ( object ) {
 	_panStart = new THREE.Vector2(),
 	_panEnd = new THREE.Vector2();
 
-
 	// methods
+
+	this.getInternals = function ()
+	{
+		return [_rotateStart, _rotateEnd, _zoomStart, _zoomEnd, _panStart, _panEnd, quaternion ];
+	}
+
+	this.copy = function (source) {
+
+		var internals=source.getInternals();
+		_rotateStart.copy(internals[0]);
+		_rotateEnd.copy(internals[1]);
+		_zoomStart.copy(internals[2]);
+		_zoomEnd.copy(internals[3]);
+		_panStart.copy(internals[4]);
+		_panEnd.copy(internals[5]);
+		quaternion.copy(internals[6]);
+
+		_this.update();
+//		_this.object.position.copy( source.object.position );
+//		_this.target.copy( source.target );
+//		_this.checkDistances();
+
+//		_this.object.lookAt( _this.target );
+
+	};
 
 	this.handleEvent = function ( event ) {
 

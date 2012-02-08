@@ -1,4 +1,11 @@
-
+/*
+#asset(three.js/*)
+#ignore(THREE.*)
+#ignore(THREE)
+#ignore(Detector)
+#ignore(Uint8Array)
+#ignore(HACKSetDirtyVertices)
+*/
 qx.Class.define("desk.meshView", 
 {
 	extend : qx.core.Object,
@@ -134,6 +141,11 @@ qx.Class.define("desk.meshView",
 
 		this.__shapesVisibility.length=0;
 		this._disposeObjects("__embededHTML","__shapesList");
+	},
+
+	events : {
+		// the "changeSlice" event is fired whenever the viewPoint changes
+		"changeViewPoint" : "qx.event.type.Event"
 	},
 
 	properties : {
@@ -453,7 +465,7 @@ qx.Class.define("desk.meshView",
 
 					var mesh=new THREE.Mesh(geometry,material);
 					mesh.doubleSided=true;
-					_this.__scene.addObject(mesh);
+					_this.__scene.add(mesh);
 
 					function updateTexture()
 					{
@@ -461,11 +473,12 @@ qx.Class.define("desk.meshView",
 						for (var i=0;i<4;i++) {
 							geometry.vertices[i].position.set(coords[3*i],coords[3*i+1],coords[3*i+2]);
 						}
+
 						geometry.computeCentroids();
 						geometry.computeFaceNormals();
 						geometry.computeVertexNormals();
 						geometry.computeBoundingSphere();
-						geometry.__dirtyVertices = true;
+						HACKSetDirtyVertices(geometry);
 
 						var data=volView.getSliceImageData().data;
 						for (var i=length;i--;)
@@ -546,8 +559,9 @@ qx.Class.define("desk.meshView",
 				container.appendChild( renderer.domElement );
 				controls.onUpdate=render;
 
-				function render() {
 
+				function render() {
+					_this.fireEvent("changeViewPoint");
 					controls.update();
 					renderer.render( scene, camera );
 
@@ -631,7 +645,7 @@ qx.Class.define("desk.meshView",
 						var mesh = new THREE.Mesh(geom, material );
 						mesh.doubleSided=true;
 
-						_this.__scene.addObject( mesh );
+						_this.__scene.add( mesh );
 
 						if(typeof callback == 'function') {
 							callback(mesh);
@@ -667,7 +681,7 @@ qx.Class.define("desk.meshView",
 			var useWorker = true
 			var useBuffers = true;
 
-			if (this.__numberOfLoaders<50){
+			if (this.__numberOfLoaders<32){
 				this.__meshesToLoad.shift();
 				this.__numberOfLoaders++;
 				var loader = new THREE.CTMLoader( this.__renderer.context );
@@ -678,12 +692,13 @@ qx.Class.define("desk.meshView",
 							var threecolor=new THREE.Color().setRGB(color[0],color[1],color[2]);
 							var material =  new THREE.MeshLambertMaterial( {
 								 color:threecolor.getHex(),
-								 opacity: color[3]} );
+								 opacity: color[3],
+								 wireframe : true} );
 							if (color[3]<0.999) material.transparent=true;
 							var mesh = new THREE.Mesh(geom, material );
 							mesh.doubleSided=true;
 
-							_this.__scene.addObject( mesh );
+							_this.__scene.add( mesh );
 
 							if(typeof parameters.callback == 'function') {
 								parameters.callback(mesh);
@@ -752,9 +767,13 @@ qx.Class.define("desk.meshView",
 				if (e.supportsType("meshView"))
 				{
 						var meshView2=e.getData("meshView");
-						this.__scene.bind(meshView2.__scene);
-						meshView2.__scene.bind(this.__scene);
-						meshView2.__scene.cameracontroller.onChange();
+						meshView2.addListener("changeViewPoint", function (e) {
+							console.log(this.__controls);
+							console.log(meshView2.__controls);
+							this.__controls.copy(meshView2.__controls);
+							this.__controls.update();
+							this.render();
+							}, this);
 				}
 			},this);
 			return dragLabel;
@@ -857,6 +876,7 @@ qx.Class.define("desk.meshView",
 						var shape=_this.__shapesArray[shapesArray[i].nodeId];
 						shape.material.wireframe=wireframeCheckBox.getValue();
 					}
+					console.log(wireframeCheckBox.getValue());
 					_this.render();
 				}
 				});
