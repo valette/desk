@@ -419,58 +419,34 @@ qx.Class.define("desk.meshView",
 				if (e.supportsType("volumeSlice"))
 				{
 					var volView=e.getData("volumeSlice");
-					var dimensions=volView.getDimensions();
-					var width=dimensions[0];
-					var height=dimensions[1];
+//					var dimensions=volView.getDimensions();
+					//var width=dimensions[0];
+//					var height=dimensions[1];
+
 					var geometry=new THREE.Geometry();
 					geometry.dynamic=true;
 					for (var i=0;i<4;i++)
 						geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( 0, 0, 0 ) ) );
 					geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
-//					geometry.faces.push( new THREE.Face3( 0, 2, 3 ) );
-
-
-					var rwidth = 256, rheight = 256, rsize = rwidth * rheight;
-
-					var tcolor = new THREE.Color( 0xffffff );
-
-					var factor=4;
-					var dataColor = new Uint8Array( rsize * factor);
-
-					for ( var i = 0; i < rsize; i ++ ) {
-
-						var h = i / rsize;
-
-						tcolor.setHSV( 0.45 + 0.5 * h, 0.5 + 0.4 * h, h * h );
-
-						dataColor[ i * factor ]     = Math.floor( tcolor.r * 255 );
-						dataColor[ i * factor + 1 ] = Math.floor( tcolor.g * 255 );
-						dataColor[ i * factor + 2 ] = Math.floor( tcolor.b * 255 );
-						dataColor[ i * 4 + 3 ] = 255;
-
-					}
-
-					colorRampTexture = new THREE.DataTexture( dataColor, rwidth, rheight, THREE.RGBAFormat );
-					colorRampTexture.needsUpdate = true;
-
-
-//						var imageData=volView.getSliceImageData();
-
-					var material=new THREE.MeshBasicMaterial( {map:colorRampTexture});
-
 					geometry.faceVertexUvs[ 0 ].push( [
 						new THREE.UV( 0, 0),
-						new THREE.UV( 0, 1 ),
+						new THREE.UV( 1, 0 ),
 						new THREE.UV( 1, 1 ),
-						new THREE.UV( 1, 0 )
+						new THREE.UV( 0, 1 )
 						] );
+
+
+					var imageData=volView.getSliceImageData();
+					var length=imageData.data.length;
+					var dataColor = new Uint8Array( length);
+					var texture = new THREE.DataTexture( dataColor, imageData.width, imageData.height, THREE.RGBAFormat );
+					texture.needsUpdate = true;
+					texture.magFilter=THREE.NearestFilter;
+					var material=new THREE.MeshBasicMaterial( {map:texture});
 
 					var mesh=new THREE.Mesh(geometry,material);
 					mesh.doubleSided=true;
 					_this.__scene.addObject(mesh);
-
-
-
 
 					function updateTexture()
 					{
@@ -484,9 +460,10 @@ qx.Class.define("desk.meshView",
 						geometry.computeBoundingSphere();
 						geometry.__dirtyVertices = true;
 
-						var imageData=volView.getSliceImageData();
-						console.log(imageData);
-						
+						var data=volView.getSliceImageData().data;
+						for (var i=length;i--;)
+							dataColor[i]=data[i];
+						texture.needsUpdate = true;
 						_this.render();
 					}
 
@@ -813,12 +790,12 @@ qx.Class.define("desk.meshView",
 				topBox.add(alwaysOnTopCheckBox);
 			}
 			var ratio=255;
-			var slider=new qx.ui.form.Slider();
-			slider.setMinimum(0);
-			slider.setMaximum(ratio);
-			slider.setWidth(30);
-			slider.setOrientation("vertical");
-			bottomBox.add(slider);
+			var opacitySlider=new qx.ui.form.Slider();
+			opacitySlider.setMinimum(0);
+			opacitySlider.setMaximum(ratio);
+			opacitySlider.setWidth(30);
+			opacitySlider.setOrientation("vertical");
+			bottomBox.add(opacitySlider);
 
 			var enableUpdate=true;
 			var updateWidgets=function (event)
@@ -832,13 +809,29 @@ qx.Class.define("desk.meshView",
 				colorSelector.setPreviousColor(Math.round(ratio*color.r),
 						Math.round(ratio*color.g),Math.round(ratio*color.b));
 				wireframeCheckBox.setValue(firstSelectedShape.material.wireframe);
-				slider.setValue(Math.round(firstSelectedShape.material.opacity*ratio));
+				opacitySlider.setValue(Math.round(firstSelectedShape.material.opacity*ratio));
 				enableUpdate=true;
 			}
 			
 			updateWidgets();
 
-			var updateRepresentation=function(event){
+			shapesTree.addListener("changeSelection",updateWidgets);
+
+			opacitySlider.addListener("changeValue", function(event){
+				if (enableUpdate)
+				{
+					var shapesArray=shapesTree.getSelectedNodes();
+					for (var i=0;i<shapesArray.length;i++)
+					{
+						var shape=_this.__shapesArray[shapesArray[i].nodeId];
+						shape.material.opacity=opacitySlider.getValue()/ratio;
+					}
+					_this.render();
+				}
+				});
+			
+			
+			colorSelector.addListener("changeValue", function(event){
 				if (enableUpdate)
 				{
 					var shapesArray=shapesTree.getSelectedNodes();
@@ -848,29 +841,24 @@ qx.Class.define("desk.meshView",
 						shape.material.color.setRGB (colorSelector.getRed()/ratio,
 									colorSelector.getGreen()/ratio,
 									colorSelector.getBlue()/ratio);
-						shape.material.opacity=slider.getValue()/ratio;
-						if (wireframeCheckBox.getValue())
-						{
-							console.log("value : ");
-							console.log(wireframeCheckBox.getValue());
-							shape.material.wireframe=true;
-						}
-						else
-						{
-							shape.material.wireframe=false;
-						}
 					}
 					_this.render();
 				}
-			}
+				});
 
-			shapesTree.addListener("changeSelection",updateWidgets);
+			wireframeCheckBox.addListener('changeValue',function(event){
+				if (enableUpdate)
+				{
+					var shapesArray=shapesTree.getSelectedNodes();
+					for (var i=0;i<shapesArray.length;i++)
+					{
+						var shape=_this.__shapesArray[shapesArray[i].nodeId];
+						shape.material.wireframe=wireframeCheckBox.getValue();
+					}
+					_this.render();
+				}
+				});
 
-
-			slider.addListener("changeValue", updateRepresentation);
-			colorSelector.addListener("changeValue", updateRepresentation);
-
-			wireframeCheckBox.addListener('changeValue',updateRepresentation);
 			return (mainContainer);
 		},
 
