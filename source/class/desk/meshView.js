@@ -276,7 +276,6 @@ qx.Class.define("desk.meshView",
 			}
 			else
 			{
-				console.log(this.__boudingBoxDiagonalLength);
 				var ratio=bbdiaglength/this.__boudingBoxDiagonalLength;
 				this.__boudingBoxDiagonalLength=bbdiaglength;
 				if (ratio>1)
@@ -284,10 +283,6 @@ qx.Class.define("desk.meshView",
 					var backPedal=camera.position.clone();
 					backPedal.subSelf(this.__controls.target);
 					backPedal.multiplyScalar(ratio);
-					console.log("target : ");
-					console.log(this.__controls.target);
-					console.log(camera.position);
-					console.log(backPedal);
 					backPedal.addSelf(this.__controls.target);
 					camera.position.copy(backPedal);
 				}
@@ -424,19 +419,75 @@ qx.Class.define("desk.meshView",
 				if (e.supportsType("volumeSlice"))
 				{
 					var volView=e.getData("volumeSlice");
-					var scene=this.getScene();
 					var dimensions=volView.getDimensions();
 					var width=dimensions[0];
 					var height=dimensions[1];
-					var square=o3djs.mesh.createSquare(scene, width, height);
+					var geometry=new THREE.Geometry();
+					geometry.dynamic=true;
+					for (var i=0;i<4;i++)
+						geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( 0, 0, 0 ) ) );
+					geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
+//					geometry.faces.push( new THREE.Face3( 0, 2, 3 ) );
+
+
+					var rwidth = 256, rheight = 256, rsize = rwidth * rheight;
+
+					var tcolor = new THREE.Color( 0xffffff );
+
+					var factor=4;
+					var dataColor = new Uint8Array( rsize * factor);
+
+					for ( var i = 0; i < rsize; i ++ ) {
+
+						var h = i / rsize;
+
+						tcolor.setHSV( 0.45 + 0.5 * h, 0.5 + 0.4 * h, h * h );
+
+						dataColor[ i * factor ]     = Math.floor( tcolor.r * 255 );
+						dataColor[ i * factor + 1 ] = Math.floor( tcolor.g * 255 );
+						dataColor[ i * factor + 2 ] = Math.floor( tcolor.b * 255 );
+						dataColor[ i * 4 + 3 ] = 255;
+
+					}
+
+					colorRampTexture = new THREE.DataTexture( dataColor, rwidth, rheight, THREE.RGBAFormat );
+					colorRampTexture.needsUpdate = true;
+
+
+//						var imageData=volView.getSliceImageData();
+
+					var material=new THREE.MeshBasicMaterial( {map:colorRampTexture});
+
+					geometry.faceVertexUvs[ 0 ].push( [
+						new THREE.UV( 0, 0),
+						new THREE.UV( 0, 1 ),
+						new THREE.UV( 1, 1 ),
+						new THREE.UV( 1, 0 )
+						] );
+
+					var mesh=new THREE.Mesh(geometry,material);
+					mesh.doubleSided=true;
+					_this.__scene.addObject(mesh);
+
+
+
 
 					function updateTexture()
 					{
 						var coords=volView.getCornersCoordinates();
-						for (var i=0;i<4;i++)
-							square.setVertexCoordinates(i,coords[3*i],coords[3*i+1],coords[3*i+2]);
-						square.setTextureImageData(volView.getSliceImageData());
-						scene.render();
+						for (var i=0;i<4;i++) {
+							geometry.vertices[i].position.set(coords[3*i],coords[3*i+1],coords[3*i+2]);
+						}
+						geometry.computeCentroids();
+						geometry.computeFaceNormals();
+						geometry.computeVertexNormals();
+						geometry.computeBoundingSphere();
+						geometry.__dirtyVertices = true;
+
+						var imageData=volView.getSliceImageData();
+						console.log(imageData);
+						
+						_this.render();
 					}
 
 					updateTexture();
@@ -444,14 +495,14 @@ qx.Class.define("desk.meshView",
 					var listenerId=volView.addListener('changeSlice',function(e)
 						{
 							updateTexture();
-							scene.render();}, this);
+							_this.render();}, this);
 
 					if (this.__volumes==null)
 						this.__volumes=[];
 					this.__volumes.push({
 							volumeViewer : volView,
 							listener : listenerId});
-					scene.render();
+					_this.render();
 				}
 				// activate the window
 				var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
