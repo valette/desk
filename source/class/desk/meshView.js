@@ -767,15 +767,17 @@ qx.Class.define("desk.meshView",
 			this.__window.addListener("drop", function(e) {
 				if (e.supportsType("meshView"))
 				{
-						var meshView2=e.getData("meshView");
-						meshView2.addListener("changeViewPoint", function (e) {
-							this.__controls.copy(meshView2.__controls);
-							this.render();
-							}, this);
-						this.addListener("changeViewPoint", function (e) {
-							meshView2.__controls.copy(this.__controls);
-							meshView2.render();
-							}, this);
+					var meshView2=e.getData("meshView");
+					meshView2.addListener("changeViewPoint", function (e) {
+						this.__controls.copy(meshView2.__controls);
+						this.render();
+						}, this);
+					this.addListener("changeViewPoint", function (e) {
+						meshView2.__controls.copy(this.__controls);
+						meshView2.render();
+						}, this);
+					this.__controls.copy(meshView2.__controls);
+					this.render();
 				}
 			},this);
 			return dragLabel;
