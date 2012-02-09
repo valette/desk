@@ -587,6 +587,8 @@ qx.Class.define("desk.meshView",
 						button=1;
 					else if ((event.isMiddlePressed())||(event.isShiftPressed()))
 						button=2;
+					else if (event.isCtrlPressed())
+						button=3;
 
 					controls.mouseDown(button,
 									event.getDocumentLeft()-origin.left,
@@ -594,7 +596,7 @@ qx.Class.define("desk.meshView",
 					});
 
 /*													event.isShiftPressed(),
-													event.isCtrlPressed(),
+													,
 													event.isMiddlePressed(),
 													event.isRightPressed());});
 */
@@ -768,7 +770,6 @@ qx.Class.define("desk.meshView",
 						var meshView2=e.getData("meshView");
 						meshView2.addListener("changeViewPoint", function (e) {
 							this.__controls.copy(meshView2.__controls);
-						//	this.__controls.update();
 							this.render();
 							}, this);
 						this.addListener("changeViewPoint", function (e) {

@@ -9,7 +9,7 @@ geometry.__dirtyVertices = true;
 THREE.TrackballControls2 = function ( object ) {
 
 	var _this = this,
-	STATE = { NONE : -1, ROTATE : 0, ZOOM : 1, PAN : 2 };
+	STATE = { NONE : -1, ROTATE : 0, ZOOM : 1, PAN : 2 , ROTATE_Z : 3};
 
 	this.object = object;
 //	this.domElement = ( domElement !== undefined ) ? domElement : document;
@@ -63,6 +63,7 @@ THREE.TrackballControls2 = function ( object ) {
 	_dy=0;
 	_xinit=0;
 	_yinit=0;
+	_alpha=0;
 
 	// methods
 
@@ -72,6 +73,9 @@ THREE.TrackballControls2 = function ( object ) {
 	}
 
 	this.copy = function (source) {
+		//_dx=0;
+		//_dy=0;
+		//_alpha=0;
 
 		var internals=source.getInternals();
 		_zoomStart.copy(internals[0]);
@@ -84,7 +88,7 @@ THREE.TrackballControls2 = function ( object ) {
 		_this.object.position.copy(source.object.position);
 		_this.target.copy(source.target);
 
-		_this.update();
+	//	_this.update();
 
 	};
 
@@ -109,25 +113,35 @@ THREE.TrackballControls2 = function ( object ) {
 
 	this.rotateCamera = function() {
 
-		if ( (_dx!=0)||(_dy!=0) ) {
+		var axis = new THREE.Vector3(),
+			quaternion = new THREE.Quaternion(),
+			angle;
 
-			var axis = new THREE.Vector3(),
-				quaternion = new THREE.Quaternion(),
-				angle = _this.rotateSpeed*_dy/_this.radius;
+		if ( _dy != 0 ) {
+			angle = _this.rotateSpeed * _dy / _this.radius;
 
 			axis.cross( _eye, _this.object.up ).normalize();
 			quaternion.setFromAxisAngle( axis, angle );
 
 			quaternion.multiplyVector3( _eye );
 			quaternion.multiplyVector3( _this.object.up );
+		}
 
-			axis.copy(_this.object.up).normalize();
-			angle=-_this.rotateSpeed*_dx/_this.radius;
-			quaternion.setFromAxisAngle( axis, angle );
+		if ( _dx != 0 ) {
+			angle = -_this.rotateSpeed * _dx / _this.radius;
+			axis.copy( _this.object.up ).normalize();
+			quaternion.setFromAxisAngle( axis , angle );
 
 			quaternion.multiplyVector3( _eye );
 			quaternion.multiplyVector3( _this.object.up );
+		}
 
+		if ( _alpha != 0 ) {
+			axis.copy( _eye ).normalize();
+			quaternion.setFromAxisAngle( axis , _alpha );
+
+	//		quaternion.multiplyVector3( _eye );
+			quaternion.multiplyVector3( _this.object.up );
 		}
 
 	};
@@ -319,6 +333,7 @@ THREE.TrackballControls2 = function ( object ) {
 
 		_dx=0;
 		_dy=0;
+		_alpha=0;
 
 		if ( _state === STATE.NONE ) {
 
@@ -326,12 +341,8 @@ THREE.TrackballControls2 = function ( object ) {
 
 		} else if ( _state === STATE.ROTATE && !_this.noRotate ) {
 
-		//	_rotateEnd = _this.getMouseProjectionOnBall( x, y );
 			_dx=x-_xinit;
 			_dy=y-_yinit;
-			_xinit=x;
-			_yinit=y;
-
 
 		} else if ( _state === STATE.ZOOM && !_this.noZoom ) {
 
@@ -341,14 +352,43 @@ THREE.TrackballControls2 = function ( object ) {
 
 			_panEnd = _this.getMouseOnScreen( x, y );
 
+		} else if ( _state === STATE.ROTATE_Z ) {
+
+			var p1 = new THREE.Vector2( x - 0.5 * this.screen.width,
+								y - 0.5 * this.screen.height);
+			var p2 = new THREE.Vector2( _xinit - 0.5 * this.screen.width,
+								_yinit - 0.5 * this.screen.height);
+
+			var n1 = p1.length();
+			var n2 = p2.length();
+			var n12 = n1 * n2;
+
+			if ( n12 > 0 )
+			{
+				var cosAlpha = p1.dot( p2 ) / n12;
+				var sinAlpha = p2.y * p1.x - p2.x * p1.y;
+
+				if ( cosAlpha > 1 )
+				{
+					_alpha = 0;
+				}
+				else
+				{
+					_alpha = Math.acos( cosAlpha );
+				}
+				if ( sinAlpha > 0 )
+					_alpha = -_alpha;
+			}
 		}
 
-		if (_this.onUpdate!=null)
+		_xinit = x;
+		_yinit = y;
+
+		if ( _this.onUpdate != null )
 			_this.onUpdate();
 	};
 
 	this.mouseUp = function( ) {
 		_state = STATE.NONE;
-
 	};
 };
