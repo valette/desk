@@ -64,6 +64,8 @@ THREE.TrackballControls2 = function ( object ) {
 
 	_dx=0;
 	_dy=0;
+	_xinit=0;
+	_yinit=0;
 
 	// methods
 
@@ -156,12 +158,23 @@ THREE.TrackballControls2 = function ( object ) {
 
 			angle *= _this.rotateSpeed;
 
-			quaternion.setFromAxisAngle( axis, -angle );
+			axis.cross( _eye, _this.object.up ).normalize();
+
+		//	axis.set(-1,0,0);
+			angle=3*_dy/_this.radius;
+			quaternion.setFromAxisAngle( axis, angle );
 
 			quaternion.multiplyVector3( _eye );
 			quaternion.multiplyVector3( _this.object.up );
 
-			quaternion.multiplyVector3( _rotateEnd );
+			axis.copy(_this.object.up).normalize();
+			angle=-3*_dx/_this.radius;
+			quaternion.setFromAxisAngle( axis, angle );
+
+			quaternion.multiplyVector3( _eye );
+			quaternion.multiplyVector3( _this.object.up );
+
+	//		quaternion.multiplyVector3( _rotateEnd );
 
 //			if ( _this.staticMoving ) {
 
@@ -344,7 +357,8 @@ THREE.TrackballControls2 = function ( object ) {
 				_panStart = _panEnd = _this.getMouseOnScreen( x, y );
 
 			}
-
+			_xinit=x;
+			_yinit=y;
 		}
 
 	};
@@ -362,6 +376,11 @@ THREE.TrackballControls2 = function ( object ) {
 			_keyPressed = false;
 
 		}
+
+		_dx=x-_xinit;
+		_dy=y-_yinit;
+		_xinit=x;
+		_yinit=y;
 
 		if ( _state === STATE.NONE ) {
 
