@@ -527,15 +527,15 @@ qx.Class.define("desk.meshView",
 				scene.add( camera );
 
 
-				controls.rotateSpeed = 5.0;
-				controls.zoomSpeed = 5;
-				controls.panSpeed = 2;
+//				controls.rotateSpeed = 5.0;
+//				controls.zoomSpeed = 5;
+//				controls.panSpeed = 2;
 
-				controls.noZoom = false;
-				controls.noPan = false;
+//				controls.noZoom = false;
+//				controls.noPan = false;
 
-				controls.staticMoving = true;
-				controls.dynamicDampingFactor = 0.3;
+//				controls.staticMoving = true;
+//				controls.dynamicDampingFactor = 0.3;
 
 				// lights
 
@@ -767,11 +767,13 @@ qx.Class.define("desk.meshView",
 				{
 						var meshView2=e.getData("meshView");
 						meshView2.addListener("changeViewPoint", function (e) {
-							console.log(this.__controls);
-							console.log(meshView2.__controls);
 							this.__controls.copy(meshView2.__controls);
-							this.__controls.update();
+						//	this.__controls.update();
 							this.render();
+							}, this);
+						this.addListener("changeViewPoint", function (e) {
+							meshView2.__controls.copy(this.__controls);
+							meshView2.render();
 							}, this);
 				}
 			},this);

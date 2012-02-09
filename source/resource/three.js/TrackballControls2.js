@@ -26,16 +26,16 @@ THREE.TrackballControls2 = function ( object ) {
 
 	this.setSize();
 
-	this.rotateSpeed = 1.0;
-	this.zoomSpeed = 1.2;
-	this.panSpeed = 0.3;
+	this.rotateSpeed = 5;
+	this.zoomSpeed = 5;
+	this.panSpeed = 2;
 
 	this.noRotate = false;
 	this.noZoom = false;
 	this.noPan = false;
 
-	this.staticMoving = false;
-	this.dynamicDampingFactor = 0.2;
+//	this.staticMoving = false;
+//	this.dynamicDampingFactor = 0.2;
 
 	this.minDistance = 0;
 	this.maxDistance = Infinity;
@@ -62,11 +62,14 @@ THREE.TrackballControls2 = function ( object ) {
 	_panStart = new THREE.Vector2(),
 	_panEnd = new THREE.Vector2();
 
+	_dx=0;
+	_dy=0;
+
 	// methods
 
 	this.getInternals = function ()
 	{
-		return [_rotateStart, _rotateEnd, _zoomStart, _zoomEnd, _panStart, _panEnd, quaternion ];
+		return [_rotateStart, _rotateEnd, _zoomStart, _zoomEnd, _panStart, _panEnd, _eye];
 	}
 
 	this.copy = function (source) {
@@ -78,7 +81,11 @@ THREE.TrackballControls2 = function ( object ) {
 		_zoomEnd.copy(internals[3]);
 		_panStart.copy(internals[4]);
 		_panEnd.copy(internals[5]);
-		quaternion.copy(internals[6]);
+
+		_eye.copy(internals[6]);	
+		_this.object.up.copy(source.object.up);
+		_this.object.position.copy(source.object.position);
+		_this.target.copy(source.target);
 
 		_this.update();
 //		_this.object.position.copy( source.object.position );
@@ -156,16 +163,16 @@ THREE.TrackballControls2 = function ( object ) {
 
 			quaternion.multiplyVector3( _rotateEnd );
 
-			if ( _this.staticMoving ) {
+//			if ( _this.staticMoving ) {
 
 				_rotateStart = _rotateEnd;
 
-			} else {
+/*			} else {
 
 				quaternion.setFromAxisAngle( axis, angle * ( _this.dynamicDampingFactor - 1.0 ) );
 				quaternion.multiplyVector3( _rotateStart );
 
-			}
+			}*/
 
 		}
 
@@ -179,15 +186,15 @@ THREE.TrackballControls2 = function ( object ) {
 
 			_eye.multiplyScalar( factor );
 
-			if ( _this.staticMoving ) {
+//			if ( _this.staticMoving ) {
 
 				_zoomStart = _zoomEnd;
-
+/*
 			} else {
 
 				_zoomStart.y += ( _zoomEnd.y - _zoomStart.y ) * this.dynamicDampingFactor;
 
-			}
+			}*/
 
 		}
 
@@ -207,15 +214,15 @@ THREE.TrackballControls2 = function ( object ) {
 			_this.object.position.addSelf( pan );
 			_this.target.addSelf( pan );
 
-			if ( _this.staticMoving ) {
+//			if ( _this.staticMoving ) {
 
 				_panStart = _panEnd;
 
-			} else {
+	/*		} else {
 
 				_panStart.addSelf( mouseChange.sub( _panEnd, _panStart ).multiplyScalar( _this.dynamicDampingFactor ) );
 
-			}
+			}*/
 
 		}
 
