@@ -73,9 +73,6 @@ THREE.TrackballControls2 = function ( object ) {
 	}
 
 	this.copy = function (source) {
-		//_dx=0;
-		//_dy=0;
-		//_alpha=0;
 
 		var internals=source.getInternals();
 		_zoomStart.copy(internals[0]);
@@ -87,8 +84,6 @@ THREE.TrackballControls2 = function ( object ) {
 		_this.object.up.copy(source.object.up);
 		_this.object.position.copy(source.object.position);
 		_this.target.copy(source.target);
-
-	//	_this.update();
 
 	};
 
