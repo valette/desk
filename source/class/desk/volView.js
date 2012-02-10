@@ -423,19 +423,19 @@ qx.Class.define("desk.volView",
 				"output_directory" : "cache\/"};
 				
 			//~ segColor test
+			/*
 			if((volView.__isSegWindow)&&(selection==selectables[1]))
 			{
 				parameterMap.action = "slice_volume_color";
 				parameterMap.format = "0";
 			}
-			//~ orion test (change orientation param in volume_slice action : actions.xml)
-			//~ if(false)
-			//~ {
-				//~ parameterMap.slice_orientation = "1"; //~ ZY X
-				//~ parameterMap.slice_orientation = "2"; //~ XZ Y
-				parameterMap.slice_orientation = volView.__display.orientation;
-			//~ }
+			*/
 			
+		//~ orion test (change orientation param in volume_slice action : actions.xml)
+			parameterMap.slice_orientation = volView.__display.orientation;
+			
+			//~ segColor test
+			/*
 			if(volView.__formatSelectBox!=null)
 			{
 				//~ volView.debug("volView.__formatSelectBox : " + volView.__formatSelectBox);
@@ -444,6 +444,7 @@ qx.Class.define("desk.volView",
 				var selection = volView.__formatSelectBox.getSelection();
 				var selectables = volView.__formatSelectBox.getSelectables();
 			}
+			*/
 			
 			function getAnswer(e)
 			{
@@ -674,6 +675,8 @@ qx.Class.define("desk.volView",
 			
 			volView.__fileBrowser.getActions().launchAction(parameterMap, getAnswer);
 			
+			//~ segColor test
+			/*
 			if(volView.__formatSelectBox!=null)
 			if(volView.__isSegWindow)
 			{
@@ -685,6 +688,7 @@ qx.Class.define("desk.volView",
 				volView.__formatSelectBox.setSelection([selectables[0]]);
 				volView.__formatSelectBox.close();
 			}
+			*/
 			
 		},
 
@@ -743,8 +747,9 @@ qx.Class.define("desk.volView",
 			this.__loadSeeds.onload = function (){
 				if(volView.__drawingCanvasParams.drawingContext!=null)
 				{
-					volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, 2*volView.__scaledWidth+32, 2*volView.__scaledHeight+32);
-					volView.__htmlContextLabels.clearRect(-16, -16, 2*volView.__scaledWidth+32, 2*volView.__scaledHeight+32);
+					//~ volView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, 2*volView.__scaledWidth+32, 2*volView.__scaledHeight+32);
+					//~ volView.__htmlContextLabels.clearRect(-16, -16, 2*volView.__scaledWidth+32, 2*volView.__scaledHeight+32);
+					volView.__clearDrawingCanvas();
 					volView.__htmlContextLabels.drawImage(volView.__loadSeeds, 0, 0);
 					volView.__drawZoomedCanvas(volView.__display.curCtxtZoom,true);
 					//~ volView.__currentSeedsSlice=sliceId;
@@ -879,24 +884,7 @@ qx.Class.define("desk.volView",
             slider.addListener("changeValue",function(e){
                 spinner.setValue(volView.__dimensions[2]-1-e.getData());});
             
-			volView.__orientationSelect = volView.__getOrientationSelectBox();
-			//~ volView.__orientationSelect = new qx.ui.form.RadioButtonGroup();
-			//~ volView.__orientationSelect.setLayout(new qx.ui.layout.VBox(2));
-			//~ volView.__orientationSelect.add(new qx.ui.form.RadioButton("XY Z"));
-			//~ volView.__orientationSelect.add(new qx.ui.form.RadioButton("ZY X"));
-			//~ volView.__orientationSelect.add(new qx.ui.form.RadioButton("XZ Y"));
-			//~ volView.__orientationSelect.addListener("changeSelection", function(event)
-			//~ {
-				//~ var selectedButton = event.getData()[0];
-				//~ var buttons = volView.__orientationSelect.getChildren();
-				//~ var newOrValue = 0;
-				//~ for(var i=0; i<buttons.length; i++)
-				//~ {
-					//~ if(buttons[i]==selectedButton)
-						//~ newOrValue = i;
-				//~ }
-				//~ volView.__display.orientation = newOrValue;
-			//~ }, this);
+			//~ volView.__orientationSelect = volView.__getOrientationSelectBox();
 			
 			
 			volView.__topLeftContainer.add(spinner);
@@ -909,7 +897,7 @@ qx.Class.define("desk.volView",
 			volView.__formatSelectBox=volView.__getFormatSelectBox();
 			volView.__topLeftContainer.add(volView.__formatSelectBox);
 			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});
-			volView.__topLeftContainer.add(volView.__orientationSelect);
+			//~ volView.__topLeftContainer.add(volView.__orientationSelect);
 			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 3});
 			volView.__topLeftContainer.add(volView.__getDragAndDropLabel());
 			volView.__topLeftContainer.add(volView.__getPaintPanelVisibilitySwitch());
@@ -2423,7 +2411,8 @@ qx.Class.define("desk.volView",
 								});
 			this.__toolsWindow.addListener("close", function(event)
 			{
-				this.__topLeftContainer.getChildren()[7].setValue(false);
+				var children = this.__topLeftContainer.getChildren(); //~ CAUTION ! ---> This only works if the "Paint" toggle button is the last child
+				children[children.length-1].setValue(false);
 			}, this);
 			this.__toolsWindow.add(this.__mainRightContainer); //~ winSeparate test
 			
@@ -3076,11 +3065,12 @@ qx.Class.define("desk.volView",
 				var item=seedsTypeItems[i];
 				var seedsList=item.getUserData("seedsList");
 				var filePrefix=item.getUserData("filePrefix");
+				var seedOrientation = item.getUserData("orientation");
 				var slices=seedsList.getChildren();
 				for(var j=0; j<slices.length; j++)
 				{
 					var sliceId=slices[j].getUserData("slice");
-					var sliceAttributes = {slice: sliceId + ""};
+					var sliceAttributes = {slice: sliceId + "", orientation: seedOrientation + ""};
 					xmlContent += this.__element(filePrefix, this.getSeedFileName(sliceId, item), sliceAttributes) + '\n';
 				}
 			}
@@ -3216,13 +3206,20 @@ qx.Class.define("desk.volView",
 		__updateAll : function()
 		{
 			var currentSlice=this.__display.depthShift;
+	this.debug("currentSlice : " + currentSlice);
 			
 			if (this.__seedsTypeSelectBox!=null)
 			{
 				var seedsTypeListItem=this.__seedsTypeSelectBox.getSelection()[0];
+	this.debug("this.__seedsTypeSelectBox : " + this.__seedsTypeSelectBox);
+	this.debug("seedsTypeListItem : " + seedsTypeListItem);
 
 				var sliceItem=seedsTypeListItem.getUserData("seedsArray")[currentSlice];
+	this.debug("sliceItem : " + sliceItem);
+				
 				var seedsList=seedsTypeListItem.getUserData("seedsList");
+	this.debug("seedsList : " + seedsList);
+				
 				if(sliceItem!=0)
 				{
 					// the slice contains seeds
@@ -3234,7 +3231,7 @@ qx.Class.define("desk.volView",
 					// current slice has no seeds
 					seedsList.resetSelection();
 					this.__clearDrawingCanvas();
-					this.__htmlContextLabels.clearRect(-16, -16, 2*this.__scaledWidth+32, 2*this.__scaledHeight+32);
+					//~ this.__htmlContextLabels.clearRect(-16, -16, 2*this.__scaledWidth+32, 2*this.__scaledHeight+32);
 				}
 			}
 			
@@ -3302,13 +3299,16 @@ qx.Class.define("desk.volView",
 		__resetSeedsList : function()
 		{
 			var seedsTypeSelectBoxItems=this.__seedsTypeSelectBox.getChildren();
+this.debug("seedsTypeSelectBoxItems.length : " + seedsTypeSelectBoxItems.length);
 			var numberOfSlices=this.__dimensions[2];
+this.debug("3316 : numberOfSlices : " + numberOfSlices);
 
 			for (var i=0;i<seedsTypeSelectBoxItems.length;i++)
 			{
 				var item=seedsTypeSelectBoxItems[i];
 				item.getUserData("seedsList").removeAll();
 				var seedsArray=new Array(numberOfSlices);
+this.debug("3322 : seedsArray : " + seedsArray);
 				item.setUserData("seedsArray",seedsArray);
 				var cacheTags=new Array(numberOfSlices);
 				item.setUserData("cacheTags",cacheTags);
@@ -3317,6 +3317,7 @@ qx.Class.define("desk.volView",
 					cacheTags[j]=Math.random();
 					seedsArray[j]=0;
 				}
+this.debug("3331 : seedsArray : " + seedsArray);
 			}
 			//~ this.__currentSeedsSlice = null;
 			//~ this.__display.depthShift = 0;
@@ -3329,11 +3330,15 @@ qx.Class.define("desk.volView",
 
 			var seedsList=seedsTypeListItem.getUserData("seedsList");
 			var seedsArray=seedsTypeListItem.getUserData("seedsArray");
+this.debug("3344 : seedsArray : " + seedsArray);
 
 			var sliceItem = new qx.ui.form.ListItem(""+ sliceId);
 			sliceItem.setUserData("slice",sliceId);
+this.debug("3451 : this.__display.orientation : " + this.__display.orientation);
+			sliceItem.setUserData("orientation",this.__display.orientation); //~ orion test
 			var tempPos = 0;
 			var seeds=seedsList.getChildren();
+this.debug("seeds.length : " +seeds.length);
 			for(var i=0; i<seeds.length; i++)
 			{
 				if(seeds[i].getUserData("slice")>sliceId)
@@ -3341,6 +3346,7 @@ qx.Class.define("desk.volView",
 			}
 			seedsList.addAt(sliceItem, tempPos);
 			seedsArray[sliceId] = sliceItem;
+this.debug("3358 : seedsArray : " + seedsArray);
 
 			sliceItem.addListener("click", function(event)
 				{this.__spinner.setValue(event.getTarget().getUserData("slice"));}, this);
@@ -3414,12 +3420,16 @@ qx.Class.define("desk.volView",
 			var seedsItem = new qx.ui.form.ListItem("seeds");
 			seedsItem.setUserData("filePrefix", "seed");
 			seedsItem.setUserData("seedsList", seedsList);
+this.debug("3436 : this.__display.orientation : " + this.__display.orientation);
+			seedsItem.setUserData("orientation",this.__display.orientation); //~ orion test
 			seedsItem.setUserData("oppositeList", correctionsList);
 			selectBox.add(seedsItem);
 
 			var correctionsItem = new qx.ui.form.ListItem("corrections");
 			correctionsItem.setUserData("filePrefix", "correction");
 			correctionsItem.setUserData("seedsList", correctionsList);
+this.debug("3443 : this.__display.orientation : " + this.__display.orientation);
+			correctionsItem.setUserData("orientation",this.__display.orientation); //~ orion test
 			correctionsItem.setUserData("oppositeList", seedsList);
 			selectBox.add(correctionsItem);
 			selectBox.addListener("changeSelection",function (e) {
@@ -3550,13 +3560,8 @@ qx.Class.define("desk.volView",
 						parameterMap.action = "slice_volume_color";
 						parameterMap.format = "0";
 					}
-					//~ orion test (change orientation param in volume_slice action : actions.xml)
-					//~ if(false)
-					//~ {
-						//~ parameterMap.slice_orientation = "1"; //~ ZY X
-						//~ parameterMap.slice_orientation = "2"; //~ XZ Y
-						parameterMap.slice_orientation = this.__display.orientation;
-					//~ }
+				//~ orion test (change orientation param in volume_slice action : actions.xml)
+					parameterMap.slice_orientation = this.__display.orientation;
 					var slicingLabel=new qx.ui.basic.Label("computing...");
 					this.__topLeftContainer.addAfter(slicingLabel,selectBox);
 					function getAnswer(e)
@@ -3590,6 +3595,7 @@ qx.Class.define("desk.volView",
 		
 		
        ////Create and add the orientation select box
+       //~ orion test
        __getOrientationSelectBox : function()
 		{
 			var selectBox= new qx.ui.form.SelectBox();
@@ -3756,7 +3762,7 @@ qx.Class.define("desk.volView",
 				seedsTypeSelectBoxItem=this.__seedsTypeSelectBox.getSelection()[0];
 			var filePrefix=seedsTypeSelectBoxItem.getUserData("filePrefix");
 			//~ orion test (change orientation param in volume_slice action : actions.xml)
-			switch(volView.__display.orientation)
+			switch(this.__display.orientation)
 			{
 				// ZY X
 				case 1 :
