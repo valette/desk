@@ -10,9 +10,15 @@ qx.Class.define("desk.meshView",
 {
 	extend : qx.core.Object,
 
-	construct : function(file, fileBrowser, mtime)
+	construct : function(file, fileBrowser, mtime, parameters)
 	{
 //		this.base(arguments);
+
+		if ( parameters != undefined )
+		{
+			if (parameters.convertVTK!==undefined)
+				this.setConvertVTK(parameters.convertVTK);
+		}
 
 		var window=new qx.ui.window.Window();
 		window.setLayout(new qx.ui.layout.VBox());
@@ -150,7 +156,8 @@ qx.Class.define("desk.meshView",
 
 	properties : {
 	// the "ready" property is true when the UI is ready.
-		ready : { init : false, check: "Boolean", event : "changeReady"}
+		ready : { init : false, check: "Boolean", event : "changeReady"},
+		convertVTK : { init : false, check: "Boolean"}
 	},
 
 	members : {
@@ -203,32 +210,54 @@ qx.Class.define("desk.meshView",
 
 			var fileBrowser=this.__fileBrowser;
 
-			var loadMeshIntoScene=function(file)
-			{
-				//console.log(label+" "+color[0]+" "+color[1]+" "+color[2]+" "+color[3]);
-				_this.loadCTMURL(fileBrowser.getFileURL(file)+"?nocache="+mtime, function (shape)
-					{
-						_this.__shapesArray[leaf]=shape;	
-						_this.__shapesVisibility[leaf]=true;
+			var extension=file.substring(file.length-4, file.length);
 
-						if (update==true)
-							_this.viewAll();
-						else{
-							if ((update!=null)&&(update!=false))
-							{
-								update();
-							}
+			function loadMeshIntoScene(file)
+			{
+			
+				function callback (shape)
+				{
+					_this.__shapesArray[ leaf ] = shape ;	
+					_this.__shapesVisibility[leaf] = true ;
+
+					if ( update == true )
+						_this.viewAll();
+					else {
+						if ( (update != null ) && ( update != false ) )	{
+							update();
 						}
-					}, mtime, color);
+					}
+				}
+
+				if ( mtime === undefined )
+					mtime=Math.random();
+
+				switch (extension)
+				{
+				case ".vtk":
+					if (_this.isConvertVTK()===false)
+					{
+						_this.loadVTKURL(fileBrowser.getFileURL(file)+"?nocache="+mtime, callback, mtime, color);
+						break;
+					}
+				default : 
+					_this.loadCTMURL(fileBrowser.getFileURL(file)+"?nocache="+mtime, callback, mtime, color);
+				}
 			}
 
-			var extension=file.substring(file.length-4, file.length);
+
 			switch (extension)
 			{
+			case ".vtk":
+				if (this.isConvertVTK()===false)
+				{
+					loadMeshIntoScene(file,mtime);
+					break;
+				}
 			case ".ply":
 			case ".obj":
 			case ".stl":
-			case ".vtk":
+
 				var parameterMap={
 					"action" : "mesh2ctm",
 					"input_mesh" : file,

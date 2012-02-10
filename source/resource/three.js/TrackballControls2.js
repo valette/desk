@@ -28,7 +28,7 @@ THREE.TrackballControls2 = function ( object ) {
 
 	this.rotateSpeed = 3;
 	this.zoomSpeed = 5;
-	this.panSpeed = 2;
+	this.panSpeed = 1.2;
 
 	this.noRotate = false;
 	this.noZoom = false;
@@ -238,6 +238,10 @@ THREE.TrackballControls2 = function ( object ) {
 		_this.checkDistances();
 
 		_this.object.lookAt( _this.target );
+
+		_dx=0;
+		_dy=0;
+		_alpha=0;
 
 	};
 
