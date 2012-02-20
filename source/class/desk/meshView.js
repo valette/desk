@@ -155,7 +155,7 @@ qx.Class.define("desk.meshView",
 	},
 
 	properties : {
-	// the "ready" property is true when the UI is ready.
+		// the "ready" property is true when the UI is ready.
 		ready : { init : false, check: "Boolean", event : "changeReady"},
 		convertVTK : { init : true, check: "Boolean"}
 	},
@@ -180,12 +180,11 @@ qx.Class.define("desk.meshView",
 		__camera : null,
 		__renderer : null,
 		__controls : null,
-		
 
 		// array used to store linked volume viewers
 		__volumes : null,
 
-		// array containing the queue of meses to load 
+		// array containing the queue of meshes to load 
 		__meshesToLoad : null,
 
 		// number defining the current number of loaders
@@ -230,18 +229,21 @@ qx.Class.define("desk.meshView",
 				}
 
 				if ( mtime === undefined )
+				{
 					mtime=Math.random();
+					console.log("mtime : "+mtime);
+				}
 
 				switch (extension)
 				{
 				case ".vtk":
 					if (_this.isConvertVTK()===false)
 					{
-						_this.loadVTKURL(fileBrowser.getFileURL(file)+"?nocache="+mtime, callback, mtime, color);
+						_this.loadVTKURL(fileBrowser.getFileURL(file)+"?nocache="+mtime, callback, color);
 						break;
 					}
 				default : 
-					_this.loadCTMURL(fileBrowser.getFileURL(file)+"?nocache="+mtime, callback, mtime, color);
+					_this.loadCTMURL(fileBrowser.getFileURL(file)+"?nocache="+mtime, callback, color);
 				}
 			}
 
@@ -257,6 +259,7 @@ qx.Class.define("desk.meshView",
 			case ".ply":
 			case ".obj":
 			case ".stl":
+			case ".off":
 
 				var parameterMap={
 					"action" : "mesh2ctm",
@@ -268,7 +271,6 @@ qx.Class.define("desk.meshView",
 					var req = e.getTarget();
 					var splitResponse=req.getResponseText().split("\n");
 					var outputDir=splitResponse[0];
-			//		console.log(req.getResponseText());
 					var mtime=splitResponse[splitResponse.length-3];
 					loadMeshIntoScene(outputDir+"\/"+"mesh.ctm",mtime);
 				}
@@ -363,6 +365,7 @@ qx.Class.define("desk.meshView",
 					case ".stl":
 					case ".vtk":
 					case ".ctm":
+					case ".off":
 						this.__readFile (file, mtime, [1.0,1.0,1.0,1.0], true);
 						break;
 
@@ -555,17 +558,6 @@ qx.Class.define("desk.meshView",
 
 				scene.add( camera );
 
-
-//				controls.rotateSpeed = 5.0;
-//				controls.zoomSpeed = 5;
-//				controls.panSpeed = 2;
-
-//				controls.noZoom = false;
-//				controls.noPan = false;
-
-//				controls.staticMoving = true;
-//				controls.dynamicDampingFactor = 0.3;
-
 				// lights
 
 				var dirLight = new THREE.DirectionalLight( 0xffffff );
@@ -624,11 +616,6 @@ qx.Class.define("desk.meshView",
 									event.getDocumentTop()-origin.top);
 					});
 
-/*													event.isShiftPressed(),
-													,
-													event.isMiddlePressed(),
-													event.isRightPressed());});
-*/
 				htmlContainer.addListener("mousemove", function (event)	{
 					if (draggingInProgress)
 					{
@@ -655,7 +642,7 @@ qx.Class.define("desk.meshView",
 		},
 
 
-		loadVTKURL : function (url, callback, mtime, color) {
+		loadVTKURL : function (url, callback, color) {
 
 			var loader=new THREE.VTKLoader();
 			var _this=this;
@@ -677,10 +664,10 @@ qx.Class.define("desk.meshView",
 							callback(mesh);
 							}
 						_this.viewAll();
-					}, mtime);
+					});
 		},
 
-		loadCTMURL : function (url, callback, mtime, color) {
+		loadCTMURL : function (url, callback, color) {
 
 			if (this.__meshesToLoad==null)
 				this.__meshesToLoad=new Array();
@@ -723,7 +710,7 @@ qx.Class.define("desk.meshView",
 							_this.viewAll();
 							_this.__numberOfLoaders--;
 							_this.__loadQueue();
-						}, useWorker, useBuffers);//  mtime);
+						}, useWorker, useBuffers);
 				this.__loadQueue();
 			}
 		},
