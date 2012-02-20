@@ -59,11 +59,11 @@ THREE.TrackballControls2 = function ( object ) {
 	_panStart = new THREE.Vector2(),
 	_panEnd = new THREE.Vector2();
 
-	_dx=0;
-	_dy=0;
-	_xinit=0;
-	_yinit=0;
-	_alpha=0;
+	this._dx=0;
+	this._dy=0;
+	this._xinit=0;
+	this._yinit=0;
+	this._alpha=0;
 
 	// methods
 
@@ -112,31 +112,34 @@ THREE.TrackballControls2 = function ( object ) {
 			quaternion = new THREE.Quaternion(),
 			angle;
 
-		if ( _dy != 0 ) {
-			angle = _this.rotateSpeed * _dy / _this.radius;
+		if ( _this._dy != 0 ) {
+			angle = _this.rotateSpeed * _this._dy / _this.radius;
 
 			axis.cross( _eye, _this.object.up ).normalize();
 			quaternion.setFromAxisAngle( axis, angle );
 
 			quaternion.multiplyVector3( _eye );
 			quaternion.multiplyVector3( _this.object.up );
+			_this._dy=0;
 		}
 
-		if ( _dx != 0 ) {
-			angle = -_this.rotateSpeed * _dx / _this.radius;
+		if ( _this._dx != 0 ) {
+			angle = -_this.rotateSpeed * _this._dx / _this.radius;
 			axis.copy( _this.object.up ).normalize();
 			quaternion.setFromAxisAngle( axis , angle );
 
 			quaternion.multiplyVector3( _eye );
 			quaternion.multiplyVector3( _this.object.up );
+			_this._dx=0;
 		}
 
-		if ( _alpha != 0 ) {
+		if ( _this._alpha != 0 ) {
 			axis.copy( _eye ).normalize();
-			quaternion.setFromAxisAngle( axis , _alpha );
+			quaternion.setFromAxisAngle( axis , _this._alpha );
 
 	//		quaternion.multiplyVector3( _eye );
 			quaternion.multiplyVector3( _this.object.up );
+			_this._alpha=0;
 		}
 
 	};
@@ -239,10 +242,6 @@ THREE.TrackballControls2 = function ( object ) {
 
 		_this.object.lookAt( _this.target );
 
-		_dx=0;
-		_dy=0;
-		_alpha=0;
-
 	};
 
 
@@ -311,8 +310,8 @@ THREE.TrackballControls2 = function ( object ) {
 				_panStart = _panEnd = _this.getMouseOnScreen( x, y );
 
 			}
-			_xinit=x;
-			_yinit=y;
+			_this._xinit=x;
+			_this._yinit=y;
 		}
 
 	};
@@ -330,9 +329,9 @@ THREE.TrackballControls2 = function ( object ) {
 
 		}
 
-		_dx=0;
-		_dy=0;
-		_alpha=0;
+		_this._dx=0;
+		_this._dy=0;
+		_this._alpha=0;
 
 		if ( _state === STATE.NONE ) {
 
@@ -340,8 +339,8 @@ THREE.TrackballControls2 = function ( object ) {
 
 		} else if ( _state === STATE.ROTATE && !_this.noRotate ) {
 
-			_dx=x-_xinit;
-			_dy=y-_yinit;
+			_this._dx=x-_this._xinit;
+			_this._dy=y-_this._yinit;
 
 		} else if ( _state === STATE.ZOOM && !_this.noZoom ) {
 
@@ -355,8 +354,8 @@ THREE.TrackballControls2 = function ( object ) {
 
 			var p1 = new THREE.Vector2( x - 0.5 * this.screen.width,
 								y - 0.5 * this.screen.height);
-			var p2 = new THREE.Vector2( _xinit - 0.5 * this.screen.width,
-								_yinit - 0.5 * this.screen.height);
+			var p2 = new THREE.Vector2( _this._xinit - 0.5 * this.screen.width,
+								_this._yinit - 0.5 * this.screen.height);
 
 			var n1 = p1.length();
 			var n2 = p2.length();
@@ -369,19 +368,19 @@ THREE.TrackballControls2 = function ( object ) {
 
 				if ( cosAlpha > 1 )
 				{
-					_alpha = 0;
+					_this._alpha = 0;
 				}
 				else
 				{
-					_alpha = Math.acos( cosAlpha );
+					_this._alpha = Math.acos( cosAlpha );
 				}
 				if ( sinAlpha > 0 )
-					_alpha = -_alpha;
+					_this._alpha = _this._alpha;
 			}
 		}
 
-		_xinit = x;
-		_yinit = y;
+		_this._xinit = x;
+		_this._yinit = y;
 
 		if ( _this.onUpdate != null )
 			_this.onUpdate();

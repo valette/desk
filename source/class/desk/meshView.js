@@ -187,8 +187,8 @@ qx.Class.define("desk.meshView",
 		// array containing the queue of meshes to load 
 		__meshesToLoad : null,
 
-		// number defining the current number of loaders
-		__numberOfLoaders : 0,
+		// number defining the maximum number of loaders
+		__numberOfLoaders : 16,
 
 		// stores the scene bounding box diagonal length, usefull for updating
 		__boudingBoxDiagonalLength : 0,
@@ -692,9 +692,9 @@ qx.Class.define("desk.meshView",
 			var useWorker = true
 			var useBuffers = true;
 
-			if (this.__numberOfLoaders<32){
+			if (this.__numberOfLoaders>0){
 				this.__meshesToLoad.shift();
-				this.__numberOfLoaders++;
+				this.__numberOfLoaders--;
 				var loader = new THREE.CTMLoader( this.__renderer.context );
 				loader.load (parameters.url,
 					function(geom){
@@ -714,7 +714,7 @@ qx.Class.define("desk.meshView",
 								parameters.callback(mesh);
 								}
 							_this.viewAll();
-							_this.__numberOfLoaders--;
+							_this.__numberOfLoaders++;
 							_this.__loadQueue();
 						}, useWorker, useBuffers);
 				this.__loadQueue();
