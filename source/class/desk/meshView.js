@@ -10,9 +10,15 @@ qx.Class.define("desk.meshView",
 {
 	extend : qx.core.Object,
 
-	construct : function(file, fileBrowser, mtime)
+	construct : function(file, fileBrowser, mtime, parameters)
 	{
 //		this.base(arguments);
+
+		if ( parameters != undefined )
+		{
+			if (parameters.convertVTK!==undefined)
+				this.setConvertVTK(parameters.convertVTK);
+		}
 
 		var window=new qx.ui.window.Window();
 		window.setLayout(new qx.ui.layout.VBox());
@@ -149,8 +155,9 @@ qx.Class.define("desk.meshView",
 	},
 
 	properties : {
-	// the "ready" property is true when the UI is ready.
-		ready : { init : false, check: "Boolean", event : "changeReady"}
+		// the "ready" property is true when the UI is ready.
+		ready : { init : false, check: "Boolean", event : "changeReady"},
+		convertVTK : { init : true, check: "Boolean"}
 	},
 
 	members : {
@@ -173,12 +180,11 @@ qx.Class.define("desk.meshView",
 		__camera : null,
 		__renderer : null,
 		__controls : null,
-		
 
 		// array used to store linked volume viewers
 		__volumes : null,
 
-		// array containing the queue of meses to load 
+		// array containing the queue of meshes to load 
 		__meshesToLoad : null,
 
 		// number defining the current number of loaders
@@ -203,32 +209,58 @@ qx.Class.define("desk.meshView",
 
 			var fileBrowser=this.__fileBrowser;
 
-			var loadMeshIntoScene=function(file)
-			{
-				//console.log(label+" "+color[0]+" "+color[1]+" "+color[2]+" "+color[3]);
-				_this.loadCTMURL(fileBrowser.getFileURL(file)+"?nocache="+mtime, function (shape)
-					{
-						_this.__shapesArray[leaf]=shape;	
-						_this.__shapesVisibility[leaf]=true;
+			var extension=file.substring(file.length-4, file.length);
 
-						if (update==true)
-							_this.viewAll();
-						else{
-							if ((update!=null)&&(update!=false))
-							{
-								update();
-							}
+			function loadMeshIntoScene(file)
+			{
+			
+				function callback (shape)
+				{
+					_this.__shapesArray[ leaf ] = shape ;	
+					_this.__shapesVisibility[leaf] = true ;
+
+					if ( update == true )
+						_this.viewAll();
+					else {
+						if ( (update != null ) && ( update != false ) )	{
+							update();
 						}
-					}, mtime, color);
+					}
+				}
+
+				if ( mtime === undefined )
+				{
+					mtime=Math.random();
+					console.log("mtime : "+mtime);
+				}
+
+				switch (extension)
+				{
+				case ".vtk":
+					if (_this.isConvertVTK()===false)
+					{
+						_this.loadVTKURL(fileBrowser.getFileURL(file)+"?nocache="+mtime, callback, color);
+						break;
+					}
+				default : 
+					_this.loadCTMURL(fileBrowser.getFileURL(file)+"?nocache="+mtime, callback, color);
+				}
 			}
 
-			var extension=file.substring(file.length-4, file.length);
+
 			switch (extension)
 			{
+			case ".vtk":
+				if (this.isConvertVTK()===false)
+				{
+					loadMeshIntoScene(file,mtime);
+					break;
+				}
 			case ".ply":
 			case ".obj":
 			case ".stl":
-			case ".vtk":
+			case ".off":
+
 				var parameterMap={
 					"action" : "mesh2ctm",
 					"input_mesh" : file,
@@ -239,7 +271,6 @@ qx.Class.define("desk.meshView",
 					var req = e.getTarget();
 					var splitResponse=req.getResponseText().split("\n");
 					var outputDir=splitResponse[0];
-			//		console.log(req.getResponseText());
 					var mtime=splitResponse[splitResponse.length-3];
 					loadMeshIntoScene(outputDir+"\/"+"mesh.ctm",mtime);
 				}
@@ -334,6 +365,7 @@ qx.Class.define("desk.meshView",
 					case ".stl":
 					case ".vtk":
 					case ".ctm":
+					case ".off":
 						this.__readFile (file, mtime, [1.0,1.0,1.0,1.0], true);
 						break;
 
@@ -359,7 +391,6 @@ qx.Class.define("desk.meshView",
 						{
 							var color=[1.0,1.0,1.0,1.0];
 							var mesh=meshes[n];
-							var Label=mesh.getAttribute("Label");
 							if (mesh.hasAttribute("color"))
 							{
 								var colorstring=mesh.getAttribute("color");
@@ -384,7 +415,14 @@ qx.Class.define("desk.meshView",
 								}
 							}
 
-							this.__readFile(path+"/"+mesh.getAttribute("Mesh"), mtime, color, update, false);
+							var xmlName;
+							if (mesh.hasAttribute("Mesh")) {
+								xmlName=mesh.getAttribute("Mesh");
+								}
+							else {
+								xmlName=mesh.getAttribute("mesh");
+								}
+							this.__readFile(path+"/"+xmlName, mtime, color, update, false);
 						}
 						break;
 					default : 
@@ -526,17 +564,6 @@ qx.Class.define("desk.meshView",
 
 				scene.add( camera );
 
-
-//				controls.rotateSpeed = 5.0;
-//				controls.zoomSpeed = 5;
-//				controls.panSpeed = 2;
-
-//				controls.noZoom = false;
-//				controls.noPan = false;
-
-//				controls.staticMoving = true;
-//				controls.dynamicDampingFactor = 0.3;
-
 				// lights
 
 				var dirLight = new THREE.DirectionalLight( 0xffffff );
@@ -595,11 +622,6 @@ qx.Class.define("desk.meshView",
 									event.getDocumentTop()-origin.top);
 					});
 
-/*													event.isShiftPressed(),
-													,
-													event.isMiddlePressed(),
-													event.isRightPressed());});
-*/
 				htmlContainer.addListener("mousemove", function (event)	{
 					if (draggingInProgress)
 					{
@@ -626,24 +648,19 @@ qx.Class.define("desk.meshView",
 		},
 
 
-		loadVTKURL : function (url, callback, mtime, color) {
+		loadVTKURL : function (url, callback, color) {
 
 			var loader=new THREE.VTKLoader();
 			var _this=this;
-			var color2=[];
-			for (var i=0;i<4;i++)
-				color2[i]=color[i];
 
-			loader.load (url,					
-				(function(mycolor) {
-					return function(geom){
+			loader.load (url, function(geom){
 						geom.computeBoundingBox();
 
-						var threecolor=new THREE.Color().setRGB(mycolor[0],mycolor[1],mycolor[2]);
+						var threecolor=new THREE.Color().setRGB(color[0],color[1],color[2]);
 						var material =  new THREE.MeshLambertMaterial( {
 							 color:threecolor.getHex(),
-							 opacity: mycolor[3]} );
-						if (mycolor[3]<0.999) material.transparent=true;
+							 opacity: color[3]} );
+						if (color[3]<0.999) material.transparent=true;
 						var mesh = new THREE.Mesh(geom, material );
 						mesh.doubleSided=true;
 
@@ -653,23 +670,15 @@ qx.Class.define("desk.meshView",
 							callback(mesh);
 							}
 						_this.viewAll();
-					}
-					}
-					) ( color2 ), mtime);
+					});
 		},
 
-		loadCTMURL : function (url, callback, mtime, color) {
-
-			var url2=url+"";
-
-			var color2=[];
-			for (var i=0;i<4;i++)
-				color2[i]=color[i];
+		loadCTMURL : function (url, callback, color) {
 
 			if (this.__meshesToLoad==null)
 				this.__meshesToLoad=new Array();
 
-			var mesh={url : url2, color : color2, callback : callback};
+			var mesh={url : url, color : color, callback : callback};
 			this.__meshesToLoad[this.__meshesToLoad.length]=mesh;
 			this.__loadQueue();
 		},
@@ -707,7 +716,7 @@ qx.Class.define("desk.meshView",
 							_this.viewAll();
 							_this.__numberOfLoaders--;
 							_this.__loadQueue();
-						}, useWorker, useBuffers);//  mtime);
+						}, useWorker, useBuffers);
 				this.__loadQueue();
 			}
 		},

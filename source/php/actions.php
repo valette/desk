@@ -389,6 +389,12 @@ foreach ($actions->children() as $action)
 						echo("\nDone\n");
 						system("LD_LIBRARY_PATH=/home/visu/src/openCTM/tools /home/visu/src/openCTM/tools/ctmconv mesh.ply mesh.ctm| tee action.log");				
 					}
+					else if ($extension=="stl")
+					{
+						system("/home/visu/src/vtkSurfaceBuild/bin/stl2ply $meshFileName | tee action.log");
+						echo("\nDone\n");
+						system("LD_LIBRARY_PATH=/home/visu/src/openCTM/tools /home/visu/src/openCTM/tools/ctmconv mesh.ply mesh.ctm| tee action.log");				
+					}
 					else
 					{
 						system("LD_LIBRARY_PATH=/home/visu/src/openCTM/tools /home/visu/src/openCTM/tools/ctmconv $meshFileName mesh.ctm | tee action.log");				

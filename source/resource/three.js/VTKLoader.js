@@ -12,7 +12,7 @@ THREE.VTKLoader.prototype = new THREE.Loader();
 THREE.VTKLoader.prototype.constructor = THREE.VTKLoader;
 THREE.VTKLoader.prototype.supr = THREE.Loader.prototype;
 
-THREE.VTKLoader.prototype.load = function( url, callback, opt_mtime) {
+THREE.VTKLoader.prototype.load = function( url, callback ) {
 
 	this.onLoadStart();
 
@@ -188,10 +188,7 @@ THREE.VTKLoader.prototype.load = function( url, callback, opt_mtime) {
 	}
 
 	var xmlhttp=new XMLHttpRequest();
-	if (opt_mtime==null)
-		xmlhttp.open("GET",url,true);
-	else
-		xmlhttp.open("GET",url+"?nocache=" + opt_mtime,true);
+	xmlhttp.open("GET",url,true);
 
 	function handler()
 	{
