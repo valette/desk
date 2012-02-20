@@ -32,6 +32,7 @@
 <parameter name="format" type="string" default="vtk" prefix="-f "/>
 <parameter name="manifold_output" type="int" default="0" min="0" max="1" prefix="-m "/>
 <parameter name="anisotropy" type="int" default="0" min="0" max="1" prefix="-a "/>
+<parameter name="colors" type="file" prefix="-x "/>
 </action>
 
 <action name="mesh2vtk" executable="/home/visu/src/vtkSurfaceBuild/bin/mesh2vtk">
