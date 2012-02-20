@@ -157,7 +157,7 @@ qx.Class.define("desk.meshView",
 	properties : {
 	// the "ready" property is true when the UI is ready.
 		ready : { init : false, check: "Boolean", event : "changeReady"},
-		convertVTK : { init : false, check: "Boolean"}
+		convertVTK : { init : true, check: "Boolean"}
 	},
 
 	members : {
@@ -659,20 +659,15 @@ qx.Class.define("desk.meshView",
 
 			var loader=new THREE.VTKLoader();
 			var _this=this;
-			var color2=[];
-			for (var i=0;i<4;i++)
-				color2[i]=color[i];
 
-			loader.load (url,					
-				(function(mycolor) {
-					return function(geom){
+			loader.load (url, function(geom){
 						geom.computeBoundingBox();
 
-						var threecolor=new THREE.Color().setRGB(mycolor[0],mycolor[1],mycolor[2]);
+						var threecolor=new THREE.Color().setRGB(color[0],color[1],color[2]);
 						var material =  new THREE.MeshLambertMaterial( {
 							 color:threecolor.getHex(),
-							 opacity: mycolor[3]} );
-						if (mycolor[3]<0.999) material.transparent=true;
+							 opacity: color[3]} );
+						if (color[3]<0.999) material.transparent=true;
 						var mesh = new THREE.Mesh(geom, material );
 						mesh.doubleSided=true;
 
@@ -682,23 +677,15 @@ qx.Class.define("desk.meshView",
 							callback(mesh);
 							}
 						_this.viewAll();
-					}
-					}
-					) ( color2 ), mtime);
+					}, mtime);
 		},
 
 		loadCTMURL : function (url, callback, mtime, color) {
 
-			var url2=url+"";
-
-			var color2=[];
-			for (var i=0;i<4;i++)
-				color2[i]=color[i];
-
 			if (this.__meshesToLoad==null)
 				this.__meshesToLoad=new Array();
 
-			var mesh={url : url2, color : color2, callback : callback};
+			var mesh={url : url, color : color, callback : callback};
 			this.__meshesToLoad[this.__meshesToLoad.length]=mesh;
 			this.__loadQueue();
 		},
