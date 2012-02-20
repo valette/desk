@@ -117,6 +117,7 @@
 <description>(multi-objects) segments a volume using graph cuts and clustering techniques</description>
 <parameter prefix="-i " name="input_volume" type="file" required="true"/>
 <parameter prefix="-x " name="seeds" type="file" required="true"/>
+<parameter prefix="-ad " name="adjacencies" type="file" required="true"/>
 <parameter prefix="-cf " name="clustering" type="file" required="true"/>
 <parameter prefix="-t " name="unary_binary_weight" type="float" required="true" min="0" max="1" default="0.2"/>
 <anchor text="-op seg"/>
@@ -131,7 +132,7 @@
 <anchor text=" -f meta -x -u -v"/>
 </action>
 
-<action name="set_permissions" executable="chmod a+rw" void="true">
+<action name="set_permissions" executable="chmod g+rw" void="true">
 <description>Give write permissions to group</description>
 <parameter name="directory" type="directory" required="true"/>
 <anchor text="-R"/>

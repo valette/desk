@@ -39,7 +39,7 @@ qx.Class.define("desk.segTools",
 							});
 		this.addListener("close", function(event)
 		{
-this.debug("this.addListener(close, function(event) !!!");
+//~ this.debug("42 : >>>>>>>   this.addListener(close, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 			for(var i=0; i<this.__master.__viewers.length; i++)
 			{
 				var children = this.__master.__viewers[i].__topLeftContainer.getChildren(); //~ CAUTION ! ---> This only works if the "Paint" toggle button is the last child
@@ -274,6 +274,7 @@ this.debug("this.addListener(close, function(event) !!!");
 		__drawZoomedCanvas : null,
 		*/
 		
+		__settingButtons : false,
 		
 		
 		
@@ -315,7 +316,7 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 			
             tools.__penSize.addListener("changeValue", function(event)
 			{
-//~ tools.debug("tools.__penSize.addListener(changeValue, function(event) !!!");
+//~ tools.debug("319 : >>>>>>>   tools.__penSize.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				for(var i=0; i<theMaster.__viewers.length; i++)
 					theMaster.__viewers[i].__htmlContextLabels.lineWidth = event.getData()*Math.sqrt(theMaster.__viewers[i].__scale[0]*theMaster.__viewers[i].__scale[1]);
 				tools.__eraserCursor.set({width: Math.ceil(tools.__eraserCoeff*tools.__penSize.getValue()*tools.__curView.__display.curCtxtZoom/tools.__curView.__scale[0]+1),
@@ -324,14 +325,13 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
             
 			tools.__penSize.addListener("mouseout", function(event)
 			{
-//~ tools.debug("tools.__penSize.addListener(mouseout, function(event) !!!");
-				tools.__penSize.releaseCapture();
+//~ tools.debug("328 : >>>>>>>   tools.__penSize.addListener(mouseout, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+				//~ tools.__penSize.releaseCapture();
 				
 				//~ if(tools.__curView.__drawingCanvas != null)
 						//~ tools.__curView.__drawingCanvas.resetCursor();
 				//~ if(tools.__eraserCursor != null)
 						//~ tools.__eraserCursor.resetCursor();
-				//~ tools.__penSize.releaseCapture();
 			}, this);
 			
 			var penLabel = new qx.ui.basic.Label("Brush : ");
@@ -356,13 +356,15 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 			
             tools.__eraserCursor.addListener("mousedown", function(event)
 			{
-//~ tools.debug("tools.__eraserCursor.addListener(mousedown, function(event) !!!");
-				tools.__eraserCursor.capture();
+//~ tools.debug("359 : >>>>>>>   tools.__eraserCursor.addListener(mousedown, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+				//~ tools.__eraserCursor.capture();
 				
-				//~ if(tools.__curView.__drawingCanvas != null)
-						//~ tools.__curView.__drawingCanvas.resetCursor();
-				//~ if(tools.__eraserCursor != null)
-						//~ tools.__eraserCursor.resetCursor();
+				if(tools.__curView.__imageCanvas != null)
+					tools.__curView.__imageCanvas.resetCursor();
+				if(tools.__curView.__drawingCanvas != null)
+						tools.__curView.__drawingCanvas.resetCursor();
+				if(tools.__eraserCursor != null)
+						tools.__eraserCursor.resetCursor();
 						
 				tools.__curView.__mouseActionActive = true;
             ////Erase
@@ -389,8 +391,8 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 			
             tools.__eraserCursor.addListener("mousemove", function(event)
 			{
-//~ tools.debug("tools.__eraserCursor.addListener(mousemove, function(event) !!!");
-				tools.__eraserCursor.capture();
+tools.debug("394 : >>>>>>>   tools.__eraserCursor.addListener(mousemove, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+				//~ tools.__eraserCursor.capture();
 				tools.__curView.__getPosition(event,false);	// No scaling so coordinates are compatible with placeEraser function
                 var tempMargin = 4/tools.__curView.__display.curCtxtZoom;
                 var leftLimit = tempMargin;
@@ -424,17 +426,21 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
             
             tools.__eraserCursor.addListener("mouseup", function(event)
 			{
-//~ tools.debug("tools.__eraserCursor.addListener(mouseup, function(event) !!!");
+//~ tools.debug("429 : >>>>>>>   tools.__eraserCursor.addListener(mouseup, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
                 tools.__curView.__mouseData.mouseMiddleDownFlag = false;
                 tools.__curView.__mouseData.mouseLeftDownFlag = false;
                 tools.__curView.__mouseActionActive = false;
-                tools.__eraserCursor.releaseCapture();
+                //~ tools.__eraserCursor.releaseCapture();
+				if(tools.__curView.__drawingCanvas != null)
+					tools.__curView.__drawingCanvas.resetCursor();
+				if(tools.__eraserCursor != null)
+					tools.__eraserCursor.resetCursor();
             },this);
 			
 			tools.__eraserCursor.addListener("mouseover", function(event)
 			{
-//~ tools.debug("tools.__eraserCursor.addListener(mouseover, function(event) !!!");
-				tools.__eraserCursor.capture();
+tools.debug("442 : >>>>>>>   tools.__eraserCursor.addListener(mouseover, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+				//~ tools.__eraserCursor.capture();
 				if((tools.__curView.__mouseData.mouseLeftDownFlag)&&(tools.__curView.__mouseActionMode==4))
 					tools.__curView.__eraseFnct(true);
 					
@@ -446,16 +452,16 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 			
 			tools.__eraserCursor.addListener("mouseout", function(event)
 			{
-//~ tools.debug("tools.__eraserCursor.addListener(mouseout, function(event) !!!");
+tools.debug("455 : >>>>>>>   tools.__eraserCursor.addListener(mouseout, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				if((tools.__curView.__mouseData.mouseLeftDownFlag)&&(tools.__curView.__mouseActionMode==4))
-					tools.__eraserCursor.capture();
+					//~ tools.__eraserCursor.capture();
 				if((tools.__curView.__mouseData.mouseLeftDownFlag)&&(tools.__curView.__mouseActionMode==4))
 					tools.__curView.__eraseFnct(true);
 			}, this);
 			
-	//~ tools.debug("451 : tools.__eraserCursor.addListener(mousewheel, tools.__curView.__mouseWheelHandler, this); !");
+	//~ tools.debug("tools.__eraserCursor.addListener(mousewheel, tools.__curView.__mouseWheelHandler, this); !");
 			//~ tools.__eraserCursor.addListener("mousewheel", tools.__curView.__mouseWheelHandler, this);
-			// go see  segTools  Line: 822
+			// go see  segTools  Line: 841 : tools.addListenerOnce("appear", function(event))
 
 			tools.getLayoutParent().add(tools.__eraserCursor);
 			
@@ -471,13 +477,13 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 			
 			tools.__eraserButton.addListener("changeValue", function(event)
 			{
-//~ tools.debug("tools.__eraserButton.addListener(changeValue, function(event) !!!");
+//~ tools.debug("480 : >>>>>>>   tools.__eraserButton.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				for(var i=0; i<theMaster.__viewers.length; i++)
 				{
 					//~ if((event.getData()==true)&&(!theMaster.__viewers[i].__isSegWindow))
 					if(event.getData()==true)
 					{
-						tools.__eraserCursor.capture();
+						//~ tools.__eraserCursor.capture();
 						theMaster.__viewers[i].__setMouseActionMode(4);
 					}
 					else
@@ -554,7 +560,7 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
                 });
 				labelBox.addListener("click", function()
 				{
-//~ tools.debug("labelBox.addListener(click, function(event) !!!");
+//~ tools.debug("563 : >>>>>>>   labelBox.addListener(click, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 					for(var i=0; i<theMaster.__viewers.length; i++)
 					{
 						theMaster.__viewers[i].__drawingCanvasParams.paintFlag = true;
@@ -627,7 +633,7 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 					if(this.responseXML!=null)
 					{
 						var response = this.responseXML;
-tools.debug("625 : response : " + response);
+tools.debug("636 : colorsParamRequest -> response : " + response);
 						nbLabels = response.getElementsByTagName("color").length;
 						tools.__labelColors=new Array(nbLabels);
 						for(var i=0; i<nbLabels; i++)
@@ -660,7 +666,8 @@ tools.debug("625 : response : " + response);
 						alert('Global Params : "Fetched the wrong page" OR "Network error"');
 				}
 			};
-			colorsParamRequest.open("GET", "/visu/colorsKnee.xml?nocache="+Math.random(), true);
+			//~ colorsParamRequest.open("GET", "/visu/colorsKnee.xml?nocache="+Math.random(), true);
+			colorsParamRequest.open("GET", "/visu/colors7.xml?nocache="+Math.random(), true);
 			colorsParamRequest.send(null);
 
 			//~ tools.__seedsTypeSelectBox = tools.__getSeedsTypeSelectBox();
@@ -675,7 +682,7 @@ tools.debug("625 : response : " + response);
 			whileDrawingDrwngOpacitySlider.setValue(100);
 			whileDrawingDrwngOpacitySlider.addListener("changeValue", function(event)
 			{
-//~ tools.debug("whileDrawingDrwngOpacitySlider.addListener(changeValue, function(event) !!!");
+//~ tools.debug("685 : >>>>>>>   whileDrawingDrwngOpacitySlider.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				for(var i=0; i<theMaster.__viewers.length; i++)
 					theMaster.__viewers[i].__drawingCanvas.set({opacity: event.getData()/100});
 			},this);
@@ -735,15 +742,20 @@ tools.debug("625 : response : " + response);
 
 			tools.addListener("changeSessionDirectory", function (e)
 			{
-//~ tools.debug("tools.addListener(changeSessionDirectory, function(event) !!!");
+//~ tools.debug("745 : >>>>>>>   tools.addListener(changeSessionDirectory, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				var directory=e.getData();
 				medianFilteringAction.setOutputDirectory(directory);
 				clusteringAction.setOutputDirectory(directory);
 				segmentationAction.setOutputDirectory(directory);
 				meshingAction.setOutputDirectory(directory);
+				//~ var adjacenciesXMLFileName = "/var/www/html" + "/visu/adjacencies3.xml?nocache="+Math.random();
+				//~ var adjacenciesXMLFileName = "/visu/adjacencies3.xml?nocache="+Math.random();
+				//~ var adjacenciesXMLFileName = "data/adjacencies3.xml?nocache="+Math.random();
+				var adjacenciesXMLFileName = "data/adjacencies7.xml";
 				segmentationAction.setActionParameters({
 					"input_volume" : volFile,
-					"seeds" : tools.getSessionDirectory()+"/seeds.xml"});
+					"seeds" : tools.getSessionDirectory()+"/seeds.xml",
+					"adjacencies" : adjacenciesXMLFileName});
 				clusteringAction.setActionParameters({
 					"input_volume" : volFile});
 				meshingAction.setActionParameters({
@@ -753,7 +765,7 @@ tools.debug("625 : response : " + response);
 			tools.__startSegmentationButton=new qx.ui.form.Button("Start segmentation");
 			tools.__startSegmentationButton.addListener("execute", function ()
 			{
-//~ tools.debug("tools.__startSegmentationButton.addListener(execute, function(event) !!!");
+//~ tools.debug("768 : >>>>>>>   tools.__startSegmentationButton.addListener(execute, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				tools.__startSegmentationButton.setEnabled(false);
 				tools.__segmentationInProgress=true;
 				for(var i=0; i<theMaster.__viewers.length; i++)
@@ -768,7 +780,7 @@ tools.debug("625 : response : " + response);
 			var meshingButton=new qx.ui.form.Button("extract meshes");
 			tools.__extractMeshesButton=meshingButton;
 			meshingButton.addListener("execute", function () {
-//~ tools.debug("meshingButton.addListener(execute, function(event) !!!");
+//~ tools.debug("783 : >>>>>>>   meshingButton.addListener(execute, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				tools.__startSegmentationButton.setEnabled(false);
 				meshingButton.setEnabled(false);
 				meshingAction.executeAction();
@@ -778,11 +790,11 @@ tools.debug("625 : response : " + response);
 			var segmentationViewer=null;
 			medianFilteringAction.addListener("actionUpdated", function ()
 			{
-//~ tools.debug("medianFilteringAction.addListener(actionUpdated, function(event) !!!");
+//~ tools.debug("794 : >>>>>>>   medianFilteringAction.addListener(actionUpdated, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				tools.__startSegmentationButton.setEnabled(true);
 				if (segmentationViewer==null)
 				{
-	this.debug("719 : segmentationViewer=new desk.volView__classTest...............................");
+	tools.debug("797 : segmentationViewer=new desk.volView__classTest...............................");
 					segmentationViewer=new desk.volView__classTest(theMaster,
 											medianFilteringAction.getOutputDirectory()+"/output.mhd",
 											fileBrowser,tools.__curView.__display.orientation);
@@ -791,19 +803,19 @@ tools.debug("625 : response : " + response);
 											//~ fileBrowser);
 			//~ segmentationViewer.linkToVolumeViewer(tools.__curView); //~ later...
 					segmentationViewer.getWindow().addListener("beforeClose", function (e) {
-//~ tools.debug("segmentationViewer.getWindow().addListener(beforeClose, function(event) !!!");
+//~ tools.debug("806 : >>>>>>>   segmentationViewer.getWindow().addListener(beforeClose, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 							segmentationViewer=null;});
 				}
 				else
 				{
 					segmentationViewer.__updateVolume();
 				}
-				segmentationViewer.__isSegWindow = true; //~ segColor test
+				//~ segmentationViewer.__isSegWindow = true; //~ segColor test
 			}, this);
 
 			meshingAction.addListener("actionUpdated", function ()
 			{
-//~ tools.debug("meshingAction.addListener(actionUpdated, function(event) !!!");
+//~ tools.debug("818 : >>>>>>>  meshingAction.addListener(actionUpdated, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				meshingButton.setEnabled(true);
 				tools.__startSegmentationButton.setEnabled(true);
 				var meshesViewer=new desk.meshView(tools.getSessionDirectory()+"/meshes/meshes.xml",
@@ -812,9 +824,9 @@ tools.debug("625 : response : " + response);
 			
 			//~ theMaster.__resetSeedsList(); //~ later // go see volMaster Line : 1077
 			
-			tools.addListener("appear", function(event)
+			tools.addListenerOnce("appear", function(event)
 			{
-//~ tools.debug("tools.addListener(appear, function(event) !!!");
+tools.debug("829 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				tools.setCaption("Tools -- " + tools.__curView.getCaption());
 				
 				if(tools.__seedsTypeSelectBox==null)
@@ -824,10 +836,9 @@ tools.debug("625 : response : " + response);
 					// from  segTools  Line : 609
 				}
 				
-				tools.debug("820 : volView.__master.__tools.__eraserCursor.addListener(mousewheel, volView.__mouseWheelHandler, this); !");
+				tools.debug("839 : tools.__eraserCursor.addListener(mousewheel, tools.__curView.__mouseWheelHandler, tools.__eraserCursor); !");
 				if(!tools.__curView.__isSegWindow)
-					for(var i=0; i<theMaster.__viewers.length; i++)
-						tools.__eraserCursor.addListener("mousewheel", theMaster.__viewers[i].__mouseWheelHandler);
+						tools.__eraserCursor.addListener("mousewheel", tools.__curView.__mouseWheelHandler, tools.__eraserCursor);
 				// from  segTools  Line: 430
 			}, this);
            
@@ -848,49 +859,58 @@ this.debug("------->>>   tools.__getPaintPanelVisibilitySwitch : function()   !!
 			
 			var paintPaneVisibilitySwitch=new qx.ui.form.ToggleButton("Paint");
 			
-////////////  UNUSED................................................................................................................................
-			//~ var displayBorder = tools.getContentPaddingBottom();
-			//~ var scrollBarsLength = 16;
-			//~ var secondRightWidth = tools.__rightPanelWidth + 0*scrollBarsLength; //~ resizing : value measured manually during debug... // with scroll container
-			//~ var firstRightWidthAtSelectSession = tools.__rightPanelWidth + tools.getLayout().getSpacing(); //~ resizing : value measured manually during debug... // with scroll container
-			//~ var volViewAloneMinWidth = 1;
-			//~ var firstExecution = false;
-			
 			paintPaneVisibilitySwitch.addListener("changeValue", function (e)
 			{
-//~ tools.debug("paintPaneVisibilitySwitch.addListener(changeValue, function(event) !!!");
-				if (e.getData())
+//~ tools.debug("864 : >>>>>>>  paintPaneVisibilitySwitch.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+				if(!tools.__settingButtons)
 				{
-					//~ if (tools.__mainRightContainer==null)
-					//~ {
-						//~ tools.__buildRightContainer();
-					//~ }
-					tools.__mainRightContainer.setVisibility("visible");
+					tools.__settingButtons = true;
+					if (e.getData())
+					{
+						tools.__mainRightContainer.setVisibility("visible");
+						
+						if(tools.__seedsTypeSelectBox!=null) // go see :  selectBox.addListenerOnce("appear", function(event)
+							for(var i=0; i<theMaster.__viewers.length; i++)
+							{
+								var list = tools.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")];
+								list.setVisibility("visible");
+							}
+						
+						tools.open(); //~ winSeparate test
+						tools.moveTo(tools.__curView.getBounds().left + tools.__curView.getBounds().width + 5 + 35, tools.__curView.getBounds().top); //~ winSeparate test
 					
-					if(tools.__seedsTypeSelectBox!=null) // go see :  selectBox.addListenerOnce("appear", function(event)
-						for(var i=0; i<theMaster.__viewers.length; i++)
-						{
-							var list = tools.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")];
-							list.setVisibility("visible");
-						}
-					
-					tools.open(); //~ winSeparate test
-					tools.moveTo(tools.__curView.getBounds().left + tools.__curView.getBounds().width + 5 + 35, tools.__curView.getBounds().top); //~ winSeparate test
+						theMaster.__updateAll();
+					}
+					else
+					{
+						tools.__mainRightContainer.setVisibility("excluded");
+						
+						if(tools.__seedsTypeSelectBox!=null) // go see :  selectBox.addListenerOnce("appear", function(event)
+							for(var i=0; i<theMaster.__viewers.length; i++)
+							{
+								var list = tools.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")];
+								list.setVisibility("excluded");
+								theMaster.__viewers[i].__drawingCanvasParams.drawingContext.clearRect(-16, -16, theMaster.__viewers[i].__dimensions[0]*theMaster.__viewers[i].__scaledWidth+32, theMaster.__viewers[i].__dimensions[1]*theMaster.__viewers[i].__scaledHeight+32);
+							}
+						
+						tools.close(); //~ winSeparate test
+					}
+					for(var i=0; i<theMaster.__viewers.length; i++)
+					{
+						var children = theMaster.__viewers[i].__topLeftContainer.getChildren(); //~ CAUTION ! ---> This only works if the "Paint" toggle button is the last child
+						children[children.length-1].setValue(e.getData());
+					}
 				}
-				else
+				//~ var viewerSync = true;
+				tools.__settingButtons = false;
+				for(var i=0; i<theMaster.__viewers.length; i++)
 				{
-					tools.__mainRightContainer.setVisibility("excluded");
-					
-					if(tools.__seedsTypeSelectBox!=null) // go see :  selectBox.addListenerOnce("appear", function(event)
-						for(var i=0; i<theMaster.__viewers.length; i++)
-						{
-							var list = tools.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")];
-							list.setVisibility("excluded");
-						}
-					
-					tools.close(); //~ winSeparate test
-					tools.__curView.__drawingCanvasParams.drawingContext.clearRect(-16, -16, tools.__curView.__dimensions[0]*tools.__curView.__scaledWidth+32, tools.__curView.__dimensions[1]*tools.__curView.__scaledHeight+32);
+					var children = theMaster.__viewers[i].__topLeftContainer.getChildren(); //~ CAUTION ! ---> This only works if the "Paint" toggle button is the last child
+					if(children[children.length-1].getValue()!=e.getData())
+						//~ viewerSync = false;
+						tools.__settingButtons = true;
 				}
+				//~ tools.__settingButtons = !viewerSync;
 			}, this);
 
 
@@ -966,7 +986,7 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 			
 			sessionsList.addListener("changeSelection", function(e)
 			{
-//~ tools.debug("sessionsList.addListener(changeSelection, function(event) !!!");
+//~ tools.debug("989 : >>>>>>>  sessionsList.addListener(changeSelection, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				if (!updateInProgress)
 				{
 					var listItem=sessionsList.getSelection()[0];
@@ -984,7 +1004,7 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 
 
 			button.addListener("execute", function (e){
-//~ tools.debug("button.addListener(execute, function(event) !!!");
+//~ tools.debug("1007 : >>>>>>>  button.addListener(execute, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				theMaster.__resetSeedsList();
 				theMaster.__updateAll();
 				fileBrowser.createNewSession(volFile,sessionType, updateList);
@@ -1057,7 +1077,7 @@ this.debug("------->>>   tools.__getSeedsTypeSelectBox : function()   !!!!!!!");
 			
 			selectBox.addListener("changeSelection",function (e)
 			{
-//~ tools.debug("selectBox.addListener(changeSelection, function(event) !!!");
+//~ tools.debug("1080 : >>>>>>>  selectBox.addListener(changeSelection, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				var SelectedItem = selectBox.getSelection()[0];
 				var selectedOppositeList;
 				var selectedSeedsList;
@@ -1077,7 +1097,7 @@ this.debug("------->>>   tools.__getSeedsTypeSelectBox : function()   !!!!!!!");
 			
 			selectBox.addListenerOnce("appear", function(event)
 			{
-//~ tools.debug("selectBox.addListenerOnce(appear, function(event) !!!");
+tools.debug("1100 : >>>>>>>  selectBox.addListener(appear, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				for(var i=0; i<theMaster.__viewers.length; i++)
 				{
 					var list = selectBox.getSelection()[0].getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")];

@@ -103,7 +103,7 @@ qx.Class.define("desk.volView__classTest",
 
 		this.addListener("move", function(event)
 		{
-//~ this.debug("this.addListener(move, function(event) !!!");
+this.debug("106 : >>>>>>>  this.addListener(move, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 			//~ if(this.__master.__tools!=null)
 				//~ this.__master.__tools.moveTo(this.getBounds().left + this.getBounds().width + 5 + 35,
 											//~ this.getBounds().top); //~ winSeparate test
@@ -135,7 +135,7 @@ qx.Class.define("desk.volView__classTest",
 		
 		this.addListener("changeZIndex", function(event)
 		{
-//~ this.debug("this.addListener(changeZIndex, function(event) !!!");
+//~ this.debug("138 : >>>>>>>  this.addListener(changeZIndex, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 			if(this.__getSeedsLists("seedsList")!=null)
 			{
 				var seedsList = this.__getSeedsLists("seedsList");
@@ -152,7 +152,7 @@ qx.Class.define("desk.volView__classTest",
 		
 		this.addListener("mousemove", function(event)
 		{
-//~ this.debug("106 : >>>>>>>   addListener(mousemove, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+this.debug("155 : >>>>>>>  this.addListener(mousemove, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 			//~ if((this.__mouseActionActive==true)&&(this.__mouseActionMode==4))
 			//~ {
 				//~ if(this.__drawingCanvas != null)
@@ -177,11 +177,33 @@ qx.Class.define("desk.volView__classTest",
 			
 		}, this);
 		
+		this.addListener("mousedown", function(event)
+		{
+//~ this.debug("182 : >>>>>>>   this.addListener(mousemove, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+			if(this.__imageCanvas != null)
+				this.__imageCanvas.resetCursor();
+			if(this.__drawingCanvas != null)
+				this.__drawingCanvas.resetCursor();
+			if((this.__master.__tools.__eraserCursor != null)&&(!this.__isSegWindow))
+				this.__master.__tools.__eraserCursor.resetCursor();
+		}, this);
+		
 		this.addListener("changeActive", function(event)
 		{
-	//~ this.debug("732 : >>>>>>>   addListener(changeDisplay, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ this.debug("193 : >>>>>>>   this.addListener(changeActive, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 			if((event.getData())&&(this.__master.__tools!=null))
 				this.__setAsCurrent();
+		}, this);
+		
+		this.addListener("beforeClose", function(event)
+		{
+//~ this.debug("200 : >>>>>>>   this.addListener(beforeClose, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+			if(this.__master.__tools.__seedsTypeSelectBox!=null) // go see :  selectBox.addListenerOnce("appear", function(event)
+			{
+				var list = this.__master.__tools.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList")[this.getUserData("viewerIndex")];
+				if(typeof list != "undefined")
+					list.setVisibility("excluded");
+			}
 		}, this);
 		
 		var volView = this;
@@ -329,6 +351,7 @@ qx.Class.define("desk.volView__classTest",
 		__mouseMoveHandler : null,
 		__mouseUpHandler : null,
 		__mouseOverHandler : null,
+		__mouseOutHandler : null,
 
 		// the image used to load volume slices
 		__loadImage : null,
@@ -404,17 +427,9 @@ this.debug("------->>>   volView.__setVolume : function()   !!!!!!!");
 			volView.__file=file;
 		},
 		
-		__getDimensions : function ()
-		{
-this.debug("------->>>   volView.__getDimensions : function()   !!!!!!!");
-
-			var volView = this;
-			return (volView.__dimensions);
-		},
-		
 		getDimensions : function ()
 		{
-this.debug("------->>>   volView.__getDimensions : function()   !!!!!!!");
+this.debug("------->>>   volView.getDimensions : function()   !!!!!!!");
 
 			var volView = this;
 			return (volView.__dimensions);
@@ -422,28 +437,77 @@ this.debug("------->>>   volView.__getDimensions : function()   !!!!!!!");
 		
 		getCornersCoordinates : function ()
 		{
-this.debug("------->>>   volView.__getCornersCoordinates : function()   !!!!!!!");
+this.debug("------->>>   volView.getCornersCoordinates : function()   !!!!!!!");
 			
 			var volView = this;
 			
-			var z=volView.__origin[2]+(volView.__spinner.getValue()+volView.__extent[4])*volView.__spacing[2];
-			var xmin=volView.__origin[0]+volView.__extent[0]*volView.__spacing[0];
-			var xmax=volView.__origin[0]+volView.__extent[1]*volView.__spacing[0];
-			var ymin=volView.__origin[1]+volView.__extent[2]*volView.__spacing[1];
-			var ymax=volView.__origin[1]+volView.__extent[3]*volView.__spacing[1];
 			var coordinates=[];
-			coordinates[0]=xmin;
-			coordinates[1]=ymin;
-			coordinates[2]=z;
-			coordinates[3]=xmax;
-			coordinates[4]=ymin;
-			coordinates[5]=z;
-			coordinates[6]=xmax;
-			coordinates[7]=ymax;
-			coordinates[8]=z;
-			coordinates[9]=xmin;
-			coordinates[10]=ymax;
-			coordinates[11]=z;
+			
+			// orion test (change orientation param in volume_slice action : actions.xml)
+			switch(volView.__display.orientation)
+			{
+				// ZY X
+				case 1 :
+					var zmin=volView.__origin[0]+volView.__extent[0]*volView.__spacing[0];
+					var zmax=volView.__origin[0]+volView.__extent[1]*volView.__spacing[0];
+					var ymin=volView.__origin[1]+volView.__extent[2]*volView.__spacing[1];
+					var ymax=volView.__origin[1]+volView.__extent[3]*volView.__spacing[1];
+					var x = volView.__origin[2]+(volView.__spinner.getValue()+volView.__extent[4])*volView.__spacing[2];
+					coordinates[0]=x;
+					coordinates[1]=ymin;
+					coordinates[2]=zmax;
+					coordinates[3]=x;
+					coordinates[4]=ymin;
+					coordinates[5]=zmin;
+					coordinates[6]=x;
+					coordinates[7]=ymax;
+					coordinates[8]=zmin;
+					coordinates[9]=x;
+					coordinates[10]=ymax;
+					coordinates[11]=zmax;
+					break;
+				// XZ Y
+				case 2 :
+					var xmin=volView.__origin[0]+volView.__extent[0]*volView.__spacing[0];
+					var xmax=volView.__origin[0]+volView.__extent[1]*volView.__spacing[0];
+					var zmin=volView.__origin[1]+volView.__extent[2]*volView.__spacing[1];
+					var zmax=volView.__origin[1]+volView.__extent[3]*volView.__spacing[1];
+					var y = volView.__origin[2]+(volView.__extent[4])*volView.__spacing[2];
+					y = y - (volView.__dimensions[2] - volView.__spinner.getValue())*volView.__spacing[2];
+					coordinates[0]=xmin;
+					coordinates[1]=y;
+					coordinates[2]=zmin;
+					coordinates[3]=xmax;
+					coordinates[4]=y;
+					coordinates[5]=zmin;
+					coordinates[6]=xmax;
+					coordinates[7]=y;
+					coordinates[8]=zmax;
+					coordinates[9]=xmin;
+					coordinates[10]=y;
+					coordinates[11]=zmax;
+					break;
+				// XY Z
+				default :
+					var xmin=volView.__origin[0]+volView.__extent[0]*volView.__spacing[0];
+					var xmax=volView.__origin[0]+volView.__extent[1]*volView.__spacing[0];
+					var ymin=volView.__origin[1]+volView.__extent[2]*volView.__spacing[1];
+					var ymax=volView.__origin[1]+volView.__extent[3]*volView.__spacing[1];
+					var z = volView.__origin[2]+(volView.__spinner.getValue()+volView.__extent[4])*volView.__spacing[2];
+					coordinates[0]=xmin;
+					coordinates[1]=ymin;
+					coordinates[2]=z;
+					coordinates[3]=xmax;
+					coordinates[4]=ymin;
+					coordinates[5]=z;
+					coordinates[6]=xmax;
+					coordinates[7]=ymax;
+					coordinates[8]=z;
+					coordinates[9]=xmin;
+					coordinates[10]=ymax;
+					coordinates[11]=z;
+			}
+			
 			return (coordinates);
 		},
 		
@@ -468,20 +532,11 @@ this.debug("------->>>   volView.__updateVolume : function()   !!!!!!!");
 				"input_volume" : volView.__file,
 				"output_directory" : "cache\/"};
 				
-			//~ segColor test
-			/*
-			if((volView.__isSegWindow)&&(selection==selectables[1]))
-			{
-				parameterMap.action = "slice_volume_color";
-				parameterMap.format = "0";
-			}
-			*/
-			
 		//~ orion test (change orientation param in volume_slice action : actions.xml)
 			parameterMap.slice_orientation = volView.__display.orientation;
 			
 			//~ segColor test
-			/*
+			//~ /*
 			if(volView.__formatSelectBox!=null)
 			{
 				//~ volView.debug("volView.__formatSelectBox : " + volView.__formatSelectBox);
@@ -490,7 +545,16 @@ this.debug("------->>>   volView.__updateVolume : function()   !!!!!!!");
 				var selection = volView.__formatSelectBox.getSelection();
 				var selectables = volView.__formatSelectBox.getSelectables();
 			}
-			*/
+			//~ */
+			
+			//~ segColor test
+			//~ /*
+			if((volView.__isSegWindow)&&(selection==selectables[1]))
+			{
+				//~ parameterMap.action = "slice_volume_color";
+				parameterMap.format = "0";
+			}
+			//~ */
 			
 			function getAnswer(e)
 			{
@@ -510,7 +574,7 @@ this.debug("------->>>   volView.__updateVolume : function()   !!!!!!!");
 						if(this.responseXML!=null)
 						{
 							var response = this.responseXML;
-volView.debug("505 : response : " + response);
+volView.debug("577 : globalParamRequest -> response : " + response);
 							var volume=response.getElementsByTagName("volume")[0];
 							if (volume==null)
 								return;
@@ -696,7 +760,7 @@ volView.debug("505 : response : " + response);
 								volView.debug("volView.__scaledWidth : " + volView.__scaledWidth);
 								volView.debug("volView.__scaledHeight : " + volView.__scaledHeight);
 							}
-							/*
+							//~ /*
 							if( volView.__mainLeftContainer!=null)
 								if( volView.__mainLeftContainer.getChildren()[0]!=null)
 								{
@@ -735,7 +799,7 @@ volView.debug("505 : response : " + response);
 								}
 								volView.__slider.setMaximum(volView.__dimensions[2]-1);
 							}
-							*/
+							//~ */
 							
 							if (buildUI)
 							{
@@ -744,7 +808,7 @@ volView.debug("505 : response : " + response);
 							}
 							else
 							{
-								volView.__updateAll();
+								volView.__master.__updateAll();
 							}
 						}
 						else
@@ -766,25 +830,26 @@ volView.debug("505 : response : " + response);
 			volView.__fileBrowser.getActions().launchAction(parameterMap, getAnswer);
 			
 			//~ segColor test
-			/*
+			//~ /*
+	//~ volView.debug("811 : selectables : " + selectables);
 			if(volView.__formatSelectBox!=null)
-			if(volView.__isSegWindow)
-			{
-				volView.__formatSelectBox.setSelection([selectables[1]]);
-				volView.__formatSelectBox.close();
-			}
-			else
-			{
-				volView.__formatSelectBox.setSelection([selectables[0]]);
-				volView.__formatSelectBox.close();
-			}
-			*/
+				if(volView.__isSegWindow)
+				{
+					volView.__formatSelectBox.setSelection([selectables[1]]);
+					volView.__formatSelectBox.close();
+				}
+				else
+				{
+					volView.__formatSelectBox.setSelection([selectables[0]]);
+					volView.__formatSelectBox.close();
+				}
+			//~ */
 			
 		},
 		
 		__updateImage : function ()
 		{
-this.debug("------->>>   volView.__updateImage : function()   !!!!!!!");
+//~ this.debug("------->>>   volView.__updateImage : function()   !!!!!!!");
 
 			var volView = this;
 			
@@ -792,9 +857,13 @@ this.debug("------->>>   volView.__updateImage : function()   !!!!!!!");
 			
 			volView.__loadImage.onload = function()
 			{
-	volView.debug("787 : " + volView + ".__loadImage.onload = function () !!!");
+	//~ volView.debug("787 : " + volView + ".__loadImage.onload = function () !!!");
 				if(volView.__drawingCanvasParams.drawingContext!=null)
+				{
+					if(volView.__isSegWindow) //~ segColor test
+						volView.__colorSegImage();
 					volView.__drawZoomedCanvas(volView.__display.curCtxtZoom,true);
+				}
 			};
 
 			var selection = volView.__formatSelectBox.getSelection()[0];
@@ -821,9 +890,42 @@ this.debug("------->>>   volView.__updateImage : function()   !!!!!!!");
 			}
 		},
 		
+		__colorSegImage : function ()
+		{
+			var volView = this;
+			var tools = volView.__master.__tools;
+			
+			var dataDesc = volView.__htmlContextImage.getImageData(0, 0, volView.__dimensions[0], volView.__dimensions[1]);
+            var data = dataDesc.data;
+			var labelColors = tools.__labelColors;
+			for(var i=0; i<data.length; i+=4)
+			{
+				var rightColorIndex = 0;
+				for(var j=0; j!=labelColors.length; j++)
+				{
+					var color = labelColors[j];
+					if(data[i]-1==j)
+					{
+						rightColorIndex = j;
+					}
+				}
+				var rightColor = labelColors[rightColorIndex];
+				data[i] = rightColor.red;
+				data[i+1] = rightColor.green;
+				data[i+2] = rightColor.blue;
+				data[i+3] = 255;
+			}
+			dataDesc.data = data;
+			volView.__pixels = data;
+			volView.__imageData = dataDesc;
+			volView.fireEvent("changeSlice");
+			
+			return dataDesc;
+		},
+		
 		getSliceImageData : function()
 		{
-this.debug("------->>>   volView.__getSliceImageData : function()   !!!!!!!");
+this.debug("------->>>   volView.getSliceImageData : function()   !!!!!!!");
 
 			var volView = this;
 			return volView.__imageData;
@@ -831,7 +933,7 @@ this.debug("------->>>   volView.__getSliceImageData : function()   !!!!!!!");
 		
 		getSlicePixels : function()
 		{
-this.debug("------->>>   volView.__getSlicePixels : function()   !!!!!!!");
+this.debug("------->>>   volView.getSlicePixels : function()   !!!!!!!");
 
 			var volView = this;
 			return volView.__pixels;
@@ -853,7 +955,7 @@ this.debug("------->>>   volView.linkToVolumeViewer : function()   !!!!!!!");
 				//~ myVolumeViewer.__saveDisplay(); //~ Sorry, there's problems with this. Try again later...
 				myVolumeViewer.addListener("changeDisplay", function(event)
 				{
-	//~ this.debug("732 : >>>>>>>   addListener(changeDisplay, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ myVolumeViewer.debug("958 : >>>>>>>   myVolumeViewer.addListener(changeDisplay, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 					if(displayControl==false)
 					{
 						displayControl = true;
@@ -864,7 +966,7 @@ this.debug("------->>>   volView.linkToVolumeViewer : function()   !!!!!!!");
 				});
 				volumeViewer.addListener("changeDisplay", function(event)
 				{
-	//~ this.debug("742 : >>>>>>>   addListener(changeDisplay, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ volumeViewer.debug("969 : >>>>>>>   volumeViewer.addListener(changeDisplay, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 					if(displayControl==false)
 					{
 						displayControl = true;
@@ -881,7 +983,7 @@ this.debug("------->>>   volView.linkToVolumeViewer : function()   !!!!!!!");
 					applyLink();
 				else
 					volumeViewer.addListenerOnce("changeReady", function () {
-	//~ this.debug("758 : >>>>>>>   addListener(changeReady, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ volumeViewer.debug("986 : >>>>>>>   volumeViewer.addListener(changeReady, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 						applyLink()});
 			}
 
@@ -892,7 +994,7 @@ this.debug("------->>>   volView.linkToVolumeViewer : function()   !!!!!!!");
 				else
 				{
 					myVolumeViewer.addListenerOnce("changeReady", function () {
-	//~ this.debug("769 : >>>>>>>   addListener(changeReady, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ this.debug("997 : >>>>>>>   myVolumeViewer.addListener(changeReady, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 						meReady();});
 				}
 			}
@@ -925,24 +1027,34 @@ this.debug("------->>>   volView.linkToVolumeViewer : function()   !!!!!!!");
 							volView.__drawingCanvasParams.paintFlag = false;
 						}
 					}
-					volView.__drawingCanvas.releaseCapture();
+					//~ volView.__drawingCanvas.releaseCapture();
 			}
 
 			if ((mode!=4)&&(tools.__eraserCursor!=null)&&(!volView.__isSegWindow))
-				tools.__eraserCursor.exclude();
+			{
+					tools.__eraserCursor.exclude();
+					tools.__eraserButton.setValue(false);
+			}
 			
-			//~ if(volView.__drawingCanvas != null)
-					//~ volView.__drawingCanvas.resetCursor();
-			//~ if((tools.__eraserCursor != null)&&(!volView.__isSegWindow))
-					//~ tools.__eraserCursor.resetCursor();
+			if(volView.__imageCanvas != null)
+				volView.__imageCanvas.resetCursor();
+			if(volView.__drawingCanvas != null)
+				volView.__drawingCanvas.resetCursor();
+			if((tools.__eraserCursor != null)&&(!volView.__isSegWindow))
+				tools.__eraserCursor.resetCursor();
 			
 			volView.__mouseActionMode = mode;
 		},
 		
 		__setAsCurrent : function ()
 		{
-//~ this.debug("------->>>   volView.__setAsCurrent : function()   !!!!!!!");
-			this.__master.__tools.__curView = this;
+this.debug("------->>>   volView.__setAsCurrent : function()   !!!!!!!");
+			var isNotSeg = false;
+			for(var i=0; i<this.__master.__viewers.length; i++)
+				if(this==this.__master.__viewers[i])
+					isNotSeg = true;
+			if(isNotSeg)
+				this.__master.__tools.__curView = this;
 		},
         ////Computes on image mouse position
 		////If(scaling) applies zoom factor for relative coordinates (on zoomed window)
@@ -993,16 +1105,16 @@ this.debug("------->>>   volView.linkToVolumeViewer : function()   !!!!!!!");
 			
 			var tempDecaleX = volView.__display.hrzntlShift/volView.__display.curCtxtZoom + volView.__mouseData.recentX-volView.__display.onDispMouseHrzPos;
 			var tempDecaleY = volView.__display.vrtclShift/volView.__display.curCtxtZoom + volView.__mouseData.recentY-volView.__display.onDispMouseVrtPos;
-			//~ if(volView.__display.curCtxtZoom<1) //~ zoomOUt
-			//~ {
-				//~ tempDecaleX = volView.__display.hrzntlShift*volView.__display.curCtxtZoom + volView.__mouseData.recentX-volView.__display.onDispMouseHrzPos;
-				//~ tempDecaleY = volView.__display.vrtclShift*volView.__display.curCtxtZoom + volView.__mouseData.recentY-volView.__display.onDispMouseVrtPos;
-			//~ }
+			if(volView.__display.curCtxtZoom<1) //~ zoomOUt
+			{
+				tempDecaleX = volView.__display.hrzntlShift*volView.__display.curCtxtZoom + volView.__mouseData.recentX-volView.__display.onDispMouseHrzPos;
+				tempDecaleY = volView.__display.vrtclShift*volView.__display.curCtxtZoom + volView.__mouseData.recentY-volView.__display.onDispMouseVrtPos;
+			}
 			volView.__display.hrzntlShift = tempDecaleX;
 			volView.__display.vrtclShift = tempDecaleY;
 			volView.__display.hrzntlShift = volView.__display.hrzntlShift*volView.__display.curCtxtZoom;
 			volView.__display.vrtclShift = volView.__display.vrtclShift*volView.__display.curCtxtZoom;
-			if(volView.__display.curCtxtZoom<1)
+			if(volView.__display.curCtxtZoom<1) //~ zoomOUt
 			{
 				volView.__display.hrzntlShift = volView.__display.hrzntlShift/volView.__display.curCtxtZoom;
 				volView.__display.vrtclShift = volView.__display.vrtclShift/volView.__display.curCtxtZoom;
@@ -1020,7 +1132,10 @@ this.debug("------->>>   volView.linkToVolumeViewer : function()   !!!!!!!");
 			var canvasImage = curView.__loadImage;
 			curView.__imgCanvasParams.imgContext.setTransform(1,0,0,1,0,0);
 			curView.__htmlContextImage.drawImage(canvasImage, 0, 0);
+		if(!curView.__isSegWindow)
 			var outImg = curView.__processBrCr(curView.__imgCanvasParams.brightness, curView.__imgCanvasParams.contrast, true, curView);
+		else
+			var outImg = volView.__colorSegImage();
 			curView.__htmlContextImage.putImageData(outImg, 0, 0, canvasImage.width, canvasImage.height, 0, 0, curView.__scaledWidth, curView.__scaledHeight);
 			curView.__imgCanvasParams.imgContext.drawImage(curView.__htmlCanvasImage, 0, 0);
 			curView.__drawingCanvasParams.drawingContext.setTransform(1,0,0,1,0,0);
@@ -1058,7 +1173,7 @@ this.debug("------->>>   volView.linkToVolumeViewer : function()   !!!!!!!");
 					if(this.responseXML!=null)
 					{
 						var response = this.responseXML;
-volView.debug("1048 : response : " + response);
+volView.debug("1176 : loadDispRequest -> response : " + response);
 						var display=response.getElementsByTagName("display")[0];
 						if (display==null)
 							return;
@@ -1173,8 +1288,8 @@ volView.debug("1048 : response : " + response);
                 volView.__drawingCanvasParams.drawingContext.fill();
 				volView.__drawingCanvasParams.drawingContext.setTransform(1,0,0,1,0,0);
             }
-            else
-              	volView.__drawingCanvas.releaseCapture();
+            //~ else
+              	//~ volView.__drawingCanvas.releaseCapture();
 		},
 
 	////Function applies brightness and contrast values
@@ -1185,6 +1300,9 @@ volView.debug("1048 : response : " + response);
 				var volView = curView;
 			else
 				var volView = this;
+				
+			var tools = volView.__master.__tools;
+			
 			var canvasImage = volView.__loadImage;
             var brightness = inBrightness; //parsing ???
             var contrast = inContrast; //parsing ???
@@ -1200,53 +1318,38 @@ volView.debug("1048 : response : " + response);
             if (typeof volView.__htmlContextImage.getImageData == "function")
             {
                 dataDesc = volView.__htmlContextImage.getImageData(0, 0, volView.__dimensions[0], volView.__dimensions[1]);
-                var data = dataDesc.data;
-                var p = canvasImage.width * canvasImage.height;
-                var pix = p*4, pix1, pix2;
-                var mul, add;
-                if (contrast != 1) {
-                    if (legacy) {
-                        mul = contrast;
-                        add = (brightness - 128) * contrast + 128;
-                    } else {
-                        mul = brightMul * contrast;
-                        add = - contrast * 128 + 128;
-                    }
-                } else {  // this if-then is not necessary anymore, is it?
-                    if (legacy) {
-                        mul = 1;
-                        add = brightness;
-                    } else {
-                        mul = brightMul;
-                        add = 0;
-                    }
-                }
-
-	            var r, g, b,a,c;
-	            var r1=1/256;
-	            var r2=1/(256*256);
-	            var max=volView.__scalarMax;
-	            var min=volView.__scalarMin;
-	            var shift=-min;
-	            var scale=255/(max-min);
-				if(volView.__isSegWindow) //~ segColor test
+ 				if(!volView.__isSegWindow) //~ segColor test
 				{
-					pix=0;
-					while (p--){
-						c= data[pix];
-						c=c* mul + add;
-						if (c>255)
-							c=255;
-						else if (c<0)
-							c=0;
-						data[pix++]=c;
-						data[pix++]=c;
-						data[pix++]=c;
-						data[pix++]=255;
+					var data = dataDesc.data;
+					var p = canvasImage.width * canvasImage.height;
+					var pix = p*4, pix1, pix2;
+					var mul, add;
+					if (contrast != 1) {
+						if (legacy) {
+							mul = contrast;
+							add = (brightness - 128) * contrast + 128;
+						} else {
+							mul = brightMul * contrast;
+							add = - contrast * 128 + 128;
+						}
+					} else {  // this if-then is not necessary anymore, is it?
+						if (legacy) {
+							mul = 1;
+							add = brightness;
+						} else {
+							mul = brightMul;
+							add = 0;
+						}
 					}
-				}
-				else
-				{
+
+					var r, g, b,a,c;
+					var r1=1/256;
+					var r2=1/(256*256);
+					var max=volView.__scalarMax;
+					var min=volView.__scalarMin;
+					var shift=-min;
+					var scale=255/(max-min);
+					
 					if (volView.__formatSelectBox.getSelection()[0].getLabel()=="png")
 					{
 						switch (volView.__scalarSize)
@@ -1407,11 +1510,11 @@ volView.debug("1048 : response : " + response);
 							data[pix++]=255;
 							}
 					}
+					dataDesc.data = data;
+					volView.__pixels = data;
+					volView.__imageData = dataDesc;
+					volView.fireEvent("changeSlice");
 				}
-				dataDesc.data = data;
-				volView.__pixels=data;
-				volView.__imageData=dataDesc;
-				volView.fireEvent("changeSlice");
 				return dataDesc;
 			}
 			else
@@ -1493,7 +1596,7 @@ volView.debug("1048 : response : " + response);
 			var volView = this;
 			var tools = volView.__master.__tools;
 			
-			tools.__eraserCursor.capture();
+			//~ tools.__eraserCursor.capture();
 			volView.__currentSeedsModified=true;
 			var tempX, tempY;
 			if(autoComplete)
@@ -1544,7 +1647,7 @@ volView.debug("1048 : response : " + response);
 		
 		__buildUI : function ()
 		{
-this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
+//~ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 
 			var volView = this;
 			var tools = volView.__master.__tools;
@@ -1557,14 +1660,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 			var mLCL=new qx.ui.layout.VBox();
 			mLCL.setSpacing(spacing);
 			volView.__mainLeftContainer = new qx.ui.container.Composite(mLCL);
-			//~ var scrollContainer = new qx.ui.container.Scroll(volView.__mainLeftContainer); //~ resizing Scroll
-			//~ scrollContainer.set({scrollbarX : "on", scrollbarY : "on"});
-            //~ var listeners = qx.event.Registration.getManager(scrollContainer).getListeners(scrollContainer, "mousewheel");
-            //~ if (listeners)
-                //~ for (var i = 0; i < listeners.length; i++)
-                    //~ scrollContainer.removeListener("mousewheel", listeners[i].handler, scrollContainer);
-			//~ volView.__window.add(scrollContainer, {flex: 2}); //~ resizing Scroll
-			volView.__window.add(volView.__mainLeftContainer, {flex:1}); //~ comment when resizing Scroll
+			volView.__window.add(volView.__mainLeftContainer, {flex:1});
 		
 			var tLCL=new qx.ui.layout.HBox();
 			tLCL.setSpacing(spacing);
@@ -1584,7 +1680,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 
 			volView.__brghtnssCntrstButton.addListener("changeValue", function(event)
 			{
-	//~ this.debug("1125 : >>>>>>>   addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+volView.debug("1683 : >>>>>>>   volView.__brghtnssCntrstButton.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				if(event.getData())
 					volView.__setMouseActionMode(1);
 				else
@@ -1598,7 +1694,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 			
 			resetBrCrButton.addListener("execute", function(event)
 			{
-	//~ this.debug("1139 : >>>>>>>   addListener(execute, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ volView.debug("1697 : >>>>>>>   resetBrCrButton.addListener(execute, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
                 volView.__imgCanvasParams.brightness = 0;
                 volView.__imgCanvasParams.contrast = 0;
 				volView.__drawZoomedCanvas(volView.__display.curCtxtZoom,true);
@@ -1611,7 +1707,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 			var useLblsColorsCheckBox = new qx.ui.form.CheckBox("Use Label Colors");
 			useLblsColorsCheckBox.addListener("changeValue", function(event) //~ segColor test
 			{
-	//~ this.debug("1152 : >>>>>>>   addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ volView.debug("1710 : >>>>>>>   useLblsColorsCheckBox.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				volView.__isSegWindow = event.getData();
 				volView.__updateVolume();
 			},this);
@@ -1635,28 +1731,44 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
             spinner.setMinimum(0);
             spinner.setValue(0);
             slider.addListener("changeValue",function(e){
-	//~ this.debug("1176 : >>>>>>>   addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ volView.debug("1734 : >>>>>>>   slider.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
                 spinner.setValue(volView.__dimensions[2]-1-e.getData());});
             
+			
+			var tLCTL=new qx.ui.layout.HBox();
+			tLCTL.setSpacing(spacing);
+			var topLeftContainerTop = new qx.ui.container.Composite(tLCTL);
+			topLeftContainerTop.add(volView.__brghtnssCntrstButton);
+			topLeftContainerTop.add(resetBrCrButton);
+			topLeftContainerTop.add(new qx.ui.core.Spacer(), {flex : 3});
+			volView.__formatSelectBox = volView.__getFormatSelectBox();
+			topLeftContainerTop.add(volView.__formatSelectBox);
+			topLeftContainerTop.add(new qx.ui.core.Spacer(), {flex : 2});
+			topLeftContainerTop.add(useLblsColorsCheckBox); //~ segColor test
+			
+			var tLCBL=new qx.ui.layout.HBox();
+			tLCBL.setSpacing(spacing);
+			var topLeftContainerBottom = new qx.ui.container.Composite(tLCBL);
+			topLeftContainerBottom.add(spinner);
+			topLeftContainerBottom.add(new qx.ui.core.Spacer(), {flex : 5});
 			volView.__orientationSelect = volView.__getOrientationSelectBox();
+			topLeftContainerBottom.add(volView.__orientationSelect);
+			topLeftContainerBottom.add(new qx.ui.core.Spacer(), {flex : 5});
+			topLeftContainerBottom.add(volView.__getDragAndDropLabel());
 			
-			volView.__topLeftContainer.add(spinner);
-			volView.__topLeftContainer.add(volView.__brghtnssCntrstButton);
-			volView.__topLeftContainer.add(resetBrCrButton);
-			//~ volView.__topLeftContainer.add(useLblsColorsCheckBox); //~ segColor test
+			var tLCTNBL=new qx.ui.layout.VBox();
+			tLCTNBL.setSpacing(spacing);
+			var topLeftContainerTopNBottom = new qx.ui.container.Composite(tLCTNBL);
+			volView.__topLeftContainer.add(topLeftContainerTopNBottom, {flex : 7});
+			topLeftContainerTopNBottom.add(topLeftContainerTop);
+			topLeftContainerTopNBottom.add(topLeftContainerBottom);
 			
+			volView.__topLeftContainer.add(new qx.ui.core.Spacer(), {flex : 1});
 			
-			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 7});
-			volView.__formatSelectBox=volView.__getFormatSelectBox();
-			volView.__topLeftContainer.add(volView.__formatSelectBox);
-			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 1});
-			volView.__topLeftContainer.add(volView.__orientationSelect);
-			volView.__topLeftContainer.add(new qx.ui.core.Spacer(),{flex : 3});
-			volView.__topLeftContainer.add(volView.__getDragAndDropLabel());
 			
 			volView.__topLeftContainer.addListener("appear", function(event)
 			{
-				//~ volView.debug("1233 : volView.__topLeftContainer.addListener(appear, function(event) !!!");
+volView.debug("1771 : volView.__topLeftContainer.addListener(appear, function(event) !!!");
 				volView.__topLeftContainer.add(tools.__getPaintPanelVisibilitySwitch());
 				volView.__setAsCurrent();
 			}, this);
@@ -1665,7 +1777,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 			
 			volView.__updateContext = function(event)
 			{
-	//~ this.debug("1650: >>>>>>>   addListener(__updateContext, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ volView.debug("1780: >>>>>>>   volView.addListener(__updateContext, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				if((volView.__imageCanvas != null)&&(volView.__drawingCanvas != null)&&(volView.__htmlContextImage != null)&&(volView.__htmlContextLabels != null))
 				{
 					volView.__drawZoomedCanvas(volView.__display.curCtxtZoom,true);
@@ -1675,7 +1787,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 			
 			volView.__mouseDownHandler = function(event)
             {
-	//~ this.debug("1660: >>>>>>>   addListener(__mouseDownHandler, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ volView.debug("1790: >>>>>>>   volView.addListener(__mouseDownHandler, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 			////"Undo" (draw previous canvas)
 				volView.__undoFnct(event);
 			////Locate mouse
@@ -1689,7 +1801,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 					switch (volView.__mouseActionMode)
                     {
 						case 4:
-							tools.__eraserCursor.capture();
+							//~ tools.__eraserCursor.capture();
 							if(tools.__eraserCursor.getVisibility()=="excluded")
 								tools.__eraserCursor.show();
 							break;
@@ -1718,17 +1830,19 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
                     }
                     volView.__htmlContextLabels.beginPath();
                     
-					//~ if(volView.__drawingCanvas != null)
-							//~ volView.__drawingCanvas.resetCursor();
-					//~ if((tools.__eraserCursor != null)&&(!volView.__isSegWindow))
-							//~ tools.__eraserCursor.resetCursor();
+					if(volView.__imageCanvas != null)
+						volView.__imageCanvas.resetCursor();
+					if(volView.__drawingCanvas != null)
+						volView.__drawingCanvas.resetCursor();
+					if((tools.__eraserCursor != null)&&(!volView.__isSegWindow))
+						tools.__eraserCursor.resetCursor();
 					
-					spinner.releaseCapture();
-					tools.__penSize.releaseCapture();
+					//~ spinner.releaseCapture();
+					//~ tools.__penSize.releaseCapture();
                 }
 			////Activate moving
-                if(((event.isShiftPressed())||(event.isMiddlePressed()))&&(1<=volView.__display.curCtxtZoom))
-                //~ if(((event.isShiftPressed())||(event.isMiddlePressed()))) //~ zoomOUT
+                //~ if(((event.isShiftPressed())||(event.isMiddlePressed()))&&(1<=volView.__display.curCtxtZoom))
+                if(((event.isShiftPressed())||(event.isMiddlePressed()))) //~ zoomOUT
 				{
 					drawingCanvas.set({cursor: "move"});
 					if((tools.__eraserCursor != null)&&(!volView.__isSegWindow))
@@ -1752,7 +1866,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 			volView.__display.wheelScale = 0;
             volView.__mouseWheelHandler = function(event)
             {
-	//~ this.debug("1288: >>>>>>>   addListener(__mouseWheelHandler, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ volView.debug("1869: >>>>>>>   volView.__mouseWheelHandler = function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				var curView = tools.__curView;
 				if(((typeof curView!="undefined")&&(this==curView))||(this==tools.__eraserCursor))
 				{
@@ -1763,9 +1877,9 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 					var currentZoom = curView.__display.curCtxtZoom;
 					var zoomFactor = Math.pow(2,tempScale);
 				////Apply zoom
-					if((1<=zoomFactor)&&(zoomFactor<=curView.__MaxZoom))	////Only zoom no shrinking and not more than Max zoom
+					//~ if((1<=zoomFactor)&&(zoomFactor<=curView.__MaxZoom))	////Only zoom no shrinking and not more than MaxZoom
 				//~ zoomOUT
-					//~ if(zoomFactor<=curView.__MaxZoom)	//// Zoom in and zoom out
+					if(zoomFactor<=curView.__MaxZoom)	//// Zoom in and zoom out (limited to MaxZoom)
 					{
 						curView.debug(" zoom = x" + zoomFactor);
 						var location=curView.__imageCanvas.getContentLocation();
@@ -1805,9 +1919,9 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 						}
 					}
 				//~ zoomOUT : comment else code below
-					else
-						if(zoomFactor<1)
-							curView.__resetZoom(curView);
+					//~ else
+						//~ if(zoomFactor<1)
+							//~ curView.__resetZoom(curView);
 					curView.__drawZoomedCanvas(curView.__display.curCtxtZoom, true, curView);
 				////Draw cursor
 					if(curView.__mouseActionMode==3)
@@ -1821,7 +1935,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 			
 			volView.__mouseMoveHandler = function(event)
             {
-	//~ this.debug("1354: >>>>>>>   addListener(__mouseMoveHandler, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+volView.debug("1938: >>>>>>>   volView.__mouseMoveHandler = function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				volView.__getPosition(event,true);
                 //~ if((volView.__mouseData.mouseMiddleDownFlag)&&(volView.__mouseActionMode!=4))
                 if(volView.__mouseData.mouseMiddleDownFlag)
@@ -1832,7 +1946,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 				switch (volView.__mouseActionMode)
 				{
 					case 4 :
-						tools.__eraserCursor.capture();
+						//~ tools.__eraserCursor.capture();
 						if(tools.__eraserCursor.getVisibility()=="excluded")
 							tools.__eraserCursor.show();
 						////Set eraser cursor position
@@ -1849,7 +1963,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 						break;
 					case 3 :
 						drawZoomedCanvas(volView.__display.curCtxtZoom,false);
-						volView.__drawingCanvas.capture();
+						//~ volView.__drawingCanvas.capture();
 						if(!volView.__mouseData.mouseMiddleDownFlag)
 							volView.__drawBrush(event,volView.__display.curCtxtZoom);
 						break;
@@ -1875,7 +1989,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
  						break;
 					case 3 : 
 						////Draw to mouse position
-						volView.__drawingCanvas.capture();
+						//~ volView.__drawingCanvas.capture();
 						volView.__htmlContextLabels.lineWidth = tools.__penSize.getValue();
 						volView.__htmlContextLabels.strokeStyle = volView.__drawingCanvasParams.currentColor;
 						volView.__htmlContextLabels.fillStyle = volView.__drawingCanvasParams.currentColor;
@@ -1884,7 +1998,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 						volView.__htmlContextLabels.stroke();
 						break;
 					case 4 :
-						tools.__eraserCursor.capture();
+						//~ tools.__eraserCursor.capture();
 						volView.__mouseData.mouseLeftDownFlag = true;
 						if(tools.__eraserCursor.getVisibility()=="excluded")
 							tools.__eraserCursor.show();
@@ -1904,14 +2018,14 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 			
 			volView.__mouseUpHandler = function(event)
             {
-	//~ this.debug("1437 : >>>>>>>   addListener(__mouseUpHandler, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ volView.debug("2021: >>>>>>>   volView.__mouseUpHandler = function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
                 volView.__mouseData.mouseLeftDownFlag = false;
 				volView.__mouseData.mouseMiddleDownFlag = false;
-				if (!event.isLeftPressed())
+				if (!event.isLeftPressed()&&(!event.isMiddlePressed()))
 					volView.__save2undoStack(event);
 				volView.__mouseActionActive = false;
-				if((tools.__eraserCursor!=null)&&(!volView.__isSegWindow))
-					tools.__eraserCursor.releaseCapture();
+				//~ if((tools.__eraserCursor!=null)&&(!volView.__isSegWindow))
+					//~ tools.__eraserCursor.releaseCapture();
 				if(volView.__drawingCanvas != null)
 					volView.__drawingCanvas.resetCursor();
 				if((tools.__eraserCursor != null)&&(!volView.__isSegWindow))
@@ -1920,14 +2034,26 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
             
 			volView.__mouseOverHandler = function(event)
 			{
-	//~ this.debug("1449 : >>>>>>>   addListener(__mouseOverHandler, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+	this.debug("2022 : >>>>>>>   addListener(__mouseOverHandler, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				if((volView.__mouseData.mouseLeftDownFlag)&&(volView.__mouseActionMode==4))
 					volView.__eraseFnct(true);
 					
-				//~ if(volView.__drawingCanvas != null)
-					//~ volView.__drawingCanvas.resetCursor();
-				//~ if((tools.__eraserCursor != null)&&(!volView.__isSegWindow))
-					//~ tools.__eraserCursor.resetCursor();
+				if(volView.__drawingCanvas != null)
+					volView.__drawingCanvas.resetCursor();
+				if((tools.__eraserCursor != null)&&(!volView.__isSegWindow))
+					tools.__eraserCursor.resetCursor();
+				
+			};
+			
+			volView.__mouseOutHandler = function(event)
+			{
+	this.debug("2035 : >>>>>>>   addListener(__mouseOutHandler, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+				
+				volView.__mouseActionActive = false;
+				
+				volView.__htmlContextLabels.beginPath();
+				volView.__mouseData.mouseLeftDownFlag = false;
+				volView.__mouseData.mouseMiddleDownFlag = false;
 				
 			};
 			
@@ -1955,7 +2081,6 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 			var initResizeCount = 0;
 			var initResizeTimes = 3; //~ the extra times it takes to resize the display at the beginning (while loading window elements)
 			var displayBorder = volView.getContentPaddingBottom();
-			var scrollBarsLength = 16;
 			var winTitleBarHeight = 26;
 			var eventWidth;
 			var eventHeight;
@@ -1963,7 +2088,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 			var heightCandidate;
 			volView.__imageCanvas.addListener("resize", function(event) //~ resizing
 			{
-//~ this.debug("1948 : >>>>>>>   addListener(resize, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+volView.debug("2091 : >>>>>>>   volView.addListener(resize, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
  				//~ volView.debug("resize event!"); //~ resizing
 				
 				
@@ -2066,7 +2191,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 			//~ var tempWidth = volView.__scaledWidth;
 			volView.addListener("beforeMaximize", function(event)
 			{
-	//~ this.debug("1563 : >>>>>>>   addListener(beforeMaximize, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ volView.debug("2194 : >>>>>>>   volView.addListener(beforeMaximize, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				//~ volView.debug("event.getEventPhase() : " + event.getEventPhase());
 				//~ volView.debug("event.getType() : " + event.getType());
 				//~ volView.debug("event.getOriginalTarget() : " + event.getOriginalTarget());
@@ -2081,7 +2206,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 			},this);
 			volView.addListener("maximize", function(event)
 			{
-	//~ this.debug("1578 : >>>>>>>   addListener(maximize, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ volView.debug("2209 : >>>>>>>   volView.addListener(maximize, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				//~ volView.debug("event.getEventPhase() : " + event.getEventPhase());
 				//~ volView.debug("event.getType() : " + event.getType());
 				//~ volView.debug("event.getOriginalTarget() : " + event.getOriginalTarget());
@@ -2118,7 +2243,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 			},this);
 			volView.addListener("resize", function(event)
 			{
-	//~ this.debug("1596 : >>>>>>>   addListener(resize, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+volView.debug("2246 : >>>>>>>   volView.addListener(resize, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				//~ volView.debug("event.getEventPhase() : " + event.getEventPhase());
 				//~ volView.debug("event.getType() : " + event.getType());
 				//~ volView.debug("event.getOriginalTarget() : " + event.getOriginalTarget());
@@ -2158,7 +2283,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 			
 			volView.__imageCanvas.addListener("mouseout", function(event)
 			{
-	//~ this.debug("1614 : >>>>>>>   addListener(mouseout, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+volView.debug("2286 : >>>>>>>   volView.__imageCanvas.addListener(mouseout, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				volView.__mouseActionActive = false;
 	//			if(((volView.__drawingCanvasParams.paintFlag)||(volView.__drawingCanvasParams.brCrFixingFlag))&&(volView.__mouseActionMode!=4))
 //				{
@@ -2167,10 +2292,10 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 					volView.__mouseData.mouseMiddleDownFlag = false;
 //				}
 			},this);
-
+			
 			volView.__imageCanvas.addListener("mouseover", function(event)
 			{
-	//~ this.debug("1629 : >>>>>>>   addListener(mouseover, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+volView.debug("2298 : >>>>>>>   volView.__imageCanvas.addListener(mouseover, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				if((volView.__mouseData.mouseLeftDownFlag)&&(volView.__mouseActionMode==4))
 					volView.__eraseFnct(true);
 					
@@ -2183,27 +2308,33 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 			
 			volView.__imageCanvas.addListener("mousemove", function(event)
 			{
-	//~ this.debug("1640 : >>>>>>>   addListener(mousemove, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+volView.debug("2311 : >>>>>>>   volView.__imageCanvas.addListener(mousemove, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				if(event.isLeftPressed())
 				{
-					if((tools.__eraserCursor!=null)&&(!volView.__isSegWindow))
-						tools.__eraserCursor.capture();
+					//~ if((tools.__eraserCursor!=null)&&(!volView.__isSegWindow))
+						//~ tools.__eraserCursor.capture();
 					if((volView.__mouseData.mouseLeftDownFlag)&&(volView.__mouseActionMode==4))
 						volView.__eraseFnct(true);
 				}
-			},this);
-			
-			volView.__imageCanvas.addListener("mousedown", function(event)
-			{
-	//~ this.debug("1652 : >>>>>>>   addListener(mousedown, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				if((volView.__mouseData.mouseLeftDownFlag)&&(volView.__mouseActionMode==4))
-					if((tools.__eraserCursor!=null)&&(!volView.__isSegWindow))
-						tools.__eraserCursor.capture();
-						
 				//~ if(volView.__drawingCanvas != null)
 					//~ volView.__drawingCanvas.resetCursor();
 				//~ if((tools.__eraserCursor != null)&&(!volView.__isSegWindow))
 					//~ tools.__eraserCursor.resetCursor();
+			},this);
+			
+			volView.__imageCanvas.addListener("mousedown", function(event)
+			{
+volView.debug("2327 : >>>>>>>   volView.__imageCanvas.addListener(mousedown, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+				//~ if((volView.__mouseData.mouseLeftDownFlag)&&(volView.__mouseActionMode==4))
+					//~ if((tools.__eraserCursor!=null)&&(!volView.__isSegWindow))
+						//~ tools.__eraserCursor.capture();
+				
+				if(volView.__imageCanvas != null)
+					volView.__imageCanvas.resetCursor();
+				if(volView.__drawingCanvas != null)
+					volView.__drawingCanvas.resetCursor();
+				if((tools.__eraserCursor != null)&&(!volView.__isSegWindow))
+					tools.__eraserCursor.resetCursor();
 				
 			},this);
 			
@@ -2271,7 +2402,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 	
 			spinner.addListener("changeValue", function(event)
 			{
-	this.debug("1730 : >>>>>>>   addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ volView.debug("2405 : >>>>>>>   spinner.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				volView.__htmlContextLabels.beginPath(); // seb : why???
 				volView.__mouseData.mouseLeftDownFlag = false;
 				
@@ -2293,27 +2424,28 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 			//~ Test is using seeds or just visualisation
 				if(tempSeedsArray!=null)
 				{
-					volView.debug("tempSeedsArray!=null !!!");
+					//~ volView.debug("tempSeedsArray!=null !!!");
 					volView.__master.__updateAll();
 					
-					volView.__updateImage(); //~ copied from just below...
+					//~ volView.__updateImage(); //~ copied from just below...
 				}
 				else
 				{
-					volView.debug("1732 : volView.__updateImage(); !");
+					//~ volView.debug("1732 : volView.__updateImage(); !");
 				////Update image canvas
-					volView.__updateImage(); //~ copied from __updateAll
+					//~ volView.__updateImage(); //~ copied from __updateAll
 				}
+				volView.__updateImage(); //~ since it appears in both cases just above...
 				
-				spinner.releaseCapture();
-				tools.__penSize.releaseCapture();
+				//~ spinner.releaseCapture();
+				//~ tools.__penSize.releaseCapture();
 				
 			}, this);
 			
 			spinner.addListener("mouseout", function(event)
 			{
-	//~ this.debug("1766 : >>>>>>>   addListener(mouseout, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				spinner.releaseCapture();
+//~ volView.debug("1766 : >>>>>>>   spinner.addListener(mouseout, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+				//~ spinner.releaseCapture();
 				
 				if(volView.__drawingCanvas != null)
 					volView.__drawingCanvas.resetCursor();
@@ -2366,6 +2498,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 				drawingCanvas.addListener("mousemove", volView.__mouseMoveHandler, volView);
 				drawingCanvas.addListener("mouseup", volView.__mouseUpHandler, volView);
 				drawingCanvas.addListener("mouseover", volView.__mouseOverHandler, volView);
+				drawingCanvas.addListener("mouseup",volView.__mouseOutHandler, volView);
 				
 				
 				imgCanvas.addListener("redraw", function(event)
@@ -2375,18 +2508,21 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 					volView.__imgCanvasParams.imgContext.drawImage(volView.__htmlCanvasImage, 0, 0);
 		        });
 
+				/*
 				imgCanvas.addListener("mousemove", function(event)
 				{
-	//~ this.debug("1835 : >>>>>>>   addListener(mousemove, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-					if((tools.__eraserCursor!=null)&&(!volView.__isSegWindow))
-						tools.__eraserCursor.capture();
+	this.debug("2486 : >>>>>>>   addListener(mousemove, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+					//~ if((tools.__eraserCursor!=null)&&(!volView.__isSegWindow))
+						//~ tools.__eraserCursor.capture();
 					if((volView.__mouseData.mouseLeftDownFlag)&&(volView.__mouseActionMode==4))
 						volView.__eraseFnct(true);
 				},this);
-			
+				*/
+				
+				/*
 				imgCanvas.addListener("mouseover", function(event)
 				{
-	//~ this.debug("1844 : >>>>>>>   addListener(mouseover, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+	this.debug("2495 : >>>>>>>   addListener(mouseover, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 					if((volView.__mouseData.mouseLeftDownFlag)&&(volView.__mouseActionMode==4))
 						volView.__eraseFnct(true);
 					
@@ -2396,13 +2532,15 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 						//~ tools.__eraserCursor.resetCursor();
 					
 				},this);
-			
+				*/
+				
+				/*
 				imgCanvas.addListener("mousedown", function(event)
 				{
 	//~ this.debug("1855 : >>>>>>>   addListener(mousedown, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-					if((volView.__mouseData.mouseLeftDownFlag)&&(volView.__mouseActionMode==4))
-						if(tools.__eraserCursor!=null)
-							tools.__eraserCursor.capture();
+					//~ if((volView.__mouseData.mouseLeftDownFlag)&&(volView.__mouseActionMode==4))
+						//~ if(tools.__eraserCursor!=null)
+							//~ tools.__eraserCursor.capture();
 							
 					//~ if(volView.__drawingCanvas != null)
 						//~ volView.__drawingCanvas.resetCursor();
@@ -2410,6 +2548,7 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 						//~ tools.__eraserCursor.resetCursor();
 					
 				},this);
+				*/
 			
 				spinner.setValue(Math.round(volView.__dimensions[2]/2));
 				volView.setReady(true);
@@ -2461,8 +2600,8 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 				sx = avoidEscaping(sx*volView.__scale[0], 0, volView.__dimensions[0] - 1);
 				sy = avoidEscaping(sy*volView.__scale[1], 0, volView.__dimensions[1] - 1);
 				//~ sdw = Math.floor(sdw*volView.__scale[0]);
-				sdw = sdw*volView.__scale[0]; //~ zoomOUT : comment
-				//~ sdw = avoidEscaping(sdw*volView.__scale[0], 1, volView.__dimensions[0] - sx); //~ zoomOUT
+				//~ sdw = sdw*volView.__scale[0]; //~ zoomOUT : comment
+				sdw = avoidEscaping(sdw*volView.__scale[0], 1, volView.__dimensions[0] - sx); //~ zoomOUT
 				sdw = Math.floor(sdw);
 				//~ if(sdw<1)
 				//~ {
@@ -2470,8 +2609,8 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 					//~ sx = volView.__dimensions[0] - 1;
 				//~ }
 				//~ sdh = Math.floor(sdh*volView.__scale[1]);
-				sdh = sdh*volView.__scale[1]; //~ zoomOUT : comment
-				//~ sdh = avoidEscaping(sdh*volView.__scale[1], 1, volView.__dimensions[1] - sy); //~ zoomOUT
+				//~ sdh = sdh*volView.__scale[1]; //~ zoomOUT : comment
+				sdh = avoidEscaping(sdh*volView.__scale[1], 1, volView.__dimensions[1] - sy); //~ zoomOUT
 				sdh = Math.floor(sdh);
 				//~ if(sdh<1)
 				//~ {
@@ -2572,7 +2711,10 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 					if(volView.__loadImage.complete)
 					{
 						volView.__htmlContextImage.drawImage(volView.__loadImage, 0, 0);
+					if(!volView.__isSegWindow)
 						var outImg = volView.__processBrCr(volView.__imgCanvasParams.brightness, volView.__imgCanvasParams.contrast, true, volView);
+					else
+						var outImg = volView.__colorSegImage();
 						volView.__htmlContextImage.putImageData(outImg, 0, 0);
 						var tempFill = volView.__imgCanvasParams.imgContext.fillStyle;
 						volView.__imgCanvasParams.imgContext.fillStyle = '#4682B4';
@@ -2661,6 +2803,9 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 				
 				var whatContext = volView.__imgCanvasParams.imgContext;
 				whatContext.strokeStyle = '#FD8C00';
+				if(volView.__isSegWindow) //~ segColor test
+					//~ whatContext.strokeStyle = '#FFFFFF';
+					whatContext.strokeStyle = '#888888';
 				whatContext.lineWidth = volView.__imageBorder;
 				
 				var drawNorth = false;
@@ -2668,11 +2813,21 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 				var drawSouth = false;
 				var drawEast = false;
 				
+				if(1<=zoomFactor)
+				{
 					var southMax = Math.floor(volView.__dimensions[1]/zoomFactor - 1);
 					var eastMax = Math.floor(volView.__dimensions[0]/zoomFactor - 1);
-				//~ if((zoomFactor==1)&&(((sx==0)&&(old_dx==0))||((sy==0)&&(old_dy==0))))
-				//~ {
-				//~ volView.debug("'if' is positive !");
+				}
+				else
+				{
+					var southMax = Math.floor(volView.__dimensions[1]*zoomFactor - 1);
+					var eastMax = Math.floor(volView.__dimensions[0]*zoomFactor - 1);
+				}
+				//~ volView.debug("southMax : " + southMax);
+				//~ volView.debug("eastMax : " + eastMax);
+		//~ if((zoomFactor==1)&&(((sx==0)&&(old_dx==0))||((sy==0)&&(old_dy==0))))
+		//~ {
+		//~ volView.debug("'if' is positive !");
 					if((sx==0)&&(old_dx==0)&&(zoomFactor==1))
 					{
 						newBounds[0] = volView.__imageBorder; //~ new dx
@@ -2687,10 +2842,10 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 						drawNorth = true;
 						drawSouth = true;
 					}
-				//~ }
-				//~ else
-				//~ {
-				//~ volView.debug("doing else...");
+		//~ }
+		//~ else
+		//~ {
+		//~ volView.debug("doing else...");
 					if(old_dy>0)	//// North border will be drawn
 					{
 						newBounds[1] = old_dy + volView.__imageBorder;
@@ -2703,20 +2858,18 @@ this.debug("------->>>   volView.__buildUI : function()   !!!!!!!");
 						newBounds[2] = newBounds[2] - volView.__imageBorder;
 						drawWest = true;
 					}
-					//~ var southMax = Math.floor(volView.__dimensions[1]/zoomFactor - 1);
-					if((sy>0)&&(sdh<=southMax))	//// South border will be drawn
+					if((sy>0)&&(sdh<southMax))	//// South border will be drawn
 					{
 						newBounds[3] = newBounds[3] - volView.__imageBorder;
 						drawSouth = true;
 					}
-					//~ var eastMax = Math.floor(volView.__dimensions[0]/zoomFactor - 1);
-					if((sx>0)&&(sdw<=eastMax))	//// East border will be drawn
+					if((sx>0)&&(sdw<eastMax))	//// East border will be drawn
 					{
 						newBounds[2] = newBounds[2] - volView.__imageBorder;
 						drawEast = true;
 					}
-				//~ }
-			//~ volView.debug("N:" + drawNorth + ", W:" + drawWest + ", S:" + drawSouth + ", E:" + drawEast);
+		//~ }
+				//~ volView.debug("N:" + drawNorth + ", W:" + drawWest + ", S:" + drawSouth + ", E:" + drawEast);
 			//// Draw borders if necessary
 				if(drawOnly)
 				{
@@ -2836,7 +2989,8 @@ this.debug("------->>>   volView.__getFormatSelectBox : function()   !!!!!!!");
 			var PNGFormat = new qx.ui.form.ListItem("png");
 			selectBox.add(PNGFormat);
 			
-			selectBox.addListener('changeSelection', function (e){
+			selectBox.addListener('changeSelection', function (e)
+			{
 	//~ this.debug("2258 : >>>>>>>   addListener(changeSelection, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 			//console.log("change...");
 				var path=selectBox.getSelection()[0].getUserData("path");
@@ -2852,13 +3006,15 @@ this.debug("------->>>   volView.__getFormatSelectBox : function()   !!!!!!!");
 					//~ segColor test
 					if(volView.__isSegWindow)
 					{
-						parameterMap.action = "slice_volume_color";
+						//~ parameterMap.action = "slice_volume_color";
 						parameterMap.format = "0";
 					}
 				//~ orion test (change orientation param in volume_slice action : actions.xml)
 					parameterMap.slice_orientation = volView.__display.orientation;
 					var slicingLabel=new qx.ui.basic.Label("computing...");
-					volView.__topLeftContainer.addAfter(slicingLabel,selectBox);
+					//~ volView.__topLeftContainer.addAfter(slicingLabel,selectBox);
+					//~ volView.__topLeftContainer.addAfter(slicingLabel,topLeftContainerTopNBottom); //~ segColor test
+					//~ volView.__topLeftContainer.add(slicingLabel); //~ segColor test
 					function getAnswer(e)
 					{
 						var req = e.getTarget();
@@ -2873,7 +3029,9 @@ this.debug("------->>>   volView.__getFormatSelectBox : function()   !!!!!!!");
 					// switch back to before computing is done png
 					selectBox.setSelection([JPGFormat]);
 					selectBox.close();
-					volView.__topLeftContainer.addAfter(slicingLabel,selectBox);
+					//~ volView.__topLeftContainer.addAfter(slicingLabel,selectBox);
+					//~ volView.__topLeftContainer.addAfter(slicingLabel,topLeftContainerTopNBottom); //~ segColor test
+					volView.__topLeftContainer.add(slicingLabel); //~ segColor test
 					volView.__fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 					break;
 				case "computing":
@@ -2884,7 +3042,8 @@ this.debug("------->>>   volView.__getFormatSelectBox : function()   !!!!!!!");
 				default :
 					// slices are ready (PNG or JPG)
 					volView.__updateImage();
-				}}, this);
+				}
+			}, this);
 			return (selectBox);
 		},
 		
@@ -2931,7 +3090,7 @@ this.debug("------->>>   volView.__getOrientationSelectBox : function()   !!!!!!
 						//~ segColor test
 						if(volView.__isSegWindow)
 						{
-							parameterMap.action = "slice_volume_color";
+							//~ parameterMap.action = "slice_volume_color";
 							parameterMap.format = "0";
 						}
 						
@@ -3164,7 +3323,7 @@ volView.debug("var keyPressHandler = function(event) !!!");
 		
 		__addNewSeedItemToList : function (sliceId, seedsTypeListItem)
 		{
-this.debug("------->>>   volView.__addNewSeedItemToList : function()   !!!!!!!");
+//~ this.debug("------->>>   volView.__addNewSeedItemToList : function()   !!!!!!!");
 
 			var volView = this;
 			
@@ -3244,7 +3403,7 @@ this.debug("------->>>   volView.__addNewSeedItemToList : function()   !!!!!!!")
 		
 		__saveCurrentSeeds : function(callback)
 		{
-this.debug("------->>>   volView.__saveCurrentSeeds : function()   !!!!!!!");
+//~ this.debug("------->>>   volView.__saveCurrentSeeds : function()   !!!!!!!");
 
 			var volView = this;
 			

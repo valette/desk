@@ -30,6 +30,7 @@ qx.Class.define("desk.volMaster",
 		this.__nbUsedOrientations = 3;
 		for(var i=0; i<this.__nbUsedOrientations; i++)
 		{
+			
 			this.__viewers[i] = new desk.volView__classTest(this, globalFile, globalFileBrowser, i);
 			// index test : add lfexibility between orientation (1,2 or 3) and a unique index for each viewer no matter its view orientation
 			//					<!> CAUTION : any index must be  <  this.__viewers.length
@@ -90,9 +91,9 @@ this.debug("------->>>   theMaster.__loadSession : function()   !!!!!!!");
 			theMaster.__resetSeedsList();
 	//~ theMaster.debug("89 : after  theMaster.__resetSeedsList();");
 			
-			var colorsParamRequest = new XMLHttpRequest();
+			var loadSessionRequest = new XMLHttpRequest();
 			
-			colorsParamRequest.onreadystatechange = function()
+			loadSessionRequest.onreadystatechange = function()
 			{
 				 if(this.readyState == 4 && this.status == 200)
 				 {
@@ -100,7 +101,7 @@ this.debug("------->>>   theMaster.__loadSession : function()   !!!!!!!");
 					if(this.responseXML!=null)
 					{
 						var response = this.responseXML;
-theMaster.debug("103 : response : " + response);
+theMaster.debug("104 : loadSessionRequest -> response : " + response);
 						var seedsTypes = tools.__seedsTypeSelectBox.getChildren();
 						for (var k=0;k<seedsTypes.length;k++)
 						{
@@ -139,9 +140,9 @@ theMaster.debug("103 : response : " + response);
 				}
 			};
 			var filePrefix = tools.__seedsTypeSelectBox.getSelection()[0].getLabel();
-			colorsParamRequest.open("GET",
+			loadSessionRequest.open("GET",
 				fileBrowser.getFileURL(tools.getSessionDirectory()+"/seeds.xml?nocache="+Math.random()), true);
-			colorsParamRequest.send(null);
+			loadSessionRequest.send(null);
 		},
 		
 		__updateAll : function()
@@ -291,19 +292,6 @@ this.debug("------->>>   theMaster.__resetSeedsList : function()   !!!!!!!");
 				item.setUserData("cacheTags", tempMultiCacheTags);
 				
 			}
-		},
-		
-		__saveAllCurrentSeeds : function(callback)
-		{
-this.debug("------->>>   theMaster.__saveAllCurrentSeeds : function(callback)   !!!!!!!");
-			var theMaster = this;
-			
-			var tools = theMaster.__tools;
-			
-			var fileBrowser = theMaster.__fileBrowser;
-			
-			var launchCallBack = false;
-			
 		},
 		
 		////Rewrite xml list of the drawn seeds

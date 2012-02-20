@@ -340,11 +340,8 @@ qx.Class.define("desk.fileBrowser",
 					//~ 
 					//~ qx.core.Init.getApplication().getRoot().add(volView);
 					
-				//~ orion test : launch the 3 views at once ! ! !
+				//~ orion test
 					var volViewers = new desk.volMaster(file, myBrowser);
-					qx.core.Init.getApplication().getRoot().add(volViewers[0]);
-					//~ qx.core.Init.getApplication().getRoot().add(volViewers[1]);
-					//~ qx.core.Init.getApplication().getRoot().add(volViewers[2]);
 					
 					break;
 				case ".par":
