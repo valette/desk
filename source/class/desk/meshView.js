@@ -391,7 +391,6 @@ qx.Class.define("desk.meshView",
 						{
 							var color=[1.0,1.0,1.0,1.0];
 							var mesh=meshes[n];
-							var Label=mesh.getAttribute("Label");
 							if (mesh.hasAttribute("color"))
 							{
 								var colorstring=mesh.getAttribute("color");
@@ -416,7 +415,14 @@ qx.Class.define("desk.meshView",
 								}
 							}
 
-							this.__readFile(path+"/"+mesh.getAttribute("Mesh"), mtime, color, update, false);
+							var xmlName;
+							if (mesh.hasAttribute("Mesh")) {
+								xmlName=mesh.getAttribute("Mesh");
+								}
+							else {
+								xmlName=mesh.getAttribute("mesh");
+								}
+							this.__readFile(path+"/"+xmlName, mtime, color, update, false);
 						}
 						break;
 					default : 
