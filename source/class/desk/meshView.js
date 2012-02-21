@@ -469,7 +469,7 @@ qx.Class.define("desk.meshView",
 				this.__slicesRoot=dataModel.addBranch(null,"slices", true);
 
 
-			var leaf=dataModel.addLeaf(this.__slicesRoot,"slice", null);
+			var leaf=dataModel.addLeaf(this.__slicesRoot,volView.getFile(), null);
 			dataModel.setData();
 			this.__shapesArray[ leaf ] = mesh ;	
 			this.__shapesVisibility[leaf] = true ;

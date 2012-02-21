@@ -326,6 +326,14 @@ qx.Class.define("desk.volView",
 		getWindow : function() {
 			return this.__window;},
 
+		getSlider : function() {
+			return this.__slider;
+		},
+
+		getFile : function () {
+			return this.__file;
+		},
+
 		__setVolume : function (file,fileBrowser) {
 			this.__fileBrowser=fileBrowser;
 			this.__file=file;
