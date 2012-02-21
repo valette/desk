@@ -193,9 +193,6 @@ qx.Class.define("desk.meshView",
 		// stores the scene bounding box diagonal length, usefull for updating
 		__boudingBoxDiagonalLength : 0,
 
-		// possibly stores a callback called after resizing 3D view
-		__afterResize : null,
-
 		__readFile : function (file, mtime, color, update, opt_updateDataModel) {
 			var label;
 			var lastSlashIndex=file.lastIndexOf("\/");
@@ -604,10 +601,6 @@ qx.Class.define("desk.meshView",
 					camera.updateProjectionMatrix();
 					controls.setSize( elementSize.width , elementSize.height );
 					render();
-					if (typeof _this.__afterResize == 'function')
-						_this.__afterResize();
-					else
-						console.log( _this.__afterResize);
 					}
 
 				var draggingInProgress=false;
@@ -729,28 +722,51 @@ qx.Class.define("desk.meshView",
 
 		snapshot : function (factor) {
 			if (factor==null)
-				factor=4;
+				factor=1;
 
 			var width=this.__window.getWidth();
 			var height=this.__window.getHeight();
-			console.log(width+" "+height);
-			var _this=this;
-			this.__afterResize=function() {
+
+			if (factor==1)
+			{
+				this.render();
 				var strData = this.__renderer.domElement.toDataURL("image/png");
 				var saveData=strData.replace("image/png", "image/octet-stream");
 				document.location.href = saveData;
-				_this.__afterResize=null;
-				_this.__window.set({width: width, height : height});
-				}
-			this.__window.set({width: width*factor, height : height*factor});
-//			this.render();
-
+			}
+			else
+			{
+				this.__embededHTML.addListenerOnce("resize", function() {
+					var strData = this.__renderer.domElement.toDataURL("image/png");
+					var saveData=strData.replace("image/png", "image/octet-stream");
+					document.location.href = saveData;
+					this.__window.set({width: width, height : height});
+				}, this);
+				this.__window.set({width: width*factor, height : height*factor});
+			}
 		},
 
 		__getSnapshotButton : function () {
+
+			var factor=1;
+
+			var menu = new qx.ui.menu.Menu();
+			var x1button = new qx.ui.menu.Button("x1");
+			x1button.addListener("execute", function (){factor=1;},this);
+			menu.add(x1button);
+			var x2button = new qx.ui.menu.Button("x2");
+			x2button.addListener("execute", function (){factor=2;},this);
+			menu.add(x2button);
+			var x3button = new qx.ui.menu.Button("x3");
+			x3button.addListener("execute", function (){factor=3;},this);
+			menu.add(x3button);
+			var x4button = new qx.ui.menu.Button("x4");
+			x4button.addListener("execute", function (){factor=4;},this);
+			menu.add(x4button);
+
 			var button=new qx.ui.form.Button(null, "resource/desk/camera-photo.png");
-			button.addListener("execute", function(e) {
-				this.snapshot();}, this);
+			button.addListener("execute", function(e) {console.log(factor);this.snapshot(factor);}, this);
+			button.setContextMenu(menu);
 			return button;
 		},
 
