@@ -170,9 +170,19 @@ qx.Class.define("desk.meshView",
 
 		__fileBrowser : null,
 
-		// arrays containing shapes
+		// a treeVirtual element storing all meshes
 		__shapesList : null,
+
+		// the nodeId for meshes
+		__meshesRoot : null,
+
+		// the nodeId for slices
+		__slicesRoot : null,
+
+		// array keeping all three.js meshes
 		__shapesArray : null,
+
+		// array storing all meshes visibility
 		__shapesVisibility : null,
 
 		//THREE.js objects
@@ -203,7 +213,11 @@ qx.Class.define("desk.meshView",
 
 			var _this=this;
 			var dataModel=this.__shapesList.getDataModel();
-			var leaf=dataModel.addLeaf(null,label, null);
+
+			if (this.__meshesRoot===null)
+				this.__meshesRoot=dataModel.addBranch(null,"meshes", true);
+
+			var leaf=dataModel.addLeaf(this.__meshesRoot,label, null);
 			if (opt_updateDataModel!=false)
 				dataModel.setData();
 
@@ -504,6 +518,18 @@ qx.Class.define("desk.meshView",
 					var mesh=new THREE.Mesh(geometry,material);
 					mesh.doubleSided=true;
 					_this.__scene.add(mesh);
+
+					var dataModel=this.__shapesList.getDataModel();
+
+					if (this.__slicesRoot===null)
+						this.__slicesRoot=dataModel.addBranch(null,"slices", true);
+
+
+					var leaf=dataModel.addLeaf(this.__slicesRoot,"slice", null);
+					dataModel.setData();
+					this.__shapesArray[ leaf ] = mesh ;	
+					this.__shapesVisibility[leaf] = true ;
+
 
 					function updateTexture()
 					{
@@ -863,16 +889,20 @@ qx.Class.define("desk.meshView",
 			var updateWidgets=function (event)
 			{
 				enableUpdate=false;
-				var firstSelectedShape=_this.__shapesArray[shapesTree.getSelectedNodes()[0].nodeId];
-				var color=firstSelectedShape.material.color;
-				colorSelector.setRed(Math.round(ratio*color.r));
-				colorSelector.setGreen(Math.round(ratio*color.g));
-				colorSelector.setBlue(Math.round(ratio*color.b));
-				colorSelector.setPreviousColor(Math.round(ratio*color.r),
-						Math.round(ratio*color.g),Math.round(ratio*color.b));
-		//		wireframeCheckBox.setValue(firstSelectedShape.material.wireframe);
-				opacitySlider.setValue(Math.round(firstSelectedShape.material.opacity*ratio));
-				enableUpdate=true;
+				var selectedNode=shapesTree.getSelectedNodes()[0];
+				if (selectedNode.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+				{
+					var firstSelectedShape=_this.__shapesArray[selectedNode.nodeId];
+					var color=firstSelectedShape.material.color;
+					colorSelector.setRed(Math.round(ratio*color.r));
+					colorSelector.setGreen(Math.round(ratio*color.g));
+					colorSelector.setBlue(Math.round(ratio*color.b));
+					colorSelector.setPreviousColor(Math.round(ratio*color.r),
+							Math.round(ratio*color.g),Math.round(ratio*color.b));
+			//		wireframeCheckBox.setValue(firstSelectedShape.material.wireframe);
+					opacitySlider.setValue(Math.round(firstSelectedShape.material.opacity*ratio));
+					enableUpdate=true;
+				}
 			}
 			
 			updateWidgets();
