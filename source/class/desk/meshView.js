@@ -463,6 +463,8 @@ qx.Class.define("desk.meshView",
 			mesh.doubleSided=true;
 			this.__scene.add(mesh);
 
+			mesh.__volView=volView;
+
 			var dataModel=this.__shapesList.getDataModel();
 
 			if (this.__slicesRoot===null)
@@ -649,6 +651,52 @@ qx.Class.define("desk.meshView",
 					htmlContainer.releaseCapture();
 					draggingInProgress=false;
 					controls.mouseUp();});
+
+				htmlContainer.addListener("mousewheel", function (event)	{
+					var tree=_this.__shapesList;
+					var root=_this.__slicesRoot;
+					if (root!==null)
+					{
+						var rootNode=tree.nodeGet(root);
+						var children=rootNode.children;
+						if (children.length!=0)
+						{
+							var meshes=[];
+							for (var i=0;i<children.length;i++)
+							{
+								if (_this.__shapesVisibility[children[i]])
+									meshes.push(_this.__shapesArray[children[i]]);
+							}
+
+							var origin=htmlContainer.getContentLocation();
+							var x=event.getDocumentLeft()-origin.left;
+							var y=event.getDocumentTop()-origin.top;
+
+							var elementSize=htmlContainer.getInnerSize();
+							var x2 = ( x / elementSize.width ) * 2 - 1;
+							var y2 = - ( y / elementSize.height ) * 2 + 1;
+
+							var projector = new THREE.Projector();
+							var vector = new THREE.Vector3( x2, y2, 0.5 );
+							projector.unprojectVector( vector, camera );
+
+							var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
+
+							var intersects = ray.intersectObjects( meshes );
+
+							if ( intersects.length > 0 ) {
+								var slider=intersects[0].object.__volView.getSlider();
+								var delta=Math.round(event.getWheelDelta()/2);
+								var newValue=slider.getValue()+delta;
+								if (newValue>slider.getMaximum())
+									newValue=slider.getMaximum()
+								if (newValue<slider.getMinimum())
+									newValue=slider.getMinimum()
+								slider.setValue(newValue);
+							}
+						}
+					}
+					});
 
 				this.setReady(true);
 			}, this);
