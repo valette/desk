@@ -287,7 +287,7 @@ qx.Class.define("desk.meshView",
 				loadMeshIntoScene(file);
 				break;
 			default : 
-				alert("error : file "+file+"cannot be displayed by mesh viewer");
+				alert("error : file "+file+" cannot be displayed by mesh viewer");
 			}
 		},
 
