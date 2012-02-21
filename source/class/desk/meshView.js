@@ -193,6 +193,9 @@ qx.Class.define("desk.meshView",
 		// stores the scene bounding box diagonal length, usefull for updating
 		__boudingBoxDiagonalLength : 0,
 
+		// possibly stores a callback called after resizing 3D view
+		__afterResize : null,
+
 		__readFile : function (file, mtime, color, update, opt_updateDataModel) {
 			var label;
 			var lastSlashIndex=file.lastIndexOf("\/");
@@ -577,7 +580,7 @@ qx.Class.define("desk.meshView",
 
 				// renderer
 
-				var renderer = new THREE.WebGLRenderer( { antialias: false } );
+				var renderer = new THREE.WebGLRenderer( { antialias: true } );
 
 				this.__renderer=renderer;
 				renderer.setClearColorHex( 0xffffff, 1 );
@@ -591,7 +594,6 @@ qx.Class.define("desk.meshView",
 					_this.fireEvent("changeViewPoint");
 					controls.update();
 					renderer.render( scene, camera );
-
 				}
 
 				htmlContainer.addListener("resize",resizeHTML);
@@ -602,6 +604,10 @@ qx.Class.define("desk.meshView",
 					camera.updateProjectionMatrix();
 					controls.setSize( elementSize.width , elementSize.height );
 					render();
+					if (typeof _this.__afterResize == 'function')
+						_this.__afterResize();
+					else
+						console.log( _this.__afterResize);
 					}
 
 				var draggingInProgress=false;
@@ -723,16 +729,22 @@ qx.Class.define("desk.meshView",
 
 		snapshot : function (factor) {
 			if (factor==null)
-				factor=1;
+				factor=4;
 
-			var elementSize=this.__embededHTML.getInnerSize();
-			var myWidth = elementSize.width*factor;
-			var myHeight = elementSize.height*factor;
+			var width=this.__window.getWidth();
+			var height=this.__window.getHeight();
+			console.log(width+" "+height);
+			var _this=this;
+			this.__afterResize=function() {
+				var strData = this.__renderer.domElement.toDataURL("image/png");
+				var saveData=strData.replace("image/png", "image/octet-stream");
+				document.location.href = saveData;
+				_this.__afterResize=null;
+				_this.__window.set({width: width, height : height});
+				}
+			this.__window.set({width: width*factor, height : height*factor});
+//			this.render();
 
-			this.render();
-			var strData = this.__renderer.domElement.toDataURL("image/png");
-			var saveData=strData.replace("image/png", "image/octet-stream");
-			document.location.href = saveData;
 		},
 
 		__getSnapshotButton : function () {
