@@ -36,7 +36,7 @@ qx.Class.define("desk.meshView",
 		var pane = new qx.ui.splitpane.Pane("horizontal")
 		window.add(pane,{flex : 1});
 
-		this.__embededHTML=this.createDisplayWidget();
+		this.__embededHTML=this.__createRenderWindow();
 		pane.add(this.__embededHTML, 5);
 		window.open();
 
@@ -130,12 +130,6 @@ qx.Class.define("desk.meshView",
 
 	destruct : function(){
 		console.log("destructor");
-		// remove bindings from volume viewers
-		var volumes=this.__volumes;
-		if (volumes!=null)
-			for (var i=0;i<volumes.length;i++)
-				volumes[i].volumeViewer.removeListenerById(volumes[i].listener);
-		this.__volumes=null;
 
 		//clean the scene
 		var shapes=this.__shapesArray;
@@ -190,9 +184,6 @@ qx.Class.define("desk.meshView",
 		__camera : null,
 		__renderer : null,
 		__controls : null,
-
-		// array used to store linked volume viewers
-		__volumes : null,
 
 		// array containing the queue of meshes to load 
 		__meshesToLoad : null,
@@ -446,18 +437,88 @@ qx.Class.define("desk.meshView",
 			}
 		},
 
-		createDisplayWidget : function(){
+		attachVolumeSlice : function (volView)
+		{
+			var geometry=new THREE.Geometry();
+			geometry.dynamic=true;
+			for (var i=0;i<4;i++)
+				geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( 0, 0, 0 ) ) );
+			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
+			geometry.faceVertexUvs[ 0 ].push( [
+				new THREE.UV( 0, 0),
+				new THREE.UV( 1, 0 ),
+				new THREE.UV( 1, 1 ),
+				new THREE.UV( 0, 1 )
+				] );
+
+			var imageData=volView.getSliceImageData();
+			var length=imageData.data.length;
+			var dataColor = new Uint8Array( length);
+			var texture = new THREE.DataTexture( dataColor, imageData.width, imageData.height, THREE.RGBAFormat );
+			texture.needsUpdate = true;
+			texture.magFilter=THREE.NearestFilter;
+			var material=new THREE.MeshBasicMaterial( {map:texture});
+
+			var mesh=new THREE.Mesh(geometry,material);
+			mesh.doubleSided=true;
+			this.__scene.add(mesh);
+
+			var dataModel=this.__shapesList.getDataModel();
+
+			if (this.__slicesRoot===null)
+				this.__slicesRoot=dataModel.addBranch(null,"slices", true);
 
 
+			var leaf=dataModel.addLeaf(this.__slicesRoot,"slice", null);
+			dataModel.setData();
+			this.__shapesArray[ leaf ] = mesh ;	
+			this.__shapesVisibility[leaf] = true ;
+
+			var _this=this;
+
+			function updateTexture()
+			{
+				var coords=volView.getCornersCoordinates();
+				for (var i=0;i<4;i++) {
+					geometry.vertices[i].position.set(coords[3*i],coords[3*i+1],coords[3*i+2]);
+				}
+
+				geometry.computeCentroids();
+				geometry.computeFaceNormals();
+				geometry.computeVertexNormals();
+				geometry.computeBoundingSphere();
+				HACKSetDirtyVertices(geometry);
+
+				var data=volView.getSliceImageData().data;
+				for (var i=length;i--;)
+					dataColor[i]=data[i];
+				texture.needsUpdate = true;
+				_this.render();
+			}
+
+			updateTexture();
+
+			var listenerId=volView.addListener('changeSlice',function(e)
+				{
+					updateTexture();
+					_this.render();
+				}, this);
+
+			this.__window.addListener("close", function() {
+				volView.removeListenerById(listenerId);
+				});
+
+			_this.render();
+		},
+
+		__createRenderWindow : function(){
 			var htmlContainer = new qx.ui.embed.Html();
 			var randomId=Math.random();
 			htmlContainer.setHtml("<div id=\"three.js"+randomId+"\"></div>");
 
 			var _this=this;
-			var canvaselement;
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
-
 
 			this.__window.setDroppable(true);
 			this.__window.addListener("drop", function(e) {
@@ -492,79 +553,9 @@ qx.Class.define("desk.meshView",
 				}
 				if (e.supportsType("volumeSlice"))
 				{
-					var volView=e.getData("volumeSlice");
-
-					var geometry=new THREE.Geometry();
-					geometry.dynamic=true;
-					for (var i=0;i<4;i++)
-						geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( 0, 0, 0 ) ) );
-					geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
-					geometry.faceVertexUvs[ 0 ].push( [
-						new THREE.UV( 0, 0),
-						new THREE.UV( 1, 0 ),
-						new THREE.UV( 1, 1 ),
-						new THREE.UV( 0, 1 )
-						] );
-
-
-					var imageData=volView.getSliceImageData();
-					var length=imageData.data.length;
-					var dataColor = new Uint8Array( length);
-					var texture = new THREE.DataTexture( dataColor, imageData.width, imageData.height, THREE.RGBAFormat );
-					texture.needsUpdate = true;
-					texture.magFilter=THREE.NearestFilter;
-					var material=new THREE.MeshBasicMaterial( {map:texture});
-
-					var mesh=new THREE.Mesh(geometry,material);
-					mesh.doubleSided=true;
-					_this.__scene.add(mesh);
-
-					var dataModel=this.__shapesList.getDataModel();
-
-					if (this.__slicesRoot===null)
-						this.__slicesRoot=dataModel.addBranch(null,"slices", true);
-
-
-					var leaf=dataModel.addLeaf(this.__slicesRoot,"slice", null);
-					dataModel.setData();
-					this.__shapesArray[ leaf ] = mesh ;	
-					this.__shapesVisibility[leaf] = true ;
-
-
-					function updateTexture()
-					{
-						var coords=volView.getCornersCoordinates();
-						for (var i=0;i<4;i++) {
-							geometry.vertices[i].position.set(coords[3*i],coords[3*i+1],coords[3*i+2]);
-						}
-
-						geometry.computeCentroids();
-						geometry.computeFaceNormals();
-						geometry.computeVertexNormals();
-						geometry.computeBoundingSphere();
-						HACKSetDirtyVertices(geometry);
-
-						var data=volView.getSliceImageData().data;
-						for (var i=length;i--;)
-							dataColor[i]=data[i];
-						texture.needsUpdate = true;
-						_this.render();
-					}
-
-					updateTexture();
-
-					var listenerId=volView.addListener('changeSlice',function(e)
-						{
-							updateTexture();
-							_this.render();}, this);
-
-					if (this.__volumes==null)
-						this.__volumes=[];
-					this.__volumes.push({
-							volumeViewer : volView,
-							listener : listenerId});
-					_this.render();
+					this.attachVolumeSlice(e.getData("volumeSlice"));
 				}
+
 				// activate the window
 				var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
 				windowManager.bringToFront(this.__window);
@@ -573,7 +564,6 @@ qx.Class.define("desk.meshView",
 			this.__window.addListener("close", function(e) {
 				this.dispose();
 				},this);
-
 
 			htmlContainer.addListener("appear",function(e){
 
