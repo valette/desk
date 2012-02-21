@@ -297,14 +297,12 @@ qx.Class.define("desk.fileBrowser",
 				switch (extension)
 				{
 				case ".vtk":
-					new desk.meshView(file, myBrowser,modificationTime);
-//					qx.core.Init.getApplication().getRoot().add(meshView);
-					break;
 				case ".ply":
 				case ".obj":
 				case ".stl":
 				case ".ctm":
-					var meshView=new desk.meshView(file,myBrowser);
+				case ".off":
+					var meshView=new desk.meshView(file, myBrowser,modificationTime);
 //					qx.core.Init.getApplication().getRoot().add(meshView);
 					break;
 				case ".png":
