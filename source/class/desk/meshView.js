@@ -1019,10 +1019,13 @@ qx.Class.define("desk.meshView",
 				var shapesArray=this.__shapesList.getSelectedNodes();
 				for (var i=0;i<shapesArray.length;i++)
 				{
-					var shapeId=shapesArray[i].nodeId;
-					var shape=this.__shapesArray[shapeId];
-					shape.visible=true;
-					this.__shapesVisibility[shapeId]=true;
+					if (shapesArray[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+					{
+						var shapeId=shapesArray[i].nodeId;
+						var shape=this.__shapesArray[shapeId];
+						shape.visible=true;
+						this.__shapesVisibility[shapeId]=true;
+					}
 				}
 				this.render();		
 				},this);
@@ -1033,10 +1036,13 @@ qx.Class.define("desk.meshView",
 				var shapesArray=this.__shapesList.getSelectedNodes();
 				for (var i=0;i<shapesArray.length;i++)
 				{
-					var shapeId=shapesArray[i].nodeId;
-					var shape=this.__shapesArray[shapeId];
-					shape.visible=false;
-					this.__shapesVisibility[shapeId]=false;
+					if (shapesArray[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+					{
+						var shapeId=shapesArray[i].nodeId;
+						var shape=this.__shapesArray[shapeId];
+						shape.visible=false;
+						this.__shapesVisibility[shapeId]=false;
+					}
 				}
 				this.render();		
 				},this);
@@ -1047,12 +1053,15 @@ qx.Class.define("desk.meshView",
 				var shapesArray=this.__shapesList.getSelectedNodes();
 				for (var i=0;i<shapesArray.length;i++)
 				{
-					var shapeId=shapesArray[i].nodeId;
-					var dataModel=this.__shapesList.getDataModel();
-					dataModel.prune(shapeId, true);
-					this.__scene.removeObject(this.__shapesArray[shapeId]);
-					this.__shapesArray[shapeId]=0;
-					dataModel.setData();
+					if (shapesArray[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+					{
+						var shapeId=shapesArray[i].nodeId;
+						var dataModel=this.__shapesList.getDataModel();
+						dataModel.prune(shapeId, true);
+						this.__scene.removeObject(this.__shapesArray[shapeId]);
+						this.__shapesArray[shapeId]=0;
+						dataModel.setData();
+					}
 				}
 				this.render();		
 				},this);
