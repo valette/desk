@@ -82,21 +82,13 @@ qx.Class.define("desk.volumeSlice",
 			return (this.__dimensions);
 		},
 
-		getImage : function(){
-			return this.__image;
-		},
 
-		getCanvas : function(){
+		getImageCanvas : function(){
 			return this.__canvas;
 		},
 
 		getSlider : function (){
 			return this.__slider;
-		},
-
-		getSliceImageData : function (){
-			return this.__canvas.getContext2d().getImageData(0, 0,
-					this.__dimensions[0], this.__dimensions[1]);
 		},
 
 		getCornersCoordinates : function () {
@@ -214,7 +206,6 @@ qx.Class.define("desk.volumeSlice",
 //			this.__fileFormatBox.add(SelectPNG);
 			leftContainer.add(this.__fileFormatBox);
 			this.__fileFormatBox.addListener("changeSelection", function(event){this.updateImage();},this);
-
 
 			this.__image=new Image();
 			this.__canvas = new qx.ui.embed.Canvas().set({

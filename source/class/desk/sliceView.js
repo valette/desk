@@ -157,9 +157,11 @@ qx.Class.define("desk.sliceView",
 				_this.__controls.target.copy(_this.__camera.position);
 				_this.__camera.position.setZ(_this.__camera.position.z+0.7*(coordinates[2]-coordinates[0]));
 
-				
+				var canvas=volumeSlice.getImageCanvas();
+				var width=canvas.getCanvasWidth();
+				var height=canvas.getCanvasHeight();
+				var imageData=canvas.getContext2d().getImageData(0, 0, width, height);
 
-				var imageData=volumeSlice.getSliceImageData();
 				var length=imageData.data.length;
 				var dataColor = new Uint8Array( length);
 
@@ -180,7 +182,8 @@ qx.Class.define("desk.sliceView",
 					geometry.computeBoundingSphere();
 				//	HACKSetDirtyVertices(geometry);
 
-					var data=volumeSlice.getSliceImageData().data;
+//					var data=volumeSlice.getSliceImageData().data;
+					var data=canvas.getContext2d().getImageData(0, 0,width, height).data;
 					for (var i=length;i--;)
 						dataColor[i]=data[i];
 					texture.needsUpdate = true;
