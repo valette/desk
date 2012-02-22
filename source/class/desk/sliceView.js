@@ -358,12 +358,12 @@ qx.Class.define("desk.sliceView",
 
 						if ( intersects.length > 0 ) {
 							var xinter=intersects[0].point.x;
-							var yinter=intersects[0].point.x;
+							var yinter=intersects[0].point.y;
 							console.log(xinter+" "+yinter);
 							var coordinates=volumeSlice.get2DCornersCoordinates();
 							var dimensions=volumeSlice.get2DDimensions();
-							var intxc=Math.round((xinter-coordinates[0])*dimensions[0]/(coordinates[2]-coordinates[0]));
-							var intyc=Math.round((yinter-coordinates[5])*dimensions[1]/(coordinates[1]-coordinates[5]));
+							var intxc=Math.floor((xinter-coordinates[0])*dimensions[0]/(coordinates[2]-coordinates[0]));
+							var intyc=Math.floor((yinter-coordinates[5])*dimensions[1]/(coordinates[1]-coordinates[5]));
 							console.log(intxc+" "+intyc);
 						}
 					}
