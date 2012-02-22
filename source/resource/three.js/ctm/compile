@@ -1,0 +1,6 @@
+#!/bin/bash
+java -jar ./compiler.jar --compilation_level SIMPLE_OPTIMIZATIONS --js CTMWorker2.js --js lzma.js --js ctm.js >CTMWorkerMin.js
+
+#java -jar ./compiler.jar --compilation_level SIMPLE_OPTIMIZATIONS --compute_phase_ordering --js concat.js >compiled.js
+#java -jar ./compiler.jar --compilation_level ADVANCED_OPTIMIZATIONS --js concat.js >compiled.js
+#scp compiled.js tux.creatis.insa-lyon.fr:/home/valette/public_html/meshView/compiled.js
