@@ -70,29 +70,22 @@ qx.Class.define("desk.sliceView",
 		return (this);		
 	},
 
-	statics : {
-		LINKEDWINDOW : null
-	},
-
 	properties : {
-		slice : { check : "Number", init : 0 ,  event : "changeSlice"},
 		ready : { init : false, check: "Boolean", event : "changeReady"}
 	},
-
 
 	members : {
 
 		__fileBrowser : null,
 		__slices : null,
 
-
-		__image : null,
-		__canvas : null,
 		__slider : null,
 
 		__fileFormatBox : null,
 
 		__window :null,
+
+		__viewPort : null,
 
 		//THREE.js objects
 		__scene : null,
@@ -209,6 +202,8 @@ qx.Class.define("desk.sliceView",
 
 		__getRenderWindow : function() {
 			var htmlContainer = new qx.ui.embed.Html();
+			this.__viewPort=htmlContainer;
+
 			var randomId=Math.random();
 			htmlContainer.setHtml("<div id=\"three.js"+randomId+"\"></div>");
 
@@ -316,10 +311,9 @@ qx.Class.define("desk.sliceView",
 					render();
 					}
 
-				var draggingInProgress=false;
+				var mouseMode=0;
 				htmlContainer.addListener("mousedown", function (event)	{
 					htmlContainer.capture();
-					var origin=htmlContainer.getContentLocation();
 
 					var button=0;
 					if (event.isRightPressed())
@@ -331,55 +325,38 @@ qx.Class.define("desk.sliceView",
 
 					if (button!=0)
 					{
-						draggingInProgress=true;
+						mouseMode=2;
+						var origin=htmlContainer.getContentLocation();
 						controls.mouseDown(button,
 							event.getDocumentLeft()-origin.left,
 							event.getDocumentTop()-origin.top);
 					}
 					else
 					{
-						var origin=htmlContainer.getContentLocation();
-						var x=event.getDocumentLeft()-origin.left;
-						var y=event.getDocumentTop()-origin.top;
-
-						var elementSize=htmlContainer.getInnerSize();
-						var x2 = ( x / elementSize.width ) * 2 - 1;
-						var y2 = - ( y / elementSize.height ) * 2 + 1;
-
-						var projector = new THREE.Projector();
-						var vector = new THREE.Vector3( x2, y2, 0.5 );
-						projector.unprojectVector( vector, camera );
-
-						var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
-						var meshes=[];
-						var volumeSlice=_this.__slices[0];
-						meshes.push(volumeSlice.getUserData("mesh"));
-						var intersects = ray.intersectObjects( meshes );
-
-						if ( intersects.length > 0 ) {
-							var xinter=intersects[0].point.x;
-							var yinter=intersects[0].point.y;
-							console.log(xinter+" "+yinter);
-							var coordinates=volumeSlice.get2DCornersCoordinates();
-							var dimensions=volumeSlice.get2DDimensions();
-							var intxc=Math.floor((xinter-coordinates[0])*dimensions[0]/(coordinates[2]-coordinates[0]));
-							var intyc=Math.floor((yinter-coordinates[5])*dimensions[1]/(coordinates[1]-coordinates[5]));
-							console.log(intxc+" "+intyc);
-						}
+						mouseMode=1;
+						_this.getPositionOnSlice(event);
 					}
 					});
 
 				htmlContainer.addListener("mousemove", function (event)	{
-					if (draggingInProgress)
+					switch (mouseMode)
 					{
+					case 2:
 						var origin=htmlContainer.getContentLocation();
 						controls.mouseMove(event.getDocumentLeft()-origin.left
 								, event.getDocumentTop()-origin.top);
-					}});
+						break;
+					case 1:
+						_this.getPositionOnSlice(event);
+						break;
+					default:
+						break;
+					}
+					});
 
 				htmlContainer.addListener("mouseup", function (event)	{
 					htmlContainer.releaseCapture();
-					draggingInProgress=false;
+					mouseMode=0;
 					controls.mouseUp();});
 
 				htmlContainer.addListener("mousewheel", function (event) {
@@ -396,13 +373,45 @@ qx.Class.define("desk.sliceView",
 
 				this.setReady(true);
 			}, this);
-
-	
 			return (htmlContainer);
 		},
 
-		getCanvas : function(){
-			return this.__canvas;
+		getPositionOnSlice : function (event) {
+			var viewPort=this.__viewPort;
+			var origin=viewPort.getContentLocation();
+			var x=event.getDocumentLeft()-origin.left;
+			var y=event.getDocumentTop()-origin.top;
+
+			var elementSize=viewPort.getInnerSize();
+			var x2 = ( x / elementSize.width ) * 2 - 1;
+			var y2 = - ( y / elementSize.height ) * 2 + 1;
+
+			var projector = new THREE.Projector();
+			var vector = new THREE.Vector3( x2, y2, 0.5 );
+			var camera=this.__camera;
+			projector.unprojectVector( vector, camera );
+
+			var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
+			var meshes=[];
+			var volumeSlice=this.__slices[0];
+			meshes.push(volumeSlice.getUserData("mesh"));
+			var intersects = ray.intersectObjects( meshes );
+
+			if ( intersects.length > 0 ) {
+				var xinter=intersects[0].point.x;
+				var yinter=intersects[0].point.y;
+			//	console.log(xinter+" "+yinter);
+				var coordinates=volumeSlice.get2DCornersCoordinates();
+				var dimensions=volumeSlice.get2DDimensions();
+				var intxc=Math.floor((xinter-coordinates[0])*dimensions[0]/(coordinates[2]-coordinates[0]));
+				var intyc=Math.floor((yinter-coordinates[5])*dimensions[1]/(coordinates[1]-coordinates[5]));
+				console.log(intxc+" "+intyc);
+				return {x :intxc, y :intyc};
+			}
+			else
+			{
+				return false;
+			}
 		},
 
 		getSlider : function (){
@@ -439,12 +448,6 @@ qx.Class.define("desk.sliceView",
 			this.__window.add(leftContainer);
 
 			this.__window.add(this.__getRenderWindow(), {flex : 1});
-		},
-
-		redraw : function()
-		{
-			this.__canvas.getContext2d().drawImage(this.__image, 0, 0);
 		}
-
 	}
 });
