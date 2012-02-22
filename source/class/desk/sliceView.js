@@ -173,6 +173,7 @@ qx.Class.define("desk.sliceView",
 				var mesh=new THREE.Mesh(geometry,material);
 				mesh.doubleSided=true;
 				_this.__scene.add(mesh);
+				volumeSlice.setUserData("mesh",mesh);
 
 				function updateTexture()
 				{
@@ -261,7 +262,6 @@ qx.Class.define("desk.sliceView",
 				},this);
 
 			htmlContainer.addListener("appear",function(e){
-				console.log("appear");
 				// scene and camera
 				var elementSize=htmlContainer.getInnerSize();
 				var scene = new THREE.Scene();
@@ -320,18 +320,53 @@ qx.Class.define("desk.sliceView",
 				htmlContainer.addListener("mousedown", function (event)	{
 					htmlContainer.capture();
 					var origin=htmlContainer.getContentLocation();
-					draggingInProgress=true;
-					var button=2;
+
+					var button=0;
 					if (event.isRightPressed())
 						button=1;
-	//				else if ((event.isMiddlePressed())||(event.isShiftPressed()))
-	//					button=2;
+					else if ((event.isMiddlePressed())||(event.isShiftPressed()))
+						button=2;
 	//				else if (event.isCtrlPressed())
 	//					button=3;
 
-					controls.mouseDown(button,
-									event.getDocumentLeft()-origin.left,
-									event.getDocumentTop()-origin.top);
+					if (button!=0)
+					{
+						draggingInProgress=true;
+						controls.mouseDown(button,
+							event.getDocumentLeft()-origin.left,
+							event.getDocumentTop()-origin.top);
+					}
+					else
+					{
+						var origin=htmlContainer.getContentLocation();
+						var x=event.getDocumentLeft()-origin.left;
+						var y=event.getDocumentTop()-origin.top;
+
+						var elementSize=htmlContainer.getInnerSize();
+						var x2 = ( x / elementSize.width ) * 2 - 1;
+						var y2 = - ( y / elementSize.height ) * 2 + 1;
+
+						var projector = new THREE.Projector();
+						var vector = new THREE.Vector3( x2, y2, 0.5 );
+						projector.unprojectVector( vector, camera );
+
+						var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
+						var meshes=[];
+						var volumeSlice=_this.__slices[0];
+						meshes.push(volumeSlice.getUserData("mesh"));
+						var intersects = ray.intersectObjects( meshes );
+
+						if ( intersects.length > 0 ) {
+							var xinter=intersects[0].point.x;
+							var yinter=intersects[0].point.x;
+							console.log(xinter+" "+yinter);
+							var coordinates=volumeSlice.get2DCornersCoordinates();
+							var dimensions=volumeSlice.get2DDimensions();
+							var intxc=Math.round((xinter-coordinates[0])*dimensions[0]/(coordinates[2]-coordinates[0]));
+							var intyc=Math.round((yinter-coordinates[5])*dimensions[1]/(coordinates[1]-coordinates[5]));
+							console.log(intxc+" "+intyc);
+						}
+					}
 					});
 
 				htmlContainer.addListener("mousemove", function (event)	{

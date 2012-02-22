@@ -113,6 +113,13 @@ qx.Class.define("desk.volumeSlice",
 			return (coordinates);
 		},
 
+		get2DDimensions: function () {
+			var dims=[];
+			dims.push(this.__dimensions[0]);
+			dims.push(this.__dimensions[1]);
+			return (dims);
+		},
+
 		get2DCornersCoordinates : function () {
 			var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
 			var xmax=this.__origin[0]+this.__extent[1]*this.__spacing[0];
