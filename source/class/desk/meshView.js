@@ -371,7 +371,7 @@ qx.Class.define("desk.meshView",
 					case ".vtk":
 					case ".ctm":
 					case ".off":
-						this.__readFile (file, mtime, [1.0,1.0,1.0,1.0], true);
+						_this.__readFile (file, mtime, [1.0,1.0,1.0,1.0], true);
 						break;
 
 					case ".xml":
@@ -427,7 +427,7 @@ qx.Class.define("desk.meshView",
 							else {
 								xmlName=mesh.getAttribute("mesh");
 								}
-							this.__readFile(path+"/"+xmlName, mtime, color, update, false);
+							_this.__readFile(path+"/"+xmlName, mtime, color, update, false);
 						}
 						break;
 					default : 
@@ -550,7 +550,7 @@ qx.Class.define("desk.meshView",
 								default:
 							}
 						}
-						this.__readFile(fileName, mTime, [1,1,1,1], update);
+						this.openFile(fileName, mTime);
 					}
 				}
 				if (e.supportsType("volumeSlice"))
