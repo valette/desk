@@ -192,7 +192,6 @@ qx.Class.define("desk.sliceView",
 				var listenerId=volumeSlice.addListener('changeSlice',function(e)
 					{
 						updateTexture();
-						console.log("changed slice");
 						_this.render();
 					});
 
@@ -344,6 +343,17 @@ qx.Class.define("desk.sliceView",
 					htmlContainer.releaseCapture();
 					draggingInProgress=false;
 					controls.mouseUp();});
+
+				htmlContainer.addListener("mousewheel", function (event) {
+								var slider=_this.__slider;
+								var delta=Math.round(event.getWheelDelta()/2);
+								var newValue=slider.getValue()+delta;
+								if (newValue>slider.getMaximum())
+									newValue=slider.getMaximum()
+								if (newValue<slider.getMinimum())
+									newValue=slider.getMinimum()
+								slider.setValue(newValue);
+						});
 
 
 				this.setReady(true);
