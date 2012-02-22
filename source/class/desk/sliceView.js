@@ -1,6 +1,5 @@
 qx.Class.define("desk.sliceView", 
 {
-//	extend : qx.ui.window.Window,
 	extend : qx.ui.container.Composite,
 
 	construct : function(file, fileBrowser)
@@ -19,6 +18,7 @@ qx.Class.define("desk.sliceView",
 		this.__window.setResizable(true,true,true,true);
 		this.__window.setUseResizeFrame(true);
 		this.__window.setUseMoveFrame(true);
+		this.__window.set({width : 400, height : 400});
 
 		var volView=this;
 		if (fileBrowser==null)
@@ -88,7 +88,6 @@ qx.Class.define("desk.sliceView",
 
 		__image : null,
 		__canvas : null,
-		__maxZ : 100,
 		__slider : null,
 
 		__fileFormatBox : null,
@@ -133,8 +132,12 @@ qx.Class.define("desk.sliceView",
 			function initSlice () {
 				var geometry=new THREE.Geometry();
 				geometry.dynamic=true;
+
+				var coordinates=volumeSlice.get2DCornersCoordinates();
 				for (var i=0;i<4;i++)
-					geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( 0, 0, 0 ) ) );
+					geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( coordinates[2*i],
+																				coordinates[2*i+1], 0 ) ) );
+
 				geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
 				geometry.faceVertexUvs[ 0 ].push( [
 					new THREE.UV( 0, 0),
@@ -143,12 +146,16 @@ qx.Class.define("desk.sliceView",
 					new THREE.UV( 0, 1 )
 					] );
 
-				var coordinates=volumeSlice.getCornersCoordinates();
-				_this.__camera.position.set(0.5*(coordinates[0]+coordinates[3]),
-											0.5*(coordinates[4]+coordinates[7]),
+				
+				_this.__slider.setMaximum(volumeSlice.getNumberOfSlices()-1);
+				_this.__slider.setValue(Math.round(0.5*volumeSlice.getNumberOfSlices()));
+				_this.__slider.bind("value", volumeSlice.getSlider(), "value");
+
+				_this.__camera.position.set(0.5*(coordinates[0]+coordinates[2]),
+											0.5*(coordinates[3]+coordinates[5]),
 											0);
 				_this.__controls.target.copy(_this.__camera.position);
-				_this.__camera.position.setZ(_this.__camera.position.z+0.7*(coordinates[3]-coordinates[0]));
+				_this.__camera.position.setZ(_this.__camera.position.z+0.7*(coordinates[2]-coordinates[0]));
 
 				
 
@@ -167,16 +174,11 @@ qx.Class.define("desk.sliceView",
 
 				function updateTexture()
 				{
-					var coords=volumeSlice.getCornersCoordinates();
-					for (var i=0;i<4;i++) {
-						geometry.vertices[i].position.set(coords[3*i],coords[3*i+1],0);
-					}
-
 					geometry.computeCentroids();
 					geometry.computeFaceNormals();
 					geometry.computeVertexNormals();
 					geometry.computeBoundingSphere();
-					HACKSetDirtyVertices(geometry);
+				//	HACKSetDirtyVertices(geometry);
 
 					var data=volumeSlice.getSliceImageData().data;
 					for (var i=length;i--;)
@@ -367,15 +369,15 @@ qx.Class.define("desk.sliceView",
 
 			this.__slider=new qx.ui.form.Slider();
 			this.__slider.setMinimum(0);
-			this.__slider.setMaximum(this.__maxZ);
-			this.__slider.setValue(Math.round(0.5*this.__maxZ));
+			this.__slider.setMaximum(100);
+			this.__slider.setValue(0);
 			this.__slider.setWidth(30);
 			this.__slider.setOrientation("vertical");
 
 			
 			// if there is only one slice, do not show the slider...
-			if (this.__maxZ>0)
-				leftContainer.add(this.__slider, {flex : 1});
+	//		if (this.__maxZ>0)
+			leftContainer.add(this.__slider, {flex : 1});
 
 			this.__fileFormatBox = new qx.ui.form.SelectBox();
 			this.__fileFormatBox.setWidth(30);

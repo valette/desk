@@ -1,33 +1,23 @@
 qx.Class.define("desk.volumeSlice", 
 {
-  extend : qx.ui.window.Window,
+  extend : qx.core.Object,
 
 	construct : function(file, fileBrowser)
 	{
 		this.base(arguments);
 
-		this.__window=this;
+		var _this=this;
 
-		this.setLayout(new qx.ui.layout.HBox(5));
-		this.setShowClose(true);
-		this.setShowMinimize(false);
-		this.setResizable(true,true,true,true);
-		this.setUseResizeFrame(true);
-		this.setUseMoveFrame(true);
-
-		var volView=this;
 		if (fileBrowser==null)
 			alert ("error! no file browser was provided");
 		else
 		{
-			//file is a tree node...
-			this.setCaption(file);
 
 			function getAnswer(e)
 				{
 					var req = e.getTarget();
 					var slicesDirectory=req.getResponseText().split("\n")[0];
-					volView.openFile(fileBrowser.getFileURL(slicesDirectory)+"/volume.xml");
+					_this.openFile(fileBrowser.getFileURL(slicesDirectory)+"/volume.xml");
 				}
 
 			var parameterMap={
@@ -35,11 +25,6 @@ qx.Class.define("desk.volumeSlice",
 				"input_volume" : file,
 				"output_directory" : "cache\/"};
 			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
-
-			var label = new qx.ui.basic.Label("Computing slices, wait...").set({
-				font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
-				});
-			this.add(label, {flex : 1});
 		}
 
 /*		// drag and drop support
@@ -61,12 +46,7 @@ qx.Class.define("desk.volumeSlice",
 				}
 			}, this);
 */
-		this.open();
 		return (this);		
-	},
-
-	statics : {
-		LINKEDWINDOW : null
 	},
 
 	properties : {
@@ -90,8 +70,6 @@ qx.Class.define("desk.volumeSlice",
 		__origin : null,
 		__spacing : null,
 		__dimensions: null,
-
-		__window :null,
 
 		//THREE.js objects
 		__scene : null,
@@ -143,9 +121,28 @@ qx.Class.define("desk.volumeSlice",
 			return (coordinates);
 		},
 
-		openFile : function (file) {
-			this.removeAll();
+		get2DCornersCoordinates : function () {
+			var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
+			var xmax=this.__origin[0]+this.__extent[1]*this.__spacing[0];
+			var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
+			var ymax=this.__origin[1]+this.__extent[3]*this.__spacing[1];
+			var coordinates=[];
+			coordinates[0]=xmin;
+			coordinates[1]=ymax;
+			coordinates[2]=xmax;
+			coordinates[3]=ymax;
+			coordinates[4]=xmax;
+			coordinates[5]=ymin;
+			coordinates[6]=xmin;
+			coordinates[7]=ymin;
+			return (coordinates);
+		},
 
+		getNumberOfSlices : function () {
+			return (this.__dimensions[2]);
+		},
+
+		openFile : function (file) {
 			var xmlDoc;
 			{
 				var xmlhttp=new XMLHttpRequest();
@@ -218,7 +215,6 @@ qx.Class.define("desk.volumeSlice",
 			leftContainer.add(this.__fileFormatBox);
 			this.__fileFormatBox.addListener("changeSelection", function(event){this.updateImage();},this);
 
-			this.add(leftContainer);
 
 			this.__image=new Image();
 			this.__canvas = new qx.ui.embed.Canvas().set({
@@ -230,21 +226,7 @@ qx.Class.define("desk.volumeSlice",
 				});
 	        this.__canvas.addListener("redraw", this.redraw, this);
 
-			this.add(this.__canvas);
 			this.updateImage();
-
-			this.addListener("keypress",
-				function(event) {if (event.getKeyIdentifier()=="S") 
-					desk.volView.LINKEDWINDOW=this;},this);
-			this.addListener("click",
-				function(event) {
-					if ((desk.volView.LINKEDWINDOW!=null)&&(desk.volView.LINKEDWINDOW!=this))
-					{
-						this.__slider.bind("value", desk.volView.LINKEDWINDOW.__slider, "value");
-						desk.volView.LINKEDWINDOW.__slider.bind("value", this.__slider, "value");
-						desk.volView.LINKEDWINDOW=null;
-					}},this);
-
 		},
 
 		redraw : function()
@@ -257,8 +239,8 @@ qx.Class.define("desk.volumeSlice",
 			var slice=volView.__maxZ-volView.__slider.getValue();
 			this.__image.onload=function(){
 				volView.redraw();
-				volView.setSlice(slice);
 				volView.setReady(true);
+				volView.setSlice(slice);
 				};
 			this.__image.src=this.__path+this.__prefix+"XY"+(this.__offset+this.__maxZ-this.__slider.getValue())
 				+"."+this.__fileFormatBox.getSelection()[0].getLabel()+"?nocache="+this.__timestamp;
