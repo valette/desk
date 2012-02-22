@@ -359,6 +359,12 @@ qx.Class.define("desk.fileBrowser",
 				else
 					alert("Cannot view a directory!");});
 
+			myBrowser.addAction("sliceView", function (node) {
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+					var volView=new desk.sliceView(myBrowser.getNodeFile(node), myBrowser);
+				else
+					alert("Cannot view a directory!");});
+
 			myBrowser.addAction("download",function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 				{
