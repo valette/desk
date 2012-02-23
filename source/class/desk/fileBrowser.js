@@ -325,14 +325,22 @@ qx.Class.define("desk.fileBrowser",
 					else if (xmlDoc.getElementsByTagName("volume").length!=0)
 					{
 						var volView=new desk.volView(file, myBrowser, modificationTime);
+						//~ var volView=new desk.volMaster(file, myBrowser, modificationTime); //~ orion test
 //						qx.core.Init.getApplication().getRoot().add(volView);
 					}
 					else
 						alert ("xml file of unknown type!");
 					break;
 				case ".mhd":
-					var volView=new desk.volView(file, myBrowser);
-					qx.core.Init.getApplication().getRoot().add(volView);
+					//~ var volView=new desk.volView(file, myBrowser);
+					
+					//~ var volView = new desk.volMaster(file, myBrowser); //~ orion test
+					//~ 
+					//~ qx.core.Init.getApplication().getRoot().add(volView);
+					
+				//~ orion test
+					var volViewers = new desk.volMaster(file, myBrowser);
+					
 					break;
 				case ".par":
 					myBrowser.getActions().createActionWindowFromURL(myBrowser.getNodeURL(node));
