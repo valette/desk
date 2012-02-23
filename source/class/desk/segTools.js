@@ -150,17 +150,20 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
             tools.__penSize = new qx.ui.form.Spinner().set({
                 minimum: 1,
                 maximum: 100,
-                value: 5//tools.__curView.__drawingCanvasParams.myLineWidth
+                value: 1//tools.__curView.__drawingCanvasParams.myLineWidth
             });
 			
             tools.__penSize.addListener("changeValue", function(event)
 			{
 //~ tools.debug("319 : >>>>>>>   tools.__penSize.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+				console.log(event.getData());
 				for(var i=0; i<theMaster.__viewers.length; i++)
-					theMaster.__viewers[i].__htmlContextLabels.lineWidth = event.getData()*Math.sqrt(theMaster.__viewers[i].__scale[0]*theMaster.__viewers[i].__scale[1]);
-				tools.__eraserCursor.set({width: Math.ceil(tools.__eraserCoeff*tools.__penSize.getValue()*tools.__curView.__display.curCtxtZoom/tools.__curView.__scale[0]+1),
-											height: Math.ceil(tools.__eraserCoeff*tools.__penSize.getValue()*tools.__curView.__display.curCtxtZoom/tools.__curView.__scale[1]+1)});
+					theMaster.__viewers[i].setPaintWidth(event.getData());
+
+//				tools.__eraserCursor.set({width: Math.ceil(tools.__eraserCoeff*tools.__penSize.getValue()*tools.__curView.__display.curCtxtZoom/tools.__curView.__scale[0]+1),
+	//										height: Math.ceil(tools.__eraserCoeff*tools.__penSize.getValue()*tools.__curView.__display.curCtxtZoom/tools.__curView.__scale[1]+1)});
             });
+            tools.__penSize.setValue(5);
             
 			tools.__penSize.addListener("mouseout", function(event)
 			{

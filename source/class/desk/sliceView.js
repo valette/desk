@@ -83,6 +83,7 @@ qx.Class.define("desk.sliceView",
 		__viewPort : null,
 
 		__currentColor : null,
+		__currentWidth : null,
 
 		//THREE.js objects
 		__scene : null,
@@ -93,7 +94,11 @@ qx.Class.define("desk.sliceView",
 		__master : null,
 
 		setPaintColor : function (color) {
-			this.__currentColor=color;
+			this.__paintColor=color;
+		},
+
+		setPaintWidth : function (width) {
+			this.__paintWidth=width;
 		},
 
 		render : function ( ) {
@@ -341,9 +346,10 @@ qx.Class.define("desk.sliceView",
 						mouseMode=1;
 						var position=_this.getPositionOnSlice(event);
 						var context=_this.__slices[0].getImageCanvas().getContext2d();
-						context.strokeStyle = _this.__currentColor;
+						context.strokeStyle = _this.__paintColor;
 						context.lineJoin = "round";
-						context.lineWidth = 5;
+						context.lineWidth = _this.__paintWidth;
+						console.log(_this.__paintWidth);
 				//		console.log(position);
 					    context.beginPath();
 						context.moveTo(position.x, position.y);
