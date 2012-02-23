@@ -11,13 +11,13 @@ qx.Class.define("desk.sliceView",
 {
 	extend : qx.ui.container.Composite,
 
-	construct : function(file, fileBrowser, master, orientation)
+	construct : function(file, fileBrowser, master, orientation, callback)
 	{
 		this.base(arguments);
 
 		this.__slices=[];
 		this.__fileBrowser=fileBrowser;
-		this.addVolume(file);
+		this.addVolume(file, callback);
 
 		if (typeof orientation=="number")
 			this.setOrientation(orientation);
@@ -75,6 +75,8 @@ qx.Class.define("desk.sliceView",
 
 		__fileFormatBox : null,
 
+		__mainLeftContainer : null,
+
 		__window :null,
 
 		__viewPort : null,
@@ -92,18 +94,18 @@ qx.Class.define("desk.sliceView",
 			this.__renderer.render( this.__scene, this.__camera );			
 		},
 
-		addVolume : function (file)
+		addVolume : function (file, callback)
 		{
 			if (this.isReady()) {
-				this.__addVolume(file);
+				this.__addVolume(file, callback);
 			}
 			else {
 				this.addListenerOnce("changeReady", function () {
-					this.__addVolume(file)},this);
+					this.__addVolume(file, callback)},this);
 			}
 		},
 
-		__addVolume : function (file) {
+		__addVolume : function (file, callback) {
 			var volumeSlice=new desk.volumeSlice(file,this.__fileBrowser, this.getOrientation());
 			this.__slices.push(volumeSlice);
 			var _this=this;
@@ -191,6 +193,10 @@ qx.Class.define("desk.sliceView",
 					});
 
 				_this.render();
+				if (typeof callback=="function")
+				{
+					callback(volumeSlice);
+				}
 			}
 		},
 
@@ -425,12 +431,146 @@ qx.Class.define("desk.sliceView",
 		},
 
 
+		getSeedsLists : function()
+		{
+this.debug("------->>>   volView.__createSeedsLists : function()   !!!!!!!");
+			var volView = this;
+			
+			var tools = volView.__master.__tools;
+			
+			var theMaster = volView.__master;
+			
+			var volFile = volView.__file;
+			
+			var fileBrowser = volView.__fileBrowser;
+			
+			
+			
+			// create seeds list
+			var seedsList=new qx.ui.form.List();
+			seedsList.setWidth(30);
+			seedsList.setScrollbarY("off");
+			var winTitleBarHeight = 26;
+			var mywindow=volView.__window;
+			console.log(this.__window.getBounds());
+			console.log(mywindow.getBounds());
+			var bounds=mywindow.getBounds();
+			console.log("bounds : ");
+			console.log(bounds);
+			var displayBorder = mywindow.getContentPaddingBottom();
+			tools.getLayoutParent().add(seedsList,
+										{left : bounds.left + bounds.width + 5,
+										top: bounds.top + winTitleBarHeight + volView.__mainLeftContainer.getChildren()[0].getBounds().height + volView.__mainLeftContainer.getLayout().getSpacing() + displayBorder});
+			seedsList.set({height:volView.__slider.getBounds().height, zIndex:volView.getZIndex()});
+			seedsList.setVisibility("excluded");
+			
+			
+			
+			// create corrections list
+			var correctionsList=new qx.ui.form.List();
+			correctionsList.setWidth(30);
+			correctionsList.setScrollbarY("off");
+			tools.getLayoutParent().add(correctionsList,
+										{left:bounds.left + bounds.width + 5,
+										top: bounds.top + winTitleBarHeight + volView.__mainLeftContainer.getChildren()[0].getBounds().height + volView.__mainLeftContainer.getLayout().getSpacing() + displayBorder});
+			correctionsList.set({height:volView.__slider.getBounds().height, zIndex:volView.getZIndex()});
+			correctionsList.setVisibility("excluded");
+			
+			
+			
+			seedsList.addListener("removeItem", function(event) {
+//~ volView.debug("3220 : >>>>>>>  seedsList.addListener(removeItem, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+				if (seedsList.getChildren().length==0)
+					tools.__startSegmentationButton.setEnabled(false);
+				}, this);
+
+			seedsList.addListener("addItem", function(event) {
+//~ volView.debug("3226 : >>>>>>>  seedsList.addListener(addItem, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+				tools.__startSegmentationButton.setEnabled(true);
+				}, this);
+			
+			
+			var keyPressHandler = function(event)
+			{
+//~ volView.debug("3233 : >>>>>>>  keyPressHandler = function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+				if(event.getKeyIdentifier()=="Delete")
+				{
+					var selectedChild = this.getSelection()[0];
+					if (selectedChild!=null)
+					{
+						var sliceId = selectedChild.getUserData("slice");
+					////Erase image on the server
+						theMaster.__eraseFile(tools.getSessionDirectory()+"/"+volView.__getSeedFileName(sliceId));
+						tools.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsArray")[volView.__display.orientation][sliceId]=0;
+						volView.__clearDrawingCanvas();
+						this.remove(selectedChild); //  this  : the given List (see below)
+						theMaster.__saveSeedsXML();
+					}
+				}
+			};
+			seedsList.addListener("keypress", keyPressHandler, seedsList);
+			correctionsList.addListener("keypress", keyPressHandler, correctionsList);
+			
+			
+			
+			var createdLists = [];
+			createdLists[0] = seedsList;
+			createdLists[1] = correctionsList;
+			
+			
+			return createdLists;
+			
+			
+		},
+		
+		__getSeedsLists : function(key,seedsTypeListItem)
+		{
+//~ this.debug("------->>>   volView.__getSeedsLists : function()   !!!!!!!");
+
+			volView = this;
+			
+			var seedsList = null;
+			var seedsTypeSelectBox = volView.__master.__tools.__seedsTypeSelectBox;
+			if(seedsTypeSelectBox!=null)
+			{
+				var mySeedsTypeListItem = null;
+				if(seedsTypeListItem!=null)
+					mySeedsTypeListItem = seedsTypeListItem;
+				else
+					mySeedsTypeListItem = seedsTypeSelectBox.getSelection()[0];
+				if(mySeedsTypeListItem!=null)
+				{
+					seedsList = mySeedsTypeListItem.getUserData(key)[volView.getUserData("viewerIndex")];
+				}
+			}
+			
+			return seedsList;
+		},
+
 		__createUI : function (file) {
 
 			var leftContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
+			this.__mainLeftContainer=leftContainer;
+//			var button=new qx.ui.form.ToggleButton("tools");
 
-			var button=new qx.ui.form.ToggleButton("tools");
-			button.addListener("changeValue",function (value) {
+
+			var _this=this;
+
+			if (this.__master.isToolsReady())
+			{
+				addtoolsButton();
+			}
+			else
+			{
+				this.__master.addListenerOnce("changeToolsReady", function () {
+					addToolsButton();
+					});
+			}
+
+			function addToolsButton() {
+				leftContainer.add(_this.__master.getTools().getPaintPanelVisibilitySwitch());
+			}
+		/*	button.addListener("changeValue",function (value) {
 				if (this.__master!=null)
 				{
 					if (value)
@@ -442,8 +582,7 @@ qx.Class.define("desk.sliceView",
 						this.__master.getTools().close();
 					}
 				} 
-			},this)
-			leftContainer.add(button);
+			},this)*/
 
 			this.__slider=new qx.ui.form.Slider();
 			this.__slider.setMinimum(0);

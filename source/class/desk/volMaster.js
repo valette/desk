@@ -26,23 +26,18 @@ qx.Class.define("desk.volMaster",
 		//~ var Y_xz_viewer = new desk.volView__classTest(this, globalFile, globalFileBrowser, 2);
 		
 		//~ orion test : launch the 3 views at once ! ! !
+
+		this.__createVolumesList();
+
 		this.__viewers = [];
-		this.__nbUsedOrientations = 1;
-		for(var i=0; i<this.__nbUsedOrientations; i++)
-		{
-			
-			this.__viewers[i] = new desk.sliceView(globalFile, globalFileBrowser, this, i);
-			// index test : add lfexibility between orientation (1,2 or 3) and a unique index for each viewer no matter its view orientation
-			//					<!> CAUTION : any index must be  <  this.__viewers.length
-			this.__viewers[i].setUserData("viewerIndex",i);
-		}
+		this.__nbUsedOrientations = 3;
+		this.addVolume(globalFile);
 		
 		
 		var tryToolwin = new desk.segTools(this, globalFile, globalFileBrowser);
 		
-		this.__tools = tryToolwin;
-		
-		
+		this.__tools = tryToolwin;	
+		this.setToolsReady(true);	
 		
 	//// MUST return the first volView__classTest instance !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		//~ return (Z_xy_viewer);
@@ -57,6 +52,8 @@ qx.Class.define("desk.volMaster",
 	},
 
 	properties : {
+		toolsReady : { init : false, check: "Boolean", event : "changeToolsReady"},
+	
 		firstViewerOn : { init:false, event:"firstViewerReady" },
 		secondViewerOn : { init:false, event:"secondViewerReady" },
 		thirdViewerOn : { init:false, event:"thirdViewerReady" },
@@ -65,6 +62,9 @@ qx.Class.define("desk.volMaster",
 
 	members :
 	{
+
+		__volumes : null,
+
 		__viewers : null,
 		
 		__nbUsedOrientations : null,
@@ -78,7 +78,52 @@ qx.Class.define("desk.volMaster",
 		getTools : function () {
 			return this.__tools;
 		},
-		
+
+		__createVolumesList : function () {
+			var window=new qx.ui.window.Window();
+
+			window.setLayout(new qx.ui.layout.HBox(5));
+			window.setShowClose(true);
+			window.setShowMinimize(false);
+			window.setResizable(true,true,true,true);
+			window.setUseResizeFrame(true);
+			window.setUseMoveFrame(true);
+			window.set({width : 400, height : 400});
+			window.setCaption("volumes");
+
+			this.__volumes= new qx.ui.form.List();
+			this.__volumes.set({ selectionMode : "multi" });
+
+			window.add(this.__volumes, {flex : 1});
+			window.open();
+		},
+
+		addVolume : function (file) {
+			var volumeSlices=[];
+			for(var i=0; i<this.__nbUsedOrientations; i++)
+			{
+				if (this.__viewers[i]==undefined)
+				{
+					this.__viewers[i] = new desk.sliceView(file, this.__fileBrowser, this, i, ( function (myI) { 
+						return (function (volumeSlice) {
+							console.log(myI);
+							volumeSlices[myI]=volumeSlice;
+							});
+						} ) (i));
+					// index test : add lfexibility between orientation (1,2 or 3) and a unique index for each viewer no matter its view orientation
+					//					<!> CAUTION : any index must be  <  this.__viewers.length
+					this.__viewers[i].setUserData("viewerIndex",i);
+				}
+				else
+				{
+					alert ("already one volume present, implement addition TODO");
+				}
+			}
+			var volumeListItem=new qx.ui.form.ListItem(file);
+			volumeListItem.setUserData("slices", volumeSlices);
+			this.__volumes.add(volumeListItem);
+		},
+
 		__loadSession : function()
 		{
 this.debug("------->>>   theMaster.__loadSession : function()   !!!!!!!");

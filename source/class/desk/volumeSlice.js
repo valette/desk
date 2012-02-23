@@ -8,6 +8,8 @@ qx.Class.define("desk.volumeSlice",
 
 		var _this=this;
 
+		this.setOrientation(orientation);
+
 		if (fileBrowser==null)
 			alert ("error! no file browser was provided");
 		else
@@ -51,7 +53,8 @@ qx.Class.define("desk.volumeSlice",
 	},
 
 	properties : {
-		ready : { init : false, check: "Boolean", event : "changeReady"}
+		ready : { init : false, check: "Boolean", event : "changeReady"},
+		orientation : { init : 0, check: "Number", event : "changeOrientation"}
 	},
 
 	events : {
@@ -65,7 +68,7 @@ qx.Class.define("desk.volumeSlice",
 		__prefix : null,
 		__image : null,
 		__canvas : null,
-		__maxZ : null,
+
 		__slider : null,
 		__timestamp : null,
 		__fileFormatBox : null,
@@ -142,7 +145,18 @@ qx.Class.define("desk.volumeSlice",
 		},
 
 		getNumberOfSlices : function () {
-			return (this.__dimensions[2]);
+			switch(this.getOrientation())
+			{
+				// ZY X
+				case 1 :
+					return this.__dimensions[0]
+				// XZ Y
+				case 2 :
+					return this.__dimensions[1]
+				// XY Z
+				default :
+					return this.__dimensions[2]
+			}
 		},
 
 		openFile : function (file) {
@@ -168,7 +182,7 @@ qx.Class.define("desk.volumeSlice",
 							parseInt(XMLextent.getAttribute("z2")));
 
 			var XMLdimensions=volume.getElementsByTagName("dimensions")[0];
-			this.__maxZ=parseInt(XMLdimensions.getAttribute("z"))-1;
+
 			this.__dimensions=new Array(parseInt(XMLdimensions.getAttribute("x")),
 							parseInt(XMLdimensions.getAttribute("y")),
 							parseInt(XMLdimensions.getAttribute("z")));
@@ -199,14 +213,14 @@ qx.Class.define("desk.volumeSlice",
 
 			this.__slider=new qx.ui.form.Slider();
 			this.__slider.setMinimum(0);
-			this.__slider.setMaximum(this.__maxZ);
-			this.__slider.setValue(Math.round(0.5*this.__maxZ));
+			this.__slider.setMaximum(this.getNumberOfSlices()-1);
+			this.__slider.setValue(Math.round(0.5*(this.getNumberOfSlices()-1)));
 			this.__slider.setWidth(30);
 			this.__slider.setOrientation("vertical");
 			this.__slider.addListener("changeValue", function(event){this.updateImage();},this);
 			
 			// if there is only one slice, do not show the slider...
-			if (this.__maxZ>0)
+			if (this.getNumberOfSlices()>1)
 				leftContainer.add(this.__slider, {flex : 1});
 
 			this.__fileFormatBox = new qx.ui.form.SelectBox();
@@ -237,14 +251,32 @@ qx.Class.define("desk.volumeSlice",
 		},
 
 		updateImage : function() {
-			var volView=this;
-			var slice=volView.__maxZ-volView.__slider.getValue();
+			var _this=this;
+			var slice=this.getNumberOfSlices()-1-_this.__slider.getValue();
+
 			this.__image.onload=function(){
-				volView.redraw();
-				volView.setReady(true);
-				volView.fireEvent("changeSlice");
+				_this.redraw();
+				_this.setReady(true);
+				_this.fireEvent("changeSlice");
 				};
-			this.__image.src=this.__path+this.__prefix+"XY"+(this.__offset+this.__maxZ-this.__slider.getValue())
+
+			var orientationString;
+			switch(this.getOrientation())
+			{
+				// ZY X
+				case 1 :
+					orientationString="ZY";
+					break;
+				// XZ Y
+				case 2 :
+					orientationString="XZ";
+					break;
+				// XY Z
+				default :
+					orientationString="XY";
+					break;
+				}
+			this.__image.src=this.__path+this.__prefix+orientationString+(this.__offset+this.getNumberOfSlices()-1-this.__slider.getValue())
 				+"."+this.__fileFormatBox.getSelection()[0].getLabel()+"?nocache="+this.__timestamp;
 		}
 	}

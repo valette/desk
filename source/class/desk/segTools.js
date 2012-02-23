@@ -88,191 +88,31 @@ this.debug("42 : >>>>>>>   this.addListener(close, function(event)   !!!!!!!!!!!
 		
 		
 		__curView : null, // en attendant...
-		
-		/*
-		__slider : null,
-		__spinner : null,
-		__formatSelectBox : null,
-		__orientationSelect : null,
 
-		__segmentationInProgress : false,
-		__startSegmentationButton : null,
-		__extractMeshesButton : null,
-
-		// the main tabview
-		__tabView : null,
-
-		__currentSeedsModified : false,
-		*/
-		
 		
 		__seedsTypeSelectBox : null,
 		
-		
-		/*
-		__hasCorrectionSeeds : false,
 
-		__mouseActionMode : 0,
-		__mouseActionActive : false,
-
-// Données pour la position de l'objet window qui contient l'interface
-//(position par rapport au document <-> fenêtre de l'explorateur)
-// La largeur et la hauteur sont des valeurs par défaut. Si les widgets
-//dans la fenêtre ont besoin de plus d'espace, la fenêtre s'élargit
-// d'elle-même...normalement...
-		__winMap : null,
-
-// Variable pour le canvas HTMLCanvasElement des seeds (utilisé pour les calculs
-// en arrière plan: changement de slide, zoom, annuler<-click droit)
-		__htmlCanvasLabels : null,
-
-// Variable pour le contexte associé au canvas précédent
-		__htmlContextLabels : null,
-
-// Données globales pour le canvas qx.html.Canvas des seeds (utilisé pour l'affichage)
-         __drawingCanvasParams : null,
-
-// Variable pour le canvas HTMLCanvasElement des images (utilisé pour les calculs en arrière plan:
-// changement de slide, zoom, annuler<-click droit)
-         __htmlCanvasImage : null,
-
-// Variable pour le contexte du canvas précédent
-         __htmlContextImage : null,
-		 
-// Données globales pour le canvas qx.html.Canvas des images (utilisé pour l'affichage)
-         __imgCanvasParams : null,
-
-         __horizSlices : null,
-
-// Tableau contenant la pile de canvas permettant de faire "annuler" avec click droit
-         __ctrlZData : null,
-
-// Taille de la pile "annuler"
-         __undoLimit : 10,
-
-// Données globales associées à la souris (position et evenements)
-         __mouseData : null,
-         */
 
 // Tableau contenant les couleurs des seeds
          __labelColors : null,
 		
-		/*
-         __imageZ : 1,     // Indice de position en z du canvas image (tout au fond)
-
-         __MaxZoom : 8,     //Limite du zoom : x4
-         __timestamp : 0,     //Valeur calculée pour différencier les images dans le caché de l'explorateur
-         */
          
          __eraserCoeff : 2,     //Taille gomme  =  eraserCoeff * taille crayon --> c'est plus agréable d'effacer comme ça
          
-        /*
-         __numberOfSlices : 0,     //Contient le nombre de slides récuperé à partir du fichier xml (le programme est fait pour  numberOfSlices = "z")
-
-         __slicesNameOffset : 0,     //Contient la valeur de l'offset récuperé à partir du fichier xml
-         */
          
          __eraserCursorZ : 123000000,     //Indice de position en z du widget qui représente la gomme (toujours devant)
-         
-        /*
-         __drawingCanvasZ : 1023,     //Indice de position en z du canvas dessin (devant l'image, derrière la gomme)
-         __slicesNamePrefix : null,     //Contient la chaîne de charactéres du prefix récuperée à partir du fichier xml lors d'un appui sur la touche "s"
-         __drawingSKeyOpacity : 0,     //Opacité à appliquer au canvas de dessin dans la zone image lors d'un appui sur la touche "s"
-
-//Variable pour le canvas HTMLCanvasElement des seeds utilisés pour la segmentation la plus récente
-         __htmlContextUsedSeeds : null,
-
-//Variable pour le canvas HTMLCanvasElement des image resultat de la segmentation
-         __htmlCanvasUsedSeeds : null,
-
-		// the path containing jpg slices
-		__pathJPG : null,
-
-		__embedObjectImage : null,
-		__embedObjectLabels : null,
-		__embedObjectUsedSeeds : null,
-
-
-		// the image pixels after brightness/contrast processing
-		__pixels : null,
-
-		// the imageData after brightness/contrast processing
-		__imageData : null,
-		*/
 		
 		__penSize : null,
 		__eraserButton : null,
 		__eraserCursor : null,
 		
-		/*
-		__colorsContainer : null,
-		__brghtnssCntrstButton : null,
-		__wheelScale : null,
-		__updateContext : null,
-		__mouseDownHandler : null,
-		__mouseWheelHandler : null,
-		__mouseMoveHandler : null,
-		__mouseUpHandler : null,
-		__mouseOverHandler : null,
 
-		// the image used to load volume slices
-		__loadImage : null,
-
-		__loadSeeds : null,
-
-		__currentSeedsSlice : null,
-
-		// volume extent (VTK style)
-		__extent : null,
-
-		// volume dimensions in 3 directions
-		__dimensions : null,
-
-		// volume spacing in 3 directions
-		__spacing  : null,
-
-		// volume origin
-		__origin : null,
-
-		// size of data (in bytes)
-		__scalarSize : 1,
-
-		// scalar type, as defined by VTK
-		__scalarType : null,
-
-		// minimal scalar value in the volume
-		__scalarMin : null,
-
-		// maximal scalar value in the volume
-		__scalarMax : null,
-
-		// display size scale
-		__scale : null,
-		*/
 		
 		// width of the panel measured manually during debug
 		//~ __rightPanelWidth : 405 + 16 + 4,
 		__rightPanelWidth : 405,
 		
-		/*
-		// border used to make visible the bounds of the image
-		__imageBorder : 3,
-		
-		// display size scale
-		__scaledWidth : null,
-
-		// display size scale
-		__scaledHeight : null,
-
-		// space coordinates of the center of the volume
-		__centerVolPos : null,
-		
-		// the display canvas used for the drawings
-		__drawingCanvas : null,
-
-		// the function which draws the canvas
-		__drawZoomedCanvas : null,
-		*/
 		
 		__settingButtons : false,
 		
@@ -844,7 +684,7 @@ tools.debug("824 : >>>>>>>   segmentationViewer.getWindow().addListener(beforeCl
 			tools.addListenerOnce("appear", function(event)
 			{
 tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				tools.setCaption("Tools -- " + tools.__curView.getCaption());
+			//	tools.setCaption("Tools -- " + tools.__curView.getCaption());
 				
 				if(tools.__seedsTypeSelectBox==null)
 				{
@@ -854,15 +694,15 @@ tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 				}
 				
 				//~ tools.debug("857 : tools.__eraserCursor.addListener(mousewheel, tools.__curView.__mouseWheelHandler, tools.__eraserCursor); !");
-				if(!tools.__curView.__isSegWindow)
-					tools.__eraserCursor.addListener("mousewheel", tools.__curView.__mouseWheelHandler, tools.__eraserCursor);
+		//seb		if(!tools.__curView.__isSegWindow)
+		//seb			tools.__eraserCursor.addListener("mousewheel", tools.__curView.__mouseWheelHandler, tools.__eraserCursor);
 				// from  segTools  Line: 430
 				
 			}, this);
            
 		},
 		
-		__getPaintPanelVisibilitySwitch : function ()
+		getPaintPanelVisibilitySwitch : function ()
 		{
 this.debug("------->>>   tools.__getPaintPanelVisibilitySwitch : function()   !!!!!!!");
 			
@@ -1056,9 +896,9 @@ this.debug("------->>>   tools.__getSeedsTypeSelectBox : function()   !!!!!!!");
 			{
 				for(var i=0; i<theMaster.__viewers.length; i++)
 				{
-					if((theMaster.__viewers[i].__display.orientation==orionCount)&&(typeof tempMultiViewSeeds[orionCount]=="undefined"))
+					if((theMaster.__viewers[i].getOrientation()==orionCount)&&(typeof tempMultiViewSeeds[orionCount]=="undefined"))
 					{
-						singleViewLists = theMaster.__viewers[i].__createSeedsLists();
+						singleViewLists = theMaster.__viewers[i].getSeedsLists();
 						tempMultiViewSeeds[orionCount] = singleViewLists[0];
 //~ tools.debug("1026 : tempMultiViewSeeds["+orionCount+"] : " + tempMultiViewSeeds[orionCount]);
 						tempMultiViewCorrections[orionCount] = singleViewLists[1];
