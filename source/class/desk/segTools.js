@@ -39,7 +39,7 @@ qx.Class.define("desk.segTools",
 							});
 		this.addListener("close", function(event)
 		{
-//~ this.debug("42 : >>>>>>>   this.addListener(close, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+this.debug("42 : >>>>>>>   this.addListener(close, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 			for(var i=0; i<this.__master.__viewers.length; i++)
 			{
 				var children = this.__master.__viewers[i].__topLeftContainer.getChildren(); //~ CAUTION ! ---> This only works if the "Paint" toggle button is the last child
@@ -328,10 +328,10 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 //~ tools.debug("328 : >>>>>>>   tools.__penSize.addListener(mouseout, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				//~ tools.__penSize.releaseCapture();
 				
-				//~ if(tools.__curView.__drawingCanvas != null)
-						//~ tools.__curView.__drawingCanvas.resetCursor();
-				//~ if(tools.__eraserCursor != null)
-						//~ tools.__eraserCursor.resetCursor();
+				if(tools.__curView.__drawingCanvas != null)
+						tools.__curView.__drawingCanvas.resetCursor();
+				if(tools.__eraserCursor != null)
+						tools.__eraserCursor.resetCursor();
 			}, this);
 			
 			var penLabel = new qx.ui.basic.Label("Brush : ");
@@ -357,7 +357,7 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
             tools.__eraserCursor.addListener("mousedown", function(event)
 			{
 //~ tools.debug("359 : >>>>>>>   tools.__eraserCursor.addListener(mousedown, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				//~ tools.__eraserCursor.capture();
+				tools.__eraserCursor.capture();
 				
 				if(tools.__curView.__imageCanvas != null)
 					tools.__curView.__imageCanvas.resetCursor();
@@ -391,7 +391,7 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 			
             tools.__eraserCursor.addListener("mousemove", function(event)
 			{
-tools.debug("394 : >>>>>>>   tools.__eraserCursor.addListener(mousemove, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ tools.debug("394 : >>>>>>>   tools.__eraserCursor.addListener(mousemove, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				//~ tools.__eraserCursor.capture();
 				tools.__curView.__getPosition(event,false);	// No scaling so coordinates are compatible with placeEraser function
                 var tempMargin = 4/tools.__curView.__display.curCtxtZoom;
@@ -402,10 +402,12 @@ tools.debug("394 : >>>>>>>   tools.__eraserCursor.addListener(mousemove, functio
 			////Hide eraser if out of drawing zone
                 if(!((leftLimit<=tools.__curView.__display.onDispMouseHrzPos)&&(tools.__curView.__display.onDispMouseHrzPos<=rightLimit)&&(topLimit<=tools.__curView.__display.onDispMouseVrtPos)&&(tools.__curView.__display.onDispMouseVrtPos<=bottomLimit)))
                 {
+		//~ tools.debug("405 : Hide eraser if out of drawing zone !");
                     if(tools.__eraserCursor.getVisibility()=="visible")
 					{
-			tools.debug("396 : tools.__eraserCursor.exclude(); !");
+			//~ tools.debug("396 : tools.__eraserCursor.exclude(); !");
                         tools.__eraserCursor.exclude();
+						//~ tools.__curView.__imageCanvas.remove(tools.__eraserCursor);
 					}
                 }
 			////Move eraser to mouse position
@@ -426,20 +428,20 @@ tools.debug("394 : >>>>>>>   tools.__eraserCursor.addListener(mousemove, functio
             
             tools.__eraserCursor.addListener("mouseup", function(event)
 			{
-//~ tools.debug("429 : >>>>>>>   tools.__eraserCursor.addListener(mouseup, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ tools.debug("431 : >>>>>>>   tools.__eraserCursor.addListener(mouseup, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
                 tools.__curView.__mouseData.mouseMiddleDownFlag = false;
                 tools.__curView.__mouseData.mouseLeftDownFlag = false;
                 tools.__curView.__mouseActionActive = false;
-                //~ tools.__eraserCursor.releaseCapture();
 				if(tools.__curView.__drawingCanvas != null)
 					tools.__curView.__drawingCanvas.resetCursor();
 				if(tools.__eraserCursor != null)
 					tools.__eraserCursor.resetCursor();
+				tools.__eraserCursor.releaseCapture(); // ONLY IF CAPTURING JUST  __eraseFnct()  OR  __moveCanvas() !!!!!!!
             },this);
 			
 			tools.__eraserCursor.addListener("mouseover", function(event)
 			{
-tools.debug("442 : >>>>>>>   tools.__eraserCursor.addListener(mouseover, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ tools.debug("444 : >>>>>>>   tools.__eraserCursor.addListener(mouseover, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				//~ tools.__eraserCursor.capture();
 				if((tools.__curView.__mouseData.mouseLeftDownFlag)&&(tools.__curView.__mouseActionMode==4))
 					tools.__curView.__eraseFnct(true);
@@ -450,14 +452,14 @@ tools.debug("442 : >>>>>>>   tools.__eraserCursor.addListener(mouseover, functio
 					//~ tools.__eraserCursor.resetCursor();
 			}, this);
 			
+			
 			tools.__eraserCursor.addListener("mouseout", function(event)
 			{
-tools.debug("455 : >>>>>>>   tools.__eraserCursor.addListener(mouseout, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				if((tools.__curView.__mouseData.mouseLeftDownFlag)&&(tools.__curView.__mouseActionMode==4))
-					//~ tools.__eraserCursor.capture();
+//~ tools.debug("458 : >>>>>>>   tools.__eraserCursor.addListener(mouseout, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				if((tools.__curView.__mouseData.mouseLeftDownFlag)&&(tools.__curView.__mouseActionMode==4))
 					tools.__curView.__eraseFnct(true);
 			}, this);
+			
 			
 	//~ tools.debug("tools.__eraserCursor.addListener(mousewheel, tools.__curView.__mouseWheelHandler, this); !");
 			//~ tools.__eraserCursor.addListener("mousewheel", tools.__curView.__mouseWheelHandler, this);
@@ -477,7 +479,7 @@ tools.debug("455 : >>>>>>>   tools.__eraserCursor.addListener(mouseout, function
 			
 			tools.__eraserButton.addListener("changeValue", function(event)
 			{
-//~ tools.debug("480 : >>>>>>>   tools.__eraserButton.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ tools.debug("482 : >>>>>>>   tools.__eraserButton.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				for(var i=0; i<theMaster.__viewers.length; i++)
 				{
 					//~ if((event.getData()==true)&&(!theMaster.__viewers[i].__isSegWindow))
@@ -540,6 +542,7 @@ tools.debug("455 : >>>>>>>   tools.__eraserCursor.addListener(mouseout, function
 			var nbLines = 1;
 			var createToolBox = function(inLabel)
             {
+tools.debug("545: >>>>>>>   createToolBox = function(inLabel)   !!!!!!!!!!!!!!!!!!!!!!!!!");
                 var labelLayout = new qx.ui.layout.VBox();
                 labelLayout.setSpacing(4);
 				var labelBox = new qx.ui.container.Composite().set({
@@ -560,7 +563,7 @@ tools.debug("455 : >>>>>>>   tools.__eraserCursor.addListener(mouseout, function
                 });
 				labelBox.addListener("click", function()
 				{
-//~ tools.debug("563 : >>>>>>>   labelBox.addListener(click, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ tools.debug("566 : >>>>>>>   labelBox.addListener(click, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 					for(var i=0; i<theMaster.__viewers.length; i++)
 					{
 						theMaster.__viewers[i].__drawingCanvasParams.paintFlag = true;
@@ -633,7 +636,7 @@ tools.debug("455 : >>>>>>>   tools.__eraserCursor.addListener(mouseout, function
 					if(this.responseXML!=null)
 					{
 						var response = this.responseXML;
-tools.debug("636 : colorsParamRequest -> response : " + response);
+tools.debug("639 : colorsParamRequest -> response : " + response);
 						nbLabels = response.getElementsByTagName("color").length;
 						tools.__labelColors=new Array(nbLabels);
 						for(var i=0; i<nbLabels; i++)
@@ -656,14 +659,28 @@ tools.debug("636 : colorsParamRequest -> response : " + response);
 							newLabel.name = newLabel.name.replace(newLabel.name.charAt(0), newLabel.name.charAt(0).toUpperCase());
 							createToolBox(newLabel);
 						}
+						
+						for(var i=0; i<theMaster.__viewers.length; i++)
+						{
+							theMaster.__viewers[i].__labelColorsReds = new Uint8Array(256);
+							theMaster.__viewers[i].__labelColorsGreens = new Uint8Array(256);
+							theMaster.__viewers[i].__labelColorsBlues = new Uint8Array(256);
+							for(var j=0; j<tools.__labelColors.length; j++)
+							{
+								theMaster.__viewers[i].__labelColorsReds[j] = tools.__labelColors[j].red;
+								theMaster.__viewers[i].__labelColorsGreens[j] = tools.__labelColors[j].green;
+								theMaster.__viewers[i].__labelColorsBlues[j] = tools.__labelColors[j].blue;
+							}
+						}
+						
 					}
 					else
-							alert("Global Params : Failure...");
+						alert("Global Params : Failure...");
 				}
 				else if (this.readyState == 4 && this.status != 200)
 				{
-						// fetched the wrong page or network error...
-						alert('Global Params : "Fetched the wrong page" OR "Network error"');
+					// fetched the wrong page or network error...
+					alert('Global Params : "Fetched the wrong page" OR "Network error"');
 				}
 			};
 			//~ colorsParamRequest.open("GET", "/visu/colorsKnee.xml?nocache="+Math.random(), true);
@@ -682,7 +699,7 @@ tools.debug("636 : colorsParamRequest -> response : " + response);
 			whileDrawingDrwngOpacitySlider.setValue(100);
 			whileDrawingDrwngOpacitySlider.addListener("changeValue", function(event)
 			{
-//~ tools.debug("685 : >>>>>>>   whileDrawingDrwngOpacitySlider.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ tools.debug("703 : >>>>>>>   whileDrawingDrwngOpacitySlider.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				for(var i=0; i<theMaster.__viewers.length; i++)
 					theMaster.__viewers[i].__drawingCanvas.set({opacity: event.getData()/100});
 			},this);
@@ -742,7 +759,7 @@ tools.debug("636 : colorsParamRequest -> response : " + response);
 
 			tools.addListener("changeSessionDirectory", function (e)
 			{
-//~ tools.debug("745 : >>>>>>>   tools.addListener(changeSessionDirectory, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ tools.debug("763 : >>>>>>>   tools.addListener(changeSessionDirectory, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				var directory=e.getData();
 				medianFilteringAction.setOutputDirectory(directory);
 				clusteringAction.setOutputDirectory(directory);
@@ -765,7 +782,7 @@ tools.debug("636 : colorsParamRequest -> response : " + response);
 			tools.__startSegmentationButton=new qx.ui.form.Button("Start segmentation");
 			tools.__startSegmentationButton.addListener("execute", function ()
 			{
-//~ tools.debug("768 : >>>>>>>   tools.__startSegmentationButton.addListener(execute, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ tools.debug("786 : >>>>>>>   tools.__startSegmentationButton.addListener(execute, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				tools.__startSegmentationButton.setEnabled(false);
 				tools.__segmentationInProgress=true;
 				for(var i=0; i<theMaster.__viewers.length; i++)
@@ -780,7 +797,7 @@ tools.debug("636 : colorsParamRequest -> response : " + response);
 			var meshingButton=new qx.ui.form.Button("extract meshes");
 			tools.__extractMeshesButton=meshingButton;
 			meshingButton.addListener("execute", function () {
-//~ tools.debug("783 : >>>>>>>   meshingButton.addListener(execute, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ tools.debug("801 : >>>>>>>   meshingButton.addListener(execute, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				tools.__startSegmentationButton.setEnabled(false);
 				meshingButton.setEnabled(false);
 				meshingAction.executeAction();
@@ -790,11 +807,11 @@ tools.debug("636 : colorsParamRequest -> response : " + response);
 			var segmentationViewer=null;
 			medianFilteringAction.addListener("actionUpdated", function ()
 			{
-//~ tools.debug("794 : >>>>>>>   medianFilteringAction.addListener(actionUpdated, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ tools.debug("811 : >>>>>>>   medianFilteringAction.addListener(actionUpdated, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				tools.__startSegmentationButton.setEnabled(true);
 				if (segmentationViewer==null)
 				{
-	tools.debug("797 : segmentationViewer=new desk.volView__classTest...............................");
+	//~ tools.debug("815 : segmentationViewer=new desk.volView__classTest...............................");
 					segmentationViewer=new desk.volView__classTest(theMaster,
 											medianFilteringAction.getOutputDirectory()+"/output.mhd",
 											fileBrowser,tools.__curView.__display.orientation);
@@ -803,7 +820,7 @@ tools.debug("636 : colorsParamRequest -> response : " + response);
 											//~ fileBrowser);
 			//~ segmentationViewer.linkToVolumeViewer(tools.__curView); //~ later...
 					segmentationViewer.getWindow().addListener("beforeClose", function (e) {
-//~ tools.debug("806 : >>>>>>>   segmentationViewer.getWindow().addListener(beforeClose, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+tools.debug("824 : >>>>>>>   segmentationViewer.getWindow().addListener(beforeClose, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 							segmentationViewer=null;});
 				}
 				else
@@ -815,7 +832,7 @@ tools.debug("636 : colorsParamRequest -> response : " + response);
 
 			meshingAction.addListener("actionUpdated", function ()
 			{
-//~ tools.debug("818 : >>>>>>>  meshingAction.addListener(actionUpdated, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ tools.debug("836 : >>>>>>>  meshingAction.addListener(actionUpdated, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				meshingButton.setEnabled(true);
 				tools.__startSegmentationButton.setEnabled(true);
 				var meshesViewer=new desk.meshView(tools.getSessionDirectory()+"/meshes/meshes.xml",
@@ -826,7 +843,7 @@ tools.debug("636 : colorsParamRequest -> response : " + response);
 			
 			tools.addListenerOnce("appear", function(event)
 			{
-tools.debug("829 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				tools.setCaption("Tools -- " + tools.__curView.getCaption());
 				
 				if(tools.__seedsTypeSelectBox==null)
@@ -836,10 +853,11 @@ tools.debug("829 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 					// from  segTools  Line : 609
 				}
 				
-				tools.debug("839 : tools.__eraserCursor.addListener(mousewheel, tools.__curView.__mouseWheelHandler, tools.__eraserCursor); !");
+				//~ tools.debug("857 : tools.__eraserCursor.addListener(mousewheel, tools.__curView.__mouseWheelHandler, tools.__eraserCursor); !");
 				if(!tools.__curView.__isSegWindow)
-						tools.__eraserCursor.addListener("mousewheel", tools.__curView.__mouseWheelHandler, tools.__eraserCursor);
+					tools.__eraserCursor.addListener("mousewheel", tools.__curView.__mouseWheelHandler, tools.__eraserCursor);
 				// from  segTools  Line: 430
+				
 			}, this);
            
 		},
@@ -861,7 +879,7 @@ this.debug("------->>>   tools.__getPaintPanelVisibilitySwitch : function()   !!
 			
 			paintPaneVisibilitySwitch.addListener("changeValue", function (e)
 			{
-//~ tools.debug("864 : >>>>>>>  paintPaneVisibilitySwitch.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ tools.debug("883 : >>>>>>>  paintPaneVisibilitySwitch.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				if(!tools.__settingButtons)
 				{
 					tools.__settingButtons = true;
@@ -912,7 +930,6 @@ this.debug("------->>>   tools.__getPaintPanelVisibilitySwitch : function()   !!
 				}
 				//~ tools.__settingButtons = !viewerSync;
 			}, this);
-
 
 			return paintPaneVisibilitySwitch;
 		},
@@ -973,7 +990,7 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 						tools.__tabView.setVisibility("visible");
 						tools.setSessionDirectory(fileBrowser.getSessionDirectory(
 							volFile,sessionType,sessionIdToSelect));
-			tools.debug(" 857 : __getSessionsWidget : theMaster.__saveSeedsXML(); !");
+			//~ tools.debug(" 857 : __getSessionsWidget : theMaster.__saveSeedsXML(); !");
 						theMaster.__saveSeedsXML();
 					}
 					else
@@ -986,7 +1003,7 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 			
 			sessionsList.addListener("changeSelection", function(e)
 			{
-//~ tools.debug("989 : >>>>>>>  sessionsList.addListener(changeSelection, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ tools.debug("1007 : >>>>>>>  sessionsList.addListener(changeSelection, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				if (!updateInProgress)
 				{
 					var listItem=sessionsList.getSelection()[0];
@@ -1004,7 +1021,7 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 
 
 			button.addListener("execute", function (e){
-//~ tools.debug("1007 : >>>>>>>  button.addListener(execute, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ tools.debug("1025 : >>>>>>>  button.addListener(execute, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				theMaster.__resetSeedsList();
 				theMaster.__updateAll();
 				fileBrowser.createNewSession(volFile,sessionType, updateList);
@@ -1077,7 +1094,7 @@ this.debug("------->>>   tools.__getSeedsTypeSelectBox : function()   !!!!!!!");
 			
 			selectBox.addListener("changeSelection",function (e)
 			{
-//~ tools.debug("1080 : >>>>>>>  selectBox.addListener(changeSelection, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ tools.debug("1098 : >>>>>>>  selectBox.addListener(changeSelection, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				var SelectedItem = selectBox.getSelection()[0];
 				var selectedOppositeList;
 				var selectedSeedsList;
@@ -1097,7 +1114,7 @@ this.debug("------->>>   tools.__getSeedsTypeSelectBox : function()   !!!!!!!");
 			
 			selectBox.addListenerOnce("appear", function(event)
 			{
-tools.debug("1100 : >>>>>>>  selectBox.addListener(appear, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+tools.debug("1118 : >>>>>>>  selectBox.addListener(appear, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				for(var i=0; i<theMaster.__viewers.length; i++)
 				{
 					var list = selectBox.getSelection()[0].getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")];

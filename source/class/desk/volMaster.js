@@ -228,6 +228,7 @@ this.debug("------->>>   theMaster.__updateSeeds : function()   !!!!!!!");
 				theMaster.__viewers[i].__loadSeeds.Id = sliceId;
 				theMaster.__viewers[i].__loadSeeds.onload = function ()
 				{
+//~ theMaster.debug("231 : >>>>>>>  theMaster.__viewers[i].__loadSeeds.onload   !!!!!!!!!!!!!!!!!!!!!!!!!");
 					var thisVolView = this.viewer;
 					if(thisVolView.__drawingCanvasParams.drawingContext!=null)
 					{
@@ -261,7 +262,7 @@ this.debug("------->>>   theMaster.__resetSeedsList : function()   !!!!!!!");
 			for (var k=0;k<seedsTypeSelectBoxItems.length;k++)
 			{
 				var item=seedsTypeSelectBoxItems[k];
-	theMaster.debug("261 : item : " + item);
+	//~ theMaster.debug("261 : item : " + item);
 				
 				var tempMultiArray = [];
 				var tempMultiCacheTags = [];
@@ -321,23 +322,23 @@ this.debug("------->>>   theMaster.__saveSeedsXML : function(callback)   !!!!!!!
 				
 				for(var orionCount=0; orionCount<theMaster.__nbUsedOrientations; orionCount++)
 				{
-		theMaster.debug("331 : orionCount : " + orionCount);
+		//~ theMaster.debug("331 : orionCount : " + orionCount);
 					for(var i=0; i<theMaster.__viewers.length; i++)
 					{
 						var seedsList = null;
-		theMaster.debug("335 : theMaster.__viewers[" + i + "].__display.orientation : " + theMaster.__viewers[i].__display.orientation);
+		//~ theMaster.debug("335 : theMaster.__viewers[" + i + "].__display.orientation : " + theMaster.__viewers[i].__display.orientation);
 						if((theMaster.__viewers[i].__display.orientation==orionCount)&&(seedsList==null))
 							seedsList = item.getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")];
 						if(seedsList!=null)
 						{
-		theMaster.debug("345 : seedsList.length : " + seedsList.length);
+		//~ theMaster.debug("345 : seedsList.length : " + seedsList.length);
 							var filePrefix=item.getUserData("filePrefix");
-		theMaster.debug("347 : filePrefix : " + filePrefix);
+		//~ theMaster.debug("347 : filePrefix : " + filePrefix);
 							var slices=seedsList.getChildren();
 							for(var j=0; j<slices.length; j++)
 							{
 								var sliceId=slices[j].getUserData("slice");
-		theMaster.debug("352 : sliceId : " + sliceId);
+		//~ theMaster.debug("352 : sliceId : " + sliceId);
 								var sliceAttributes = {slice: sliceId + "", orientation: orionCount + ""};
 								xmlContent += theMaster.__element(filePrefix, theMaster.__viewers[i].__getSeedFileName(sliceId, item), sliceAttributes) + '\n';
 							}
@@ -346,7 +347,7 @@ this.debug("------->>>   theMaster.__saveSeedsXML : function(callback)   !!!!!!!
 				}
 			}
 
-theMaster.debug("363 : .getSessionDirectory() !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//~ theMaster.debug("363 : .getSessionDirectory() !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 			var parameterMap={
 				"action" : "save_xml_file",
 				"file_name" : "seeds.xml",
@@ -380,6 +381,7 @@ this.debug("------->>>   theMaster.__eraseFile : function()   !!!!!!!");
 		__loadWindows : function ()
 		{
 this.debug("------->>>   theMaster.__loadWindows : function()   !!!!!!!");
+
 			//~ use __loadDisplay method of the volViewers
 
 			var theMaster = this;
@@ -393,6 +395,7 @@ this.debug("------->>>   theMaster.__loadWindows : function()   !!!!!!!");
 		__saveWindows : function()
         {
 this.debug("------->>>   theMaster.__saveWindows : function()   !!!!!!!");
+
 			//~ use __saveDisplay method of the volViewers
 			
 
