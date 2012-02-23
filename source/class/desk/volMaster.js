@@ -106,7 +106,6 @@ qx.Class.define("desk.volMaster",
 					this.__viewers[i] = new desk.sliceView(file, this.__fileBrowser, this, i, ( function (myI) { 
 						return (function (volumeSlice) {
 							volumeSlices[myI]=volumeSlice;
-							console.log(volumeSlices);
 							});
 						} ) (i));
 					// index test : add lfexibility between orientation (1,2 or 3) and a unique index for each viewer no matter its view orientation

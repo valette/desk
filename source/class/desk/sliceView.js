@@ -14,7 +14,7 @@ qx.Class.define("desk.sliceView",
 	construct : function(file, fileBrowser, master, orientation, callback)
 	{
 		this.base(arguments);
-
+	
 		this.__slices=[];
 		this.__fileBrowser=fileBrowser;
 		this.addVolume(file, callback);
@@ -27,7 +27,6 @@ qx.Class.define("desk.sliceView",
 		this.__master=master;		
 
 		this.__window=new qx.ui.window.Window();
-
 		this.__window.setLayout(new qx.ui.layout.HBox(5));
 		this.__window.setShowClose(true);
 		this.__window.setShowMinimize(false);
@@ -35,7 +34,8 @@ qx.Class.define("desk.sliceView",
 		this.__window.setUseResizeFrame(true);
 		this.__window.setUseMoveFrame(true);
 		this.__window.set({width : 400, height : 400});
-		this.__window.setCaption(file);
+//		this.__window.setCaption(file);
+		this.__window.setCaption(orientation);
 		this.__createUI();
 
 /*		// drag and drop support
@@ -93,6 +93,9 @@ qx.Class.define("desk.sliceView",
 
 		__master : null,
 
+		__drawingCanvas : null,
+		__outputCanvas : null,
+
 		setPaintColor : function (color) {
 			this.__paintColor=color;
 		},
@@ -138,7 +141,9 @@ qx.Class.define("desk.sliceView",
 				for (var i=0;i<4;i++)
 					geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( coordinates[2*i],
 																				coordinates[2*i+1], 0 ) ) );
-
+			console.log(_this.getOrientation());
+			console.log(coordinates);
+//				geometry.faces.push( new THREE.Face4( 1, 0, 3, 2 ) );
 				geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
 				geometry.faceVertexUvs[ 0 ].push( [
 					new THREE.UV( 0, 0),
@@ -159,8 +164,20 @@ qx.Class.define("desk.sliceView",
 				_this.__camera.position.setZ(_this.__camera.position.z+(coordinates[2]-coordinates[0]));
 
 				var canvas=volumeSlice.getImageCanvas();
+		    	
 				var width=canvas.getCanvasWidth();
 				var height=canvas.getCanvasHeight();
+
+				_this.__drawingCanvas = new qx.ui.embed.Canvas().set({
+					canvasWidth: width,
+					canvasHeight: height
+				});
+
+				_this.__outputCanvas = new qx.ui.embed.Canvas().set({
+					canvasWidth: width,
+					canvasHeight: height
+				});
+
 				var imageData=canvas.getContext2d().getImageData(0, 0, width, height);
 
 				var length=imageData.data.length;
@@ -182,10 +199,15 @@ qx.Class.define("desk.sliceView",
 					geometry.computeFaceNormals();
 					geometry.computeVertexNormals();
 					geometry.computeBoundingSphere();
-				//	HACKSetDirtyVertices(geometry);
 
-//					var data=volumeSlice.getSliceImageData().data;
-					var data=canvas.getContext2d().getImageData(0, 0,width, height).data;
+					var context=_this.__outputCanvas.getContext2d();
+					context.clearRect ( 0 , 0 , width , height );
+
+					context.drawImage(canvas.getContentElement().getCanvas(), 0, 0);					
+					context.drawImage(_this.__drawingCanvas.getContentElement().getCanvas(), 0, 0);
+
+					var data=context.getImageData(0, 0,width, height).data;
+
 					for (var i=length;i--;)
 						dataColor[i]=data[i];
 					texture.needsUpdate = true;
@@ -345,12 +367,10 @@ qx.Class.define("desk.sliceView",
 					{
 						mouseMode=1;
 						var position=_this.getPositionOnSlice(event);
-						var context=_this.__slices[0].getImageCanvas().getContext2d();
+						var context=_this.__drawingCanvas.getContext2d();
 						context.strokeStyle = _this.__paintColor;
 						context.lineJoin = "round";
 						context.lineWidth = _this.__paintWidth;
-						console.log(_this.__paintWidth);
-				//		console.log(position);
 					    context.beginPath();
 						context.moveTo(position.x, position.y);
 						context.closePath();
@@ -368,7 +388,7 @@ qx.Class.define("desk.sliceView",
 								, event.getDocumentTop()-origin.top);
 						break;
 					case 1:
-						var context=_this.__slices[0].getImageCanvas().getContext2d();
+						var context=_this.__drawingCanvas.getContext2d();
 						var position=_this.getPositionOnSlice(event);
 					     context.lineTo(position.x, position.y);
 						context.stroke();
@@ -446,7 +466,7 @@ qx.Class.define("desk.sliceView",
 
 		getSeedsLists : function()
 		{
-this.debug("------->>>   volView.__createSeedsLists : function()   !!!!!!!");
+//this.debug("------->>>   volView.__createSeedsLists : function()   !!!!!!!");
 			var volView = this;
 			
 			var tools = volView.__master.__tools;
@@ -547,7 +567,7 @@ this.debug("------->>>   volView.__createSeedsLists : function()   !!!!!!!");
 		},
 
 		__createUI : function (file) {
-
+			this.__window.add(this.__getRenderWindow(), {flex : 1});
 			var leftContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
 			this.__mainLeftContainer=leftContainer;
 //			var button=new qx.ui.form.ToggleButton("tools");
@@ -603,7 +623,6 @@ this.debug("------->>>   volView.__createSeedsLists : function()   !!!!!!!");
 			leftContainer.add(this.__fileFormatBox);
 
 			this.__window.add(leftContainer);
-			this.__window.add(this.__getRenderWindow(), {flex : 1});
 		}
 	}
 });

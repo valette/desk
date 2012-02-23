@@ -52,7 +52,7 @@ this.debug("42 : >>>>>>>   this.addListener(close, function(event)   !!!!!!!!!!!
 			}
 		}, this);
 		
-		this.__curView = this.__master.__viewers[0];
+//		this.__curView = this.__master.__viewers[0];
 		
 	//// Fill window with the tools widgets
 		this.__buildRightContainer();
@@ -156,7 +156,6 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
             tools.__penSize.addListener("changeValue", function(event)
 			{
 //~ tools.debug("319 : >>>>>>>   tools.__penSize.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				console.log(event.getData());
 				for(var i=0; i<theMaster.__viewers.length; i++)
 					theMaster.__viewers[i].setPaintWidth(event.getData());
 
@@ -384,7 +383,7 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 			var nbLines = 1;
 			var createToolBox = function(inLabel)
             {
-tools.debug("545: >>>>>>>   createToolBox = function(inLabel)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+//tools.debug("545: >>>>>>>   createToolBox = function(inLabel)   !!!!!!!!!!!!!!!!!!!!!!!!!");
                 var labelLayout = new qx.ui.layout.VBox();
                 labelLayout.setSpacing(4);
 				var labelBox = new qx.ui.container.Composite().set({
@@ -706,7 +705,7 @@ tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 		
 		getPaintPanelVisibilitySwitch : function ()
 		{
-this.debug("------->>>   tools.__getPaintPanelVisibilitySwitch : function()   !!!!!!!");
+//this.debug("------->>>   tools.__getPaintPanelVisibilitySwitch : function()   !!!!!!!");
 			
 			var tools = this;
 			
@@ -763,13 +762,13 @@ this.debug("------->>>   tools.__getPaintPanelVisibilitySwitch : function()   !!
 				}
 				//~ var viewerSync = true;
 				tools.__settingButtons = false;
-				for(var i=0; i<theMaster.__viewers.length; i++)
+		/*		for(var i=0; i<theMaster.__viewers.length; i++)
 				{
 					var children = theMaster.__viewers[i].__topLeftContainer.getChildren(); //~ CAUTION ! ---> This only works if the "Paint" toggle button is the last child
 					if(children[children.length-1].getValue()!=e.getData())
 						//~ viewerSync = false;
 						tools.__settingButtons = true;
-				}
+				}*/
 				//~ tools.__settingButtons = !viewerSync;
 			}, this);
 

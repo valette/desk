@@ -122,8 +122,23 @@ qx.Class.define("desk.volumeSlice",
 
 		get2DDimensions: function () {
 			var dims=[];
-			dims.push(this.__dimensions[0]);
-			dims.push(this.__dimensions[1]);
+switch(this.getOrientation())
+			{
+				// ZY X
+				case 1 :
+					dims[0]=this.__dimensions[1];
+					dims[1]=this.__dimensions[2];
+					break;
+				// XZ Y
+				case 2 :
+					dims[0]=this.__dimensions[0];
+					dims[1]=this.__dimensions[2];
+					break;
+				// XY Z
+				default :
+					dims[0]=this.__dimensions[0];
+					dims[1]=this.__dimensions[1];
+			}
 			return (dims);
 		},
 
@@ -132,15 +147,45 @@ qx.Class.define("desk.volumeSlice",
 			var xmax=this.__origin[0]+this.__extent[1]*this.__spacing[0];
 			var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
 			var ymax=this.__origin[1]+this.__extent[3]*this.__spacing[1];
+			var zmin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
+			var zmax=this.__origin[2]+this.__extent[5]*this.__spacing[2];
 			var coordinates=[];
-			coordinates[0]=xmin;
-			coordinates[1]=ymax;
-			coordinates[2]=xmax;
-			coordinates[3]=ymax;
-			coordinates[4]=xmax;
-			coordinates[5]=ymin;
-			coordinates[6]=xmin;
-			coordinates[7]=ymin;
+			console.log("orientation : "+this.getOrientation());
+			switch(this.getOrientation())
+			{
+				// ZY X
+				case 1 :
+					coordinates[0]=ymin;
+					coordinates[1]=zmax;
+					coordinates[2]=ymax;
+					coordinates[3]=zmax;
+					coordinates[4]=ymax;
+					coordinates[5]=zmin;
+					coordinates[6]=ymin;
+					coordinates[7]=zmin;
+					break;
+				// XZ Y
+				case 2 :
+					coordinates[0]=xmin;
+					coordinates[1]=zmax;
+					coordinates[2]=xmax;
+					coordinates[3]=zmax;
+					coordinates[4]=xmax;
+					coordinates[5]=zmin;
+					coordinates[6]=xmin;
+					coordinates[7]=zmin;
+					break;
+				// XY Z
+				default :
+					coordinates[0]=xmin;
+					coordinates[1]=ymax;
+					coordinates[2]=xmax;
+					coordinates[3]=ymax;
+					coordinates[4]=xmax;
+					coordinates[5]=ymin;
+					coordinates[6]=xmin;
+					coordinates[7]=ymin;
+			}
 			return (coordinates);
 		},
 
@@ -149,13 +194,13 @@ qx.Class.define("desk.volumeSlice",
 			{
 				// ZY X
 				case 1 :
-					return this.__dimensions[0]
+					return this.__dimensions[0];
 				// XZ Y
 				case 2 :
-					return this.__dimensions[1]
+					return this.__dimensions[1];
 				// XY Z
 				default :
-					return this.__dimensions[2]
+					return this.__dimensions[2];
 			}
 		},
 
@@ -244,15 +289,232 @@ qx.Class.define("desk.volumeSlice",
 				height: this.__dimensions[1],
 				syncDimension: true
 				});
-	        this.__canvas.addListener("redraw", this.redraw, this);
+
+			this.__originalImageCanvas = new qx.ui.embed.Canvas().set({
+				canvasWidth: this.__dimensions[0],
+				canvasHeight: this.__dimensions[1],
+				width: this.__dimensions[0],
+				height: this.__dimensions[1],
+				syncDimension: true
+				});
 
 			this.updateImage();
 		},
 
-		redraw : function()
-		{
-			this.__canvas.getContext2d().drawImage(this.__image, 0, 0);
+		__applyBrightnessToCanvas : function () {
+			var canvas=this.__originalImageCanvas;
+			var dataDesc = canvas.getContext2d().getImageData
+					(0, 0, canvas.getCanvasWidth(), canvas.getCanvasHeight());
+			console.log("datadesc:");
+			console.log(dataDesc);
+			this.__canvas.getContext2d().putImageData(dataDesc,0,0);
+			return;
+
+			if(!volView.__isSegWindow) //~ segColor test
+			{
+				var data = dataDesc.data;
+				var p = canvasImage.width * canvasImage.height;
+				var pix = p*4, pix1, pix2;
+				var mul, add;
+				if (contrast != 1) {
+					if (legacy) {
+						mul = contrast;
+						add = (brightness - 128) * contrast + 128;
+					} else {
+						mul = brightMul * contrast;
+						add = - contrast * 128 + 128;
+					}
+				} else {  // this if-then is not necessary anymore, is it?
+					if (legacy) {
+						mul = 1;
+						add = brightness;
+					} else {
+						mul = brightMul;
+						add = 0;
+					}
+				}
+
+				var r, g, b,a,c;
+				var r1=1/256;
+				var r2=1/(256*256);
+				var max=volView.__scalarMax;
+				var min=volView.__scalarMin;
+				var shift=-min;
+				var scale=255/(max-min);
+				
+				if (volView.__formatSelectBox.getSelection()[0].getLabel()=="png")
+				{
+					switch (volView.__scalarSize)
+					{
+					case 1:
+						if (volView.__scalarType==3)
+						{
+							pix=0;
+						// unsigned char: no need to check for sign
+							while (p--) {
+								c=data[pix];
+								c=(c+shift)*scale;
+								c=c* mul + add;
+								
+								if (c>255)
+									c=255;
+								else if (c<0)
+									c=0;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=255;
+								}
+							}
+							else
+							{
+								pix=0;
+								while (p--) {
+									c=data[pix];
+									if (c>127)
+										c-=256;
+									c=(c+shift)*scale;
+									c=c* mul + add;
+									
+									if (c>255)
+										c=255;
+									else if (c<0)
+										c=0;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=255;
+								}
+							}
+							break;
+						case 2:
+							if (volView.__scalarType==4)
+							{
+							// signed short : need to check for sign
+								pix=0;
+								while (p--){
+									r= data[pix];
+									g= data[pix+1];
+									c=r+256*g;
+									// check sign
+									if (g>127)
+										c-=65536;
+									c=(c+shift)*scale;
+									c=c* mul + add;
+									
+									if (c>255)
+										c=255;
+									else if (c<0)
+										c=0;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=255;
+								}
+							}
+							else
+							{
+							// unsigned short : no need to check sign
+								pix=0;
+								while (p--){
+									r= data[pix];
+									g= data[pix+1];
+									c=r+256*g;
+									c=(c+shift)*scale;
+									c=c* mul + add;
+									if (c>255)
+										c=255;
+									else if (c<0)
+										c=0;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=255;
+								}
+							}
+							break;
+						case 4:
+							if (volView.__scalarType==7)
+							{
+								// unsigned int : no need to check sign
+								pix=0;
+								while (p--){
+									r= data[pix];
+									g= data[pix+1];
+									b= data[pix+2];
+									a= data[pix+3];
+									c=r+256*g+65536*b;
+									c=(c+shift)*scale;
+									c=c* mul + add;
+									if (c>255)
+									c=255;
+									else if (c<0)
+									c=0;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=255;
+								}
+							}
+							else
+							{
+								// signed int : check sign
+								pix=0;
+								while (p--){
+									r= data[pix];
+									g= data[pix+1];
+									b= data[pix+2];
+									a= data[pix+3];
+									c=r+256*g+65536*b;
+									if (c>8388607)
+										c-=16777216;
+									c=(c+shift)*scale;
+									c=c* mul + add;
+									if (c>255)
+										c=255;
+									else if (c<0)
+										c=0;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=c;
+									data[pix++]=255;
+								}
+							}
+							break;
+							default :
+								alert("format not supported. please repport");
+					}
+				}
+				else
+				{
+					// format is jpeg : just copy the pixels
+					pix=0;
+					while (p--){
+						c= data[pix];
+						c=c* mul + add;
+						if (c>255)
+							c=255;
+						else if (c<0)
+							c=0;
+						data[pix++]=c;
+						data[pix++]=c;
+						data[pix++]=c;
+						data[pix++]=255;
+						}
+				}
+				dataDesc.data = data;
+				volView.__pixels = data;
+				volView.__imageData = dataDesc;
+				volView.fireEvent("changeSlice");
+			}
+			return dataDesc;
 		},
+
+		redraw : function () {
+			this.__originalImageCanvas.getContext2d().drawImage(this.__image, 0, 0);
+			this.__applyBrightnessToCanvas();
+		},
+
 
 		updateImage : function() {
 			var _this=this;
