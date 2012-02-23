@@ -311,7 +311,7 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
             tools.__penSize = new qx.ui.form.Spinner().set({
                 minimum: 1,
                 maximum: 100,
-                value: tools.__curView.__drawingCanvasParams.myLineWidth
+                value: 5//tools.__curView.__drawingCanvasParams.myLineWidth
             });
 			
             tools.__penSize.addListener("changeValue", function(event)
@@ -344,7 +344,7 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 			
 
 		////Create eraser
-            var eraserBorder = new qx.ui.decoration.Single(1, "solid", "black");
+    /*        var eraserBorder = new qx.ui.decoration.Single(1, "solid", "black");
 			
             tools.__eraserCursor = new qx.ui.core.Widget().set({
 										backgroundColor: "white",
@@ -471,7 +471,7 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 			
             tools.__eraserCursor.exclude();
 
-			
+			*/
 			
 			
 		////Create eraser on/off button

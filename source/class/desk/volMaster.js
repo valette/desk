@@ -27,11 +27,11 @@ qx.Class.define("desk.volMaster",
 		
 		//~ orion test : launch the 3 views at once ! ! !
 		this.__viewers = [];
-		this.__nbUsedOrientations = 3;
+		this.__nbUsedOrientations = 1;
 		for(var i=0; i<this.__nbUsedOrientations; i++)
 		{
 			
-			this.__viewers[i] = new desk.volView__classTest(this, globalFile, globalFileBrowser, i);
+			this.__viewers[i] = new desk.sliceView(globalFile, globalFileBrowser, this, i);
 			// index test : add lfexibility between orientation (1,2 or 3) and a unique index for each viewer no matter its view orientation
 			//					<!> CAUTION : any index must be  <  this.__viewers.length
 			this.__viewers[i].setUserData("viewerIndex",i);
@@ -75,7 +75,9 @@ qx.Class.define("desk.volMaster",
 		
 		__fileBrowser : null,
 		
-		
+		getTools : function () {
+			return this.__tools;
+		},
 		
 		__loadSession : function()
 		{

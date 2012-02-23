@@ -11,13 +11,20 @@ qx.Class.define("desk.sliceView",
 {
 	extend : qx.ui.container.Composite,
 
-	construct : function(file, fileBrowser)
+	construct : function(file, fileBrowser, master, orientation)
 	{
 		this.base(arguments);
 
 		this.__slices=[];
 		this.__fileBrowser=fileBrowser;
 		this.addVolume(file);
+
+		if (typeof orientation=="number")
+			this.setOrientation(orientation);
+		else
+			this.setOrientation(0);
+
+		this.__master=master;		
 
 		this.__window=new qx.ui.window.Window();
 
@@ -28,33 +35,8 @@ qx.Class.define("desk.sliceView",
 		this.__window.setUseResizeFrame(true);
 		this.__window.setUseMoveFrame(true);
 		this.__window.set({width : 400, height : 400});
-
-		var volView=this;
-		if (fileBrowser==null)
-			alert ("error! no file browser was provided");
-		else
-		{
-			//file is a tree node...
-			this.__window.setCaption(file);
-
-			function getAnswer(e)
-				{
-					var req = e.getTarget();
-					var slicesDirectory=req.getResponseText().split("\n")[0];
-					volView.openFile(fileBrowser.getFileURL(slicesDirectory)+"/volume.xml");
-				}
-
-			var parameterMap={
-				"action" : "slice_volume",
-				"input_volume" : file,
-				"output_directory" : "cache\/"};
-			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
-
-			var label = new qx.ui.basic.Label("Computing slices, wait...").set({
-				font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
-				});
-			this.add(label, {flex : 1});
-		}
+		this.__window.setCaption(file);
+		this.__createUI();
 
 /*		// drag and drop support
 		this.setDraggable(true);
@@ -80,6 +62,7 @@ qx.Class.define("desk.sliceView",
 	},
 
 	properties : {
+		orientation : { init : -1, check: "Number", event : "changeOrientation"},
 		ready : { init : false, check: "Boolean", event : "changeReady"}
 	},
 
@@ -102,6 +85,8 @@ qx.Class.define("desk.sliceView",
 		__renderer : null,
 		__controls : null,
 
+		__master : null,
+
 		render : function ( ) {
 			this.__controls.update();
 			this.__renderer.render( this.__scene, this.__camera );			
@@ -119,7 +104,7 @@ qx.Class.define("desk.sliceView",
 		},
 
 		__addVolume : function (file) {
-			var volumeSlice=new desk.volumeSlice(file,this.__fileBrowser);
+			var volumeSlice=new desk.volumeSlice(file,this.__fileBrowser, this.getOrientation());
 			this.__slices.push(volumeSlice);
 			var _this=this;
 
@@ -346,7 +331,7 @@ qx.Class.define("desk.sliceView",
 						context.strokeStyle = "#df4b26";
 						context.lineJoin = "round";
 						context.lineWidth = 5;
-						console.log(position);
+				//		console.log(position);
 					    context.beginPath();
 						context.moveTo(position.x, position.y);
 						context.closePath();
@@ -440,10 +425,25 @@ qx.Class.define("desk.sliceView",
 		},
 
 
-		openFile : function (file) {
-			this.removeAll();
+		__createUI : function (file) {
 
 			var leftContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
+
+			var button=new qx.ui.form.ToggleButton("tools");
+			button.addListener("changeValue",function (value) {
+				if (this.__master!=null)
+				{
+					if (value)
+					{
+						this.__master.getTools().open();
+					}
+					else
+					{
+						this.__master.getTools().close();
+					}
+				} 
+			},this)
+			leftContainer.add(button);
 
 			this.__slider=new qx.ui.form.Slider();
 			this.__slider.setMinimum(0);

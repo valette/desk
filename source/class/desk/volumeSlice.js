@@ -2,7 +2,7 @@ qx.Class.define("desk.volumeSlice",
 {
   extend : qx.core.Object,
 
-	construct : function(file, fileBrowser)
+	construct : function(file, fileBrowser, orientation)
 	{
 		this.base(arguments);
 
@@ -21,9 +21,10 @@ qx.Class.define("desk.volumeSlice",
 				}
 
 			var parameterMap={
-				"action" : "slice_volume",
-				"input_volume" : file,
-				"output_directory" : "cache\/"};
+				action : "slice_volume",
+				input_volume : file,
+				output_directory : "cache\/",
+				slice_orientation : orientation};
 			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 		}
 
