@@ -320,8 +320,6 @@ qx.Class.define("desk.sliceView",
 						button=1;
 					else if ((event.isMiddlePressed())||(event.isShiftPressed()))
 						button=2;
-	//				else if (event.isCtrlPressed())
-	//					button=3;
 
 					if (button!=0)
 					{
@@ -433,7 +431,6 @@ qx.Class.define("desk.sliceView",
 
 			
 			// if there is only one slice, do not show the slider...
-	//		if (this.__maxZ>0)
 			leftContainer.add(this.__slider, {flex : 1});
 
 			this.__fileFormatBox = new qx.ui.form.SelectBox();
@@ -444,9 +441,7 @@ qx.Class.define("desk.sliceView",
 //			this.__fileFormatBox.add(SelectPNG);
 			leftContainer.add(this.__fileFormatBox);
 
-
 			this.__window.add(leftContainer);
-
 			this.__window.add(this.__getRenderWindow(), {flex : 1});
 		}
 	}
