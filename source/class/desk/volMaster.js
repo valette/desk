@@ -62,7 +62,6 @@ qx.Class.define("desk.volMaster",
 
 	members :
 	{
-
 		__volumes : null,
 
 		__viewers : null,
@@ -106,8 +105,8 @@ qx.Class.define("desk.volMaster",
 				{
 					this.__viewers[i] = new desk.sliceView(file, this.__fileBrowser, this, i, ( function (myI) { 
 						return (function (volumeSlice) {
-							console.log(myI);
 							volumeSlices[myI]=volumeSlice;
+							console.log(volumeSlices);
 							});
 						} ) (i));
 					// index test : add lfexibility between orientation (1,2 or 3) and a unique index for each viewer no matter its view orientation
@@ -201,20 +200,21 @@ this.debug("------->>>   theMaster.__updateAll : function()   !!!!!!!");
 			var tools = theMaster.__tools;
 			
 			var fileBrowser = theMaster.__fileBrowser;
+			var targetSlices=this.__volumes.getChildren()[0].getUserData("slices");
 			
-			
-			for(var i=0; i<theMaster.__viewers.length; i++)
+			for(var i=0; i<targetSlices.length; i++)
 			{
 				if (tools.__seedsTypeSelectBox!=null)
 				{
-					var currentSlice = theMaster.__viewers[i].__display.depthShift;
+					var currentSlice = targetSlices[i].getCurrentSlice();
+
 		//~ theMaster.debug("162 : currentSlice : " + currentSlice);
 					var seedsTypeListItem=tools.__seedsTypeSelectBox.getSelection()[0];
 		//~ theMaster.debug("164 : seedsTypeListItem : " + seedsTypeListItem);
 		//~ theMaster.debug("165 : seedsTypeListItem.getUserData(seedsArray).length : " + seedsTypeListItem.getUserData("seedsArray").length);
 		//~ theMaster.debug("166 : theMaster.__viewers["+i+"].__display.orientation : " + theMaster.__viewers[i].__display.orientation);
 		//~ theMaster.debug("167 : seedsTypeListItem.getUserData(seedsArray)[theMaster.__viewers["+i+"].__display.orientation].length : " + seedsTypeListItem.getUserData("seedsArray")[theMaster.__viewers[i].__display.orientation].length);
-					var sliceItem=seedsTypeListItem.getUserData("seedsArray")[theMaster.__viewers[i].__display.orientation][currentSlice];
+					var sliceItem=seedsTypeListItem.getUserData("seedsArray")[targetSlices[i].getOrientation()][currentSlice];
 		//~ theMaster.debug("170 : sliceItem : " + sliceItem);
 		//~ theMaster.debug("171 : theMaster.__viewers["+i+"].getUserData(viewerIndex) : " + theMaster.__viewers[i].getUserData("viewerIndex"));
 		//~ theMaster.debug("172 : seedsTypeListItem.getUserData(seedsList) : " + seedsTypeListItem.getUserData("seedsList"));
@@ -230,12 +230,12 @@ this.debug("------->>>   theMaster.__updateAll : function()   !!!!!!!");
 					{
 						// current slice has no seeds
 						seedsList.resetSelection();
-						theMaster.__viewers[i].__clearDrawingCanvas();
+//seb						theMaster.__viewers[i].__clearDrawingCanvas();
 					}
 				}
 
 				////Update image canvas
-				theMaster.__viewers[i].__updateImage();
+//seb				theMaster.__viewers[i].__updateImage();
 				
 				////Clear "undo" stack
 				theMaster.__viewers[i].__ctrlZData = [];
@@ -313,9 +313,13 @@ this.debug("------->>>   theMaster.__resetSeedsList : function()   !!!!!!!");
 				
 				var tempMultiArray = [];
 				var tempMultiCacheTags = [];
+
+				var volumeSlices=this.__volumes.getChildren()[0].getUserData("slices");
+
 				for(var orionCount=0; orionCount<theMaster.__nbUsedOrientations; orionCount++)
 				{
-					var numberOfSlices = theMaster.__viewers[0].__dimensions[2]; // just to give a default value to numberOfSlices
+					var numberOfSlices=volumeSlices[orionCount].getNumberOfSlices();
+/*seb					var numberOfSlices = theMaster.__viewers[0].__dimensions[2]; // just to give a default value to numberOfSlices
 					for(var i=0; i<theMaster.__viewers.length; i++)
 					{
 						if(theMaster.__viewers[i].__display.orientation==orionCount)
@@ -323,7 +327,7 @@ this.debug("------->>>   theMaster.__resetSeedsList : function()   !!!!!!!");
 							item.getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")].removeAll();
 							numberOfSlices = theMaster.__viewers[i].__dimensions[2];
 						}
-					}
+					}*/
 					tempMultiArray[orionCount] = new Array(numberOfSlices);
 					tempMultiCacheTags[orionCount] = new Array(numberOfSlices);
 					for (var j=0;j!=numberOfSlices;j++)
@@ -369,13 +373,7 @@ this.debug("------->>>   theMaster.__saveSeedsXML : function(callback)   !!!!!!!
 				
 				for(var orionCount=0; orionCount<theMaster.__nbUsedOrientations; orionCount++)
 				{
-		//~ theMaster.debug("331 : orionCount : " + orionCount);
-					for(var i=0; i<theMaster.__viewers.length; i++)
-					{
-						var seedsList = null;
-		//~ theMaster.debug("335 : theMaster.__viewers[" + i + "].__display.orientation : " + theMaster.__viewers[i].__display.orientation);
-						if((theMaster.__viewers[i].__display.orientation==orionCount)&&(seedsList==null))
-							seedsList = item.getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")];
+							var seedsList = item.getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")];
 						if(seedsList!=null)
 						{
 		//~ theMaster.debug("345 : seedsList.length : " + seedsList.length);
@@ -390,7 +388,6 @@ this.debug("------->>>   theMaster.__saveSeedsXML : function(callback)   !!!!!!!
 								xmlContent += theMaster.__element(filePrefix, theMaster.__viewers[i].__getSeedFileName(sliceId, item), sliceAttributes) + '\n';
 							}
 						}
-					}
 				}
 			}
 

@@ -88,7 +88,6 @@ this.debug("42 : >>>>>>>   this.addListener(close, function(event)   !!!!!!!!!!!
 		
 		
 		__curView : null, // en attendant...
-
 		
 		__seedsTypeSelectBox : null,
 		
@@ -406,8 +405,8 @@ tools.debug("545: >>>>>>>   createToolBox = function(inLabel)   !!!!!!!!!!!!!!!!
 //~ tools.debug("566 : >>>>>>>   labelBox.addListener(click, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 					for(var i=0; i<theMaster.__viewers.length; i++)
 					{
-						theMaster.__viewers[i].__drawingCanvasParams.paintFlag = true;
-						theMaster.__viewers[i].__setMouseActionMode(3);
+						theMaster.__viewers[i].setPaintMode(true);
+//						theMaster.__viewers[i].__setMouseActionMode(3);
 					}
 					var j = 0;
 					var children = tools.__colorsContainer.getChildren();
@@ -432,12 +431,12 @@ tools.debug("545: >>>>>>>   createToolBox = function(inLabel)   !!!!!!!!!!!!!!!!
 						children[j].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
 						for(var i=0; i<theMaster.__viewers.length; i++)
 						{
-							theMaster.__viewers[i].__drawingCanvasParams.paintFlag = false;
-							theMaster.__viewers[i].__setMouseActionMode(0);
+							theMaster.__viewers[i].setPaintMode(false);
+//							theMaster.__viewers[i].__setMouseActionMode(0);
 						}
 					}
 					for(var i=0; i<theMaster.__viewers.length; i++)
-						theMaster.__viewers[i].__drawingCanvasParams.currentColor = colorBox.getBackgroundColor();
+						theMaster.__viewers[i].setPaintColor(colorBox.getBackgroundColor());
 					tools.__colorsContainer.set({opacity: 1});
                 });
 				var boxLabel = new qx.ui.basic.Label("\\" + inLabel.id + " : " + inLabel.name).set({alignX:"left"});
@@ -735,7 +734,7 @@ this.debug("------->>>   tools.__getPaintPanelVisibilitySwitch : function()   !!
 							}
 						
 						tools.open(); //~ winSeparate test
-						tools.moveTo(tools.__curView.getBounds().left + tools.__curView.getBounds().width + 5 + 35, tools.__curView.getBounds().top); //~ winSeparate test
+		//				tools.moveTo(tools.__curView.getBounds().left + tools.__curView.getBounds().width + 5 + 35, tools.__curView.getBounds().top); //~ winSeparate test
 					
 						theMaster.__updateAll();
 					}
@@ -753,11 +752,11 @@ this.debug("------->>>   tools.__getPaintPanelVisibilitySwitch : function()   !!
 						
 						tools.close(); //~ winSeparate test
 					}
-					for(var i=0; i<theMaster.__viewers.length; i++)
+/*			seb		for(var i=0; i<theMaster.__viewers.length; i++)
 					{
 						var children = theMaster.__viewers[i].__topLeftContainer.getChildren(); //~ CAUTION ! ---> This only works if the "Paint" toggle button is the last child
 						children[children.length-1].setValue(e.getData());
-					}
+					}*/
 				}
 				//~ var viewerSync = true;
 				tools.__settingButtons = false;

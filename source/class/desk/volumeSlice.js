@@ -159,6 +159,10 @@ qx.Class.define("desk.volumeSlice",
 			}
 		},
 
+		getCurrentSlice : function () {
+			return this.__slider.getValue();
+		},
+
 		openFile : function (file) {
 			var xmlDoc;
 			{

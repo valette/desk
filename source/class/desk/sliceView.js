@@ -63,7 +63,8 @@ qx.Class.define("desk.sliceView",
 
 	properties : {
 		orientation : { init : -1, check: "Number", event : "changeOrientation"},
-		ready : { init : false, check: "Boolean", event : "changeReady"}
+		ready : { init : false, check: "Boolean", event : "changeReady"},
+		paintMode : { init : false, check: "Boolean"}
 	},
 
 	members : {
@@ -81,6 +82,8 @@ qx.Class.define("desk.sliceView",
 
 		__viewPort : null,
 
+		__currentColor : null,
+
 		//THREE.js objects
 		__scene : null,
 		__camera : null,
@@ -88,6 +91,10 @@ qx.Class.define("desk.sliceView",
 		__controls : null,
 
 		__master : null,
+
+		setPaintColor : function (color) {
+			this.__currentColor=color;
+		},
 
 		render : function ( ) {
 			this.__controls.update();
@@ -334,7 +341,7 @@ qx.Class.define("desk.sliceView",
 						mouseMode=1;
 						var position=_this.getPositionOnSlice(event);
 						var context=_this.__slices[0].getImageCanvas().getContext2d();
-						context.strokeStyle = "#df4b26";
+						context.strokeStyle = _this.__currentColor;
 						context.lineJoin = "round";
 						context.lineWidth = 5;
 				//		console.log(position);
@@ -450,18 +457,7 @@ this.debug("------->>>   volView.__createSeedsLists : function()   !!!!!!!");
 			var seedsList=new qx.ui.form.List();
 			seedsList.setWidth(30);
 			seedsList.setScrollbarY("off");
-			var winTitleBarHeight = 26;
-			var mywindow=volView.__window;
-			console.log(this.__window.getBounds());
-			console.log(mywindow.getBounds());
-			var bounds=mywindow.getBounds();
-			console.log("bounds : ");
-			console.log(bounds);
-			var displayBorder = mywindow.getContentPaddingBottom();
-			tools.getLayoutParent().add(seedsList,
-										{left : bounds.left + bounds.width + 5,
-										top: bounds.top + winTitleBarHeight + volView.__mainLeftContainer.getChildren()[0].getBounds().height + volView.__mainLeftContainer.getLayout().getSpacing() + displayBorder});
-			seedsList.set({height:volView.__slider.getBounds().height, zIndex:volView.getZIndex()});
+			this.__window.add(seedsList);
 			seedsList.setVisibility("excluded");
 			
 			
@@ -470,10 +466,7 @@ this.debug("------->>>   volView.__createSeedsLists : function()   !!!!!!!");
 			var correctionsList=new qx.ui.form.List();
 			correctionsList.setWidth(30);
 			correctionsList.setScrollbarY("off");
-			tools.getLayoutParent().add(correctionsList,
-										{left:bounds.left + bounds.width + 5,
-										top: bounds.top + winTitleBarHeight + volView.__mainLeftContainer.getChildren()[0].getBounds().height + volView.__mainLeftContainer.getLayout().getSpacing() + displayBorder});
-			correctionsList.set({height:volView.__slider.getBounds().height, zIndex:volView.getZIndex()});
+			this.__window.add(correctionsList);
 			correctionsList.setVisibility("excluded");
 			
 			
