@@ -50,10 +50,13 @@ qx.Class.define("desk.volumeSlice",
 	},
 
 	properties : {
-		slice : { check : "Number", init : 0 ,  event : "changeSlice"},
 		ready : { init : false, check: "Boolean", event : "changeReady"}
 	},
 
+	events : {
+		// the "changeSlice" event is fired whenever the image changes
+		"changeSlice" : "qx.event.type.Event"
+	},
 
 	members : {
 		__path : null,
@@ -238,7 +241,7 @@ qx.Class.define("desk.volumeSlice",
 			this.__image.onload=function(){
 				volView.redraw();
 				volView.setReady(true);
-				volView.setSlice(slice);
+				volView.fireEvent("changeSlice");
 				};
 			this.__image.src=this.__path+this.__prefix+"XY"+(this.__offset+this.__maxZ-this.__slider.getValue())
 				+"."+this.__fileFormatBox.getSelection()[0].getLabel()+"?nocache="+this.__timestamp;

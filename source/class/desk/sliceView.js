@@ -1,3 +1,12 @@
+/*
+#asset(three.js/*)
+#ignore(THREE.*)
+#ignore(THREE)
+#ignore(Detector)
+#ignore(Uint8Array)
+#ignore(HACKSetDirtyVertices)
+*/
+
 qx.Class.define("desk.sliceView", 
 {
 	extend : qx.ui.container.Composite,
@@ -148,7 +157,7 @@ qx.Class.define("desk.sliceView",
 											0.5*(coordinates[3]+coordinates[5]),
 											0);
 				_this.__controls.target.copy(_this.__camera.position);
-				_this.__camera.position.setZ(_this.__camera.position.z+0.7*(coordinates[2]-coordinates[0]));
+				_this.__camera.position.setZ(_this.__camera.position.z+(coordinates[2]-coordinates[0]));
 
 				var canvas=volumeSlice.getImageCanvas();
 				var width=canvas.getCanvasWidth();
@@ -332,7 +341,17 @@ qx.Class.define("desk.sliceView",
 					else
 					{
 						mouseMode=1;
-						_this.getPositionOnSlice(event);
+						var position=_this.getPositionOnSlice(event);
+						var context=_this.__slices[0].getImageCanvas().getContext2d();
+						context.strokeStyle = "#df4b26";
+						context.lineJoin = "round";
+						context.lineWidth = 5;
+						console.log(position);
+					    context.beginPath();
+						context.moveTo(position.x, position.y);
+						context.closePath();
+						context.stroke();
+					     _this.__slices[0].fireEvent("changeSlice");
 					}
 					});
 
@@ -345,7 +364,11 @@ qx.Class.define("desk.sliceView",
 								, event.getDocumentTop()-origin.top);
 						break;
 					case 1:
-						_this.getPositionOnSlice(event);
+						var context=_this.__slices[0].getImageCanvas().getContext2d();
+						var position=_this.getPositionOnSlice(event);
+					     context.lineTo(position.x, position.y);
+						context.stroke();
+						_this.__slices[0].fireEvent("changeSlice");
 						break;
 					default:
 						break;
@@ -402,8 +425,8 @@ qx.Class.define("desk.sliceView",
 				var coordinates=volumeSlice.get2DCornersCoordinates();
 				var dimensions=volumeSlice.get2DDimensions();
 				var intxc=Math.floor((xinter-coordinates[0])*dimensions[0]/(coordinates[2]-coordinates[0]));
-				var intyc=Math.floor((yinter-coordinates[5])*dimensions[1]/(coordinates[1]-coordinates[5]));
-				console.log(intxc+" "+intyc);
+				var intyc=Math.floor((yinter-coordinates[1])*dimensions[1]/(coordinates[5]-coordinates[1]));
+		//		console.log(intxc+" "+intyc);
 				return {x :intxc, y :intyc};
 			}
 			else
