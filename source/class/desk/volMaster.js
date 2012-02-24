@@ -130,22 +130,17 @@ qx.Class.define("desk.volMaster",
 			this.__volumes.add(volumeListItem);
 		},
 
-		__loadSession : function()
+		loadSession : function()
 		{
-this.debug("------->>>   theMaster.__loadSession : function()   !!!!!!!");
+			var viewers=this.__viewers;
 
-			var theMaster = this;
-			
-			var tools = theMaster.__tools;
-			
-			var fileBrowser = theMaster.__fileBrowser;
-			
-	//~ theMaster.debug("88 : theMaster.__resetSeedsList(); !");
 			this.__applyToViewers(function (viewer) {
 				viewer.resetSeedsLists();
+				var seedsType=viewer.getSeedsType()
+				viewer.setSeedsType(1-seedsType);
+				viewer.setSeedsType(seedsType);
 				});
 
-	//~ theMaster.debug("89 : after  theMaster.__resetSeedsList();");
 			
 			var loadSessionRequest = new XMLHttpRequest();
 			
@@ -157,47 +152,46 @@ this.debug("------->>>   theMaster.__loadSession : function()   !!!!!!!");
 					if(this.responseXML!=null)
 					{
 						var response = this.responseXML;
-theMaster.debug("104 : loadSessionRequest -> response : " + response);
-						var seedsTypes = tools.__seedsTypeSelectBox.getChildren();
-						for (var k=0;k<seedsTypes.length;k++)
+						for (var k=0;k<2;k++)
 						{
-							var seedsTypeSelectBoxItem=seedsTypes[k];
 							var slices;
-	//~ theMaster.debug("109 : seedsTypeSelectBoxItem.getUserData(filePrefix) : " + seedsTypeSelectBoxItem.getUserData("filePrefix"));
-							if (seedsTypeSelectBoxItem.getUserData("filePrefix")=="seed")
+							if (k==0)
 								slices=response.getElementsByTagName("seed");
 							else
 								slices=response.getElementsByTagName("correction");
-	//~ theMaster.debug("113 : slices.length : " + slices.length);
+							console.log(slices);
 							for(var j=0; j<slices.length; j++)
 							{
 								var sliceId = parseInt(slices[j].getAttribute("slice"),10);
-								var sliceOrientation = parseInt(slices[j].getAttribute("orientation"),10);
-								for(var i=0; i<theMaster.__viewers.length; i++)
-									if(sliceOrientation==theMaster.getViewers()[i].getOrientation())
-										theMaster.__viewers[i].addNewSeedItemToList(sliceId);
+								var sliceOrientation;
+								if (slices[j].hasAttribute("orientation"))
+								{
+									sliceOrientation = parseInt(slices[j].getAttribute("orientation"),10);
+								}
+								else
+								{
+									sliceOrientation = 0;
+								}
+								for(var i=0; i<viewers.length; i++)
+									if(sliceOrientation==viewers[i].getOrientation())
+										viewers[i].addNewSeedItemToList(sliceId, k);
 							}
 						}
-						tools.__extractMeshesButton.setEnabled(true);
-						//~ theMaster.__loadDisplay(); //~ Sorry, there's problems with this. Try again later...
-			//			theMaster.__updateAll();
 					}
 					else
 					{
 						alert("no seeds found");
-			//			theMaster.__updateAll();
 					}
 				}
 				else if (this.readyState == 4 && this.status != 200)
 				{
 					alert("no seeds found");
-
-			//		theMaster.__updateAll();
 				}
 			};
-			var filePrefix = tools.__seedsTypeSelectBox.getSelection()[0].getLabel();
+
 			loadSessionRequest.open("GET",
-				fileBrowser.getFileURL(tools.getSessionDirectory()+"/seeds.xml?nocache="+Math.random()), true);
+				this.__fileBrowser.getFileURL(
+					this.__tools.getSessionDirectory()+"/seeds.xml?nocache="+Math.random()), true);
 			loadSessionRequest.send(null);
 		},
 		
@@ -326,7 +320,9 @@ this.debug("------->>>   theMaster.__saveSeedsXML : function(callback)   !!!!!!!
 			}
 			xmlContent+=theMaster.__element('colors', colors)+"\n";
 
-			var seedsTypeItems=tools.__seedsTypeSelectBox.getChildren();
+			console.log("implement xml seeds save!!!!");
+/*			var seedsTypeItems=tools.__seedsTypeSelectBox.getChildren();
+
 			for (var k=0;k<seedsTypeItems.length;k++)
 			{
 				var item=seedsTypeItems[k];
@@ -358,7 +354,7 @@ this.debug("------->>>   theMaster.__saveSeedsXML : function(callback)   !!!!!!!
 				"xmlData" : theMaster.__element('seeds', xmlContent),
 				"output_directory" : tools.getSessionDirectory()};
 
-			fileBrowser.getActions().launchAction(parameterMap, callback);
+			fileBrowser.getActions().launchAction(parameterMap, callback);*/
 		},
 		
 		////Use a php file to remove the specified file in the server

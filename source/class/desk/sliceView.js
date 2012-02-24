@@ -581,26 +581,18 @@ qx.Class.define("desk.sliceView",
 			}
 		},
 
-		addNewSeedItemToList : function (sliceId)
+		addNewSeedItemToList : function (sliceId, seedsType)
 		{
-			var volView = this;
-			
-			var tools = volView.__master.getTools();
-			
-			var theMaster = volView.__master;
-			
-			var volFile = volView.__file;
-			
-			var fileBrowser = volView.__fileBrowser;
-
 			var sliceItem = new qx.ui.form.ListItem(""+ sliceId);
 			sliceItem.setUserData("slice",sliceId);
 			sliceItem.addListener("click", function(event)
 			{
 				this.__spinner.setValue(event.getTarget().getUserData("slice"));
 			}, this);
-			
-			var seedsList = this.__seedsLists[this.getSeedsType()];
+
+			if (seedsType==null)
+				seedsType=this.getSeedsType();
+			var seedsList = this.__seedsLists[seedsType];
 			var seeds = seedsList.getChildren();
 			var tempPos = 0;
 
@@ -748,7 +740,7 @@ qx.Class.define("desk.sliceView",
 		{
 //~ this.debug("------->>>   volView.__getSeedsLists : function()   !!!!!!!");
 
-			volView = this;
+			var volView = this;
 			
 			var seedsList = null;
 			var seedsTypeSelectBox = volView.__master.__tools.__seedsTypeSelectBox;
@@ -772,25 +764,20 @@ qx.Class.define("desk.sliceView",
 			this.__window.add(this.__getRenderWindow(), {flex : 1});
 			var leftContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
 			this.__mainLeftContainer=leftContainer;
-//			var button=new qx.ui.form.ToggleButton("tools");
-
 
 			var _this=this;
 
 			if (this.__master.isToolsReady())
 			{
-				addtoolsButton();
-			}
+				leftContainer.add(_this.__master.getTools().getPaintPanelVisibilitySwitch());			}
 			else
 			{
 				this.__master.addListenerOnce("changeToolsReady", function () {
-					addToolsButton();
+					leftContainer.add(
+						_this.__master.getTools().getPaintPanelVisibilitySwitch());					
 					});
 			}
 
-			function addToolsButton() {
-				leftContainer.add(_this.__master.getTools().getPaintPanelVisibilitySwitch());
-			}
 		/*	button.addListener("changeValue",function (value) {
 				if (this.__master!=null)
 				{

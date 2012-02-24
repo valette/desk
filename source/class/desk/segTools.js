@@ -1,3 +1,7 @@
+/*
+#ignore(Uint8Array)
+*/
+
 qx.Class.define("desk.segTools",
 {
   extend : qx.ui.window.Window,
@@ -651,7 +655,7 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 						tools.__tabView.setVisibility("visible");
 						tools.setSessionDirectory(fileBrowser.getSessionDirectory(
 							volFile,sessionType,listItem.getLabel()));
-						theMaster.__loadSession();
+						theMaster.loadSession();
 					}
 					sessionsList.close();
 				}
