@@ -115,9 +115,15 @@ this.debug("42 : >>>>>>>   this.addListener(close, function(event)   !!!!!!!!!!!
 		
 		
 		__settingButtons : false,
-		
-		
-		
+
+
+		__applyToViewers : function (theFunction) {
+			var viewers=this.__master.getViewers();
+			for (var i=0;i<viewers.length;i++) {
+				theFunction (viewers[i]);
+			}
+		},
+
 		__buildRightContainer : function()
 		{
 this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
@@ -154,192 +160,28 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
                 value: 1//tools.__curView.__drawingCanvasParams.myLineWidth
             });
 			
-            tools.__penSize.addListener("changeValue", function(event)
+            this.__penSize.addListener("changeValue", function(event)
 			{
-				var viewers=theMaster.getViewers();
-//~ tools.debug("319 : >>>>>>>   tools.__penSize.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				for(var i=0; i<viewers.length; i++)
-					viewers[i].setPaintWidth(event.getData());
-
-//				tools.__eraserCursor.set({width: Math.ceil(tools.__eraserCoeff*tools.__penSize.getValue()*tools.__curView.__display.curCtxtZoom/tools.__curView.__scale[0]+1),
-	//										height: Math.ceil(tools.__eraserCoeff*tools.__penSize.getValue()*tools.__curView.__display.curCtxtZoom/tools.__curView.__scale[1]+1)});
-            });
-            tools.__penSize.setValue(5);
-            
-			tools.__penSize.addListener("mouseout", function(event)
-			{
-//~ tools.debug("328 : >>>>>>>   tools.__penSize.addListener(mouseout, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				//~ tools.__penSize.releaseCapture();
-				
-				if(tools.__curView.__drawingCanvas != null)
-						tools.__curView.__drawingCanvas.resetCursor();
-				if(tools.__eraserCursor != null)
-						tools.__eraserCursor.resetCursor();
-			}, this);
+					this.__applyToViewers(function (viewer) {
+						viewer.setPaintWidth(event.getData());
+					});
+				}, this);
+            this.__penSize.setValue(5);
 			
 			var penLabel = new qx.ui.basic.Label("Brush : ");
-			
-			tools.__topRightContainer.add(penLabel);
-			tools.__topRightContainer.add(tools.__penSize);
-			
-//~ tools.debug("328 :  tools.__curView.__penSize = tools.__penSize; !!!!!!!!!!!!!!!!!!!!!!!!!");
-			//~ tools.__curView.__penSize = tools.__penSize;
-			
-
-		////Create eraser
-    /*        var eraserBorder = new qx.ui.decoration.Single(1, "solid", "black");
-			
-            tools.__eraserCursor = new qx.ui.core.Widget().set({
-										backgroundColor: "white",
-										decorator: eraserBorder,
-										width: Math.ceil(tools.__eraserCoeff*tools.__penSize.getValue()*tools.__curView.__display.curCtxtZoom+1),
-										height : Math.ceil(tools.__eraserCoeff*tools.__penSize.getValue()*tools.__curView.__display.curCtxtZoom+1),
-										zIndex : tools.__eraserCursorZ
-									});
-			
-            tools.__eraserCursor.addListener("mousedown", function(event)
-			{
-//~ tools.debug("359 : >>>>>>>   tools.__eraserCursor.addListener(mousedown, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				tools.__eraserCursor.capture();
-				
-				if(tools.__curView.__imageCanvas != null)
-					tools.__curView.__imageCanvas.resetCursor();
-				if(tools.__curView.__drawingCanvas != null)
-						tools.__curView.__drawingCanvas.resetCursor();
-				if(tools.__eraserCursor != null)
-						tools.__eraserCursor.resetCursor();
-						
-				tools.__curView.__mouseActionActive = true;
-            ////Erase
-				if((event.isLeftPressed())&&(tools.__curView.__mouseActionMode==4))
-                {
-					tools.__curView.__getPosition(event,true);
-					tools.__curView.__save2undoStack(event);
-					tools.__curView.__eraseFnct();
-                    tools.__curView.__mouseData.mouseLeftDownFlag = true;	// Activate erasing while moving
-                }
-			////Activate moving
-                if(event.isMiddlePressed())
-                {
-					tools.__curView.__getPosition(event,true);
-					if(tools.__eraserCursor != null)
-							tools.__eraserCursor.set({cursor: "move"});
-                    tools.__curView.__mouseData.mouseMiddleDownFlag = true;
-					tools.__curView.__mouseData.recentX = tools.__curView.__display.onDispMouseHrzPos;
-					tools.__curView.__mouseData.recentY = tools.__curView.__display.onDispMouseVrtPos;
-                 }
-			////"Undo" (draw previous canvas)
-				tools.__curView.__undoFnct(event);
-            });
-			
-            tools.__eraserCursor.addListener("mousemove", function(event)
-			{
-//~ tools.debug("394 : >>>>>>>   tools.__eraserCursor.addListener(mousemove, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				//~ tools.__eraserCursor.capture();
-				tools.__curView.__getPosition(event,false);	// No scaling so coordinates are compatible with placeEraser function
-                var tempMargin = 4/tools.__curView.__display.curCtxtZoom;
-                var leftLimit = tempMargin;
-                var rightLimit = tools.__curView.__scaledWidth/tools.__curView.__display.curCtxtZoom-tempMargin;
-                var topLimit = tempMargin;
-                var bottomLimit = tools.__curView.__scaledHeight/tools.__curView.__display.curCtxtZoom-tempMargin;
-			////Hide eraser if out of drawing zone
-                if(!((leftLimit<=tools.__curView.__display.onDispMouseHrzPos)&&(tools.__curView.__display.onDispMouseHrzPos<=rightLimit)&&(topLimit<=tools.__curView.__display.onDispMouseVrtPos)&&(tools.__curView.__display.onDispMouseVrtPos<=bottomLimit)))
-                {
-		//~ tools.debug("405 : Hide eraser if out of drawing zone !");
-                    if(tools.__eraserCursor.getVisibility()=="visible")
-					{
-			//~ tools.debug("396 : tools.__eraserCursor.exclude(); !");
-                        tools.__eraserCursor.exclude();
-						//~ tools.__curView.__imageCanvas.remove(tools.__eraserCursor);
-					}
-                }
-			////Move eraser to mouse position
-				var canvasLocation = tools.__curView.__imageCanvas.getContentLocation();
-                tools.__eraserCursor.set({marginLeft: Math.round(canvasLocation.left+(tools.__curView.__display.onDispMouseHrzPos-tools.__eraserCoeff*tools.__penSize.getValue()/(2*tools.__curView.__scale[0]))*tools.__curView.__display.curCtxtZoom),
-										marginTop: Math.round(canvasLocation.top+(tools.__curView.__display.onDispMouseVrtPos-tools.__eraserCoeff*tools.__penSize.getValue()/(2*tools.__curView.__scale[1]))*tools.__curView.__display.curCtxtZoom)});
-				tools.__curView.__display.onDispMouseHrzPos = tools.__curView.__display.hrzntlShift/tools.__curView.__display.curCtxtZoom + tools.__curView.__display.onDispMouseHrzPos;
-                tools.__curView.__display.onDispMouseVrtPos = tools.__curView.__display.vrtclShift/tools.__curView.__display.curCtxtZoom + tools.__curView.__display.onDispMouseVrtPos;
-				if((tools.__curView.__mouseData.mouseLeftDownFlag)&&(tools.__curView.__mouseActionMode==4))
-				{
-					tools.__curView.__eraseFnct(true);
-                }
-                if(tools.__curView.__mouseData.mouseMiddleDownFlag)
-                {
-					tools.__curView.__moveCanvas();
-                }
-            },this);
-            
-            tools.__eraserCursor.addListener("mouseup", function(event)
-			{
-//~ tools.debug("431 : >>>>>>>   tools.__eraserCursor.addListener(mouseup, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-                tools.__curView.__mouseData.mouseMiddleDownFlag = false;
-                tools.__curView.__mouseData.mouseLeftDownFlag = false;
-                tools.__curView.__mouseActionActive = false;
-				if(tools.__curView.__drawingCanvas != null)
-					tools.__curView.__drawingCanvas.resetCursor();
-				if(tools.__eraserCursor != null)
-					tools.__eraserCursor.resetCursor();
-				tools.__eraserCursor.releaseCapture(); // ONLY IF CAPTURING JUST  __eraseFnct()  OR  __moveCanvas() !!!!!!!
-            },this);
-			
-			tools.__eraserCursor.addListener("mouseover", function(event)
-			{
-//~ tools.debug("444 : >>>>>>>   tools.__eraserCursor.addListener(mouseover, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				//~ tools.__eraserCursor.capture();
-				if((tools.__curView.__mouseData.mouseLeftDownFlag)&&(tools.__curView.__mouseActionMode==4))
-					tools.__curView.__eraseFnct(true);
-					
-				//~ if(tools.__curView.__drawingCanvas != null)
-					//~ tools.__curView.__drawingCanvas.resetCursor();
-				//~ if(tools.__eraserCursor != null)
-					//~ tools.__eraserCursor.resetCursor();
-			}, this);
-			
-			
-			tools.__eraserCursor.addListener("mouseout", function(event)
-			{
-//~ tools.debug("458 : >>>>>>>   tools.__eraserCursor.addListener(mouseout, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				if((tools.__curView.__mouseData.mouseLeftDownFlag)&&(tools.__curView.__mouseActionMode==4))
-					tools.__curView.__eraseFnct(true);
-			}, this);
-			
-			
-	//~ tools.debug("tools.__eraserCursor.addListener(mousewheel, tools.__curView.__mouseWheelHandler, this); !");
-			//~ tools.__eraserCursor.addListener("mousewheel", tools.__curView.__mouseWheelHandler, this);
-			// go see  segTools  Line: 841 : tools.addListenerOnce("appear", function(event))
-
-			tools.getLayoutParent().add(tools.__eraserCursor);
-			
-			tools.__eraserCursor.resetCursor();
-			
-            tools.__eraserCursor.exclude();
-
-			*/
-			
+			this.__topRightContainer.add(penLabel);
+			this.__topRightContainer.add(tools.__penSize);
 			
 		////Create eraser on/off button
             tools.__eraserButton = new qx.ui.form.ToggleButton("Eraser");
 			
 			tools.__eraserButton.addListener("changeValue", function(event)
 			{
-				var viewers=theMaster.getViewers();
-//~ tools.debug("482 : >>>>>>>   tools.__eraserButton.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				for(var i=0; i<viewers.length; i++)
-				{
-					//~ if((event.getData()==true)&&(!theMaster.__viewers[i].__isSegWindow))
-					if(event.getData()==true)
-					{
-						//~ tools.__eraserCursor.capture();
-						viewers[i].__setMouseActionMode(4);
-					}
-					else
-						viewers[i].__setMouseActionMode(0);
+				this.__applyToViewers(function (viewer) {
+					viewer.setEraseMode(e.getData());
+					});
+				}, this);
 
-					viewers[i].__htmlContextLabels.beginPath();
-					viewers[i].__mouseData.mouseLeftDownFlag = false;
-				}
-            });
-			
 			tools.__topRightContainer.add(tools.__eraserButton);
 
 			
@@ -363,6 +205,12 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 			tools.__tabView=tabView;
             tabView.add(paintPage);
 			tabView.setVisibility("excluded");
+
+			var layout1=new qx.ui.layout.HBox();
+			var container1 = new qx.ui.container.Composite(layout1);  //~ resizing
+			container1.add(this.__master.getBrightnessContrastButton());
+			container1.add(this.__master.getResetBrightnessContrastButton());
+			tools.__mainRightContainer.add(container1);
 
 			//~ /*
 			var sessionWdgt = tools.__getSessionsWidget(); //~ resizing
@@ -408,19 +256,15 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 				labelBox.addListener("click", function()
 				{
 					var viewers=theMaster.getViewers();
-//~ tools.debug("566 : >>>>>>>   labelBox.addListener(click, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-					for(var i=0; i<viewers.length; i++)
-					{
-						viewers[i].setPaintMode(true);
-//						theMaster.__viewers[i].__setMouseActionMode(3);
-					}
+
 					var j = 0;
 					var children = tools.__colorsContainer.getChildren();
+					var paint;
 					while(children[j]!=this)
 					{
 						j++;
 					}
-					if(!((children[j].getBackgroundColor()=="white")&&(tools.__curView.__mouseActionMode!=4)))
+					if(!(children[j].getBackgroundColor()=="white"))//&&(tools.__curView.__mouseActionMode!=4)))
 					{
 						children[j].set({decorator: focusedBorder, backgroundColor: "white"});
 						for(var k=0; k<nbLabels; k++)
@@ -430,19 +274,18 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 								children[k].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
 							}
 						}
+						paint=true;
 					}
-				////Comment to desactivate color on/off on click
 					else
 					{
 						children[j].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
-						for(var i=0; i<viewers.length; i++)
-						{
-							viewers[i].setPaintMode(false);
-//							viewers[i].__setMouseActionMode(0);
-						}
+						paint=false
 					}
-					for(var i=0; i<viewers.length; i++)
-						viewers[i].setPaintColor(colorBox.getBackgroundColor());
+
+					tools.__applyToViewers( function (viewer) {
+						viewer.setPaintColor(colorBox.getBackgroundColor());
+						viewer.setPaintMode(paint);
+						});
 					tools.__colorsContainer.set({opacity: 1});
                 });
 				var boxLabel = new qx.ui.basic.Label("\\" + inLabel.id + " : " + inLabel.name).set({alignX:"left"});
@@ -540,14 +383,14 @@ tools.debug("639 : colorsParamRequest -> response : " + response);
 			whileDrawingDrwngOpacitySlider.setValue(100);
 			whileDrawingDrwngOpacitySlider.addListener("changeValue", function(event)
 			{
-				var viewers=theMaster.getViewers();
-//~ tools.debug("703 : >>>>>>>   whileDrawingDrwngOpacitySlider.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				for(var i=0; i<viewers.length; i++)
-					viewers[i].__drawingCanvas.set({opacity: event.getData()/100});
+				this.__applyToViewers(function (viewer) {
+					viewer.setPaintOpacity(event.getData()/100);
+					});
 			},this);
-            tools.__topRightContainer.add(whileDrawingDrwngOpacitySlider, {flex : 1});
 
-			paintPage.add(tools.__bottomRightContainer);
+            this.__topRightContainer.add(whileDrawingDrwngOpacitySlider, {flex : 1});
+
+			paintPage.add(this.__bottomRightContainer);
 
 			var clusteringPage = new qx.ui.tabview.Page("clustering");
             clusteringPage.setLayout(new qx.ui.layout.VBox());

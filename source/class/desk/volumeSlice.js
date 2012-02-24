@@ -99,6 +99,21 @@ qx.Class.define("desk.volumeSlice",
 		__lookupTableGreen : null,
 		__lookupTableBlue : null,
 
+		getBrightness : function () {
+			return (this.__brightness);
+		},
+
+		getContrast : function () {
+			return (this.__contrast);
+		},
+
+		setBrightnessAndContrast : function (brightness, contrast)
+		{
+			this.__brightness=brightness;
+			this.__contrast=contrast;
+			this.redraw();
+		},
+
 		getDimensions : function ()
 		{
 			return (this.__dimensions);

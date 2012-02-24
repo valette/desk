@@ -57,11 +57,17 @@ qx.Class.define("desk.sliceView",
 				}
 			}, this);
 */
+		this.addListener("changePaintOpacity", function (event) {
+			console.log(event.getData());
+			this.__drawingCanvas.set({opacity: event.getData()});
+				}, this);
+
 		this.__window.open();
 		return (this);		
 	},
 
 	properties : {
+		paintOpacity : { init : 1, check: "Number", event : "changePaintOpacity"},
 		orientation : { init : -1, check: "Number", event : "changeOrientation"},
 		ready : { init : false, check: "Boolean", event : "changeReady"},
 		paintMode : { init : false, check: "Boolean"}
@@ -102,10 +108,6 @@ qx.Class.define("desk.sliceView",
 
 		setPaintWidth : function (width) {
 			this.__paintWidth=width;
-		},
-
-		getDrawingCanvas : function () {
-			return this.__drawingCanvas;
 		},
 
 		render : function ( ) {
@@ -374,17 +376,20 @@ qx.Class.define("desk.sliceView",
 					}
 					else
 					{
-						mouseMode=1;
-						var position=_this.getPositionOnSlice(event);
-						var context=_this.__drawingCanvas.getContext2d();
-						context.strokeStyle = _this.__paintColor;
-						context.lineJoin = "round";
-						context.lineWidth = _this.__paintWidth;
-					    context.beginPath();
-						context.moveTo(position.x, position.y);
-						context.closePath();
-						context.stroke();
-					     _this.__slices[0].fireEvent("changeSlice");
+						if (_this.isPaintMode())
+						{
+							mouseMode=1;
+							var position=_this.getPositionOnSlice(event);
+							var context=_this.__drawingCanvas.getContext2d();
+							context.strokeStyle = _this.__paintColor;
+							context.lineJoin = "round";
+							context.lineWidth = _this.__paintWidth;
+							context.beginPath();
+							context.moveTo(position.x, position.y);
+							context.closePath();
+							context.stroke();
+							 _this.__slices[0].fireEvent("changeSlice");
+						}
 					}
 					});
 
