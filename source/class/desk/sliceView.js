@@ -69,6 +69,7 @@ qx.Class.define("desk.sliceView",
 
 	properties : {
 		paintOpacity : { init : 1, check: "Number", event : "changePaintOpacity"},
+		seedsType : { init : 0, check: "Number", event : "changeSeedsType"},
 		orientation : { init : -1, check: "Number", event : "changeOrientation"},
 		ready : { init : false, check: "Boolean", event : "changeReady"},
 		paintMode : { init : false, check: "Boolean"}
@@ -515,7 +516,6 @@ qx.Class.define("desk.sliceView",
 
 			seedsList.addListener("removeItem", function(event) {
 				if (seedsList.getChildren().length==0)
-				
 					tools.__startSegmentationButton.setEnabled(false);
 				}, this);
 
@@ -544,6 +544,19 @@ qx.Class.define("desk.sliceView",
 			seedsList.addListener("keypress", keyPressHandler, seedsList);
 			correctionsList.addListener("keypress", keyPressHandler, correctionsList);
 
+			this.addListener("changeSeedsType", function (e) {
+				if (e.getData()=="0")
+				{
+					seedsList.setVisibility("visible");
+					correctionsList.setVisibility("excluded");
+				}
+				else
+				{
+					seedsList.setVisibility("excluded");
+					correctionsList.setVisibility("visible");
+				}
+			});
+
 			var createdLists = [];
 			createdLists[0] = seedsList;
 			createdLists[1] = correctionsList;
@@ -551,7 +564,24 @@ qx.Class.define("desk.sliceView",
 			return createdLists;
 		},
 
-		addNewSeedItemToList : function (sliceId, seedsTypeListItem)
+		resetSeedsLists : function () {
+			for(var i=0;i<2;i++)
+			{
+				var numberOfSlices=this.__slices[0].getNumberOfSlices();
+				var seedsArray = new Array(numberOfSlices);
+				var cacheTagsArray = new Array(numberOfSlices);
+				for (var j=0;j!=numberOfSlices;j++)
+				{
+					seedsArray[j]=Math.random();
+					cacheTagsArray[j]=0;
+				}
+				var list=this.__seedsLists[i];
+				list.setUserData("seedsArray", seedsArray);
+				list.setUserData("cacheTags", cacheTagsArray);
+			}
+		},
+
+		addNewSeedItemToList : function (sliceId)
 		{
 			var volView = this;
 			
@@ -563,19 +593,14 @@ qx.Class.define("desk.sliceView",
 			
 			var fileBrowser = volView.__fileBrowser;
 
-			if (seedsTypeListItem==null)
-				seedsTypeListItem=tools.__seedsTypeSelectBox.getSelection()[0];
-
 			var sliceItem = new qx.ui.form.ListItem(""+ sliceId);
 			sliceItem.setUserData("slice",sliceId);
 			sliceItem.addListener("click", function(event)
 			{
-//~ volView.debug("3311 : >>>>>>>  sliceItem.addListener(addItem, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				this.__spinner.setValue(event.getTarget().getUserData("slice"));
 			}, this);
 			
-			var seedsList = volView.__getSeedsLists("seedsList",seedsTypeListItem);
-
+			var seedsList = this.__seedsLists[this.getSeedsType()];
 			var seeds = seedsList.getChildren();
 			var tempPos = 0;
 
@@ -585,10 +610,6 @@ qx.Class.define("desk.sliceView",
 					tempPos++;
 			}
 			seedsList.addAt(sliceItem, tempPos);
-			
-			var seedsArray=seedsTypeListItem.getUserData("seedsArray")[volView.getOrientation()];
-
-			seedsArray[sliceId] = sliceItem;
 		},		
 
 		saveCurrentSeeds : function(callback)
@@ -666,16 +687,13 @@ qx.Class.define("desk.sliceView",
 				}
 				if(!isAllBlack)
 				{
-			/*		var numberOfRemainingRequests=2;
-					var success=function (e) {
-						numberOfRemainingRequests--;
-						if ((numberOfRemainingRequests==0)&&(callback!=null))
+					volView.__currentSeedsModified=false;
+					function success () {
+						if (callback!=null)
 						{
-                            volView.__currentSeedsModified=false;
-                            if (callback != null)
                                callback();
 						}
-					};*/
+					};
 
 					////Send png image to server
 					seedsImageData.data = pixels;
@@ -683,9 +701,9 @@ qx.Class.define("desk.sliceView",
 					this.__drawingCanvas.getContext2d().putImageData(seedsImageData, 0, 0);
 					var pngImg = this.__drawingCanvas.getContentElement().getCanvas().toDataURL("image/png");
 					var saveData=pngImg.replace("image/png", "image/octet-stream");
-					document.location.href = saveData;
+				//	document.location.href = saveData;
 
-				/*	var commaIndex=pngImg.lastIndexOf(",");
+			/*		var commaIndex=pngImg.lastIndexOf(",");
 					var base64Img = pngImg.substring(commaIndex+1,pngImg.length);
 					var parameterMap={
 						"action" : "save_binary_file",
@@ -708,8 +726,8 @@ qx.Class.define("desk.sliceView",
 					
 					
 					theMaster.__saveSeedsXML(success);
-					
 					*/
+					
 					
 				}
 				else

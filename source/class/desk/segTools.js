@@ -37,21 +37,6 @@ qx.Class.define("desk.segTools",
 								resizable: false,
 								movable : true
 							});
-		this.addListener("close", function(event)
-		{
-			var viewers=this.__master.getViewers();
-this.debug("42 : >>>>>>>   this.addListener(close, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-			for(var i=0; i<viewers.length; i++)
-			{
-				var children = viewers[i].__topLeftContainer.getChildren(); //~ CAUTION ! ---> This only works if the "Paint" toggle button is the last child
-				children[children.length-1].setValue(false);
-				if(this.__seedsTypeSelectBox!=null)
-				{
-					var list = this.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList")[viewers[i].getUserData("viewerIndex")];
-					list.setVisibility("excluded");
-				}
-			}
-		}, this);
 		
 //		this.__curView = this.__master.__viewers[0];
 		
@@ -571,73 +556,20 @@ tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 		
 		getPaintPanelVisibilitySwitch : function ()
 		{
-//this.debug("------->>>   tools.__getPaintPanelVisibilitySwitch : function()   !!!!!!!");
-			
-			var tools = this;
-			
-			var theMaster = tools.__master;
-			
-			var volFile = tools.__file;
-			
-			var fileBrowser = tools.__fileBrowser;
-			
-			
-			var paintPaneVisibilitySwitch=new qx.ui.form.ToggleButton("Paint");
-			
+			var paintPaneVisibilitySwitch=new qx.ui.form.ToggleButton("tools");
 			paintPaneVisibilitySwitch.addListener("changeValue", function (e)
 			{
-//~ tools.debug("883 : >>>>>>>  paintPaneVisibilitySwitch.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				if(!tools.__settingButtons)
-				{
-					tools.__settingButtons = true;
-					var viewers=theMaster.getViewers();
 					if (e.getData())
 					{
-						tools.__mainRightContainer.setVisibility("visible");
-						if(tools.__seedsTypeSelectBox!=null) // go see :  selectBox.addListenerOnce("appear", function(event)
-							for(var i=0; i<viewers.length; i++)
-							{
-								var list = tools.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList")[viewers[i].getUserData("viewerIndex")];
-								list.setVisibility("visible");
-							}
-						
-						tools.open(); //~ winSeparate test
-		//				tools.moveTo(tools.__curView.getBounds().left + tools.__curView.getBounds().width + 5 + 35, tools.__curView.getBounds().top); //~ winSeparate test
-					
-						theMaster.__updateAll();
+						this.__mainRightContainer.setVisibility("visible");
+						this.open();
 					}
 					else
 					{
-						tools.__mainRightContainer.setVisibility("excluded");
-						
-						if(tools.__seedsTypeSelectBox!=null) // go see :  selectBox.addListenerOnce("appear", function(event)
-							for(var i=0; i<viewers.length; i++)
-							{
-								var list = tools.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList")[viewers[i].getUserData("viewerIndex")];
-								list.setVisibility("excluded");
-								viewers[i].__drawingCanvasParams.drawingContext.clearRect(-16, -16, viewers[i].__dimensions[0]*viewers[i].__scaledWidth+32, viewers[i].__dimensions[1]*viewers[i].__scaledHeight+32);
-							}
-						
-						tools.close(); //~ winSeparate test
+						this.__mainRightContainer.setVisibility("excluded");
+						this.close(); 
 					}
-/*			seb		for(var i=0; i<theMaster.__viewers.length; i++)
-					{
-						var children = theMaster.__viewers[i].__topLeftContainer.getChildren(); //~ CAUTION ! ---> This only works if the "Paint" toggle button is the last child
-						children[children.length-1].setValue(e.getData());
-					}*/
-				}
-				//~ var viewerSync = true;
-				tools.__settingButtons = false;
-		/*		for(var i=0; i<theMaster.__viewers.length; i++)
-				{
-					var children = theMaster.__viewers[i].__topLeftContainer.getChildren(); //~ CAUTION ! ---> This only works if the "Paint" toggle button is the last child
-					if(children[children.length-1].getValue()!=e.getData())
-						//~ viewerSync = false;
-						tools.__settingButtons = true;
-				}*/
-				//~ tools.__settingButtons = !viewerSync;
 			}, this);
-
 			return paintPaneVisibilitySwitch;
 		},
 		
@@ -740,112 +672,30 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 		
 		__getSeedsTypeSelectBox : function()
 		{
-this.debug("------->>>   tools.__getSeedsTypeSelectBox : function()   !!!!!!!");
-			
 			var tools = this;
-			
 			var theMaster = tools.__master;
-			
 			var volFile = tools.__file;
-			
 			var fileBrowser = tools.__fileBrowser;
-			
-			
-			
 			var selectBox = new qx.ui.form.SelectBox();
-			
-			
-			
-			var singleViewLists = [];
-			var tempMultiViewSeeds = [];
-			var tempMultiViewCorrections = [];
-			for(var orionCount=0; orionCount<theMaster.__nbUsedOrientations; orionCount++)
-			{
-				var viewers=theMaster.getViewers();
-				for(var i=0; i<viewers.length; i++)
-				{
-					if((viewers[i].getOrientation()==orionCount)&&(typeof tempMultiViewSeeds[orionCount]=="undefined"))
-					{
-						singleViewLists = viewers[i].getSeedsLists();
-						tempMultiViewSeeds[orionCount] = singleViewLists[0];
-//~ tools.debug("1026 : tempMultiViewSeeds["+orionCount+"] : " + tempMultiViewSeeds[orionCount]);
-						tempMultiViewCorrections[orionCount] = singleViewLists[1];
-//~ tools.debug("1029 : tempMultiViewCorrections["+orionCount+"] : " + tempMultiViewCorrections[orionCount]);
-					}
-				}
-			}
-			
-			
-			
+
 			var seedsItem = new qx.ui.form.ListItem("seeds");
-//~ tools.debug("1033 : seedsItem : " + seedsItem);
 			seedsItem.setUserData("filePrefix", "seed");
-//~ tools.debug("1034 : tempMultiViewSeeds.length : " + tempMultiViewSeeds.length);
-//~ tools.debug("1035 : tempMultiViewSeeds : " + tempMultiViewSeeds);
-			seedsItem.setUserData("seedsList", tempMultiViewSeeds);
-			seedsItem.setUserData("oppositeList", tempMultiViewCorrections);
-			
+			seedsItem.setUserData("seedsType", 0);
 			selectBox.add(seedsItem);
-			
-			
+
 			var correctionsItem = new qx.ui.form.ListItem("corrections");
-//~ tools.debug("1033 : correctionsItem : " + correctionsItem);
 			correctionsItem.setUserData("filePrefix", "correction");
-//~ tools.debug("1044 : tempMultiViewCorrections.length : " + tempMultiViewCorrections.length);
-//~ tools.debug("1045 : tempMultiViewCorrections : " + tempMultiViewCorrections);
-			correctionsItem.setUserData("seedsList", tempMultiViewCorrections);
-			correctionsItem.setUserData("oppositeList", tempMultiViewSeeds);
-			
+			correctionsItem.setUserData("seedsType", 1);
 			selectBox.add(correctionsItem);
-			
-			
-			
+
 			selectBox.addListener("changeSelection",function (e)
 			{
-//~ tools.debug("1098 : >>>>>>>  selectBox.addListener(changeSelection, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				var SelectedItem = selectBox.getSelection()[0];
-				var selectedOppositeList;
-				var selectedSeedsList;
-				var viewers=theMaster.getViewers();
-				for(var i=0; i<viewers.length; i++)
-				{
-					selectedOppositeList = SelectedItem.getUserData("oppositeList")[viewers[i].getUserData("viewerIndex")];
-					selectedOppositeList.setVisibility("excluded");
-					selectedOppositeList.resetSelection();
-
-					selectedSeedsList = SelectedItem.getUserData("seedsList")[viewers[i].getUserData("viewerIndex")];
-					selectedSeedsList.setVisibility("visible");
-				}
-				
-				theMaster.__updateAll();
+				this.__applyToViewers(function (viewer) {
+					viewer.setSeedsType(selectBox.getSelection()[0].getUserData("seedsType"));
+					});
 			},this);
-			
-			
-			selectBox.addListenerOnce("appear", function(event)
-			{
-				var viewers=theMaster.getViewers();
-tools.debug("1118 : >>>>>>>  selectBox.addListener(appear, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				for(var i=0; i<viewers.length; i++)
-				{
-					var list = selectBox.getSelection()[0].getUserData("seedsList")[viewers[i].getUserData("viewerIndex")];
-					list.setVisibility("visible");
-				}
-				// from   paintPaneVisibilitySwitch.addListener("changeValue", function (e)
-			
-			
-				theMaster.__resetSeedsList(); //~ from segTools  Line : 807
-			
-			
-			}, this);
-			
-			
-			
 			tools.__seedsTypeSelectBox = selectBox;
-			
-			
-			
 			return selectBox;
-			
 		}
 		
 		

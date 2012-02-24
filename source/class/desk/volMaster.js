@@ -70,7 +70,14 @@ qx.Class.define("desk.volMaster",
 		__file : null,
 		
 		__fileBrowser : null,
-		
+
+		__applyToViewers : function (theFunction) {
+			var viewers=this.__viewers;
+			for (var i=0;i<viewers.length;i++) {
+				theFunction (viewers[i]);
+			}
+		},
+
 		getTools : function () {
 			return this.__tools;
 		},
@@ -134,7 +141,10 @@ this.debug("------->>>   theMaster.__loadSession : function()   !!!!!!!");
 			var fileBrowser = theMaster.__fileBrowser;
 			
 	//~ theMaster.debug("88 : theMaster.__resetSeedsList(); !");
-			theMaster.__resetSeedsList();
+			this.__applyToViewers(function (viewer) {
+				viewer.resetSeedsLists();
+				});
+
 	//~ theMaster.debug("89 : after  theMaster.__resetSeedsList();");
 			
 			var loadSessionRequest = new XMLHttpRequest();
@@ -170,19 +180,19 @@ theMaster.debug("104 : loadSessionRequest -> response : " + response);
 						}
 						tools.__extractMeshesButton.setEnabled(true);
 						//~ theMaster.__loadDisplay(); //~ Sorry, there's problems with this. Try again later...
-						theMaster.__updateAll();
+			//			theMaster.__updateAll();
 					}
 					else
 					{
 						alert("no seeds found");
-						theMaster.__updateAll();
+			//			theMaster.__updateAll();
 					}
 				}
 				else if (this.readyState == 4 && this.status != 200)
 				{
 					alert("no seeds found");
 
-					theMaster.__updateAll();
+			//		theMaster.__updateAll();
 				}
 			};
 			var filePrefix = tools.__seedsTypeSelectBox.getSelection()[0].getLabel();
@@ -190,60 +200,6 @@ theMaster.debug("104 : loadSessionRequest -> response : " + response);
 				fileBrowser.getFileURL(tools.getSessionDirectory()+"/seeds.xml?nocache="+Math.random()), true);
 			loadSessionRequest.send(null);
 		},
-		
-		__updateAll : function()
-		{
-this.debug("------->>>   theMaster.__updateAll : function()   !!!!!!!");
-
-			var theMaster = this;
-			
-			var tools = theMaster.__tools;
-			
-			var fileBrowser = theMaster.__fileBrowser;
-			var targetSlices=this.__volumes.getChildren()[0].getUserData("slices");
-			
-			for(var i=0; i<targetSlices.length; i++)
-			{
-				if (tools.__seedsTypeSelectBox!=null)
-				{
-					var currentSlice = targetSlices[i].getCurrentSlice();
-
-		//~ theMaster.debug("162 : currentSlice : " + currentSlice);
-					var seedsTypeListItem=tools.__seedsTypeSelectBox.getSelection()[0];
-		//~ theMaster.debug("164 : seedsTypeListItem : " + seedsTypeListItem);
-		//~ theMaster.debug("165 : seedsTypeListItem.getUserData(seedsArray).length : " + seedsTypeListItem.getUserData("seedsArray").length);
-		//~ theMaster.debug("166 : theMaster.__viewers["+i+"].__display.orientation : " + theMaster.__viewers[i].__display.orientation);
-		//~ theMaster.debug("167 : seedsTypeListItem.getUserData(seedsArray)[theMaster.__viewers["+i+"].__display.orientation].length : " + seedsTypeListItem.getUserData("seedsArray")[theMaster.__viewers[i].__display.orientation].length);
-					var sliceItem=seedsTypeListItem.getUserData("seedsArray")[targetSlices[i].getOrientation()][currentSlice];
-		//~ theMaster.debug("170 : sliceItem : " + sliceItem);
-		//~ theMaster.debug("171 : theMaster.__viewers["+i+"].getUserData(viewerIndex) : " + theMaster.__viewers[i].getUserData("viewerIndex"));
-		//~ theMaster.debug("172 : seedsTypeListItem.getUserData(seedsList) : " + seedsTypeListItem.getUserData("seedsList"));
-					var seedsList=seedsTypeListItem.getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")];
-		//~ theMaster.debug("174 : seedsList : " + seedsList);
-					if(sliceItem!=0)
-					{
-						// the slice contains seeds
-						theMaster.__updateSeeds();
-						seedsList.setSelection([sliceItem]);
-					}
-					else
-					{
-						// current slice has no seeds
-						seedsList.resetSelection();
-//seb						theMaster.__viewers[i].__clearDrawingCanvas();
-					}
-				}
-
-				////Update image canvas
-//seb				theMaster.__viewers[i].__updateImage();
-				
-				////Clear "undo" stack
-				theMaster.__viewers[i].__ctrlZData = [];
-				theMaster.__viewers[i].__currentSeedsModified=false;
-			}
-			
-		},
-		
 		
 		__updateSeeds : function ()
 		{
@@ -348,59 +304,6 @@ this.debug("------->>>   theMaster.__updateSeeds : function()   !!!!!!!");
 				}
 			}, this);
 			return button;
-		},
-
-
-		__resetSeedsList : function()
-		{
-this.debug("------->>>   theMaster.__resetSeedsList : function()   !!!!!!!");
-
-			var theMaster = this;
-			
-			var tools = theMaster.__tools;
-			
-			var fileBrowser = theMaster.__fileBrowser;
-			
-			var seedsTypeSelectBoxItems = tools.__seedsTypeSelectBox.getChildren();
-
-			for (var k=0;k<seedsTypeSelectBoxItems.length;k++)
-			{
-				var item=seedsTypeSelectBoxItems[k];
-	//~ theMaster.debug("261 : item : " + item);
-				
-				var tempMultiArray = [];
-				var tempMultiCacheTags = [];
-
-				var volumeSlices=this.__volumes.getChildren()[0].getUserData("slices");
-
-				for(var orionCount=0; orionCount<theMaster.__nbUsedOrientations; orionCount++)
-				{
-					var numberOfSlices=volumeSlices[orionCount].getNumberOfSlices();
-/*seb					var numberOfSlices = theMaster.__viewers[0].__dimensions[2]; // just to give a default value to numberOfSlices
-					for(var i=0; i<theMaster.__viewers.length; i++)
-					{
-						if(theMaster.__viewers[i].__display.orientation==orionCount)
-						{
-							item.getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")].removeAll();
-							numberOfSlices = theMaster.__viewers[i].__dimensions[2];
-						}
-					}*/
-					tempMultiArray[orionCount] = new Array(numberOfSlices);
-					tempMultiCacheTags[orionCount] = new Array(numberOfSlices);
-					for (var j=0;j!=numberOfSlices;j++)
-					{
-						tempMultiCacheTags[orionCount][j]=Math.random();
-						tempMultiArray[orionCount][j]=0;
-					}
-	//~ theMaster.debug("285 : tempMultiArray[" + orionCount + "].length : " + tempMultiArray[orionCount].length);
-	//~ theMaster.debug("286 : tempMultiArray[" + orionCount + "] : " + tempMultiArray[orionCount]);
-				}
-	//~ theMaster.debug("288 : tempMultiArray.length : " + tempMultiArray.length);
-				
-				item.setUserData("seedsArray", tempMultiArray);
-				item.setUserData("cacheTags", tempMultiCacheTags);
-				
-			}
 		},
 		
 		////Rewrite xml list of the drawn seeds
