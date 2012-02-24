@@ -95,11 +95,20 @@ qx.Class.define("desk.volumeSlice",
 		__brightness : 0,
 		__contrast : 1,
 
+		__lookupTableRed : null,
+		__lookupTableGreen : null,
+		__lookupTableBlue : null,
+
 		getDimensions : function ()
 		{
 			return (this.__dimensions);
 		},
 
+		setLookupTables : function (red, green, blue) {
+			this.__lookupTableRed=red;
+			this.__lookupTableGreen=green;
+			this.__lookupTableBlue=blue;
+		},
 
 		getImageCanvas : function(){
 			return this.__canvas;
@@ -161,7 +170,7 @@ switch(this.getOrientation())
 			var zmin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
 			var zmax=this.__origin[2]+this.__extent[5]*this.__spacing[2];
 			var coordinates=[];
-			console.log("orientation : "+this.getOrientation());
+		//	console.log("orientation : "+this.getOrientation());
 			switch(this.getOrientation())
 			{
 				// ZY X

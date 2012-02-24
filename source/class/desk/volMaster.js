@@ -78,6 +78,10 @@ qx.Class.define("desk.volMaster",
 			return this.__tools;
 		},
 
+		getViewers : function () {
+			return this.__viewers;
+		},
+
 		__createVolumesList : function () {
 			var window=new qx.ui.window.Window();
 

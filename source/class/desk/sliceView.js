@@ -35,7 +35,7 @@ qx.Class.define("desk.sliceView",
 		this.__window.setUseMoveFrame(true);
 		this.__window.set({width : 400, height : 400});
 //		this.__window.setCaption(file);
-		this.__window.setCaption(orientation);
+		this.__window.setCaption(""+orientation);
 		this.__createUI();
 
 /*		// drag and drop support
@@ -104,6 +104,10 @@ qx.Class.define("desk.sliceView",
 			this.__paintWidth=width;
 		},
 
+		getDrawingCanvas : function () {
+			return this.__drawingCanvas;
+		},
+
 		render : function ( ) {
 			this.__controls.update();
 			this.__renderer.render( this.__scene, this.__camera );			
@@ -141,9 +145,8 @@ qx.Class.define("desk.sliceView",
 				for (var i=0;i<4;i++)
 					geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( coordinates[2*i],
 																				coordinates[2*i+1], 0 ) ) );
-			console.log(_this.getOrientation());
-			console.log(coordinates);
-//				geometry.faces.push( new THREE.Face4( 1, 0, 3, 2 ) );
+	//		console.log(_this.getOrientation());
+	//		console.log(coordinates);
 				geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
 				geometry.faceVertexUvs[ 0 ].push( [
 					new THREE.UV( 0, 0),
@@ -314,14 +317,14 @@ qx.Class.define("desk.sliceView",
 
 				// lights
 
-				var dirLight = new THREE.DirectionalLight( 0xffffff );
+	/*			var dirLight = new THREE.DirectionalLight( 0xffffff );
 				dirLight.position.set( 200, 200, 1000 ).normalize();
 				camera.add( dirLight );
 				camera.add( dirLight.target );
 				var dirLight2 = new THREE.DirectionalLight( 0xffffff );
 				dirLight2.position.set( -200, -200, -1000 ).normalize();
 				camera.add( dirLight2 );
-				camera.add( dirLight2.target );
+				camera.add( dirLight2.target );*/
 
 				// renderer
 
@@ -454,11 +457,11 @@ qx.Class.define("desk.sliceView",
 			//	console.log(xinter+" "+yinter);
 				var coordinates=volumeSlice.get2DCornersCoordinates();
 				var dimensions=volumeSlice.get2DDimensions();
-				console.log("intersection : "+xinter+" "+yinter);
+		//		console.log("intersection : "+xinter+" "+yinter);
 				var intxc=Math.floor((xinter-coordinates[0])*dimensions[0]/(coordinates[2]-coordinates[0]));
 				var intyc=Math.floor((yinter-coordinates[1])*dimensions[1]/(coordinates[5]-coordinates[1]));
 		//		console.log(intxc+" "+intyc);
-				console.log("intersection : "+intxc+" "+intyc);
+		//		console.log("intersection : "+intxc+" "+intyc);
 				return {x :intxc, y :intyc};
 			}
 			else

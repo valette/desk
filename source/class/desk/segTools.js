@@ -39,14 +39,15 @@ qx.Class.define("desk.segTools",
 							});
 		this.addListener("close", function(event)
 		{
+			var viewers=this.__master.getViewers();
 this.debug("42 : >>>>>>>   this.addListener(close, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-			for(var i=0; i<this.__master.__viewers.length; i++)
+			for(var i=0; i<viewers.length; i++)
 			{
-				var children = this.__master.__viewers[i].__topLeftContainer.getChildren(); //~ CAUTION ! ---> This only works if the "Paint" toggle button is the last child
+				var children = viewers[i].__topLeftContainer.getChildren(); //~ CAUTION ! ---> This only works if the "Paint" toggle button is the last child
 				children[children.length-1].setValue(false);
 				if(this.__seedsTypeSelectBox!=null)
 				{
-					var list = this.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList")[this.__master.__viewers[i].getUserData("viewerIndex")];
+					var list = this.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList")[viewers[i].getUserData("viewerIndex")];
 					list.setVisibility("excluded");
 				}
 			}
@@ -155,9 +156,10 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 			
             tools.__penSize.addListener("changeValue", function(event)
 			{
+				var viewers=theMaster.getViewers();
 //~ tools.debug("319 : >>>>>>>   tools.__penSize.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				for(var i=0; i<theMaster.__viewers.length; i++)
-					theMaster.__viewers[i].setPaintWidth(event.getData());
+				for(var i=0; i<viewers.length; i++)
+					viewers[i].setPaintWidth(event.getData());
 
 //				tools.__eraserCursor.set({width: Math.ceil(tools.__eraserCoeff*tools.__penSize.getValue()*tools.__curView.__display.curCtxtZoom/tools.__curView.__scale[0]+1),
 	//										height: Math.ceil(tools.__eraserCoeff*tools.__penSize.getValue()*tools.__curView.__display.curCtxtZoom/tools.__curView.__scale[1]+1)});
@@ -320,20 +322,21 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 			
 			tools.__eraserButton.addListener("changeValue", function(event)
 			{
+				var viewers=theMaster.getViewers();
 //~ tools.debug("482 : >>>>>>>   tools.__eraserButton.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				for(var i=0; i<theMaster.__viewers.length; i++)
+				for(var i=0; i<viewers.length; i++)
 				{
 					//~ if((event.getData()==true)&&(!theMaster.__viewers[i].__isSegWindow))
 					if(event.getData()==true)
 					{
 						//~ tools.__eraserCursor.capture();
-						theMaster.__viewers[i].__setMouseActionMode(4);
+						viewers[i].__setMouseActionMode(4);
 					}
 					else
-						theMaster.__viewers[i].__setMouseActionMode(0);
+						viewers[i].__setMouseActionMode(0);
 
-					theMaster.__viewers[i].__htmlContextLabels.beginPath();
-					theMaster.__viewers[i].__mouseData.mouseLeftDownFlag = false;
+					viewers[i].__htmlContextLabels.beginPath();
+					viewers[i].__mouseData.mouseLeftDownFlag = false;
 				}
             });
 			
@@ -404,10 +407,11 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
                 });
 				labelBox.addListener("click", function()
 				{
+					var viewers=theMaster.getViewers();
 //~ tools.debug("566 : >>>>>>>   labelBox.addListener(click, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-					for(var i=0; i<theMaster.__viewers.length; i++)
+					for(var i=0; i<viewers.length; i++)
 					{
-						theMaster.__viewers[i].setPaintMode(true);
+						viewers[i].setPaintMode(true);
 //						theMaster.__viewers[i].__setMouseActionMode(3);
 					}
 					var j = 0;
@@ -431,14 +435,14 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 					else
 					{
 						children[j].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
-						for(var i=0; i<theMaster.__viewers.length; i++)
+						for(var i=0; i<viewers.length; i++)
 						{
-							theMaster.__viewers[i].setPaintMode(false);
-//							theMaster.__viewers[i].__setMouseActionMode(0);
+							viewers[i].setPaintMode(false);
+//							viewers[i].__setMouseActionMode(0);
 						}
 					}
-					for(var i=0; i<theMaster.__viewers.length; i++)
-						theMaster.__viewers[i].setPaintColor(colorBox.getBackgroundColor());
+					for(var i=0; i<viewers.length; i++)
+						viewers[i].setPaintColor(colorBox.getBackgroundColor());
 					tools.__colorsContainer.set({opacity: 1});
                 });
 				var boxLabel = new qx.ui.basic.Label("\\" + inLabel.id + " : " + inLabel.name).set({alignX:"left"});
@@ -500,20 +504,16 @@ tools.debug("639 : colorsParamRequest -> response : " + response);
 							newLabel.name = newLabel.name.replace(newLabel.name.charAt(0), newLabel.name.charAt(0).toUpperCase());
 							createToolBox(newLabel);
 						}
-						
-						for(var i=0; i<theMaster.__viewers.length; i++)
-						{
-							theMaster.__viewers[i].__labelColorsReds = new Uint8Array(256);
-							theMaster.__viewers[i].__labelColorsGreens = new Uint8Array(256);
-							theMaster.__viewers[i].__labelColorsBlues = new Uint8Array(256);
-							for(var j=0; j<tools.__labelColors.length; j++)
+						var viewers=theMaster.getViewers();
+						var lutRed= new Uint8Array(256);
+						var lutGreen= new Uint8Array(256);
+						var lutBlue= new Uint8Array(256);
+						for(var j=0; j<tools.__labelColors.length; j++)
 							{
-								theMaster.__viewers[i].__labelColorsReds[j] = tools.__labelColors[j].red;
-								theMaster.__viewers[i].__labelColorsGreens[j] = tools.__labelColors[j].green;
-								theMaster.__viewers[i].__labelColorsBlues[j] = tools.__labelColors[j].blue;
+								lutRed[j] = tools.__labelColors[j].red;
+								lutGreen[j] = tools.__labelColors[j].green;
+								lutBlue[j] = tools.__labelColors[j].blue;
 							}
-						}
-						
 					}
 					else
 						alert("Global Params : Failure...");
@@ -540,9 +540,10 @@ tools.debug("639 : colorsParamRequest -> response : " + response);
 			whileDrawingDrwngOpacitySlider.setValue(100);
 			whileDrawingDrwngOpacitySlider.addListener("changeValue", function(event)
 			{
+				var viewers=theMaster.getViewers();
 //~ tools.debug("703 : >>>>>>>   whileDrawingDrwngOpacitySlider.addListener(changeValue, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				for(var i=0; i<theMaster.__viewers.length; i++)
-					theMaster.__viewers[i].__drawingCanvas.set({opacity: event.getData()/100});
+				for(var i=0; i<viewers.length; i++)
+					viewers[i].__drawingCanvas.set({opacity: event.getData()/100});
 			},this);
             tools.__topRightContainer.add(whileDrawingDrwngOpacitySlider, {flex : 1});
 
@@ -626,9 +627,10 @@ tools.debug("639 : colorsParamRequest -> response : " + response);
 //~ tools.debug("786 : >>>>>>>   tools.__startSegmentationButton.addListener(execute, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				tools.__startSegmentationButton.setEnabled(false);
 				tools.__segmentationInProgress=true;
-				for(var i=0; i<theMaster.__viewers.length; i++)
+				var viewers=theMaster.getViewers();
+				for(var i=0; i<viewers.length; i++)
 				{
-					theMaster.__viewers[i].__saveCurrentSeeds();
+					viewers[i].__saveCurrentSeeds();
 				}
 				tools.__curView.__saveCurrentSeeds(function() {
 							medianFilteringAction.executeAction();}, null);
@@ -724,14 +726,14 @@ tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 				if(!tools.__settingButtons)
 				{
 					tools.__settingButtons = true;
+					var viewers=theMaster.getViewers();
 					if (e.getData())
 					{
 						tools.__mainRightContainer.setVisibility("visible");
-						
 						if(tools.__seedsTypeSelectBox!=null) // go see :  selectBox.addListenerOnce("appear", function(event)
-							for(var i=0; i<theMaster.__viewers.length; i++)
+							for(var i=0; i<viewers.length; i++)
 							{
-								var list = tools.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")];
+								var list = tools.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList")[viewers[i].getUserData("viewerIndex")];
 								list.setVisibility("visible");
 							}
 						
@@ -745,11 +747,11 @@ tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 						tools.__mainRightContainer.setVisibility("excluded");
 						
 						if(tools.__seedsTypeSelectBox!=null) // go see :  selectBox.addListenerOnce("appear", function(event)
-							for(var i=0; i<theMaster.__viewers.length; i++)
+							for(var i=0; i<viewers.length; i++)
 							{
-								var list = tools.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")];
+								var list = tools.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsList")[viewers[i].getUserData("viewerIndex")];
 								list.setVisibility("excluded");
-								theMaster.__viewers[i].__drawingCanvasParams.drawingContext.clearRect(-16, -16, theMaster.__viewers[i].__dimensions[0]*theMaster.__viewers[i].__scaledWidth+32, theMaster.__viewers[i].__dimensions[1]*theMaster.__viewers[i].__scaledHeight+32);
+								viewers[i].__drawingCanvasParams.drawingContext.clearRect(-16, -16, viewers[i].__dimensions[0]*viewers[i].__scaledWidth+32, viewers[i].__dimensions[1]*viewers[i].__scaledHeight+32);
 							}
 						
 						tools.close(); //~ winSeparate test
@@ -895,11 +897,12 @@ this.debug("------->>>   tools.__getSeedsTypeSelectBox : function()   !!!!!!!");
 			var tempMultiViewCorrections = [];
 			for(var orionCount=0; orionCount<theMaster.__nbUsedOrientations; orionCount++)
 			{
-				for(var i=0; i<theMaster.__viewers.length; i++)
+				var viewers=theMaster.getViewers();
+				for(var i=0; i<viewers.length; i++)
 				{
-					if((theMaster.__viewers[i].getOrientation()==orionCount)&&(typeof tempMultiViewSeeds[orionCount]=="undefined"))
+					if((viewers[i].getOrientation()==orionCount)&&(typeof tempMultiViewSeeds[orionCount]=="undefined"))
 					{
-						singleViewLists = theMaster.__viewers[i].getSeedsLists();
+						singleViewLists = viewers[i].getSeedsLists();
 						tempMultiViewSeeds[orionCount] = singleViewLists[0];
 //~ tools.debug("1026 : tempMultiViewSeeds["+orionCount+"] : " + tempMultiViewSeeds[orionCount]);
 						tempMultiViewCorrections[orionCount] = singleViewLists[1];
@@ -939,13 +942,14 @@ this.debug("------->>>   tools.__getSeedsTypeSelectBox : function()   !!!!!!!");
 				var SelectedItem = selectBox.getSelection()[0];
 				var selectedOppositeList;
 				var selectedSeedsList;
-				for(var i=0; i<theMaster.__viewers.length; i++)
+				var viewers=theMaster.getViewers();
+				for(var i=0; i<viewers.length; i++)
 				{
-					selectedOppositeList = SelectedItem.getUserData("oppositeList")[theMaster.__viewers[i].getUserData("viewerIndex")];
+					selectedOppositeList = SelectedItem.getUserData("oppositeList")[viewers[i].getUserData("viewerIndex")];
 					selectedOppositeList.setVisibility("excluded");
 					selectedOppositeList.resetSelection();
 
-					selectedSeedsList = SelectedItem.getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")];
+					selectedSeedsList = SelectedItem.getUserData("seedsList")[viewers[i].getUserData("viewerIndex")];
 					selectedSeedsList.setVisibility("visible");
 				}
 				
@@ -955,10 +959,11 @@ this.debug("------->>>   tools.__getSeedsTypeSelectBox : function()   !!!!!!!");
 			
 			selectBox.addListenerOnce("appear", function(event)
 			{
+				var viewers=theMaster.getViewers();
 tools.debug("1118 : >>>>>>>  selectBox.addListener(appear, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				for(var i=0; i<theMaster.__viewers.length; i++)
+				for(var i=0; i<viewers.length; i++)
 				{
-					var list = selectBox.getSelection()[0].getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")];
+					var list = selectBox.getSelection()[0].getUserData("seedsList")[viewers[i].getUserData("viewerIndex")];
 					list.setVisibility("visible");
 				}
 				// from   paintPaneVisibilitySwitch.addListener("changeValue", function (e)
