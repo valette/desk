@@ -170,12 +170,18 @@ qx.Class.define("desk.sliceView",
 
 				_this.__drawingCanvas = new qx.ui.embed.Canvas().set({
 					canvasWidth: width,
-					canvasHeight: height
+					canvasHeight: height,
+					width: width,
+					height: height,
+					syncDimension: true
 				});
 
 				_this.__outputCanvas = new qx.ui.embed.Canvas().set({
 					canvasWidth: width,
-					canvasHeight: height
+					canvasHeight: height,
+					width: width,
+					height: height,
+					syncDimension: true
 				});
 
 				var imageData=canvas.getContext2d().getImageData(0, 0, width, height);
@@ -448,9 +454,11 @@ qx.Class.define("desk.sliceView",
 			//	console.log(xinter+" "+yinter);
 				var coordinates=volumeSlice.get2DCornersCoordinates();
 				var dimensions=volumeSlice.get2DDimensions();
+				console.log("intersection : "+xinter+" "+yinter);
 				var intxc=Math.floor((xinter-coordinates[0])*dimensions[0]/(coordinates[2]-coordinates[0]));
 				var intyc=Math.floor((yinter-coordinates[1])*dimensions[1]/(coordinates[5]-coordinates[1]));
 		//		console.log(intxc+" "+intyc);
+				console.log("intersection : "+intxc+" "+intyc);
 				return {x :intxc, y :intyc};
 			}
 			else

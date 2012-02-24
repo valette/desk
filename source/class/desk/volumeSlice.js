@@ -53,6 +53,7 @@ qx.Class.define("desk.volumeSlice",
 	},
 
 	properties : {
+		imageFormat : { init : 0, check: "Number", event : "changeImageFormat"},
 		ready : { init : false, check: "Boolean", event : "changeReady"},
 		orientation : { init : 0, check: "Number", event : "changeOrientation"}
 	},
@@ -78,11 +79,21 @@ qx.Class.define("desk.volumeSlice",
 		__spacing : null,
 		__dimensions: null,
 
+		__scalarType : null,
+		__scalarSize : null,
+		__scalarMin : null,
+		__scalarMax : null,
+
+
+
 		//THREE.js objects
 		__scene : null,
 		__camera : null,
 		__renderer : null,
 		__controls : null,
+
+		__brightness : 0,
+		__contrast : 1,
 
 		getDimensions : function ()
 		{
@@ -126,8 +137,8 @@ switch(this.getOrientation())
 			{
 				// ZY X
 				case 1 :
-					dims[0]=this.__dimensions[1];
-					dims[1]=this.__dimensions[2];
+					dims[0]=this.__dimensions[2];
+					dims[1]=this.__dimensions[1];
 					break;
 				// XZ Y
 				case 2 :
@@ -155,14 +166,14 @@ switch(this.getOrientation())
 			{
 				// ZY X
 				case 1 :
-					coordinates[0]=ymin;
-					coordinates[1]=zmax;
-					coordinates[2]=ymax;
-					coordinates[3]=zmax;
-					coordinates[4]=ymax;
-					coordinates[5]=zmin;
-					coordinates[6]=ymin;
-					coordinates[7]=zmin;
+					coordinates[0]=zmin;
+					coordinates[1]=ymax;
+					coordinates[2]=zmax;
+					coordinates[3]=ymax;
+					coordinates[4]=zmax;
+					coordinates[5]=ymin;
+					coordinates[6]=zmin;
+					coordinates[7]=ymin;
 					break;
 				// XZ Y
 				case 2 :
@@ -246,6 +257,14 @@ switch(this.getOrientation())
 							parseFloat(XMLorigin.getAttribute("y")),
 							parseFloat(XMLorigin.getAttribute("z")));
 
+			var XMLscalars=volume.getElementsByTagName("scalars")[0];
+			this.__scalarType=parseInt(XMLscalars.getAttribute("type"),10);
+			this.__scalarSize=parseInt(XMLscalars.getAttribute("size"),10);
+			this.__scalarMin=parseFloat(XMLscalars.getAttribute("min"),10);
+			this.__scalarMax=parseFloat(XMLscalars.getAttribute("max"),10);
+	
+
+
 			var slices=volume.getElementsByTagName("slicesprefix")[0];
 			this.__offset=parseInt(slices.getAttribute("offset"));
 			this.__timestamp=slices.getAttribute("timestamp");
@@ -271,30 +290,22 @@ switch(this.getOrientation())
 			// if there is only one slice, do not show the slider...
 			if (this.getNumberOfSlices()>1)
 				leftContainer.add(this.__slider, {flex : 1});
-
-			this.__fileFormatBox = new qx.ui.form.SelectBox();
-			this.__fileFormatBox.setWidth(30);
-			var SelectJPG = new qx.ui.form.ListItem("jpg");
-			this.__fileFormatBox.add(SelectJPG);
-//			var SelectPNG = new qx.ui.form.ListItem("png");
-//			this.__fileFormatBox.add(SelectPNG);
-			leftContainer.add(this.__fileFormatBox);
-			this.__fileFormatBox.addListener("changeSelection", function(event){this.updateImage();},this);
+			var dims=this.get2DDimensions();
 
 			this.__image=new Image();
 			this.__canvas = new qx.ui.embed.Canvas().set({
-				canvasWidth: this.__dimensions[0],
-				canvasHeight: this.__dimensions[1],
-				width: this.__dimensions[0],
-				height: this.__dimensions[1],
+				canvasWidth: dims[0],
+				canvasHeight: dims[1],
+				width: dims[0],
+				height: dims[1],
 				syncDimension: true
 				});
 
 			this.__originalImageCanvas = new qx.ui.embed.Canvas().set({
-				canvasWidth: this.__dimensions[0],
-				canvasHeight: this.__dimensions[1],
-				width: this.__dimensions[0],
-				height: this.__dimensions[1],
+				canvasWidth: dims[0],
+				canvasHeight: dims[1],
+				width: dims[0],
+				height: dims[1],
 				syncDimension: true
 				});
 
@@ -305,54 +316,74 @@ switch(this.getOrientation())
 			var canvas=this.__originalImageCanvas;
 			var dataDesc = canvas.getContext2d().getImageData
 					(0, 0, canvas.getCanvasWidth(), canvas.getCanvasHeight());
-			console.log("datadesc:");
-			console.log(dataDesc);
-			this.__canvas.getContext2d().putImageData(dataDesc,0,0);
-			return;
 
-			if(!volView.__isSegWindow) //~ segColor test
-			{
-				var data = dataDesc.data;
-				var p = canvasImage.width * canvasImage.height;
-				var pix = p*4, pix1, pix2;
-				var mul, add;
-				if (contrast != 1) {
-					if (legacy) {
-						mul = contrast;
-						add = (brightness - 128) * contrast + 128;
-					} else {
-						mul = brightMul * contrast;
-						add = - contrast * 128 + 128;
-					}
-				} else {  // this if-then is not necessary anymore, is it?
-					if (legacy) {
-						mul = 1;
-						add = brightness;
-					} else {
-						mul = brightMul;
-						add = 0;
-					}
+			var data = dataDesc.data;
+
+			var pix = data.length, pix1, pix2;
+			var p= pix/4;
+			var mul, add;
+			var legacy=true;
+			var contrast=this.__contrast;
+			var brightness=this.__brightness;
+			var brightMul=1;
+
+			if (contrast != 1) {
+				if (legacy) {
+					mul = contrast;
+					add = (brightness - 128) * contrast + 128;
+				} else {
+					mul = brightMul * contrast;
+					add = - contrast * 128 + 128;
 				}
+			} else {  // this if-then is not necessary anymore, is it?
+				if (legacy) {
+					mul = 1;
+					add = brightness;
+				} else {
+					mul = brightMul;
+					add = 0;
+				}
+			}
 
-				var r, g, b,a,c;
-				var r1=1/256;
-				var r2=1/(256*256);
-				var max=volView.__scalarMax;
-				var min=volView.__scalarMin;
-				var shift=-min;
-				var scale=255/(max-min);
-				
-				if (volView.__formatSelectBox.getSelection()[0].getLabel()=="png")
+			var r, g, b,a,c;
+			var r1=1/256;
+			var r2=1/(256*256);
+			var max=this.__scalarMax;
+			var min=this.__scalarMin;
+			var shift=-min;
+			var scale=255/(max-min);
+			
+			if (this.getImageFormat()==1)
+			{
+				switch (this.__scalarSize)
 				{
-					switch (volView.__scalarSize)
+				case 1:
+					if (this.__scalarType==3)
 					{
-					case 1:
-						if (volView.__scalarType==3)
+						pix=0;
+					// unsigned char: no need to check for sign
+						while (p--) {
+							c=data[pix];
+							c=(c+shift)*scale;
+							c=c* mul + add;
+							
+							if (c>255)
+								c=255;
+							else if (c<0)
+								c=0;
+							data[pix++]=c;
+							data[pix++]=c;
+							data[pix++]=c;
+							data[pix++]=255;
+							}
+						}
+						else
 						{
 							pix=0;
-						// unsigned char: no need to check for sign
 							while (p--) {
 								c=data[pix];
+								if (c>127)
+									c-=256;
 								c=(c+shift)*scale;
 								c=c* mul + add;
 								
@@ -364,155 +395,133 @@ switch(this.getOrientation())
 								data[pix++]=c;
 								data[pix++]=c;
 								data[pix++]=255;
-								}
 							}
-							else
-							{
-								pix=0;
-								while (p--) {
-									c=data[pix];
-									if (c>127)
-										c-=256;
-									c=(c+shift)*scale;
-									c=c* mul + add;
-									
-									if (c>255)
-										c=255;
-									else if (c<0)
-										c=0;
-									data[pix++]=c;
-									data[pix++]=c;
-									data[pix++]=c;
-									data[pix++]=255;
-								}
-							}
-							break;
-						case 2:
-							if (volView.__scalarType==4)
-							{
-							// signed short : need to check for sign
-								pix=0;
-								while (p--){
-									r= data[pix];
-									g= data[pix+1];
-									c=r+256*g;
-									// check sign
-									if (g>127)
-										c-=65536;
-									c=(c+shift)*scale;
-									c=c* mul + add;
-									
-									if (c>255)
-										c=255;
-									else if (c<0)
-										c=0;
-									data[pix++]=c;
-									data[pix++]=c;
-									data[pix++]=c;
-									data[pix++]=255;
-								}
-							}
-							else
-							{
-							// unsigned short : no need to check sign
-								pix=0;
-								while (p--){
-									r= data[pix];
-									g= data[pix+1];
-									c=r+256*g;
-									c=(c+shift)*scale;
-									c=c* mul + add;
-									if (c>255)
-										c=255;
-									else if (c<0)
-										c=0;
-									data[pix++]=c;
-									data[pix++]=c;
-									data[pix++]=c;
-									data[pix++]=255;
-								}
-							}
-							break;
-						case 4:
-							if (volView.__scalarType==7)
-							{
-								// unsigned int : no need to check sign
-								pix=0;
-								while (p--){
-									r= data[pix];
-									g= data[pix+1];
-									b= data[pix+2];
-									a= data[pix+3];
-									c=r+256*g+65536*b;
-									c=(c+shift)*scale;
-									c=c* mul + add;
-									if (c>255)
-									c=255;
-									else if (c<0)
-									c=0;
-									data[pix++]=c;
-									data[pix++]=c;
-									data[pix++]=c;
-									data[pix++]=255;
-								}
-							}
-							else
-							{
-								// signed int : check sign
-								pix=0;
-								while (p--){
-									r= data[pix];
-									g= data[pix+1];
-									b= data[pix+2];
-									a= data[pix+3];
-									c=r+256*g+65536*b;
-									if (c>8388607)
-										c-=16777216;
-									c=(c+shift)*scale;
-									c=c* mul + add;
-									if (c>255)
-										c=255;
-									else if (c<0)
-										c=0;
-									data[pix++]=c;
-									data[pix++]=c;
-									data[pix++]=c;
-									data[pix++]=255;
-								}
-							}
-							break;
-							default :
-								alert("format not supported. please repport");
-					}
-				}
-				else
-				{
-					// format is jpeg : just copy the pixels
-					pix=0;
-					while (p--){
-						c= data[pix];
-						c=c* mul + add;
-						if (c>255)
-							c=255;
-						else if (c<0)
-							c=0;
-						data[pix++]=c;
-						data[pix++]=c;
-						data[pix++]=c;
-						data[pix++]=255;
 						}
+						break;
+					case 2:
+						if (this.__scalarType==4)
+						{
+						// signed short : need to check for sign
+							pix=0;
+							while (p--){
+								r= data[pix];
+								g= data[pix+1];
+								c=r+256*g;
+								// check sign
+								if (g>127)
+									c-=65536;
+								c=(c+shift)*scale;
+								c=c* mul + add;
+								
+								if (c>255)
+									c=255;
+								else if (c<0)
+									c=0;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=255;
+							}
+						}
+						else
+						{
+						// unsigned short : no need to check sign
+							pix=0;
+							while (p--){
+								r= data[pix];
+								g= data[pix+1];
+								c=r+256*g;
+								c=(c+shift)*scale;
+								c=c* mul + add;
+								if (c>255)
+									c=255;
+								else if (c<0)
+									c=0;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=255;
+							}
+						}
+						break;
+					case 4:
+						if (this.__scalarType==7)
+						{
+							// unsigned int : no need to check sign
+							pix=0;
+							while (p--){
+								r= data[pix];
+								g= data[pix+1];
+								b= data[pix+2];
+								a= data[pix+3];
+								c=r+256*g+65536*b;
+								c=(c+shift)*scale;
+								c=c* mul + add;
+								if (c>255)
+								c=255;
+								else if (c<0)
+								c=0;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=255;
+							}
+						}
+						else
+						{
+							// signed int : check sign
+							pix=0;
+							while (p--){
+								r= data[pix];
+								g= data[pix+1];
+								b= data[pix+2];
+								a= data[pix+3];
+								c=r+256*g+65536*b;
+								if (c>8388607)
+									c-=16777216;
+								c=(c+shift)*scale;
+								c=c* mul + add;
+								if (c>255)
+									c=255;
+								else if (c<0)
+									c=0;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=255;
+							}
+						}
+						break;
+						default :
+							alert("format not supported. please repport");
 				}
-				dataDesc.data = data;
-				volView.__pixels = data;
-				volView.__imageData = dataDesc;
-				volView.fireEvent("changeSlice");
 			}
-			return dataDesc;
+			else
+			{
+				// format is jpeg : just copy the pixels
+				pix=0;
+				while (p--){
+					c= data[pix];
+					c=c* mul + add;
+					if (c>255)
+						c=255;
+					else if (c<0)
+						c=0;
+					data[pix++]=c;
+					data[pix++]=c;
+					data[pix++]=c;
+					data[pix++]=255;
+					}
+			}
+			dataDesc.data = data;
+			this.__canvas.getContext2d().putImageData(dataDesc,0,0);
+			return;
 		},
 
 		redraw : function () {
-			this.__originalImageCanvas.getContext2d().drawImage(this.__image, 0, 0);
 			this.__applyBrightnessToCanvas();
+			this.setReady(true);
+			this.fireEvent("changeSlice");
 		},
 
 
@@ -521,9 +530,8 @@ switch(this.getOrientation())
 			var slice=this.getNumberOfSlices()-1-_this.__slider.getValue();
 
 			this.__image.onload=function(){
+				_this.__originalImageCanvas.getContext2d().drawImage(_this.__image, 0, 0);
 				_this.redraw();
-				_this.setReady(true);
-				_this.fireEvent("changeSlice");
 				};
 
 			var orientationString;
@@ -543,7 +551,7 @@ switch(this.getOrientation())
 					break;
 				}
 			this.__image.src=this.__path+this.__prefix+orientationString+(this.__offset+this.getNumberOfSlices()-1-this.__slider.getValue())
-				+"."+this.__fileFormatBox.getSelection()[0].getLabel()+"?nocache="+this.__timestamp;
+				+".jpg?nocache="+this.__timestamp;
 		}
 	}
 });
