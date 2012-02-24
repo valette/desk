@@ -96,6 +96,11 @@ this.debug("42 : >>>>>>>   this.addListener(close, function(event)   !!!!!!!!!!!
 
 // Tableau contenant les couleurs des seeds
          __labelColors : null,
+
+// type arrays containing seeds colors (for speed processing)
+         __labelColorsRed : null,
+         __labelColorsGreen : null,
+         __labelColorsBlue : null,
 		
          
          __eraserCoeff : 2,     //Taille gomme  =  eraserCoeff * taille crayon --> c'est plus agréable d'effacer comme ça
@@ -116,6 +121,14 @@ this.debug("42 : >>>>>>>   this.addListener(close, function(event)   !!!!!!!!!!!
 		
 		__settingButtons : false,
 
+
+		getLabelColors : function () {
+			var colors=[];
+			colors[0]=this.__labelColorsRed;
+			colors[1]=this.__labelColorsGreen;
+			colors[2]=this.__labelColorsBlue;
+			return colors;
+		},
 
 		__applyToViewers : function (theFunction) {
 			var viewers=this.__master.getViewers();
@@ -327,6 +340,9 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 tools.debug("639 : colorsParamRequest -> response : " + response);
 						nbLabels = response.getElementsByTagName("color").length;
 						tools.__labelColors=new Array(nbLabels);
+						tools.__labelColorsRed=new Uint8Array (nbLabels);
+						tools.__labelColorsGreen=new Uint8Array (nbLabels);
+						tools.__labelColorsBlue=new Uint8Array (nbLabels);
 						for(var i=0; i<nbLabels; i++)
 						{
 							var color=response.getElementsByTagName("color")[i];
@@ -339,6 +355,11 @@ tools.debug("639 : colorsParamRequest -> response : " + response);
 								label : ""+label,
 								name : colorName
 							};
+
+							tools.__labelColorsRed[i]=tools.__labelColors[i].red;
+							tools.__labelColorsGreen[i]=tools.__labelColors[i].green;
+							tools.__labelColorsBlue[i]=tools.__labelColors[i].blue;
+
 							var newLabel = {
 								id : label,
 								name : colorName,

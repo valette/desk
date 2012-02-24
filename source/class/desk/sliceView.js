@@ -36,6 +36,8 @@ qx.Class.define("desk.sliceView",
 		this.__window.set({width : 400, height : 400});
 //		this.__window.setCaption(file);
 		this.__window.setCaption(""+orientation);
+
+		this.__createSeedsLists();
 		this.__createUI();
 
 /*		// drag and drop support
@@ -101,12 +103,21 @@ qx.Class.define("desk.sliceView",
 		__drawingCanvas : null,
 		__outputCanvas : null,
 
+		__seedsLists : null,
+		__currentSeedsModified : false,
+		__oldSliceIndex : null,
+
+
 		setPaintColor : function (color) {
 			this.__paintColor=color;
 		},
 
 		setPaintWidth : function (width) {
 			this.__paintWidth=width;
+		},
+
+		getSeedsLists : function () {
+			return (this.__seedsLists);
 		},
 
 		render : function ( ) {
@@ -406,6 +417,7 @@ qx.Class.define("desk.sliceView",
 					     context.lineTo(position.x, position.y);
 						context.stroke();
 						_this.__slices[0].fireEvent("changeSlice");
+						_this.__currentSeedsModified=true;
 						break;
 					default:
 						break;
@@ -478,7 +490,7 @@ qx.Class.define("desk.sliceView",
 			return this.__slider;
 		},
 
-		getSeedsLists : function()
+		__createSeedsLists : function()
 		{
 			var volView = this;
 			var tools = this.__master.getTools();
@@ -513,7 +525,7 @@ qx.Class.define("desk.sliceView",
 
 			var keyPressHandler = function(event)
 			{
-//~ volView.debug("3233 : >>>>>>>  keyPressHandler = function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+
 				if(event.getKeyIdentifier()=="Delete")
 				{
 					var selectedChild = this.getSelection()[0];
@@ -535,13 +547,12 @@ qx.Class.define("desk.sliceView",
 			var createdLists = [];
 			createdLists[0] = seedsList;
 			createdLists[1] = correctionsList;
+			this.__seedsLists=createdLists;
 			return createdLists;
 		},
 
 		addNewSeedItemToList : function (sliceId, seedsTypeListItem)
 		{
-//~ this.debug("------->>>   volView.__addNewSeedItemToList : function()   !!!!!!!");
-
 			var volView = this;
 			
 			var tools = volView.__master.getTools();
@@ -564,10 +575,10 @@ qx.Class.define("desk.sliceView",
 			}, this);
 			
 			var seedsList = volView.__getSeedsLists("seedsList",seedsTypeListItem);
-//~ volView.debug("3324 : seedsList : " + seedsList);
+
 			var seeds = seedsList.getChildren();
 			var tempPos = 0;
-//~ volView.debug("3327 : seeds.length : " +seeds.length);
+
 			for(var i=0; i<seeds.length; i++)
 			{
 				if(seeds[i].getUserData("slice")>sliceId)
@@ -576,10 +587,145 @@ qx.Class.define("desk.sliceView",
 			seedsList.addAt(sliceItem, tempPos);
 			
 			var seedsArray=seedsTypeListItem.getUserData("seedsArray")[volView.getOrientation()];
-//~ volView.debug("3336 : seedsArray : " + seedsArray);
+
 			seedsArray[sliceId] = sliceItem;
-//~ volView.debug("3338 : seedsArray : " + seedsArray);
 		},		
+
+		saveCurrentSeeds : function(callback)
+		{
+//~ this.debug("------->>>   volView.__saveCurrentSeeds : function()   !!!!!!!");
+
+			var volView = this;
+			
+			var tools = volView.__master.getTools();
+			
+			var theMaster = this.__master;
+			
+			var volFile = this.__file;
+			
+			var fileBrowser = this.__fileBrowser;
+			
+			
+			var launchCallBack = false;
+			
+
+			var oldSliceIndex = this.__oldSliceIndex;
+			console.log("test");
+			if (this.__currentSeedsModified!=false)
+			{			console.log("modified!");
+				var canvas=this.__drawingCanvas;
+				var seedsImageData=this.__drawingCanvas.getContext2d().getImageData(0, 0, canvas.getWidth(), canvas.getHeight());
+				var pixels = seedsImageData.data;
+				var isAllBlack = true;
+
+				var labelColors = tools.getLabelColors();
+				var redArray=labelColors[0];
+				var greenArray=labelColors[1];
+				var blueArray=labelColors[2];
+				var numberOfColors=labelColors.length;
+				console.log(redArray);
+				console.log(greenArray);
+				console.log(blueArray);
+				var numberOfBytes=pixels.length
+				for(var i=0; i<numberOfBytes; i+=4)
+				{
+					if(128<=pixels[i+3])  //  if( color is solid not totally transparent, ie. alpha=0) <-> if( not background )
+					{
+						var dRed = 0;
+						var dGreen = 0;
+						var dBlue = 0;
+						var distance = 500000;
+						var rightColorIndex = 0;
+						for(var j=0; j!=numberOfColors; j++)
+						{
+							dRed = redArray[j]-pixels[i];
+							dGreen = greenArray[j]-pixels[i+1];
+							dBlue = blueArray[j]-pixels[i+2];
+							var testD = dRed*dRed+dGreen*dGreen+dBlue*dBlue;
+							if(testD<distance)
+							{
+								distance = testD;
+								rightColorIndex = j;
+							}
+						}
+						pixels[i] = redArray[rightColorIndex];
+						pixels[i+1] = greenArray[rightColorIndex];
+						pixels[i+2] = blueArray[rightColorIndex];
+						pixels[i+3] = 255;
+					//	console.log([pixels[i],pixels[i+1],pixels[i+2]]);
+						isAllBlack = false;
+					}
+					////Comment "else" to send combined image
+					else
+					{
+						pixels[i] = 0;
+						pixels[i+1] = 0;
+						pixels[i+2] = 0;
+						pixels[i+3] = 0;
+					}
+				}
+				if(!isAllBlack)
+				{
+			/*		var numberOfRemainingRequests=2;
+					var success=function (e) {
+						numberOfRemainingRequests--;
+						if ((numberOfRemainingRequests==0)&&(callback!=null))
+						{
+                            volView.__currentSeedsModified=false;
+                            if (callback != null)
+                               callback();
+						}
+					};*/
+
+					////Send png image to server
+					seedsImageData.data = pixels;
+
+					this.__drawingCanvas.getContext2d().putImageData(seedsImageData, 0, 0);
+					var pngImg = this.__drawingCanvas.getContentElement().getCanvas().toDataURL("image/png");
+					var saveData=pngImg.replace("image/png", "image/octet-stream");
+					document.location.href = saveData;
+
+				/*	var commaIndex=pngImg.lastIndexOf(",");
+					var base64Img = pngImg.substring(commaIndex+1,pngImg.length);
+					var parameterMap={
+						"action" : "save_binary_file",
+						"file_name" : volView.__getSeedFileName(volView.__display.depthShift),
+						"base64Data" : base64Img,
+						"output_directory" : tools.getSessionDirectory()};
+
+					this.__fileBrowser.getActions().launchAction(parameterMap, success);
+	//~ volView.debug("3467 : tools : " + tools);
+	//~ volView.debug("3468 : tools.__seedsTypeSelectBox : " + tools.__seedsTypeSelectBox);
+	//~ volView.debug("3469 : tools.__seedsTypeSelectBox.getSelection() : " + tools.__seedsTypeSelectBox.getSelection());
+					var seedsTypeSelectBoxItem = tools.__seedsTypeSelectBox.getSelection()[0];
+	//~ volView.debug("3471 : seedsTypeSelectBoxItem : " + seedsTypeSelectBoxItem);
+	//~ volView.debug("3472 : seedsTypeSelectBoxItem.getUserData(cacheTags) : " + seedsTypeSelectBoxItem.getUserData("cacheTags"));
+					seedsTypeSelectBoxItem.getUserData("cacheTags")[volView.__display.orientation][volView.__display.depthShift]=
+                                            Math.random();
+					if(seedsTypeSelectBoxItem.getUserData("seedsArray")[volView.__display.orientation][oldSliceIndex]==0)
+						volView.__addNewSeedItemToList(oldSliceIndex);
+					
+					
+					
+					theMaster.__saveSeedsXML(success);
+					
+					*/
+					
+				}
+				else
+					launchCallBack = true;
+			}
+			else
+				launchCallBack = true;
+			
+			if(launchCallBack==true)
+			{
+				if (callback != null)
+					callback();
+			}
+			
+		},
+
 		__getSeedsLists : function(key,seedsTypeListItem)
 		{
 //~ this.debug("------->>>   volView.__getSeedsLists : function()   !!!!!!!");
@@ -659,9 +805,13 @@ qx.Class.define("desk.sliceView",
 			slider.setOrientation("vertical");
 			slider.addListener("changeValue",function(e){
 				spinner.setValue(this.__slices[0].getNumberOfSlices()-1-e.getData());
+				this.saveCurrentSeeds();
 				}, this);
-			
-			// if there is only one slice, do not show the slider...
+
+			spinner.addListener("changeValue",function(e){
+				slider.setValue(this.__slices[0].getNumberOfSlices()-1-e.getData());
+				}, this);		
+
 			leftContainer.add(slider, {flex : 1});
 
 			this.__fileFormatBox = new qx.ui.form.SelectBox();
