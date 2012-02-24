@@ -58,7 +58,6 @@ qx.Class.define("desk.sliceView",
 			}, this);
 */
 		this.addListener("changePaintOpacity", function (event) {
-			console.log(event.getData());
 			this.__drawingCanvas.set({opacity: event.getData()});
 				}, this);
 

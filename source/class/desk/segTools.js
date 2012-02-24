@@ -178,7 +178,7 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 			tools.__eraserButton.addListener("changeValue", function(event)
 			{
 				this.__applyToViewers(function (viewer) {
-					viewer.setEraseMode(e.getData());
+					viewer.setEraseMode(event.getData());
 					});
 				}, this);
 
