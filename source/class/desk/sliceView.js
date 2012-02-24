@@ -478,52 +478,39 @@ qx.Class.define("desk.sliceView",
 			return this.__slider;
 		},
 
-
 		getSeedsLists : function()
 		{
-//this.debug("------->>>   volView.__createSeedsLists : function()   !!!!!!!");
 			var volView = this;
-			
-			var tools = volView.__master.__tools;
-			
-			var theMaster = volView.__master;
-			
-			var volFile = volView.__file;
-			
-			var fileBrowser = volView.__fileBrowser;
-			
-			
-			
+			var tools = this.__master.getTools();
+			var theMaster = this.__master;
+			var volFile = this.__file;
+
+			var fileBrowser = this.__fileBrowser;
+
 			// create seeds list
 			var seedsList=new qx.ui.form.List();
 			seedsList.setWidth(30);
 			seedsList.setScrollbarY("off");
 			this.__window.add(seedsList);
 			seedsList.setVisibility("excluded");
-			
-			
-			
+
 			// create corrections list
 			var correctionsList=new qx.ui.form.List();
 			correctionsList.setWidth(30);
 			correctionsList.setScrollbarY("off");
 			this.__window.add(correctionsList);
 			correctionsList.setVisibility("excluded");
-			
-			
-			
+
 			seedsList.addListener("removeItem", function(event) {
-//~ volView.debug("3220 : >>>>>>>  seedsList.addListener(removeItem, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				if (seedsList.getChildren().length==0)
+				
 					tools.__startSegmentationButton.setEnabled(false);
 				}, this);
 
 			seedsList.addListener("addItem", function(event) {
-//~ volView.debug("3226 : >>>>>>>  seedsList.addListener(addItem, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-				tools.__startSegmentationButton.setEnabled(true);
+			//	tools.__startSegmentationButton.setEnabled(true);
 				}, this);
-			
-			
+
 			var keyPressHandler = function(event)
 			{
 //~ volView.debug("3233 : >>>>>>>  keyPressHandler = function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
@@ -544,19 +531,55 @@ qx.Class.define("desk.sliceView",
 			};
 			seedsList.addListener("keypress", keyPressHandler, seedsList);
 			correctionsList.addListener("keypress", keyPressHandler, correctionsList);
-			
-			
-			
+
 			var createdLists = [];
 			createdLists[0] = seedsList;
 			createdLists[1] = correctionsList;
-			
-			
 			return createdLists;
-			
-			
 		},
-		
+
+		addNewSeedItemToList : function (sliceId, seedsTypeListItem)
+		{
+//~ this.debug("------->>>   volView.__addNewSeedItemToList : function()   !!!!!!!");
+
+			var volView = this;
+			
+			var tools = volView.__master.getTools();
+			
+			var theMaster = volView.__master;
+			
+			var volFile = volView.__file;
+			
+			var fileBrowser = volView.__fileBrowser;
+
+			if (seedsTypeListItem==null)
+				seedsTypeListItem=tools.__seedsTypeSelectBox.getSelection()[0];
+
+			var sliceItem = new qx.ui.form.ListItem(""+ sliceId);
+			sliceItem.setUserData("slice",sliceId);
+			sliceItem.addListener("click", function(event)
+			{
+//~ volView.debug("3311 : >>>>>>>  sliceItem.addListener(addItem, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+				this.__spinner.setValue(event.getTarget().getUserData("slice"));
+			}, this);
+			
+			var seedsList = volView.__getSeedsLists("seedsList",seedsTypeListItem);
+//~ volView.debug("3324 : seedsList : " + seedsList);
+			var seeds = seedsList.getChildren();
+			var tempPos = 0;
+//~ volView.debug("3327 : seeds.length : " +seeds.length);
+			for(var i=0; i<seeds.length; i++)
+			{
+				if(seeds[i].getUserData("slice")>sliceId)
+					tempPos++;
+			}
+			seedsList.addAt(sliceItem, tempPos);
+			
+			var seedsArray=seedsTypeListItem.getUserData("seedsArray")[volView.getOrientation()];
+//~ volView.debug("3336 : seedsArray : " + seedsArray);
+			seedsArray[sliceId] = sliceItem;
+//~ volView.debug("3338 : seedsArray : " + seedsArray);
+		},		
 		__getSeedsLists : function(key,seedsTypeListItem)
 		{
 //~ this.debug("------->>>   volView.__getSeedsLists : function()   !!!!!!!");
@@ -618,16 +641,28 @@ qx.Class.define("desk.sliceView",
 				} 
 			},this)*/
 
-			this.__slider=new qx.ui.form.Slider();
-			this.__slider.setMinimum(0);
-			this.__slider.setMaximum(100);
-			this.__slider.setValue(0);
-			this.__slider.setWidth(30);
-			this.__slider.setOrientation("vertical");
 
+			////Create spinner and sync it with the slider
+			var spinner = new qx.ui.form.Spinner();
+			this.__spinner=spinner;
+			spinner.setMaximum(10000000);
+			spinner.setMinimum(0);
+			spinner.setValue(0);
+			leftContainer.add(spinner);
+			
+			var slider=new qx.ui.form.Slider();
+			this.__slider=slider;
+			slider.setMinimum(0);
+			slider.setMaximum(100);
+			slider.setValue(0);
+			slider.setWidth(30);
+			slider.setOrientation("vertical");
+			slider.addListener("changeValue",function(e){
+				spinner.setValue(this.__slices[0].getNumberOfSlices()-1-e.getData());
+				}, this);
 			
 			// if there is only one slice, do not show the slider...
-			leftContainer.add(this.__slider, {flex : 1});
+			leftContainer.add(slider, {flex : 1});
 
 			this.__fileFormatBox = new qx.ui.form.SelectBox();
 			this.__fileFormatBox.setWidth(30);

@@ -33,10 +33,7 @@ qx.Class.define("desk.volMaster",
 		this.__nbUsedOrientations = 3;
 		this.addVolume(globalFile);
 		
-		
-		var tryToolwin = new desk.segTools(this, globalFile, globalFileBrowser);
-		
-		this.__tools = tryToolwin;	
+		this.__tools = new desk.segTools(this, globalFile, globalFileBrowser);;	
 		this.setToolsReady(true);	
 		
 	//// MUST return the first volView__classTest instance !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -167,8 +164,8 @@ theMaster.debug("104 : loadSessionRequest -> response : " + response);
 								var sliceId = parseInt(slices[j].getAttribute("slice"),10);
 								var sliceOrientation = parseInt(slices[j].getAttribute("orientation"),10);
 								for(var i=0; i<theMaster.__viewers.length; i++)
-									if(sliceOrientation==theMaster.__viewers[i].__display.orientation)
-										theMaster.__viewers[i].__addNewSeedItemToList(sliceId, seedsTypeSelectBoxItem);
+									if(sliceOrientation==theMaster.getViewers()[i].getOrientation())
+										theMaster.__viewers[i].addNewSeedItemToList(sliceId);
 							}
 						}
 						tools.__extractMeshesButton.setEnabled(true);
