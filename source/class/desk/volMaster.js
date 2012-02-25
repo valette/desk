@@ -49,12 +49,7 @@ qx.Class.define("desk.volMaster",
 	},
 
 	properties : {
-		toolsReady : { init : false, check: "Boolean", event : "changeToolsReady"},
-	
-		firstViewerOn : { init:false, event:"firstViewerReady" },
-		secondViewerOn : { init:false, event:"secondViewerReady" },
-		thirdViewerOn : { init:false, event:"thirdViewerReady" },
-		segToolsOn : { init:false, event:"segToolsReady" }
+		toolsReady : { init : false, check: "Boolean", event : "changeToolsReady"}
 	},
 
 	members :
@@ -159,7 +154,7 @@ qx.Class.define("desk.volMaster",
 								slices=response.getElementsByTagName("seed");
 							else
 								slices=response.getElementsByTagName("correction");
-							console.log(slices);
+
 							for(var j=0; j<slices.length; j++)
 							{
 								var sliceId = parseInt(slices[j].getAttribute("slice"),10);

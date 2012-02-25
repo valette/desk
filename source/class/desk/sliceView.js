@@ -108,6 +108,9 @@ qx.Class.define("desk.sliceView",
 		__currentSeedsModified : false,
 		__oldSliceIndex : null,
 
+		getVolumeSliceToPaint : function () {
+			return (this.__slices[0]);
+		},
 
 		setPaintColor : function (color) {
 			this.__paintColor=color;
@@ -171,7 +174,8 @@ qx.Class.define("desk.sliceView",
 				
 				_this.__slider.setMaximum(volumeSlice.getNumberOfSlices()-1);
 				_this.__slider.setValue(Math.round(0.5*volumeSlice.getNumberOfSlices()));
-				_this.__slider.bind("value", volumeSlice.getSlider(), "value");
+				_this.__slider.bind("value", volumeSlice, "currentSlice");
+//				volumeSlice.bind("currentSlice", _this.__slider, "value");
 
 				_this.__camera.position.set(0.5*(coordinates[0]+coordinates[2]),
 											0.5*(coordinates[3]+coordinates[5]),
@@ -238,8 +242,7 @@ qx.Class.define("desk.sliceView",
 
 				updateTexture();
 
-				var listenerId=volumeSlice.addListener('changeSlice',function(e)
-					{
+				var listenerId=volumeSlice.addListener('changeImage',function() {
 						updateTexture();
 						_this.render();
 					});
@@ -249,6 +252,7 @@ qx.Class.define("desk.sliceView",
 					});
 
 				_this.render();
+
 				if (typeof callback=="function")
 				{
 					callback(volumeSlice);
@@ -399,7 +403,7 @@ qx.Class.define("desk.sliceView",
 							context.moveTo(position.x, position.y);
 							context.closePath();
 							context.stroke();
-							 _this.__slices[0].fireEvent("changeSlice");
+							 _this.getVolumeSliceToPaint().fireEvent("changeImage");
 						}
 					}
 					});
@@ -417,7 +421,7 @@ qx.Class.define("desk.sliceView",
 						var position=_this.getPositionOnSlice(event);
 					     context.lineTo(position.x, position.y);
 						context.stroke();
-						_this.__slices[0].fireEvent("changeSlice");
+						_this.getVolumeSliceToPaint().fireEvent("changeImage");
 						_this.__currentSeedsModified=true;
 						break;
 					default:
@@ -464,7 +468,7 @@ qx.Class.define("desk.sliceView",
 
 			var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
 			var meshes=[];
-			var volumeSlice=this.__slices[0];
+			var volumeSlice=this.getVolumeSliceToPaint();
 			meshes.push(volumeSlice.getUserData("mesh"));
 			var intersects = ray.intersectObjects( meshes );
 
@@ -567,7 +571,7 @@ qx.Class.define("desk.sliceView",
 		resetSeedsLists : function () {
 			for(var i=0;i<2;i++)
 			{
-				var numberOfSlices=this.__slices[0].getNumberOfSlices();
+				var numberOfSlices=this.getVolumeSliceToPaint().getNumberOfSlices();
 				var seedsArray = new Array(numberOfSlices);
 				var cacheTagsArray = new Array(numberOfSlices);
 				for (var j=0;j!=numberOfSlices;j++)
@@ -604,28 +608,17 @@ qx.Class.define("desk.sliceView",
 			seedsList.addAt(sliceItem, tempPos);
 		},		
 
-		saveCurrentSeeds : function(callback)
+		saveCurrentSeeds : function()
 		{
-//~ this.debug("------->>>   volView.__saveCurrentSeeds : function()   !!!!!!!");
-
-			var volView = this;
-			
+			var volView = this;			
 			var tools = volView.__master.getTools();
-			
 			var theMaster = this.__master;
-			
 			var volFile = this.__file;
-			
 			var fileBrowser = this.__fileBrowser;
-			
-			
-			var launchCallBack = false;
-			
-
 			var oldSliceIndex = this.__oldSliceIndex;
-			console.log("test");
+
 			if (this.__currentSeedsModified!=false)
-			{			console.log("modified!");
+			{
 				var canvas=this.__drawingCanvas;
 				var seedsImageData=this.__drawingCanvas.getContext2d().getImageData(0, 0, canvas.getWidth(), canvas.getHeight());
 				var pixels = seedsImageData.data;
@@ -680,12 +673,6 @@ qx.Class.define("desk.sliceView",
 				if(!isAllBlack)
 				{
 					volView.__currentSeedsModified=false;
-					function success () {
-						if (callback!=null)
-						{
-                               callback();
-						}
-					};
 
 					////Send png image to server
 					seedsImageData.data = pixels;
@@ -719,21 +706,37 @@ qx.Class.define("desk.sliceView",
 					
 					theMaster.__saveSeedsXML(success);
 					*/
-					
-					
 				}
-				else
-					launchCallBack = true;
 			}
-			else
-				launchCallBack = true;
-			
-			if(launchCallBack==true)
+			return false;
+		},
+
+		getCurrentSeedFileName : function(sliceId, seedType)
+		{			
+			var filePrefix;
+			if (seedType==0) {
+				filePrefix = "seed";
+			}
+			else {
+				filePrefix = "correction";
+			}
+
+			var offset=this.getVolumeSliceToPaint().getSlicesIdOffset();
+
+			switch(this.getOrientation())
 			{
-				if (callback != null)
-					callback();
+				// ZY X
+				case 1 :
+					return filePrefix +"ZY"+(offset + sliceId) +".png";
+					break;
+				// XZ Y
+				case 2 :
+					return filePrefix +"XZ"+(offset + sliceId) +".png";
+					break;
+				// XY Z
+				default :
+					return filePrefix +"XY"+(offset + sliceId) +".png";
 			}
-			
 		},
 
 		__getSeedsLists : function(key,seedsTypeListItem)
@@ -809,12 +812,12 @@ qx.Class.define("desk.sliceView",
 			slider.setWidth(30);
 			slider.setOrientation("vertical");
 			slider.addListener("changeValue",function(e){
-				spinner.setValue(this.__slices[0].getNumberOfSlices()-1-e.getData());
+				spinner.setValue(this.getVolumeSliceToPaint().getNumberOfSlices()-1-e.getData());
 				this.saveCurrentSeeds();
 				}, this);
 
 			spinner.addListener("changeValue",function(e){
-				slider.setValue(this.__slices[0].getNumberOfSlices()-1-e.getData());
+				slider.setValue(this.getVolumeSliceToPaint().getNumberOfSlices()-1-e.getData());
 				}, this);		
 
 			leftContainer.add(slider, {flex : 1});

@@ -30,29 +30,15 @@ qx.Class.define("desk.volumeSlice",
 			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 		}
 
-/*		// drag and drop support
-		this.setDraggable(true);
-		this.addListener("dragstart", function(e) {
-			e.addAction("copy");
-			e.addType("volumeSlice");
-			});
+		this.addListener("changeCurrentSlice", function(){
+			this.updateImage();
+			},this);
 
-		this.addListener("droprequest", function(e) {
-				var type = e.getCurrentType();
-				switch (type)
-				{
-				case "volumeSlice":
-					e.addData(type, this);
-					break;
-				default :
-					alert ("type "+type+"not supported for drag and drop");
-				}
-			}, this);
-*/
 		return (this);		
 	},
 
 	properties : {
+		currentSlice : { init : 0, check: "Number", event : "changeCurrentSlice"},
 		imageFormat : { init : 0, check: "Number", event : "changeImageFormat"},
 		ready : { init : false, check: "Boolean", event : "changeReady"},
 		orientation : { init : 0, check: "Number", event : "changeOrientation"}
@@ -60,7 +46,7 @@ qx.Class.define("desk.volumeSlice",
 
 	events : {
 		// the "changeSlice" event is fired whenever the image changes
-		"changeSlice" : "qx.event.type.Event"
+		"changeImage" : "qx.event.type.Event"
 	},
 
 	members : {
@@ -70,7 +56,6 @@ qx.Class.define("desk.volumeSlice",
 		__image : null,
 		__canvas : null,
 
-		__slider : null,
 		__timestamp : null,
 		__fileFormatBox : null,
 
@@ -83,8 +68,6 @@ qx.Class.define("desk.volumeSlice",
 		__scalarSize : null,
 		__scalarMin : null,
 		__scalarMax : null,
-
-
 
 		//THREE.js objects
 		__scene : null,
@@ -114,9 +97,12 @@ qx.Class.define("desk.volumeSlice",
 			this.redraw();
 		},
 
-		getDimensions : function ()
-		{
-			return (this.__dimensions);
+		getDimensions : function () {
+			return this.__dimensions;
+		},
+
+		getSlicesIdOffset : function () {
+			return this.__offset;
 		},
 
 		setLookupTables : function (red, green, blue) {
@@ -129,12 +115,8 @@ qx.Class.define("desk.volumeSlice",
 			return this.__canvas;
 		},
 
-		getSlider : function (){
-			return this.__slider;
-		},
-
 		getCornersCoordinates : function () {
-			var z=this.__origin[2]+(this.__dimensions[2]-this.__slider.getValue()+this.__extent[4])*this.__spacing[2];
+			var z=this.__origin[2]+(this.__dimensions[2]-this.getCurrentSlice()+this.__extent[4])*this.__spacing[2];
 			var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
 			var xmax=this.__origin[0]+this.__extent[1]*this.__spacing[0];
 			var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
@@ -185,7 +167,7 @@ switch(this.getOrientation())
 			var zmin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
 			var zmax=this.__origin[2]+this.__extent[5]*this.__spacing[2];
 			var coordinates=[];
-		//	console.log("orientation : "+this.getOrientation());
+
 			switch(this.getOrientation())
 			{
 				// ZY X
@@ -239,10 +221,6 @@ switch(this.getOrientation())
 			}
 		},
 
-		getCurrentSlice : function () {
-			return this.__slider.getValue();
-		},
-
 		openFile : function (file) {
 			var xmlDoc;
 			{
@@ -286,8 +264,6 @@ switch(this.getOrientation())
 			this.__scalarSize=parseInt(XMLscalars.getAttribute("size"),10);
 			this.__scalarMin=parseFloat(XMLscalars.getAttribute("min"),10);
 			this.__scalarMax=parseFloat(XMLscalars.getAttribute("max"),10);
-	
-
 
 			var slices=volume.getElementsByTagName("slicesprefix")[0];
 			this.__offset=parseInt(slices.getAttribute("offset"));
@@ -301,19 +277,6 @@ switch(this.getOrientation())
 			if (slashIndex>0)
 				this.__path=file.substring(0,slashIndex)+"\/";
 
-			var leftContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
-
-			this.__slider=new qx.ui.form.Slider();
-			this.__slider.setMinimum(0);
-			this.__slider.setMaximum(this.getNumberOfSlices()-1);
-			this.__slider.setValue(Math.round(0.5*(this.getNumberOfSlices()-1)));
-			this.__slider.setWidth(30);
-			this.__slider.setOrientation("vertical");
-			this.__slider.addListener("changeValue", function(event){this.updateImage();},this);
-			
-			// if there is only one slice, do not show the slider...
-			if (this.getNumberOfSlices()>1)
-				leftContainer.add(this.__slider, {flex : 1});
 			var dims=this.get2DDimensions();
 
 			this.__image=new Image();
@@ -545,13 +508,12 @@ switch(this.getOrientation())
 		redraw : function () {
 			this.__applyBrightnessToCanvas();
 			this.setReady(true);
-			this.fireEvent("changeSlice");
+			this.fireEvent("changeImage");
 		},
-
 
 		updateImage : function() {
 			var _this=this;
-			var slice=this.getNumberOfSlices()-1-_this.__slider.getValue();
+			var slice=this.getNumberOfSlices()-1-_this.getCurrentSlice();
 
 			this.__image.onload=function(){
 				_this.__originalImageCanvas.getContext2d().drawImage(_this.__image, 0, 0);
@@ -574,7 +536,7 @@ switch(this.getOrientation())
 					orientationString="XY";
 					break;
 				}
-			this.__image.src=this.__path+this.__prefix+orientationString+(this.__offset+this.getNumberOfSlices()-1-this.__slider.getValue())
+			this.__image.src=this.__path+this.__prefix+orientationString+(this.__offset+this.getNumberOfSlices()-1-this.getCurrentSlice())
 				+".jpg?nocache="+this.__timestamp;
 		}
 	}
