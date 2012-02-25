@@ -148,7 +148,7 @@ qx.Class.define("desk.sliceView",
 			var coordinates=volumeSlice.get2DCornersCoordinates();
 			for (var i=0;i<4;i++)
 				geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( coordinates[2*i],
-																			coordinates[2*i+1], 0.001 ) ) );
+																			coordinates[2*i+1], 0.01 ) ) );
 			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
 			geometry.faceVertexUvs[ 0 ].push( [
 				new THREE.UV( 0, 0),
@@ -366,7 +366,7 @@ qx.Class.define("desk.sliceView",
 				// scene and camera
 				var elementSize=htmlContainer.getInnerSize();
 				var scene = new THREE.Scene();
-				var camera = new THREE.PerspectiveCamera( 60, elementSize.width / elementSize.height, 0.01, 1e10 );
+				var camera = new THREE.PerspectiveCamera( 60, elementSize.width / elementSize.height, 1, 1e5 );
 				var container = document.getElementById( "three.js"+randomId);
 				var controls = new THREE.TrackballControls2( camera,container );
 
