@@ -103,8 +103,6 @@ qx.Class.define("desk.sliceView",
 		__master : null,
 
 		__drawingCanvas : null,
-		__drawingMesh : null,
-		__outputCanvas : null,
 
 		__seedsLists : null,
 		__currentSeedsModified : false,
@@ -171,11 +169,7 @@ qx.Class.define("desk.sliceView",
 				syncDimension: true
 			});
 
-			canvas=this.__drawingCanvas;
-
-			var imageData=canvas.getContext2d().getImageData(0, 0, width, height);
-
-			var length=imageData.data.length;
+			var length=width*height*4;
 			var dataColor = new Uint8Array( length);
 
 			var texture = new THREE.DataTexture( dataColor, width, height, THREE.RGBAFormat );
@@ -196,7 +190,8 @@ qx.Class.define("desk.sliceView",
 			var _this=this;
 			function updateTexture()
 			{
-				var data=canvas.getContext2d().getImageData(0, 0,width, height).data;
+				var data=_this.__drawingCanvas.getContext2d().getImageData
+									(0, 0,width, height).data;
 				for (var i=length;i--;)
 					dataColor[i]=data[i];
 				texture.needsUpdate = true;
@@ -263,20 +258,10 @@ qx.Class.define("desk.sliceView",
 				var width=canvas.getCanvasWidth();
 				var height=canvas.getCanvasHeight();
 
-				_this.__outputCanvas = new qx.ui.embed.Canvas().set({
-					canvasWidth: width,
-					canvasHeight: height,
-					width: width,
-					height: height,
-					syncDimension: true
-				});
-
-				var imageData=canvas.getContext2d().getImageData(0, 0, width, height);
-
-				var length=imageData.data.length;
+				var length=width*height*4;
 				var dataColor = new Uint8Array( length);
-
-				var texture = new THREE.DataTexture( dataColor, imageData.width, imageData.height, THREE.RGBAFormat );
+				var texture = new THREE.DataTexture(
+						dataColor, width, height, THREE.RGBAFormat );
 				texture.needsUpdate = true;
 				texture.magFilter=THREE.NearestFilter;
 				var material=new THREE.MeshBasicMaterial( {map:texture});
@@ -286,20 +271,14 @@ qx.Class.define("desk.sliceView",
 				_this.__scene.add(mesh);
 				volumeSlice.setUserData("mesh",mesh);
 
+				geometry.computeCentroids();
+				geometry.computeFaceNormals();
+				geometry.computeVertexNormals();
+				geometry.computeBoundingSphere();
+
 				function updateTexture()
 				{
-					geometry.computeCentroids();
-					geometry.computeFaceNormals();
-					geometry.computeVertexNormals();
-					geometry.computeBoundingSphere();
-
-					var context=_this.__outputCanvas.getContext2d();
-					context.clearRect ( 0 , 0 , width , height );
-
-					context.drawImage(canvas.getContentElement().getCanvas(), 0, 0);					
-			//		context.drawImage(_this.__drawingCanvas.getContentElement().getCanvas(), 0, 0);
-
-					var data=context.getImageData(0, 0,width, height).data;
+					var data=canvas.getContext2d().getImageData(0, 0,width, height).data;
 
 					for (var i=length;i--;)
 						dataColor[i]=data[i];
@@ -396,19 +375,7 @@ qx.Class.define("desk.sliceView",
 				this.__controls=controls;
 				this.__scene=scene;
 				this.__camera=camera;
-
 				scene.add( camera );
-
-				// lights
-
-	/*			var dirLight = new THREE.DirectionalLight( 0xffffff );
-				dirLight.position.set( 200, 200, 1000 ).normalize();
-				camera.add( dirLight );
-				camera.add( dirLight.target );
-				var dirLight2 = new THREE.DirectionalLight( 0xffffff );
-				dirLight2.position.set( -200, -200, -1000 ).normalize();
-				camera.add( dirLight2 );
-				camera.add( dirLight2.target );*/
 
 				// renderer
 
@@ -542,14 +509,10 @@ qx.Class.define("desk.sliceView",
 			if ( intersects.length > 0 ) {
 				var xinter=intersects[0].point.x;
 				var yinter=intersects[0].point.y;
-			//	console.log(xinter+" "+yinter);
 				var coordinates=volumeSlice.get2DCornersCoordinates();
 				var dimensions=volumeSlice.get2DDimensions();
-		//		console.log("intersection : "+xinter+" "+yinter);
 				var intxc=Math.floor((xinter-coordinates[0])*dimensions[0]/(coordinates[2]-coordinates[0]));
 				var intyc=Math.floor((yinter-coordinates[1])*dimensions[1]/(coordinates[5]-coordinates[1]));
-		//		console.log(intxc+" "+intyc);
-		//		console.log("intersection : "+intxc+" "+intyc);
 				return {x :intxc, y :intyc};
 			}
 			else
