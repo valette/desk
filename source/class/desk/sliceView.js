@@ -59,9 +59,6 @@ qx.Class.define("desk.sliceView",
 				}
 			}, this);
 */
-		this.addListener("changePaintOpacity", function (event) {
-			this.__drawingCanvas.set({opacity: event.getData()});
-				}, this);
 
 		this.__window.open();
 		return (this);		
@@ -73,6 +70,10 @@ qx.Class.define("desk.sliceView",
 		orientation : { init : -1, check: "Number", event : "changeOrientation"},
 		ready : { init : false, check: "Boolean", event : "changeReady"},
 		paintMode : { init : false, check: "Boolean"}
+	},
+
+	events : {
+		"changeDrawing" : "qx.event.type.Event"
 	},
 
 	members : {
@@ -102,6 +103,7 @@ qx.Class.define("desk.sliceView",
 		__master : null,
 
 		__drawingCanvas : null,
+		__drawingMesh : null,
 		__outputCanvas : null,
 
 		__seedsLists : null,
@@ -140,6 +142,80 @@ qx.Class.define("desk.sliceView",
 			}
 		},
 
+		__setDrawingMesh : function (volumeSlice)
+		{
+			var geometry=new THREE.Geometry();
+			geometry.dynamic=true;
+
+			var coordinates=volumeSlice.get2DCornersCoordinates();
+			for (var i=0;i<4;i++)
+				geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( coordinates[2*i],
+																			coordinates[2*i+1], 1 ) ) );
+			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
+			geometry.faceVertexUvs[ 0 ].push( [
+				new THREE.UV( 0, 0),
+				new THREE.UV( 1, 0 ),
+				new THREE.UV( 1, 1 ),
+				new THREE.UV( 0, 1 )
+				] );
+
+			var canvas=volumeSlice.getImageCanvas();
+			var width=canvas.getCanvasWidth();
+			var height=canvas.getCanvasHeight();
+
+			this.__drawingCanvas = new qx.ui.embed.Canvas().set({
+				canvasWidth: width,
+				canvasHeight: height,
+				width: width,
+				height: height,
+				syncDimension: true
+			});
+
+			canvas=this.__drawingCanvas;
+
+			var imageData=canvas.getContext2d().getImageData(0, 0, width, height);
+
+			var length=imageData.data.length;
+			var dataColor = new Uint8Array( length);
+
+			var texture = new THREE.DataTexture( dataColor, width, height, THREE.RGBAFormat );
+			texture.needsUpdate = true;
+			texture.magFilter=THREE.NearestFilter;
+			
+			var material=new THREE.MeshBasicMaterial( {map:texture, transparent: true});
+
+			var mesh=new THREE.Mesh(geometry,material);
+			mesh.doubleSided=true;
+			this.__scene.add(mesh);
+
+			geometry.computeCentroids();
+			geometry.computeFaceNormals();
+			geometry.computeVertexNormals();
+			geometry.computeBoundingSphere();
+
+			var _this=this;
+			function updateTexture()
+			{
+				var data=canvas.getContext2d().getImageData(0, 0,width, height).data;
+				for (var i=length;i--;)
+					dataColor[i]=data[i];
+				texture.needsUpdate = true;
+				_this.render();
+			}
+
+			updateTexture();
+
+			this.addListener('changeDrawing',function() {
+					updateTexture();
+					_this.render();
+				});
+
+			this.addListener("changePaintOpacity", function (event) {
+					mesh.material.opacity=event.getData();
+					_this.render();
+				});
+		},
+
 		__addVolume : function (file, callback) {
 			var volumeSlice=new desk.volumeSlice(file,this.__fileBrowser, this.getOrientation());
 			this.__slices.push(volumeSlice);
@@ -175,7 +251,6 @@ qx.Class.define("desk.sliceView",
 				_this.__slider.setMaximum(volumeSlice.getNumberOfSlices()-1);
 				_this.__slider.setValue(Math.round(0.5*volumeSlice.getNumberOfSlices()));
 				_this.__slider.bind("value", volumeSlice, "currentSlice");
-//				volumeSlice.bind("currentSlice", _this.__slider, "value");
 
 				_this.__camera.position.set(0.5*(coordinates[0]+coordinates[2]),
 											0.5*(coordinates[3]+coordinates[5]),
@@ -187,14 +262,6 @@ qx.Class.define("desk.sliceView",
 		    	
 				var width=canvas.getCanvasWidth();
 				var height=canvas.getCanvasHeight();
-
-				_this.__drawingCanvas = new qx.ui.embed.Canvas().set({
-					canvasWidth: width,
-					canvasHeight: height,
-					width: width,
-					height: height,
-					syncDimension: true
-				});
 
 				_this.__outputCanvas = new qx.ui.embed.Canvas().set({
 					canvasWidth: width,
@@ -230,7 +297,7 @@ qx.Class.define("desk.sliceView",
 					context.clearRect ( 0 , 0 , width , height );
 
 					context.drawImage(canvas.getContentElement().getCanvas(), 0, 0);					
-					context.drawImage(_this.__drawingCanvas.getContentElement().getCanvas(), 0, 0);
+			//		context.drawImage(_this.__drawingCanvas.getContentElement().getCanvas(), 0, 0);
 
 					var data=context.getImageData(0, 0,width, height).data;
 
@@ -252,7 +319,7 @@ qx.Class.define("desk.sliceView",
 					});
 
 				_this.render();
-
+				_this.__setDrawingMesh(volumeSlice);
 				if (typeof callback=="function")
 				{
 					callback(volumeSlice);
@@ -403,7 +470,7 @@ qx.Class.define("desk.sliceView",
 							context.moveTo(position.x, position.y);
 							context.closePath();
 							context.stroke();
-							 _this.getVolumeSliceToPaint().fireEvent("changeImage");
+							_this.fireEvent("changeDrawing");
 						}
 					}
 					});
@@ -421,7 +488,7 @@ qx.Class.define("desk.sliceView",
 						var position=_this.getPositionOnSlice(event);
 					     context.lineTo(position.x, position.y);
 						context.stroke();
-						_this.getVolumeSliceToPaint().fireEvent("changeImage");
+						_this.fireEvent("changeDrawing");
 						_this.__currentSeedsModified=true;
 						break;
 					default:
