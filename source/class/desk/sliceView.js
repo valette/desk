@@ -148,7 +148,7 @@ qx.Class.define("desk.sliceView",
 			var coordinates=volumeSlice.get2DCornersCoordinates();
 			for (var i=0;i<4;i++)
 				geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( coordinates[2*i],
-																			coordinates[2*i+1], 1 ) ) );
+																			coordinates[2*i+1], 0.001 ) ) );
 			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
 			geometry.faceVertexUvs[ 0 ].push( [
 				new THREE.UV( 0, 0),
@@ -650,7 +650,7 @@ qx.Class.define("desk.sliceView",
 			if (this.__currentSeedsModified!=false)
 			{
 				var canvas=this.__drawingCanvas;
-				var seedsImageData=this.__drawingCanvas.getContext2d().getImageData(0, 0, canvas.getWidth(), canvas.getHeight());
+				var seedsImageData=canvas.getContext2d().getImageData(0, 0, canvas.getWidth(), canvas.getHeight());
 				var pixels = seedsImageData.data;
 				var isAllBlack = true;
 
@@ -658,10 +658,7 @@ qx.Class.define("desk.sliceView",
 				var redArray=labelColors[0];
 				var greenArray=labelColors[1];
 				var blueArray=labelColors[2];
-				var numberOfColors=labelColors.length;
-				console.log(redArray);
-				console.log(greenArray);
-				console.log(blueArray);
+				var numberOfColors=labelColors[0].length;
 				var numberOfBytes=pixels.length
 				for(var i=0; i<numberOfBytes; i+=4)
 				{
@@ -672,6 +669,7 @@ qx.Class.define("desk.sliceView",
 						var dBlue = 0;
 						var distance = 500000;
 						var rightColorIndex = 0;
+
 						for(var j=0; j!=numberOfColors; j++)
 						{
 							dRed = redArray[j]-pixels[i];
@@ -688,7 +686,6 @@ qx.Class.define("desk.sliceView",
 						pixels[i+1] = greenArray[rightColorIndex];
 						pixels[i+2] = blueArray[rightColorIndex];
 						pixels[i+3] = 255;
-					//	console.log([pixels[i],pixels[i+1],pixels[i+2]]);
 						isAllBlack = false;
 					}
 					////Comment "else" to send combined image
