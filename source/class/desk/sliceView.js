@@ -765,11 +765,20 @@ qx.Class.define("desk.sliceView",
 			var x,y;
 
 			button.addListener("mousedown", function(event)	{
-				x=event.getScreenLeft();
-				y=event.getScreenTop();
 				slices=this.__master.getVolumesList().getChildren()[0].getUserData("slices");
-				button.capture();
-				clicked=true;
+				if (event.isRightPressed())
+				{
+					for (var i=0;i<slices.length;i++) {
+						slices[i].setBrightnessAndContrast(0,1);
+					}
+				}
+				else
+				{
+					x=event.getScreenLeft();
+					y=event.getScreenTop();
+					button.capture();
+					clicked=true;
+				}
 			}, this);
 
 			button.addListener("mousemove", function(event)	{
@@ -792,19 +801,6 @@ qx.Class.define("desk.sliceView",
 			button.addListener("mouseup", function(event)	{
 				button.releaseCapture()
 				clicked=false;
-			}, this);
-			return button;
-		},
-
-		__getResetBrightnessContrastButton : function () {
-			////Create reset brightness/contrast button
-			var button = new qx.ui.form.Button("Reset");
-			button.addListener("execute", function(event)
-			{
-				var slices=this.__master.getVolumesList().getChildren()[0].getUserData("slices");
-				for (var i=0;i<slices.length;i++) {
-					slices[i].setBrightnessAndContrast(0,1);
-				}
 			}, this);
 			return button;
 		},
@@ -893,11 +889,7 @@ qx.Class.define("desk.sliceView",
 				} 
 			},this)*/
 
-			var layout1=new qx.ui.layout.HBox();
-			var container1 = new qx.ui.container.Composite(layout1);  //~ resizing
-			container1.add(this.__getBrightnessContrastButton());
-			container1.add(this.__getResetBrightnessContrastButton());
-			leftContainer.add(container1);
+			leftContainer.add(this.__getBrightnessContrastButton());
 
 			////Create spinner and sync it with the slider
 			var spinner = new qx.ui.form.Spinner();
