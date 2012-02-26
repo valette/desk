@@ -73,6 +73,10 @@ qx.Class.define("desk.volMaster",
 			}
 		},
 
+		getVolumesList : function () {
+			return this.__volumes;
+		},
+
 		getTools : function () {
 			return this.__tools;
 		},
@@ -237,64 +241,7 @@ this.debug("------->>>   theMaster.__updateSeeds : function()   !!!!!!!");
 			}
 			
 		},
-		
-		getBrightnessContrastButton : function () {
-			////Create brightness/contrast fixing on/off button
-			var button = new qx.ui.form.Button(null, "desk/Contrast_Logo_petit.PNG");
 
-			button.set({toolTipText : "LUMINOSITE/CONTRASTE"});
-
-			var clicked=false;
-			var contrast=1;
-			var brightness=0;
-			var slices;
-			var x,y;
-
-			button.addListener("mousedown", function(event)	{
-				x=event.getScreenLeft();
-				y=event.getScreenTop();
-				slices=this.__volumes.getChildren()[0].getUserData("slices");
-				button.capture();
-				clicked=true;
-			}, this);
-
-			button.addListener("mousemove", function(event)	{
-				if (clicked)
-				{
-					var newX=event.getScreenLeft();
-					var newY=event.getScreenTop();
-					var deltaX=newX-x;
-					var deltaY=newY-y;
-					brightness-=deltaY/3;
-					contrast+=deltaX/200;
-					x=newX;
-					y=newY;
-					for (var i=0;i<slices.length;i++) {
-						slices[i].setBrightnessAndContrast(brightness,contrast);
-					}
-				}
-			}, this);
-
-			button.addListener("mouseup", function(event)	{
-				button.releaseCapture()
-				clicked=false;
-			}, this);
-			return button;
-		},
-
-		getResetBrightnessContrastButton : function () {
-			////Create reset brightness/contrast button
-			var button = new qx.ui.form.Button("Reset");
-			button.addListener("execute", function(event)
-			{
-				var slices=this.__volumes.getChildren()[0].getUserData("slices");
-				for (var i=0;i<slices.length;i++) {
-					slices[i].setBrightnessAndContrast(0,1);
-				}
-			}, this);
-			return button;
-		},
-		
 		////Rewrite xml list of the drawn seeds
 		__saveSeedsXML : function(callback)
         {

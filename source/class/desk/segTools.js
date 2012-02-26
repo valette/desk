@@ -208,12 +208,6 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
             tabView.add(paintPage);
 			tabView.setVisibility("excluded");
 
-			var layout1=new qx.ui.layout.HBox();
-			var container1 = new qx.ui.container.Composite(layout1);  //~ resizing
-			container1.add(this.__master.getBrightnessContrastButton());
-			container1.add(this.__master.getResetBrightnessContrastButton());
-			tools.__mainRightContainer.add(container1);
-
 			//~ /*
 			var sessionWdgt = tools.__getSessionsWidget(); //~ resizing
 			//~ sessionWdgt.setHeight(tools.__curView.__mainLeftContainer.getChildren()[0].getBounds().height); //~ resizing
