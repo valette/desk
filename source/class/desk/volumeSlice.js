@@ -19,7 +19,7 @@ qx.Class.define("desk.volumeSlice",
 				{
 					var req = e.getTarget();
 					var slicesDirectory=req.getResponseText().split("\n")[0];
-					_this.openFile(fileBrowser.getFileURL(slicesDirectory)+"/volume.xml");
+					_this.openXMLURL(fileBrowser.getFileURL(slicesDirectory)+"/volume.xml");
 				}
 
 			var parameterMap={
@@ -221,14 +221,34 @@ switch(this.getOrientation())
 			}
 		},
 
-		openFile : function (file) {
-			var xmlDoc;
-			{
-				var xmlhttp=new XMLHttpRequest();
-				xmlhttp.open("GET",file+"?nocache=" + Math.random(),false);
-				xmlhttp.send();
-				xmlDoc=xmlhttp.responseXML;
+		openXMLURL : function (xmlURL) {
+
+			var xmlhttp=new XMLHttpRequest();
+			xmlhttp.open("GET",xmlURL+"?nocache=" + Math.random(),true);
+			var _this=this;
+
+			xmlhttp.onreadystatechange = function() {
+				 if(this.readyState == 4 && this.status == 200)
+				 {
+					// so far so good
+					if(xmlhttp.responseXML!=null)
+					{
+						var response = xmlhttp.responseXML;
+						_this.__parseXMLresponse(response,xmlURL);
+					}
+					else
+						alert("open volume slice : Failure...");
+				}
+				else if (xmlhttp.readyState == 4 && xmlhttp.status != 200)
+				{
+					// fetched the wrong page or network error...
+					alert('open volume slice : "Fetched the wrong page" OR "Network error"');
+				}
 			}
+			xmlhttp.send();
+		},
+
+		__parseXMLresponse : function (xmlDoc, xmlURL) {
 
 			var volume=xmlDoc.getElementsByTagName("volume")[0];
 			if (volume==null)
@@ -272,10 +292,10 @@ switch(this.getOrientation())
 				this.__timestamp=Math.random();
 			this.__prefix=slices.childNodes[0].nodeValue;
 
-			var slashIndex=file.lastIndexOf("/");
+			var slashIndex=xmlURL.lastIndexOf("/");
 			this.__path="";
 			if (slashIndex>0)
-				this.__path=file.substring(0,slashIndex)+"\/";
+				this.__path=xmlURL.substring(0,slashIndex)+"\/";
 
 			var dims=this.get2DDimensions();
 
