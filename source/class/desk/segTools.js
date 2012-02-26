@@ -6,7 +6,7 @@ qx.Class.define("desk.segTools",
 {
   extend : qx.ui.window.Window,
 
-	construct : function(volumeMaster, globalFile, globalFileBrowser)
+	construct : function(master, globalFile, globalFileBrowser)
 	{	
 		this.base(arguments);
 
@@ -23,7 +23,7 @@ qx.Class.define("desk.segTools",
 		
 		this.__tools = this;
 		
-		this.__master = volumeMaster;
+		this.__master = master;
 		
 		this.__file = globalFile;
 		
@@ -46,7 +46,14 @@ qx.Class.define("desk.segTools",
 		
 	//// Fill window with the tools widgets
 		this.__buildRightContainer();
-		
+
+		var _this=this;
+		master.applyToViewers( function (viewer) {
+			var theViewer=viewer;
+			viewer.getSlider().addListener("changeValue", function () {
+				_this.__getSeedsImage(theViewer);
+				});
+			});
 	//// Return the tools window aka : this
 		return (this);
 
@@ -100,24 +107,12 @@ qx.Class.define("desk.segTools",
 		__penSize : null,
 		__eraserButton : null,
 		__eraserCursor : null,
-		
 
-		
 		// width of the panel measured manually during debug
 		//~ __rightPanelWidth : 405 + 16 + 4,
 		__rightPanelWidth : 405,
 		
-		
 		__settingButtons : false,
-
-
-		getLabelColors : function () {
-			var colors=[];
-			colors[0]=this.__labelColorsRed;
-			colors[1]=this.__labelColorsGreen;
-			colors[2]=this.__labelColorsBlue;
-			return colors;
-		},
 
 		__applyToViewers : function (theFunction) {
 			var viewers=this.__master.getViewers();
@@ -655,8 +650,6 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 				}
 			});
 
-
-
 			button.addListener("execute", function (e){
 //~ tools.debug("1025 : >>>>>>>  button.addListener(execute, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				theMaster.__resetSeedsList();
@@ -694,7 +687,103 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 			},this);
 			tools.__seedsTypeSelectBox = selectBox;
 			return selectBox;
+		},
+
+		__getSeedsImage : function ( sliceView )
+		{
+			if (sliceView.isDrawingCanvasModified()==true)
+			{
+				var canvas=sliceView.getDrawingCanvas();
+				var seedsImageData=canvas.getContext2d().getImageData(0, 0, canvas.getWidth(), canvas.getHeight());
+				var pixels = seedsImageData.data;
+				var isAllBlack = true;
+
+				var redArray=this.__labelColorsRed;
+				var greenArray=this.__labelColorsGreen;
+				var blueArray=this.__labelColorsBlue;
+				var numberOfColors=this.__labelColors.length;
+				var numberOfBytes=pixels.length
+				for(var i=0; i<numberOfBytes; i+=4)
+				{
+					if(128<=pixels[i+3])  //  if( color is solid not totally transparent, ie. alpha=0) <-> if( not background )
+					{
+						var dRed = 0;
+						var dGreen = 0;
+						var dBlue = 0;
+						var distance = 500000;
+						var rightColorIndex = 0;
+
+						for(var j=0; j!=numberOfColors; j++)
+						{
+							dRed = redArray[j]-pixels[i];
+							dGreen = greenArray[j]-pixels[i+1];
+							dBlue = blueArray[j]-pixels[i+2];
+							var testD = dRed*dRed+dGreen*dGreen+dBlue*dBlue;
+							if(testD<distance)
+							{
+								distance = testD;
+								rightColorIndex = j;
+							}
+						}
+						pixels[i] = redArray[rightColorIndex];
+						pixels[i+1] = greenArray[rightColorIndex];
+						pixels[i+2] = blueArray[rightColorIndex];
+						pixels[i+3] = 255;
+						isAllBlack = false;
+					}
+					////Comment "else" to send combined image
+					else
+					{
+						pixels[i] = 0;
+						pixels[i+1] = 0;
+						pixels[i+2] = 0;
+						pixels[i+3] = 0;
+					}
+				}
+
+				sliceView.setDrawingCanvasNotModified();
+
+				if(!isAllBlack)
+				{
+					////Send png image to server
+					seedsImageData.data = pixels;
+
+					canvas.getContext2d().putImageData(seedsImageData, 0, 0);
+					var pngImg = canvas.getContentElement().getCanvas().toDataURL("image/png");
+					var saveData=pngImg.replace("image/png", "image/octet-stream");
+					document.location.href = saveData;
+					var commaIndex=pngImg.lastIndexOf(",");
+					var base64Img = pngImg.substring(commaIndex+1,pngImg.length);
+					return base64Img;
+			/*		var parameterMap={
+						"action" : "save_binary_file",
+						"file_name" : volView.__getSeedFileName(volView.__display.depthShift),
+						"base64Data" : base64Img,
+						"output_directory" : tools.getSessionDirectory()};
+
+					this.__fileBrowser.getActions().launchAction(parameterMap, success);
+	//~ volView.debug("3467 : tools : " + tools);
+	//~ volView.debug("3468 : tools.__seedsTypeSelectBox : " + tools.__seedsTypeSelectBox);
+	//~ volView.debug("3469 : tools.__seedsTypeSelectBox.getSelection() : " + tools.__seedsTypeSelectBox.getSelection());
+					var seedsTypeSelectBoxItem = tools.__seedsTypeSelectBox.getSelection()[0];
+	//~ volView.debug("3471 : seedsTypeSelectBoxItem : " + seedsTypeSelectBoxItem);
+	//~ volView.debug("3472 : seedsTypeSelectBoxItem.getUserData(cacheTags) : " + seedsTypeSelectBoxItem.getUserData("cacheTags"));
+					seedsTypeSelectBoxItem.getUserData("cacheTags")[volView.__display.orientation][volView.__display.depthShift]=
+                                            Math.random();
+					if(seedsTypeSelectBoxItem.getUserData("seedsArray")[volView.__display.orientation][oldSliceIndex]==0)
+						volView.__addNewSeedItemToList(oldSliceIndex);
+					
+					
+					
+					theMaster.__saveSeedsXML(success);
+					*/
+				}
+			}
+
+			sliceView.setDrawingCanvasNotModified();
+			return false;
 		}
+
 		
 		
 		
