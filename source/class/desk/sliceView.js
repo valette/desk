@@ -759,8 +759,6 @@ qx.Class.define("desk.sliceView",
 			button.set({toolTipText : "LUMINOSITE/CONTRASTE"});
 
 			var clicked=false;
-			var contrast=1;
-			var brightness=0;
 			var slices;
 			var x,y;
 
@@ -788,6 +786,9 @@ qx.Class.define("desk.sliceView",
 					var newY=event.getScreenTop();
 					var deltaX=newX-x;
 					var deltaY=newY-y;
+					var contrast=slices[0].getContrast();
+					var brightness=slices[0].getBrightness();
+
 					brightness-=deltaY/3;
 					contrast+=deltaX/200;
 					x=newX;
