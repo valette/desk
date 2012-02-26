@@ -406,10 +406,11 @@ qx.Class.define("desk.sliceView",
 					}
 
 				var mouseMode=0;
+				var button=0;
 				htmlContainer.addListener("mousedown", function (event)	{
 					htmlContainer.capture();
 
-					var button=0;
+					button=0;
 					if (event.isRightPressed())
 						button=1;
 					else if ((event.isMiddlePressed())||(event.isShiftPressed()))
@@ -449,6 +450,18 @@ qx.Class.define("desk.sliceView",
 						var origin=htmlContainer.getContentLocation();
 						controls.mouseMove(event.getDocumentLeft()-origin.left
 								, event.getDocumentTop()-origin.top);
+
+						//propagate zoom to other viewers
+						if (button==1) {
+							var z=_this.__camera.position.z;
+							_this.__master.applyToViewers (function (viewer) {
+								if (viewer!=_this) {
+									viewer.__camera.position.z=z;
+									viewer.render();
+									}
+								});
+						}
+						
 						break;
 					case 1:
 						var context=_this.__drawingCanvas.getContext2d();

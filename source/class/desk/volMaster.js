@@ -66,7 +66,7 @@ qx.Class.define("desk.volMaster",
 		
 		__fileBrowser : null,
 
-		__applyToViewers : function (theFunction) {
+		applyToViewers : function (theFunction) {
 			var viewers=this.__viewers;
 			for (var i=0;i<viewers.length;i++) {
 				theFunction (viewers[i]);
@@ -129,7 +129,7 @@ qx.Class.define("desk.volMaster",
 		{
 			var viewers=this.__viewers;
 
-			this.__applyToViewers(function (viewer) {
+			this.applyToViewers(function (viewer) {
 				viewer.resetSeedsLists();
 				var seedsType=viewer.getSeedsType()
 				viewer.setSeedsType(1-seedsType);
