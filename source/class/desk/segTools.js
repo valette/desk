@@ -151,7 +151,8 @@ qx.Class.define("desk.segTools",
 					sliceView.fireEvent("changeDrawing");
 				}
 				imageLoader.src=_this.__fileBrowser.getFileURL(_this.getSessionDirectory())+"/"+
-								_this.__getSeedFileName ( sliceView, sliceId, seedsType);
+								_this.__getSeedFileName ( sliceView, sliceId, seedsType)+"?nocache="+
+								cacheTagsArray[sliceId];
 			}
 			else {
 				sliceView.fireEvent("changeDrawing");
@@ -604,18 +605,18 @@ tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 			var master=this.__master;
 			var _this=this;
 
+			master.applyToViewers ( function (sliceView) {
+				sliceView.setUserData("previousSlice", sliceView.getSlice());
+			});
+
 			var loadSessionRequest = new XMLHttpRequest();
 			
-			loadSessionRequest.onreadystatechange = function()
-			{
-				 if(this.readyState == 4 && this.status == 200)
-				 {
+			loadSessionRequest.onreadystatechange = function( ) {
+				 if(this.readyState == 4 && this.status == 200) {
 					// so far so good
-					if(this.responseXML!=null)
-					{
+					if(this.responseXML!=null) {
 						var response = this.responseXML;
-						for (var k=0;k<2;k++)
-						{
+						for (var k=0;k<2;k++) {
 							var slices;
 							if (k==0) {
 								slices=response.getElementsByTagName("seed");
@@ -640,13 +641,11 @@ tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 							}
 						}
 					}
-					else
-					{
+					else {
 						alert("no seeds found");
 					}
 				}
-				else if (this.readyState == 4 && this.status != 200)
-				{
+				else if (this.readyState == 4 && this.status != 200) {
 					alert("no seeds found");
 				}
 			};
@@ -754,16 +753,23 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
         	var wasAnySeedModified=false;
         	var _this=this;
 			this.__master.applyToViewers ( function ( sliceView ) {
-				var result=_this.__getNewSeedsImage ( sliceView );
-				if ( result!=false ) {
+				var base64Img=_this.__getNewSeedsImage ( sliceView );
+				if ( base64Img!=false ) {
 					// save image
 					var sliceId=sliceView.getUserData( "previousSlice" );
 					var seedsType=_this.getSeedsType();
 					var fileName=_this.getSessionDirectory()+"/"+
 						_this.__getSeedFileName (sliceView, sliceId, seedsType);
-					console.log ("save : "+fileName);
+
 					_this.__addNewSeedItemToList ( sliceView, sliceId, seedsType );
 					wasAnySeedModified=true;
+
+					var parameterMap={
+					action : "save_binary_file",
+					file_name : _this.__getSeedFileName (sliceView, sliceId, seedsType),
+					base64Data : base64Img,
+					output_directory : _this.getSessionDirectory()};
+					_this.__fileBrowser.getActions().launchAction(parameterMap);
 				}
 				sliceView.setUserData("previousSlice", sliceView.getSlice());
 				sliceView.setDrawingCanvasNotModified();
@@ -868,42 +874,13 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 				}
 			});
 
-			console.log(xmlContent);
-
-/*			var seedsTypeItems=tools.__seedsTypeSelectBox.getChildren();
-
-			for (var k=0;k<seedsTypeItems.length;k++)
-			{
-				var item=seedsTypeItems[k];
-				
-				for(var orionCount=0; orionCount<theMaster.__nbUsedOrientations; orionCount++)
-				{
-							var seedsList = item.getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")];
-						if(seedsList!=null)
-						{
-		//~ theMaster.debug("345 : seedsList.length : " + seedsList.length);
-							var filePrefix=item.getUserData("filePrefix");
-		//~ theMaster.debug("347 : filePrefix : " + filePrefix);
-							var slices=seedsList.getChildren();
-							for(var j=0; j<slices.length; j++)
-							{
-								var sliceId=slices[j].getUserData("slice");
-		//~ theMaster.debug("352 : sliceId : " + sliceId);
-								var sliceAttributes = {slice: sliceId + "", orientation: orionCount + ""};
-								xmlContent += theMaster.__element(filePrefix, theMaster.__viewers[i].__getSeedFileName(sliceId, item), sliceAttributes) + '\n';
-							}
-						}
-				}
-			}
-
-//~ theMaster.debug("363 : .getSessionDirectory() !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 			var parameterMap={
 				"action" : "save_xml_file",
 				"file_name" : "seeds.xml",
-				"xmlData" : theMaster.__element('seeds', xmlContent),
-				"output_directory" : tools.getSessionDirectory()};
+				"xmlData" : element('seeds', xmlContent),
+				"output_directory" : this.getSessionDirectory()};
 
-			fileBrowser.getActions().launchAction(parameterMap, callback);*/
+			this.__fileBrowser.getActions().launchAction(parameterMap, callback);
 		},
 
 		__getSeedsTypeSelectBox : function()
@@ -992,7 +969,6 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 					canvas.getContext2d().putImageData(seedsImageData, 0, 0);
 					var pngImg = canvas.getContentElement().getCanvas().toDataURL("image/png");
 					var saveData=pngImg.replace("image/png", "image/octet-stream");
-					document.location.href = saveData;
 					var commaIndex=pngImg.lastIndexOf(",");
 					var base64Img = pngImg.substring(commaIndex+1,pngImg.length);
 					return base64Img;
