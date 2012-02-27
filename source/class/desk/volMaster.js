@@ -128,71 +128,6 @@ qx.Class.define("desk.volMaster",
 			volumeListItem.setUserData("slices", volumeSlices);
 			this.__volumes.add(volumeListItem);
 		},
-
-		loadSession : function()
-		{
-			var viewers=this.__viewers;
-
-			this.applyToViewers(function (viewer) {
-				viewer.resetSeedsLists();
-				var seedsType=viewer.getSeedsType()
-				viewer.setSeedsType(1-seedsType);
-				viewer.setSeedsType(seedsType);
-				});
-
-			
-			var loadSessionRequest = new XMLHttpRequest();
-			
-			loadSessionRequest.onreadystatechange = function()
-			{
-				 if(this.readyState == 4 && this.status == 200)
-				 {
-					// so far so good
-					if(this.responseXML!=null)
-					{
-						var response = this.responseXML;
-						for (var k=0;k<2;k++)
-						{
-							var slices;
-							if (k==0)
-								slices=response.getElementsByTagName("seed");
-							else
-								slices=response.getElementsByTagName("correction");
-
-							for(var j=0; j<slices.length; j++)
-							{
-								var sliceId = parseInt(slices[j].getAttribute("slice"),10);
-								var sliceOrientation;
-								if (slices[j].hasAttribute("orientation"))
-								{
-									sliceOrientation = parseInt(slices[j].getAttribute("orientation"),10);
-								}
-								else
-								{
-									sliceOrientation = 0;
-								}
-								for(var i=0; i<viewers.length; i++)
-									if(sliceOrientation==viewers[i].getOrientation())
-										viewers[i].addNewSeedItemToList(sliceId, k);
-							}
-						}
-					}
-					else
-					{
-						alert("no seeds found");
-					}
-				}
-				else if (this.readyState == 4 && this.status != 200)
-				{
-					alert("no seeds found");
-				}
-			};
-
-			loadSessionRequest.open("GET",
-				this.__fileBrowser.getFileURL(
-					this.__tools.getSessionDirectory()+"/seeds.xml?nocache="+Math.random()), true);
-			loadSessionRequest.send(null);
-		},
 		
 		__updateSeeds : function ()
 		{
@@ -319,69 +254,6 @@ this.debug("------->>>   theMaster.__eraseFile : function()   !!!!!!!");
 		},
 		
 		
-		
-		__loadWindows : function ()
-		{
-this.debug("------->>>   theMaster.__loadWindows : function()   !!!!!!!");
-
-			//~ use __loadDisplay method of the volViewers
-
-			var theMaster = this;
-			
-			var tools = theMaster.__tools;
-			
-			var fileBrowser = theMaster.__fileBrowser;
-			
-		},
-		
-		__saveWindows : function()
-        {
-this.debug("------->>>   theMaster.__saveWindows : function()   !!!!!!!");
-
-			//~ use __saveDisplay method of the volViewers
-			
-
-			var theMaster = this;
-			
-			var tools = theMaster.__tools;
-			
-			var fileBrowser = theMaster.__fileBrowser;
-			
-			
-			//~ create main xml too
-			/*
-			var xmlContent = '\n';
-
-			for (var key  in theMaster.__curView.__display)
-			{
-				if (key == 'length' || !theMaster.__curView.__display.hasOwnProperty(key))
-				{
-						continue;
-				}
-				var paramAttribute = {value : theMaster.__curView.__display[key] + ""};
-				xmlContent += theMaster.__element(key, "", paramAttribute) + '\n';
-				theMaster.debug(key + " : " + theMaster.__curView.__display[key]);
-			}
-			
-			var parameterMap = {
-					"action" : "save_xml_file",
-					"file_name" : "savedDisplay.xml",
-					"xmlData" : theMaster.__element('display', xmlContent)
-				};
-			if(tools.getSessionDirectory()!=null)
-			{
-				parameterMap.output_directory = tools.getSessionDirectory();
-			}
-			else
-			{
-				parameterMap.output_directory = theMaster.__file.substring(0,theMaster.__file.lastIndexOf('/'));
-			}
-			fileBrowser.getActions().launchAction(parameterMap, callback);
-			*/
-		},
-		
-		
-		
         // XML writer with attributes and smart attribute quote escaping
 		/*
 			Format a dictionary of attributes into a string suitable
@@ -448,23 +320,9 @@ this.debug("------->>>   theMaster.__saveWindows : function()   !!!!!!!");
 			return xml;
 		}
 		
-		
-		
-		
-		
 		// add the "add oriented view" function  usable by the volView instances and the segTools windows !!!
-		
-		
-		
-		
-		
-		
+
 	} //// END of   members :
-	
-	
-	
-	
-	
-	
+
 	
 }); //// END of   qx.Class.define("desk.volMaster",

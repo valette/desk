@@ -37,7 +37,6 @@ qx.Class.define("desk.sliceView",
 //		this.__window.setCaption(file);
 		this.__window.setCaption(""+orientation);
 
-		this.__createSeedsLists();
 		this.__createUI();
 
 /*		// drag and drop support
@@ -65,8 +64,8 @@ qx.Class.define("desk.sliceView",
 	},
 
 	properties : {
+		currentSlice : { init : 0, check: "Number", event : "changeCurrentSlice"},
 		paintOpacity : { init : 1, check: "Number", event : "changePaintOpacity"},
-		seedsType : { init : 0, check: "Number", event : "changeSeedsType"},
 		orientation : { init : -1, check: "Number", event : "changeOrientation"},
 		ready : { init : false, check: "Boolean", event : "changeReady"},
 		paintMode : { init : false, check: "Boolean"}
@@ -104,9 +103,11 @@ qx.Class.define("desk.sliceView",
 
 		__drawingCanvas : null,
 
-		__seedsLists : null,
 		__drawingCanvasModified : false,
-		__oldSliceIndex : null,
+
+		getWindow : function () {
+			return this.__window;
+		},
 
 		getDrawingCanvas : function () {
 			return this.__drawingCanvas;
@@ -130,10 +131,6 @@ qx.Class.define("desk.sliceView",
 
 		setPaintWidth : function (width) {
 			this.__paintWidth=width;
-		},
-
-		getSeedsLists : function () {
-			return (this.__seedsLists);
 		},
 
 		render : function ( ) {
@@ -550,119 +547,6 @@ qx.Class.define("desk.sliceView",
 			return this.__slider;
 		},
 
-		__createSeedsLists : function()
-		{
-			var volView = this;
-			var tools = this.__master.getTools();
-			var theMaster = this.__master;
-			var volFile = this.__file;
-
-			var fileBrowser = this.__fileBrowser;
-
-			// create seeds list
-			var seedsList=new qx.ui.form.List();
-			seedsList.setWidth(30);
-			seedsList.setScrollbarY("off");
-			this.__window.add(seedsList);
-			seedsList.setVisibility("excluded");
-
-			// create corrections list
-			var correctionsList=new qx.ui.form.List();
-			correctionsList.setWidth(30);
-			correctionsList.setScrollbarY("off");
-			this.__window.add(correctionsList);
-			correctionsList.setVisibility("excluded");
-
-			seedsList.addListener("removeItem", function(event) {
-				if (seedsList.getChildren().length==0)
-					tools.__startSegmentationButton.setEnabled(false);
-				}, this);
-
-			seedsList.addListener("addItem", function(event) {
-			//	tools.__startSegmentationButton.setEnabled(true);
-				}, this);
-
-			var keyPressHandler = function(event)
-			{
-
-				if(event.getKeyIdentifier()=="Delete")
-				{
-					var selectedChild = this.getSelection()[0];
-					if (selectedChild!=null)
-					{
-						var sliceId = selectedChild.getUserData("slice");
-					////Erase image on the server
-						theMaster.__eraseFile(tools.getSessionDirectory()+"/"+volView.__getSeedFileName(sliceId));
-						tools.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsArray")[volView.__display.orientation][sliceId]=0;
-						volView.__clearDrawingCanvas();
-						this.remove(selectedChild); //  this  : the given List (see below)
-						theMaster.__saveSeedsXML();
-					}
-				}
-			};
-			seedsList.addListener("keypress", keyPressHandler, seedsList);
-			correctionsList.addListener("keypress", keyPressHandler, correctionsList);
-
-			this.addListener("changeSeedsType", function (e) {
-				if (e.getData()=="0")
-				{
-					seedsList.setVisibility("visible");
-					correctionsList.setVisibility("excluded");
-				}
-				else
-				{
-					seedsList.setVisibility("excluded");
-					correctionsList.setVisibility("visible");
-				}
-			});
-
-			var createdLists = [];
-			createdLists[0] = seedsList;
-			createdLists[1] = correctionsList;
-			this.__seedsLists=createdLists;
-			return createdLists;
-		},
-
-		resetSeedsLists : function () {
-			for(var i=0;i<2;i++)
-			{
-				var numberOfSlices=this.getVolumeSliceToPaint().getNumberOfSlices();
-				var seedsArray = new Array(numberOfSlices);
-				var cacheTagsArray = new Array(numberOfSlices);
-				for (var j=0;j!=numberOfSlices;j++)
-				{
-					seedsArray[j]=Math.random();
-					cacheTagsArray[j]=0;
-				}
-				var list=this.__seedsLists[i];
-				list.setUserData("seedsArray", seedsArray);
-				list.setUserData("cacheTags", cacheTagsArray);
-			}
-		},
-
-		addNewSeedItemToList : function (sliceId, seedsType)
-		{
-			var sliceItem = new qx.ui.form.ListItem(""+ sliceId);
-			sliceItem.setUserData("slice",sliceId);
-			sliceItem.addListener("click", function(event)
-			{
-				this.__spinner.setValue(event.getTarget().getUserData("slice"));
-			}, this);
-
-			if (seedsType==null)
-				seedsType=this.getSeedsType();
-			var seedsList = this.__seedsLists[seedsType];
-			var seeds = seedsList.getChildren();
-			var tempPos = 0;
-
-			for(var i=0; i<seeds.length; i++)
-			{
-				if(seeds[i].getUserData("slice")>sliceId)
-					tempPos++;
-			}
-			seedsList.addAt(sliceItem, tempPos);
-		},
-
 		__getBrightnessContrastButton : function () {
 			////Create brightness/contrast fixing on/off button
 			var button = new qx.ui.form.Button(null, "desk/Contrast_Logo_petit.PNG");
@@ -715,58 +599,6 @@ qx.Class.define("desk.sliceView",
 				clicked=false;
 			}, this);
 			return button;
-		},
-
-		getCurrentSeedFileName : function(sliceId, seedType)
-		{			
-			var filePrefix;
-			if (seedType==0) {
-				filePrefix = "seed";
-			}
-			else {
-				filePrefix = "correction";
-			}
-
-			var offset=this.getVolumeSliceToPaint().getSlicesIdOffset();
-
-			switch(this.getOrientation())
-			{
-				// ZY X
-				case 1 :
-					return filePrefix +"ZY"+(offset + sliceId) +".png";
-					break;
-				// XZ Y
-				case 2 :
-					return filePrefix +"XZ"+(offset + sliceId) +".png";
-					break;
-				// XY Z
-				default :
-					return filePrefix +"XY"+(offset + sliceId) +".png";
-			}
-		},
-
-		__getSeedsLists : function(key,seedsTypeListItem)
-		{
-//~ this.debug("------->>>   volView.__getSeedsLists : function()   !!!!!!!");
-
-			var volView = this;
-			
-			var seedsList = null;
-			var seedsTypeSelectBox = volView.__master.__tools.__seedsTypeSelectBox;
-			if(seedsTypeSelectBox!=null)
-			{
-				var mySeedsTypeListItem = null;
-				if(seedsTypeListItem!=null)
-					mySeedsTypeListItem = seedsTypeListItem;
-				else
-					mySeedsTypeListItem = seedsTypeSelectBox.getSelection()[0];
-				if(mySeedsTypeListItem!=null)
-				{
-					seedsList = mySeedsTypeListItem.getUserData(key)[volView.getUserData("viewerIndex")];
-				}
-			}
-			
-			return seedsList;
 		},
 
 		__createUI : function (file) {
@@ -825,6 +657,9 @@ qx.Class.define("desk.sliceView",
 			spinner.addListener("changeValue",function(e){
 				slider.setValue(this.getVolumeSliceToPaint().getNumberOfSlices()-1-e.getData());
 				}, this);		
+
+			spinner.bind ("value", this, "currentSlice");
+			this.bind ("currentSlice", spinner, "value");
 
 			leftContainer.add(slider, {flex : 1});
 

@@ -49,9 +49,8 @@ qx.Class.define("desk.segTools",
 
 		var _this=this;
 		master.applyToViewers( function (viewer) {
-			var theViewer=viewer;
-			viewer.getSlider().addListener("changeValue", function () {
-				_this.__getSeedsImage(theViewer);
+			viewer.addListener("changeCurrentSlice", function () {
+				_this.__getSeedsImage(viewer);
 				});
 			});
 	//// Return the tools window aka : this
@@ -59,11 +58,19 @@ qx.Class.define("desk.segTools",
 
 	},
 
+	constants : {
+		filePrefixes : ["seed","correction"],
+		seedsListsString : "seedsLists",
+		seedsArrayString : "seedsArray",
+		cacheTagsArrayString : "cacheTagsArray"
+	},
+
 	events : {
 	},
 
 	properties : {
-		sessionDirectory : { init : null, event : "changeSessionDirectory"}
+		sessionDirectory : { init : null, event : "changeSessionDirectory"},
+		seedsType : { init : 0, check: "Number", event : "changeSeedsType"}
 	},
 
 	members :
@@ -88,7 +95,7 @@ qx.Class.define("desk.segTools",
 		
 		__seedsTypeSelectBox : null,
 		
-
+		__startSegmentationButton : null,
 
 // Tableau contenant les couleurs des seeds
          __labelColors : null,
@@ -114,11 +121,8 @@ qx.Class.define("desk.segTools",
 		
 		__settingButtons : false,
 
-		__applyToViewers : function (theFunction) {
-			var viewers=this.__master.getViewers();
-			for (var i=0;i<viewers.length;i++) {
-				theFunction (viewers[i]);
-			}
+		saveAllseeds : function () {
+				//ssss
 		},
 
 		__buildRightContainer : function()
@@ -159,7 +163,7 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 			
             this.__penSize.addListener("changeValue", function(event)
 			{
-					this.__applyToViewers(function (viewer) {
+					this.__master.applyToViewers(function (viewer) {
 						viewer.setPaintWidth(event.getData());
 					});
 				}, this);
@@ -174,7 +178,7 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 			
 			tools.__eraserButton.addListener("changeValue", function(event)
 			{
-				this.__applyToViewers(function (viewer) {
+				this.__master.applyToViewers(function (viewer) {
 					viewer.setEraseMode(event.getData());
 					});
 				}, this);
@@ -203,17 +207,12 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
             tabView.add(paintPage);
 			tabView.setVisibility("excluded");
 
-			//~ /*
-			var sessionWdgt = tools.__getSessionsWidget(); //~ resizing
-			//~ sessionWdgt.setHeight(tools.__curView.__mainLeftContainer.getChildren()[0].getBounds().height); //~ resizing
-			//~ tools.__mainRightContainer.add(tools.__getSessionsWidget());
-			tools.__mainRightContainer.add(sessionWdgt); //~ resizing
-			// go see 
-			//~ */
+			var sessionWdgt = tools.__getSessionsWidget();
+			this.__addSeedsListsToViews();
+			tools.__mainRightContainer.add(sessionWdgt);
 			
 			tools.__mainRightContainer.add(tools.__mainBottomRightContainer, {flex : 1}); //~ resizing
 
-			//~ tools.__mainRightContainer.add(tabView);
 			tools.__mainBottomRightContainer.add(tabView); //~ resizing
 			
 		////Function creates one label box
@@ -273,7 +272,7 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 						paint=false
 					}
 
-					tools.__applyToViewers( function (viewer) {
+					tools.__master.applyToViewers( function (viewer) {
 						viewer.setPaintColor(colorBox.getBackgroundColor());
 						viewer.setPaintMode(paint);
 						});
@@ -382,7 +381,7 @@ tools.debug("639 : colorsParamRequest -> response : " + response);
 			whileDrawingDrwngOpacitySlider.setValue(100);
 			whileDrawingDrwngOpacitySlider.addListener("changeValue", function(event)
 			{
-				this.__applyToViewers(function (viewer) {
+				this.__master.applyToViewers(function (viewer) {
 					viewer.setPaintOpacity(event.getData()/100);
 					});
 			},this);
@@ -565,7 +564,70 @@ tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 			}, this);
 			return paintPaneVisibilitySwitch;
 		},
-		
+
+		loadSession : function()
+		{
+			var seedsType=this.getSeedsType()
+			this.setSeedsType(1-seedsType);
+			this.setSeedsType(seedsType);
+	
+			this.__clearSeeds();
+			var master=this.__master;
+			var _this=this;
+
+			var loadSessionRequest = new XMLHttpRequest();
+			
+			loadSessionRequest.onreadystatechange = function()
+			{
+				 if(this.readyState == 4 && this.status == 200)
+				 {
+					// so far so good
+					if(this.responseXML!=null)
+					{
+						var response = this.responseXML;
+						for (var k=0;k<2;k++)
+						{
+							var slices;
+							if (k==0) {
+								slices=response.getElementsByTagName("seed");
+							}
+							else {
+								slices=response.getElementsByTagName("correction");
+							}
+
+							for(var j=0; j<slices.length; j++) {
+								var sliceId = parseInt(slices[j].getAttribute("slice"),10);
+								var sliceOrientation;
+								if (slices[j].hasAttribute("orientation")){
+									sliceOrientation = parseInt(slices[j].getAttribute("orientation"),10);
+								}
+								else {
+									sliceOrientation = 0;
+								}
+								master.applyToViewers ( function (sliceView) {
+									if(sliceOrientation==sliceView.getOrientation())
+										_this.__addNewSeedItemToList(sliceView, sliceId, k);
+									});
+							}
+						}
+					}
+					else
+					{
+						alert("no seeds found");
+					}
+				}
+				else if (this.readyState == 4 && this.status != 200)
+				{
+					alert("no seeds found");
+				}
+			};
+
+			loadSessionRequest.open("GET",
+				this.__fileBrowser.getFileURL(
+					this.__tools.getSessionDirectory()+"/seeds.xml?nocache="+Math.random()), true);
+			loadSessionRequest.send(null);
+		},
+
 		__getSessionsWidget : function()
 		{
 this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
@@ -622,7 +684,6 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 						tools.__tabView.setVisibility("visible");
 						tools.setSessionDirectory(fileBrowser.getSessionDirectory(
 							volFile,sessionType,sessionIdToSelect));
-			//~ tools.debug(" 857 : __getSessionsWidget : theMaster.__saveSeedsXML(); !");
 						theMaster.__saveSeedsXML();
 					}
 					else
@@ -635,7 +696,6 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 			
 			sessionsList.addListener("changeSelection", function(e)
 			{
-//~ tools.debug("1007 : >>>>>>>  sessionsList.addListener(changeSelection, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				if (!updateInProgress)
 				{
 					var listItem=sessionsList.getSelection()[0];
@@ -644,14 +704,13 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 						tools.__tabView.setVisibility("visible");
 						tools.setSessionDirectory(fileBrowser.getSessionDirectory(
 							volFile,sessionType,listItem.getLabel()));
-						theMaster.loadSession();
+						tools.loadSession();
 					}
 					sessionsList.close();
 				}
 			});
 
 			button.addListener("execute", function (e){
-//~ tools.debug("1025 : >>>>>>>  button.addListener(execute, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				theMaster.__resetSeedsList();
 				theMaster.__updateAll();
 				fileBrowser.createNewSession(volFile,sessionType, updateList);
@@ -670,22 +729,22 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 			var selectBox = new qx.ui.form.SelectBox();
 
 			var seedsItem = new qx.ui.form.ListItem("seeds");
-			seedsItem.setUserData("filePrefix", "seed");
 			seedsItem.setUserData("seedsType", 0);
 			selectBox.add(seedsItem);
 
 			var correctionsItem = new qx.ui.form.ListItem("corrections");
-			correctionsItem.setUserData("filePrefix", "correction");
 			correctionsItem.setUserData("seedsType", 1);
 			selectBox.add(correctionsItem);
 
 			selectBox.addListener("changeSelection",function (e)
 			{
-				this.__applyToViewers(function (viewer) {
-					viewer.setSeedsType(selectBox.getSelection()[0].getUserData("seedsType"));
+				var newSeedsType=selectBox.getSelection()[0].getUserData("seedsType");
+				this.__master.applyToViewers(function (viewer) {
+					var seedsLists=viewer.getUserData(desk.segTools.seedsListsString);
+					seedsLists[newSeedsType].setVisibility("visible");
+					seedsLists[1-newSeedsType].setVisibility("excluded");
 					});
 			},this);
-			tools.__seedsTypeSelectBox = selectBox;
 			return selectBox;
 		},
 
@@ -782,19 +841,149 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 
 			sliceView.setDrawingCanvasNotModified();
 			return false;
-		}
+		},
 
-		
-		
-		
-		
-		
+		__addSeedsListsToViews : function ( ) {
+			var _this=this;
+			this.__master.applyToViewers ( function (sliceView) {
+				_this.__addSeedsLists ( sliceView );
+			});		
+		},
+
+		__addSeedsLists : function( sliceView )
+		{
+			var _this=this;
+			var master = this.__master;
+
+			// create seeds list
+			var seedsList=new qx.ui.form.List();
+			seedsList.setWidth(30);
+			seedsList.setScrollbarY("off");
+			sliceView.getWindow().add(seedsList);
+			seedsList.setVisibility("excluded");
+
+			// create corrections list
+			var correctionsList=new qx.ui.form.List();
+			correctionsList.setWidth(30);
+			correctionsList.setScrollbarY("off");
+			sliceView.getWindow().add(correctionsList);
+			correctionsList.setVisibility("excluded");
+
+			var lists=[];
+			lists.push(seedsList);
+			lists.push(correctionsList);
+			sliceView.setUserData(desk.segTools.seedsListsString, lists);
+
+			seedsList.addListener("removeItem", function(event) {
+				if (seedsList.getChildren().length==0)
+					_this.__startSegmentationButton.setEnabled(false);
+				}, this);
+
+			seedsList.addListener("addItem", function(event) {
+			//	_this.__startSegmentationButton.setEnabled(true);
+				}, this);
+
+			var keyPressHandler = function(event)
+			{
+
+				if(event.getKeyIdentifier()=="Delete") {
+			/*		var selectedChild = this.getSelection()[0];
+					if (selectedChild!=null) {
+						var sliceId = selectedChild.getUserData("slice");
+					////Erase image on the server
+						master.__eraseFile(_this.getSessionDirectory()+"/"+_this.__getSeedFileName(sliceId));
+						_this.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsArray")[sliceView.getOrientation()][sliceId]=0;
+						sliceView.clearDrawingCanvas();
+						this.remove(selectedChild); //  this  : the given List (see below)
+						theMaster.__saveSeedsXML();
+					}*/
+				}
+			};
+			seedsList.addListener("keypress", keyPressHandler, seedsList);
+			correctionsList.addListener("keypress", keyPressHandler, correctionsList);
+
+			this.addListener("changeSeedsType", function (e) {
+				if (e.getData()=="0")
+				{
+					seedsList.setVisibility("visible");
+					correctionsList.setVisibility("excluded");
+				}
+				else
+				{
+					seedsList.setVisibility("excluded");
+					correctionsList.setVisibility("visible");
+				}
+			});
+		},
+
+		__clearSeeds : function ( ) {
+			this.__master.applyToViewers ( function (sliceView) {
+				var seedsLists=sliceView.getUserData(desk.segTools.seedsListsString);
+				for (var i=0;i<2;i++)
+				{
+					var numberOfSlices=sliceView.getVolumeSliceToPaint().getNumberOfSlices();
+					var seedsArray = [];
+					var cacheTagsArray = [];
+					for (var j=0;j!=numberOfSlices;j++)
+					{
+						seedsArray[j]=Math.random();
+						cacheTagsArray[j]=0;
+					}
+					seedsLists[i].removeAll();
+					seedsLists[i].setUserData(desk.segTools.seedsArrayString, seedsArray);
+					seedsLists[i].setUserData(desk.segTools.cacheTagsArrayString, cacheTagsArray);
+				}
+			});
+		},
+
+
+		__addNewSeedItemToList : function ( sliceView, sliceId, seedsType )
+		{
+			var sliceItem = new qx.ui.form.ListItem(""+ sliceId);
+			sliceItem.setUserData("slice",sliceId);
+			sliceItem.addListener("click", function(event) {
+				sliceView.setCurrentSlice(event.getTarget().getUserData("slice"));
+			});
+
+			var seedsList = sliceView.getUserData(desk.segTools.seedsListsString)[seedsType];
+			var seeds = seedsList.getChildren();
+			var tempPos = 0;
+
+			for(var i=0; i<seeds.length; i++)
+			{
+				if(seeds[i].getUserData("slice")>sliceId)
+					tempPos++;
+			}
+
+			seedsList.addAt(sliceItem, tempPos);
+		},
+
+		__getSeedFileName : function(sliceView, sliceId, seedType) {			
+			var filePrefix;
+			if (seedType==0) {
+				filePrefix = "seed";
+			}
+			else {
+				filePrefix = "correction";
+			}
+
+			var offset=this.getVolumeSliceToPaint().getSlicesIdOffset();
+
+			switch(sliceView.getOrientation())
+			{
+				// ZY X
+				case 1 :
+					return filePrefix +"ZY"+(offset + sliceId) +".png";
+					break;
+				// XZ Y
+				case 2 :
+					return filePrefix +"XZ"+(offset + sliceId) +".png";
+					break;
+				// XY Z
+				default :
+					return filePrefix +"XY"+(offset + sliceId) +".png";
+			}
+		}
 	} //// END of   members :
-	
-	
-	
-	
-	
-	
-	
+
 }); //// END of   qx.Class.define("desk.segTools",
