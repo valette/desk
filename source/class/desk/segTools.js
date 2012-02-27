@@ -45,14 +45,17 @@ qx.Class.define("desk.segTools",
 //		this.__curView = this.__master.__viewers[0];
 		
 	//// Fill window with the tools widgets
+
 		this.__buildRightContainer();
 
+
 		var _this=this;
-		master.applyToViewers( function (viewer) {
-			viewer.addListener("changeSlice", function () {
+		master.applyToViewers( function (sliceView) {
+			sliceView.addListener("changeSlice", function ( event ) {
 				_this.__saveCurrentSeeds();
-				});
+				_this.__reloadSeedImage( sliceView );
 			});
+		});
 	//// Return the tools window aka : this
 		return (this);
 
@@ -123,6 +126,38 @@ qx.Class.define("desk.segTools",
 
 		saveAllseeds : function () {
 				//ssss
+		},
+
+		__reloadSeedImage : function (sliceView) {
+			if (this.getSessionDirectory()==null)
+				return;
+			var _this=this;
+			var canvas=sliceView.getDrawingCanvas();
+			var width=canvas.getCanvasWidth()
+			var height=canvas.getCanvasHeight()
+
+			var context=canvas.getContext2d();
+			context.clearRect(0, 0, width, height);
+			var seedsType=_this.getSeedsType();
+			var seedsList=sliceView.getUserData(desk.segTools.seedsListsString)[seedsType];
+			var seedsArray=seedsList.getUserData(desk.segTools.seedsArrayString);
+			var cacheTagsArray=seedsList.getUserData(desk.segTools.cacheTagsArrayString);
+			var sliceId=sliceView.getSlice();
+
+			if (seedsArray[sliceId]!=0) {
+				console.log("seeds for type "+seedsType);
+				var imageLoader= new Image();
+				imageLoader.onload=function(){
+					context.drawImage(imageLoader, 0, 0);
+					sliceView.fireEvent("changeDrawing");
+				}
+				imageLoader.src=_this.__fileBrowser.getFileURL(_this.getSessionDirectory())+"/"+
+								_this.__getSeedFileName ( sliceView, sliceId, seedsType);
+			}
+			else {
+				console.log("no seeds for type "+seedsType);
+				sliceView.fireEvent("changeDrawing");
+			}
 		},
 
 		__buildRightContainer : function()
@@ -567,10 +602,6 @@ tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 
 		loadSession : function()
 		{
-			var seedsType=this.getSeedsType()
-			this.setSeedsType(1-seedsType);
-			this.setSeedsType(seedsType);
-	
 			this.__clearSeeds();
 			var master=this.__master;
 			var _this=this;
@@ -720,6 +751,8 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 		},
 
 		__saveCurrentSeeds : function() {
+			if (this.getSessionDirectory()==null)
+				return;
         	var wasAnySeedModified=false;
         	var _this=this;
 			this.__master.applyToViewers ( function ( sliceView ) {
@@ -877,10 +910,9 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 
 		__getSeedsTypeSelectBox : function()
 		{
-			var tools = this;
-			var theMaster = tools.__master;
-			var volFile = tools.__file;
-			var fileBrowser = tools.__fileBrowser;
+			var theMaster = this.__master;
+			var volFile = this.__file;
+			var fileBrowser = this.__fileBrowser;
 			var selectBox = new qx.ui.form.SelectBox();
 
 			var seedsItem = new qx.ui.form.ListItem("seeds");
@@ -891,14 +923,21 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 			correctionsItem.setUserData("seedsType", 1);
 			selectBox.add(correctionsItem);
 
-			selectBox.addListener("changeSelection",function (e){
+			var _this=this;
+
+			function updateSeedsListsVisibility (e) {
 				var newSeedsType=selectBox.getSelection()[0].getUserData("seedsType");
-				this.__master.applyToViewers(function (viewer) {
-					var seedsLists=viewer.getUserData(desk.segTools.seedsListsString);
+				_this.setSeedsType(newSeedsType);
+				_this.__master.applyToViewers(function ( sliceView ) {
+					var seedsLists=sliceView.getUserData(desk.segTools.seedsListsString);
 					seedsLists[newSeedsType].setVisibility("visible");
 					seedsLists[1-newSeedsType].setVisibility("excluded");
+					_this.__reloadSeedImage (sliceView);
 					});
-			},this);
+			}
+
+			selectBox.addListener("changeSelection",updateSeedsListsVisibility);
+			updateSeedsListsVisibility();
 			return selectBox;
 		},
 
@@ -1041,17 +1080,6 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 			};
 			seedsList.addListener("keypress", keyPressHandler, seedsList);
 			correctionsList.addListener("keypress", keyPressHandler, correctionsList);
-
-			this.addListener("changeSeedsType", function (e) {
-				if (e.getData()=="0") {
-					seedsList.setVisibility("visible");
-					correctionsList.setVisibility("excluded");
-				}
-				else {
-					seedsList.setVisibility("excluded");
-					correctionsList.setVisibility("visible");
-				}
-			});
 		},
 
 		__clearSeeds : function ( ) {
@@ -1064,8 +1092,8 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 					var cacheTagsArray = [];
 					for (var j=0;j!=numberOfSlices;j++)
 					{
-						seedsArray[j]=Math.random();
-						cacheTagsArray[j]=0;
+						seedsArray[j]=0;
+						cacheTagsArray[j]=Math.random();
 					}
 					seedsLists[i].removeAll();
 					seedsLists[i].setUserData(desk.segTools.seedsArrayString, seedsArray);
@@ -1076,6 +1104,7 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 
 		__addNewSeedItemToList : function ( sliceView, sliceId, seedsType )
 		{
+			console.log("added slice "+sliceId+" of type "+seedsType);
 			var sliceItem = new qx.ui.form.ListItem(""+ sliceId);
 			sliceItem.setUserData("slice",sliceId);
 			sliceItem.addListener("click", function(event) {
@@ -1093,6 +1122,7 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 			}
 
 			seedsList.addAt(sliceItem, tempPos);
+			seedsList.getUserData(desk.segTools.seedsArrayString)[sliceId]=sliceItem;
 		},
 
 		__getSeedFileName : function(sliceView, sliceId, seedType) {			

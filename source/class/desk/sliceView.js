@@ -39,6 +39,10 @@ qx.Class.define("desk.sliceView",
 
 		this.__createUI();
 
+		this.__drawingCanvas = new qx.ui.embed.Canvas().set({
+			syncDimension: true
+		});
+
 /*		// drag and drop support
 		this.setDraggable(true);
 		this.addListener("dragstart", function(e) {
@@ -170,12 +174,11 @@ qx.Class.define("desk.sliceView",
 			var width=canvas.getCanvasWidth();
 			var height=canvas.getCanvasHeight();
 
-			this.__drawingCanvas = new qx.ui.embed.Canvas().set({
+			this.__drawingCanvas.set({
 				canvasWidth: width,
 				canvasHeight: height,
 				width: width,
-				height: height,
-				syncDimension: true
+				height: height
 			});
 
 			var length=width*height*4;
@@ -471,7 +474,7 @@ qx.Class.define("desk.sliceView",
 									}
 								});
 						}
-						
+
 						break;
 					case 1:
 						var context=_this.__drawingCanvas.getContext2d();
@@ -604,7 +607,7 @@ qx.Class.define("desk.sliceView",
 
 		__createUI : function (file) {
 			this.__window.add(this.__getRenderWindow(), {flex : 1});
-			var rightContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
+			var rightContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox());
 			this.__rightContainer=rightContainer;
 
 			var _this=this;
