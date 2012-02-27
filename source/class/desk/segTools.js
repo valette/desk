@@ -146,15 +146,18 @@ qx.Class.define("desk.segTools",
 
 			if (seedsArray[sliceId]!=0) {
 				var imageLoader= new Image();
+				seedsList.setSelection([seedsArray[sliceId]]);
 				imageLoader.onload=function(){
 					context.drawImage(imageLoader, 0, 0);
 					sliceView.fireEvent("changeDrawing");
+					imageLoader.onload=0;
 				}
 				imageLoader.src=_this.__fileBrowser.getFileURL(_this.getSessionDirectory())+"/"+
 								_this.__getSeedFileName ( sliceView, sliceId, seedsType)+"?nocache="+
 								cacheTagsArray[sliceId];
 			}
 			else {
+				seedsList.resetSelection();
 				sliceView.fireEvent("changeDrawing");
 			}
 		},
