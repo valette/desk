@@ -84,7 +84,7 @@ qx.Class.define("desk.sliceView",
 
 		__fileFormatBox : null,
 
-		__mainLeftContainer : null,
+		__rightContainer : null,
 
 		__window :null,
 
@@ -260,7 +260,8 @@ qx.Class.define("desk.sliceView",
 											0.5*(coordinates[3]+coordinates[5]),
 											0);
 				_this.__controls.target.copy(_this.__camera.position);
-				_this.__camera.position.setZ(_this.__camera.position.z+(coordinates[2]-coordinates[0]));
+				_this.__camera.position.setZ(_this.__camera.position.z+
+								volumeSlice.getBoundingBoxDiagonalLength()*0.6);
 
 				var canvas=volumeSlice.getImageCanvas();
 		    	
@@ -603,18 +604,18 @@ qx.Class.define("desk.sliceView",
 
 		__createUI : function (file) {
 			this.__window.add(this.__getRenderWindow(), {flex : 1});
-			var leftContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
-			this.__mainLeftContainer=leftContainer;
+			var rightContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
+			this.__rightContainer=rightContainer;
 
 			var _this=this;
 
 			if (this.__master.isToolsReady())
 			{
-				leftContainer.add(_this.__master.getTools().getPaintPanelVisibilitySwitch());			}
+				rightContainer.add(_this.__master.getTools().getPaintPanelVisibilitySwitch());			}
 			else
 			{
 				this.__master.addListenerOnce("changeToolsReady", function () {
-					leftContainer.add(
+					rightContainer.add(
 						_this.__master.getTools().getPaintPanelVisibilitySwitch());					
 					});
 			}
@@ -633,7 +634,7 @@ qx.Class.define("desk.sliceView",
 				} 
 			},this)*/
 
-			leftContainer.add(this.__getBrightnessContrastButton());
+			rightContainer.add(this.__getBrightnessContrastButton());
 
 			////Create spinner and sync it with the slider
 			var spinner = new qx.ui.form.Spinner();
@@ -641,7 +642,7 @@ qx.Class.define("desk.sliceView",
 			spinner.setMaximum(10000000);
 			spinner.setMinimum(0);
 			spinner.setValue(0);
-			leftContainer.add(spinner);
+			rightContainer.add(spinner);
 			
 			var slider=new qx.ui.form.Slider();
 			this.__slider=slider;
@@ -661,7 +662,7 @@ qx.Class.define("desk.sliceView",
 			spinner.bind ("value", this, "currentSlice");
 			this.bind ("currentSlice", spinner, "value");
 
-			leftContainer.add(slider, {flex : 1});
+			rightContainer.add(slider, {flex : 1});
 
 			this.__fileFormatBox = new qx.ui.form.SelectBox();
 			this.__fileFormatBox.setWidth(30);
@@ -669,9 +670,9 @@ qx.Class.define("desk.sliceView",
 			this.__fileFormatBox.add(SelectJPG);
 //			var SelectPNG = new qx.ui.form.ListItem("png");
 //			this.__fileFormatBox.add(SelectPNG);
-			leftContainer.add(this.__fileFormatBox);
+			rightContainer.add(this.__fileFormatBox);
 
-			this.__window.add(leftContainer);
+			this.__window.add(rightContainer);
 		}
 	}
 });

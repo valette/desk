@@ -137,6 +137,18 @@ qx.Class.define("desk.volumeSlice",
 			return (coordinates);
 		},
 
+		getBoundingBoxDiagonalLength : function () {
+			var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
+			var xmax=this.__origin[0]+this.__extent[1]*this.__spacing[0];
+			var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
+			var ymax=this.__origin[1]+this.__extent[3]*this.__spacing[1];
+			var zmin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
+			var zmax=this.__origin[2]+this.__extent[5]*this.__spacing[2];
+			return Math.sqrt((xmax-xmin)*(xmax-xmin)+
+								(ymax-ymin)*(ymax-ymin)+
+								(zmax-zmin)*(zmax-zmin));
+		},
+
 		get2DDimensions: function () {
 			var dims=[];
 switch(this.getOrientation())
