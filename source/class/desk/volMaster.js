@@ -14,38 +14,21 @@ qx.Class.define("desk.volMaster",
             qx.log.appender.Console;
         }
 
-    ////Global variables
-		
 		this.__file = globalFile;
-		
+
 		this.__fileBrowser = globalFileBrowser;
-		
-		
-		//~ var Z_xy_viewer = new desk.volView__classTest(this, globalFile, globalFileBrowser, 0);
-		//~ var X_zy_viewer = new desk.volView__classTest(this, globalFile, globalFileBrowser, 1);
-		//~ var Y_xz_viewer = new desk.volView__classTest(this, globalFile, globalFileBrowser, 2);
-		
-		//~ orion test : launch the 3 views at once ! ! !
 
 		this.__createVolumesList();
 
 		this.__viewers = [];
 		this.__nbUsedOrientations = 3;
 		this.addVolume(globalFile);
-		
+
 		this.__tools = new desk.segTools(this, globalFile, globalFileBrowser);;	
 		this.setToolsReady(true);	
-		
-	//// MUST return the first volView__classTest instance !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		//~ return (Z_xy_viewer);
+
 		return (this.__viewers); //~ orion test : launch the 3 views at once ! ! !
 
-	},
-
-	events : {
-		// add the "add oriented view" event!
-		
-		//add the "change viewer" event !
 	},
 
 	properties : {
@@ -177,63 +160,6 @@ this.debug("------->>>   theMaster.__updateSeeds : function()   !!!!!!!");
 			
 		},
 
-		////Rewrite xml list of the drawn seeds
-		__saveSeedsXML : function(callback)
-        {
-this.debug("------->>>   theMaster.__saveSeedsXML : function(callback)   !!!!!!!");
-
-			var theMaster = this;
-			
-			var tools = theMaster.__tools;
-			
-			var fileBrowser = theMaster.__fileBrowser;
-			
-			
-			var xmlContent = '\n';
-			var colors='\n';
-			for(var i=0; i<tools.__labelColors.length; i++)
-			{
-				colors+=theMaster.__element('color',null, tools.__labelColors[i]);
-			}
-			xmlContent+=theMaster.__element('colors', colors)+"\n";
-
-			console.log("implement xml seeds save!!!!");
-/*			var seedsTypeItems=tools.__seedsTypeSelectBox.getChildren();
-
-			for (var k=0;k<seedsTypeItems.length;k++)
-			{
-				var item=seedsTypeItems[k];
-				
-				for(var orionCount=0; orionCount<theMaster.__nbUsedOrientations; orionCount++)
-				{
-							var seedsList = item.getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")];
-						if(seedsList!=null)
-						{
-		//~ theMaster.debug("345 : seedsList.length : " + seedsList.length);
-							var filePrefix=item.getUserData("filePrefix");
-		//~ theMaster.debug("347 : filePrefix : " + filePrefix);
-							var slices=seedsList.getChildren();
-							for(var j=0; j<slices.length; j++)
-							{
-								var sliceId=slices[j].getUserData("slice");
-		//~ theMaster.debug("352 : sliceId : " + sliceId);
-								var sliceAttributes = {slice: sliceId + "", orientation: orionCount + ""};
-								xmlContent += theMaster.__element(filePrefix, theMaster.__viewers[i].__getSeedFileName(sliceId, item), sliceAttributes) + '\n';
-							}
-						}
-				}
-			}
-
-//~ theMaster.debug("363 : .getSessionDirectory() !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-			var parameterMap={
-				"action" : "save_xml_file",
-				"file_name" : "seeds.xml",
-				"xmlData" : theMaster.__element('seeds', xmlContent),
-				"output_directory" : tools.getSessionDirectory()};
-
-			fileBrowser.getActions().launchAction(parameterMap, callback);*/
-		},
-		
 		////Use a php file to remove the specified file in the server
 		__eraseFile : function(file)
         {
@@ -251,77 +177,7 @@ this.debug("------->>>   theMaster.__eraseFile : function()   !!!!!!!");
 				"file_name" : file};
 
 			theMaster.__fileBrowser.getActions().launchAction(parameterMap);
-		},
-		
-		
-        // XML writer with attributes and smart attribute quote escaping
-		/*
-			Format a dictionary of attributes into a string suitable
-			for inserting into the start tag of an element.  Be smart
-		   about escaping embedded quotes in the attribute values.
-		*/
-		__formatAttributes : function (attributes)
-		{
-			var APOS = "'";
-			var QUOTE = '"';
-			var ESCAPED_QUOTE = {  };
-			ESCAPED_QUOTE[QUOTE] = '&quot;';
-			ESCAPED_QUOTE[APOS] = '&apos;';
-			var att_value;
-			var apos_pos, quot_pos;
-			var use_quote, escape, quote_to_escape;
-			var att_str;
-			var re;
-			var result = '';
-			for (var att in attributes) {
-				att_value = attributes[att];
-				// Find first quote marks if any
-				apos_pos = att_value.indexOf(APOS);
-				quot_pos = att_value.indexOf(QUOTE);
-				// Determine which quote type to use around 
-				// the attribute value
-				if (apos_pos == -1 && quot_pos == -1) {
-					att_str = ' ' + att + "='" + att_value +  "'";	//	use single quotes for attributes
-					att_str = ' ' + att + '="' + att_value +  '"';	//	use double quotes for attributes
-					result += att_str;
-					continue;
-				}
-				// Prefer the single quote unless forced to use double
-				if (quot_pos != -1 && quot_pos < apos_pos) {
-					use_quote = APOS;
-				}
-				else {
-					use_quote = QUOTE;
-				}
-				// Figure out which kind of quote to escape
-				// Use nice dictionary instead of yucky if-else nests
-				escape = ESCAPED_QUOTE[use_quote];
-				// Escape only the right kind of quote
-				re = new RegExp(use_quote,'g');
-				att_str = ' ' + att + '=' + use_quote + 
-					att_value.replace(re, escape) + use_quote;
-				result += att_str;
-			}
-			return result;
-		},
-		__element : function (name,content,attributes)
-		{
-			var att_str = '';
-			if (attributes) { // tests false if this arg is missing!
-				att_str = this.__formatAttributes(attributes);
-			}
-			var xml;
-			if (!content){
-				xml='<' + name + att_str + '/>';
-			}
-			else {
-				xml='<' + name + att_str + '>' + content + '</'+name+'>';
-			}
-			return xml;
 		}
-		
-		// add the "add oriented view" function  usable by the volView instances and the segTools windows !!!
-
 	} //// END of   members :
 
 	

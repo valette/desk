@@ -49,8 +49,8 @@ qx.Class.define("desk.segTools",
 
 		var _this=this;
 		master.applyToViewers( function (viewer) {
-			viewer.addListener("changeCurrentSlice", function () {
-				_this.__getSeedsImage(viewer);
+			viewer.addListener("changeSlice", function () {
+				_this.__saveCurrentSeeds();
 				});
 			});
 	//// Return the tools window aka : this
@@ -58,7 +58,7 @@ qx.Class.define("desk.segTools",
 
 	},
 
-	constants : {
+	statics : {
 		filePrefixes : ["seed","correction"],
 		seedsListsString : "seedsLists",
 		seedsArrayString : "seedsArray",
@@ -684,7 +684,6 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 						tools.__tabView.setVisibility("visible");
 						tools.setSessionDirectory(fileBrowser.getSessionDirectory(
 							volFile,sessionType,sessionIdToSelect));
-						theMaster.__saveSeedsXML();
 					}
 					else
 						sessionsList.setSelection([dummyItem]);					
@@ -719,7 +718,163 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 			updateList();
 			return sessionsListContainer;
 		},
-		
+
+		__saveCurrentSeeds : function() {
+        	var wasAnySeedModified=false;
+        	var _this=this;
+			this.__master.applyToViewers ( function ( sliceView ) {
+				var result=_this.__getNewSeedsImage ( sliceView );
+				if ( result!=false ) {
+					// save image
+					var sliceId=sliceView.getUserData( "previousSlice" );
+					var seedsType=_this.getSeedsType();
+					var fileName=_this.getSessionDirectory()+"/"+
+						_this.__getSeedFileName (sliceView, sliceId, seedsType);
+					console.log ("save : "+fileName);
+					_this.__addNewSeedItemToList ( sliceView, sliceId, seedsType );
+					wasAnySeedModified=true;
+				}
+				sliceView.setUserData("previousSlice", sliceView.getSlice());
+				sliceView.setDrawingCanvasNotModified();
+			});
+			if (wasAnySeedModified) {
+				this.__saveSeedsXML();
+			}
+		},
+
+		////Rewrite xml list of the drawn seeds
+		__saveSeedsXML : function(callback) {
+               // XML writer with attributes and smart attribute quote escaping
+			/*
+				Format a dictionary of attributes into a string suitable
+				for inserting into the start tag of an element.  Be smart
+			   about escaping embedded quotes in the attribute values.
+			*/
+			function formatAttributes (attributes) {
+				var APOS = "'";
+				var QUOTE = '"';
+				var ESCAPED_QUOTE = {  };
+				ESCAPED_QUOTE[QUOTE] = '&quot;';
+				ESCAPED_QUOTE[APOS] = '&apos;';
+				var att_value;
+				var apos_pos, quot_pos;
+				var use_quote, escape, quote_to_escape;
+				var att_str;
+				var re;
+				var result = '';
+				for (var att in attributes) {
+					att_value = attributes[att];
+					// Find first quote marks if any
+					apos_pos = att_value.indexOf(APOS);
+					quot_pos = att_value.indexOf(QUOTE);
+					// Determine which quote type to use around 
+					// the attribute value
+					if (apos_pos == -1 && quot_pos == -1) {
+						att_str = ' ' + att + "='" + att_value +  "'";	//	use single quotes for attributes
+						att_str = ' ' + att + '="' + att_value +  '"';	//	use double quotes for attributes
+						result += att_str;
+						continue;
+					}
+					// Prefer the single quote unless forced to use double
+					if (quot_pos != -1 && quot_pos < apos_pos) {
+						use_quote = APOS;
+					}
+					else {
+						use_quote = QUOTE;
+					}
+					// Figure out which kind of quote to escape
+					// Use nice dictionary instead of yucky if-else nests
+					escape = ESCAPED_QUOTE[use_quote];
+					// Escape only the right kind of quote
+					re = new RegExp(use_quote,'g');
+					att_str = ' ' + att + '=' + use_quote + 
+						att_value.replace(re, escape) + use_quote;
+					result += att_str;
+				}
+				return result;
+			}
+
+			function element (name,content,attributes) {
+				var att_str = '';
+				if (attributes) { // tests false if this arg is missing!
+					att_str = formatAttributes(attributes);
+				}
+				var xml;
+				if (!content){
+					xml='<' + name + att_str + '/>';
+				}
+				else {
+					xml='<' + name + att_str + '>' + content + '</'+name+'>';
+				}
+				return xml;
+			}
+
+			var xmlContent = '\n';
+			var colors='\n';
+			for(var i=0; i<this.__labelColors.length; i++)
+			{
+				colors+=element('color',null, this.__labelColors[i]);
+			}
+			xmlContent+=element('colors', colors)+"\n";
+
+			var _this=this;
+			this.__master.applyToViewers( function (sliceView) {
+				var seedsLists=sliceView.getUserData(desk.segTools.seedsListsString);
+				var orientation=sliceView.getOrientation();
+
+				for (var seedsType=0; seedsType<2; seedsType++) {
+					var list=seedsLists[seedsType];
+					var filePrefix=desk.segTools.filePrefixes[seedsType];
+					var slices=list.getChildren();
+					for (var i=0;i<slices.length;i++)
+					{
+						var sliceId=slices[i].getUserData("slice");
+						//~ theMaster.debug("352 : sliceId : " + sliceId);
+						xmlContent += element(filePrefix,
+								_this.__getSeedFileName(sliceView, sliceId, seedsType), 
+								{slice: sliceId + "", orientation: orientation + ""}) + '\n';
+					}
+				}
+			});
+
+			console.log(xmlContent);
+
+/*			var seedsTypeItems=tools.__seedsTypeSelectBox.getChildren();
+
+			for (var k=0;k<seedsTypeItems.length;k++)
+			{
+				var item=seedsTypeItems[k];
+				
+				for(var orionCount=0; orionCount<theMaster.__nbUsedOrientations; orionCount++)
+				{
+							var seedsList = item.getUserData("seedsList")[theMaster.__viewers[i].getUserData("viewerIndex")];
+						if(seedsList!=null)
+						{
+		//~ theMaster.debug("345 : seedsList.length : " + seedsList.length);
+							var filePrefix=item.getUserData("filePrefix");
+		//~ theMaster.debug("347 : filePrefix : " + filePrefix);
+							var slices=seedsList.getChildren();
+							for(var j=0; j<slices.length; j++)
+							{
+								var sliceId=slices[j].getUserData("slice");
+		//~ theMaster.debug("352 : sliceId : " + sliceId);
+								var sliceAttributes = {slice: sliceId + "", orientation: orionCount + ""};
+								xmlContent += theMaster.__element(filePrefix, theMaster.__viewers[i].__getSeedFileName(sliceId, item), sliceAttributes) + '\n';
+							}
+						}
+				}
+			}
+
+//~ theMaster.debug("363 : .getSessionDirectory() !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+			var parameterMap={
+				"action" : "save_xml_file",
+				"file_name" : "seeds.xml",
+				"xmlData" : theMaster.__element('seeds', xmlContent),
+				"output_directory" : tools.getSessionDirectory()};
+
+			fileBrowser.getActions().launchAction(parameterMap, callback);*/
+		},
+
 		__getSeedsTypeSelectBox : function()
 		{
 			var tools = this;
@@ -736,8 +891,7 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 			correctionsItem.setUserData("seedsType", 1);
 			selectBox.add(correctionsItem);
 
-			selectBox.addListener("changeSelection",function (e)
-			{
+			selectBox.addListener("changeSelection",function (e){
 				var newSeedsType=selectBox.getSelection()[0].getUserData("seedsType");
 				this.__master.applyToViewers(function (viewer) {
 					var seedsLists=viewer.getUserData(desk.segTools.seedsListsString);
@@ -748,10 +902,8 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 			return selectBox;
 		},
 
-		__getSeedsImage : function ( sliceView )
-		{
-			if (sliceView.isDrawingCanvasModified()==true)
-			{
+		__getNewSeedsImage : function ( sliceView ) {
+			if (sliceView.isDrawingCanvasModified()==true) {
 				var canvas=sliceView.getDrawingCanvas();
 				var seedsImageData=canvas.getContext2d().getImageData(0, 0, canvas.getWidth(), canvas.getHeight());
 				var pixels = seedsImageData.data;
@@ -762,8 +914,7 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 				var blueArray=this.__labelColorsBlue;
 				var numberOfColors=this.__labelColors.length;
 				var numberOfBytes=pixels.length
-				for(var i=0; i<numberOfBytes; i+=4)
-				{
+				for(var i=0; i<numberOfBytes; i+=4) {
 					if(128<=pixels[i+3])  //  if( color is solid not totally transparent, ie. alpha=0) <-> if( not background )
 					{
 						var dRed = 0;
@@ -772,14 +923,12 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 						var distance = 500000;
 						var rightColorIndex = 0;
 
-						for(var j=0; j!=numberOfColors; j++)
-						{
+						for(var j=0; j!=numberOfColors; j++) {
 							dRed = redArray[j]-pixels[i];
 							dGreen = greenArray[j]-pixels[i+1];
 							dBlue = blueArray[j]-pixels[i+2];
 							var testD = dRed*dRed+dGreen*dGreen+dBlue*dBlue;
-							if(testD<distance)
-							{
+							if(testD<distance) {
 								distance = testD;
 								rightColorIndex = j;
 							}
@@ -791,8 +940,7 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 						isAllBlack = false;
 					}
 					////Comment "else" to send combined image
-					else
-					{
+					else {
 						pixels[i] = 0;
 						pixels[i+1] = 0;
 						pixels[i+2] = 0;
@@ -800,10 +948,7 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 					}
 				}
 
-				sliceView.setDrawingCanvasNotModified();
-
-				if(!isAllBlack)
-				{
+				if(!isAllBlack) {
 					////Send png image to server
 					seedsImageData.data = pixels;
 
@@ -831,15 +976,11 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
                                             Math.random();
 					if(seedsTypeSelectBoxItem.getUserData("seedsArray")[volView.__display.orientation][oldSliceIndex]==0)
 						volView.__addNewSeedItemToList(oldSliceIndex);
-					
-					
-					
+
 					theMaster.__saveSeedsXML(success);
 					*/
 				}
 			}
-
-			sliceView.setDrawingCanvasNotModified();
 			return false;
 		},
 
@@ -847,11 +988,10 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 			var _this=this;
 			this.__master.applyToViewers ( function (sliceView) {
 				_this.__addSeedsLists ( sliceView );
-			});		
+			});
 		},
 
-		__addSeedsLists : function( sliceView )
-		{
+		__addSeedsLists : function( sliceView ) {
 			var _this=this;
 			var master = this.__master;
 
@@ -903,13 +1043,11 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 			correctionsList.addListener("keypress", keyPressHandler, correctionsList);
 
 			this.addListener("changeSeedsType", function (e) {
-				if (e.getData()=="0")
-				{
+				if (e.getData()=="0") {
 					seedsList.setVisibility("visible");
 					correctionsList.setVisibility("excluded");
 				}
-				else
-				{
+				else {
 					seedsList.setVisibility("excluded");
 					correctionsList.setVisibility("visible");
 				}
@@ -917,10 +1055,10 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 		},
 
 		__clearSeeds : function ( ) {
+			var master=this.__master;
 			this.__master.applyToViewers ( function (sliceView) {
 				var seedsLists=sliceView.getUserData(desk.segTools.seedsListsString);
-				for (var i=0;i<2;i++)
-				{
+				for (var i=0;i<2;i++) {
 					var numberOfSlices=sliceView.getVolumeSliceToPaint().getNumberOfSlices();
 					var seedsArray = [];
 					var cacheTagsArray = [];
@@ -936,13 +1074,12 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 			});
 		},
 
-
 		__addNewSeedItemToList : function ( sliceView, sliceId, seedsType )
 		{
 			var sliceItem = new qx.ui.form.ListItem(""+ sliceId);
 			sliceItem.setUserData("slice",sliceId);
 			sliceItem.addListener("click", function(event) {
-				sliceView.setCurrentSlice(event.getTarget().getUserData("slice"));
+				sliceView.setSlice(event.getTarget().getUserData("slice"));
 			});
 
 			var seedsList = sliceView.getUserData(desk.segTools.seedsListsString)[seedsType];
@@ -967,7 +1104,7 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 				filePrefix = "correction";
 			}
 
-			var offset=this.getVolumeSliceToPaint().getSlicesIdOffset();
+			var offset=sliceView.getVolumeSliceToPaint().getSlicesIdOffset();
 
 			switch(sliceView.getOrientation())
 			{

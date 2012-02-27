@@ -30,7 +30,7 @@ qx.Class.define("desk.volumeSlice",
 			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 		}
 
-		this.addListener("changeCurrentSlice", function(){
+		this.addListener("changeSlice", function(){
 			this.updateImage();
 			},this);
 
@@ -38,7 +38,7 @@ qx.Class.define("desk.volumeSlice",
 	},
 
 	properties : {
-		currentSlice : { init : 0, check: "Number", event : "changeCurrentSlice"},
+		slice : { init : 0, check: "Number", event : "changeSlice"},
 		imageFormat : { init : 0, check: "Number", event : "changeImageFormat"},
 		ready : { init : false, check: "Boolean", event : "changeReady"},
 		orientation : { init : 0, check: "Number", event : "changeOrientation"}
@@ -116,7 +116,7 @@ qx.Class.define("desk.volumeSlice",
 		},
 
 		getCornersCoordinates : function () {
-			var z=this.__origin[2]+(this.__dimensions[2]-this.getCurrentSlice()+this.__extent[4])*this.__spacing[2];
+			var z=this.__origin[2]+(this.__dimensions[2]-this.getSlice()+this.__extent[4])*this.__spacing[2];
 			var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
 			var xmax=this.__origin[0]+this.__extent[1]*this.__spacing[0];
 			var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
@@ -545,7 +545,7 @@ switch(this.getOrientation())
 
 		updateImage : function() {
 			var _this=this;
-			var slice=this.getNumberOfSlices()-1-_this.getCurrentSlice();
+			var slice=this.getNumberOfSlices()-1-_this.getSlice();
 
 			this.__image.onload=function(){
 				_this.__originalImageCanvas.getContext2d().drawImage(_this.__image, 0, 0);
@@ -568,7 +568,7 @@ switch(this.getOrientation())
 					orientationString="XY";
 					break;
 				}
-			this.__image.src=this.__path+this.__prefix+orientationString+(this.__offset+this.getNumberOfSlices()-1-this.getCurrentSlice())
+			this.__image.src=this.__path+this.__prefix+orientationString+(this.__offset+this.getNumberOfSlices()-1-this.getSlice())
 				+".jpg?nocache="+this.__timestamp;
 		}
 	}

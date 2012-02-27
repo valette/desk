@@ -64,7 +64,7 @@ qx.Class.define("desk.sliceView",
 	},
 
 	properties : {
-		currentSlice : { init : 0, check: "Number", event : "changeCurrentSlice"},
+		slice : { init : 0, check: "Number", event : "changeSlice"},
 		paintOpacity : { init : 1, check: "Number", event : "changePaintOpacity"},
 		orientation : { init : -1, check: "Number", event : "changeOrientation"},
 		ready : { init : false, check: "Boolean", event : "changeReady"},
@@ -254,7 +254,7 @@ qx.Class.define("desk.sliceView",
 				
 				_this.__slider.setMaximum(volumeSlice.getNumberOfSlices()-1);
 				_this.__slider.setValue(Math.round(0.5*volumeSlice.getNumberOfSlices()));
-				_this.__slider.bind("value", volumeSlice, "currentSlice");
+				_this.__slider.bind("value", volumeSlice, "slice");
 
 				_this.__camera.position.set(0.5*(coordinates[0]+coordinates[2]),
 											0.5*(coordinates[3]+coordinates[5]),
@@ -620,20 +620,6 @@ qx.Class.define("desk.sliceView",
 					});
 			}
 
-		/*	button.addListener("changeValue",function (value) {
-				if (this.__master!=null)
-				{
-					if (value)
-					{
-						this.__master.getTools().open();
-					}
-					else
-					{
-						this.__master.getTools().close();
-					}
-				} 
-			},this)*/
-
 			rightContainer.add(this.__getBrightnessContrastButton());
 
 			////Create spinner and sync it with the slider
@@ -659,8 +645,8 @@ qx.Class.define("desk.sliceView",
 				slider.setValue(this.getVolumeSliceToPaint().getNumberOfSlices()-1-e.getData());
 				}, this);		
 
-			spinner.bind ("value", this, "currentSlice");
-			this.bind ("currentSlice", spinner, "value");
+			spinner.bind ("value", this, "slice");
+			this.bind ("slice", spinner, "value");
 
 			rightContainer.add(slider, {flex : 1});
 
@@ -668,8 +654,8 @@ qx.Class.define("desk.sliceView",
 			this.__fileFormatBox.setWidth(30);
 			var SelectJPG = new qx.ui.form.ListItem("jpg");
 			this.__fileFormatBox.add(SelectJPG);
-//			var SelectPNG = new qx.ui.form.ListItem("png");
-//			this.__fileFormatBox.add(SelectPNG);
+			var SelectPNG = new qx.ui.form.ListItem("png");
+			this.__fileFormatBox.add(SelectPNG);
 			rightContainer.add(this.__fileFormatBox);
 
 			this.__window.add(rightContainer);
