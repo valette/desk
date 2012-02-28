@@ -41,32 +41,19 @@ qx.Class.define("desk.volMaster",
 		this.__nbUsedOrientations = 3;
 		this.addVolume(globalFile);
 
-		this.__tools = new desk.segTools(this, globalFile, globalFileBrowser);
-		this.setToolsReady(true);	
-
 		return (this.__viewers); //~ orion test : launch the 3 views at once ! ! !
 
 	},
 
-	properties : {
-		toolsReady : { init : false, check: "Boolean", event : "changeToolsReady"}
-	},
-
 	members :
 	{
-
 		__window : null,
-
 		__volumes : null,
-
 		__viewers : null,
-		
+
 		__nbUsedOrientations : null,
-		
-		__tools : null,
-		
+
 		__file : null,
-		
 		__fileBrowser : null,
 
 		applyToViewers : function (theFunction) {
@@ -80,10 +67,6 @@ qx.Class.define("desk.volMaster",
 			return this.__volumes;
 		},
 
-		getTools : function () {
-			return this.__tools;
-		},
-
 		getViewers : function () {
 			return this.__viewers;
 		},
@@ -92,15 +75,12 @@ qx.Class.define("desk.volMaster",
 			var container=new qx.ui.container.Composite();
 			container.setLayout(new qx.ui.layout.VBox());
 
-			if (this.isToolsReady()) {
-					container.addAt(this.__tools.getPaintPanelVisibilitySwitch(),0);
-			}
-			else {
-				this.addListenerOnce("changeToolsReady", function () {
-					container.addAt(this.__tools.getPaintPanelVisibilitySwitch(),0);
-					}, this);
-			}
-
+			var paintButton=new qx.ui.form.ToggleButton("segmentation");
+			paintButton.addListener("execute", function (e) {
+				var tools = new desk.segTools(this, this.__file, this.__fileBrowser);
+			},this);
+			
+			container.add(paintButton);
 			this.__volumes=new qx.ui.container.Composite();
 			this.__volumes.setLayout(new qx.ui.layout.VBox());
 			container.add(this.__volumes);
@@ -202,7 +182,7 @@ qx.Class.define("desk.volMaster",
 
 			settingsContainer.add(brightnessButton);
 
-			fileFormatBox = new qx.ui.form.SelectBox();
+			var fileFormatBox = new qx.ui.form.SelectBox();
 			fileFormatBox.setWidth(60);
 			var SelectJPG = new qx.ui.form.ListItem("jpg");
 			SelectJPG.setUserData("imageFormat", 1);
@@ -215,7 +195,6 @@ qx.Class.define("desk.volMaster",
 			fileFormatBox.addListener("changeSelection", function ( ) {
 				var imageFormat=fileFormatBox.getSelection()[0].getUserData("imageFormat");
 				for (var i=0;i<volumeSlices.length;i++) {
-					console.log(imageFormat);
 					volumeSlices[i].setImageFormat(imageFormat);
 				}
 			});

@@ -236,8 +236,10 @@ qx.Class.define("desk.sliceView",
 
 				
 				_this.__slider.setMaximum(volumeSlice.getNumberOfSlices()-1);
-				_this.__slider.setValue(Math.round(0.5*volumeSlice.getNumberOfSlices()));
-				_this.__slider.bind("value", volumeSlice, "slice");
+				_this.addListener("changeSlice", function (e) {
+					volumeSlice.setSlice(e.getData());
+				});
+				_this.setSlice(Math.round(0.5*volumeSlice.getNumberOfSlices()));
 
 				_this.__camera.position.set(0.5*(coordinates[0]+coordinates[2]),
 											0.5*(coordinates[3]+coordinates[5]),
@@ -527,11 +529,6 @@ qx.Class.define("desk.sliceView",
 			}
 		},
 
-		getSlider : function (){
-			return this.__slider;
-		},
-
-
 		__createUI : function (file) {
 			this.add(this.__getRenderWindow(), {flex : 1});
 			var rightContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox());
@@ -547,8 +544,14 @@ qx.Class.define("desk.sliceView",
 			slider.setWidth(30);
 			slider.setOrientation("vertical");
 			slider.addListener("changeValue",function(e){
-				label.setValue((this.getVolumeSliceToPaint().getNumberOfSlices()-1-e.getData())+"");
+				this.setSlice(this.getVolumeSliceToPaint().getNumberOfSlices()-1-e.getData())
 				}, this);
+
+			this.addListener("changeSlice", function (e) {
+				var sliceId=e.getData();
+				label.setValue(sliceId+"");
+				slider.setValue(this.getVolumeSliceToPaint().getNumberOfSlices()-1-sliceId)
+			}, this);
 
 			rightContainer.add(slider, {flex : 1});
 			this.add(rightContainer);

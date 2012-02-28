@@ -592,7 +592,7 @@ switch(this.getOrientation())
 					orientationString="XY";
 					break;
 				}
-			this.__image.src=this.__path+this.__prefix+orientationString+(this.__offset+this.getNumberOfSlices()-1-this.getSlice())
+			this.__image.src=this.__path+this.__prefix+orientationString+(this.__offset+this.getSlice())
 				+fileSuffix+"?nocache="+this.__timestamp;
 		}
 	}

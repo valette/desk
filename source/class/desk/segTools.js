@@ -20,19 +20,15 @@ qx.Class.define("desk.segTools",
         }
 
     ////Global variables ?
-		
-		this.__tools = this;
-		
+
 		this.__master = master;
-		
+
 		this.__file = globalFile;
-		
+
 		this.__fileBrowser = globalFileBrowser;
-		
-		
-		
+
 	//// Set window
-		this.setLayout(new qx.ui.layout.Canvas());
+		this.setLayout(new qx.ui.layout.VBox());
 		this.set({
 								showMinimize: false,
 								showMaximize: false,
@@ -41,8 +37,6 @@ qx.Class.define("desk.segTools",
 								resizable: false,
 								movable : true
 							});
-		
-//		this.__curView = this.__master.__viewers[0];
 		
 	//// Fill window with the tools widgets
 
@@ -56,6 +50,8 @@ qx.Class.define("desk.segTools",
 				_this.__reloadSeedImage( sliceView );
 			});
 		});
+
+		this.open();
 	//// Return the tools window aka : this
 		return (this);
 
@@ -78,17 +74,10 @@ qx.Class.define("desk.segTools",
 
 	members :
 	{
-		__tools : null,
-		
 		__master : null,
-		
 		__file : null,
-		
 		__fileBrowser : null,
-		
-		
-		
-		__mainRightContainer : null,
+
 		__topRightContainer : null,
 		__bottomRightContainer : null,
 		__mainBottomRightContainer : null,
@@ -123,10 +112,6 @@ qx.Class.define("desk.segTools",
 		__rightPanelWidth : 405,
 		
 		__settingButtons : false,
-
-		saveAllseeds : function () {
-				//ssss
-		},
 
 		__reloadSeedImage : function (sliceView) {
 			if (this.getSessionDirectory()==null)
@@ -176,12 +161,6 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 			
 			
 			var spacing=5;
-			var mRCL=new qx.ui.layout.VBox();
-			mRCL.setSpacing(spacing);
-			tools.__mainRightContainer = new qx.ui.container.Composite(mRCL);
-			tools.add(tools.__mainRightContainer); //~ winSeparate test
-			tools.__mainRightContainer.setVisibility("excluded");
-			tools.__mainRightContainer.set({width : tools.__rightPanelWidth}); // try same width befor and after
 			
 			var tRCL=new qx.ui.layout.HBox();
 			tRCL.setSpacing(spacing);
@@ -246,9 +225,9 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 
 			var sessionWdgt = tools.__getSessionsWidget();
 			this.__addSeedsListsToViews();
-			tools.__mainRightContainer.add(sessionWdgt);
+			this.add(sessionWdgt);
 			
-			tools.__mainRightContainer.add(tools.__mainBottomRightContainer, {flex : 1}); //~ resizing
+			this.add(tools.__mainBottomRightContainer, {flex : 1}); //~ resizing
 
 			tools.__mainBottomRightContainer.add(tabView); //~ resizing
 			
@@ -475,7 +454,6 @@ tools.debug("639 : colorsParamRequest -> response : " + response);
 
 			var mRCgSH_height = tabView.getLayoutParent().getLayoutParent().getSizeHint().height;
 			var debugManualMeasureH = 80;
-			tools.__mainRightContainer.setMinHeight(tabView.getSizeHint().height + mRCgSH_height + debugManualMeasureH);
 
 			tools.addListener("changeSessionDirectory", function (e)
 			{
@@ -582,25 +560,6 @@ tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 			}, this);
            
 		},
-		
-		getPaintPanelVisibilitySwitch : function ()
-		{
-			var paintPaneVisibilitySwitch=new qx.ui.form.ToggleButton("tools");
-			paintPaneVisibilitySwitch.addListener("changeValue", function (e)
-			{
-					if (e.getData())
-					{
-						this.__mainRightContainer.setVisibility("visible");
-						this.open();
-					}
-					else
-					{
-						this.__mainRightContainer.setVisibility("excluded");
-						this.close(); 
-					}
-			}, this);
-			return paintPaneVisibilitySwitch;
-		},
 
 		loadSession : function()
 		{
@@ -655,7 +614,7 @@ tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 
 			loadSessionRequest.open("GET",
 				this.__fileBrowser.getFileURL(
-					this.__tools.getSessionDirectory()+"/seeds.xml?nocache="+Math.random()), true);
+					this.getSessionDirectory()+"/seeds.xml?nocache="+Math.random()), true);
 			loadSessionRequest.send(null);
 		},
 
@@ -1035,6 +994,7 @@ tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 		__clearSeeds : function ( ) {
 			var master=this.__master;
 			this.__master.applyToViewers ( function (sliceView) {
+				sliceView.setUserData("previousSlice", sliceView.getSlice());
 				var seedsLists=sliceView.getUserData(desk.segTools.seedsListsString);
 				for (var i=0;i<2;i++) {
 					var numberOfSlices=sliceView.getVolumeSliceToPaint().getNumberOfSlices();
