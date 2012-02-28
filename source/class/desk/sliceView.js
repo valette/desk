@@ -11,14 +11,13 @@ qx.Class.define("desk.sliceView",
 {
 	extend : qx.ui.container.Composite,
 
-	construct : function(file, fileBrowser, master, orientation, callback)
+	construct : function(fileBrowser, master, orientation)
 	{
 		this.base(arguments);
 		this.setLayout(new qx.ui.layout.HBox(5));
 
 		this.__slices=[];
 		this.__fileBrowser=fileBrowser;
-		this.addVolume(file, callback);
 
 		if (typeof orientation=="number")
 			this.setOrientation(orientation);

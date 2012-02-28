@@ -100,11 +100,14 @@ qx.Class.define("desk.volMaster",
 			{
 				if (this.__viewers[i]==undefined)
 				{
-					var sliceView=  new desk.sliceView(file, this.__fileBrowser, this, i, ( function (myI) { 
+					var sliceView=  new desk.sliceView(this.__fileBrowser, this, i);
+
+					sliceView.addVolume(file, ( function (myI) { 
 						return (function (volumeSlice) {
 							volumeSlices[myI]=volumeSlice;
 							});
 						} ) (i));
+
 					this.__viewers[i] =sliceView;	
 					switch (i)
 					{
