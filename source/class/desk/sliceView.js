@@ -14,7 +14,7 @@ qx.Class.define("desk.sliceView",
 	construct : function(fileBrowser, master, orientation)
 	{
 		this.base(arguments);
-		this.setLayout(new qx.ui.layout.HBox(5));
+		this.setLayout(new qx.ui.layout.HBox());
 
 		this.__slices=[];
 		this.__fileBrowser=fileBrowser;
@@ -73,8 +73,6 @@ qx.Class.define("desk.sliceView",
 		__slices : null,
 
 		__slider : null,
-
-		__fileFormatBox : null,
 
 		__rightContainer : null,
 
@@ -533,86 +531,14 @@ qx.Class.define("desk.sliceView",
 			return this.__slider;
 		},
 
-		__getBrightnessContrastButton : function () {
-			////Create brightness/contrast fixing on/off button
-			var button = new qx.ui.form.Button(null, "desk/Contrast_Logo_petit.PNG");
-
-			button.set({toolTipText : "LUMINOSITE/CONTRASTE"});
-
-			var clicked=false;
-			var slices;
-			var x,y;
-
-			button.addListener("mousedown", function(event)	{
-				slices=this.__master.getVolumesList().getChildren()[0].getUserData("slices");
-				if (event.isRightPressed())
-				{
-					for (var i=0;i<slices.length;i++) {
-						slices[i].setBrightnessAndContrast(0,1);
-					}
-				}
-				else
-				{
-					x=event.getScreenLeft();
-					y=event.getScreenTop();
-					button.capture();
-					clicked=true;
-				}
-			}, this);
-
-			button.addListener("mousemove", function(event)	{
-				if (clicked)
-				{
-					var newX=event.getScreenLeft();
-					var newY=event.getScreenTop();
-					var deltaX=newX-x;
-					var deltaY=newY-y;
-					var contrast=slices[0].getContrast();
-					var brightness=slices[0].getBrightness();
-
-					brightness-=deltaY/3;
-					contrast+=deltaX/200;
-					x=newX;
-					y=newY;
-					for (var i=0;i<slices.length;i++) {
-						slices[i].setBrightnessAndContrast(brightness,contrast);
-					}
-				}
-			}, this);
-
-			button.addListener("mouseup", function(event)	{
-				button.releaseCapture()
-				clicked=false;
-			}, this);
-			return button;
-		},
 
 		__createUI : function (file) {
 			this.add(this.__getRenderWindow(), {flex : 1});
 			var rightContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox());
 			this.__rightContainer=rightContainer;
 
-			var _this=this;
-
-			if (this.__master.isToolsReady())
-			{
-				rightContainer.add(_this.__master.getTools().getPaintPanelVisibilitySwitch());			}
-			else
-			{
-				this.__master.addListenerOnce("changeToolsReady", function () {
-					rightContainer.add(
-						_this.__master.getTools().getPaintPanelVisibilitySwitch());					
-					});
-			}
-
-			////Create spinner and sync it with the slider
-			var spinner = new qx.ui.form.Spinner();
-			this.__spinner=spinner;
-			spinner.setMaximum(10000000);
-			spinner.setMinimum(0);
-			spinner.setValue(0);
-			rightContainer.add(spinner);
-			
+			var label = new qx.ui.basic.Label("0");
+			rightContainer.add(label);
 			var slider=new qx.ui.form.Slider();
 			this.__slider=slider;
 			slider.setMinimum(0);
@@ -621,26 +547,10 @@ qx.Class.define("desk.sliceView",
 			slider.setWidth(30);
 			slider.setOrientation("vertical");
 			slider.addListener("changeValue",function(e){
-				spinner.setValue(this.getVolumeSliceToPaint().getNumberOfSlices()-1-e.getData());
+				label.setValue((this.getVolumeSliceToPaint().getNumberOfSlices()-1-e.getData())+"");
 				}, this);
 
-			spinner.addListener("changeValue",function(e){
-				slider.setValue(this.getVolumeSliceToPaint().getNumberOfSlices()-1-e.getData());
-				}, this);		
-
-			spinner.bind ("value", this, "slice");
-			this.bind ("slice", spinner, "value");
-
 			rightContainer.add(slider, {flex : 1});
-
-			this.__fileFormatBox = new qx.ui.form.SelectBox();
-			this.__fileFormatBox.setWidth(30);
-			var SelectJPG = new qx.ui.form.ListItem("jpg");
-			this.__fileFormatBox.add(SelectJPG);
-			var SelectPNG = new qx.ui.form.ListItem("png");
-			this.__fileFormatBox.add(SelectPNG);
-			rightContainer.add(this.__fileFormatBox);
-			rightContainer.add(this.__getBrightnessContrastButton());
 			this.add(rightContainer);
 		}
 	}
