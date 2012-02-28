@@ -98,9 +98,6 @@ qx.Class.define("desk.volMaster",
 							volumeSlices[myI]=volumeSlice;
 							});
 						} ) (i));
-					// index test : add lfexibility between orientation (1,2 or 3) and a unique index for each viewer no matter its view orientation
-					//					<!> CAUTION : any index must be  <  this.__viewers.length
-					this.__viewers[i].setUserData("viewerIndex",i);
 				}
 				else
 				{
@@ -110,73 +107,6 @@ qx.Class.define("desk.volMaster",
 			var volumeListItem=new qx.ui.form.ListItem(file);
 			volumeListItem.setUserData("slices", volumeSlices);
 			this.__volumes.add(volumeListItem);
-		},
-		
-		__updateSeeds : function ()
-		{
-this.debug("------->>>   theMaster.__updateSeeds : function()   !!!!!!!");
-
-			var theMaster = this;
-			
-			var tools = theMaster.__tools;
-			
-			var fileBrowser = theMaster.__fileBrowser;
-			
-			for(var i=0; i<theMaster.__viewers.length; i++)
-			{
-				
-				var sliceId=theMaster.__viewers[i].__spinner.getValue();
-				//~ var oldSeedSlice=theMaster.__viewers[i].__currentSeedsSlice;
-				var oldSeedSlice = theMaster.__viewers[i].__display.depthShift;
-				
-				var selection = theMaster.__viewers[i].__formatSelectBox.getSelection()[0];
-				
-				var seedsURL = fileBrowser.getFileURL(tools.getSessionDirectory()+"/"+theMaster.__viewers[i].__getSeedFileName(sliceId))+"?nocache="+
-				tools.__seedsTypeSelectBox.getSelection()[0].getUserData("cacheTags")[theMaster.__viewers[i].__display.orientation][sliceId];
-				
-				// test wether the seed is already loaded. If yes, we need to recreate the Image
-				if (oldSeedSlice==sliceId)
-					theMaster.__viewers[i].__loadSeeds = new Image();
-				
-				theMaster.__viewers[i].__loadSeeds.viewer = theMaster.__viewers[i];
-				theMaster.__viewers[i].__loadSeeds.Id = sliceId;
-				theMaster.__viewers[i].__loadSeeds.onload = function ()
-				{
-//~ theMaster.debug("231 : >>>>>>>  theMaster.__viewers[i].__loadSeeds.onload   !!!!!!!!!!!!!!!!!!!!!!!!!");
-					var thisVolView = this.viewer;
-					if(thisVolView.__drawingCanvasParams.drawingContext!=null)
-					{
-						thisVolView.__clearDrawingCanvas();
-						thisVolView.__htmlContextLabels.drawImage(thisVolView.__loadSeeds, 0, 0);
-						thisVolView.__drawZoomedCanvas(thisVolView.__display.curCtxtZoom,true);
-						//~ thisVolView.__currentSeedsSlice=sliceId;
-						thisVolView.__display.depthShift = this.Id;
-					}
-				};
-				
-				theMaster.__viewers[i].__loadSeeds.src = seedsURL;
-				
-			}
-			
-		},
-
-		////Use a php file to remove the specified file in the server
-		__eraseFile : function(file)
-        {
-this.debug("------->>>   theMaster.__eraseFile : function()   !!!!!!!");
-
-			var theMaster = this;
-			
-			var tools = theMaster.__tools;
-			
-			var fileBrowser = theMaster.__fileBrowser;
-			
-			
-			var parameterMap={
-				"action" : "delete_file",
-				"file_name" : file};
-
-			theMaster.__fileBrowser.getActions().launchAction(parameterMap);
 		}
 	} //// END of   members :
 
