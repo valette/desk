@@ -660,21 +660,15 @@ tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 		},
 
 		__getSessionsWidget : function()
-		{
-this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
-			
+		{	
 			var tools = this;
-			
-			var theMaster = tools.__master;
-			
-			var volFile = tools.__file;
-			
-			var fileBrowser = tools.__fileBrowser;
+			var volFile = this.__file;
+			var fileBrowser = this.__fileBrowser;
 			
 			var sessionsListLayout=new qx.ui.layout.HBox();
 			sessionsListLayout.setSpacing(4);
 			var sessionsListContainer=new qx.ui.container.Composite(sessionsListLayout);
-			sessionsListContainer.set({width : tools.__rightPanelWidth}); //~ value measured manually during debug...  // try same width befor and after
+	//		sessionsListContainer.set({width : tools.__rightPanelWidth}); //~ value measured manually during debug...  // try same width befor and after
 			var sessionsListLabel=new qx.ui.basic.Label("Sessions : ");
 			sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});
 			sessionsListContainer.add(sessionsListLabel);
@@ -701,20 +695,20 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 						if (sessionId==sessionIdToSelect)
 							sessionItemToSelect=sessionItem;
 					}
-					var dummyItem=null;
+
 					if (sessionIdToSelect==null)
 					{
-						dummyItem = new qx.ui.form.ListItem("select a session");
+						var dummyItem = new qx.ui.form.ListItem("select a session");
 						sessionsList.add(dummyItem);
 						dummyItem.setUserData("dummy",true);
 					}
 					if (sessionItemToSelect!=null)
 					{
-						//~ tools.__curView.__saveDisplay(); //~ Sorry, there's problems with this. Try again later...
 						sessionsList.setSelection([sessionItemToSelect]);
 						tools.__tabView.setVisibility("visible");
 						tools.setSessionDirectory(fileBrowser.getSessionDirectory(
 							volFile,sessionType,sessionIdToSelect));
+						tools.__clearSeeds();
 					}
 					else
 						sessionsList.setSelection([dummyItem]);					
@@ -741,10 +735,8 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 			});
 
 			button.addListener("execute", function (e){
-				theMaster.__resetSeedsList();
-				theMaster.__updateAll();
-				fileBrowser.createNewSession(volFile,sessionType, updateList);
-				});
+				this.__fileBrowser.createNewSession(volFile,sessionType, updateList);
+				}, this);
 
 			updateList();
 			return sessionsListContainer;
@@ -878,10 +870,10 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 			});
 
 			var parameterMap={
-				"action" : "save_xml_file",
-				"file_name" : "seeds.xml",
-				"xmlData" : element('seeds', xmlContent),
-				"output_directory" : this.getSessionDirectory()};
+				action : "save_xml_file",
+				file_name : "seeds.xml",
+				xmlData : element('seeds', xmlContent),
+				output_directory : this.getSessionDirectory()};
 
 			this.__fileBrowser.getActions().launchAction(parameterMap, callback);
 		},
@@ -975,26 +967,6 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 					var commaIndex=pngImg.lastIndexOf(",");
 					var base64Img = pngImg.substring(commaIndex+1,pngImg.length);
 					return base64Img;
-			/*		var parameterMap={
-						"action" : "save_binary_file",
-						"file_name" : volView.__getSeedFileName(volView.__display.depthShift),
-						"base64Data" : base64Img,
-						"output_directory" : tools.getSessionDirectory()};
-
-					this.__fileBrowser.getActions().launchAction(parameterMap, success);
-	//~ volView.debug("3467 : tools : " + tools);
-	//~ volView.debug("3468 : tools.__seedsTypeSelectBox : " + tools.__seedsTypeSelectBox);
-	//~ volView.debug("3469 : tools.__seedsTypeSelectBox.getSelection() : " + tools.__seedsTypeSelectBox.getSelection());
-					var seedsTypeSelectBoxItem = tools.__seedsTypeSelectBox.getSelection()[0];
-	//~ volView.debug("3471 : seedsTypeSelectBoxItem : " + seedsTypeSelectBoxItem);
-	//~ volView.debug("3472 : seedsTypeSelectBoxItem.getUserData(cacheTags) : " + seedsTypeSelectBoxItem.getUserData("cacheTags"));
-					seedsTypeSelectBoxItem.getUserData("cacheTags")[volView.__display.orientation][volView.__display.depthShift]=
-                                            Math.random();
-					if(seedsTypeSelectBoxItem.getUserData("seedsArray")[volView.__display.orientation][oldSliceIndex]==0)
-						volView.__addNewSeedItemToList(oldSliceIndex);
-
-					theMaster.__saveSeedsXML(success);
-					*/
 				}
 			}
 			return false;
@@ -1008,9 +980,6 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 		},
 
 		__addSeedsLists : function( sliceView ) {
-			var _this=this;
-			var master = this.__master;
-
 			// create seeds list
 			var seedsList=new qx.ui.form.List();
 			seedsList.setWidth(30);
@@ -1030,33 +999,37 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 			lists.push(correctionsList);
 			sliceView.setUserData(desk.segTools.seedsListsString, lists);
 
-			seedsList.addListener("removeItem", function(event) {
+		/*	seedsList.addListener("removeItem", function(event) {
 				if (seedsList.getChildren().length==0)
-					_this.__startSegmentationButton.setEnabled(false);
+					this.__startSegmentationButton.setEnabled(false);
 				}, this);
 
 			seedsList.addListener("addItem", function(event) {
-			//	_this.__startSegmentationButton.setEnabled(true);
-				}, this);
+				this.__startSegmentationButton.setEnabled(true);
+				}, this);*/
 
-			var keyPressHandler = function(event)
-			{
-
+			function keyPressHandler (event) {
 				if(event.getKeyIdentifier()=="Delete") {
-			/*		var selectedChild = this.getSelection()[0];
+					var seedsType = this.getSeedsType();
+					var list=lists[seedsType];
+					var selectedChild = list.getSelection()[0];
 					if (selectedChild!=null) {
 						var sliceId = selectedChild.getUserData("slice");
-					////Erase image on the server
-						master.__eraseFile(_this.getSessionDirectory()+"/"+_this.__getSeedFileName(sliceId));
-						_this.__seedsTypeSelectBox.getSelection()[0].getUserData("seedsArray")[sliceView.getOrientation()][sliceId]=0;
-						sliceView.clearDrawingCanvas();
-						this.remove(selectedChild); //  this  : the given List (see below)
-						theMaster.__saveSeedsXML();
-					}*/
+
+						////Erase image on the server
+						this.__fileBrowser.getActions().launchAction({action : "delete_file",
+										"file_name" : this.getSessionDirectory()+"/"+
+										this.__getSeedFileName(sliceView, sliceId, seedsType)});
+						list.getUserData("seedsArray")[sliceId]=0;
+						list.remove(selectedChild);
+						this.__reloadSeedImage( sliceView );
+						this.__saveSeedsXML();
+					}
 				}
-			};
-			seedsList.addListener("keypress", keyPressHandler, seedsList);
-			correctionsList.addListener("keypress", keyPressHandler, correctionsList);
+			}
+
+			seedsList.addListener("keypress", keyPressHandler, this);
+			correctionsList.addListener("keypress", keyPressHandler, this);
 		},
 
 		__clearSeeds : function ( ) {
@@ -1105,6 +1078,7 @@ this.debug("------->>>   tools.__getSessionsWidget : function()   !!!!!!!");
 
 			seedsList.addAt(sliceItem, tempPos);
 			seedsList.getUserData(desk.segTools.seedsArrayString)[sliceId]=sliceItem;
+			seedsList.getUserData(desk.segTools.cacheTagsArrayString)[sliceId]=Math.random();
 		},
 
 		__getSeedFileName : function(sliceView, sliceId, seedType) {			
