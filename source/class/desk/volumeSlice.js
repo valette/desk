@@ -6,32 +6,22 @@ qx.Class.define("desk.volumeSlice",
 	{
 		this.base(arguments);
 
-		var _this=this;
-
 		this.setOrientation(orientation);
 
-		if (fileBrowser==null)
-			alert ("error! no file browser was provided");
-		else
-		{
+		this.__image=new Image();
+		this.__canvas = new qx.ui.embed.Canvas();
+		this.__originalImageCanvas = new qx.ui.embed.Canvas();
 
-			function getAnswer(e)
-				{
-					var req = e.getTarget();
-					var slicesDirectory=req.getResponseText().split("\n")[0];
-					_this.openXMLURL(fileBrowser.getFileURL(slicesDirectory)+"/volume.xml");
-				}
-
-			var parameterMap={
-				action : "slice_volume",
-				input_volume : file,
-				output_directory : "cache\/",
-				slice_orientation : orientation};
-			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
-		}
+		this.__fileBrowser=fileBrowser;
+		this.__file=file;
+		this.__updateFile();
 
 		this.addListener("changeSlice", function(){
-			this.updateImage();
+				this.updateImage();
+			},this);
+
+		this.addListener("changeImageFormat", function(){
+				this.__updateFile();
 			},this);
 
 		return (this);		
@@ -39,7 +29,7 @@ qx.Class.define("desk.volumeSlice",
 
 	properties : {
 		slice : { init : 0, check: "Number", event : "changeSlice"},
-		imageFormat : { init : 0, check: "Number", event : "changeImageFormat"},
+		imageFormat : { init : 1, check: "Number", event : "changeImageFormat"},
 		ready : { init : false, check: "Boolean", event : "changeReady"},
 		orientation : { init : 0, check: "Number", event : "changeOrientation"}
 	},
@@ -50,6 +40,10 @@ qx.Class.define("desk.volumeSlice",
 	},
 
 	members : {
+
+		__fileBrowser : null,
+		__file : null,
+
 		__path : null,
 		__offset : null,
 		__prefix : null,
@@ -81,6 +75,29 @@ qx.Class.define("desk.volumeSlice",
 		__lookupTableRed : null,
 		__lookupTableGreen : null,
 		__lookupTableBlue : null,
+
+		__updateFile : function () {
+			var _this=this;
+			if (this.__fileBrowser==null)
+				alert ("error! no file browser was provided");
+			else
+			{
+				function getAnswer(e)
+					{
+						var req = e.getTarget();
+						var slicesDirectory=req.getResponseText().split("\n")[0];
+						_this.openXMLURL(_this.__fileBrowser.getFileURL(slicesDirectory)+"/volume.xml");
+					}
+
+				var parameterMap={
+					action : "slice_volume",
+					input_volume : this.__file,
+					output_directory : "cache\/",
+					format : this.getImageFormat(),
+					slice_orientation : this.getOrientation()};
+				this.__fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
+			}
+		},
 
 		getBrightness : function () {
 			return (this.__brightness);
@@ -311,8 +328,7 @@ switch(this.getOrientation())
 
 			var dims=this.get2DDimensions();
 
-			this.__image=new Image();
-			this.__canvas = new qx.ui.embed.Canvas().set({
+			this.__canvas.set({
 				canvasWidth: dims[0],
 				canvasHeight: dims[1],
 				width: dims[0],
@@ -320,7 +336,7 @@ switch(this.getOrientation())
 				syncDimension: true
 				});
 
-			this.__originalImageCanvas = new qx.ui.embed.Canvas().set({
+			this.__originalImageCanvas.set({
 				canvasWidth: dims[0],
 				canvasHeight: dims[1],
 				width: dims[0],
@@ -552,6 +568,14 @@ switch(this.getOrientation())
 				_this.redraw();
 				};
 
+			var fileSuffix;
+			if (this.getImageFormat()==0) {
+				fileSuffix=".png";
+			}
+			else {
+				fileSuffix=".jpg";
+			}
+
 			var orientationString;
 			switch(this.getOrientation())
 			{
@@ -569,7 +593,7 @@ switch(this.getOrientation())
 					break;
 				}
 			this.__image.src=this.__path+this.__prefix+orientationString+(this.__offset+this.getNumberOfSlices()-1-this.getSlice())
-				+".jpg?nocache="+this.__timestamp;
+				+fileSuffix+"?nocache="+this.__timestamp;
 		}
 	}
 });

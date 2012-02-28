@@ -41,7 +41,7 @@ qx.Class.define("desk.volMaster",
 		this.__nbUsedOrientations = 3;
 		this.addVolume(globalFile);
 
-		this.__tools = new desk.segTools(this, globalFile, globalFileBrowser);	
+		this.__tools = new desk.segTools(this, globalFile, globalFileBrowser);
 		this.setToolsReady(true);	
 
 		return (this.__viewers); //~ orion test : launch the 3 views at once ! ! !
@@ -205,11 +205,20 @@ qx.Class.define("desk.volMaster",
 			fileFormatBox = new qx.ui.form.SelectBox();
 			fileFormatBox.setWidth(60);
 			var SelectJPG = new qx.ui.form.ListItem("jpg");
+			SelectJPG.setUserData("imageFormat", 1);
 			fileFormatBox.add(SelectJPG);
 			var SelectPNG = new qx.ui.form.ListItem("png");
+			SelectPNG.setUserData("imageFormat", 0);
 			fileFormatBox.add(SelectPNG);
 			settingsContainer.add(fileFormatBox);
 
+			fileFormatBox.addListener("changeSelection", function ( ) {
+				var imageFormat=fileFormatBox.getSelection()[0].getUserData("imageFormat");
+				for (var i=0;i<volumeSlices.length;i++) {
+					console.log(imageFormat);
+					volumeSlices[i].setImageFormat(imageFormat);
+				}
+			});
 			this.__volumes.add(volumeListItem);
 		}
 	} //// END of   members :
