@@ -15,6 +15,7 @@ qx.Class.define("desk.sliceView",
 	{
 		this.base(arguments);
 		this.setLayout(new qx.ui.layout.HBox());
+		this.setDecorator("main");
 
 		this.__slices=[];
 		this.__fileBrowser=fileBrowser;
@@ -535,6 +536,8 @@ qx.Class.define("desk.sliceView",
 			this.__rightContainer=rightContainer;
 
 			var label = new qx.ui.basic.Label("0");
+			label.setTextAlign("center");
+			label.setWidth(30);
 			rightContainer.add(label);
 			var slider=new qx.ui.form.Slider();
 			this.__slider=slider;

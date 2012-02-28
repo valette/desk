@@ -148,9 +148,7 @@ qx.Class.define("desk.segTools",
 		},
 
 		__buildRightContainer : function()
-		{
-this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
-			
+		{	
 			var tools = this;
 			
 			var theMaster = tools.__master;
@@ -240,7 +238,6 @@ this.debug("------->>>   tools.__buildRightContainer : function()   !!!!!!!");
 			var nbLines = 1;
 			var createToolBox = function(inLabel)
             {
-//tools.debug("545: >>>>>>>   createToolBox = function(inLabel)   !!!!!!!!!!!!!!!!!!!!!!!!!");
                 var labelLayout = new qx.ui.layout.VBox();
                 labelLayout.setSpacing(4);
 				var labelBox = new qx.ui.container.Composite().set({
@@ -385,11 +382,6 @@ tools.debug("639 : colorsParamRequest -> response : " + response);
 			colorsParamRequest.open("GET", "/visu/colors7.xml?nocache="+Math.random(), true);
 			colorsParamRequest.send(null);
 
-			//~ tools.__seedsTypeSelectBox = tools.__getSeedsTypeSelectBox();
-			//~ paintPage.addAt(tools.__seedsTypeSelectBox,0);
-			// go see segTools  Line : 750 (appear event)
-
-			
 			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
 			tools.__topRightContainer.add(whileDrawingDrwngOpacityLabel);
 			
@@ -452,12 +444,8 @@ tools.debug("639 : colorsParamRequest -> response : " + response);
 			meshingAction.buildUI();
 			meshingPage.add(meshingAction);
 
-			var mRCgSH_height = tabView.getLayoutParent().getLayoutParent().getSizeHint().height;
-			var debugManualMeasureH = 80;
-
 			tools.addListener("changeSessionDirectory", function (e)
 			{
-//~ tools.debug("763 : >>>>>>>   tools.addListener(changeSessionDirectory, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				var directory=e.getData();
 				medianFilteringAction.setOutputDirectory(directory);
 				clusteringAction.setOutputDirectory(directory);
@@ -469,8 +457,9 @@ tools.debug("639 : colorsParamRequest -> response : " + response);
 				var adjacenciesXMLFileName = "data/adjacencies7.xml";
 				segmentationAction.setActionParameters({
 					"input_volume" : volFile,
-					"seeds" : tools.getSessionDirectory()+"/seeds.xml",
-					"adjacencies" : adjacenciesXMLFileName});
+					"seeds" : tools.getSessionDirectory()+"/seeds.xml"
+					//,"adjacencies" : adjacenciesXMLFileName
+					});
 				clusteringAction.setActionParameters({
 					"input_volume" : volFile});
 				meshingAction.setActionParameters({
@@ -480,23 +469,16 @@ tools.debug("639 : colorsParamRequest -> response : " + response);
 			tools.__startSegmentationButton=new qx.ui.form.Button("Start segmentation");
 			tools.__startSegmentationButton.addListener("execute", function ()
 			{
-//~ tools.debug("786 : >>>>>>>   tools.__startSegmentationButton.addListener(execute, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				tools.__startSegmentationButton.setEnabled(false);
 				tools.__segmentationInProgress=true;
-				var viewers=theMaster.getViewers();
-				for(var i=0; i<viewers.length; i++)
-				{
-					viewers[i].__saveCurrentSeeds();
-				}
-				tools.__curView.__saveCurrentSeeds(function() {
-							medianFilteringAction.executeAction();}, null);
+				tools.__saveCurrentSeeds(function() {
+							medianFilteringAction.executeAction();});
 			}, this);
 			tools.__bottomRightContainer.add(tools.__startSegmentationButton);
 
 			var meshingButton=new qx.ui.form.Button("extract meshes");
 			tools.__extractMeshesButton=meshingButton;
 			meshingButton.addListener("execute", function () {
-//~ tools.debug("801 : >>>>>>>   meshingButton.addListener(execute, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				tools.__startSegmentationButton.setEnabled(false);
 				meshingButton.setEnabled(false);
 				meshingAction.executeAction();
@@ -506,17 +488,12 @@ tools.debug("639 : colorsParamRequest -> response : " + response);
 			var segmentationViewer=null;
 			medianFilteringAction.addListener("actionUpdated", function ()
 			{
-//~ tools.debug("811 : >>>>>>>   medianFilteringAction.addListener(actionUpdated, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				tools.__startSegmentationButton.setEnabled(true);
 				if (segmentationViewer==null)
 				{
-	//~ tools.debug("815 : segmentationViewer=new desk.volView__classTest...............................");
 					segmentationViewer=new desk.volView__classTest(theMaster,
 											medianFilteringAction.getOutputDirectory()+"/output.mhd",
 											fileBrowser,tools.__curView.__display.orientation);
-					//~ segmentationViewer=new desk.volView(
-											//~ medianFilteringAction.getOutputDirectory()+"/output.mhd",
-											//~ fileBrowser);
 			//~ segmentationViewer.linkToVolumeViewer(tools.__curView); //~ later...
 					segmentationViewer.getWindow().addListener("beforeClose", function (e) {
 tools.debug("824 : >>>>>>>   segmentationViewer.getWindow().addListener(beforeClose, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
@@ -531,34 +508,14 @@ tools.debug("824 : >>>>>>>   segmentationViewer.getWindow().addListener(beforeCl
 
 			meshingAction.addListener("actionUpdated", function ()
 			{
-//~ tools.debug("836 : >>>>>>>  meshingAction.addListener(actionUpdated, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
 				meshingButton.setEnabled(true);
 				tools.__startSegmentationButton.setEnabled(true);
 				var meshesViewer=new desk.meshView(tools.getSessionDirectory()+"/meshes/meshes.xml",
 								fileBrowser);
 			}, this);
-			
-			//~ theMaster.__resetSeedsList(); //~ later // go see volMaster Line : 1077
-			
-			tools.addListenerOnce("appear", function(event)
-			{
-tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-			//	tools.setCaption("Tools -- " + tools.__curView.getCaption());
-				
-				if(tools.__seedsTypeSelectBox==null)
-				{
-					tools.__seedsTypeSelectBox = tools.__getSeedsTypeSelectBox();
-					paintPage.addAt(tools.__seedsTypeSelectBox,0);
-					// from  segTools  Line : 609
-				}
-				
-				//~ tools.debug("857 : tools.__eraserCursor.addListener(mousewheel, tools.__curView.__mouseWheelHandler, tools.__eraserCursor); !");
-		//seb		if(!tools.__curView.__isSegWindow)
-		//seb			tools.__eraserCursor.addListener("mousewheel", tools.__curView.__mouseWheelHandler, tools.__eraserCursor);
-				// from  segTools  Line: 430
-				
-			}, this);
-           
+
+			tools.__seedsTypeSelectBox = tools.__getSeedsTypeSelectBox();
+			paintPage.addAt(tools.__seedsTypeSelectBox,0);
 		},
 
 		loadSession : function()
@@ -627,7 +584,6 @@ tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 			var sessionsListLayout=new qx.ui.layout.HBox();
 			sessionsListLayout.setSpacing(4);
 			var sessionsListContainer=new qx.ui.container.Composite(sessionsListLayout);
-	//		sessionsListContainer.set({width : tools.__rightPanelWidth}); //~ value measured manually during debug...  // try same width befor and after
 			var sessionsListLabel=new qx.ui.basic.Label("Sessions : ");
 			sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});
 			sessionsListContainer.add(sessionsListLabel);
@@ -701,9 +657,21 @@ tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 			return sessionsListContainer;
 		},
 
-		__saveCurrentSeeds : function() {
+		__saveCurrentSeeds : function(callback) {
+
 			if (this.getSessionDirectory()==null)
 				return;
+
+			var numberOfRemainingSaves=1+this.__master.getViewers().length;
+
+			function savecallback () {
+				numberOfRemainingSaves--;
+				if ((numberOfRemainingSaves==0)&&
+					(typeof callback =="function")) {
+						callback();
+					}
+			}
+			
         	var wasAnySeedModified=false;
         	var _this=this;
 			this.__master.applyToViewers ( function ( sliceView ) {
@@ -723,13 +691,19 @@ tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 					file_name : _this.__getSeedFileName (sliceView, sliceId, seedsType),
 					base64Data : base64Img,
 					output_directory : _this.getSessionDirectory()};
-					_this.__fileBrowser.getActions().launchAction(parameterMap);
+					_this.__fileBrowser.getActions().launchAction(parameterMap, savecallback);
+				}
+				else {
+					savecallback();
 				}
 				sliceView.setUserData("previousSlice", sliceView.getSlice());
 				sliceView.setDrawingCanvasNotModified();
 			});
 			if (wasAnySeedModified) {
-				this.__saveSeedsXML();
+				this.__saveSeedsXML(savecallback);
+			}
+			else {
+				savecallback();
 			}
 		},
 

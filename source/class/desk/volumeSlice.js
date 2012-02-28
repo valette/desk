@@ -388,7 +388,7 @@ switch(this.getOrientation())
 			var shift=-min;
 			var scale=255/(max-min);
 			
-			if (this.getImageFormat()==1)
+			if (this.getImageFormat()==0)
 			{
 				switch (this.__scalarSize)
 				{

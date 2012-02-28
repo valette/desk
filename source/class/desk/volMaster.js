@@ -18,20 +18,30 @@ qx.Class.define("desk.volMaster",
 
 		this.__fileBrowser = globalFileBrowser;
 
-		var gridLayout=new qx.ui.layout.Grid();
+		var gridLayout=new qx.ui.layout.Grid(3,3);
 		for (var i=0;i<2;i++) {
 			gridLayout.setRowFlex(i,1);
 			gridLayout.setColumnFlex(i,1);
 		}
 
-		this.__window=new qx.ui.window.Window().set({decorator : "main"});
+		this.__window=new qx.ui.window.Window();
 		this.__window.setLayout(gridLayout);
 		this.__window.setShowClose(true);
 		this.__window.setShowMinimize(false);
 		this.__window.setResizable(true,true,true,true);
 		this.__window.setUseResizeFrame(true);
 		this.__window.setUseMoveFrame(true);
-		this.__window.set({width : 600, height : 600});
+
+		var width=window.innerWidth;
+		var height=window.innerHeight;
+		console.log(width+" "+height);
+		var minSize=height;
+		if (minSize>width) {
+			minSize=width;
+		}
+		minSize*=0.85;
+		
+		this.__window.set({width : minSize, height : minSize});
 		this.__window.setCaption(globalFile);
 		this.__window.open();
 
@@ -122,9 +132,12 @@ qx.Class.define("desk.volMaster",
 				}
 			}
 
-			var volumeListItem=new qx.ui.container.Composite();
+			var volumeListItem=new qx.ui.container.Composite()
+			volumeListItem.setDecorator("main");
 			volumeListItem.setLayout(new qx.ui.layout.VBox());
-			volumeListItem.add(new qx.ui.basic.Label(file));
+			var shortFileName=file.substring(file.lastIndexOf("/"), file.length);
+			volumeListItem.add(new qx.ui.basic.Label(shortFileName));
+			volumeListItem.set({toolTipText : file});
 			volumeListItem.setUserData("slices", volumeSlices);
 
 			var settingsContainer=new qx.ui.container.Composite();
