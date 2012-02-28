@@ -984,14 +984,14 @@ tools.debug("847 : >>>>>>>  tools.addListener(appear, function(event)   !!!!!!!!
 			var seedsList=new qx.ui.form.List();
 			seedsList.setWidth(30);
 			seedsList.setScrollbarY("off");
-			sliceView.getWindow().add(seedsList);
+			sliceView.add(seedsList);
 			seedsList.setVisibility("excluded");
 
 			// create corrections list
 			var correctionsList=new qx.ui.form.List();
 			correctionsList.setWidth(30);
 			correctionsList.setScrollbarY("off");
-			sliceView.getWindow().add(correctionsList);
+			sliceView.add(correctionsList);
 			correctionsList.setVisibility("excluded");
 
 			var lists=[];

@@ -14,7 +14,8 @@ qx.Class.define("desk.sliceView",
 	construct : function(file, fileBrowser, master, orientation, callback)
 	{
 		this.base(arguments);
-	
+		this.setLayout(new qx.ui.layout.HBox(5));
+
 		this.__slices=[];
 		this.__fileBrowser=fileBrowser;
 		this.addVolume(file, callback);
@@ -25,17 +26,6 @@ qx.Class.define("desk.sliceView",
 			this.setOrientation(0);
 
 		this.__master=master;		
-
-		this.__window=new qx.ui.window.Window();
-		this.__window.setLayout(new qx.ui.layout.HBox(5));
-		this.__window.setShowClose(true);
-		this.__window.setShowMinimize(false);
-		this.__window.setResizable(true,true,true,true);
-		this.__window.setUseResizeFrame(true);
-		this.__window.setUseMoveFrame(true);
-		this.__window.set({width : 400, height : 400});
-//		this.__window.setCaption(file);
-		this.__window.setCaption(""+orientation);
 
 		this.__createUI();
 
@@ -63,7 +53,6 @@ qx.Class.define("desk.sliceView",
 			}, this);
 */
 
-		this.__window.open();
 		return (this);		
 	},
 
@@ -90,8 +79,6 @@ qx.Class.define("desk.sliceView",
 
 		__rightContainer : null,
 
-		__window :null,
-
 		__viewPort : null,
 
 		__currentColor : null,
@@ -108,10 +95,6 @@ qx.Class.define("desk.sliceView",
 		__drawingCanvas : null,
 
 		__drawingCanvasModified : false,
-
-		getWindow : function () {
-			return this.__window;
-		},
 
 		getDrawingCanvas : function () {
 			return this.__drawingCanvas;
@@ -306,9 +289,9 @@ qx.Class.define("desk.sliceView",
 						_this.render();
 					});
 
-				_this.__window.addListener("close", function() {
+			/*	_this.__window.addListener("close", function() {
 					volumeSlice.removeListenerById(listenerId);
-					});
+					});*/
 
 				_this.render();
 				_this.__setDrawingMesh(volumeSlice);
@@ -330,8 +313,8 @@ qx.Class.define("desk.sliceView",
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
-			this.__window.setDroppable(true);
-			this.__window.addListener("drop", function(e) {
+			this.setDroppable(true);
+			this.addListener("drop", function(e) {
 				if (e.supportsType("fileBrowser"))
 				{
 					var fileBrowser=e.getData("fileBrowser");
@@ -368,12 +351,12 @@ qx.Class.define("desk.sliceView",
 
 				// activate the window
 				var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
-				windowManager.bringToFront(this.__window);
+				windowManager.bringToFront(this);
 			}, this);
 
-			this.__window.addListener("close", function(e) {
+/*			this.__window.addListener("close", function(e) {
 				this.dispose();
-				},this);
+				},this);*/
 
 			htmlContainer.addListener("appear",function(e){
 				// scene and camera
@@ -606,7 +589,7 @@ qx.Class.define("desk.sliceView",
 		},
 
 		__createUI : function (file) {
-			this.__window.add(this.__getRenderWindow(), {flex : 1});
+			this.add(this.__getRenderWindow(), {flex : 1});
 			var rightContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox());
 			this.__rightContainer=rightContainer;
 
@@ -622,8 +605,6 @@ qx.Class.define("desk.sliceView",
 						_this.__master.getTools().getPaintPanelVisibilitySwitch());					
 					});
 			}
-
-			rightContainer.add(this.__getBrightnessContrastButton());
 
 			////Create spinner and sync it with the slider
 			var spinner = new qx.ui.form.Spinner();
@@ -660,8 +641,8 @@ qx.Class.define("desk.sliceView",
 			var SelectPNG = new qx.ui.form.ListItem("png");
 			this.__fileFormatBox.add(SelectPNG);
 			rightContainer.add(this.__fileFormatBox);
-
-			this.__window.add(rightContainer);
+			rightContainer.add(this.__getBrightnessContrastButton());
+			this.add(rightContainer);
 		}
 	}
 });

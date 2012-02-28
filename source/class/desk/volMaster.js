@@ -18,13 +18,30 @@ qx.Class.define("desk.volMaster",
 
 		this.__fileBrowser = globalFileBrowser;
 
+		var gridLayout=new qx.ui.layout.Grid();
+		for (var i=0;i<2;i++) {
+			gridLayout.setRowFlex(i,1);
+			gridLayout.setColumnFlex(i,1);
+		}
+
+		this.__window=new qx.ui.window.Window().set({decorator : "main"});
+		this.__window.setLayout(gridLayout);
+		this.__window.setShowClose(true);
+		this.__window.setShowMinimize(false);
+		this.__window.setResizable(true,true,true,true);
+		this.__window.setUseResizeFrame(true);
+		this.__window.setUseMoveFrame(true);
+		this.__window.set({width : 600, height : 600});
+		this.__window.setCaption(globalFile);
+		this.__window.open();
+
 		this.__createVolumesList();
 
 		this.__viewers = [];
 		this.__nbUsedOrientations = 3;
 		this.addVolume(globalFile);
 
-		this.__tools = new desk.segTools(this, globalFile, globalFileBrowser);;	
+		this.__tools = new desk.segTools(this, globalFile, globalFileBrowser);	
 		this.setToolsReady(true);	
 
 		return (this.__viewers); //~ orion test : launch the 3 views at once ! ! !
@@ -37,6 +54,9 @@ qx.Class.define("desk.volMaster",
 
 	members :
 	{
+
+		__window : null,
+
 		__volumes : null,
 
 		__viewers : null,
@@ -69,22 +89,9 @@ qx.Class.define("desk.volMaster",
 		},
 
 		__createVolumesList : function () {
-			var window=new qx.ui.window.Window();
-
-			window.setLayout(new qx.ui.layout.HBox(5));
-			window.setShowClose(true);
-			window.setShowMinimize(false);
-			window.setResizable(true,true,true,true);
-			window.setUseResizeFrame(true);
-			window.setUseMoveFrame(true);
-			window.set({width : 400, height : 400});
-			window.setCaption("volumes");
-
 			this.__volumes= new qx.ui.form.List();
 			this.__volumes.set({ selectionMode : "multi" });
-
-			window.add(this.__volumes, {flex : 1});
-			window.open();
+			this.__window.add(this.__volumes, {row: 1, column: 0});
 		},
 
 		addVolume : function (file) {
@@ -93,11 +100,25 @@ qx.Class.define("desk.volMaster",
 			{
 				if (this.__viewers[i]==undefined)
 				{
-					this.__viewers[i] = new desk.sliceView(file, this.__fileBrowser, this, i, ( function (myI) { 
+					var sliceView=  new desk.sliceView(file, this.__fileBrowser, this, i, ( function (myI) { 
 						return (function (volumeSlice) {
 							volumeSlices[myI]=volumeSlice;
 							});
 						} ) (i));
+					this.__viewers[i] =sliceView;	
+					switch (i)
+					{
+					case 0 : 
+						this.__window.add(sliceView, {row: 0, column: 0});
+						break;
+					case 1 : 
+						this.__window.add(sliceView, {row: 0, column: 1});
+						break;
+					case 2 : 
+						this.__window.add(sliceView, {row: 1, column: 1});
+						break;
+					}
+					
 				}
 				else
 				{
