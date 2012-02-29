@@ -28,13 +28,25 @@ qx.Class.define("desk.volMaster",
 			gridLayout.setColumnFlex(i,1);
 		}
 
+		var gridContainer=new qx.ui.container.Composite();
+		gridContainer.setLayout(gridLayout);
+		this.__gridContainer=gridContainer;
+
+		var fullscreenContainer=new qx.ui.container.Composite();
+		fullscreenContainer.setLayout(new qx.ui.layout.HBox());
+		this.__fullscreenContainer=fullscreenContainer;
+		fullscreenContainer.setVisibility("excluded")
+
 		this.__window=new qx.ui.window.Window();
-		this.__window.setLayout(gridLayout);
+		this.__window.setLayout(new qx.ui.layout.VBox());
 		this.__window.setShowClose(true);
 		this.__window.setShowMinimize(false);
 		this.__window.setResizable(true,true,true,true);
 		this.__window.setUseResizeFrame(true);
 		this.__window.setUseMoveFrame(true);
+
+		this.__window.add(gridContainer, {flex : 1});
+		this.__window.add(fullscreenContainer, {flex : 1});
 
 		var width=window.innerWidth;
 		var height=window.innerHeight;
@@ -52,13 +64,13 @@ qx.Class.define("desk.volMaster",
 
 		this.__viewers = [];
 		this.__nbUsedOrientations = 3;
+
 		this.__addViewers();
 		this.addVolume(globalFile);
 
 		this.__addDropFileSupport();
 
 		return (this.__viewers); //~ orion test : launch the 3 views at once ! ! !
-
 	},
 
 
@@ -69,6 +81,8 @@ qx.Class.define("desk.volMaster",
 
 	members :
 	{
+		__fullscreenContainer : null,
+		__gridContainer : null,
 		__window : null,
 		__volumes : null,
 		__viewers : null,
@@ -119,27 +133,48 @@ qx.Class.define("desk.volMaster",
 			this.__volumes=new qx.ui.container.Composite();
 			this.__volumes.setLayout(new qx.ui.layout.VBox());
 			container.add(this.__volumes);
-			this.__window.add(container, {row: 1, column: 0});
+			this.__gridContainer.add(container, {row: 1, column: 0});
 		},
 
 		__addViewers : function () {
-			for(var i=0; i<this.__nbUsedOrientations; i++)
-			{
+			for(var i=0; i<this.__nbUsedOrientations; i++) {
 				var sliceView=  new desk.sliceView(this.__fileBrowser, this, i);
 				this.__viewers[i] =sliceView;	
 				switch (i)
 				{
-				case 0 : 
-					this.__window.add(sliceView, {row: 0, column: 0});
+				case 0 :
+					this.__addViewerToGrid(sliceView, 0, 0);
 					break;
 				case 1 : 
-					this.__window.add(sliceView, {row: 0, column: 1});
+					this.__addViewerToGrid(sliceView, 0, 1);
 					break;
 				case 2 : 
-					this.__window.add(sliceView, {row: 1, column: 1});
+					this.__addViewerToGrid(sliceView, 1, 1);
 					break;
 				}
 			}
+		},
+
+		__addViewerToGrid : function (sliceView, x, y) {
+			var fullscreen=false;
+			this.__gridContainer.add(sliceView, {row: x, column: y});
+
+			var fullscreenButton=new qx.ui.form.Button("+");
+			sliceView.getRightContainer().add(fullscreenButton);
+			fullscreenButton.addListener("execute", function () {
+				if (!fullscreen) {
+					this.__gridContainer.setVisibility("excluded");
+					this.__fullscreenContainer.add(sliceView, {flex : 1});
+					this.__fullscreenContainer.setVisibility("visible");
+					fullscreen=true;
+				}
+				else {
+					this.__fullscreenContainer.setVisibility("excluded");
+					fullscreen=false;
+					this.__gridContainer.add(sliceView, {row: x, column: y});
+					this.__gridContainer.setVisibility("visible");
+				}
+			}, this);
 		},
 
 		addVolume : function (file, parameters) {
@@ -162,7 +197,11 @@ qx.Class.define("desk.volMaster",
 			volumeListItem.setDecorator("main");
 			volumeListItem.setLayout(new qx.ui.layout.VBox());
 			var shortFileName=file.substring(file.lastIndexOf("/")+1, file.length);
-			volumeListItem.add(new qx.ui.basic.Label(shortFileName));
+
+			var label=new qx.ui.basic.Label(shortFileName);
+			label.setContextMenu(this.__getVolumeContextMenu(volumeListItem));
+			volumeListItem.add(label);
+
 			volumeListItem.set({toolTipText : file});
 			volumeListItem.setUserData("slices", volumeSlices);
 
@@ -282,7 +321,6 @@ qx.Class.define("desk.volMaster",
 			settingsContainer.add(hideShowCheckbox);
 
 			this.__volumes.add(volumeListItem);
-			volumeListItem.setContextMenu(this.__getVolumeContextMenu(volumeListItem));
 			return (volumeListItem);
 		},
 

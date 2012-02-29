@@ -75,6 +75,10 @@ qx.Class.define("desk.sliceView",
 
 		__drawingCanvasModified : false,
 
+		getRightContainer : function () {
+			return this.__rightContainer;
+		},
+
 		getDrawingCanvas : function () {
 			return this.__drawingCanvas;
 		},
@@ -369,7 +373,7 @@ qx.Class.define("desk.sliceView",
 
 			var _this=this;
 
-			htmlContainer.addListener("appear",function(e){
+			htmlContainer.addListenerOnce("appear",function(e){
 				// scene and camera
 				var elementSize=htmlContainer.getInnerSize();
 				this.__scene = new THREE.Scene();

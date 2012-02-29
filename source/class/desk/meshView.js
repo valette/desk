@@ -567,7 +567,7 @@ qx.Class.define("desk.meshView",
 				this.dispose();
 				},this);
 
-			htmlContainer.addListener("appear",function(e){
+			htmlContainer.addListenerOnce("appear",function(e){
 
 				// scene and camera
 				var elementSize=htmlContainer.getInnerSize();
