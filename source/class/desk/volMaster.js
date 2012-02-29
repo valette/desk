@@ -137,6 +137,18 @@ qx.Class.define("desk.volMaster",
 			var _this=this;
 			var volumeSlices=[];
 
+			var opacity=1;
+			var imageFormat=1;
+			
+			if (parameters!=null) {
+				if (parameters.opacity!=null) {
+					opacity=parameters.opacity;
+				}
+				if (parameters.imageFormat!=null) {
+					imageFormat=parameters.imageFormat;
+				}
+			}
+
 			var volumeListItem=new qx.ui.container.Composite()
 			volumeListItem.setDecorator("main");
 			volumeListItem.setLayout(new qx.ui.layout.VBox());
@@ -224,15 +236,19 @@ qx.Class.define("desk.volMaster",
 			fileFormatBox.add(SelectPNG);
 			settingsContainer.add(fileFormatBox);
 
+			if (imageFormat!=1) {
+				fileFormatBox.setSelection([SelectPNG]);
+			}
+
 			fileFormatBox.addListener("changeSelection", function ( ) {
-				var imageFormat=fileFormatBox.getSelection()[0].getUserData("imageFormat");
+				imageFormat=fileFormatBox.getSelection()[0].getUserData("imageFormat");
 				for (var i=0;i<volumeSlices.length;i++) {
 					volumeSlices[i].setImageFormat(imageFormat);
 				}
 			});
 
             var opacitySlider = new qx.ui.form.Slider();
-			opacitySlider.setValue(100);
+			opacitySlider.setValue(opacity*100);
 			opacitySlider.addListener("changeValue", function(event)
 			{
 				for (var i=0;i<volumeSlices.length;i++) {

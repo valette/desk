@@ -127,27 +127,15 @@ qx.Class.define("desk.sliceView",
 		addVolume : function (file, parameters, callback)
 		{
 			if (this.isReady()) {
-				this.__addVolume(file, callback);
+				this.__addVolume(file, parameters, callback);
 			}
 			else {
 				this.addListenerOnce("changeReady", function () {
-					this.__addVolume(file, callback);},this);
+					this.__addVolume(file, parameters, callback);},this);
 			}
 		},
 
-		reorderMeshes : function ()
-		{
-			if (this.isReady()) {
-				this.__reorderMeshes();
-			}
-			else {
-				this.addListenerOnce("changeReady", function () {
-					this.__reorderMeshes();},this);
-			}
-		},
-
-
-		__reorderMeshes : function () {
+		reorderMeshes : function () {
 			var z_space=0.01;
 			var mesh;
 			var slices=this.__slices;
@@ -263,7 +251,7 @@ qx.Class.define("desk.sliceView",
 				});
 		},
 
-		__addVolume : function (file, callback) {
+		__addVolume : function (file, parameters, callback) {
 			var volumeSlice=new desk.volumeSlice(file,this.__fileBrowser, this.getOrientation());
 			this.__slices.push(volumeSlice);
 			var _this=this;

@@ -558,14 +558,23 @@ tools.debug("824 : >>>>>>>   segmentationViewer.getWindow().addListener(beforeCl
 										_this.__addNewSeedItemToList(sliceView, sliceId, k);
 									});
 							}
+						master.applyToViewers( function (sliceView) {
+								_this.__reloadSeedImage( sliceView );
+							});
 						}
 					}
 					else {
 						alert("no seeds found");
+						master.applyToViewers( function (sliceView) {
+								_this.__reloadSeedImage( sliceView );
+							});
 					}
 				}
 				else if (this.readyState == 4 && this.status != 200) {
 					alert("no seeds found");
+					master.applyToViewers( function (sliceView) {
+						_this.__reloadSeedImage( sliceView );
+						});
 				}
 			};
 
