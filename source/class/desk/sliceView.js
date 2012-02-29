@@ -549,15 +549,11 @@ qx.Class.define("desk.sliceView",
 			this.__rightContainer=rightContainer;
 
 			var label = new qx.ui.basic.Label("0");
-			label.setTextAlign("center");
-			label.setWidth(30);
+			label.set({textAlign: "center", width : 30, decorator : "main"});
 			rightContainer.add(label);
 			var slider=new qx.ui.form.Slider();
 			this.__slider=slider;
-			slider.setMinimum(0);
-			slider.setMaximum(100);
-			slider.setValue(0);
-			slider.setWidth(30);
+			slider.set ({minimum : 0, maximum : 100, value : 0, width :30});
 			slider.setOrientation("vertical");
 			slider.addListener("changeValue",function(e){
 				this.setSlice(this.getVolumeSliceToPaint().getNumberOfSlices()-1-e.getData())

@@ -132,7 +132,7 @@ qx.Class.define("desk.volMaster",
 			container.add(paintButton);
 			this.__volumes=new qx.ui.container.Composite();
 			this.__volumes.setLayout(new qx.ui.layout.VBox());
-			container.add(this.__volumes);
+			container.add(this.__volumes, {flex : 1});
 			this.__gridContainer.add(container, {row: 1, column: 0});
 		},
 
@@ -204,16 +204,21 @@ qx.Class.define("desk.volMaster",
 			}
 
 			var volumeListItem=new qx.ui.container.Composite()
-			volumeListItem.setDecorator("main");
 			volumeListItem.setLayout(new qx.ui.layout.VBox());
-			var shortFileName=file.substring(file.lastIndexOf("/")+1, file.length);
-
-			var label=new qx.ui.basic.Label(shortFileName);
-			label.setContextMenu(this.__getVolumeContextMenu(volumeListItem));
-			volumeListItem.add(label);
-
+			volumeListItem.setDecorator("main");
 			volumeListItem.set({toolTipText : file});
 			volumeListItem.setUserData("slices", volumeSlices);
+
+			var shortFileName=file.substring(file.lastIndexOf("/")+1, file.length);
+
+			var labelcontainer=new qx.ui.container.Composite()
+			labelcontainer.setLayout(new qx.ui.layout.HBox());
+			volumeListItem.add(labelcontainer, {flex : 1});
+
+			var label=new qx.ui.basic.Label(shortFileName);
+			label.setTextAlign("left");
+			labelcontainer.add(label, {flex : 1});
+			labelcontainer.setContextMenu(this.__getVolumeContextMenu(volumeListItem));
 
 			var numberOfRemainingMeshes=this.__nbUsedOrientations;
 
