@@ -34,12 +34,11 @@ qx.Class.define("desk.volMaster",
 
 		var width=window.innerWidth;
 		var height=window.innerHeight;
-		console.log(width+" "+height);
 		var minSize=height;
 		if (minSize>width) {
 			minSize=width;
 		}
-		minSize*=0.85;
+		minSize=Math.round(minSize*0.85);
 		
 		this.__window.set({width : minSize, height : minSize});
 		this.__window.setCaption(globalFile);
@@ -50,6 +49,8 @@ qx.Class.define("desk.volMaster",
 		this.__viewers = [];
 		this.__nbUsedOrientations = 3;
 		this.addVolume(globalFile);
+
+		this.__addDropFileSupport();
 
 		return (this.__viewers); //~ orion test : launch the 3 views at once ! ! !
 
@@ -81,6 +82,19 @@ qx.Class.define("desk.volMaster",
 			return this.__viewers;
 		},
 
+		__reorderMeshes : function () {
+			var volumes=this.__volumes.getChildren();
+			for (var i=0;i<volumes.length;i++) {
+				var slices=volumes[i].getUserData("slices");
+				for (var j=0;j<slices.length;j++){
+					slices[j].setUserData("rank", i);
+				}
+			}
+			this.applyToViewers( function (sliceView) {
+				sliceView.reorderMeshes();
+			});
+		},
+
 		__createVolumesList : function () {
 			var container=new qx.ui.container.Composite();
 			container.setLayout(new qx.ui.layout.VBox());
@@ -98,19 +112,24 @@ qx.Class.define("desk.volMaster",
 		},
 
 		addVolume : function (file) {
+			var _this=this;
 			var volumeSlices=[];
+
+			var volumeListItem=new qx.ui.container.Composite()
+			volumeListItem.setDecorator("main");
+			volumeListItem.setLayout(new qx.ui.layout.VBox());
+			var shortFileName=file.substring(file.lastIndexOf("/"), file.length);
+			volumeListItem.add(new qx.ui.basic.Label(shortFileName));
+			volumeListItem.set({toolTipText : file});
+			volumeListItem.setUserData("slices", volumeSlices);
+
+			var numberOfRemainingMeshes=this.__nbUsedOrientations;
+
 			for(var i=0; i<this.__nbUsedOrientations; i++)
 			{
 				if (this.__viewers[i]==undefined)
 				{
 					var sliceView=  new desk.sliceView(this.__fileBrowser, this, i);
-
-					sliceView.addVolume(file, ( function (myI) { 
-						return (function (volumeSlice) {
-							volumeSlices[myI]=volumeSlice;
-							});
-						} ) (i));
-
 					this.__viewers[i] =sliceView;	
 					switch (i)
 					{
@@ -126,19 +145,17 @@ qx.Class.define("desk.volMaster",
 					}
 					
 				}
-				else
-				{
-					alert ("already one volume present, implement addition TODO");
-				}
-			}
+				this.__viewers[i].addVolume(file, ( function (myI) { 
+					return (function (volumeSlice) {
+						volumeSlices[myI]=volumeSlice;
+						numberOfRemainingMeshes--;
+						if (numberOfRemainingMeshes==0) {
+							_this.__reorderMeshes();
+						}
+						});
+					} ) (i));
 
-			var volumeListItem=new qx.ui.container.Composite()
-			volumeListItem.setDecorator("main");
-			volumeListItem.setLayout(new qx.ui.layout.VBox());
-			var shortFileName=file.substring(file.lastIndexOf("/"), file.length);
-			volumeListItem.add(new qx.ui.basic.Label(shortFileName));
-			volumeListItem.set({toolTipText : file});
-			volumeListItem.setUserData("slices", volumeSlices);
+			}
 
 			var settingsContainer=new qx.ui.container.Composite();
 			settingsContainer.setLayout(new qx.ui.layout.HBox());
@@ -211,7 +228,42 @@ qx.Class.define("desk.volMaster",
 					volumeSlices[i].setImageFormat(imageFormat);
 				}
 			});
+
+            var opacitySlider = new qx.ui.form.Slider();
+			opacitySlider.setValue(100);
+			opacitySlider.addListener("changeValue", function(event)
+			{
+				for (var i=0;i<volumeSlices.length;i++) {
+					volumeSlices[i].getUserData("mesh").material.opacity=event.getData()/100;
+				}
+				this.applyToViewers(function (viewer) {
+					viewer.render();
+					});
+			},this);
+			settingsContainer.add(opacitySlider, {flex : 1});
+
 			this.__volumes.add(volumeListItem);
+		},
+
+		__addDropFileSupport : function () {
+			this.__window.setDroppable(true);
+			this.__window.addListener("drop", function(e) {
+				if (e.supportsType("fileBrowser")) {
+					var fileBrowser=e.getData("fileBrowser");
+					var nodes=fileBrowser.getSelectedNodes();
+					for (var i=0;i<nodes.length;i++) {
+						this.addVolume(fileBrowser.getNodeFile(nodes[i]));
+					}
+				}
+		//		if (e.supportsType("volumeSlice"))
+		//		{
+		//			this.attachVolumeSlice(e.getData("volumeSlice"));
+		//		}
+
+				// activate the window
+				var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
+				windowManager.bringToFront(this.__window);
+			}, this);
 		}
 	} //// END of   members :
 

@@ -91,6 +91,7 @@ qx.Class.define("desk.sliceView",
 		__master : null,
 
 		__drawingCanvas : null,
+		__drawingMesh : null,
 
 		__drawingCanvasModified : false,
 
@@ -130,8 +131,59 @@ qx.Class.define("desk.sliceView",
 			}
 			else {
 				this.addListenerOnce("changeReady", function () {
-					this.__addVolume(file, callback)},this);
+					this.__addVolume(file, callback);},this);
 			}
+		},
+
+		reorderMeshes : function ()
+		{
+			if (this.isReady()) {
+				this.__reorderMeshes();
+			}
+			else {
+				this.addListenerOnce("changeReady", function () {
+					this.__reorderMeshes();},this);
+			}
+		},
+
+
+		__reorderMeshes : function () {
+			var z_space=0.01;
+			var mesh;
+			var slices=this.__slices;
+	
+			for (var i=0;i<slices.length;i++) {
+				var sliceGeometry=this.__slices[i].getUserData("mesh").geometry;
+				var rank=slices[i].getUserData("rank");
+				for (var j=0;j<sliceGeometry.length;j++) {
+					sliceGeometry[j].setZ(rank*z_space);
+				}
+				HACKSetDirtyVertices(sliceGeometry);
+			}
+
+			var paintMeshGeometry=this.__drawingMesh.geometry;
+			for (var j=0;j<paintMeshGeometry.length;j++) {
+					paintMeshGeometry[j].setZ(this.__slices.length*z_space);
+				}
+			HACKSetDirtyVertices(paintMeshGeometry);
+
+			for (var i=0;i<slices.length;i++) {
+				mesh=slices[i].getUserData("mesh");
+				this.__scene.remove(mesh);
+			}
+
+			this.__scene.remove(this.__drawingMesh);
+
+			for (var rank=0;rank<slices.length;rank++) {
+				var index=-1;
+				for (var i=0;i<slices.length;i++) {
+					if (slices[i].getUserData("rank")==rank) {
+						mesh=slices[i].getUserData("mesh");
+						this.__scene.add(mesh);
+					}
+				}
+			}
+			this.__scene.add(this.__drawingMesh);
 		},
 
 		__setDrawingMesh : function (volumeSlice)
@@ -140,9 +192,12 @@ qx.Class.define("desk.sliceView",
 			geometry.dynamic=true;
 
 			var coordinates=volumeSlice.get2DCornersCoordinates();
-			for (var i=0;i<4;i++)
-				geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( coordinates[2*i],
-																			coordinates[2*i+1], 0.01 ) ) );
+			for (var i=0;i<4;i++) {
+				geometry.vertices.push(
+					new THREE.Vertex(
+						new THREE.Vector3( coordinates[2*i],coordinates[2*i+1], 0 ) ) );
+			}
+
 			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
 			geometry.faceVertexUvs[ 0 ].push( [
 				new THREE.UV( 0, 0),
@@ -161,6 +216,8 @@ qx.Class.define("desk.sliceView",
 				width: width,
 				height: height
 			});
+			this.__drawingCanvas.getContext2d().clearRect(0,0,width,height);
+
 
 			var length=width*height*4;
 			var dataColor = new Uint8Array( length);
@@ -174,6 +231,7 @@ qx.Class.define("desk.sliceView",
 			var mesh=new THREE.Mesh(geometry,material);
 			mesh.doubleSided=true;
 			this.__scene.add(mesh);
+			this.__drawingMesh=mesh;
 
 			geometry.computeCentroids();
 			geometry.computeFaceNormals();
@@ -185,8 +243,9 @@ qx.Class.define("desk.sliceView",
 			{
 				var data=_this.__drawingCanvas.getContext2d().getImageData
 									(0, 0,width, height).data;
-				for (var i=length;i--;)
+				for (var i=length;i--;) {
 					dataColor[i]=data[i];
+				}
 				texture.needsUpdate = true;
 				_this.render();
 			}
@@ -222,9 +281,12 @@ qx.Class.define("desk.sliceView",
 				geometry.dynamic=true;
 
 				var coordinates=volumeSlice.get2DCornersCoordinates();
-				for (var i=0;i<4;i++)
-					geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( coordinates[2*i],
-																				coordinates[2*i+1], 0 ) ) );
+				for (var i=0;i<4;i++) {
+					geometry.vertices.push(
+						new THREE.Vertex(
+							new THREE.Vector3(
+								coordinates[2*i],coordinates[2*i+1],0)));
+				}
 	//		console.log(_this.getOrientation());
 	//		console.log(coordinates);
 				geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
@@ -236,18 +298,25 @@ qx.Class.define("desk.sliceView",
 					] );
 
 				
-				_this.__slider.setMaximum(volumeSlice.getNumberOfSlices()-1);
+
 				_this.addListener("changeSlice", function (e) {
 					volumeSlice.setSlice(e.getData());
 				});
-				_this.setSlice(Math.round(0.5*volumeSlice.getNumberOfSlices()));
 
-				_this.__camera.position.set(0.5*(coordinates[0]+coordinates[2]),
-											0.5*(coordinates[3]+coordinates[5]),
-											0);
-				_this.__controls.target.copy(_this.__camera.position);
-				_this.__camera.position.setZ(_this.__camera.position.z+
-								volumeSlice.getBoundingBoxDiagonalLength()*0.6);
+				if (_this.__slices.length==1) {
+					_this.__slider.setMaximum(volumeSlice.getNumberOfSlices()-1);	
+					_this.setSlice(Math.round(0.5*volumeSlice.getNumberOfSlices()));
+
+					_this.__camera.position.set(0.5*(coordinates[0]+coordinates[2]),
+												0.5*(coordinates[3]+coordinates[5]),
+												0);
+					_this.__controls.target.copy(_this.__camera.position);
+					_this.__camera.position.setZ(_this.__camera.position.z+
+									volumeSlice.getBoundingBoxDiagonalLength()*0.6);
+				}
+				else {
+					volumeSlice.setSlice(_this.getSlice());
+				}
 
 				var canvas=volumeSlice.getImageCanvas();
 		    	
@@ -260,7 +329,7 @@ qx.Class.define("desk.sliceView",
 						dataColor, width, height, THREE.RGBAFormat );
 				texture.needsUpdate = true;
 				texture.magFilter=THREE.NearestFilter;
-				var material=new THREE.MeshBasicMaterial( {map:texture});
+				var material=new THREE.MeshBasicMaterial( {map:texture, transparent: true});
 
 				var mesh=new THREE.Mesh(geometry,material);
 				mesh.doubleSided=true;
@@ -282,19 +351,18 @@ qx.Class.define("desk.sliceView",
 					_this.render();
 				}
 
-				updateTexture();
-
 				var listenerId=volumeSlice.addListener('changeImage',function() {
 						updateTexture();
 						_this.render();
 					});
-
+				updateTexture();
 			/*	_this.__window.addListener("close", function() {
 					volumeSlice.removeListenerById(listenerId);
 					});*/
 
-				_this.render();
 				_this.__setDrawingMesh(volumeSlice);
+				_this.render();
+
 				if (typeof callback=="function")
 				{
 					callback(volumeSlice);
@@ -312,51 +380,6 @@ qx.Class.define("desk.sliceView",
 			var _this=this;
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
-
-			this.setDroppable(true);
-			this.addListener("drop", function(e) {
-				if (e.supportsType("fileBrowser"))
-				{
-					var fileBrowser=e.getData("fileBrowser");
-					var nodes=fileBrowser.getSelectedNodes();
-					var numberOfMeshes=nodes.length;
-					var numberOfRemainingMeshes=numberOfMeshes;
-					for (var i=0;i<nodes.length;i++)
-					{
-						var fileNode=nodes[i];
-						var fileName=fileBrowser.getNodeFile(fileNode);
-						var mTime=fileBrowser.getNodeMTime(fileNode);
-
-						var update=function()
-						{
-							numberOfRemainingMeshes--;
-							switch (numberOfRemainingMeshes)
-							{
-								case Math.floor(numberOfMeshes/4):
-								case Math.floor(numberOfMeshes/2):
-								case Math.floor(numberOfMeshes*3/4):
-								case 0:
-									_this.viewAll();
-									break;
-								default:
-							}
-						}
-						this.openFile(fileName, mTime);
-					}
-				}
-				if (e.supportsType("volumeSlice"))
-				{
-					this.attachVolumeSlice(e.getData("volumeSlice"));
-				}
-
-				// activate the window
-				var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
-				windowManager.bringToFront(this);
-			}, this);
-
-/*			this.__window.addListener("close", function(e) {
-				this.dispose();
-				},this);*/
 
 			htmlContainer.addListener("appear",function(e){
 				// scene and camera
