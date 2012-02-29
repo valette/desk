@@ -173,6 +173,16 @@ qx.Class.define("desk.volMaster",
 					fullscreen=false;
 					this.__gridContainer.add(sliceView, {row: x, column: y});
 					this.__gridContainer.setVisibility("visible");
+
+					// render other viewers, fixes issues with window resize
+					this.applyToViewers(function (viewer) {
+						if (viewer!=sliceView){
+							viewer.addListenerOnce("appear", function () {
+								console.log("render");
+								viewer.render();
+							});
+						}
+					});
 				}
 			}, this);
 		},
