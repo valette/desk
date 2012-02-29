@@ -2,11 +2,22 @@ qx.Class.define("desk.volumeSlice",
 {
   extend : qx.core.Object,
 
-	construct : function(file, fileBrowser, orientation)
+	construct : function(file, fileBrowser, orientation, parameters)
 	{
 		this.base(arguments);
 
 		this.setOrientation(orientation);
+
+		if (parameters!=null) {
+			if (parameters.imageFormat!=null) {
+				this.setImageFormat(parameters.imageFormat);
+			}
+
+			if (parameters.colors!=null) {
+				this.setLookupTables(parameters.colors);
+			}
+		}
+		
 
 		this.__image=new Image();
 		this.__canvas = new qx.ui.embed.Canvas();
@@ -122,10 +133,10 @@ qx.Class.define("desk.volumeSlice",
 			return this.__offset;
 		},
 
-		setLookupTables : function (red, green, blue) {
-			this.__lookupTableRed=red;
-			this.__lookupTableGreen=green;
-			this.__lookupTableBlue=blue;
+		setLookupTables : function ( luts ) {
+			this.__lookupTableRed=luts[0];
+			this.__lookupTableGreen=luts[1];
+			this.__lookupTableBlue=luts[2];
 		},
 
 		getImageCanvas : function(){
@@ -168,7 +179,7 @@ qx.Class.define("desk.volumeSlice",
 
 		get2DDimensions: function () {
 			var dims=[];
-switch(this.getOrientation())
+			switch(this.getOrientation())
 			{
 				// ZY X
 				case 1 :
@@ -553,8 +564,177 @@ switch(this.getOrientation())
 			return;
 		},
 
+		__applyLookupTablesToCanvas : function () {
+			var canvas=this.__originalImageCanvas;
+			var dataDesc = canvas.getContext2d().getImageData
+					(0, 0, canvas.getCanvasWidth(), canvas.getCanvasHeight());
+
+			var data = dataDesc.data;
+
+			var pix = data.length, pix1, pix2;
+			var p= pix/4;
+			var r, g, b,a,c;
+
+			var max=this.__scalarMax;
+			var min=this.__scalarMin;
+
+			var redArray=this.__lookupTableRed;
+			var greenArray=this.__lookupTableGreen;
+			var blueArray=this.__lookupTableBlue;
+
+			if (this.getImageFormat()==0)
+			{
+				switch (this.__scalarSize)
+				{
+				case 1:
+					if (this.__scalarType==3)
+					{
+						pix=0;
+					// unsigned char: no need to check for sign
+						while (p--) {
+							r= data[pix]-1;
+							data[pix++]=redArray[r];
+							data[pix++]=greenArray[r];
+							data[pix++]=blueArray[r];
+							data[pix++]=255;
+							}
+						}
+						else
+						{
+							pix=0;
+							while (p--) {
+								c=data[pix];
+								if (c>127)
+									c-=256;
+								c=(c+shift)*scale;
+								c=c* mul + add;
+								
+								if (c>255)
+									c=255;
+								else if (c<0)
+									c=0;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=255;
+							}
+						}
+						break;
+					case 2:
+						if (this.__scalarType==4)
+						{
+						// signed short : need to check for sign
+							pix=0;
+							while (p--){
+								r= data[pix];
+								g= data[pix+1];
+								c=r+256*g;
+								// check sign
+								if (g>127)
+									c-=65536;
+								c=(c+shift)*scale;
+								c=c* mul + add;
+								
+								if (c>255)
+									c=255;
+								else if (c<0)
+									c=0;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=255;
+							}
+						}
+						else
+						{
+						// unsigned short : no need to check sign
+							pix=0;
+							while (p--){
+								r= data[pix];
+								g= data[pix+1];
+								c=r+256*g;
+								c=(c+shift)*scale;
+								c=c* mul + add;
+								if (c>255)
+									c=255;
+								else if (c<0)
+									c=0;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=255;
+							}
+						}
+						break;
+					case 4:
+						if (this.__scalarType==7)
+						{
+							// unsigned int : no need to check sign
+							pix=0;
+							while (p--){
+								r= data[pix];
+								g= data[pix+1];
+								b= data[pix+2];
+								a= data[pix+3];
+								c=r+256*g+65536*b;
+								c=(c+shift)*scale;
+								c=c* mul + add;
+								if (c>255)
+								c=255;
+								else if (c<0)
+								c=0;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=c;
+								data[pix++]=255;
+							}
+						}
+						else
+						{
+							// signed int : check sign
+							pix=0;
+							while (p--){
+								r= data[pix];
+								data[pix++]=redArray[r];
+								data[pix++]=greenArray[r];
+								data[pix++]=blueArray[r];
+								data[pix++]=255;
+							}
+						}
+						break;
+						default :
+							alert("format not supported. please repport");
+				}
+			}
+			else
+			{
+				// format is jpeg : just copy the pixels
+				pix=0;
+				while (p--){
+					c= data[pix];
+					c=c* mul + add;
+					if (c>255)
+						c=255;
+					else if (c<0)
+						c=0;
+					data[pix++]=c;
+					data[pix++]=c;
+					data[pix++]=c;
+					data[pix++]=255;
+					}
+			}
+			dataDesc.data = data;
+			this.__canvas.getContext2d().putImageData(dataDesc,0,0);
+			return;
+		},
+
 		redraw : function () {
-			this.__applyBrightnessToCanvas();
+			if (this.__lookupTableRed!=null) {
+				this.__applyLookupTablesToCanvas();
+			}
+			else {
+				this.__applyBrightnessToCanvas();
+			}
 			this.setReady(true);
 			this.fireEvent("changeImage");
 		},

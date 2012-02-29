@@ -491,16 +491,21 @@ qx.Class.define("desk.segTools",
 				if (segmentationToken==null)
 				{
 					segmentationToken=theMaster.addVolume(medianFilteringAction.getOutputDirectory()+"/output.mhd",
-								{opacity : 0.5});
-/*					segmentationToken.getWindow().addListener("beforeClose", function (e) {
-tools.debug("824 : >>>>>>>   segmentationToken.getWindow().addListener(beforeClose, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-							segmentationToken=null;});*/
+								{opacity : 0.5, imageFormat : 0,
+								colors : [tools.__labelColorsRed, tools.__labelColorsGreen, tools.__labelColorsBlue]});
 				}
 				else
 				{
 					theMaster.updateVolume(segmentationToken);
 				}
 			}, this);
+
+			tools.__master.addListener("removeVolume", function (e) {
+				if (e.getData()==segmentationToken) {
+					segmentationToken=null;
+				}
+			});
+
 
 			meshingAction.addListener("actionUpdated", function ()
 			{

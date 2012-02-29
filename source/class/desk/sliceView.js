@@ -33,26 +33,6 @@ qx.Class.define("desk.sliceView",
 			syncDimension: true
 		});
 
-/*		// drag and drop support
-		this.setDraggable(true);
-		this.addListener("dragstart", function(e) {
-			e.addAction("copy");
-			e.addType("volumeSlice");
-			});
-
-		this.addListener("droprequest", function(e) {
-				var type = e.getCurrentType();
-				switch (type)
-				{
-				case "volumeSlice":
-					e.addData(type, this);
-					break;
-				default :
-					alert ("type "+type+"not supported for drag and drop");
-				}
-			}, this);
-*/
-
 		return (this);		
 	},
 
@@ -136,16 +116,11 @@ qx.Class.define("desk.sliceView",
 		},
 
 		removeVolumes : function (slices) {
-			console.log("remove:");
-			console.log(slices);
 			var mySlices=this.__slices;
-			console.log(mySlices);
 			for (var i=0;i<slices.length;i++) {
 				var slice=slices[i];
 				for (var j=0;j<mySlices.length;j++) {
 					if (mySlices[j]==slice) {
-						console.log("found");
-						console.log(slice);
 						var mesh=slice.getUserData("mesh");
 						this.__scene.remove(mesh);
 						mySlices.splice(j,1);
@@ -163,8 +138,6 @@ qx.Class.define("desk.sliceView",
 			var slices=this.__slices;
 			var i,j;
 
-			console.log("length :"+slices.length);
-			console.log("ranks :");
 			var length=slices.length;
 			for (i=0;i<length;i++) {
 				this.__slices[i].getUserData("mesh").renderDepth=length-i;

@@ -1,3 +1,6 @@
+/*
+#ignore(Detector)
+*/
 qx.Class.define("desk.volMaster", 
 {
 	extend : qx.core.Object,
@@ -57,6 +60,12 @@ qx.Class.define("desk.volMaster",
 		return (this.__viewers); //~ orion test : launch the 3 views at once ! ! !
 
 	},
+
+
+	events : {
+		"removeVolume" : "qx.event.type.Data"
+	},
+
 
 	members :
 	{
@@ -152,7 +161,7 @@ qx.Class.define("desk.volMaster",
 			var volumeListItem=new qx.ui.container.Composite()
 			volumeListItem.setDecorator("main");
 			volumeListItem.setLayout(new qx.ui.layout.VBox());
-			var shortFileName=file.substring(file.lastIndexOf("/"), file.length);
+			var shortFileName=file.substring(file.lastIndexOf("/")+1, file.length);
 			volumeListItem.add(new qx.ui.basic.Label(shortFileName));
 			volumeListItem.set({toolTipText : file});
 			volumeListItem.setUserData("slices", volumeSlices);
@@ -295,6 +304,11 @@ qx.Class.define("desk.volMaster",
 		},
 
 		updateVolume : function (volumeListItem) {
+			var slices=volumeListItem.getUserData("slices");
+			for (var i=0;i<slices.length;i++) {
+				slices[i].update();
+			}
+			
 		},
 
 
@@ -305,6 +319,7 @@ qx.Class.define("desk.volMaster",
 			});
 
 			this.__volumes.remove(volumeListItem);
+			this.fireDataEvent("removeVolume", volumeListItem);
 			volumeListItem.dispose();
 		},
 

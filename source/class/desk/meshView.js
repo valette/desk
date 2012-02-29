@@ -829,7 +829,9 @@ qx.Class.define("desk.meshView",
 			menu.add(x4button);
 
 			var button=new qx.ui.form.Button(null, "resource/desk/camera-photo.png");
-			button.addListener("execute", function(e) {console.log(factor);this.snapshot(factor);}, this);
+			button.addListener("execute", function(e) {
+				this.snapshot(factor);}, this);
+	
 			button.setContextMenu(menu);
 			return button;
 		},
