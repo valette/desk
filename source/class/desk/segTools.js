@@ -327,7 +327,6 @@ qx.Class.define("desk.segTools",
 					if(this.responseXML!=null)
 					{
 						var response = this.responseXML;
-tools.debug("639 : colorsParamRequest -> response : " + response);
 						nbLabels = response.getElementsByTagName("color").length;
 						tools.__labelColors=new Array(nbLabels);
 						tools.__labelColorsRed=new Uint8Array (nbLabels);
@@ -485,25 +484,22 @@ tools.debug("639 : colorsParamRequest -> response : " + response);
 				}, this);
 			tools.__bottomRightContainer.add(meshingButton);
 
-			var segmentationViewer=null;
+			var segmentationToken=null;
 			medianFilteringAction.addListener("actionUpdated", function ()
 			{
 				tools.__startSegmentationButton.setEnabled(true);
-				if (segmentationViewer==null)
+				if (segmentationToken==null)
 				{
-					segmentationViewer=new desk.volView__classTest(theMaster,
-											medianFilteringAction.getOutputDirectory()+"/output.mhd",
-											fileBrowser,tools.__curView.__display.orientation);
-			//~ segmentationViewer.linkToVolumeViewer(tools.__curView); //~ later...
-					segmentationViewer.getWindow().addListener("beforeClose", function (e) {
-tools.debug("824 : >>>>>>>   segmentationViewer.getWindow().addListener(beforeClose, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
-							segmentationViewer=null;});
+					segmentationToken=theMaster.addVolume(medianFilteringAction.getOutputDirectory()+"/output.mhd",
+								{opacity : 0.5});
+/*					segmentationToken.getWindow().addListener("beforeClose", function (e) {
+tools.debug("824 : >>>>>>>   segmentationToken.getWindow().addListener(beforeClose, function(event)   !!!!!!!!!!!!!!!!!!!!!!!!!");
+							segmentationToken=null;});*/
 				}
 				else
 				{
-					segmentationViewer.__updateVolume();
+					theMaster.updateVolume(segmentationToken);
 				}
-				//~ segmentationViewer.__isSegWindow = true; //~ segColor test
 			}, this);
 
 			meshingAction.addListener("actionUpdated", function ()

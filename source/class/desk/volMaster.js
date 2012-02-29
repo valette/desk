@@ -273,7 +273,39 @@ qx.Class.define("desk.volMaster",
 			settingsContainer.add(hideShowCheckbox);
 
 			this.__volumes.add(volumeListItem);
+			volumeListItem.setContextMenu(this.__getVolumeContextMenu(volumeListItem));
 			return (volumeListItem);
+		},
+
+		__getVolumeContextMenu : function (volumeListItem) {
+				//context menu to edit meshes appearance
+			var menu = new qx.ui.menu.Menu;
+			var propertiesButton = new qx.ui.menu.Button("properties");
+			propertiesButton.addListener("execute", function (){
+				alert ("todo!");
+				},this);
+			menu.add(propertiesButton);
+
+			var removeButton = new qx.ui.menu.Button("remove");
+			removeButton.addListener("execute", function (){
+				this.removeVolume(volumeListItem);
+				},this);
+			menu.add(removeButton);
+			return menu;
+		},
+
+		updateVolume : function (volumeListItem) {
+		},
+
+
+		removeVolume : function (volumeListItem) {
+			var slices=volumeListItem.getUserData("slices");
+			this.applyToViewers (function (sliceView) {
+				sliceView.removeVolumes(slices);
+			});
+
+			this.__volumes.remove(volumeListItem);
+			volumeListItem.dispose();
 		},
 
 		__addDropFileSupport : function () {

@@ -14,14 +14,14 @@ qx.Class.define("desk.volumeSlice",
 
 		this.__fileBrowser=fileBrowser;
 		this.__file=file;
-		this.__updateFile();
+		this.update();
 
 		this.addListener("changeSlice", function(){
 				this.updateImage();
 			},this);
 
 		this.addListener("changeImageFormat", function(){
-				this.__updateFile();
+				this.update();
 			},this);
 
 		return (this);		
@@ -76,7 +76,7 @@ qx.Class.define("desk.volumeSlice",
 		__lookupTableGreen : null,
 		__lookupTableBlue : null,
 
-		__updateFile : function () {
+		update : function () {
 			var _this=this;
 			if (this.__fileBrowser==null)
 				alert ("error! no file browser was provided");

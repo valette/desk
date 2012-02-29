@@ -135,43 +135,64 @@ qx.Class.define("desk.sliceView",
 			}
 		},
 
+		removeVolumes : function (slices) {
+			console.log("remove:");
+			console.log(slices);
+			var mySlices=this.__slices;
+			console.log(mySlices);
+			for (var i=0;i<slices.length;i++) {
+				var slice=slices[i];
+				for (var j=0;j<mySlices.length;j++) {
+					if (mySlices[j]==slice) {
+						console.log("found");
+						console.log(slice);
+						var mesh=slice.getUserData("mesh");
+						this.__scene.remove(mesh);
+						mySlices.splice(j,1);
+						this.removeListenerById(slice.getUserData("updateListener"));
+						this.render();
+						break;
+					}
+				}
+			}
+		},
+
 		reorderMeshes : function () {
 			var z_space=0.01;
 			var mesh;
 			var slices=this.__slices;
-	
-			for (var i=0;i<slices.length;i++) {
-				var sliceGeometry=this.__slices[i].getUserData("mesh").geometry;
+			var i,j;
+
+			console.log("length :"+slices.length);
+			console.log("ranks :");
+			var length=slices.length;
+			for (i=0;i<length;i++) {
+				this.__slices[i].getUserData("mesh").renderDepth=length-i;
+/*				var sliceGeometry=this.__slices[i].getUserData("mesh").geometry;
 				var rank=slices[i].getUserData("rank");
 				for (var j=0;j<sliceGeometry.length;j++) {
 					sliceGeometry[j].setZ(rank*z_space);
 				}
-				HACKSetDirtyVertices(sliceGeometry);
+				sliceGeometry.computeCentroids();
+				sliceGeometry.computeFaceNormals();
+				sliceGeometry.computeVertexNormals();
+				sliceGeometry.computeBoundingSphere();
+				sliceGeometry.computeBoundingBox();
+				HACKSetDirtyVertices(sliceGeometry);*/
 			}
 
-			var paintMeshGeometry=this.__drawingMesh.geometry;
-			for (var j=0;j<paintMeshGeometry.length;j++) {
-					paintMeshGeometry[j].setZ(this.__slices.length*z_space);
+			this.__drawingMesh.renderDepth=0;
+
+	/*		var paintMeshGeometry=this.__drawingMesh.geometry;
+			for (j=0;j<paintMeshGeometry.length;j++) {
+					paintMeshGeometry[j].setZ((slices.length+3)*z_space);
 				}
-			HACKSetDirtyVertices(paintMeshGeometry);
-
-			for (var i=0;i<slices.length;i++) {
-				mesh=slices[i].getUserData("mesh");
-				this.__scene.remove(mesh);
-			}
-
-			this.__scene.remove(this.__drawingMesh);
-
-			for (var rank=0;rank<slices.length;rank++) {
-				var index=-1;
-				for (var i=0;i<slices.length;i++) {
-					if (slices[i].getUserData("rank")==rank) {
-						mesh=slices[i].getUserData("mesh");
-						this.__scene.add(mesh);
-					}
-				}
-			}
-			this.__scene.add(this.__drawingMesh);
+			paintMeshGeometry.computeCentroids();
+			paintMeshGeometry.computeFaceNormals();
+			paintMeshGeometry.computeVertexNormals();
+			paintMeshGeometry.computeBoundingSphere();
+			paintMeshGeometry.computeBoundingBox();
+			HACKSetDirtyVertices(paintMeshGeometry);*/
 		},
 
 		__setDrawingMesh : function (volumeSlice)
@@ -205,7 +226,6 @@ qx.Class.define("desk.sliceView",
 				height: height
 			});
 			this.__drawingCanvas.getContext2d().clearRect(0,0,width,height);
-
 
 			var length=width*height*4;
 			var dataColor = new Uint8Array( length);
@@ -252,7 +272,15 @@ qx.Class.define("desk.sliceView",
 		},
 
 		__addVolume : function (file, parameters, callback) {
-			var volumeSlice=new desk.volumeSlice(file,this.__fileBrowser, this.getOrientation());
+			var opacity=1;
+
+			if (parameters!=null) {
+				if (parameters.opacity!=null) {
+					opacity=parameters.opacity;
+				}
+			}
+
+			var volumeSlice=new desk.volumeSlice(file,this.__fileBrowser, this.getOrientation(), parameters);
 			this.__slices.push(volumeSlice);
 			var _this=this;
 
@@ -287,9 +315,11 @@ qx.Class.define("desk.sliceView",
 
 				
 
-				_this.addListener("changeSlice", function (e) {
+				var listener=_this.addListener("changeSlice", function (e) {
 					volumeSlice.setSlice(e.getData());
 				});
+
+				volumeSlice.setUserData("updateListener", listener);
 
 				if (_this.__slices.length==1) {
 					_this.__slider.setMaximum(volumeSlice.getNumberOfSlices()-1);	
@@ -317,8 +347,7 @@ qx.Class.define("desk.sliceView",
 						dataColor, width, height, THREE.RGBAFormat );
 				texture.needsUpdate = true;
 				texture.magFilter=THREE.NearestFilter;
-				var material=new THREE.MeshBasicMaterial( {map:texture, transparent: true});
-
+				var material=new THREE.MeshBasicMaterial( {map:texture, transparent: true, opacity : opacity});
 				var mesh=new THREE.Mesh(geometry,material);
 				mesh.doubleSided=true;
 				_this.__scene.add(mesh);
@@ -370,7 +399,7 @@ qx.Class.define("desk.sliceView",
 			htmlContainer.addListener("appear",function(e){
 				// scene and camera
 				var elementSize=htmlContainer.getInnerSize();
-				var scene = new THREE.Scene();
+				this.__scene = new THREE.Scene();
 				var camera = new THREE.PerspectiveCamera( 60, elementSize.width / elementSize.height, 1, 1e5 );
 				var container = document.getElementById( "three.js"+randomId);
 				var controls = new THREE.TrackballControls2( camera,container );
@@ -378,9 +407,8 @@ qx.Class.define("desk.sliceView",
 				camera.position.set(0,0,100);
 				controls.target.set(0,0,0);
 				this.__controls=controls;
-				this.__scene=scene;
 				this.__camera=camera;
-				scene.add( camera );
+				this.__scene.add( camera );
 
 				// renderer
 
@@ -393,11 +421,10 @@ qx.Class.define("desk.sliceView",
 				container.appendChild( renderer.domElement );
 				controls.onUpdate=render;
 
-
 				function render() {
 					_this.fireEvent("changeViewPoint");
 					controls.update();
-					renderer.render( scene, camera );
+					renderer.render( _this.__scene, _this.__camera );
 				}
 
 				htmlContainer.addListener("resize",resizeHTML);
@@ -431,22 +458,22 @@ qx.Class.define("desk.sliceView",
 					}
 					else
 					{
-						if (_this.isPaintMode())
+						if (this.isPaintMode())
 						{
 							mouseMode=1;
-							var position=_this.getPositionOnSlice(event);
-							var context=_this.__drawingCanvas.getContext2d();
-							context.strokeStyle = _this.__paintColor;
+							var position=this.getPositionOnSlice(event);
+							var context=this.__drawingCanvas.getContext2d();
+							context.strokeStyle = this.__paintColor;
 							context.lineJoin = "round";
-							context.lineWidth = _this.__paintWidth;
+							context.lineWidth = this.__paintWidth;
 							context.beginPath();
 							context.moveTo(position.x, position.y);
 							context.closePath();
 							context.stroke();
-							_this.fireEvent("changeDrawing");
+							this.fireEvent("changeDrawing");
 						}
 					}
-					});
+					}, this);
 
 				htmlContainer.addListener("mousemove", function (event)	{
 					switch (mouseMode)
@@ -458,9 +485,9 @@ qx.Class.define("desk.sliceView",
 
 						//propagate zoom to other viewers
 						if (button==1) {
-							var z=_this.__camera.position.z;
-							_this.__master.applyToViewers (function (viewer) {
-								if (viewer!=_this) {
+							var z=this.__camera.position.z;
+							this.__master.applyToViewers (function (viewer) {
+								if (viewer!=this) {
 									viewer.__camera.position.z=z;
 									viewer.render();
 									}
@@ -469,17 +496,17 @@ qx.Class.define("desk.sliceView",
 
 						break;
 					case 1:
-						var context=_this.__drawingCanvas.getContext2d();
-						var position=_this.getPositionOnSlice(event);
+						var context=this.__drawingCanvas.getContext2d();
+						var position=this.getPositionOnSlice(event);
 					     context.lineTo(position.x, position.y);
 						context.stroke();
-						_this.fireEvent("changeDrawing");
-						_this.__drawingCanvasModified=true;
+						this.fireEvent("changeDrawing");
+						this.__drawingCanvasModified=true;
 						break;
 					default:
 						break;
 					}
-					});
+					}, this);
 
 				htmlContainer.addListener("mouseup", function (event)	{
 					htmlContainer.releaseCapture();
