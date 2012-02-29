@@ -124,7 +124,7 @@ qx.Class.define("desk.sliceView",
 			this.__renderer.render( this.__scene, this.__camera );			
 		},
 
-		addVolume : function (file, callback)
+		addVolume : function (file, parameters, callback)
 		{
 			if (this.isReady()) {
 				this.__addVolume(file, callback);
@@ -378,8 +378,6 @@ qx.Class.define("desk.sliceView",
 			htmlContainer.setHtml("<div id=\"three.js"+randomId+"\"></div>");
 
 			var _this=this;
-
-			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
 			htmlContainer.addListener("appear",function(e){
 				// scene and camera

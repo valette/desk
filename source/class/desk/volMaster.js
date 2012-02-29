@@ -13,6 +13,7 @@ qx.Class.define("desk.volMaster",
             // support additional cross-browser console. Press F7 to toggle visibility
             qx.log.appender.Console;
         }
+		if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
 		this.__file = globalFile;
 
@@ -48,6 +49,7 @@ qx.Class.define("desk.volMaster",
 
 		this.__viewers = [];
 		this.__nbUsedOrientations = 3;
+		this.__addViewers();
 		this.addVolume(globalFile);
 
 		this.__addDropFileSupport();
@@ -111,7 +113,27 @@ qx.Class.define("desk.volMaster",
 			this.__window.add(container, {row: 1, column: 0});
 		},
 
-		addVolume : function (file) {
+		__addViewers : function () {
+			for(var i=0; i<this.__nbUsedOrientations; i++)
+			{
+				var sliceView=  new desk.sliceView(this.__fileBrowser, this, i);
+				this.__viewers[i] =sliceView;	
+				switch (i)
+				{
+				case 0 : 
+					this.__window.add(sliceView, {row: 0, column: 0});
+					break;
+				case 1 : 
+					this.__window.add(sliceView, {row: 0, column: 1});
+					break;
+				case 2 : 
+					this.__window.add(sliceView, {row: 1, column: 1});
+					break;
+				}
+			}
+		},
+
+		addVolume : function (file, parameters) {
 			var _this=this;
 			var volumeSlices=[];
 
@@ -125,27 +147,8 @@ qx.Class.define("desk.volMaster",
 
 			var numberOfRemainingMeshes=this.__nbUsedOrientations;
 
-			for(var i=0; i<this.__nbUsedOrientations; i++)
-			{
-				if (this.__viewers[i]==undefined)
-				{
-					var sliceView=  new desk.sliceView(this.__fileBrowser, this, i);
-					this.__viewers[i] =sliceView;	
-					switch (i)
-					{
-					case 0 : 
-						this.__window.add(sliceView, {row: 0, column: 0});
-						break;
-					case 1 : 
-						this.__window.add(sliceView, {row: 0, column: 1});
-						break;
-					case 2 : 
-						this.__window.add(sliceView, {row: 1, column: 1});
-						break;
-					}
-					
-				}
-				this.__viewers[i].addVolume(file, ( function (myI) { 
+			for(var i=0; i<this.__nbUsedOrientations; i++) {
+				this.__viewers[i].addVolume(file, parameters, ( function (myI) { 
 					return (function (volumeSlice) {
 						volumeSlices[myI]=volumeSlice;
 						numberOfRemainingMeshes--;
@@ -154,7 +157,6 @@ qx.Class.define("desk.volMaster",
 						}
 						});
 					} ) (i));
-
 			}
 
 			var settingsContainer=new qx.ui.container.Composite();
@@ -242,7 +244,20 @@ qx.Class.define("desk.volMaster",
 			},this);
 			settingsContainer.add(opacitySlider, {flex : 1});
 
+			var hideShowCheckbox=new qx.ui.form.CheckBox();
+			hideShowCheckbox.setValue(true);
+			hideShowCheckbox.addListener("changeValue", function (e) {
+				for (var i=0;i<volumeSlices.length;i++) {
+					volumeSlices[i].getUserData("mesh").visible=e.getData();
+				}
+				this.applyToViewers(function (viewer) {
+					viewer.render();
+					});
+			}, this)
+			settingsContainer.add(hideShowCheckbox);
+
 			this.__volumes.add(volumeListItem);
+			return (volumeListItem);
 		},
 
 		__addDropFileSupport : function () {
