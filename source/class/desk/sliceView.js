@@ -200,15 +200,6 @@ qx.Class.define("desk.sliceView",
 			var coordinates=volumeSlice.get2DCornersCoordinates();
 			var dimensions=volumeSlice.get2DDimensions();
 
-			var center=[];
-			center[0]=0;
-			center[1]=0;
-			for (var i=0;i<4;i++) {
-				for (var j=0;j<2;j++) {
-					center[j]+=coordinates[2*i+j];
-				}
-			}
-
 			var ratio=[];
 			ratio[0]=(coordinates[2]-coordinates[0])/dimensions[0];
 			ratio[1]=(coordinates[5]-coordinates[3])/dimensions[1];
@@ -218,7 +209,6 @@ qx.Class.define("desk.sliceView",
 					new THREE.Vertex(
 						new THREE.Vector3( coordinates[2*i],coordinates[2*i+1], 0 ) ) );
 			}
-
 
 			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
 			geometry.faceVertexUvs[ 0 ].push( [
@@ -279,22 +269,17 @@ qx.Class.define("desk.sliceView",
 				}
 				texture.needsUpdate = true;
 				var radius=_this.__paintWidth/2;
-			//	console.log(ratio);
-			//	console.log(radius);
+
 				mesh.geometry.vertices[0].position.set(-radius*ratio[0], -radius*ratio[1], 0);
 				mesh.geometry.vertices[1].position.set(radius*ratio[0], -radius*ratio[1], 0);
 				mesh.geometry.vertices[2].position.set(radius*ratio[0], radius*ratio[1], 0);
 				mesh.geometry.vertices[3].position.set(-radius*ratio[0], radius*ratio[1], 0);
-/*				for (var i=0;i<4;i++)
-				{
-					console.log(geometry.vertices[i].position);
-				}*/
+
 				HACKSetDirtyVertices(geometry);
 				geometry.computeCentroids();
 				geometry.computeFaceNormals();
 				geometry.computeVertexNormals();
 				geometry.computeBoundingSphere();
-			//	mesh.position.set(center[0], center[1], 10);
 			}
 			this.__updateBrush=updateBrush;
 			
@@ -570,13 +555,14 @@ qx.Class.define("desk.sliceView",
 					htmlContainer.capture();
 
 					button=0;
-					if (event.isRightPressed())
+					if (event.isRightPressed()) {
 						button=1;
-					else if ((event.isMiddlePressed())||(event.isShiftPressed()))
+					}
+					else if ((event.isMiddlePressed())||(event.isShiftPressed())) {
 						button=2;
+					}
 
-					if (button!=0)
-					{
+					if (button!=0) {
 						mouseMode=2;
 						var origin=htmlContainer.getContentLocation();
 						controls.mouseDown(button,
@@ -585,8 +571,7 @@ qx.Class.define("desk.sliceView",
 					}
 					else
 					{
-						if (this.isPaintMode())
-						{
+						if (this.isPaintMode()) {
 							mouseMode=1;
 							var position=this.getPositionOnSlice(event);
 							var context=this.__drawingCanvas.getContext2d();
@@ -612,8 +597,7 @@ qx.Class.define("desk.sliceView",
 							context.stroke();
 							this.fireEvent("changeDrawing");
 						}
-						if (this.isEraseMode())
-						{
+						if (this.isEraseMode()) {
 							mouseMode=1;
 							var position=this.getPositionOnSlice(event);
 							var x=Math.round(position.i)+0.5;
@@ -648,8 +632,7 @@ qx.Class.define("desk.sliceView",
 
 						break;
 					case 1:
-						if (this.isPaintMode())
-						{
+						if (this.isPaintMode()) {
 							var context=this.__drawingCanvas.getContext2d();
 							var position=this.getPositionOnSlice(event);
 							context.lineTo(position.i+0.5, position.j+0.5);
@@ -657,8 +640,7 @@ qx.Class.define("desk.sliceView",
 							this.fireEvent("changeDrawing");
 							this.__drawingCanvasModified=true;
 						}
-						if (this.isEraseMode())
-						{
+						if (this.isEraseMode()) {
 							mouseMode=1;
 							var position=this.getPositionOnSlice(event);
 							var x=Math.round(position.i)+0.5;
@@ -679,8 +661,7 @@ qx.Class.define("desk.sliceView",
 					htmlContainer.releaseCapture();
 					mouseMode=0;
 					controls.mouseUp();
-					if (this.isPaintMode())
-					{
+					if ((this.isPaintMode())&&(button==0)) {
 						var context=this.__drawingCanvas.getContext2d();
 						var position=this.getPositionOnSlice(event);
 
