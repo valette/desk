@@ -45,6 +45,8 @@ qx.Class.define("desk.sliceView",
 			}
 		}, this);
 
+		this.__initUndo();
+
 		return (this);		
 	},
 
@@ -412,8 +414,7 @@ qx.Class.define("desk.sliceView",
 							new THREE.Vector3(
 								coordinates[2*i],coordinates[2*i+1],0)));
 				}
-	//		console.log(_this.getOrientation());
-	//		console.log(coordinates);
+
 				geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
 				geometry.faceVertexUvs[ 0 ].push( [
 					new THREE.UV( 0, 0),
@@ -572,6 +573,7 @@ qx.Class.define("desk.sliceView",
 					else
 					{
 						if (this.isPaintMode()) {
+							this.__saveDrawingToUndoStack();
 							mouseMode=1;
 							var position=this.getPositionOnSlice(event);
 							var context=this.__drawingCanvas.getContext2d();
@@ -598,6 +600,7 @@ qx.Class.define("desk.sliceView",
 							this.fireEvent("changeDrawing");
 						}
 						if (this.isEraseMode()) {
+							this.__saveDrawingToUndoStack();
 							mouseMode=1;
 							var position=this.getPositionOnSlice(event);
 							var x=Math.round(position.i)+0.5;
@@ -676,7 +679,7 @@ qx.Class.define("desk.sliceView",
 						context.beginPath()
 						context.arc(i, j, width/2, 0, 2*Math.PI, false);
 						context.closePath();
-						context.fill()
+						context.fill();
 						this.fireEvent("changeDrawing");
 					}
 				}, this);
@@ -758,6 +761,37 @@ qx.Class.define("desk.sliceView",
 
 			rightContainer.add(slider, {flex : 1});
 			this.add(rightContainer);
+		},
+
+		__undoData : null,
+
+		__initUndo : function () {
+			this.__undoData=[];
+			this.addListener("keypress", function (event) {
+				if (event.getKeyIdentifier()=="Backspace") {
+					var undoData=this.__undoData;
+					if (undoData.length>0) {
+						var canvas=this.__drawingCanvas;
+						var context=canvas.getContext2d();
+						context.clearRect(0,0,canvas.getCanvasWidth(),canvas.getCanvasHeight());
+						context.putImageData(undoData.pop(), 0, 0);
+						this.fireEvent("changeDrawing");
+					}
+				}
+			}, this);
+			this.addListener("changeSlice", function (event) {
+				this.__undoData=[];
+			}, this);
+		},
+
+		__saveDrawingToUndoStack : function () {
+			var canvas=this.__drawingCanvas;
+			var image=canvas.getContext2d().getImageData(0,0,canvas.getWidth(), canvas.getHeight());
+			var undoData=this.__undoData;
+			if (undoData.length==10) {
+				undoData.shift();
+			}
+			undoData.push(image);
 		}
 	}
 });
