@@ -87,6 +87,10 @@ qx.Class.define("desk.volumeSlice",
 		__lookupTableGreen : null,
 		__lookupTableBlue : null,
 
+		getFileName : function () {
+			return this.__file;
+		},
+
 		update : function () {
 			var _this=this;
 			if (this.__fileBrowser==null)

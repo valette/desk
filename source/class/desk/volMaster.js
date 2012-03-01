@@ -178,7 +178,6 @@ qx.Class.define("desk.volMaster",
 					this.applyToViewers(function (viewer) {
 						if (viewer!=sliceView){
 							viewer.addListenerOnce("appear", function () {
-								console.log("render");
 								viewer.render();
 							});
 						}
@@ -208,7 +207,7 @@ qx.Class.define("desk.volMaster",
 			volumeListItem.setDecorator("main");
 			volumeListItem.set({toolTipText : file});
 			volumeListItem.setUserData("slices", volumeSlices);
-
+			volumeListItem.setUserData("file", file);
 			var shortFileName=file.substring(file.lastIndexOf("/")+1, file.length);
 
 			var labelcontainer=new qx.ui.container.Composite()
@@ -230,8 +229,8 @@ qx.Class.define("desk.volMaster",
 						if (numberOfRemainingMeshes==0) {
 							_this.__reorderMeshes();
 						}
-						});
-					} ) (i));
+					});
+				} ) (i));
 			}
 
 			var settingsContainer=new qx.ui.container.Composite();
@@ -347,6 +346,47 @@ qx.Class.define("desk.volMaster",
 				alert ("todo!");
 				},this);
 			menu.add(propertiesButton);
+
+			var moveForward = new qx.ui.menu.Button("move forward");
+			moveForward.addListener("execute", function (){
+				var volumes=this.__volumes.getChildren();;
+				for (var index=0;index<volumes.length; index++) {
+					if (volumes[index]==volumeListItem) {
+						break;
+					}
+				}
+
+				if (index<volumes.length-1) {
+					this.__volumes.remove(volumeListItem);
+					this.__volumes.addAt(volumeListItem, index+1);
+				}
+				this.__reorderMeshes();
+				this.applyToViewers(function (viewer) {
+					viewer.render();
+					});
+				},this);
+			menu.add(moveForward);
+
+			var moveBackward = new qx.ui.menu.Button("move backward");
+			moveBackward.addListener("execute", function (){
+				var volumes=this.__volumes.getChildren();;
+				for (var index=0;index<volumes.length; index++) {
+					if (volumes[index]==volumeListItem) {
+						break;
+					}
+				}
+
+				if (index>0) {
+					this.__volumes.remove(volumeListItem);
+					this.__volumes.addAt(volumeListItem, index-1);
+				}
+				this.__reorderMeshes();
+				this.applyToViewers(function (viewer) {
+					viewer.render();
+					});
+				},this);
+			menu.add(moveBackward);
+
 
 			var removeButton = new qx.ui.menu.Button("remove");
 			removeButton.addListener("execute", function (){

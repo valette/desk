@@ -144,9 +144,9 @@ qx.Class.define("desk.sliceView",
 
 			var length=slices.length;
 			for (i=0;i<length;i++) {
-				this.__slices[i].getUserData("mesh").renderDepth=length-i;
+				var rank=slices[i].getUserData("rank");			
+				this.__slices[i].getUserData("mesh").renderDepth=length-rank;
 /*				var sliceGeometry=this.__slices[i].getUserData("mesh").geometry;
-				var rank=slices[i].getUserData("rank");
 				for (var j=0;j<sliceGeometry.length;j++) {
 					sliceGeometry[j].setZ(rank*z_space);
 				}
@@ -159,8 +159,8 @@ qx.Class.define("desk.sliceView",
 			}
 
 			this.__drawingMesh.renderDepth=0;
-
-	/*		var paintMeshGeometry=this.__drawingMesh.geometry;
+/*
+			var paintMeshGeometry=this.__drawingMesh.geometry;
 			for (j=0;j<paintMeshGeometry.length;j++) {
 					paintMeshGeometry[j].setZ((slices.length+3)*z_space);
 				}
