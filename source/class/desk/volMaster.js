@@ -343,7 +343,33 @@ qx.Class.define("desk.volMaster",
 			var menu = new qx.ui.menu.Menu;
 			var propertiesButton = new qx.ui.menu.Button("properties");
 			propertiesButton.addListener("execute", function (){
-				alert ("todo!");
+
+				function formatArray(array) {
+					var result="[";
+					for (var i=0;i<array.length;i++) {
+						result+=array[i];
+						if (i<array.length-1){
+							result+=", ";
+						}
+					}
+					result+="]";
+					return result;
+				}
+
+				var slice=volumeListItem.getUserData("slices")[0];
+				var window=new qx.ui.window.Window();
+				window.setCaption(slice.getFileName());
+				window.setLayout(new qx.ui.layout.VBox());
+				window.setShowClose(true);
+				window.setShowMinimize(false);
+				window.add(new qx.ui.basic.Label("volume : "+slice.getFileName()));
+				window.add(new qx.ui.basic.Label("dimensions : "+formatArray(slice.getDimensions())));
+				window.add(new qx.ui.basic.Label("extent : "+formatArray(slice.getExtent())));
+				window.add(new qx.ui.basic.Label("origin : "+formatArray(slice.getOrigin())));
+				window.add(new qx.ui.basic.Label("spacing : "+formatArray(slice.getSpacing())));
+				window.add(new qx.ui.basic.Label("scalarType : "+slice.getScalarType()+" ("+slice.getScalarTypeAsString()+")"));
+				window.add(new qx.ui.basic.Label("scalar bounds : "+formatArray(slice.getScalarBounds())));
+				window.open();
 				},this);
 			menu.add(propertiesButton);
 
@@ -403,7 +429,6 @@ qx.Class.define("desk.volMaster",
 			}
 			
 		},
-
 
 		removeVolume : function (volumeListItem) {
 			var slices=volumeListItem.getUserData("slices");

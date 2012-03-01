@@ -69,6 +69,7 @@ qx.Class.define("desk.volumeSlice",
 		__spacing : null,
 		__dimensions: null,
 
+		__scalarTypeString : null,
 		__scalarType : null,
 		__scalarSize : null,
 		__scalarMin : null,
@@ -89,6 +90,38 @@ qx.Class.define("desk.volumeSlice",
 
 		getFileName : function () {
 			return this.__file;
+		},
+
+		getDimensions : function () {
+			return this.__dimensions;
+		},
+
+		getExtent : function () {
+			return this.__extent;
+		},
+
+		getOrigin : function () {
+			return this.__origin;
+		},
+
+		getSpacing : function () {
+			return this.__spacing;
+		},
+
+		getScalarType : function () {
+			return this.__scalarType;
+		},
+
+		getScalarTypeAsString : function () {
+			return this.__scalarTypeString;
+		},
+
+		getScalarSize : function () {
+			return this.__scalarSize;
+		},
+
+		getScalarBounds : function () {
+			return [this.__scalarMin, this.__scalarMax];
 		},
 
 		update : function () {
@@ -328,6 +361,7 @@ qx.Class.define("desk.volumeSlice",
 			this.__scalarSize=parseInt(XMLscalars.getAttribute("size"),10);
 			this.__scalarMin=parseFloat(XMLscalars.getAttribute("min"),10);
 			this.__scalarMax=parseFloat(XMLscalars.getAttribute("max"),10);
+			this.__scalarTypeString=XMLscalars.childNodes[0].nodeValue;;
 
 			var slices=volume.getElementsByTagName("slicesprefix")[0];
 			this.__offset=parseInt(slices.getAttribute("offset"));
