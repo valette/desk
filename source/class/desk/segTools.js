@@ -44,10 +44,18 @@ qx.Class.define("desk.segTools",
 
 
 		var _this=this;
+
+		var listenersIds=[];
 		master.applyToViewers( function (sliceView) {
-			sliceView.addListener("changeSlice", function ( event ) {
+			listenersIds[sliceView]=sliceView.addListener("changeSlice", function ( event ) {
 				_this.__saveCurrentSeeds();
 				_this.__reloadSeedImage( sliceView );
+			});
+		});
+
+		this.addListener("close", function (e) {
+			master.applyToViewers( function (sliceView) {
+				sliceView.removeListenerById(listenersIds[sliceView]);
 			});
 		});
 
@@ -973,6 +981,11 @@ qx.Class.define("desk.segTools",
 
 			seedsList.addListener("keypress", keyPressHandler, this);
 			correctionsList.addListener("keypress", keyPressHandler, this);
+
+			this.addListener("close", function (e) {
+				sliceView.remove(seedsList);
+				sliceView.remove(correctionsList);
+			});
 		},
 
 		__clearSeeds : function ( ) {

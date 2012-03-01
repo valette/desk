@@ -239,6 +239,55 @@ qx.Class.define("desk.volMaster",
 			settingsContainer.setLayout(new qx.ui.layout.HBox());
 			volumeListItem.add(settingsContainer);
 
+			// create hide/show widget
+			var hideShowCheckbox=new qx.ui.form.CheckBox();
+			hideShowCheckbox.setValue(true);
+			hideShowCheckbox.addListener("changeValue", function (e) {
+				for (var i=0;i<volumeSlices.length;i++) {
+					volumeSlices[i].getUserData("mesh").visible=e.getData();
+				}
+				this.applyToViewers(function (viewer) {
+					viewer.render();
+					});
+			}, this)
+			settingsContainer.add(hideShowCheckbox);
+
+			// create file format change widget
+			var fileFormatBox = new qx.ui.form.SelectBox();
+			fileFormatBox.setWidth(60);
+			var SelectJPG = new qx.ui.form.ListItem("jpg");
+			SelectJPG.setUserData("imageFormat", 1);
+			fileFormatBox.add(SelectJPG);
+			var SelectPNG = new qx.ui.form.ListItem("png");
+			SelectPNG.setUserData("imageFormat", 0);
+			fileFormatBox.add(SelectPNG);
+			settingsContainer.add(fileFormatBox);
+
+			if (imageFormat!=1) {
+				fileFormatBox.setSelection([SelectPNG]);
+			}
+
+			fileFormatBox.addListener("changeSelection", function ( ) {
+				imageFormat=fileFormatBox.getSelection()[0].getUserData("imageFormat");
+				for (var i=0;i<volumeSlices.length;i++) {
+					volumeSlices[i].setImageFormat(imageFormat);
+				}
+			});
+
+			// create opacity widget
+            var opacitySlider = new qx.ui.form.Slider();
+			opacitySlider.setValue(opacity*100);
+			opacitySlider.addListener("changeValue", function(event)
+			{
+				for (var i=0;i<volumeSlices.length;i++) {
+					volumeSlices[i].getUserData("mesh").material.opacity=event.getData()/100;
+				}
+				this.applyToViewers(function (viewer) {
+					viewer.render();
+					});
+			},this);
+			settingsContainer.add(opacitySlider, {flex : 1});
+
 			////Create brightness/contrast fixing
 			var brightnessButton = new qx.ui.form.Button(null, "desk/Contrast_Logo_petit.PNG");
 
@@ -289,52 +338,6 @@ qx.Class.define("desk.volMaster",
 			}, this);
 
 			settingsContainer.add(brightnessButton);
-
-			var fileFormatBox = new qx.ui.form.SelectBox();
-			fileFormatBox.setWidth(60);
-			var SelectJPG = new qx.ui.form.ListItem("jpg");
-			SelectJPG.setUserData("imageFormat", 1);
-			fileFormatBox.add(SelectJPG);
-			var SelectPNG = new qx.ui.form.ListItem("png");
-			SelectPNG.setUserData("imageFormat", 0);
-			fileFormatBox.add(SelectPNG);
-			settingsContainer.add(fileFormatBox);
-
-			if (imageFormat!=1) {
-				fileFormatBox.setSelection([SelectPNG]);
-			}
-
-			fileFormatBox.addListener("changeSelection", function ( ) {
-				imageFormat=fileFormatBox.getSelection()[0].getUserData("imageFormat");
-				for (var i=0;i<volumeSlices.length;i++) {
-					volumeSlices[i].setImageFormat(imageFormat);
-				}
-			});
-
-            var opacitySlider = new qx.ui.form.Slider();
-			opacitySlider.setValue(opacity*100);
-			opacitySlider.addListener("changeValue", function(event)
-			{
-				for (var i=0;i<volumeSlices.length;i++) {
-					volumeSlices[i].getUserData("mesh").material.opacity=event.getData()/100;
-				}
-				this.applyToViewers(function (viewer) {
-					viewer.render();
-					});
-			},this);
-			settingsContainer.add(opacitySlider, {flex : 1});
-
-			var hideShowCheckbox=new qx.ui.form.CheckBox();
-			hideShowCheckbox.setValue(true);
-			hideShowCheckbox.addListener("changeValue", function (e) {
-				for (var i=0;i<volumeSlices.length;i++) {
-					volumeSlices[i].getUserData("mesh").visible=e.getData();
-				}
-				this.applyToViewers(function (viewer) {
-					viewer.render();
-					});
-			}, this)
-			settingsContainer.add(hideShowCheckbox);
 
 			this.__volumes.add(volumeListItem);
 			return (volumeListItem);
