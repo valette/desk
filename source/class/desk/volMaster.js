@@ -241,7 +241,8 @@ qx.Class.define("desk.volMaster",
 
 			// create hide/show widget
 			var hideShowCheckbox=new qx.ui.form.CheckBox();
-			hideShowCheckbox.setValue(true);
+			hideShowCheckbox.set({value : true,
+					toolTipText : "visible/hidden"});
 			hideShowCheckbox.addListener("changeValue", function (e) {
 				for (var i=0;i<volumeSlices.length;i++) {
 					volumeSlices[i].getUserData("mesh").visible=e.getData();
@@ -255,6 +256,8 @@ qx.Class.define("desk.volMaster",
 			// create file format change widget
 			var fileFormatBox = new qx.ui.form.SelectBox();
 			fileFormatBox.setWidth(60);
+			fileFormatBox.set({width : 60,
+					toolTipText : "change image format"});
 			var SelectJPG = new qx.ui.form.ListItem("jpg");
 			SelectJPG.setUserData("imageFormat", 1);
 			fileFormatBox.add(SelectJPG);
@@ -276,7 +279,8 @@ qx.Class.define("desk.volMaster",
 
 			// create opacity widget
             var opacitySlider = new qx.ui.form.Slider();
-			opacitySlider.setValue(opacity*100);
+			opacitySlider.set({value : opacity*100,
+					toolTipText : "change opacity"});
 			opacitySlider.addListener("changeValue", function(event)
 			{
 				for (var i=0;i<volumeSlices.length;i++) {
@@ -290,8 +294,7 @@ qx.Class.define("desk.volMaster",
 
 			////Create brightness/contrast fixing
 			var brightnessButton = new qx.ui.form.Button(null, "desk/Contrast_Logo_petit.PNG");
-
-			brightnessButton.set({toolTipText : "LUMINOSITE/CONTRASTE"});
+			brightnessButton.set({toolTipText : "Click and drag to change brightnes, right-click to reset brightness"});
 
 			var clicked=false;
 			var x,y;
