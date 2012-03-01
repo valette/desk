@@ -33,6 +33,18 @@ qx.Class.define("desk.sliceView",
 			syncDimension: true
 		});
 
+		this.addListener("changePaintMode", function (e) {
+			if (e.getData()==true) {
+				this.setEraseMode(false);
+			}
+		}, this);
+
+		this.addListener("changeEraseMode", function (e) {
+			if (e.getData()==true) {
+				this.setPaintMode(false);
+			}
+		}, this);
+
 		return (this);		
 	},
 
@@ -41,7 +53,8 @@ qx.Class.define("desk.sliceView",
 		paintOpacity : { init : 1, check: "Number", event : "changePaintOpacity"},
 		orientation : { init : -1, check: "Number", event : "changeOrientation"},
 		ready : { init : false, check: "Boolean", event : "changeReady"},
-		paintMode : { init : false, check: "Boolean"}
+		paintMode : { init : false, check: "Boolean", event : "changePaintMode"},
+		eraseMode : { init : false, check: "Boolean", event : "changeEraseMode"}
 	},
 
 	events : {
@@ -449,6 +462,18 @@ qx.Class.define("desk.sliceView",
 							context.stroke();
 							this.fireEvent("changeDrawing");
 						}
+						if (this.isEraseMode())
+						{
+							mouseMode=1;
+							var position=this.getPositionOnSlice(event);
+							var x=Math.round(position.x)+0.5;
+							var y=Math.round(position.y)+0.5;
+							var width=this.__paintWidth;
+							var radius=width/2;
+							this.__drawingCanvas.getContext2d().clearRect(x-radius, y-radius, width, width);
+							this.__drawingCanvasModified=true;
+							this.fireEvent("changeDrawing");
+						}
 					}
 					}, this);
 
@@ -473,12 +498,27 @@ qx.Class.define("desk.sliceView",
 
 						break;
 					case 1:
-						var context=this.__drawingCanvas.getContext2d();
-						var position=this.getPositionOnSlice(event);
-					     context.lineTo(position.x, position.y);
-						context.stroke();
-						this.fireEvent("changeDrawing");
-						this.__drawingCanvasModified=true;
+						if (this.isPaintMode())
+						{
+							var context=this.__drawingCanvas.getContext2d();
+							var position=this.getPositionOnSlice(event);
+							 context.lineTo(position.x, position.y);
+							context.stroke();
+							this.fireEvent("changeDrawing");
+							this.__drawingCanvasModified=true;
+						}
+						if (this.isEraseMode())
+						{
+							mouseMode=1;
+							var position=this.getPositionOnSlice(event);
+							var x=Math.round(position.x);
+							var y=Math.round(position.y);
+							var width=this.__paintWidth;
+							var radius=width/2;
+							this.__drawingCanvas.getContext2d().clearRect(x-radius, y-radius, width, width);
+							this.__drawingCanvasModified=true;
+							this.fireEvent("changeDrawing");
+						}
 						break;
 					default:
 						break;
