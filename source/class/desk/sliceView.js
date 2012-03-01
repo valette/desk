@@ -595,19 +595,15 @@ qx.Class.define("desk.sliceView",
 							var j=position.j+0.5;
 
 							var paintColor=_this.__paintColor;
-							var width=this.__paintWidth/2;
+							var width=this.__paintWidth;
 							context.lineWidth = 0;
 							context.strokeStyle = paintColor;
 							context.fillStyle = paintColor;
 							context.beginPath()
-							context.arc(i, j, width, 0, 2*Math.PI, false);
+							context.arc(i, j, width/2, 0, 2*Math.PI, false);
 							context.closePath();
 							context.fill()
 
-
-
-
-						//	context.strokeStyle = this.__paintColor;
 							context.lineJoin = "round";
 							context.lineWidth = width;
 							context.beginPath();
@@ -667,7 +663,7 @@ qx.Class.define("desk.sliceView",
 							var position=this.getPositionOnSlice(event);
 							var x=Math.round(position.i)+0.5;
 							var y=Math.round(position.j)+0.5;
-							var width=this.__paintWidth/2;
+							var width=this.__paintWidth;
 							var radius=width/2;
 							this.__drawingCanvas.getContext2d().clearRect(x-radius, y-radius, width, width);
 							this.__drawingCanvasModified=true;
@@ -682,7 +678,27 @@ qx.Class.define("desk.sliceView",
 				htmlContainer.addListener("mouseup", function (event)	{
 					htmlContainer.releaseCapture();
 					mouseMode=0;
-					controls.mouseUp();});
+					controls.mouseUp();
+					if (this.isPaintMode())
+					{
+						var context=this.__drawingCanvas.getContext2d();
+						var position=this.getPositionOnSlice(event);
+
+						var i=position.i+0.5;
+						var j=position.j+0.5;
+
+						var paintColor=_this.__paintColor;
+						var width=this.__paintWidth;
+						context.lineWidth = 0;
+						context.strokeStyle = paintColor;
+						context.fillStyle = paintColor;
+						context.beginPath()
+						context.arc(i, j, width/2, 0, 2*Math.PI, false);
+						context.closePath();
+						context.fill()
+						this.fireEvent("changeDrawing");
+					}
+				}, this);
 
 				htmlContainer.addListener("mousewheel", function (event) {
 								var slider=_this.__slider;
