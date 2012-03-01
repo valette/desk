@@ -32,6 +32,7 @@
 <parameter name="format" type="string" default="vtk" prefix="-f "/>
 <parameter name="manifold_output" type="int" default="0" min="0" max="1" prefix="-m "/>
 <parameter name="anisotropy" type="int" default="0" min="0" max="1" prefix="-a "/>
+<parameter name="cleaning" type="int" default="0" min="0" max="1" prefix="-c "/>
 <parameter name="colors" type="file" prefix="-x "/>
 </action>
 
@@ -46,23 +47,11 @@
 <parameter name="input_file" type="file" required="true"/>
 </action>
 
-<action name="slice_volume" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeSlice">
+<action name="slice_volume" executable="/home/visu/src/thor/vtkSurfaceH/vtkSurfaceH-build/bin/VolumeSlice">
 <description>Slice a volume image into 2D images</description>
 <parameter name="input_volume" type="file" required="true"/>
 <parameter prefix="-f " name="format" type="int" min="0" max="1"/>
-<!--
- ZY X
--->
-<!--
-<anchor text=" -orientation 1 "/>
--->
-<!--
- XZ Y 
--->
-<!--
-<anchor text=" -orientation 2 "/>
--->
-<parameter prefix="-orientation " name="slice_orientation" type="int" min="0" max="2"/>
+<parameter prefix="-orientation " name="slice_orientation" type="int" required="true" min="0" max="2"/>
 </action>
 
 <action name="slice_volume_color" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeSlice">
@@ -99,7 +88,16 @@
 <parameter prefix="-cn " name="clusters_percentage" type="float" min="0.0001"/>
 </action>
 
+<!--
 <action name="cvtseg2" executable="/home/visu/src/vtkSurfaceBuild/bin/cvtseg2">
+<description>compute an image-based clustering of the input volume</description>
+<parameter name="input_volume" type="file" required="true"/>
+<parameter prefix="-cn " name="clusters_percentage" type="float" min="0.0001" max="1" default="0.01"/>
+<anchor text="-cs 50 -gfn 1 -n 1"/>
+</action>
+-->
+
+<action name="cvtseg2" executable="/home/visu/src/thor/vtkSurfaceH/vtkSurfaceH-build/bin/cvtseg2">
 <description>compute an image-based clustering of the input volume</description>
 <parameter name="input_volume" type="file" required="true"/>
 <parameter prefix="-cn " name="clusters_percentage" type="float" min="0.0001" max="1" default="0.01"/>
@@ -114,6 +112,7 @@
 <anchor text="-op seg"/>
 </action>
 
+
 <action name="cvtgcmultiseg" executable="/home/visu/src/gc2/gc/cvtgcmultiseg">
 <description>(multi-objects) segments a volume using graph cuts and clustering techniques</description>
 <parameter prefix="-i " name="input_volume" type="file" required="true"/>
@@ -124,28 +123,14 @@
 </action>
 
 <!--
-<action name="cvtgcmultiseg" executable="/home/visu/src/gc2/gc/cvtgcmultisegH">
+<action name="cvtgcmultiseg" executable="/home/visu/src/thor/gc/gc-build/cvtgcmultiseg">
 <description>(multi-objects) segments a volume using graph cuts and clustering techniques</description>
 <parameter prefix="-i " name="input_volume" type="file" required="true"/>
 <parameter prefix="-x " name="seeds" type="file" required="true"/>
+<parameter prefix="-ad " name="adjacencies" type="file"/>
 <parameter prefix="-cf " name="clustering" type="file" required="true"/>
 <parameter prefix="-t " name="unary_binary_weight" type="float" required="true" min="0" max="1" default="0.2"/>
 <anchor text="-op seg"/>
--->
-<!--
- ZY X
--->
-<!--
-<anchor text=" -orientation 1 "/>
--->
-<!--
- XZ Y 
--->
-<!--
-<anchor text=" -orientation 2 "/>
--->
-<!--
-<parameter prefix="-orientation " name="slice_orientation" type="int" min="0" max="2" required="false"/>
 </action>
 -->
 
@@ -157,7 +142,7 @@
 <anchor text=" -f meta -x -u -v"/>
 </action>
 
-<action name="set_permissions" executable="chmod a+rw" void="true">
+<action name="set_permissions" executable="chmod g+rw" void="true">
 <description>Give write permissions to group</description>
 <parameter name="directory" type="directory" required="true"/>
 <anchor text="-R"/>
