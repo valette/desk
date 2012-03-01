@@ -86,6 +86,8 @@ qx.Class.define("desk.segTools",
 
 	members :
 	{
+
+		__colorsFile : "data/xml/colors7.xml",
 		__master : null,
 		__file : null,
 		__fileBrowser : null,
@@ -402,7 +404,8 @@ qx.Class.define("desk.segTools",
 				}
 			};
 			//~ colorsParamRequest.open("GET", "/visu/colorsKnee.xml?nocache="+Math.random(), true);
-			colorsParamRequest.open("GET", "/visu/colors7.xml?nocache="+Math.random(), true);
+			colorsParamRequest.open("GET",
+				tools.__fileBrowser.getFileURL(tools.__colorsFile)+"?nocache="+Math.random(), true);
 			colorsParamRequest.send(null);
 
 			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
@@ -462,6 +465,8 @@ qx.Class.define("desk.segTools",
 			tabView.add(meshingPage);
 			var meshingAction=new desk.action("extract_meshes", false);
 			meshingAction.setOutputSubdirectory("meshes");
+			clusteringAction.setActionParameters({"colors" : tools.__colorsFile});
+			
 //			meshingAction.connect("input_volume", 
 //										medianFilteringAction, "output.mhd");
 			meshingAction.buildUI();

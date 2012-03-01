@@ -121,19 +121,9 @@ qx.Class.define("desk.volMaster",
 		},
 
 		__createVolumesList : function () {
-			var container=new qx.ui.container.Composite();
-			container.setLayout(new qx.ui.layout.VBox());
-
-			var paintButton=new qx.ui.form.ToggleButton("segmentation");
-			paintButton.addListener("execute", function (e) {
-				var tools = new desk.segTools(this, this.__file, this.__fileBrowser);
-			},this);
-			
-			container.add(paintButton);
 			this.__volumes=new qx.ui.container.Composite();
 			this.__volumes.setLayout(new qx.ui.layout.VBox());
-			container.add(this.__volumes, {flex : 1});
-			this.__gridContainer.add(container, {row: 1, column: 0});
+			this.__gridContainer.add(this.__volumes, {row: 1, column: 0});
 		},
 
 		__addViewers : function () {
@@ -381,8 +371,14 @@ qx.Class.define("desk.volMaster",
 				},this);
 			menu.add(propertiesButton);
 
-			var moveForward = new qx.ui.menu.Button("move forward");
-			moveForward.addListener("execute", function (){
+			var paintButton=new qx.ui.menu.Button("segment");
+			paintButton.addListener("execute", function () {
+				var tools = new desk.segTools(this, this.__file, this.__fileBrowser);
+			},this);
+			menu.add(paintButton);
+
+			var moveForwardButton = new qx.ui.menu.Button("move forward");
+			moveForwardButton.addListener("execute", function () {
 				var volumes=this.__volumes.getChildren();;
 				for (var index=0;index<volumes.length; index++) {
 					if (volumes[index]==volumeListItem) {
@@ -399,10 +395,10 @@ qx.Class.define("desk.volMaster",
 					viewer.render();
 					});
 				},this);
-			menu.add(moveForward);
+			menu.add(moveForwardButton);
 
-			var moveBackward = new qx.ui.menu.Button("move backward");
-			moveBackward.addListener("execute", function (){
+			var moveBackwardButton = new qx.ui.menu.Button("move backward");
+			moveBackwardButton.addListener("execute", function (){
 				var volumes=this.__volumes.getChildren();;
 				for (var index=0;index<volumes.length; index++) {
 					if (volumes[index]==volumeListItem) {
@@ -419,8 +415,7 @@ qx.Class.define("desk.volMaster",
 					viewer.render();
 					});
 				},this);
-			menu.add(moveBackward);
-
+			menu.add(moveBackwardButton);
 
 			var removeButton = new qx.ui.menu.Button("remove");
 			removeButton.addListener("execute", function (){
