@@ -163,12 +163,14 @@ qx.Class.define("desk.volMaster",
 			sliceView.getRightContainer().add(fullscreenButton);
 			fullscreenButton.addListener("execute", function () {
 				if (!fullscreen) {
+					fullscreenButton.setLabel("-");
 					this.__gridContainer.setVisibility("excluded");
 					this.__fullscreenContainer.add(sliceView, {flex : 1});
 					this.__fullscreenContainer.setVisibility("visible");
 					fullscreen=true;
 				}
 				else {
+					fullscreenButton.setLabel("+");
 					this.__fullscreenContainer.setVisibility("excluded");
 					fullscreen=false;
 					this.__gridContainer.add(sliceView, {row: x, column: y});
