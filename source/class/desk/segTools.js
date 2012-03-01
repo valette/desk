@@ -198,10 +198,10 @@ qx.Class.define("desk.segTools",
 		////Create eraser on/off button
             tools.__eraserButton = new qx.ui.form.ToggleButton("Eraser");
 			
-			tools.__eraserButton.addListener("changeValue", function(event)
+			this.__eraserButton.addListener("changeValue", function(e)
 			{
 				this.__master.applyToViewers(function (viewer) {
-					viewer.setEraseMode(event.getData());
+					viewer.setEraseMode(e.getData());
 					});
 				}, this);
 
@@ -264,9 +264,20 @@ qx.Class.define("desk.segTools",
                     alignX : "center",
 					backgroundColor: inLabel.color
                 });
+
+				tools.__eraserButton.addListener("changeValue", function (e) {
+					if (e.getData())
+					{
+						var children = tools.__colorsContainer.getChildren();
+						for (var i=0;i<children.length;i++){
+							children[i].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
+						}
+					}
+				});
+
 				labelBox.addListener("click", function()
 				{
-					var viewers=theMaster.getViewers();
+//					var viewers=theMaster.getViewers();
 
 					var j = 0;
 					var children = tools.__colorsContainer.getChildren();
@@ -286,6 +297,7 @@ qx.Class.define("desk.segTools",
 							}
 						}
 						paint=true;
+						tools.__eraserButton.setValue(false);
 					}
 					else
 					{
