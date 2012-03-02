@@ -286,6 +286,99 @@ qx.Class.define("desk.meshView",
 			}
 		},
 
+		__links : null,
+
+		linkToMeshViewer : function (viewer) {
+			// first merge 2 links
+			var links=this.__links;
+			var links2=viewer.__links;
+			var found;
+			var viewer2;
+
+			if (links==null){
+				if (links2==null) {
+					this.__links=[];
+					viewer.__links=this.__links;
+				}
+				else {
+					this.__links=links2;
+				}
+			}
+			else {
+				if (links2==null) {
+					viewer.__links=links;
+				}
+				else {
+					//need to merge links
+					links=this.__links;
+					links2=viewer.__links;
+					for (var i=0;i<links2.length;i++) {
+						viewer2=links2[i];
+						found=false;
+						for (var j=0;j<links.length;j++) {
+							if (links[i]==viewer2) {
+								found=true;
+							}
+						}
+						if (!found) {
+							links.push(viewer2);
+						}
+					}
+					viewer.__links=links;
+				}
+			}
+
+			links=this.__links;
+			found=false;
+			for (var i=0;i<links.length;i++){
+				viewer2=links[i];
+				if (viewer2==this) {
+					found=true;
+					break;
+				}
+			}
+			if (!found) {
+				links.push(this);
+			}
+
+			found=false;
+			for (var i=0;i<links.length;i++){
+				viewer2=links[i];
+				if (viewer2==viewer) {
+					found=true;
+					break;
+				}
+			}
+			if (!found) {
+				links.push(viewer);
+			}
+		},
+
+		__propagateLinks : function () {
+			var links=this.__links;
+			if (links==null) {
+				return;
+			}
+			for (var i=0;i<links.length;i++) {
+				var viewer=links[i];
+				if (viewer!=this) {
+					viewer.__controls.copy(this.__controls);
+					viewer.render();
+				}
+			}
+		},
+
+		unLink : function () {
+			var links=this.__links;
+			for (var i=0;i<links.length;i++){
+				if (links[i]==this) {
+					links.splice(i,1);
+					break;
+				}
+			}
+			this.__links=null;
+		},
+
 		viewAll : function ( ) {
 			var max=new THREE.Vector3(-1e10,-1e10,-1e10);
 			var min=new THREE.Vector3(1e10,1e10,1e10);
@@ -643,6 +736,7 @@ qx.Class.define("desk.meshView",
 						controls.mouseMove(event.getDocumentLeft()-origin.left
 								, event.getDocumentTop()-origin.top);
 						this.render();
+						this.__propagateLinks();
 					}}, this);
 
 				htmlContainer.addListener("mouseup", function (event)	{
@@ -888,17 +982,9 @@ qx.Class.define("desk.meshView",
 			this.__window.addListener("drop", function(e) {
 				if (e.supportsType("meshView"))
 				{
-					var meshView2=e.getData("meshView");
-					meshView2.addListener("changeViewPoint", function (e) {
-						this.__controls.copy(meshView2.__controls);
-						this.render();
-						}, this);
-					this.addListener("changeViewPoint", function (e) {
-						meshView2.__controls.copy(this.__controls);
-						meshView2.render();
-						}, this);
-					this.__controls.copy(meshView2.__controls);
-					this.render();
+					var meshView=e.getData("meshView");
+					this.linkToMeshViewer(meshView);
+					meshView.__propagateLinks();
 				}
 			},this);
 			return dragLabel;
@@ -1090,3 +1176,4 @@ qx.Class.define("desk.meshView",
 		}
 	}
 });
+

@@ -242,6 +242,9 @@ THREE.TrackballControls2 = function ( object ) {
 
 		_this.object.lookAt( _this.target );
 
+		_this._dx=0;
+		_this._dy=0;
+		_this._alpha=0;
 	};
 
 
@@ -329,9 +332,6 @@ THREE.TrackballControls2 = function ( object ) {
 
 		}
 
-		_this._dx=0;
-		_this._dy=0;
-		_this._alpha=0;
 
 		if ( _state === STATE.NONE ) {
 
@@ -339,8 +339,8 @@ THREE.TrackballControls2 = function ( object ) {
 
 		} else if ( _state === STATE.ROTATE && !_this.noRotate ) {
 
-			_this._dx=x-_this._xinit;
-			_this._dy=y-_this._yinit;
+			_this._dx=+x-_this._xinit;
+			_this._dy=+y-_this._yinit;
 
 		} else if ( _state === STATE.ZOOM && !_this.noZoom ) {
 
