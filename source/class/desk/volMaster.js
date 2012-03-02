@@ -201,6 +201,27 @@ qx.Class.define("desk.volMaster",
 			volumeListItem.set({toolTipText : file});
 			volumeListItem.setUserData("slices", volumeSlices);
 			volumeListItem.setUserData("file", file);
+
+			// drag and drop support
+			volumeListItem.setDraggable(true);
+			volumeListItem.addListener("dragstart", function(e) {
+				e.addAction("alias");
+				e.addType("volumeSlices");
+				});
+
+			volumeListItem.addListener("droprequest", function(e) {
+					var type = e.getCurrentType();
+					switch (type)
+					{
+					case "volumeSlices":
+						e.addData(type, volumeSlices);
+						break;
+					default :
+						alert ("type "+type+"not supported for drag and drop");
+					}
+				}, this);
+
+
 			var shortFileName=file.substring(file.lastIndexOf("/")+1, file.length);
 
 			var labelcontainer=new qx.ui.container.Composite()
@@ -243,27 +264,6 @@ qx.Class.define("desk.volMaster",
 					});
 			}, this)
 			settingsContainer.add(hideShowCheckbox);
-
-			// drag and drop support
-			var dragLabel=new qx.ui.basic.Label("Link").set({decorator: "main"});
-			dragLabel.setDraggable(true);
-			dragLabel.addListener("dragstart", function(e) {
-				e.addAction("alias");
-				e.addType("volumeSlices");
-				});
-
-			dragLabel.addListener("droprequest", function(e) {
-					var type = e.getCurrentType();
-					switch (type)
-					{
-					case "volumeSlices":
-						e.addData(type, volumeSlices);
-						break;
-					default :
-						alert ("type "+type+"not supported for drag and drop");
-					}
-				}, this);
-			settingsContainer.add(dragLabel);
 
 			// create file format change widget
 			var fileFormatBox = new qx.ui.form.SelectBox();
@@ -467,25 +467,28 @@ qx.Class.define("desk.volMaster",
 		},
 
 		__addLinkToViewerSupport : function () {
-		/*
-			this.__volumes.setDraggable(true);
-			this.__volumes.addListener("dragstart", function(e) {
-				e.addAction("alias");
-				e.addType("volView");
-				});
+			var viewers=this.__viewers;
+			for (var i=0;i<viewers.length;i++) {
+				var label=viewers[i].getRightContainer().getChildren()[0];
+				label.setDraggable(true);
+				label.addListener("dragstart", function(e) {
+					e.addAction("alias");
+					e.addType("volView");
+					});
 
-			this.__volumes.addListener("droprequest", function(e) {
-					var type = e.getCurrentType();
-					switch (type)
-					{
-					case "volView":
-						e.addData(type, this);
-						break;
-					default :
-						alert ("type "+type+"not supported for volume drag and drop");
-					}
-				}, this);
-*/
+				label.addListener("droprequest", function(e) {
+						var type = e.getCurrentType();
+						switch (type)
+						{
+						case "volView":
+							e.addData(type, this);
+							break;
+						default :
+							alert ("type "+type+"not supported for volume drag and drop");
+						}
+					}, this);
+			}
+
 			// enable linking between viewers by drag and drop
 			this.__window.setDroppable(true);
 			this.__window.addListener("drop", function(e) {

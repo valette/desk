@@ -2,6 +2,7 @@
 #asset(three.js/*)
 #ignore(THREE.*)
 #ignore(THREE)
+#ignore(requestAnimationFrame)
 #ignore(Detector)
 #ignore(Uint8Array)
 #ignore(HACKSetDirtyVertices)

@@ -208,10 +208,10 @@ qx.Class.define("desk.volumeSlice",
 			// ZY X
 			case 1 :
 				var x=this.__origin[0]+(this.getSlice()+this.__extent[0])*this.__spacing[0];
-				var zmin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
-				var zmax=this.__origin[2]+this.__extent[5]*this.__spacing[2];
-				var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
-				var ymax=this.__origin[1]+this.__extent[3]*this.__spacing[1];
+				var ymin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
+				var ymax=this.__origin[2]+this.__extent[5]*this.__spacing[2];
+				var zmin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
+				var zmax=this.__origin[1]+this.__extent[3]*this.__spacing[1];
 				var coordinates=[];
 				coordinates[0]=x;
 				coordinates[1]=zmin;
