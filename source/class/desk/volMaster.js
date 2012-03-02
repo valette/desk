@@ -68,6 +68,7 @@ qx.Class.define("desk.volMaster",
 		this.__addViewers();
 		this.addVolume(globalFile);
 
+		this.__addLinkToViewerSupport();
 		this.__addDropFileSupport();
 
 		return (this.__viewers); //~ orion test : launch the 3 views at once ! ! !
@@ -242,6 +243,27 @@ qx.Class.define("desk.volMaster",
 					});
 			}, this)
 			settingsContainer.add(hideShowCheckbox);
+
+			// drag and drop support
+			var dragLabel=new qx.ui.basic.Label("Link").set({decorator: "main"});
+			dragLabel.setDraggable(true);
+			dragLabel.addListener("dragstart", function(e) {
+				e.addAction("alias");
+				e.addType("volumeSlices");
+				});
+
+			dragLabel.addListener("droprequest", function(e) {
+					var type = e.getCurrentType();
+					switch (type)
+					{
+					case "volumeSlices":
+						e.addData(type, volumeSlices);
+						break;
+					default :
+						alert ("type "+type+"not supported for drag and drop");
+					}
+				}, this);
+			settingsContainer.add(dragLabel);
 
 			// create file format change widget
 			var fileFormatBox = new qx.ui.form.SelectBox();
@@ -444,6 +466,48 @@ qx.Class.define("desk.volMaster",
 			volumeListItem.dispose();
 		},
 
+		__addLinkToViewerSupport : function () {
+		/*
+			this.__volumes.setDraggable(true);
+			this.__volumes.addListener("dragstart", function(e) {
+				e.addAction("alias");
+				e.addType("volView");
+				});
+
+			this.__volumes.addListener("droprequest", function(e) {
+					var type = e.getCurrentType();
+					switch (type)
+					{
+					case "volView":
+						e.addData(type, this);
+						break;
+					default :
+						alert ("type "+type+"not supported for volume drag and drop");
+					}
+				}, this);
+*/
+			// enable linking between viewers by drag and drop
+			this.__window.setDroppable(true);
+			this.__window.addListener("drop", function(e) {
+				if (e.supportsType("volView"))
+				{
+					var volView=e.getData("volView");
+					var viewers=this.__viewers;
+					var viewers2=volView.__viewers;
+					for (var i=0;i<viewers.length;i++) {
+						var viewer=viewers[i];
+						var orientation=viewer.getOrientation();
+						for (var j=0;j<viewers2.length;j++) {
+							if (viewers2[j].getOrientation()==orientation) {
+								viewers2[j].linkToViewer(viewer);
+								viewers2[j].__propagateLinks();
+							}
+						}
+					}
+				}
+			},this);
+		},
+
 		__addDropFileSupport : function () {
 			this.__window.setDroppable(true);
 			this.__window.addListener("drop", function(e) {
@@ -454,10 +518,6 @@ qx.Class.define("desk.volMaster",
 						this.addVolume(fileBrowser.getNodeFile(nodes[i]));
 					}
 				}
-		//		if (e.supportsType("volumeSlice"))
-		//		{
-		//			this.attachVolumeSlice(e.getData("volumeSlice"));
-		//		}
 
 				// activate the window
 				var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();

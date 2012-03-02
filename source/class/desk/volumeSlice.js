@@ -181,25 +181,73 @@ qx.Class.define("desk.volumeSlice",
 		},
 
 		getCornersCoordinates : function () {
-			var z=this.__origin[2]+(this.__dimensions[2]-this.getSlice()+this.__extent[4])*this.__spacing[2];
-			var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
-			var xmax=this.__origin[0]+this.__extent[1]*this.__spacing[0];
-			var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
-			var ymax=this.__origin[1]+this.__extent[3]*this.__spacing[1];
-			var coordinates=[];
-			coordinates[0]=xmin;
-			coordinates[1]=ymax;
-			coordinates[2]=z;
-			coordinates[3]=xmax;
-			coordinates[4]=ymax;
-			coordinates[5]=z;
-			coordinates[6]=xmax;
-			coordinates[7]=ymin;
-			coordinates[8]=z;
-			coordinates[9]=xmin;
-			coordinates[10]=ymin;
-			coordinates[11]=z;
-			return (coordinates);
+			switch (this.getOrientation())
+			{
+			// XY Z
+			case 0 :
+			default:
+				var z=this.__origin[2]+(this.getSlice()+this.__extent[4])*this.__spacing[2];
+				var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
+				var xmax=this.__origin[0]+this.__extent[1]*this.__spacing[0];
+				var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
+				var ymax=this.__origin[1]+this.__extent[3]*this.__spacing[1];
+				var coordinates=[];
+				coordinates[0]=xmin;
+				coordinates[1]=ymin;
+				coordinates[2]=z;
+				coordinates[3]=xmax;
+				coordinates[4]=ymin;
+				coordinates[5]=z;
+				coordinates[6]=xmax;
+				coordinates[7]=ymax;
+				coordinates[8]=z;
+				coordinates[9]=xmin;
+				coordinates[10]=ymax;
+				coordinates[11]=z;
+				return (coordinates);
+			// ZY X
+			case 1 :
+				var x=this.__origin[0]+(this.getSlice()+this.__extent[0])*this.__spacing[0];
+				var zmin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
+				var zmax=this.__origin[2]+this.__extent[5]*this.__spacing[2];
+				var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
+				var ymax=this.__origin[1]+this.__extent[3]*this.__spacing[1];
+				var coordinates=[];
+				coordinates[0]=x;
+				coordinates[1]=zmin;
+				coordinates[2]=ymin;
+				coordinates[3]=x;
+				coordinates[4]=zmin;
+				coordinates[5]=ymax;
+				coordinates[6]=x;
+				coordinates[7]=zmax;
+				coordinates[8]=ymax;
+				coordinates[9]=x;
+				coordinates[10]=zmax;
+				coordinates[11]=ymin;
+				return (coordinates);
+			// XZ Y
+			case 2 :
+				var y=this.__origin[1]+(this.getSlice()+this.__extent[2])*this.__spacing[1];
+				var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
+				var xmax=this.__origin[0]+this.__extent[1]*this.__spacing[0];
+				var zmin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
+				var zmax=this.__origin[2]+this.__extent[5]*this.__spacing[2];
+				var coordinates=[];
+				coordinates[0]=xmin;
+				coordinates[1]=y;
+				coordinates[2]=zmin;
+				coordinates[3]=xmax;
+				coordinates[4]=y;
+				coordinates[5]=zmin;
+				coordinates[6]=xmax;
+				coordinates[7]=y;
+				coordinates[8]=zmax;
+				coordinates[9]=xmin;
+				coordinates[10]=y;
+				coordinates[11]=zmax;
+				return (coordinates);
+			}
 		},
 
 		getBoundingBoxDiagonalLength : function () {

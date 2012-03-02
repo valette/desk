@@ -130,7 +130,7 @@ qx.Class.define("desk.meshView",
 
 	destruct : function(){
 		console.log("destructor");
-
+		this.unlink();
 		//clean the scene
 		var shapes=this.__shapesArray;
 		for (var i=0;i<shapes.kength;i++)
@@ -368,8 +368,11 @@ qx.Class.define("desk.meshView",
 			}
 		},
 
-		unLink : function () {
+		unlink : function () {
 			var links=this.__links;
+			if (links==null) {
+				return;
+			}
 			for (var i=0;i<links.length;i++){
 				if (links[i]==this) {
 					links.splice(i,1);
@@ -525,7 +528,13 @@ qx.Class.define("desk.meshView",
 			}
 		},
 
-		attachVolumeSlice : function (volView)
+		attachVolumeSlices : function (volumeSlices) {
+			for (var i=0;i<volumeSlices.length;i++) {
+				this.attachVolumeSlice(volumeSlices[i]);
+			}
+		},
+
+		attachVolumeSlice : function (volumeSlice)
 		{
 			var geometry=new THREE.Geometry();
 			geometry.dynamic=true;
@@ -539,7 +548,8 @@ qx.Class.define("desk.meshView",
 				new THREE.UV( 0, 1 )
 				] );
 
-			var imageData=volView.getSliceImageData();
+			var canvas=volumeSlice.getImageCanvas();
+			var imageData=canvas.getContext2d().getImageData(0,0, canvas.getCanvasWidth(), canvas.getCanvasHeight());
 			var length=imageData.data.length;
 			var dataColor = new Uint8Array( length);
 			var texture = new THREE.DataTexture( dataColor, imageData.width, imageData.height, THREE.RGBAFormat );
@@ -551,7 +561,7 @@ qx.Class.define("desk.meshView",
 			mesh.doubleSided=true;
 			this.__scene.add(mesh);
 
-			mesh.__volView=volView;
+			mesh.__volumeSlice=volumeSlice;
 
 			var dataModel=this.__shapesList.getDataModel();
 
@@ -559,7 +569,7 @@ qx.Class.define("desk.meshView",
 				this.__slicesRoot=dataModel.addBranch(null,"slices", true);
 
 
-			var leaf=dataModel.addLeaf(this.__slicesRoot,volView.getFile(), null);
+			var leaf=dataModel.addLeaf(this.__slicesRoot,volumeSlice.getFileName(), null);
 			dataModel.setData();
 			this.__shapesArray[ leaf ] = mesh ;	
 			this.__shapesVisibility[leaf] = true ;
@@ -568,7 +578,7 @@ qx.Class.define("desk.meshView",
 
 			function updateTexture()
 			{
-				var coords=volView.getCornersCoordinates();
+				var coords=volumeSlice.getCornersCoordinates();
 				for (var i=0;i<4;i++) {
 					geometry.vertices[i].position.set(coords[3*i],coords[3*i+1],coords[3*i+2]);
 				}
@@ -577,9 +587,10 @@ qx.Class.define("desk.meshView",
 				geometry.computeFaceNormals();
 				geometry.computeVertexNormals();
 				geometry.computeBoundingSphere();
+				geometry.computeBoundingBox();
 				HACKSetDirtyVertices(geometry);
 
-				var data=volView.getSliceImageData().data;
+				var data=canvas.getContext2d().getImageData(0,0, canvas.getCanvasWidth(), canvas.getCanvasHeight()).data;
 				for (var i=length;i--;)
 					dataColor[i]=data[i];
 				texture.needsUpdate = true;
@@ -588,14 +599,14 @@ qx.Class.define("desk.meshView",
 
 			updateTexture();
 
-			var listenerId=volView.addListener('changeSlice',function(e)
+			var listenerId=volumeSlice.addListener('changeImage',function(e)
 				{
 					updateTexture();
 					_this.render();
 				}, this);
 
 			this.__window.addListener("close", function() {
-				volView.removeListenerById(listenerId);
+				volumeSlice.removeListenerById(listenerId);
 				});
 
 			_this.render();
@@ -641,9 +652,9 @@ qx.Class.define("desk.meshView",
 						this.openFile(fileName, mTime);
 					}
 				}
-				if (e.supportsType("volumeSlice"))
+				if (e.supportsType("volumeSlices"))
 				{
-					this.attachVolumeSlice(e.getData("volumeSlice"));
+					this.attachVolumeSlices(e.getData("volumeSlices"));
 				}
 
 				// activate the window
@@ -777,14 +788,17 @@ qx.Class.define("desk.meshView",
 							var intersects = ray.intersectObjects( meshes );
 
 							if ( intersects.length > 0 ) {
-								var slider=intersects[0].object.__volView.getSlider();
+								var volumeSlice=intersects[0].object.__volumeSlice;
+								var maximum=volumeSlice.getNumberOfSlices()-1;
 								var delta=Math.round(event.getWheelDelta()/2);
-								var newValue=slider.getValue()+delta;
-								if (newValue>slider.getMaximum())
-									newValue=slider.getMaximum()
-								if (newValue<slider.getMinimum())
-									newValue=slider.getMinimum()
-								slider.setValue(newValue);
+								var newValue=volumeSlice.getSlice()+delta;
+								if (newValue>maximum) {
+									newValue=maximum;
+								}
+								if (newValue<0) {
+									newValue=0;
+								}
+								volumeSlice.setSlice(newValue);
 							}
 						}
 					}

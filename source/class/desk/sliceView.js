@@ -50,6 +50,12 @@ qx.Class.define("desk.sliceView",
 		return (this);		
 	},
 
+	destruct : function(){
+		console.log();
+		this.unlink();
+		//clean the scene
+	},
+
 	properties : {
 		slice : { init : 0, check: "Number", event : "changeSlice"},
 		paintOpacity : { init : 1, check: "Number", event : "changePaintOpacity"},
@@ -172,6 +178,104 @@ qx.Class.define("desk.sliceView",
 				}
 			}
 		},
+
+		__links : null,
+
+		linkToViewer : function (viewer) {
+			// first merge 2 links
+			var links=this.__links;
+			var links2=viewer.__links;
+			var found;
+			var viewer2;
+
+			if (links==null){
+				if (links2==null) {
+					this.__links=[];
+					viewer.__links=this.__links;
+				}
+				else {
+					this.__links=links2;
+				}
+			}
+			else {
+				if (links2==null) {
+					viewer.__links=links;
+				}
+				else {
+					//need to merge links
+					links=this.__links;
+					links2=viewer.__links;
+					for (var i=0;i<links2.length;i++) {
+						viewer2=links2[i];
+						found=false;
+						for (var j=0;j<links.length;j++) {
+							if (links[i]==viewer2) {
+								found=true;
+							}
+						}
+						if (!found) {
+							links.push(viewer2);
+						}
+					}
+					viewer.__links=links;
+				}
+			}
+
+			links=this.__links;
+			found=false;
+			for (var i=0;i<links.length;i++){
+				viewer2=links[i];
+				if (viewer2==this) {
+					found=true;
+					break;
+				}
+			}
+			if (!found) {
+				links.push(this);
+			}
+
+			found=false;
+			for (var i=0;i<links.length;i++){
+				viewer2=links[i];
+				if (viewer2==viewer) {
+					found=true;
+					break;
+				}
+			}
+			if (!found) {
+				links.push(viewer);
+			}
+		},
+
+		__propagateLinks : function () {
+			var links=this.__links;
+			if (links==null) {
+				return;
+			}
+			for (var i=0;i<links.length;i++) {
+				var viewer=links[i];
+				if (viewer!=this) {
+					viewer.__controls.copy(this.__controls);
+					viewer.setSlice(this.getSlice());
+					viewer.render();
+				}
+			}
+		},
+
+		unLink : function () {
+			var links=this.__links;
+			if (links==null) {
+				return;
+			}
+			for (var i=0;i<links.length;i++){
+				if (links[i]==this) {
+					links.splice(i,1);
+					break;
+				}
+			}
+			this.__links=null;
+		},
+
 
 		reorderMeshes : function () {
 			var z_space=0.01;
@@ -638,18 +742,18 @@ qx.Class.define("desk.sliceView",
 						controls.mouseMove(event.getDocumentLeft()-origin.left
 								, event.getDocumentTop()-origin.top);
 						this.render();
-
 						//propagate zoom to other viewers
 						if (button==1) {
 							var z=this.__camera.position.z;
 							this.__master.applyToViewers (function (viewer) {
 								if (viewer!=this) {
 									viewer.__camera.position.z=z;
+									viewer.__propagateLinks();
 									viewer.render();
 									}
 								});
 						}
-
+						this.__propagateLinks();
 						break;
 					case 1:
 						if (this.isPaintMode()) {
@@ -774,6 +878,7 @@ qx.Class.define("desk.sliceView",
 				var sliceId=e.getData();
 				label.setValue(sliceId+"");
 				slider.setValue(this.getVolumeSliceToPaint().getNumberOfSlices()-1-sliceId)
+				this.__propagateLinks();
 			}, this);
 
 			rightContainer.add(slider, {flex : 1});
