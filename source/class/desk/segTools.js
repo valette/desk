@@ -56,6 +56,8 @@ qx.Class.define("desk.segTools",
 		this.addListener("close", function (e) {
 			master.applyToViewers( function (sliceView) {
 				sliceView.removeListenerById(listenersIds[sliceView]);
+				sliceView.setPaintMode(false);
+				sliceView.setEraseMode(false);
 				var canvas=sliceView.getDrawingCanvas();
 				canvas.getContext2d().clearRect(0,0,
 							canvas.getCanvasWidth(), canvas.getCanvasHeight());

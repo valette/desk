@@ -125,9 +125,24 @@ qx.Class.define("desk.sliceView",
 			this.__updateBrush()
 		},
 
+		__renderfunction : null,
+		__renderingTriggered : false,
+
 		render : function ( ) {
-			this.__controls.update();
-			this.__renderer.render( this.__scene, this.__camera );			
+			var _this=this;
+
+			if (this.__renderFunction==null) {
+				this.__renderFunction=
+					function () {
+						_this.__controls.update();
+						_this.__renderer.render( _this.__scene, _this.__camera );
+						_this.__renderingTriggered = false;
+				};
+			}
+			if (!this.__renderingTriggered) {
+				this.__renderingTriggered=true;
+				requestAnimationFrame(this.__renderFunction);
+			}
 		},
 
 		addVolume : function (file, parameters, callback)
@@ -519,6 +534,7 @@ qx.Class.define("desk.sliceView",
 
 				camera.position.set(0,0,100);
 				controls.target.set(0,0,0);
+				//controls.panSpeed=1.18;
 				this.__controls=controls;
 				this.__camera=camera;
 				this.__scene.add( camera );
@@ -532,13 +548,13 @@ qx.Class.define("desk.sliceView",
 				resizeHTML();
 
 				container.appendChild( renderer.domElement );
-				controls.onUpdate=render;
+	//			controls.onUpdate=render;
 
-				function render() {
+	/*			function render() {
 					_this.fireEvent("changeViewPoint");
 					controls.update();
 					renderer.render( _this.__scene, _this.__camera );
-				}
+				}*/
 
 				htmlContainer.addListener("resize",resizeHTML);
 				function resizeHTML(){
@@ -547,7 +563,7 @@ qx.Class.define("desk.sliceView",
 					camera.aspect=elementSize.width / elementSize.height;
 					camera.updateProjectionMatrix();
 					controls.setSize( elementSize.width , elementSize.height );
-					render();
+					_this.render();
 					}
 
 				var mouseMode=0;
@@ -621,6 +637,7 @@ qx.Class.define("desk.sliceView",
 						var origin=htmlContainer.getContentLocation();
 						controls.mouseMove(event.getDocumentLeft()-origin.left
 								, event.getDocumentTop()-origin.top);
+						this.render();
 
 						//propagate zoom to other viewers
 						if (button==1) {

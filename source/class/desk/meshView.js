@@ -143,11 +143,6 @@ qx.Class.define("desk.meshView",
 		this._disposeObjects("__embededHTML","__shapesList");
 	},
 
-	events : {
-		// the "changeSlice" event is fired whenever the viewPoint changes
-		"changeViewPoint" : "qx.event.type.Event"
-	},
-
 	properties : {
 		// the "ready" property is true when the UI is ready.
 		ready : { init : false, check: "Boolean", event : "changeReady"},
@@ -577,6 +572,7 @@ qx.Class.define("desk.meshView",
 				var controls = new THREE.TrackballControls2( camera,container );
 
 				this.__controls=controls;
+				controls.zoomSpeed = 6;
 				this.__scene=scene;
 				this.__camera=camera;
 
@@ -599,17 +595,18 @@ qx.Class.define("desk.meshView",
 
 				this.__renderer=renderer;
 				renderer.setClearColorHex( 0xffffff, 1 );
+				var _this=this;
 				resizeHTML();
 
 				container.appendChild( renderer.domElement );
-				controls.onUpdate=render;
+	//			controls.onUpdate=render;
 
 
-				function render() {
+			/*	function render() {
 					_this.fireEvent("changeViewPoint");
 					controls.update();
 					renderer.render( scene, camera );
-				}
+				}*/
 
 				htmlContainer.addListener("resize",resizeHTML);
 				function resizeHTML(){
@@ -618,7 +615,7 @@ qx.Class.define("desk.meshView",
 					camera.aspect=elementSize.width / elementSize.height;
 					camera.updateProjectionMatrix();
 					controls.setSize( elementSize.width , elementSize.height );
-					render();
+					_this.render();
 					}
 
 				var draggingInProgress=false;
@@ -645,7 +642,8 @@ qx.Class.define("desk.meshView",
 						var origin=htmlContainer.getContentLocation();
 						controls.mouseMove(event.getDocumentLeft()-origin.left
 								, event.getDocumentTop()-origin.top);
-					}});
+						this.render();
+					}}, this);
 
 				htmlContainer.addListener("mouseup", function (event)	{
 					htmlContainer.releaseCapture();
@@ -705,9 +703,29 @@ qx.Class.define("desk.meshView",
 			return (htmlContainer);
 		},
 
-		render : function ( ) {
+/*		render : function ( ) {
 			this.__controls.update();
 			this.__renderer.render( this.__scene, this.__camera );			
+		},*/
+
+		__renderfunction : null,
+		__renderingTriggered : false,
+
+		render : function ( ) {
+			var _this=this;
+
+			if (this.__renderFunction==null) {
+				this.__renderFunction=
+					function () {
+						_this.__controls.update();
+						_this.__renderer.render( _this.__scene, _this.__camera );
+						_this.__renderingTriggered = false;
+				};
+			}
+			if (!this.__renderingTriggered) {
+				this.__renderingTriggered=true;
+				requestAnimationFrame(this.__renderFunction);
+			}
 		},
 
 

@@ -21,14 +21,14 @@ THREE.TrackballControls2 = function ( object ) {
 	this.setSize= function(width, height)
 	{
 		this.screen = { width: width, height: height, offsetLeft: 0, offsetTop: 0 };
-		this.radius = ( this.screen.width + this.screen.height ) / 4;
+		this.radius = ( this.screen.width + this.screen.height );
 	}
 
 	this.setSize();
 
-	this.rotateSpeed = 3;
+	this.rotateSpeed = 30;
 	this.zoomSpeed = 5;
-	this.panSpeed = 1.2;
+	this.panSpeed = 2.2;
 
 	this.noRotate = false;
 	this.noZoom = false;
@@ -100,8 +100,8 @@ THREE.TrackballControls2 = function ( object ) {
 	this.getMouseOnScreen = function( x, y ) {
 
 		return new THREE.Vector2(
-			x / _this.radius * 0.5,
-			y / _this.radius * 0.5
+			x / _this.radius,
+			y / _this.radius
 		);
 
 	};
@@ -113,7 +113,7 @@ THREE.TrackballControls2 = function ( object ) {
 			angle;
 
 		if ( _this._dy != 0 ) {
-			angle = _this.rotateSpeed * _this._dy / _this.radius;
+			angle = _this.rotateSpeed * _this._dy/_this.radius;
 
 			axis.cross( _eye, _this.object.up ).normalize();
 			quaternion.setFromAxisAngle( axis, angle );
@@ -124,7 +124,7 @@ THREE.TrackballControls2 = function ( object ) {
 		}
 
 		if ( _this._dx != 0 ) {
-			angle = -_this.rotateSpeed * _this._dx / _this.radius;
+			angle = -_this.rotateSpeed * _this._dx/_this.radius;
 			axis.copy( _this.object.up ).normalize();
 			quaternion.setFromAxisAngle( axis , angle );
 
