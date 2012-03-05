@@ -29,9 +29,10 @@ qx.Class.define("desk.volViewSimple",
 				}
 
 			var parameterMap={
-				"action" : "slice_volume",
-				"input_volume" : file,
-				"output_directory" : "cache\/"};
+				action : "slice_volume",
+				input_volume : file,
+				slice_orientation : 0,				
+				output_directory : "cache\/"};
 			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
 
 			var label = new qx.ui.basic.Label("Computing slices, wait...").set({
@@ -223,14 +224,14 @@ qx.Class.define("desk.volViewSimple",
 
 			this.addListener("keypress",
 				function(event) {if (event.getKeyIdentifier()=="S") 
-					desk.volView.LINKEDWINDOW=this;},this);
+					desk.volViewSimple.LINKEDWINDOW=this;},this);
 			this.addListener("click",
 				function(event) {
-					if ((desk.volView.LINKEDWINDOW!=null)&&(desk.volView.LINKEDWINDOW!=this))
+					if ((desk.volViewSimple.LINKEDWINDOW!=null)&&(desk.volViewSimple.LINKEDWINDOW!=this))
 					{
-						this.__slider.bind("value", desk.volView.LINKEDWINDOW.__slider, "value");
-						desk.volView.LINKEDWINDOW.__slider.bind("value", this.__slider, "value");
-						desk.volView.LINKEDWINDOW=null;
+						this.__slider.bind("value", desk.volViewSimple.LINKEDWINDOW.__slider, "value");
+						desk.volViewSimple.LINKEDWINDOW.__slider.bind("value", this.__slider, "value");
+						desk.volViewSimple.LINKEDWINDOW=null;
 					}},this);				
 		},
 
