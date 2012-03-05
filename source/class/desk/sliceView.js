@@ -582,7 +582,8 @@ qx.Class.define("desk.sliceView",
 						dataColor, width, height, THREE.RGBAFormat );
 				texture.needsUpdate = true;
 				texture.magFilter=THREE.NearestFilter;
-				var material=new THREE.MeshBasicMaterial( {map:texture, transparent: true, opacity : opacity});
+				var material=new THREE.MeshBasicMaterial( 
+						{map:texture, transparent: true, opacity : opacity});//, combine :THREE.MixOperation});
 				var mesh=new THREE.Mesh(geometry,material);
 				mesh.doubleSided=true;
 				_this.__scene.add(mesh);

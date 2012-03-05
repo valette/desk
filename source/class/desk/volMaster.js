@@ -536,11 +536,37 @@ qx.Class.define("desk.volMaster",
 			var noColors=new qx.ui.form.RadioButton("grey levels");
 			colormapGroup.add(noColors);
 
+			var ramp=new Uint8Array(256);
+			var zeros=new Uint8Array(256);
+			for (var i=0;i<256;i++) {
+				ramp[i]=i;
+				zeros[i]=0;
+			}
+
+			var redColors=new qx.ui.form.RadioButton("reds");
+			colormapGroup.add(redColors);
+
+			var greenColors=new qx.ui.form.RadioButton("greens");
+			colormapGroup.add(greenColors);
+
+			var blueColors=new qx.ui.form.RadioButton("blues");
+			colormapGroup.add(blueColors);
+
+			var randomRedColors=new qx.ui.form.RadioButton("random reds");
+			colormapGroup.add(randomRedColors);
+
+			var randomGreenColors=new qx.ui.form.RadioButton("random greens");
+			colormapGroup.add(randomGreenColors);
+
+			var randomBlueColors=new qx.ui.form.RadioButton("random blues");
+			colormapGroup.add(randomBlueColors);
+
 			var randomColors=new qx.ui.form.RadioButton("random Colors");
 			colormapGroup.add(randomColors);
 			var randomRed=new Uint8Array(256);
 			var randomGreen=new Uint8Array(256);
 			var randomBlue=new Uint8Array(256);
+
 			for (var i=0;i<256;i++) {
 				randomRed[i]=Math.floor(Math.random()*255);
 				randomGreen[i]=Math.floor(Math.random()*255);
@@ -566,6 +592,36 @@ qx.Class.define("desk.volMaster",
 				default :
 					for (var i=0;i<slices.length;i++) {
 						slices[i].removeLookupTables();
+					}
+					break;
+				case redColors :
+					for (var i=0;i<slices.length;i++) {
+						slices[i].setLookupTables([ramp, zeros, zeros]);
+					}
+					break;
+				case greenColors :
+					for (var i=0;i<slices.length;i++) {
+						slices[i].setLookupTables([zeros, ramp, zeros]);
+					}
+					break;
+				case blueColors :
+					for (var i=0;i<slices.length;i++) {
+						slices[i].setLookupTables([zeros, zeros, ramp]);
+					}
+					break;
+				case randomRedColors :
+					for (var i=0;i<slices.length;i++) {
+						slices[i].setLookupTables([randomRed, zeros, zeros]);
+					}
+					break;
+				case randomGreenColors :
+					for (var i=0;i<slices.length;i++) {
+						slices[i].setLookupTables([zeros, randomGreen, zeros]);
+					}
+					break;
+				case randomBlueColors :
+					for (var i=0;i<slices.length;i++) {
+						slices[i].setLookupTables([zeros, zeros, randomBlue]);
 					}
 					break;
 				case randomColors :
