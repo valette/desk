@@ -8,6 +8,8 @@ qx.Class.define("desk.actions",
 	{
 		this.base(arguments);
 
+		this.__actionsQueue=[];
+
 		var localAdress=window.location.href;
 		var slashIndex=localAdress.indexOf("/");
 		var slashIndex=localAdress.indexOf("/");
@@ -60,6 +62,9 @@ qx.Class.define("desk.actions",
 
 		__permissionsLevel : 0,
 
+		__actionsQueue : null,
+		__maximumNumberOfParallelActions : 20,
+
 		getPermissionsLevel : function () {
 			return this.__permissionsLevel;
 		},
@@ -80,44 +85,70 @@ qx.Class.define("desk.actions",
 			return this.__actionMenu;
 		},
 
-		launchAction : function (actionParameters, successCallback, context)
-		{
+
+		__tryToLaunchActions : function () {
+			if ((this.__actionsQueue.length==0)||(this.__maximumNumberOfParallelActions==0)) {
+				return;
+			}
+			this.__maximumNumberOfParallelActions--;
+			var action=this.__actionsQueue[0];
+			this.__actionsQueue.shift();
+			this.__launchAction(action.action, action.callback, action.context);
+		},
+
+		launchAction : function (actionParameters, successCallback, context) {
+			this.__actionsQueue.push ({action : actionParameters,
+									callback : successCallback,
+									context : context});
+			this.__tryToLaunchActions();
+		},
+
+		__launchAction : function (actionParameters, successCallback, context) {
 			var actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
 			this.__ongoingActions.add(actionNotification);
 			var req = new qx.io.request.Xhr();
-
-			function onSuccess (e){
-					var req = e.getTarget();
-					var response=req.getResponseText();
-					var splitResponse=response.split("\n");
-					if (splitResponse.length<2)
-						alert ("error for action "+actionParameters.action+": \n"+splitResponse[0]);
-					else
-					{
-						var executionStatus=splitResponse[splitResponse.length-2].split(" ")[0];
-						if ((executionStatus!="OK")&&(executionStatus!="CACHED"))
-						{
-							alert ("error for action "+actionParameters.action+": \n"+splitResponse[0]);
-						}
-						else
-						{
-							this.__ongoingActions.remove(actionNotification);
-							if (successCallback!=null)
-							{
-								if (context!=null)
-									successCallback.call(context,e);
-								else
-									successCallback(e);
-							}
-						}
-					}
-			}
 
 			req.setUrl("php/actions.php");
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData(actionParameters);
-			req.addListener("success", onSuccess, this);
+			req.addListener("success", 	function (e){
+				this.__maximumNumberOfParallelActions++;
+				this.__tryToLaunchActions();
+				var req = e.getTarget();
+				var response=req.getResponseText();
+				var splitResponse=response.split("\n");
+				if (splitResponse.length<2) {
+					alert ("error for action "+actionParameters.action+": \n"+splitResponse[0]);
+				}
+				else {
+					var executionStatus=splitResponse[splitResponse.length-2].split(" ")[0];
+					if ((executionStatus!="OK")&&(executionStatus!="CACHED")) {
+						alert ("error for action "+actionParameters.action+": \n"+splitResponse[0]);
+					}
+					else {
+						this.__ongoingActions.remove(actionNotification);
+						if (successCallback!=null) {
+							if (context!=null) {
+								successCallback.call(context,e);
+							}
+							else {
+								successCallback(e);
+							}
+						}
+					}
+				}
+			}, this);
+
+			var numberOfRetries=3;
+
+			req.addListener("error", function (e){
+				console.log("error : "+numberOfRetries+" chances left...");
+				numberOfRetries--;
+				if (numberOfRetries>0) {
+					req.send();
+				}
+			}, this);
 			req.send();
 		},
 

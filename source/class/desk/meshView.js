@@ -1072,7 +1072,9 @@ qx.Class.define("desk.meshView",
 					for (var i=0;i<shapesArray.length;i++)
 					{
 						var shape=_this.__shapesArray[shapesArray[i].nodeId];
-						shape.material.opacity=opacitySlider.getValue()/ratio;
+						if (shape!=null) {
+							shape.material.opacity=opacitySlider.getValue()/ratio;
+						}
 					}
 					_this.render();
 				}
@@ -1086,9 +1088,11 @@ qx.Class.define("desk.meshView",
 					for (var i=0;i<shapesArray.length;i++)
 					{
 						var shape=_this.__shapesArray[shapesArray[i].nodeId];
-						shape.material.color.setRGB (colorSelector.getRed()/ratio,
-									colorSelector.getGreen()/ratio,
-									colorSelector.getBlue()/ratio);
+						if (shape!=null) {
+							shape.material.color.setRGB (colorSelector.getRed()/ratio,
+										colorSelector.getGreen()/ratio,
+										colorSelector.getBlue()/ratio);
+						}
 					}
 					_this.render();
 				}
