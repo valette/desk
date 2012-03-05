@@ -1,5 +1,6 @@
 /*
 #ignore(Detector)
+#ignore(Uint8Array)
 */
 qx.Class.define("desk.volMaster", 
 {
@@ -393,6 +394,13 @@ qx.Class.define("desk.volMaster",
 				},this);
 			menu.add(propertiesButton);
 
+			var colormapButton = new qx.ui.menu.Button("color map");
+			colormapButton.addListener("execute", function () {
+				this.__createColormapWindow(volumeListItem);
+				},this);
+			menu.add(colormapButton);
+
+
 			if (desk.actions.getInstance().getPermissionsLevel()>0) {
 				var paintButton=new qx.ui.menu.Button("segment");
 				paintButton.addListener("execute", function () {
@@ -510,6 +518,68 @@ qx.Class.define("desk.volMaster",
 					}
 				}
 			},this);
+		},
+
+		__createColormapWindow : function(volumeListItem) {
+			var slices=volumeListItem.getUserData("slices");
+
+			var window=new qx.ui.window.Window();
+			window.setCaption("colors for "+slices[0].getFileName());
+			window.setLayout(new qx.ui.layout.HBox());
+			window.setShowClose(true);
+			window.setShowMinimize(false);
+
+			var colormapGroup = new qx.ui.form.RadioButtonGroup();
+			colormapGroup.setLayout(new qx.ui.layout.VBox());
+			window.add(colormapGroup);
+
+			var noColors=new qx.ui.form.RadioButton("grey levels");
+			colormapGroup.add(noColors);
+
+			var randomColors=new qx.ui.form.RadioButton("random Colors");
+			colormapGroup.add(randomColors);
+			var randomRed=new Uint8Array(256);
+			var randomGreen=new Uint8Array(256);
+			var randomBlue=new Uint8Array(256);
+			for (var i=0;i<256;i++) {
+				randomRed[i]=Math.floor(Math.random()*255);
+				randomGreen[i]=Math.floor(Math.random()*255);
+				randomBlue[i]=Math.floor(Math.random()*255);
+			}
+			var randomColorsArray=[randomRed, randomGreen, randomBlue];
+
+			var currentColors=slices[0].getLookupTables();
+			var otherColors=null;
+			if (currentColors[0]!=null) {
+				otherColors=new qx.ui.form.RadioButton("other");
+				colormapGroup.add(otherColors);
+				colormapGroup.setSelection([otherColors]);
+			}
+			else {
+				colormapGroup.setSelection([noColors]);
+			}
+
+			colormapGroup.addListener("changeSelection", function (e) {
+				switch (colormapGroup.getSelection()[0])
+				{
+				case noColors :
+				default :
+					for (var i=0;i<slices.length;i++) {
+						slices[i].removeLookupTables();
+					}
+					break;
+				case randomColors :
+					for (var i=0;i<slices.length;i++) {
+						slices[i].setLookupTables(randomColorsArray);
+					}
+					break;
+				case otherColors :
+					for (var i=0;i<slices.length;i++) {
+						slices[i].setLookupTables(currentColors);
+					}
+				}
+			});
+			window.open();
 		},
 
 		__addDropFileSupport : function () {

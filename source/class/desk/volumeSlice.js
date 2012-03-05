@@ -174,6 +174,22 @@ qx.Class.define("desk.volumeSlice",
 			this.__lookupTableRed=luts[0];
 			this.__lookupTableGreen=luts[1];
 			this.__lookupTableBlue=luts[2];
+			if (this.isReady()) {
+				this.redraw();
+			}
+		},
+
+		getLookupTables : function () {
+			return [this.__lookupTableRed, this.__lookupTableGreen, this.__lookupTableBlue];
+		},
+
+		removeLookupTables : function () {
+			this.__lookupTableRed=null;
+			this.__lookupTableGreen=null;
+			this.__lookupTableBlue=null;
+			if (this.isReady()) {
+				this.redraw();
+			}
 		},
 
 		getImageCanvas : function(){
@@ -657,8 +673,8 @@ qx.Class.define("desk.volumeSlice",
 
 			var data = dataDesc.data;
 
-			var pix = data.length, pix1, pix2;
-			var p= pix/4;
+			var pix=0;
+			var p= data.length/4;
 			var r, g, b,a,c;
 
 			var max=this.__scalarMax;
@@ -688,22 +704,14 @@ qx.Class.define("desk.volumeSlice",
 						else
 						{
 							pix=0;
+							// to finish...
 							while (p--) {
-								c=data[pix];
-								if (c>127)
-									c-=256;
-								c=(c+shift)*scale;
-								c=c* mul + add;
-								
-								if (c>255)
-									c=255;
-								else if (c<0)
-									c=0;
-								data[pix++]=c;
-								data[pix++]=c;
-								data[pix++]=c;
+								r= data[pix]-1;
+								data[pix++]=redArray[r];
+								data[pix++]=greenArray[r];
+								data[pix++]=blueArray[r];
 								data[pix++]=255;
-							}
+								}
 						}
 						break;
 					case 2:
@@ -711,45 +719,27 @@ qx.Class.define("desk.volumeSlice",
 						{
 						// signed short : need to check for sign
 							pix=0;
-							while (p--){
-								r= data[pix];
-								g= data[pix+1];
-								c=r+256*g;
-								// check sign
-								if (g>127)
-									c-=65536;
-								c=(c+shift)*scale;
-								c=c* mul + add;
-								
-								if (c>255)
-									c=255;
-								else if (c<0)
-									c=0;
-								data[pix++]=c;
-								data[pix++]=c;
-								data[pix++]=c;
+							// to finish...
+							while (p--) {
+								r= data[pix]-1;
+								data[pix++]=redArray[r];
+								data[pix++]=greenArray[r];
+								data[pix++]=blueArray[r];
 								data[pix++]=255;
-							}
+								}
 						}
 						else
 						{
 						// unsigned short : no need to check sign
 							pix=0;
-							while (p--){
-								r= data[pix];
-								g= data[pix+1];
-								c=r+256*g;
-								c=(c+shift)*scale;
-								c=c* mul + add;
-								if (c>255)
-									c=255;
-								else if (c<0)
-									c=0;
-								data[pix++]=c;
-								data[pix++]=c;
-								data[pix++]=c;
+							// to finish...
+							while (p--) {
+								r= data[pix]-1;
+								data[pix++]=redArray[r];
+								data[pix++]=greenArray[r];
+								data[pix++]=blueArray[r];
 								data[pix++]=255;
-							}
+								}
 						}
 						break;
 					case 4:
@@ -757,23 +747,14 @@ qx.Class.define("desk.volumeSlice",
 						{
 							// unsigned int : no need to check sign
 							pix=0;
-							while (p--){
-								r= data[pix];
-								g= data[pix+1];
-								b= data[pix+2];
-								a= data[pix+3];
-								c=r+256*g+65536*b;
-								c=(c+shift)*scale;
-								c=c* mul + add;
-								if (c>255)
-								c=255;
-								else if (c<0)
-								c=0;
-								data[pix++]=c;
-								data[pix++]=c;
-								data[pix++]=c;
+							// to finish...
+							while (p--) {
+								r= data[pix]-1;
+								data[pix++]=redArray[r];
+								data[pix++]=greenArray[r];
+								data[pix++]=blueArray[r];
 								data[pix++]=255;
-							}
+								}
 						}
 						else
 						{
@@ -795,17 +776,12 @@ qx.Class.define("desk.volumeSlice",
 			else
 			{
 				// format is jpeg : just copy the pixels
-				pix=0;
-				while (p--){
-					c= data[pix];
-					c=c* mul + add;
-					if (c>255)
-						c=255;
-					else if (c<0)
-						c=0;
-					data[pix++]=c;
-					data[pix++]=c;
-					data[pix++]=c;
+				// to finish...
+				while (p--) {
+					r= data[pix]-1;
+					data[pix++]=redArray[r];
+					data[pix++]=greenArray[r];
+					data[pix++]=blueArray[r];
 					data[pix++]=255;
 					}
 			}
