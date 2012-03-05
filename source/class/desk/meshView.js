@@ -470,7 +470,7 @@ qx.Class.define("desk.meshView",
 					case ".vtk":
 					case ".ctm":
 					case ".off":
-						_this.__readFile (file, mtime, [1.0,1.0,1.0,1.0], true);
+						_this.__readFile (file, mtime, [1.0,1.0,1.0,1.0, 0], true);
 						break;
 
 					case ".xml":
@@ -493,7 +493,7 @@ qx.Class.define("desk.meshView",
 
 						for (var n=0;n<numberOfMeshes;n++)
 						{
-							var color=[1.0,1.0,1.0,1.0];
+							var color=[1.0,1.0,1.0,1.0, 0];
 							var mesh=meshes[n];
 							if (mesh.hasAttribute("color"))
 							{
@@ -502,7 +502,10 @@ qx.Class.define("desk.meshView",
 								for (var j=0;j<4;j++)
 									color[j]=parseFloat(colors[j]);
 							}
-
+							if (mesh.hasAttribute("depth")) {
+								color[4]=parseInt(mesh.getAttribute("depth"));
+							}
+							
 							var update=function()
 							{
 								numberOfRemainingMeshes--;
@@ -851,6 +854,7 @@ qx.Class.define("desk.meshView",
 						if (color[3]<0.999) material.transparent=true;
 						var mesh = new THREE.Mesh(geom, material );
 						mesh.doubleSided=true;
+						mesh.renderDepth=color[4];
 
 						_this.__scene.add( mesh );
 
@@ -895,6 +899,7 @@ qx.Class.define("desk.meshView",
 							if (color[3]<0.999) material.transparent=true;
 							var mesh = new THREE.Mesh(geom, material );
 							mesh.doubleSided=true;
+							mesh.renderDepth=color[4];
 
 							_this.__scene.add( mesh );
 
@@ -1022,8 +1027,15 @@ qx.Class.define("desk.meshView",
 
 /*			var wireframeCheckBox=new qx.ui.form.CheckBox("wireframe");
 			topBox.add(wireframeCheckBox);
-			topBox.add(new qx.ui.core.Spacer(10, 20),{flex:1});
 		*/	
+
+			var renderDepthLabel=new qx.ui.basic.Label("Render Depth");
+			topBox.add(renderDepthLabel);
+
+			var renderDepthSpinner=new qx.ui.form.Spinner(-100, 0,100);
+			topBox.add(renderDepthSpinner);
+
+			topBox.add(new qx.ui.core.Spacer(10, 20),{flex:1});
 			if (parentWindow)
 			{
 				var alwaysOnTopCheckBox=new qx.ui.form.CheckBox("this window always on top");
@@ -1058,6 +1070,7 @@ qx.Class.define("desk.meshView",
 							Math.round(ratio*color.g),Math.round(ratio*color.b));
 			//		wireframeCheckBox.setValue(firstSelectedShape.material.wireframe);
 					opacitySlider.setValue(Math.round(firstSelectedShape.material.opacity*ratio));
+					renderDepthSpinner.setValue(firstSelectedShape.renderDepth);
 					enableUpdate=true;
 				}
 			}
@@ -1074,7 +1087,15 @@ qx.Class.define("desk.meshView",
 					{
 						var shape=_this.__shapesArray[shapesArray[i].nodeId];
 						if (shape!=null) {
-							shape.material.opacity=opacitySlider.getValue()/ratio;
+							var opacity=opacitySlider.getValue()/ratio;
+							shape.material.opacity=opacity;
+							if (opacity<1) {
+								shape.material.transparent=true;
+							}
+							else {
+								shape.material.transparent=false;
+							}
+
 						}
 					}
 					_this.render();
@@ -1112,6 +1133,21 @@ qx.Class.define("desk.meshView",
 					_this.render();
 				}
 				});*/
+
+			renderDepthSpinner.addListener("changeValue", function(event){
+				if (enableUpdate)
+				{
+					var shapesArray=shapesTree.getSelectedNodes();
+					for (var i=0;i<shapesArray.length;i++)
+					{
+						var shape=_this.__shapesArray[shapesArray[i].nodeId];
+						if (shape!=null) {
+							shape.renderDepth=renderDepthSpinner.getValue();
+						}
+					}
+					_this.render();
+				}
+				});
 
 			return (mainContainer);
 		},
