@@ -369,6 +369,7 @@ qx.Class.define("desk.meshView",
 				var viewer=links[i];
 				if (viewer!=this) {
 					viewer.__controls.copy(this.__controls);
+					viewer.__controls.update();
 					viewer.render();
 				}
 			}

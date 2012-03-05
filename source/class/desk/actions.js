@@ -112,7 +112,8 @@ qx.Class.define("desk.actions",
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData(actionParameters);
-			req.addListener("success", 	function (e){
+
+			function onSuccess (e){
 				this.__maximumNumberOfParallelActions++;
 				this.__tryToLaunchActions();
 				var req = e.getTarget();
@@ -138,17 +139,29 @@ qx.Class.define("desk.actions",
 						}
 					}
 				}
-			}, this);
+			}
 
 			var numberOfRetries=3;
 
-			req.addListener("error", function (e){
+			function onError (e){
 				console.log("error : "+numberOfRetries+" chances left...");
 				numberOfRetries--;
 				if (numberOfRetries>0) {
+					req = new qx.io.request.Xhr();
+					req.setUrl("php/actions.php");
+					req.setMethod("POST");
+					req.setAsync(true);
+					req.setRequestData(actionParameters);
+					req.addListener("success", onSuccess, this);
+					req.addListener("error", onError, this);
 					req.send();
 				}
-			}, this);
+			}
+
+			req.addListener("success", onSuccess, this);
+			req.addListener("error", onError, this);
+
+
 			req.send();
 		},
 
