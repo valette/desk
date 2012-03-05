@@ -1,4 +1,6 @@
 <actions>
+<permissions level="1"/>
+
 <action name="acvd" executable="/home/visu/src/vtkSurfaceBuild/bin/ACVD">
 <description>generates a simplification of the input mesh</description>
 <parameter name="input_mesh" type="file" required="true"/>
@@ -47,7 +49,7 @@
 <parameter name="input_file" type="file" required="true"/>
 </action>
 
-<action name="slice_volume" executable="/home/visu/src/thor/vtkSurfaceH/vtkSurfaceH-build/bin/VolumeSlice">
+<action name="slice_volume" executable="/home/visu/src/thor/vtkSurfaceH/vtkSurfaceH-build/bin/VolumeSlice" permissions="0">
 <description>Slice a volume image into 2D images</description>
 <parameter name="input_volume" type="file" required="true"/>
 <parameter prefix="-f " name="format" type="int" min="0" max="1"/>
@@ -185,7 +187,7 @@
 <parameter name="base64Data" type="base64" required="true"/>
 </action>
 
-<action name="mesh2ctm" executable="not needed">
+<action name="mesh2ctm" executable="not needed" permissions="0">
 <description>converts a mesh to .ctm format</description>
 <parameter name="input_mesh" type="file" required="true"/>
 </action>

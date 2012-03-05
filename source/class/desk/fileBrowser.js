@@ -38,22 +38,8 @@ qx.Class.define("desk.fileBrowser",
 
 		var dataModel = virtualTree.getDataModel();
 
-		this.__actionsHandler=desk.actions.ACTIONSHANDLER;
+		this.__actionsHandler=desk.actions.getInstance();
 		this.__baseURL=desk.actions.BASEURL;
-/*
-		//create menu
-		var menu=new qx.ui.menu.Menu;
-
-		var uploadButton = new qx.ui.menu.Button("Upload");
-		uploadButton.addListener("execute", function (e){alert ("Not implemented!");}, this);
-		menu.add(uploadButton);
-		menu.addSeparator();
-
-		this.__actionsMenuButton=new qx.ui.menu.Button("Actions", null , null);
-		menu.add(this.__actionsMenuButton);
-
-		var actionsButton = new qx.ui.form.MenuButton("Actions", null, menu);
-		this.add(actionsButton);*/
 
 		// create the filter bar
 		var filterBox = new qx.ui.container.Composite;
@@ -92,8 +78,19 @@ qx.Class.define("desk.fileBrowser",
 		this.__rootId = dataModel.addBranch(null, this.__baseDir, true);
 		this.updateRoot();
 
+		this.__createDoubleClickActions();
+
 		// events handling
-		this.createDefaultStaticActions();
+		if (this.__actionsHandler.isReady()) {
+			this.__createDefaultStaticActions();
+			console.log("ready");
+		}
+		else {
+			this.__actionsHandler.addListenerOnce("changeReady", function (e) {
+			this.__createDefaultStaticActions();
+			console.log("ready");
+			}, this);
+		}
 
 		virtualTree.addListener("cellDblclick", function (e) {
 			var node=this.getEventNode(e);
@@ -286,8 +283,7 @@ qx.Class.define("desk.fileBrowser",
 			return this.__actionsHandler;
 		},
 
-		createDefaultStaticActions : function ()
-		{
+		__createDoubleClickActions : function () {
 			var myBrowser=this;
 			function fileClicked(node) {
 				var modificationTime=myBrowser.getNodeMTime(node);
@@ -350,9 +346,16 @@ qx.Class.define("desk.fileBrowser",
 				}
 				
 			}
-
 			myBrowser.setFileHandler(fileClicked);
+		},
 
+		__createDefaultStaticActions : function ()
+		{
+			if (this.__actionsHandler.getPermissionsLevel()<1) {
+				return;
+			}
+
+			var myBrowser=this;
 			myBrowser.addAction("redo action", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 					myBrowser.__actionsHandler.createActionWindowFromURL(

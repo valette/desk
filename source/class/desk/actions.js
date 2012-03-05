@@ -2,10 +2,11 @@ qx.Class.define("desk.actions",
 {
 	extend : qx.core.Object,
 
+	type : "singleton",
+
 	construct : function(fileBrowser)
 	{
 		this.base(arguments);
-		desk.actions.ACTIONSHANDLER=this;
 
 		var localAdress=window.location.href;
 		var slashIndex=localAdress.indexOf("/");
@@ -13,44 +14,36 @@ qx.Class.define("desk.actions",
 		var slashIndex2=localAdress.indexOf("/", slashIndex+1);
 		var slashIndex3=localAdress.indexOf("/", slashIndex2+1);
 		var questionMarkIndex=localAdress.indexOf("?");
-		if (questionMarkIndex<0)
+		if (questionMarkIndex<0) {
 			questionMarkIndex=localAdress.length;
+			}
+
 		desk.actions.BASEURL=localAdress.substring(slashIndex3,
 												questionMarkIndex)+
 									"php/";
 
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.populateActionMenu();
-//		this.__menuButton=new qx.ui.menu.Button("Actions", null , null, this.__actionMenu);
 
-		function getParameter( parameterName )
-		{
-		  parameterName = parameterName.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
-		  var regexS = "[\\?&]"+parameterName+"=([^&#]*)";
-		  var regex = new RegExp( regexS );
-		  var results = regex.exec( window.location.href );
-		  if( results == null )
-			return null;
-		  else
-			return results[1];
-		}
 
-		if (fileBrowser!=null)
-			this.__fileBrowser=fileBrowser;
-		else
-			this.__fileBrowser=new desk.fileBrowser(getParameter("rootDir"));
-
-		var ongoingActions = new qx.ui.form.List().set({
-			width: 200
-	//		height: 400
-		});
-		this.__ongoingActions=ongoingActions;
-		qx.core.Init.getApplication().getRoot().add(ongoingActions, { right : 0, top : 0});
+		this.addListenerOnce("changeReady", function () {
+			var ongoingActions = new qx.ui.form.List().set({
+				width: 200
+			});
+			this.__ongoingActions=ongoingActions;
+			if (this.__permissionsLevel<1) {
+				return;
+			}
+			qx.core.Init.getApplication().getRoot().add(ongoingActions, { right : 0, top : 0});
+		}, this);
 		return this;
 	},
 
+	properties : {
+		ready : { init : false, check: "Boolean", event : "changeReady"}
+	},
+
 	statics : {
-		ACTIONSHANDLER : null,
 		BASEURL : null
 	},
 
@@ -65,8 +58,10 @@ qx.Class.define("desk.actions",
 		__actionsArray : null,
 		__currentFileBrowser : null,
 
-		getActionsXMLElement : function () {
-			return this.__actions;
+		__permissionsLevel : 0,
+
+		getPermissionsLevel : function () {
+			return this.__permissionsLevel;
 		},
 
 		getActionXMLElement : function (actionName) {
@@ -129,34 +124,46 @@ qx.Class.define("desk.actions",
 		populateActionMenu : function()
 		{
 			var xmlhttp=new XMLHttpRequest();
-			xmlhttp.open("GET",this.__actionsFile+"?nocache=" + Math.random(),false);
-			xmlhttp.send();
-			this.__actions=xmlhttp.responseXML;
-			var actions=this.__actions.getElementsByTagName("action");
-			this.__actionsArray=actions;
-			var actionMenu=this;
+			var _this=this;
+			xmlhttp.onreadystatechange = function() {
+				 if(this.readyState == 4 && this.status == 200)
+				 {
+					// so far so good
+					if(xmlhttp.responseXML!=null)
+					{
+						_this.__actions=xmlhttp.responseXML;
+						var actions=_this.__actions.getElementsByTagName("action");
+						_this.__actionsArray=actions;
+						var actionMenu=_this;
 
-			for (var n=0;n<actions.length;n++)
-			{
-				var action=actions[n];
-				var actionName=action.getAttribute("name");
-				var button=new qx.ui.menu.Button(actionName);
-				var descriptions=action.getElementsByTagName("description");
-				var tooltip=new qx.ui.tooltip.ToolTip("hello");
-				button.setToolTip(tooltip);//descriptions[0].nodeValue);
-				if (descriptions.length>0)
-				{
-			//		button.setToolTipText("hello");//descriptions[0].nodeValue);
-//					if (n==0)
-		//				alert (descriptions[0]);
+						for (var n=0;n<actions.length;n++)
+						{
+							var action=actions[n];
+							var actionName=action.getAttribute("name");
+							var button=new qx.ui.menu.Button(actionName);
+							var descriptions=action.getElementsByTagName("description");
+							var tooltip=new qx.ui.tooltip.ToolTip("hello");
+							button.setToolTip(tooltip);//descriptions[0].nodeValue);
+							if (descriptions.length>0)
+							{
+						//		button.setToolTipText("hello");//descriptions[0].nodeValue);
+				//					if (n==0)
+					//				alert (descriptions[0]);
+							}
+
+							button.addListener("execute", function (e){
+								var action= new desk.action(this.getLabel());
+								action.setOriginFileBrowser(actionMenu.__currentFileBrowser);
+								action.buildUI();},button);
+							_this.__actionMenu.add(button);
+						}
+						_this.setReady(true);
+					}
 				}
-
-				button.addListener("execute", function (e){
-					var action= new desk.action(this.getLabel());
-					action.setOriginFileBrowser(actionMenu.__currentFileBrowser);
-					action.buildUI();});
-				this.__actionMenu.add(button);
 			}
+
+			xmlhttp.open("GET",this.__actionsFile+"?nocache=" + Math.random(),true);
+			xmlhttp.send();
 		},
 
 		createActionWindowFromURL : function (fileURL)

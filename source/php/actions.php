@@ -13,6 +13,9 @@ $logHeader=$_SERVER['REMOTE_ADDR']." ".date("D M j G:i:s");
 $startTime=time();
 $inputFilesLastMtime=0;
 
+// default permissions=0;
+$permissionsLevel=0;
+
 function readParameters($file) {
 	$parameters=array();
 	if (is_file($file))
@@ -97,6 +100,14 @@ if (!($_POST["action"]))
 $actionToPerform=mysql_real_escape_string($_POST["action"])
 	or die ("no action asked!");
 
+foreach ($actions->children() as $permission)
+{
+	if ($permission->getName()=="permissions")
+	{
+		$permissionsLevel=intval($permission["level"]);
+	}
+}
+
 //echo "action : $actionToPerform\n";
 
 foreach ($actions->children() as $action)
@@ -108,6 +119,21 @@ foreach ($actions->children() as $action)
 
 		if ($actionToPerform==$currentActionName)
 		{
+			$actionPermissionLevel=$action["permissions"];
+			if ($actionPermissionLevel==null)
+			{
+				$actionPermissionLevel=1;
+			}
+			else
+			{
+				$actionPermissionLevel=intVal($actionPermissionLevel);
+			}
+
+			if ($permissionsLevel<$actionPermissionLevel)
+			{
+				die ("action forbidden! : your level=$permissionsLevel, action needs level $actionPermissionLevel");
+			}
+
 			$parametersList["action"]="$actionToPerform";
 			$command="ulimit -v 12000000; nice ".$action["executable"]
 				or die("no executable provided for action \"$actionToPerform\"");

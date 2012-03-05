@@ -393,11 +393,13 @@ qx.Class.define("desk.volMaster",
 				},this);
 			menu.add(propertiesButton);
 
-			var paintButton=new qx.ui.menu.Button("segment");
-			paintButton.addListener("execute", function () {
-				var tools = new desk.segTools(this, this.__file, this.__fileBrowser);
-			},this);
-			menu.add(paintButton);
+			if (desk.actions.getInstance().getPermissionsLevel()>0) {
+				var paintButton=new qx.ui.menu.Button("segment");
+				paintButton.addListener("execute", function () {
+					var tools = new desk.segTools(this, this.__file, this.__fileBrowser);
+				},this);
+				menu.add(paintButton);
+			}
 
 			var moveForwardButton = new qx.ui.menu.Button("move forward");
 			moveForwardButton.addListener("execute", function () {
