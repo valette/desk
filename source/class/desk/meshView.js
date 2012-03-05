@@ -442,6 +442,7 @@ qx.Class.define("desk.meshView",
 					camera.position.copy(backPedal);
 				}
 			}
+			this.__controls.update();
 			this.render();
 		},
 
@@ -709,14 +710,6 @@ qx.Class.define("desk.meshView",
 				resizeHTML();
 
 				container.appendChild( renderer.domElement );
-	//			controls.onUpdate=render;
-
-
-			/*	function render() {
-					_this.fireEvent("changeViewPoint");
-					controls.update();
-					renderer.render( scene, camera );
-				}*/
 
 				htmlContainer.addListener("resize",resizeHTML);
 				function resizeHTML(){
@@ -831,7 +824,6 @@ qx.Class.define("desk.meshView",
 			if (this.__renderFunction==null) {
 				this.__renderFunction=
 					function () {
-						_this.__controls.update();
 						_this.__renderer.render( _this.__scene, _this.__camera );
 						_this.__renderingTriggered = false;
 				};

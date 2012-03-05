@@ -26,7 +26,7 @@ THREE.TrackballControls2 = function ( object ) {
 
 	this.setSize();
 
-	this.rotateSpeed = 30;
+	this.rotateSpeed = 15;
 	this.zoomSpeed = 5;
 	this.panSpeed = 2.2;
 
@@ -42,7 +42,6 @@ THREE.TrackballControls2 = function ( object ) {
 
 	this.keys = [ 65 /*A*/, 83 /*S*/, 68 /*D*/ ];
 
-	this._onUpdate=null;
 
 	// internals
 
@@ -215,6 +214,9 @@ THREE.TrackballControls2 = function ( object ) {
 	};
 
 	this.update = function() {
+		this._update();
+	};
+	this._update = function() {
 
 		_eye.copy( _this.object.position ).subSelf( this.target );
 
@@ -363,27 +365,23 @@ THREE.TrackballControls2 = function ( object ) {
 
 			if ( n12 > 0 )
 			{
+				var alpha=0;
 				var cosAlpha = p1.dot( p2 ) / n12;
 				var sinAlpha = p2.y * p1.x - p2.x * p1.y;
 
-				if ( cosAlpha > 1 )
+				if ( cosAlpha < 1 )
 				{
-					_this._alpha = 0;
-				}
-				else
-				{
-					_this._alpha = Math.acos( cosAlpha );
+					alpha = Math.acos( cosAlpha );
 				}
 				if ( sinAlpha > 0 )
-					_this._alpha = _this._alpha;
+					alpha = -alpha;
+				this._alpha=alpha;
 			}
 		}
 
 		_this._xinit = x;
 		_this._yinit = y;
-
-		if ( _this.onUpdate != null )
-			_this.onUpdate();
+		_this._update();
 	};
 
 	this.mouseUp = function( ) {
