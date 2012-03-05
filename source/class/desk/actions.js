@@ -132,6 +132,10 @@ qx.Class.define("desk.actions",
 					if(xmlhttp.responseXML!=null)
 					{
 						_this.__actions=xmlhttp.responseXML;
+
+						var permissions=_this.__actions.getElementsByTagName("permissions")[0];
+						_this.__permissionsLevel=parseInt(permissions.getAttribute("level"));
+
 						var actions=_this.__actions.getElementsByTagName("action");
 						_this.__actionsArray=actions;
 						var actionMenu=_this;
