@@ -183,6 +183,10 @@ qx.Class.define("desk.sliceView",
 		__links : null,
 
 		linkToViewer : function (viewer) {
+			if (viewer==this) {
+				return;
+			}
+
 			// first merge 2 links
 			var links=this.__links;
 			var links2=viewer.__links;
@@ -246,6 +250,7 @@ qx.Class.define("desk.sliceView",
 			if (!found) {
 				links.push(viewer);
 			}
+			viewer.__propagateLinks();
 		},
 
 		__propagateLinks : function () {

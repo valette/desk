@@ -290,6 +290,10 @@ qx.Class.define("desk.meshView",
 		__links : null,
 
 		linkToMeshViewer : function (viewer) {
+			if (viewer==this) {
+				return;
+			}
+
 			// first merge 2 links
 			var links=this.__links;
 			var links2=viewer.__links;
@@ -353,6 +357,7 @@ qx.Class.define("desk.meshView",
 			if (!found) {
 				links.push(viewer);
 			}
+			viewer.__propagateLinks();
 		},
 
 		__propagateLinks : function () {

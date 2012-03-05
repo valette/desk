@@ -502,8 +502,7 @@ qx.Class.define("desk.volMaster",
 						var orientation=viewer.getOrientation();
 						for (var j=0;j<viewers2.length;j++) {
 							if (viewers2[j].getOrientation()==orientation) {
-								viewers2[j].linkToViewer(viewer);
-								viewers2[j].__propagateLinks();
+								viewer.linkToViewer(viewers2[j]);
 							}
 						}
 					}
