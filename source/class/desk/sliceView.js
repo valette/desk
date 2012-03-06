@@ -829,6 +829,11 @@ qx.Class.define("desk.sliceView",
 			return (htmlContainer);
 		},
 
+		__intersection : null,
+		__cornersCoordinates : null,
+		__volumeDimensions : null,
+		__projector : null,
+
 		getPositionOnSlice : function (event) {
 			var viewPort=this.__viewPort;
 			var origin=viewPort.getContentLocation();
@@ -839,30 +844,37 @@ qx.Class.define("desk.sliceView",
 			var x2 = ( x / elementSize.width ) * 2 - 1;
 			var y2 = - ( y / elementSize.height ) * 2 + 1;
 
-			var projector = new THREE.Projector();
-			var vector = new THREE.Vector3( x2, y2, 0);//0.5 );
-			var camera=this.__camera;
-			projector.unprojectVector( vector, camera );
-
-			var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
-			var meshes=[];
-			var volumeSlice=this.getVolumeSliceToPaint();
-			meshes.push(volumeSlice.getUserData("mesh"));
-			var intersects = ray.intersectObjects( meshes );
-
-			if ( intersects.length > 0 ) {
-				var xinter=intersects[0].point.x;
-				var yinter=intersects[0].point.y;
+			if (this.__projector==null){
+				var projector = new THREE.Projector();
+				this.__projector=projector;
+				var intersection = new THREE.Vector3( x2, y2, 0);
+				this.__intersection=intersection;
+				var volumeSlice=this.getVolumeSliceToPaint();
 				var coordinates=volumeSlice.get2DCornersCoordinates();
+				this.__cornersCoordinates=coordinates;
 				var dimensions=volumeSlice.get2DDimensions();
-				var intxc=Math.floor((xinter-coordinates[0])*dimensions[0]/(coordinates[2]-coordinates[0]));
-				var intyc=Math.floor((yinter-coordinates[1])*dimensions[1]/(coordinates[5]-coordinates[1]));
-				return {i :intxc, j :intyc, x:xinter, y:yinter};
+				this.__volumeDimensions=dimensions;
 			}
-			else
-			{
-				return false;
+			else {
+				var projector = this.__projector;
+				var intersection = this.__intersection.set( x2, y2, 0);
+				var coordinates=this.__cornersCoordinates;
+				var dimensions=this.__volumeDimensions;
 			}
+
+			var camera=this.__camera;
+			projector.unprojectVector( intersection, camera );
+
+			var cameraPosition=camera.position;
+			intersection.subSelf( cameraPosition );
+			intersection.multiplyScalar(-cameraPosition.z/intersection.z);
+			intersection.addSelf( cameraPosition );
+			var xinter=intersection.x;
+			var yinter=intersection.y;
+
+			var intxc=Math.floor((xinter-coordinates[0])*dimensions[0]/(coordinates[2]-coordinates[0]));
+			var intyc=Math.floor((yinter-coordinates[1])*dimensions[1]/(coordinates[5]-coordinates[1]));
+			return {i :intxc, j :intyc, x:xinter, y:yinter};
 		},
 
 		__createUI : function (file) {
