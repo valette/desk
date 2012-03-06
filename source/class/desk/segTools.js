@@ -246,72 +246,8 @@ qx.Class.define("desk.segTools",
 			this.add(tools.__mainBottomRightContainer, {flex : 1}); //~ resizing
 
 			tools.__mainBottomRightContainer.add(tabView); //~ resizing
-		
-		////Fill labels zone width data from the xml file
-			var nbLabels = 0;
-			var colorsParamRequest = new XMLHttpRequest();
-			colorsParamRequest.onreadystatechange = function()
-			{
-				 if(this.readyState == 4 && this.status == 200)
-				 {
-					// so far so good
-					if(this.responseXML!=null)
-					{
-						var response = this.responseXML;
-						nbLabels = response.getElementsByTagName("color").length;
-						tools.__labelColors=new Array(nbLabels);
-						tools.__labelColorsRed=new Uint8Array (nbLabels);
-						tools.__labelColorsGreen=new Uint8Array (nbLabels);
-						tools.__labelColorsBlue=new Uint8Array (nbLabels);
-						for(var i=0; i<nbLabels; i++)
-						{
-							var color=response.getElementsByTagName("color")[i];
-							var label=parseInt(color.getAttribute("label"),10)
-							var colorName=color.getAttribute("name");
-							tools.__labelColors[i] = {
-								red : color.getAttribute("red"),
-								green : color.getAttribute("green"),
-								blue : color.getAttribute("blue"),
-								label : ""+label,
-								name : colorName
-							};
 
-							tools.__labelColorsRed[i]=tools.__labelColors[i].red;
-							tools.__labelColorsGreen[i]=tools.__labelColors[i].green;
-							tools.__labelColorsBlue[i]=tools.__labelColors[i].blue;
-
-							var newLabel = {
-								id : label,
-								name : colorName,
-								color : "rgb(" + tools.__labelColors[i].red + "," + tools.__labelColors[i].green + "," + tools.__labelColors[i].blue + ")"
-							};
-							newLabel.name = newLabel.name.replace(newLabel.name.charAt(0), newLabel.name.charAt(0).toUpperCase());
-							tools.__addColorItem(newLabel);
-						}
-						var viewers=theMaster.getViewers();
-						var lutRed= new Uint8Array(256);
-						var lutGreen= new Uint8Array(256);
-						var lutBlue= new Uint8Array(256);
-						for(var j=0; j<tools.__labelColors.length; j++)
-							{
-								lutRed[j] = tools.__labelColors[j].red;
-								lutGreen[j] = tools.__labelColors[j].green;
-								lutBlue[j] = tools.__labelColors[j].blue;
-							}
-					}
-					else
-						alert("Global Params : Failure...");
-				}
-				else if (this.readyState == 4 && this.status != 200)
-				{
-					// fetched the wrong page or network error...
-					alert('Global Params : "Fetched the wrong page" OR "Network error"');
-				}
-			};
-			//~ colorsParamRequest.open("GET", "/visu/colorsKnee.xml?nocache="+Math.random(), true);
-			colorsParamRequest.open("GET",
-				tools.__fileBrowser.getFileURL(tools.__colorsFile)+"?nocache="+Math.random(), true);
-			colorsParamRequest.send(null);
+			this.__loadColors();		
 
 			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
 			tools.__topRightContainer.add(whileDrawingDrwngOpacityLabel);
@@ -451,6 +387,77 @@ qx.Class.define("desk.segTools",
 
 			tools.__seedsTypeSelectBox = tools.__getSeedsTypeSelectBox();
 			paintPage.addAt(tools.__seedsTypeSelectBox,0);
+		},
+
+
+		__loadColors : function () {
+			var tools=this;
+		////Fill labels zone width data from the xml file
+
+			var colorsParamRequest = new XMLHttpRequest();
+			colorsParamRequest.onreadystatechange = function()
+			{
+				 if(this.readyState == 4 && this.status == 200)
+				 {
+					// so far so good
+					if(this.responseXML!=null)
+					{
+						var response = this.responseXML;
+						var colors=response.getElementsByTagName("color");
+						var nbLabels = colors.length;
+						tools.__labelColors=new Array(nbLabels);
+						tools.__labelColorsRed=new Uint8Array (nbLabels);
+						tools.__labelColorsGreen=new Uint8Array (nbLabels);
+						tools.__labelColorsBlue=new Uint8Array (nbLabels);
+						for(var i=0; i<nbLabels; i++)
+						{
+							var color=colors[i];
+							var label=parseInt(color.getAttribute("label"),10)
+							var colorName=color.getAttribute("name");
+							tools.__labelColors[i] = {
+								red : color.getAttribute("red"),
+								green : color.getAttribute("green"),
+								blue : color.getAttribute("blue"),
+								label : ""+label,
+								name : colorName
+							};
+
+							tools.__labelColorsRed[i]=tools.__labelColors[i].red;
+							tools.__labelColorsGreen[i]=tools.__labelColors[i].green;
+							tools.__labelColorsBlue[i]=tools.__labelColors[i].blue;
+
+							var newLabel = {
+								id : label,
+								name : colorName,
+								color : "rgb(" + tools.__labelColors[i].red + "," + tools.__labelColors[i].green + "," + tools.__labelColors[i].blue + ")"
+							};
+							newLabel.name = newLabel.name.replace(newLabel.name.charAt(0), newLabel.name.charAt(0).toUpperCase());
+							tools.__addColorItem(newLabel);
+						}
+
+						var lutRed= new Uint8Array(256);
+						var lutGreen= new Uint8Array(256);
+						var lutBlue= new Uint8Array(256);
+						for(var j=0; j<tools.__labelColors.length; j++)
+							{
+								lutRed[j] = tools.__labelColors[j].red;
+								lutGreen[j] = tools.__labelColors[j].green;
+								lutBlue[j] = tools.__labelColors[j].blue;
+							}
+					}
+					else
+						alert("Global Params : Failure...");
+				}
+				else if (this.readyState == 4 && this.status != 200)
+				{
+					// fetched the wrong page or network error...
+					alert('Global Params : "Fetched the wrong page" OR "Network error"');
+				}
+			};
+			//~ colorsParamRequest.open("GET", "/visu/colorsKnee.xml?nocache="+Math.random(), true);
+			colorsParamRequest.open("GET",
+				tools.__fileBrowser.getFileURL(tools.__colorsFile)+"?nocache="+Math.random(), true);
+			colorsParamRequest.send(null);
 		},
 
 		__nbLines : 1,
