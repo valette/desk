@@ -66,6 +66,8 @@ qx.Class.define("desk.segTools",
 		});
 
 		this.open();
+
+//		this.__createLabelsList();
 	//// Return the tools window aka : this
 		return (this);
 
@@ -244,106 +246,7 @@ qx.Class.define("desk.segTools",
 			this.add(tools.__mainBottomRightContainer, {flex : 1}); //~ resizing
 
 			tools.__mainBottomRightContainer.add(tabView); //~ resizing
-			
-		////Function creates one label box
-			var unfocusedBorder = new qx.ui.decoration.Single(2, "solid", "black");
-            var focusedBorder = new qx.ui.decoration.Single(3, "solid", "red");
-			var boxWidth = 37;
-			var columnLimit = 4;
-			var colorCount = 4;
-			var nbLines = 1;
-			var createToolBox = function(inLabel)
-            {
-                var labelLayout = new qx.ui.layout.VBox();
-                labelLayout.setSpacing(4);
-				var labelBox = new qx.ui.container.Composite().set({
-                    layout : labelLayout,
-                    allowGrowX: false,
-                    allowGrowY: false,
-                    width: boxWidth,
-                    height: 53,
-                    decorator: unfocusedBorder,
-                    backgroundColor: "background-light",
-                    focusable : true
-                });
-				var colorBox = new qx.ui.container.Composite().set({
-                    maxWidth: boxWidth-12,
-                    height: 25,
-                    alignX : "center",
-					backgroundColor: inLabel.color
-                });
-
-				tools.__eraserButton.addListener("changeValue", function (e) {
-					if (e.getData())
-					{
-						var children = tools.__colorsContainer.getChildren();
-						for (var i=0;i<children.length;i++){
-							children[i].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
-						}
-					}
-				});
-
-				labelBox.addListener("click", function()
-				{
-//					var viewers=theMaster.getViewers();
-
-					var j = 0;
-					var children = tools.__colorsContainer.getChildren();
-					var paint;
-					while(children[j]!=this)
-					{
-						j++;
-					}
-					if(!(children[j].getBackgroundColor()=="white"))//&&(tools.__curView.__mouseActionMode!=4)))
-					{
-						children[j].set({decorator: focusedBorder, backgroundColor: "white"});
-						for(var k=0; k<nbLabels; k++)
-						{
-							if(k!=j)
-							{
-								children[k].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
-							}
-						}
-						paint=true;
-						tools.__eraserButton.setValue(false);
-					}
-					else
-					{
-						children[j].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
-						paint=false
-					}
-
-					tools.__master.applyToViewers( function (viewer) {
-						viewer.setPaintColor(colorBox.getBackgroundColor());
-						viewer.setPaintMode(paint);
-						});
-					tools.__colorsContainer.set({opacity: 1});
-                });
-				var boxLabel = new qx.ui.basic.Label("\\" + inLabel.id + " : " + inLabel.name).set({alignX:"left"});
-				labelBox.add(boxLabel);
-				labelBox.add(colorBox);
-				if(inLabel.id<=colorCount)
-				{
-					tools.__colorsContainer.add(labelBox, {column: inLabel.id-(nbLines-1)*columnLimit, row: (nbLines-1)});
-				}
-				else
-				{
-					nbLines++;
-					tools.__colorsContainer.add(labelBox, {column: inLabel.id-(nbLines-1)*columnLimit, row: (nbLines-1)});
-					colorCount += columnLimit;
-				}
-				var tempColors = tools.__colorsContainer._getChildren();
-				if((boxWidth<boxLabel.getSizeHint().width+8)&&(0<tempColors.length))
-				{
-					boxWidth = boxLabel.getSizeHint().width + 16;	//// value returned by getSizeHint() is not enough
-					for(var i=0; i<tempColors.length; i++)
-					{
-						tempColors[i].set({width:boxWidth});
-						tempColors[i]._getChildren()[1].set({maxWidth:boxWidth-12});
-					}
-				}
-            };
-			
+		
 		////Fill labels zone width data from the xml file
 			var nbLabels = 0;
 			var colorsParamRequest = new XMLHttpRequest();
@@ -383,7 +286,7 @@ qx.Class.define("desk.segTools",
 								color : "rgb(" + tools.__labelColors[i].red + "," + tools.__labelColors[i].green + "," + tools.__labelColors[i].blue + ")"
 							};
 							newLabel.name = newLabel.name.replace(newLabel.name.charAt(0), newLabel.name.charAt(0).toUpperCase());
-							createToolBox(newLabel);
+							tools.__addColorItem(newLabel);
 						}
 						var viewers=theMaster.getViewers();
 						var lutRed= new Uint8Array(256);
@@ -549,6 +452,98 @@ qx.Class.define("desk.segTools",
 			tools.__seedsTypeSelectBox = tools.__getSeedsTypeSelectBox();
 			paintPage.addAt(tools.__seedsTypeSelectBox,0);
 		},
+
+		__nbLines : 1,
+		__colorCount : 4,
+		__addColorItem : function(inLabel)
+        {
+		////Function creates one label box
+			var unfocusedBorder = new qx.ui.decoration.Single(2, "solid", "black");
+            var focusedBorder = new qx.ui.decoration.Single(3, "solid", "red");
+			var boxWidth = 37;
+			var columnLimit = 4;
+
+	
+            var labelLayout = new qx.ui.layout.VBox();
+            labelLayout.setSpacing(4);
+			var labelBox = new qx.ui.container.Composite().set({
+                layout : labelLayout,
+                allowGrowX: false,
+                allowGrowY: false,
+                width: boxWidth,
+                height: 53,
+                decorator: unfocusedBorder,
+                backgroundColor: "background-light",
+                focusable : true
+            });
+			var colorBox = new qx.ui.container.Composite().set({
+                maxWidth: boxWidth-12,
+                height: 25,
+                alignX : "center",
+				backgroundColor: inLabel.color
+            });
+
+			this.__eraserButton.addListener("changeValue", function (e) {
+				if (e.getData())
+				{
+						labelBox.set({decorator: unfocusedBorder, backgroundColor: "background-light"});
+				}
+			}, this);
+
+			labelBox.addListener("click", function(e)
+			{
+				var children = this.__colorsContainer.getChildren();
+				var paint;
+				if(!(labelBox.getBackgroundColor()=="white"))//&&(this.__curView.__mouseActionMode!=4)))
+				{
+					labelBox.set({decorator: focusedBorder, backgroundColor: "white"});
+					for(var k=0; k<children.length; k++)
+					{
+						if(children[k]!=labelBox)
+						{
+							children[k].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
+						}
+					}
+					paint=true;
+					this.__eraserButton.setValue(false);
+				}
+				else
+				{
+					labelBox.set({decorator: unfocusedBorder, backgroundColor: "background-light"});
+					paint=false
+				}
+
+				this.__master.applyToViewers( function (viewer) {
+					viewer.setPaintColor(colorBox.getBackgroundColor());
+					viewer.setPaintMode(paint);
+					});
+			//	this.__colorsContainer.set({opacity: 1});
+            }, this);
+    
+			var boxLabel = new qx.ui.basic.Label("\\" + inLabel.id + " : " + inLabel.name).set({alignX:"left"});
+			labelBox.add(boxLabel);
+			labelBox.add(colorBox);
+			if(inLabel.id<=this.__colorCount)
+			{
+				this.__colorsContainer.add(labelBox, {column: inLabel.id-(this.__nbLines-1)*columnLimit, row: (this.__nbLines-1)});
+			}
+			else
+			{
+				this.__nbLines++;
+				this.__colorsContainer.add(labelBox, {column: inLabel.id-(this.__nbLines-1)*columnLimit, row: (this.__nbLines-1)});
+				this.__colorCount += columnLimit;
+			}
+			var tempColors = this.__colorsContainer._getChildren();
+			if((boxWidth<boxLabel.getSizeHint().width+8)&&(0<tempColors.length))
+			{
+				boxWidth = boxLabel.getSizeHint().width + 16;	//// value returned by getSizeHint() is not enough
+				for(var i=0; i<tempColors.length; i++)
+				{
+					tempColors[i].set({width:boxWidth});
+					tempColors[i]._getChildren()[1].set({maxWidth:boxWidth-12});
+				}
+			}
+        },
 
 		loadSession : function()
 		{
@@ -1087,6 +1082,132 @@ qx.Class.define("desk.segTools",
 					return filePrefix +"XY"+(offset + sliceId) +".png";
 			}
 		}
+/*
+		__createLabelsList : function () {
+			var list;
+			var currentListItem;
+			var myWindow=new qx.ui.window.Window();
+
+			myWindow.setLayout(new qx.ui.layout.VBox());
+			myWindow.set({
+									width : 400,
+									showMinimize: false,
+									showMaximize: false,
+									allowMaximize: false,
+									showClose: true,
+									resizable: false,
+									movable : true
+								});
+	
+		//	var labelBoth = new qx.ui.basic.Label("Reorderable");
+		//	myWindow.add(labelBoth);
+
+			var both = list = new qx.ui.form.List;
+			both.setDraggable(true);
+			both.setDroppable(true);
+			both.setSelectionMode("multi");
+			myWindow.add(both);
+
+			for (var i=0; i<20; i++) {
+				var item=new qx.ui.form.ListItem("Item " + i, "icon/16/places/folder.png");
+				item.setHeight(40);
+				item.setWidth(200);
+				item.setBackgroundColor(qx.util.ColorUtil.rgbToHexString([i*10, i*10, i*10]));
+				both.add(item);
+			}
+
+
+			// Create drag indicator
+			var indicator = new qx.ui.core.Widget;
+			indicator.setDecorator(new qx.ui.decoration.Single().set({
+				top : [ 1, "solid", "#33508D" ]
+			}));
+			indicator.setHeight(0);
+			indicator.setOpacity(0.5);
+			indicator.setZIndex(100);
+			indicator.setLayoutProperties({left: -1000, top: -1000});
+			indicator.setDroppable(true);
+	//		this.getRoot().add(indicator);
+	//		qx.core.Init.getApplication().getRoot().add(indicator);
+			myWindow.add(indicator);
+
+
+			// Just add a move action
+			both.addListener("dragstart", function(e) {
+				e.addAction("move");
+			});
+
+			both.addListener("dragend", function(e)
+			{
+				// Move indicator away
+				indicator.setDomPosition(-1000, -1000);
+			});
+
+
+			both.addListener("drag", function(e)
+			{
+				var orig = e.getOriginalTarget();
+
+				// store the current listitem - if the user drops on the indicator
+				// we can use this item instead of calculating the position of the
+				// indicator
+				if (orig instanceof qx.ui.form.ListItem) {
+					currentListItem = orig;
+				}
+		//		console.log(orig);
+				if (!qx.ui.core.Widget.contains(myWindow, orig) && orig != indicator) {
+					return;
+				}
+
+				var origCoords2 = both.getContainerLocation();
+				var origCoords = orig.getContainerLocation();
+
+				indicator.setWidth(orig.getBounds().width);
+//				indicator.setDomPosition(origCoords.left,
+//							 origCoords.top);
+				indicator.setDomPosition(origCoords.left-origCoords2.left,
+							 origCoords.top-origCoords2.top);
+		//		console.log(origCoords.left+" "+origCoords.top);
+		//		console.log(origCoords2.left+" "+origCoords2.top);
+			});
+
+			both.addListener("dragover", function(e)
+			{
+				// Stop when the dragging comes from outside
+				if (e.getRelatedTarget()) {
+					e.preventDefault();
+				}
+			});
+
+			both.addListener("drop", function(e) {
+				reorderList(e.getOriginalTarget());
+			});
+
+			indicator.addListener("drop", function(e) {
+				reorderList(currentListItem);
+				});
+
+			function reorderList (listItem)
+			{
+
+				// Only continue if the target is a list item.
+				if (listItem.classname != "qx.ui.form.ListItem") {
+					return ;
+				}
+
+				var sel = list.getSortedSelection();
+
+				for (var i=0, l=sel.length; i<l; i++)
+				{
+					list.addBefore(sel[i], listItem);
+
+				// recover selection as it get lost during child move
+					list.addToSelection(sel[i]);
+				}
+			}
+			myWindow.open();
+		}*/
+
 	} //// END of   members :
 
 }); //// END of   qx.Class.define("desk.segTools",
