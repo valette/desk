@@ -377,8 +377,10 @@ qx.Class.define("desk.sliceView",
 			function updateBrush()
 			{
 				if (_this.isEraseMode()) {
-					context.fillStyle = "black";
+					context.fillStyle = "white";
 					context.fillRect (0, 0, width, height);
+					context.fillStyle = "black";
+					context.fillRect (10, 10, width-20, height-20);
 				}
 				else {
 					context.clearRect (0, 0, width, height);
