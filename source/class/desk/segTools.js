@@ -91,7 +91,6 @@ qx.Class.define("desk.segTools",
 
 	members :
 	{
-
 		__defaultColorsFile : "data/xml/colors7.xml",
 		__master : null,
 		__file : null,
@@ -100,12 +99,9 @@ qx.Class.define("desk.segTools",
 		__topRightContainer : null,
 		__bottomRightContainer : null,
 		__mainBottomRightContainer : null,
-		
-		
-		__curView : null, // en attendant...
-		
+
 		__seedsTypeSelectBox : null,
-		
+
 		__startSegmentationButton : null,
 
 // Tableau contenant les couleurs des seeds
@@ -119,22 +115,10 @@ qx.Class.define("desk.segTools",
 		__compactLabelsRed : null,
 		__compactLabelsGreen : null,
 		__compactLabelsBlue : null,
-		
-         
-         __eraserCoeff : 2,     //Taille gomme  =  eraserCoeff * taille crayon --> c'est plus agréable d'effacer comme ça
-         
-         
-         __eraserCursorZ : 123000000,     //Indice de position en z du widget qui représente la gomme (toujours devant)
-		
+
 		__penSize : null,
 		__eraserButton : null,
 		__eraserCursor : null,
-
-		// width of the panel measured manually during debug
-		//~ __rightPanelWidth : 405 + 16 + 4,
-		__rightPanelWidth : 405,
-		
-		__settingButtons : false,
 
 		__reloadSeedImage : function (sliceView) {
 			if (this.getSessionDirectory()==null)
@@ -195,7 +179,7 @@ qx.Class.define("desk.segTools",
             tools.__penSize = new qx.ui.form.Spinner().set({
                 minimum: 1,
                 maximum: 100,
-                value: 1//tools.__curView.__drawingCanvasParams.myLineWidth
+                value: 1
             });
 			
             this.__penSize.addListener("changeValue", function(event)
@@ -320,7 +304,6 @@ qx.Class.define("desk.segTools",
 			tabView.add(meshingPage);
 			var meshingAction=new desk.action("extract_meshes", false);
 			meshingAction.setOutputSubdirectory("meshes");
-//			clusteringAction.setActionParameters({"colors" : tools.__colorsFile});
 
 			meshingAction.buildUI();
 			meshingPage.add(meshingAction);
@@ -332,9 +315,6 @@ qx.Class.define("desk.segTools",
 				clusteringAction.setOutputDirectory(directory);
 				segmentationAction.setOutputDirectory(directory);
 				meshingAction.setOutputDirectory(directory);
-				//~ var adjacenciesXMLFileName = "/var/www/html" + "/visu/adjacencies3.xml?nocache="+Math.random();
-				//~ var adjacenciesXMLFileName = "/visu/adjacencies3.xml?nocache="+Math.random();
-				//~ var adjacenciesXMLFileName = "data/adjacencies3.xml?nocache="+Math.random();
 				var adjacenciesXMLFileName = "data/adjacencies7.xml";
 				segmentationAction.setActionParameters({
 					"input_volume" : volFile,
@@ -387,7 +367,6 @@ qx.Class.define("desk.segTools",
 					segmentationToken=null;
 				}
 			});
-
 
 			meshingAction.addListener("actionUpdated", function ()
 			{
@@ -518,8 +497,23 @@ qx.Class.define("desk.segTools",
 			window.setShowMinimize(false);
 			window.setUseMoveFrame(true);
 
+			var topContainer=new qx.ui.container.Composite();
+			topContainer.setLayout(new qx.ui.layout.HBox());
+			window.add(topContainer);
+
+			var topLeftContainer=new qx.ui.container.Composite();
+			topLeftContainer.setLayout(new qx.ui.layout.VBox());
+			topContainer.add(topLeftContainer);
+			topContainer.add(new qx.ui.core.Spacer(), {flex: 5})
+			var topRightContainer=new qx.ui.container.Composite();
+			topRightContainer.setLayout(new qx.ui.layout.VBox());
+			topContainer.add(topRightContainer);
+
+
 			var doNotUpdate=false;
 
+			var label1=new qx.ui.basic.Label("Name :");
+			topLeftContainer.add(label1);
 			var labelName=new qx.ui.form.TextField();
 			if (this.__targetColorItem!=null) {
 				labelName.setValue(this.__targetColorItem.labelName);
@@ -533,7 +527,10 @@ qx.Class.define("desk.segTools",
 					target.updateWidget();
 				}
 			}, this);
-			window.add(labelName);
+			topLeftContainer.add(labelName);
+
+			var label2=new qx.ui.basic.Label("Color :");
+			window.add(label2);
 
 			var colorSelector=new qx.ui.control.ColorSelector();
 			colorSelector.addListener("changeValue", function (e) {
@@ -551,6 +548,79 @@ qx.Class.define("desk.segTools",
 			}, this);
 			window.add(colorSelector);
 
+			var label3=new qx.ui.basic.Label("Adjacent labels :");
+			topRightContainer.add(label3);
+
+			var container=new qx.ui.container.Composite();
+			container.setLayout(new qx.ui.layout.HBox());
+			topRightContainer.add(container);
+
+
+			var adjacenciesField=new qx.ui.form.TextArea();
+			adjacenciesField.setValue("none");
+			adjacenciesField.setReadOnly(true);
+			container.add(adjacenciesField, {flex : 2});
+
+			var container2=new qx.ui.container.Composite();
+			container2.setLayout(new qx.ui.layout.VBox());
+			container.add(container2);
+
+			var _this=this;
+			function __getLabel(label) {
+				var intLabel=parseInt(label);
+				var labels=_this.__labelColors;
+				for (var i=0;i<labels.length;i++) {
+					if (labels[i].label==intLabel) {
+						return (labels[i]);
+					}
+				}
+				alert("error : label "+label+" does not exist!");				
+				return (false);
+			}
+
+			function __updateAdjacenciesText () {
+				var adjacencies=_this.__targetColorItem.adjacencies;
+				var text="";
+				if (adjacencies.length==0) {
+					text="none"
+				}
+				else {
+					for (var i=0;i<adjacencies.length;i++) {
+						var neighbour=adjacencies[i];
+						text+=neighbour.label+" : "+neighbour.labelName+"\n";
+					}
+				}
+				adjacenciesField.setReadOnly(false);
+				adjacenciesField.setValue(text);
+				adjacenciesField.setReadOnly(true);
+			}
+
+			var inputField=new qx.ui.form.TextField();
+			container2.add(inputField);
+			var addButton=new qx.ui.form.Button("Add");
+			addButton.addListener("execute", function () {
+				var label=__getLabel(inputField.getValue());
+				if (label==false) {
+					return;
+				}
+				this.__addEdge(label, this.__targetColorItem);
+				__updateAdjacenciesText();
+				inputField.setValue("");
+			}, this);
+			container2.add(addButton);
+			var removeButton=new qx.ui.form.Button("Remove");
+			removeButton.addListener("execute", function () {
+				var label=__getLabel(inputField.getValue());
+				if (label==false) {
+					return;
+				}
+				this.__removeEdge(label, this.__targetColorItem);
+				__updateAdjacenciesText();
+				inputField.setValue("");
+			}, this);
+			container2.add(removeButton);
+
+
 			this.__editionWindow=window;
 
 			var _this=this;
@@ -564,6 +634,7 @@ qx.Class.define("desk.segTools",
 					colorSelector.setBlue(target.blue);
 					this.__buildLookupTables();
 					doNotUpdate=false;
+					__updateAdjacenciesText();
 				}
 			}
 		},
@@ -579,6 +650,65 @@ qx.Class.define("desk.segTools",
 					return;
 				}
 			}
+		},
+
+		__addEdge : function (label1, label2) {
+			var adjacencies=label1.adjacencies;
+			var found=false;
+			for (var i=0;i<adjacencies.length;i++) {
+				if (adjacencies[i].label==label2.label) {
+					found=true;
+					break;
+				}
+			}
+
+			if (found) {
+				alert ("Error : adjacency "+label1.label+"-"+label2.label+" already exists");
+				return;
+			}
+			this.__addAdjacency(label1, label2);
+			this.__addAdjacency(label2, label1);
+		},
+
+		__removeEdge : function (label1, label2) {
+			var adjacencies=label1.adjacencies;
+			var found=false;
+			for (var i=0;i<adjacencies.length;i++) {
+				if (adjacencies[i]==label2) {
+					found=true;
+				}
+			}
+
+			if (!found) {
+				alert ("error : adjacency "+label1.label+"-"+label2.label+" does not exist");
+				return;
+			}
+			this.__removeAdjacency(label1, label2);
+			this.__removeAdjacency(label2, label1);
+
+		},
+
+		__addAdjacency : function (label1,label2) {
+			var adjacencies=label1.adjacencies;
+			var label=label2.label;
+			for (var i=0;i<adjacencies.length;i++){
+				if (label<adjacencies[i].label) {
+					adjacencies.splice(i,0,label2);
+					return;
+				}
+			}
+			adjacencies.push(label2);
+		},
+
+		__removeAdjacency : function (label1,label2) {
+			var adjacencies=label1.adjacencies;
+			for (var i=0;i<adjacencies.length;i++){
+				if (label2==adjacencies[i]) {
+					adjacencies.splice(i,1);
+					return;
+				}
+			}
+			alert ("error : adjacency to remove not found...");
 		},
 
 		__addColorItem : function(label, labelName, red, green, blue)
@@ -656,6 +786,7 @@ qx.Class.define("desk.segTools",
 				labelName : labelName,
 				container : labelBox,
 				listenerId : listenerId,
+				adjacencies : [],
 				updateWidget : function () {
 					colorBox.setBackgroundColor(
 						qx.util.ColorUtil.rgbToRgbString([labelAttributes.red,
@@ -833,6 +964,7 @@ qx.Class.define("desk.segTools",
 						tools.setSessionDirectory(fileBrowser.getSessionDirectory(
 							volFile,sessionType,sessionIdToSelect));
 						tools.__clearSeeds();
+						tools.__loadColors();
 					}
 					else
 						sessionsList.setSelection([dummyItem]);					
