@@ -516,8 +516,6 @@ qx.Class.define("desk.segTools",
 			window.setLayout(new qx.ui.layout.VBox());
 			window.setShowClose(true);
 			window.setShowMinimize(false);
-//			window.setResizable(true,true,true,true);
-//			window.setUseResizeFrame(true);
 			window.setUseMoveFrame(true);
 
 			var doNotUpdate=false;
@@ -576,6 +574,8 @@ qx.Class.define("desk.segTools",
 				if (colors[i]==item) {
 					colors.splice(i,1);
 					this.__rebuildLabelsList();
+					item.dispose();
+					this.__eraserButton.removeListenerById(item.listenerId);
 					return;
 				}
 			}
@@ -605,7 +605,7 @@ qx.Class.define("desk.segTools",
                 height: 25,
                 alignX : "center"});
 
-			this.__eraserButton.addListener("changeValue", function (e) {
+			var listenerId=this.__eraserButton.addListener("changeValue", function (e) {
 				if (e.getData())
 				{
 					labelBox.set({decorator: unfocusedBorder, backgroundColor: "background-light"});
@@ -655,6 +655,7 @@ qx.Class.define("desk.segTools",
 				label : label,
 				labelName : labelName,
 				container : labelBox,
+				listenerId : listenerId,
 				updateWidget : function () {
 					colorBox.setBackgroundColor(
 						qx.util.ColorUtil.rgbToRgbString([labelAttributes.red,
@@ -695,6 +696,19 @@ qx.Class.define("desk.segTools",
 				},this);
 			menu.add(removeButton);
 			labelBox.setContextMenu(menu);
+
+			labelAttributes.dispose=function () {
+				labelBox.destroy();
+				unfocusedBorder.dispose();
+				focusedBorder.dispose();
+				labelLayout.dispose();
+				colorBox.destroy();
+				boxLabel.destroy();
+				menu.destroy();
+				addButton.destroy();
+				editButton.destroy();
+				removeButton.destroy();
+			}
         },
 
 		loadSession : function()
