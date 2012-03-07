@@ -694,7 +694,7 @@ qx.Class.define("desk.volumeSlice",
 						pix=0;
 					// unsigned char: no need to check for sign
 						while (p--) {
-							r= data[pix]-1;
+							r= data[pix];
 							data[pix++]=redArray[r];
 							data[pix++]=greenArray[r];
 							data[pix++]=blueArray[r];
@@ -706,7 +706,7 @@ qx.Class.define("desk.volumeSlice",
 							pix=0;
 							// to finish...
 							while (p--) {
-								r= data[pix]-1;
+								r= data[pix];
 								data[pix++]=redArray[r];
 								data[pix++]=greenArray[r];
 								data[pix++]=blueArray[r];
@@ -721,7 +721,7 @@ qx.Class.define("desk.volumeSlice",
 							pix=0;
 							// to finish...
 							while (p--) {
-								r= data[pix]-1;
+								r= data[pix];
 								data[pix++]=redArray[r];
 								data[pix++]=greenArray[r];
 								data[pix++]=blueArray[r];
@@ -734,7 +734,7 @@ qx.Class.define("desk.volumeSlice",
 							pix=0;
 							// to finish...
 							while (p--) {
-								r= data[pix]-1;
+								r= data[pix];
 								data[pix++]=redArray[r];
 								data[pix++]=greenArray[r];
 								data[pix++]=blueArray[r];
@@ -749,7 +749,7 @@ qx.Class.define("desk.volumeSlice",
 							pix=0;
 							// to finish...
 							while (p--) {
-								r= data[pix]-1;
+								r= data[pix];
 								data[pix++]=redArray[r];
 								data[pix++]=greenArray[r];
 								data[pix++]=blueArray[r];
@@ -778,7 +778,7 @@ qx.Class.define("desk.volumeSlice",
 				// format is jpeg : just copy the pixels
 				// to finish...
 				while (p--) {
-					r= data[pix]-1;
+					r= data[pix];
 					data[pix++]=redArray[r];
 					data[pix++]=greenArray[r];
 					data[pix++]=blueArray[r];

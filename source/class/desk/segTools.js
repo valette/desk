@@ -390,12 +390,12 @@ qx.Class.define("desk.segTools",
 			paintPage.addAt(tools.__seedsTypeSelectBox,0);
 		},
 
-		__resetLabelsList : function () {
+		__rebuildLabelsList : function () {
 			var colors=this.__labelColors;
 			var row=0;
 			var column=0;
 			var numberOfColumns=4;
-
+			this.__colorsContainer.removeAll();
 			for (var i=0;i<colors.length;i++) {	
 				var labelBox=colors[i].container;
 				this.__colorsContainer.add(labelBox, {column: column, row: row});
@@ -404,6 +404,28 @@ qx.Class.define("desk.segTools",
 					column=0;
 					row++;
 				}
+			}
+		},
+
+		__buildLookupTables : function () {
+			var red=new Uint8Array (256);
+			var green=new Uint8Array (256);
+			var blue=new Uint8Array (256);
+			this.__labelColorsRed=red;
+			this.__labelColorsGreen=green;
+			this.__labelColorsBlue=blue;
+			var i;
+			for (i=0;i<256;i++) {
+				red[i]=0;
+				green[i]=0;
+				this.__labelColorsBlue[i]=0;
+			}
+			var colors=this.__labelColors;
+			for (i=0;i<colors.length;i++) {
+				var label=colors[i].label;
+				red[label]=colors[i].red;
+				green[label]=colors[i].green;
+				blue[label]=colors[i].blue;
 			}
 		},
 
@@ -423,9 +445,7 @@ qx.Class.define("desk.segTools",
 						var colors=response.getElementsByTagName("color");
 						var nbLabels = colors.length;
 						tools.__labelColors=new Array(nbLabels);
-						tools.__labelColorsRed=new Uint8Array (nbLabels);
-						tools.__labelColorsGreen=new Uint8Array (nbLabels);
-						tools.__labelColorsBlue=new Uint8Array (nbLabels);
+
 						for(var i=0; i<nbLabels; i++)
 						{
 							var color=colors[i];
@@ -439,29 +459,17 @@ qx.Class.define("desk.segTools",
 								name : colorName
 							};
 
-							tools.__labelColorsRed[i]=tools.__labelColors[i].red;
-							tools.__labelColorsGreen[i]=tools.__labelColors[i].green;
-							tools.__labelColorsBlue[i]=tools.__labelColors[i].blue;
-
 							var newLabel = {
 								id : label,
 								name : colorName,
 								color : "rgb(" + tools.__labelColors[i].red + "," + tools.__labelColors[i].green + "," + tools.__labelColors[i].blue + ")"
 							};
-							newLabel.name = newLabel.name.replace(newLabel.name.charAt(0), newLabel.name.charAt(0).toUpperCase());
+						//	newLabel.name = newLabel.name.replace(newLabel.name.charAt(0), newLabel.name.charAt(0).toUpperCase());
 							tools.__labelColors[i].container=tools.__addColorItem(newLabel);
 						}
 
-						var lutRed= new Uint8Array(256);
-						var lutGreen= new Uint8Array(256);
-						var lutBlue= new Uint8Array(256);
-						for(var j=0; j<tools.__labelColors.length; j++)
-							{
-								lutRed[j] = tools.__labelColors[j].red;
-								lutGreen[j] = tools.__labelColors[j].green;
-								lutBlue[j] = tools.__labelColors[j].blue;
-							}
-						tools.__resetLabelsList();
+						tools.__rebuildLabelsList();
+						tools.__buildLookupTables();
 					}
 					else
 						alert("Global Params : Failure...");
@@ -515,7 +523,7 @@ qx.Class.define("desk.segTools",
 			{
 				var children = this.__colorsContainer.getChildren();
 				var paint;
-				if(!(labelBox.getBackgroundColor()=="white"))//&&(this.__curView.__mouseActionMode!=4)))
+				if (!(labelBox.getBackgroundColor()=="white"))
 				{
 					labelBox.set({decorator: focusedBorder, backgroundColor: "white"});
 					for(var k=0; k<children.length; k++)
@@ -541,7 +549,7 @@ qx.Class.define("desk.segTools",
 			//	this.__colorsContainer.set({opacity: 1});
             }, this);
     
-			var boxLabel = new qx.ui.basic.Label("\\" + inLabel.id + " : " + inLabel.name).set({alignX:"left"});
+			var boxLabel = new qx.ui.basic.Label(inLabel.id + " : " + inLabel.name).set({alignX:"left"});
 			labelBox.add(boxLabel);
 			labelBox.add(colorBox);
 
