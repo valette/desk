@@ -804,6 +804,8 @@ qx.Class.define("desk.segTools",
 			var editButton = new qx.ui.menu.Button("edit");
 			editButton.addListener("execute", function () {
 				this.__editionWindow.open();
+				this.__targetColorItem=labelAttributes;
+				this.__updateEditionWindow();
 				},this);
 			menu.add(editButton);
 
@@ -1116,7 +1118,7 @@ qx.Class.define("desk.segTools",
 			}
 
 			var xmlContent = '\n';
-			var colors='\n';
+			var colors="";
 			for(var i=0; i<this.__labelColors.length; i++)
 			{
 				var labelColor=this.__labelColors[i];
@@ -1124,9 +1126,39 @@ qx.Class.define("desk.segTools",
 												green: ""+labelColor.green,
 												blue : ""+labelColor.blue,
 												label : ""+labelColor.label,
-												name : ""+labelColor.labelName});
+												name : ""+labelColor.labelName})+"\n";
 			}
 			xmlContent+=element('colors', colors)+"\n";
+
+			var adjacencies="\n";
+			var adjArray=[];
+			var labelColors=this.__labelColors;
+			for(var i=0; i<labelColors.length; i++)
+			{
+				var label1=labelColors[i].label;
+				var adj=labelColors[i].adjacencies;
+				for (var j=0;j<adj.length;j++) {
+					var label2=adj[j].label;
+					var found=false;
+					for (var k=0;k<adjArray.length;k++) {
+						var edge=adjArray[k];
+						if (((edge.label1==label1)&&(edge.label2==label2))||
+							((edge.label1==label2)&&(edge.label2==label1))) {
+							found=true;
+							break;
+						}
+					}
+					if (!found) {
+						adjacencies+=element('adjacency',null, 
+							{label1 : ""+label1, label2 : ""+label2})+"\n";
+						adjArray.push({label1 : label1, label2 : label2});
+					}
+				}
+			}
+
+			if (adjArray.length>0) {
+				xmlContent+=element('adjacencies', adjacencies)+"\n";
+			}
 
 			var _this=this;
 			this.__master.applyToViewers( function (sliceView) {
