@@ -42,7 +42,7 @@ qx.Class.define("desk.volMaster",
 		this.__window.setLayout(new qx.ui.layout.VBox());
 		this.__window.setShowClose(true);
 		this.__window.setShowMinimize(false);
-		this.__window.setResizable(true,true,true,true);
+	//	this.__window.setResizable(true,true,true,true);
 		this.__window.setUseResizeFrame(true);
 		this.__window.setUseMoveFrame(true);
 

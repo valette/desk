@@ -34,10 +34,9 @@ qx.Class.define("desk.segTools",
 								showMaximize: false,
 								allowMaximize: false,
 								showClose: true,
-								resizable: false,
 								movable : true
 							});
-		
+		this.setResizable(false, false, false, false);
 	//// Fill window with the tools widgets
 
 		this.__buildRightContainer();
@@ -65,7 +64,7 @@ qx.Class.define("desk.segTools",
 			});
 		});
 		this.__labelColors=[];
-		this.__createEditionWindow();
+
 		this.open();
 
 //		this.__createLabelsList();
@@ -433,7 +432,7 @@ qx.Class.define("desk.segTools",
 			}
 		},
 
-		__setColorsFromElements : function (colors) {
+		__setColorsFromElements : function (colors, adjacencies) {
 			if (colors.length==0) {
 				alert("error : no colors");
 				return;
@@ -450,6 +449,12 @@ qx.Class.define("desk.segTools",
 				this.__addColorItem(label, colorName, red, green, blue);
 			}
 			this.__rebuildLabelsList();
+			for (var i=0;i<adjacencies.length;i++)
+			{
+				var adjacency=adjacencies[i];
+				this.__addEdge(this.__getLabel(adjacency.getAttribute("label1")),
+						this.__getLabel(adjacency.getAttribute("label2")));
+			}
 		},
 
 		__loadColors : function (file) {
@@ -468,8 +473,9 @@ qx.Class.define("desk.segTools",
 					if(this.responseXML!=null)
 					{
 						var response = this.responseXML;
-						tools.__setColorsFromElements(response.getElementsByTagName("color"));
-	
+						tools.__setColorsFromElements(response.getElementsByTagName("color"),
+								response.getElementsByTagName("adjacency"));
+
 					}
 					else
 						alert("Global Params : Failure...");
@@ -496,6 +502,7 @@ qx.Class.define("desk.segTools",
 			window.setShowClose(true);
 			window.setShowMinimize(false);
 			window.setUseMoveFrame(true);
+			window.setResizable(false, false, false, false);
 
 			var topContainer=new qx.ui.container.Composite();
 			topContainer.setLayout(new qx.ui.layout.HBox());
@@ -566,17 +573,6 @@ qx.Class.define("desk.segTools",
 			container.add(container2);
 
 			var _this=this;
-			function __getLabel(label) {
-				var intLabel=parseInt(label);
-				var labels=_this.__labelColors;
-				for (var i=0;i<labels.length;i++) {
-					if (labels[i].label==intLabel) {
-						return (labels[i]);
-					}
-				}
-				alert("error : label "+label+" does not exist!");				
-				return (false);
-			}
 
 			function __updateAdjacenciesText () {
 				var adjacencies=_this.__targetColorItem.adjacencies;
@@ -599,10 +595,11 @@ qx.Class.define("desk.segTools",
 			container2.add(inputField);
 			var addButton=new qx.ui.form.Button("Add");
 			addButton.addListener("execute", function () {
-				var label=__getLabel(inputField.getValue());
+				var label=this.__getLabel(inputField.getValue());
 				if (label==false) {
 					return;
 				}
+
 				this.__addEdge(label, this.__targetColorItem);
 				__updateAdjacenciesText();
 				inputField.setValue("");
@@ -610,7 +607,7 @@ qx.Class.define("desk.segTools",
 			container2.add(addButton);
 			var removeButton=new qx.ui.form.Button("Remove");
 			removeButton.addListener("execute", function () {
-				var label=__getLabel(inputField.getValue());
+				var label=this.__getLabel(inputField.getValue());
 				if (label==false) {
 					return;
 				}
@@ -639,6 +636,18 @@ qx.Class.define("desk.segTools",
 			}
 		},
 
+		__getLabel : function (label) {
+			var intLabel=parseInt(label);
+			var labels=this.__labelColors;
+			for (var i=0;i<labels.length;i++) {
+				if (labels[i].label==intLabel) {
+					return (labels[i]);
+				}
+			}
+			alert("error : label "+label+" does not exist!");				
+			return (false);
+		},
+
 		__deleteColorItem : function (item) {
 			var colors=this.__labelColors;
 			for (var i=0;i<colors.length;i++) {
@@ -653,6 +662,11 @@ qx.Class.define("desk.segTools",
 		},
 
 		__addEdge : function (label1, label2) {
+			if (label1==label2) {
+				alert ("error : trying to create self-loop adjacency : "+
+						label1.label+"-"+label2.label);
+				return;
+			}
 			var adjacencies=label1.adjacencies;
 			var found=false;
 			for (var i=0;i<adjacencies.length;i++) {
@@ -745,7 +759,9 @@ qx.Class.define("desk.segTools",
 			labelBox.addListener("click", function(e)
 			{
 				this.__targetColorItem=labelAttributes;
-				this.__updateEditionWindow();
+				if (this.__editionWindow!=null) {
+						this.__updateEditionWindow();
+				}
 
 				var children = this.__colorsContainer.getChildren();
 				var paint;
@@ -803,6 +819,9 @@ qx.Class.define("desk.segTools",
 			var menu = new qx.ui.menu.Menu;
 			var editButton = new qx.ui.menu.Button("edit");
 			editButton.addListener("execute", function () {
+				if (this.__editionWindow==null) {
+					this.__createEditionWindow();
+				}
 				this.__editionWindow.open();
 				this.__targetColorItem=labelAttributes;
 				this.__updateEditionWindow();
@@ -889,11 +908,12 @@ qx.Class.define("desk.segTools",
 							});
 						}
 						var colors=response.getElementsByTagName("color");
+						var adjacencies=response.getElementsByTagName("adjacency");
 						if (colors.length>0) {
-							_this.__setColorsFromElements(colors);
+							_this.__setColorsFromElements(colors, adjacencies);
 						}
 						else {
-							_this.__loadDefaultColors();
+							_this.__loadColors();
 						}
 					}
 					else {
