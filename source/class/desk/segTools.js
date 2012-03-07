@@ -249,6 +249,7 @@ qx.Class.define("desk.segTools",
 
 			this.__loadColors();		
 
+
 			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
 			tools.__topRightContainer.add(whileDrawingDrwngOpacityLabel);
 			
@@ -389,6 +390,22 @@ qx.Class.define("desk.segTools",
 			paintPage.addAt(tools.__seedsTypeSelectBox,0);
 		},
 
+		__resetLabelsList : function () {
+			var colors=this.__labelColors;
+			var row=0;
+			var column=0;
+			var numberOfColumns=4;
+
+			for (var i=0;i<colors.length;i++) {	
+				var labelBox=colors[i].container;
+				this.__colorsContainer.add(labelBox, {column: column, row: row});
+				column++;
+				if (column>=numberOfColumns) {
+					column=0;
+					row++;
+				}
+			}
+		},
 
 		__loadColors : function () {
 			var tools=this;
@@ -432,7 +449,7 @@ qx.Class.define("desk.segTools",
 								color : "rgb(" + tools.__labelColors[i].red + "," + tools.__labelColors[i].green + "," + tools.__labelColors[i].blue + ")"
 							};
 							newLabel.name = newLabel.name.replace(newLabel.name.charAt(0), newLabel.name.charAt(0).toUpperCase());
-							tools.__addColorItem(newLabel);
+							tools.__labelColors[i].container=tools.__addColorItem(newLabel);
 						}
 
 						var lutRed= new Uint8Array(256);
@@ -444,6 +461,7 @@ qx.Class.define("desk.segTools",
 								lutGreen[j] = tools.__labelColors[j].green;
 								lutBlue[j] = tools.__labelColors[j].blue;
 							}
+						tools.__resetLabelsList();
 					}
 					else
 						alert("Global Params : Failure...");
@@ -460,16 +478,12 @@ qx.Class.define("desk.segTools",
 			colorsParamRequest.send(null);
 		},
 
-		__nbLines : 1,
-		__colorCount : 4,
 		__addColorItem : function(inLabel)
         {
 		////Function creates one label box
 			var unfocusedBorder = new qx.ui.decoration.Single(2, "solid", "black");
             var focusedBorder = new qx.ui.decoration.Single(3, "solid", "red");
-			var boxWidth = 37;
-			var columnLimit = 4;
-
+			var boxWidth = 80;
 	
             var labelLayout = new qx.ui.layout.VBox();
             labelLayout.setSpacing(4);
@@ -530,17 +544,8 @@ qx.Class.define("desk.segTools",
 			var boxLabel = new qx.ui.basic.Label("\\" + inLabel.id + " : " + inLabel.name).set({alignX:"left"});
 			labelBox.add(boxLabel);
 			labelBox.add(colorBox);
-			if(inLabel.id<=this.__colorCount)
-			{
-				this.__colorsContainer.add(labelBox, {column: inLabel.id-(this.__nbLines-1)*columnLimit, row: (this.__nbLines-1)});
-			}
-			else
-			{
-				this.__nbLines++;
-				this.__colorsContainer.add(labelBox, {column: inLabel.id-(this.__nbLines-1)*columnLimit, row: (this.__nbLines-1)});
-				this.__colorCount += columnLimit;
-			}
-			var tempColors = this.__colorsContainer._getChildren();
+
+	/*		var tempColors = this.__colorsContainer._getChildren();
 			if((boxWidth<boxLabel.getSizeHint().width+8)&&(0<tempColors.length))
 			{
 				boxWidth = boxLabel.getSizeHint().width + 16;	//// value returned by getSizeHint() is not enough
@@ -549,7 +554,8 @@ qx.Class.define("desk.segTools",
 					tempColors[i].set({width:boxWidth});
 					tempColors[i]._getChildren()[1].set({maxWidth:boxWidth-12});
 				}
-			}
+			}*/
+			return (labelBox);
         },
 
 		loadSession : function()
