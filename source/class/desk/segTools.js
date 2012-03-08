@@ -918,6 +918,7 @@ qx.Class.define("desk.segTools",
 					}
 					else {
 						alert("no seeds found");
+						_this.__loadColors();
 						master.applyToViewers( function (sliceView) {
 								_this.__reloadSeedImage( sliceView );
 							});
@@ -925,6 +926,7 @@ qx.Class.define("desk.segTools",
 				}
 				else if (this.readyState == 4 && this.status != 200) {
 					alert("no seeds found");
+					_this.__loadColors();
 					master.applyToViewers( function (sliceView) {
 						_this.__reloadSeedImage( sliceView );
 						});

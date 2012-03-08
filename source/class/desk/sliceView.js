@@ -412,14 +412,14 @@ qx.Class.define("desk.sliceView",
 			}
 			this.__updateBrush=updateBrush;
 			
-			this.addListener("mousemove", function (event) {
+	/*		this.addListener("mousemove", function (event) {
 				var position=this.getPositionOnSlice(event);
 				if ((position!=false)&&(this.isPaintMode()||this.isEraseMode())) {
 					mesh.visible=true;
 					mesh.position.set(position.x, position.y, 0);
 					this.render();
 				}
-			}, this);
+			}, this);*/
 			this.addListener("mouseout", function (event) {
 				mesh.visible=false;
 				this.render();
@@ -680,7 +680,9 @@ qx.Class.define("desk.sliceView",
 					}
 
 				var mouseMode=0;
-				var button=0;
+				
+				// lectcklick : 0, rightclick : 1 middleclick : 2
+				var button=-1;
 				htmlContainer.addListener("mousedown", function (event)	{
 					htmlContainer.capture();
 
@@ -744,13 +746,23 @@ qx.Class.define("desk.sliceView",
 					}, this);
 
 				htmlContainer.addListener("mousemove", function (event)	{
+					var brushMesh=this.__brushMesh;
+					var position=this.getPositionOnSlice(event);
+					if ((button<1)&&(this.isPaintMode()||this.isEraseMode())) {
+						brushMesh.visible=true;
+						brushMesh.position.set(position.x, position.y, 0);
+					}
+					else {
+						brushMesh.visible=false;
+					}
+
 					switch (mouseMode)
 					{
 					case 2:
 						var origin=htmlContainer.getContentLocation();
 						controls.mouseMove(event.getDocumentLeft()-origin.left
 								, event.getDocumentTop()-origin.top);
-						this.render();
+
 						//propagate zoom to other viewers
 						if (button==1) {
 							var z=this.__camera.position.z;
@@ -767,7 +779,7 @@ qx.Class.define("desk.sliceView",
 					case 1:
 						if (this.isPaintMode()) {
 							var context=this.__drawingCanvas.getContext2d();
-							var position=this.getPositionOnSlice(event);
+//							var position=this.getPositionOnSlice(event);
 							context.lineTo(position.i+0.5, position.j+0.5);
 							context.stroke();
 							this.fireEvent("changeDrawing");
@@ -775,7 +787,7 @@ qx.Class.define("desk.sliceView",
 						}
 						if (this.isEraseMode()) {
 							mouseMode=1;
-							var position=this.getPositionOnSlice(event);
+//							var position=this.getPositionOnSlice(event);
 							var x=Math.round(position.i)+0.5;
 							var y=Math.round(position.j)+0.5;
 							var width=this.__paintWidth;
@@ -788,6 +800,7 @@ qx.Class.define("desk.sliceView",
 					default:
 						break;
 					}
+					this.render();
 					}, this);
 
 				htmlContainer.addListener("mouseup", function (event)	{
@@ -812,6 +825,7 @@ qx.Class.define("desk.sliceView",
 						context.fill();
 						this.fireEvent("changeDrawing");
 					}
+					button=-1;
 				}, this);
 
 				htmlContainer.addListener("mousewheel", function (event) {
