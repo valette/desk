@@ -364,8 +364,10 @@ qx.Class.define("desk.sliceView",
 			var dataColor = new Uint8Array( length);
 
 			var texture = new THREE.DataTexture( dataColor, width, height, THREE.RGBAFormat );
+			texture.generateMipmaps=false;
 			texture.needsUpdate = true;
 			texture.magFilter=THREE.NearestFilter;
+			texture.minFilter=THREE.NearestFilter;
 			
 			var material=new THREE.MeshBasicMaterial( {map:texture, transparent: true});
 
@@ -462,8 +464,11 @@ qx.Class.define("desk.sliceView",
 			var dataColor = new Uint8Array( length);
 
 			var texture = new THREE.DataTexture( dataColor, width, height, THREE.RGBAFormat );
+			texture.generateMipmaps=false;
 			texture.needsUpdate = true;
 			texture.magFilter=THREE.NearestFilter;
+			texture.minFilter=THREE.NearestFilter;
+
 			
 			var material=new THREE.MeshBasicMaterial( {map:texture, transparent: true});
 
@@ -577,8 +582,11 @@ qx.Class.define("desk.sliceView",
 				var dataColor = new Uint8Array( length);
 				var texture = new THREE.DataTexture(
 						dataColor, width, height, THREE.RGBAFormat );
+				texture.generateMipmaps=false;
 				texture.needsUpdate = true;
 				texture.magFilter=THREE.NearestFilter;
+				texture.minFilter=THREE.NearestFilter;
+
 				var material=new THREE.MeshBasicMaterial( 
 						{map:texture, transparent: true, opacity : opacity});//, combine :THREE.MixOperation});
 				var mesh=new THREE.Mesh(geometry,material);
