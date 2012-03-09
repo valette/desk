@@ -27,9 +27,7 @@ qx.Class.define("desk.volumeSlice",
 		this.__file=file;
 		this.update();
 
-		this.addListener("changeSlice", function(){
-				this.updateImage();
-			},this);
+		this.__initChangeSliceTrigger();
 
 		this.addListener("changeImageFormat", function(){
 				this.update();
@@ -801,13 +799,38 @@ qx.Class.define("desk.volumeSlice",
 			this.fireEvent("changeImage");
 		},
 
-		updateImage : function() {
+		__updateTriggered : true,
+		__updateInProgress : false,
+
+		__initChangeSliceTrigger : function () {
+			this.addListener("changeSlice", function(){
+				this.__updateTriggered=true;
+				this.updateImage();
+			},this);
+		},
+
+
+		updateImage : function () {
+			if (this.__updateInProgress) {
+				this.__updateTriggered=true;
+	//			console.log("update not really");
+				return;
+			}
+	//		console.log("update really");
+			if (this.__updateTriggered) {
+				this.__reallyUpdateImage();
+			}
+		},
+
+		__reallyUpdateImage : function() {
 			var _this=this;
 			var slice=this.getNumberOfSlices()-1-_this.getSlice();
 
 			this.__image.onload=function(){
 				_this.__originalImageCanvas.getContext2d().drawImage(_this.__image, 0, 0);
 				_this.redraw();
+				_this.__updateInProgress=false;
+				_this.updateImage();
 				};
 
 			var fileSuffix;
@@ -834,6 +857,8 @@ qx.Class.define("desk.volumeSlice",
 					orientationString="XY";
 					break;
 				}
+			this.__updateInProgress=true;
+			this.__updateTriggered=false;
 			this.__image.src=this.__path+this.__prefix+orientationString+(this.__offset+this.getSlice())
 				+fileSuffix+"?nocache="+this.__timestamp;
 		}

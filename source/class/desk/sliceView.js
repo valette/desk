@@ -519,7 +519,7 @@ qx.Class.define("desk.sliceView",
 				}
 			else
 			{
-				volumeSlice.addListener("changeReady",initSlice);
+				volumeSlice.addListenerOnce("changeReady",initSlice);
 			}
 
 			function initSlice () {
@@ -560,6 +560,8 @@ qx.Class.define("desk.sliceView",
 					_this.__controls.target.copy(_this.__camera.position);
 					_this.__camera.position.setZ(_this.__camera.position.z+
 									volumeSlice.getBoundingBoxDiagonalLength()*0.6);
+
+					_this.__setupInteractionEvents();
 				}
 				else {
 					volumeSlice.setSlice(_this.getSlice());
@@ -603,9 +605,9 @@ qx.Class.define("desk.sliceView",
 						_this.render();
 					});
 				updateTexture();
-			/*	_this.__window.addListener("close", function() {
+				_this.__window.addListener("close", function() {
 					volumeSlice.removeListenerById(listenerId);
-					});*/
+					});
 
 				if (_this.__slices.length==1) {
 					_this.__setDrawingMesh(volumeSlice);
@@ -620,21 +622,193 @@ qx.Class.define("desk.sliceView",
 			}
 		},
 
+		__resizeHTML : function () {
+			var elementSize=this.__viewPort.getInnerSize();
+			this.__renderer.setSize(  elementSize.width , elementSize.height );
+			this.__camera.aspect=elementSize.width / elementSize.height;
+			this.__camera.updateProjectionMatrix();
+			this.__controls.setSize( elementSize.width , elementSize.height );
+			this.render();
+		},
+
+		__setupInteractionEvents : function () {
+
+			var htmlContainer=this.__viewPort;
+			var controls=this.__controls;
+			htmlContainer.addListener("resize",this.__resizeHTML, this);
+
+			//-1 : nothing
+			// 0 : left click
+			// 1 : zoom
+			// 2 : pan
+			// 3 : paint
+			// 4 : erase
+			var interactionMode=-1;
+
+			htmlContainer.addListener("mousedown", function (event)	{
+				htmlContainer.capture();
+				interactionMode=0;
+
+				if (event.isRightPressed()) {
+					interactionMode=1;
+					var origin=htmlContainer.getContentLocation();
+					controls.mouseDown(interactionMode,
+						event.getDocumentLeft()-origin.left,
+						event.getDocumentTop()-origin.top);
+				}
+				else if ((event.isMiddlePressed())||(event.isShiftPressed())) {
+					interactionMode=2;
+					var origin=htmlContainer.getContentLocation();
+					controls.mouseDown(interactionMode,
+						event.getDocumentLeft()-origin.left,
+						event.getDocumentTop()-origin.top);
+				}
+				else if (this.isPaintMode()) {
+					interactionMode=3;
+					this.__saveDrawingToUndoStack();
+					var position=this.getPositionOnSlice(event);
+					var context=this.__drawingCanvas.getContext2d();
+					var i=position.i+0.5;
+					var j=position.j+0.5;
+					var paintColor=this.__paintColor;
+					var width=this.__paintWidth;
+					context.lineWidth = 0;
+					context.strokeStyle = paintColor;
+					context.fillStyle = paintColor;
+					context.beginPath()
+					context.arc(i, j, width/2, 0, 2*Math.PI, false);
+					context.closePath();
+					context.fill()
+					context.lineJoin = "round";
+					context.lineWidth = width;
+					context.beginPath();
+					context.moveTo(i, j);
+					context.closePath();
+					context.stroke();
+					this.fireEvent("changeDrawing");
+				}
+				else if (this.isEraseMode()) {
+					interactionMode=4;
+					this.__saveDrawingToUndoStack();
+					var position=this.getPositionOnSlice(event);
+					var x=Math.round(position.i)+0.5;
+					var y=Math.round(position.j)+0.5;
+					var width=this.__paintWidth;
+					var radius=width/2;
+					this.__drawingCanvas.getContext2d().clearRect(x-radius, y-radius, width, width);
+					this.__drawingCanvasModified=true;
+					this.fireEvent("changeDrawing");
+				}
+			}, this);
+
+			htmlContainer.addListener("mousemove", function (event)	{
+				var brushMesh=this.__brushMesh;
+				var position=this.getPositionOnSlice(event);
+				switch (interactionMode)
+				{
+				case -1:
+					if ((this.isPaintMode()||this.isEraseMode())) {
+						brushMesh.visible=true;
+						brushMesh.position.set(position.x, position.y, 0);
+						this.render();
+					}
+					break;
+				case 0 :
+					break;
+				case 1 :
+					brushMesh.visible=false;
+					var origin=htmlContainer.getContentLocation();
+					controls.mouseMove(event.getDocumentLeft()-origin.left
+							, event.getDocumentTop()-origin.top);
+
+					var z=this.__camera.position.z;
+					this.render();
+					this.__master.applyToViewers (function (viewer) {
+						if (viewer!=this) {
+							viewer.__camera.position.z=z;
+							viewer.__propagateLinks();
+							viewer.render();
+							}
+						});
+					this.__propagateLinks();
+					break;
+				case 2 :
+					brushMesh.visible=false;
+					var origin=htmlContainer.getContentLocation();
+					controls.mouseMove(event.getDocumentLeft()-origin.left
+							, event.getDocumentTop()-origin.top);
+					this.render();
+					this.__propagateLinks();
+					break;
+				case 3 :
+					brushMesh.visible=true;
+					brushMesh.position.set(position.x, position.y, 0);
+					var context=this.__drawingCanvas.getContext2d();
+					context.lineTo(position.i+0.5, position.j+0.5);
+					context.stroke();
+					this.fireEvent("changeDrawing");
+					this.__drawingCanvasModified=true;
+					break;
+				case 4 :
+					brushMesh.visible=true;
+					brushMesh.position.set(position.x, position.y, 0);
+					var x=Math.round(position.i)+0.5;
+					var y=Math.round(position.j)+0.5;
+					var width=this.__paintWidth;
+					var radius=width/2;
+					this.__drawingCanvas.getContext2d().clearRect(x-radius, y-radius, width, width);
+					this.__drawingCanvasModified=true;
+					this.fireEvent("changeDrawing");
+				}
+			}, this);
+
+			htmlContainer.addListener("mouseup", function (event)	{
+				htmlContainer.releaseCapture();
+				controls.mouseUp();
+				if ((this.isPaintMode())&&(interactionMode==3)) {
+					var context=this.__drawingCanvas.getContext2d();
+					var position=this.getPositionOnSlice(event);
+
+					var i=position.i+0.5;
+					var j=position.j+0.5;
+
+					var paintColor=this.__paintColor;
+					var width=this.__paintWidth;
+					context.lineWidth = 0;
+					context.strokeStyle = paintColor;
+					context.fillStyle = paintColor;
+					context.beginPath()
+					context.arc(i, j, width/2, 0, 2*Math.PI, false);
+					context.closePath();
+					context.fill();
+					this.fireEvent("changeDrawing");
+				}
+				interactionMode=-1;
+			}, this);
+
+			htmlContainer.addListener("mousewheel", function (event) {
+							var slider=this.__slider;
+							var delta=Math.round(event.getWheelDelta()/2);
+							var newValue=slider.getValue()+delta;
+							if (newValue>slider.getMaximum())
+								newValue=slider.getMaximum()
+							if (newValue<slider.getMinimum())
+								newValue=slider.getMinimum()
+							slider.setValue(newValue);
+					}, this);
+		},
+
 		__getRenderWindow : function() {
 			var htmlContainer = new qx.ui.embed.Html();
 			this.__viewPort=htmlContainer;
-
-			var randomId=Math.random();
-			htmlContainer.setHtml("<div id=\"three.js"+randomId+"\"></div>");
-
-			var _this=this;
+			htmlContainer.setHtml("<div id=\"three.js"+this.toHashCode()+"\"></div>");
 
 			htmlContainer.addListenerOnce("appear",function(e){
 				// scene and camera
 				var elementSize=htmlContainer.getInnerSize();
 				this.__scene = new THREE.Scene();
 				var camera = new THREE.PerspectiveCamera( 60, elementSize.width / elementSize.height, 1, 1e5 );
-				var container = document.getElementById( "three.js"+randomId);
+				var container = document.getElementById( "three.js"+this.toHashCode());
 				var controls = new THREE.TrackballControls2( camera,container );
 
 				camera.position.set(0,0,100);
@@ -650,182 +824,9 @@ qx.Class.define("desk.sliceView",
 
 				this.__renderer=renderer;
 				renderer.setClearColorHex( 0xffffff, 1 );
-				resizeHTML();
+				this.__resizeHTML();
 
 				container.appendChild( renderer.domElement );
-
-				htmlContainer.addListener("resize",resizeHTML);
-				function resizeHTML(){
-					var elementSize=htmlContainer.getInnerSize();
-					renderer.setSize(  elementSize.width , elementSize.height );
-					camera.aspect=elementSize.width / elementSize.height;
-					camera.updateProjectionMatrix();
-					controls.setSize( elementSize.width , elementSize.height );
-					_this.render();
-					}
-
-				//-1 : nothing
-				// 0 : left click
-				// 1 : zoom
-				// 2 : pan
-				// 3 : paint
-				// 4 : erase
-				var interactionMode=-1;
-
-				htmlContainer.addListener("mousedown", function (event)	{
-					htmlContainer.capture();
-					interactionMode=0;
-
-					if (event.isRightPressed()) {
-						interactionMode=1;
-						var origin=htmlContainer.getContentLocation();
-						controls.mouseDown(interactionMode,
-							event.getDocumentLeft()-origin.left,
-							event.getDocumentTop()-origin.top);
-					}
-					else if ((event.isMiddlePressed())||(event.isShiftPressed())) {
-						interactionMode=2;
-						var origin=htmlContainer.getContentLocation();
-						controls.mouseDown(interactionMode,
-							event.getDocumentLeft()-origin.left,
-							event.getDocumentTop()-origin.top);
-					}
-					else if (this.isPaintMode()) {
-						interactionMode=3;
-						this.__saveDrawingToUndoStack();
-						var position=this.getPositionOnSlice(event);
-						var context=this.__drawingCanvas.getContext2d();
-						var i=position.i+0.5;
-						var j=position.j+0.5;
-						var paintColor=_this.__paintColor;
-						var width=this.__paintWidth;
-						context.lineWidth = 0;
-						context.strokeStyle = paintColor;
-						context.fillStyle = paintColor;
-						context.beginPath()
-						context.arc(i, j, width/2, 0, 2*Math.PI, false);
-						context.closePath();
-						context.fill()
-						context.lineJoin = "round";
-						context.lineWidth = width;
-						context.beginPath();
-						context.moveTo(i, j);
-						context.closePath();
-						context.stroke();
-						this.fireEvent("changeDrawing");
-					}
-					else if (this.isEraseMode()) {
-						interactionMode=4;
-						this.__saveDrawingToUndoStack();
-						mouseMode=1;
-						var position=this.getPositionOnSlice(event);
-						var x=Math.round(position.i)+0.5;
-						var y=Math.round(position.j)+0.5;
-						var width=this.__paintWidth;
-						var radius=width/2;
-						this.__drawingCanvas.getContext2d().clearRect(x-radius, y-radius, width, width);
-						this.__drawingCanvasModified=true;
-						this.fireEvent("changeDrawing");
-					}
-				}, this);
-
-				htmlContainer.addListener("mousemove", function (event)	{
-					var brushMesh=this.__brushMesh;
-					var position=this.getPositionOnSlice(event);
-					switch (interactionMode)
-					{
-					case -1:
-						if ((this.isPaintMode()||this.isEraseMode())) {
-							brushMesh.visible=true;
-							brushMesh.position.set(position.x, position.y, 0);
-							this.render();
-						}
-						break;
-					case 0 :
-						break;
-					case 1 :
- 						brushMesh.visible=false;
- 						var origin=htmlContainer.getContentLocation();
-						controls.mouseMove(event.getDocumentLeft()-origin.left
-								, event.getDocumentTop()-origin.top);
-
-						var z=this.__camera.position.z;
-						this.render();
-						this.__master.applyToViewers (function (viewer) {
-							if (viewer!=this) {
-								viewer.__camera.position.z=z;
-								viewer.__propagateLinks();
-								viewer.render();
-								}
-							});
-						this.__propagateLinks();
-						break;
-					case 2 :
- 						brushMesh.visible=false;
- 						var origin=htmlContainer.getContentLocation();
-						controls.mouseMove(event.getDocumentLeft()-origin.left
-								, event.getDocumentTop()-origin.top);
-						this.render();
-						this.__propagateLinks();
-						break;
-					case 3 :
- 						brushMesh.visible=true;
- 						brushMesh.position.set(position.x, position.y, 0);
-						var context=this.__drawingCanvas.getContext2d();
-						context.lineTo(position.i+0.5, position.j+0.5);
-						context.stroke();
-						this.fireEvent("changeDrawing");
-						this.__drawingCanvasModified=true;
-						break;
-					case 4 :
- 						brushMesh.visible=true;
-						brushMesh.position.set(position.x, position.y, 0);
-						var x=Math.round(position.i)+0.5;
-						var y=Math.round(position.j)+0.5;
-						var width=this.__paintWidth;
-						var radius=width/2;
-						this.__drawingCanvas.getContext2d().clearRect(x-radius, y-radius, width, width);
-						this.__drawingCanvasModified=true;
-						this.fireEvent("changeDrawing");
-					}
-				}, this);
-
-				htmlContainer.addListener("mouseup", function (event)	{
-					htmlContainer.releaseCapture();
-					controls.mouseUp();
-					if ((this.isPaintMode())&&(interactionMode==3)) {
-						var context=this.__drawingCanvas.getContext2d();
-						var position=this.getPositionOnSlice(event);
-
-						var i=position.i+0.5;
-						var j=position.j+0.5;
-
-						var paintColor=_this.__paintColor;
-						var width=this.__paintWidth;
-						context.lineWidth = 0;
-						context.strokeStyle = paintColor;
-						context.fillStyle = paintColor;
-						context.beginPath()
-						context.arc(i, j, width/2, 0, 2*Math.PI, false);
-						context.closePath();
-						context.fill();
-						this.fireEvent("changeDrawing");
-					}
-					interactionMode=-1;
-				}, this);
-
-				htmlContainer.addListener("mousewheel", function (event) {
-								var slider=_this.__slider;
-								var delta=Math.round(event.getWheelDelta()/2);
-								var newValue=slider.getValue()+delta;
-								if (newValue>slider.getMaximum())
-									newValue=slider.getMaximum()
-								if (newValue<slider.getMinimum())
-									newValue=slider.getMinimum()
-								slider.setValue(newValue);
-						});
-
-
 				this.setReady(true);
 			}, this);
 			return (htmlContainer);
@@ -847,12 +848,15 @@ qx.Class.define("desk.sliceView",
 			var y2 = - ( y / elementSize.height ) * 2 + 1;
 
 			if (this.__projector==null){
+				var volumeSlice=this.getVolumeSliceToPaint();
+				var coordinates=volumeSlice.get2DCornersCoordinates();
+	/*			if (coordinates==null) {
+					return {i :0, j :0, x:0, y:0};
+				}*/
 				var projector = new THREE.Projector();
 				this.__projector=projector;
 				var intersection = new THREE.Vector3( x2, y2, 0);
 				this.__intersection=intersection;
-				var volumeSlice=this.getVolumeSliceToPaint();
-				var coordinates=volumeSlice.get2DCornersCoordinates();
 				this.__cornersCoordinates=coordinates;
 				var dimensions=volumeSlice.get2DDimensions();
 				this.__volumeDimensions=dimensions;
