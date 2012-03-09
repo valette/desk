@@ -370,6 +370,7 @@ qx.Class.define("desk.sliceView",
 
 			var mesh=new THREE.Mesh(geometry,material);
 			mesh.doubleSided=true;
+			mesh.visible=false;
 			this.__scene.add(mesh);
 			this.__brushMesh=mesh;
 
@@ -411,15 +412,6 @@ qx.Class.define("desk.sliceView",
 				geometry.computeBoundingSphere();
 			}
 			this.__updateBrush=updateBrush;
-			
-	/*		this.addListener("mousemove", function (event) {
-				var position=this.getPositionOnSlice(event);
-				if ((position!=false)&&(this.isPaintMode()||this.isEraseMode())) {
-					mesh.visible=true;
-					mesh.position.set(position.x, position.y, 0);
-					this.render();
-				}
-			}, this);*/
 			this.addListener("mouseout", function (event) {
 				mesh.visible=false;
 				this.render();
@@ -661,13 +653,6 @@ qx.Class.define("desk.sliceView",
 				resizeHTML();
 
 				container.appendChild( renderer.domElement );
-	//			controls.onUpdate=render;
-
-	/*			function render() {
-					_this.fireEvent("changeViewPoint");
-					controls.update();
-					renderer.render( _this.__scene, _this.__camera );
-				}*/
 
 				htmlContainer.addListener("resize",resizeHTML);
 				function resizeHTML(){
@@ -679,135 +664,136 @@ qx.Class.define("desk.sliceView",
 					_this.render();
 					}
 
-				var mouseMode=0;
-				
-				// lectcklick : 0, rightclick : 1 middleclick : 2
-				var button=-1;
+				//-1 : nothing
+				// 0 : left click
+				// 1 : zoom
+				// 2 : pan
+				// 3 : paint
+				// 4 : erase
+				var interactionMode=-1;
+
 				htmlContainer.addListener("mousedown", function (event)	{
 					htmlContainer.capture();
+					interactionMode=0;
 
-					button=0;
 					if (event.isRightPressed()) {
-						button=1;
-					}
-					else if ((event.isMiddlePressed())||(event.isShiftPressed())) {
-						button=2;
-					}
-
-					if (button!=0) {
-						mouseMode=2;
+						interactionMode=1;
 						var origin=htmlContainer.getContentLocation();
-						controls.mouseDown(button,
+						controls.mouseDown(interactionMode,
 							event.getDocumentLeft()-origin.left,
 							event.getDocumentTop()-origin.top);
 					}
-					else
-					{
-						if (this.isPaintMode()) {
-							this.__saveDrawingToUndoStack();
-							mouseMode=1;
-							var position=this.getPositionOnSlice(event);
-							var context=this.__drawingCanvas.getContext2d();
-
-							var i=position.i+0.5;
-							var j=position.j+0.5;
-
-							var paintColor=_this.__paintColor;
-							var width=this.__paintWidth;
-							context.lineWidth = 0;
-							context.strokeStyle = paintColor;
-							context.fillStyle = paintColor;
-							context.beginPath()
-							context.arc(i, j, width/2, 0, 2*Math.PI, false);
-							context.closePath();
-							context.fill()
-
-							context.lineJoin = "round";
-							context.lineWidth = width;
-							context.beginPath();
-							context.moveTo(i, j);
-							context.closePath();
-							context.stroke();
-							this.fireEvent("changeDrawing");
-						}
-						if (this.isEraseMode()) {
-							this.__saveDrawingToUndoStack();
-							mouseMode=1;
-							var position=this.getPositionOnSlice(event);
-							var x=Math.round(position.i)+0.5;
-							var y=Math.round(position.j)+0.5;
-							var width=this.__paintWidth;
-							var radius=width/2;
-							this.__drawingCanvas.getContext2d().clearRect(x-radius, y-radius, width, width);
-							this.__drawingCanvasModified=true;
-							this.fireEvent("changeDrawing");
-						}
+					else if ((event.isMiddlePressed())||(event.isShiftPressed())) {
+						interactionMode=2;
+						var origin=htmlContainer.getContentLocation();
+						controls.mouseDown(interactionMode,
+							event.getDocumentLeft()-origin.left,
+							event.getDocumentTop()-origin.top);
 					}
-					}, this);
+					else if (this.isPaintMode()) {
+						interactionMode=3;
+						this.__saveDrawingToUndoStack();
+						var position=this.getPositionOnSlice(event);
+						var context=this.__drawingCanvas.getContext2d();
+						var i=position.i+0.5;
+						var j=position.j+0.5;
+						var paintColor=_this.__paintColor;
+						var width=this.__paintWidth;
+						context.lineWidth = 0;
+						context.strokeStyle = paintColor;
+						context.fillStyle = paintColor;
+						context.beginPath()
+						context.arc(i, j, width/2, 0, 2*Math.PI, false);
+						context.closePath();
+						context.fill()
+						context.lineJoin = "round";
+						context.lineWidth = width;
+						context.beginPath();
+						context.moveTo(i, j);
+						context.closePath();
+						context.stroke();
+						this.fireEvent("changeDrawing");
+					}
+					else if (this.isEraseMode()) {
+						interactionMode=4;
+						this.__saveDrawingToUndoStack();
+						mouseMode=1;
+						var position=this.getPositionOnSlice(event);
+						var x=Math.round(position.i)+0.5;
+						var y=Math.round(position.j)+0.5;
+						var width=this.__paintWidth;
+						var radius=width/2;
+						this.__drawingCanvas.getContext2d().clearRect(x-radius, y-radius, width, width);
+						this.__drawingCanvasModified=true;
+						this.fireEvent("changeDrawing");
+					}
+				}, this);
 
 				htmlContainer.addListener("mousemove", function (event)	{
 					var brushMesh=this.__brushMesh;
 					var position=this.getPositionOnSlice(event);
-					if ((button<1)&&(this.isPaintMode()||this.isEraseMode())) {
-						brushMesh.visible=true;
-						brushMesh.position.set(position.x, position.y, 0);
-					}
-					else {
-						brushMesh.visible=false;
-					}
-
-					switch (mouseMode)
+					switch (interactionMode)
 					{
-					case 2:
-						var origin=htmlContainer.getContentLocation();
+					case -1:
+						if ((this.isPaintMode()||this.isEraseMode())) {
+							brushMesh.visible=true;
+							brushMesh.position.set(position.x, position.y, 0);
+							this.render();
+						}
+						break;
+					case 0 :
+						break;
+					case 1 :
+ 						brushMesh.visible=false;
+ 						var origin=htmlContainer.getContentLocation();
 						controls.mouseMove(event.getDocumentLeft()-origin.left
 								, event.getDocumentTop()-origin.top);
 
-						//propagate zoom to other viewers
-						if (button==1) {
-							var z=this.__camera.position.z;
-							this.__master.applyToViewers (function (viewer) {
-								if (viewer!=this) {
-									viewer.__camera.position.z=z;
-									viewer.__propagateLinks();
-									viewer.render();
-									}
-								});
-						}
+						var z=this.__camera.position.z;
+						this.render();
+						this.__master.applyToViewers (function (viewer) {
+							if (viewer!=this) {
+								viewer.__camera.position.z=z;
+								viewer.__propagateLinks();
+								viewer.render();
+								}
+							});
 						this.__propagateLinks();
 						break;
-					case 1:
-						if (this.isPaintMode()) {
-							var context=this.__drawingCanvas.getContext2d();
-//							var position=this.getPositionOnSlice(event);
-							context.lineTo(position.i+0.5, position.j+0.5);
-							context.stroke();
-							this.fireEvent("changeDrawing");
-							this.__drawingCanvasModified=true;
-						}
-						if (this.isEraseMode()) {
-							mouseMode=1;
-//							var position=this.getPositionOnSlice(event);
-							var x=Math.round(position.i)+0.5;
-							var y=Math.round(position.j)+0.5;
-							var width=this.__paintWidth;
-							var radius=width/2;
-							this.__drawingCanvas.getContext2d().clearRect(x-radius, y-radius, width, width);
-							this.__drawingCanvasModified=true;
-							this.fireEvent("changeDrawing");
-						}
+					case 2 :
+ 						brushMesh.visible=false;
+ 						var origin=htmlContainer.getContentLocation();
+						controls.mouseMove(event.getDocumentLeft()-origin.left
+								, event.getDocumentTop()-origin.top);
+						this.render();
+						this.__propagateLinks();
 						break;
-					default:
+					case 3 :
+ 						brushMesh.visible=true;
+ 						brushMesh.position.set(position.x, position.y, 0);
+						var context=this.__drawingCanvas.getContext2d();
+						context.lineTo(position.i+0.5, position.j+0.5);
+						context.stroke();
+						this.fireEvent("changeDrawing");
+						this.__drawingCanvasModified=true;
 						break;
+					case 4 :
+ 						brushMesh.visible=true;
+						brushMesh.position.set(position.x, position.y, 0);
+						var x=Math.round(position.i)+0.5;
+						var y=Math.round(position.j)+0.5;
+						var width=this.__paintWidth;
+						var radius=width/2;
+						this.__drawingCanvas.getContext2d().clearRect(x-radius, y-radius, width, width);
+						this.__drawingCanvasModified=true;
+						this.fireEvent("changeDrawing");
 					}
-					this.render();
-					}, this);
+				}, this);
 
 				htmlContainer.addListener("mouseup", function (event)	{
 					htmlContainer.releaseCapture();
-					mouseMode=0;
 					controls.mouseUp();
-					if ((this.isPaintMode())&&(button==0)) {
+					if ((this.isPaintMode())&&(interactionMode==3)) {
 						var context=this.__drawingCanvas.getContext2d();
 						var position=this.getPositionOnSlice(event);
 
@@ -825,7 +811,7 @@ qx.Class.define("desk.sliceView",
 						context.fill();
 						this.fireEvent("changeDrawing");
 					}
-					button=-1;
+					interactionMode=-1;
 				}, this);
 
 				htmlContainer.addListener("mousewheel", function (event) {
