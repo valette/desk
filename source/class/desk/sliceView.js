@@ -174,6 +174,7 @@ qx.Class.define("desk.sliceView",
 						mySlices.splice(j,1);
 						this.removeListenerById(slice.getUserData("updateListener"));
 						this.render();
+						slice.dispose();
 						break;
 					}
 				}
@@ -600,14 +601,11 @@ qx.Class.define("desk.sliceView",
 					_this.render();
 				}
 
-				var listenerId=volumeSlice.addListener('changeImage',function() {
+				volumeSlice.addListener('changeImage',function() {
 						updateTexture();
 						_this.render();
 					});
 				updateTexture();
-				_this.__window.addListener("close", function() {
-					volumeSlice.removeListenerById(listenerId);
-					});
 
 				if (_this.__slices.length==1) {
 					_this.__setDrawingMesh(volumeSlice);
