@@ -455,7 +455,8 @@ qx.Class.define("desk.volumeSlice",
 				syncDimension: true
 				});
 
-			this.updateImage();
+			this.__updateTriggered=true;
+			this.__updateImage();
 		},
 
 		__applyBrightnessToCanvas : function () {
@@ -805,34 +806,29 @@ qx.Class.define("desk.volumeSlice",
 		__initChangeSliceTrigger : function () {
 			this.addListener("changeSlice", function(){
 				this.__updateTriggered=true;
-				this.updateImage();
+				this.__updateImage();
 			},this);
+
+			var _this=this;
+			this.__image.onload=function(){
+				_this.__originalImageCanvas.getContext2d().drawImage(_this.__image, 0, 0);
+				_this.redraw();
+				_this.__updateInProgress=false;
+				_this.__updateImage();
+				};
 		},
 
-
-		updateImage : function () {
+		__updateImage : function () {
 			if (this.__updateInProgress) {
 				this.__updateTriggered=true;
-	//			console.log("update not really");
 				return;
 			}
-	//		console.log("update really");
 			if (this.__updateTriggered) {
 				this.__reallyUpdateImage();
 			}
 		},
 
 		__reallyUpdateImage : function() {
-			var _this=this;
-			var slice=this.getNumberOfSlices()-1-_this.getSlice();
-
-			this.__image.onload=function(){
-				_this.__originalImageCanvas.getContext2d().drawImage(_this.__image, 0, 0);
-				_this.redraw();
-				_this.__updateInProgress=false;
-				_this.updateImage();
-				};
-
 			var fileSuffix;
 			if (this.getImageFormat()==0) {
 				fileSuffix=".png";
