@@ -232,7 +232,6 @@ qx.Class.define("desk.meshView",
 				if ( mtime === undefined )
 				{
 					mtime=Math.random();
-					console.log("mtime : "+mtime);
 				}
 
 				switch (extension)

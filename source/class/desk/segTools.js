@@ -303,7 +303,6 @@ qx.Class.define("desk.segTools",
 			tabView.add(meshingPage);
 			var meshingAction=new desk.action("extract_meshes", false);
 			meshingAction.setOutputSubdirectory("meshes");
-
 			meshingAction.buildUI();
 			meshingPage.add(meshingAction);
 
@@ -323,7 +322,8 @@ qx.Class.define("desk.segTools",
 				clusteringAction.setActionParameters({
 					"input_volume" : volFile});
 				meshingAction.setActionParameters({
-					"input_volume" : tools.getSessionDirectory()+"/filtering/output.mhd"});
+					"input_volume" : tools.getSessionDirectory()+"/filtering/output.mhd",
+					"colors" : tools.getSessionDirectory()+"/seeds.xml"});
 			});
 
 			tools.__startSegmentationButton=new qx.ui.form.Button("Start segmentation");
@@ -450,7 +450,21 @@ qx.Class.define("desk.segTools",
 				var red=parseInt(color.getAttribute("red"));
 				var green=parseInt(color.getAttribute("green"));
 				var blue=parseInt(color.getAttribute("blue"));
-				this.__addColorItem(label, colorName, red, green, blue);
+				var mColor=[];
+				if (color.hasAttribute("meshcolor")) {
+					mColor=color.getAttribute("meshcolor").split(" ");
+					mColor[0]=Math.round(parseFloat(mColor[0])*255);
+					mColor[1]=Math.round(parseFloat(mColor[1])*255);
+					mColor[2]=Math.round(parseFloat(mColor[2])*255);
+					mColor[3]=parseFloat(mColor[3]);
+					mColor[4]=parseInt(mColor[4]);
+				}
+				else {
+					mColor=[255, 255, 255, 1, 0];
+				}
+				
+				this.__addColorItem(label, colorName, red, green, blue,
+						mColor[0],mColor[1],mColor[2],mColor[3],mColor[4]);
 			}
 			this.__rebuildLabelsList();
 			for (var i=0;i<adjacencies.length;i++)
@@ -649,9 +663,9 @@ qx.Class.define("desk.segTools",
 				var target=this.__targetColorItem;
 				if ((target!=null)&&!doNotUpdate)
 				{
-					target.meshRed=colorSelector.getRed();
-					target.meshGreen=colorSelector.getGreen();
-					target.meshBlue=colorSelector.getBlue();
+					target.meshRed=meshColorSelector.getRed();
+					target.meshGreen=meshColorSelector.getGreen();
+					target.meshBlue=meshColorSelector.getBlue();
 			        meshColorView.setBackgroundColor(e.getData());
 				}
 			}, this);
@@ -685,7 +699,7 @@ qx.Class.define("desk.segTools",
 				var target=this.__targetColorItem;
 				if ((target!=null)&&!doNotUpdate)
 				{
-					target.opacity=parseInt(meshOpacity.getValue());
+					target.opacity=parseFloat(meshOpacity.getValue());
 				}
 			}, this);
 			meshOpacityContainer.add(meshOpacity);
@@ -696,7 +710,7 @@ qx.Class.define("desk.segTools",
 				var target=this.__targetColorItem;
 				if ((target!=null)&&!doNotUpdate)
 				{
-					target.depth=parseInt(meshDepth.getValue());
+					target.depth=meshDepth.getValue();
 				}
 			}, this);
 			meshOpacityContainer.add(meshDepth);
@@ -716,6 +730,13 @@ qx.Class.define("desk.segTools",
 					colorSelector.setBlue(target.blue);
 					colorView.setBackgroundColor("#"+qx.util.ColorUtil.rgbToHexString
 							([target.red, target.green, target.blue]));
+					meshColorSelector.setRed(target.meshRed);
+					meshColorSelector.setGreen(target.meshGreen);
+					meshColorSelector.setBlue(target.meshBlue);
+					meshColorView.setBackgroundColor("#"+qx.util.ColorUtil.rgbToHexString
+							([target.meshRed, target.meshGreen, target.meshBlue]));
+					meshOpacity.setValue(target.opacity+"");
+					meshDepth.setValue(target.depth);
 					this.__buildLookupTables();
 					doNotUpdate=false;
 					__updateAdjacenciesText();
@@ -812,7 +833,8 @@ qx.Class.define("desk.segTools",
 			alert ("error : adjacency to remove not found...");
 		},
 
-		__addColorItem : function(label, labelName, red, green, blue, paintMesh, opacity, depth)
+		__addColorItem : function(label, labelName, red, green, blue,
+					meshRed, meshGreen, meshBlue, opacity, depth)
         {
 		////Function creates one label box
 			var unfocusedBorder = new qx.ui.decoration.Single(2, "solid", "black");
@@ -885,7 +907,9 @@ qx.Class.define("desk.segTools",
 				red : red,
 				green : green,
 				blue : blue,
-				paintMesh : paintMesh,
+				meshRed : meshRed,
+				meshGreen : meshGreen,
+				meshBlue : meshBlue,
 				opacity : opacity,
 				depth : depth,
 				label : label,
@@ -927,7 +951,8 @@ qx.Class.define("desk.segTools",
 						maxLabel=colors[i].label;
 					}
 				}
-				this.__addColorItem (maxLabel+1, "edit me", 100, 100, 100)
+				this.__addColorItem (maxLabel+1, "edit me", 100, 100, 100,
+								100, 100, 100, 1, 0)
 				this.__rebuildLabelsList();
 				},this);
 			menu.add(addButton);
@@ -1234,11 +1259,17 @@ qx.Class.define("desk.segTools",
 			for(var i=0; i<this.__labels.length; i++)
 			{
 				var labelColor=this.__labels[i];
+				var meshColor=labelColor.meshRed/255+" "+
+								labelColor.meshGreen/255+" "+
+								labelColor.meshBlue/255+" "+
+								labelColor.opacity+" "+
+								labelColor.depth;
 				colors+=element('color',null, {red : ""+labelColor.red,
 												green: ""+labelColor.green,
 												blue : ""+labelColor.blue,
 												label : ""+labelColor.label,
-												name : ""+labelColor.labelName})+"\n";
+												name : ""+labelColor.labelName,
+												meshcolor : meshColor})+"\n";
 			}
 			xmlContent+=element('colors', colors)+"\n";
 
