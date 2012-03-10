@@ -50,6 +50,8 @@ qx.Class.define("desk.volumeSlice",
 
 	members : {
 
+		__availableFormat : null,
+
 		__fileBrowser : null,
 		__file : null,
 

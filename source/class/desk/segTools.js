@@ -63,7 +63,7 @@ qx.Class.define("desk.segTools",
 				sliceView.fireEvent("changeDrawing");
 			});
 		});
-		this.__labelColors=[];
+		this.__labels=[];
 
 		this.open();
 
@@ -104,7 +104,7 @@ qx.Class.define("desk.segTools",
 		__startSegmentationButton : null,
 
 // Tableau contenant les couleurs des seeds
-         __labelColors : null,
+         __labels : null,
 
 // type arrays containing seeds colors (for speed processing)
          __labelColorsRed : null,
@@ -380,7 +380,7 @@ qx.Class.define("desk.segTools",
 		},
 
 		__rebuildLabelsList : function () {
-			var colors=this.__labelColors;
+			var colors=this.__labels;
 			var row=0;
 			var column=0;
 			var numberOfColumns=4;
@@ -410,7 +410,7 @@ qx.Class.define("desk.segTools",
 				green[i]=0;
 				this.__labelColorsBlue[i]=0;
 			}
-			var colors=this.__labelColors;
+			var colors=this.__labels;
 
 			// build compact lookuptables for seeds processing
 			var cRed=new Uint8Array (colors.length);
@@ -437,7 +437,11 @@ qx.Class.define("desk.segTools",
 				alert("error : no colors");
 				return;
 			}
-			this.__labelColors=[];
+
+			for (var i=0;i<this.__labels.length;i++) {
+				this.__labels[i].dispose();
+			}
+			this.__labels=[];
 			for(var i=0; i<colors.length; i++)
 			{
 				var color=colors[i];
@@ -511,7 +515,8 @@ qx.Class.define("desk.segTools",
 			var topLeftContainer=new qx.ui.container.Composite();
 			topLeftContainer.setLayout(new qx.ui.layout.VBox());
 			topContainer.add(topLeftContainer);
-			topContainer.add(new qx.ui.core.Spacer(), {flex: 5})
+			topContainer.add(new qx.ui.core.Spacer(50), {flex: 5});
+
 			var topRightContainer=new qx.ui.container.Composite();
 			topRightContainer.setLayout(new qx.ui.layout.VBox());
 			topContainer.add(topRightContainer);
@@ -535,11 +540,14 @@ qx.Class.define("desk.segTools",
 				}
 			}, this);
 			topLeftContainer.add(labelName);
+			topLeftContainer.add(new qx.ui.core.Spacer(), {flex: 5});
 
-			var label2=new qx.ui.basic.Label("Color :");
-			window.add(label2);
+			var colorContainer=new qx.ui.container.Composite();
+			colorContainer.setLayout(new qx.ui.layout.HBox());
+			window.add(new qx.ui.core.Spacer(0, 30), {flex: 5});
+			window.add(colorContainer);
 
-			var colorSelector=new qx.ui.control.ColorSelector();
+			var colorSelector=new qx.ui.control.ColorPopup();
 			colorSelector.addListener("changeValue", function (e) {
 				var target=this.__targetColorItem;
 				if ((target!=null)&&!doNotUpdate)
@@ -548,12 +556,28 @@ qx.Class.define("desk.segTools",
 					target.green=colorSelector.getGreen();
 					target.blue=colorSelector.getBlue();
 					target.updateWidget();
+			        colorView.setBackgroundColor(e.getData());
 					this.__master.applyToViewers( function (viewer) {
 						viewer.setPaintColor(colorSelector.getValue());
 					});
 				}
 			}, this);
-			window.add(colorSelector);
+			colorSelector.exclude();
+
+			var colorButton = new qx.ui.form.Button("Choose color");
+			colorButton.addListener("execute", function(e)
+			{
+				colorSelector.placeToWidget(colorButton);
+				colorSelector.show();
+			});
+
+			var colorView = new qx.ui.basic.Label("Color").set({
+				padding : [3, 60],
+				decorator : "main"
+			});
+
+			colorContainer.add(colorView, {flex : 1});
+			colorContainer.add(colorButton, {flex : 1});
 
 			var label3=new qx.ui.basic.Label("Adjacent labels :");
 			topRightContainer.add(label3);
@@ -617,6 +641,67 @@ qx.Class.define("desk.segTools",
 			}, this);
 			container2.add(removeButton);
 
+			var meshColorContainer=new qx.ui.container.Composite();
+			meshColorContainer.setLayout(new qx.ui.layout.HBox());
+
+			var meshColorSelector=new qx.ui.control.ColorPopup();
+			meshColorSelector.addListener("changeValue", function (e) {
+				var target=this.__targetColorItem;
+				if ((target!=null)&&!doNotUpdate)
+				{
+					target.meshRed=colorSelector.getRed();
+					target.meshGreen=colorSelector.getGreen();
+					target.meshBlue=colorSelector.getBlue();
+			        meshColorView.setBackgroundColor(e.getData());
+				}
+			}, this);
+			colorSelector.exclude();
+
+			var meshColorButton = new qx.ui.form.Button("Choose color");
+			meshColorButton.addListener("execute", function(e)
+			{
+				meshColorSelector.placeToWidget(meshColorButton);
+				meshColorSelector.show();
+			});
+
+			var meshColorView = new qx.ui.basic.Label("Mesh color").set({
+				padding : [3, 60],
+				decorator : "main"
+			});
+
+			meshColorContainer.add(meshColorView, {flex : 1});
+			meshColorContainer.add(meshColorButton, {flex : 1});
+
+			window.add(new qx.ui.core.Spacer(0, 30), {flex: 5});
+			window.add(meshColorContainer);
+
+			var meshOpacityContainer=new qx.ui.container.Composite();
+			meshOpacityContainer.setLayout(new qx.ui.layout.HBox());
+			window.add(meshOpacityContainer);
+
+			meshOpacityContainer.add(new qx.ui.basic.Label("Mesh opacity"));
+			var meshOpacity=new qx.ui.form.TextField("1");
+			meshOpacity.addListener("changeValue", function (e) {
+				var target=this.__targetColorItem;
+				if ((target!=null)&&!doNotUpdate)
+				{
+					target.opacity=parseInt(meshOpacity.getValue());
+				}
+			}, this);
+			meshOpacityContainer.add(meshOpacity);
+			meshOpacityContainer.add(new qx.ui.core.Spacer(50), {flex: 5});
+			meshOpacityContainer.add(new qx.ui.basic.Label("Mesh depth"));
+			var meshDepth=new qx.ui.form.Spinner(-100, 0, 100);
+			meshDepth.addListener("changeValue", function (e) {
+				var target=this.__targetColorItem;
+				if ((target!=null)&&!doNotUpdate)
+				{
+					target.depth=parseInt(meshDepth.getValue());
+				}
+			}, this);
+			meshOpacityContainer.add(meshDepth);
+
+
 
 			this.__editionWindow=window;
 
@@ -629,6 +714,8 @@ qx.Class.define("desk.segTools",
 					colorSelector.setRed(target.red);
 					colorSelector.setGreen(target.green);
 					colorSelector.setBlue(target.blue);
+					colorView.setBackgroundColor("#"+qx.util.ColorUtil.rgbToHexString
+							([target.red, target.green, target.blue]));
 					this.__buildLookupTables();
 					doNotUpdate=false;
 					__updateAdjacenciesText();
@@ -638,7 +725,7 @@ qx.Class.define("desk.segTools",
 
 		__getLabel : function (label) {
 			var intLabel=parseInt(label);
-			var labels=this.__labelColors;
+			var labels=this.__labels;
 			for (var i=0;i<labels.length;i++) {
 				if (labels[i].label==intLabel) {
 					return (labels[i]);
@@ -649,7 +736,7 @@ qx.Class.define("desk.segTools",
 		},
 
 		__deleteColorItem : function (item) {
-			var colors=this.__labelColors;
+			var colors=this.__labels;
 			for (var i=0;i<colors.length;i++) {
 				if (colors[i]==item) {
 					colors.splice(i,1);
@@ -725,7 +812,7 @@ qx.Class.define("desk.segTools",
 			alert ("error : adjacency to remove not found...");
 		},
 
-		__addColorItem : function(label, labelName, red, green, blue)
+		__addColorItem : function(label, labelName, red, green, blue, paintMesh, opacity, depth)
         {
 		////Function creates one label box
 			var unfocusedBorder = new qx.ui.decoration.Single(2, "solid", "black");
@@ -798,6 +885,9 @@ qx.Class.define("desk.segTools",
 				red : red,
 				green : green,
 				blue : blue,
+				paintMesh : paintMesh,
+				opacity : opacity,
+				depth : depth,
 				label : label,
 				labelName : labelName,
 				container : labelBox,
@@ -813,7 +903,7 @@ qx.Class.define("desk.segTools",
 				}};
 			labelAttributes.updateWidget();
 
-			this.__labelColors.push(labelAttributes);
+			this.__labels.push(labelAttributes);
 
 			//context menu to edit labels
 			var menu = new qx.ui.menu.Menu;
@@ -830,7 +920,7 @@ qx.Class.define("desk.segTools",
 
 			var addButton = new qx.ui.menu.Button("add new label");
 			addButton.addListener("execute", function (){
-				var colors=this.__labelColors;
+				var colors=this.__labels;
 				var maxLabel=0;
 				for (var i=0;i<colors.length;i++) {
 					if (colors[i].label>maxLabel) {
@@ -1141,9 +1231,9 @@ qx.Class.define("desk.segTools",
 
 			var xmlContent = '\n';
 			var colors="";
-			for(var i=0; i<this.__labelColors.length; i++)
+			for(var i=0; i<this.__labels.length; i++)
 			{
-				var labelColor=this.__labelColors[i];
+				var labelColor=this.__labels[i];
 				colors+=element('color',null, {red : ""+labelColor.red,
 												green: ""+labelColor.green,
 												blue : ""+labelColor.blue,
@@ -1154,7 +1244,7 @@ qx.Class.define("desk.segTools",
 
 			var adjacencies="\n";
 			var adjArray=[];
-			var labelColors=this.__labelColors;
+			var labelColors=this.__labels;
 			for(var i=0; i<labelColors.length; i++)
 			{
 				var label1=labelColors[i].label;
