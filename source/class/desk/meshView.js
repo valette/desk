@@ -83,11 +83,11 @@ qx.Class.define("desk.meshView",
 			{
 				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 					var label = node.label;
-					var shape= meshView.__shapesArray[node.nodeId];
+					var shape= meshView.__meshes[node.nodeId];
 					if (label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1)
 					{
 						if (shape)
-							shape.visible=meshView.__shapesVisibility[node.nodeId];
+							shape.visible=meshView.__meshesVisibility[node.nodeId];
 						return true;
 					}
 					else
@@ -111,8 +111,8 @@ qx.Class.define("desk.meshView",
 		dataModel.setFilter(filter);
 
 		elementsList.add(this.__shapesList,{flex : 1});
-		this.__shapesArray=[];
-		this.__shapesVisibility = [];
+		this.__meshes=[];
+		this.__meshesVisibility = [];
 
 		var menu=this.__getContextMenu();
 		this.__shapesList.setContextMenu(menu);
@@ -133,14 +133,14 @@ qx.Class.define("desk.meshView",
 		console.log("destructor");
 		this.unlink();
 		//clean the scene
-		var shapes=this.__shapesArray;
-		for (var i=0;i<shapes.kength;i++)
+		var meshes=this.__meshes;
+		for (var i=0;i<meshes.length;i++)
 		{
-			shapes[i]=0;
+			meshes[i]=0;
 		}
-		this.__shapesArray=0;
+		this.__meshes=0;
 
-		this.__shapesVisibility.length=0;
+		this.__meshesVisibility.length=0;
 		this._disposeObjects("__embededHTML","__shapesList");
 	},
 
@@ -170,10 +170,10 @@ qx.Class.define("desk.meshView",
 		__slicesRoot : null,
 
 		// array keeping all three.js meshes
-		__shapesArray : null,
+		__meshes : null,
 
 		// array storing all meshes visibility
-		__shapesVisibility : null,
+		__meshesVisibility : null,
 
 		//THREE.js objects
 		__scene : null,
@@ -217,8 +217,8 @@ qx.Class.define("desk.meshView",
 			
 				function callback (shape)
 				{
-					_this.__shapesArray[ leaf ] = shape ;	
-					_this.__shapesVisibility[leaf] = true ;
+					_this.__meshes[ leaf ] = shape ;	
+					_this.__meshesVisibility[leaf] = true ;
 
 					if ( update == true )
 						_this.viewAll();
@@ -391,7 +391,7 @@ qx.Class.define("desk.meshView",
 		viewAll : function ( ) {
 			var max=new THREE.Vector3(-1e10,-1e10,-1e10);
 			var min=new THREE.Vector3(1e10,1e10,1e10);
-			var shapes=this.__shapesArray;
+			var shapes=this.__meshes;
 
 			for (var i=0;i<shapes.length;i++)
 			{
@@ -581,8 +581,8 @@ qx.Class.define("desk.meshView",
 
 			var leaf=dataModel.addLeaf(this.__slicesRoot,volumeSlice.getFileName(), null);
 			dataModel.setData();
-			this.__shapesArray[ leaf ] = mesh ;	
-			this.__shapesVisibility[leaf] = true ;
+			this.__meshes[ leaf ] = mesh ;	
+			this.__meshesVisibility[leaf] = true ;
 
 			var _this=this;
 
@@ -769,8 +769,8 @@ qx.Class.define("desk.meshView",
 							var meshes=[];
 							for (var i=0;i<children.length;i++)
 							{
-								if (_this.__shapesVisibility[children[i]])
-									meshes.push(_this.__shapesArray[children[i]]);
+								if (_this.__meshesVisibility[children[i]])
+									meshes.push(_this.__meshes[children[i]]);
 							}
 
 							var origin=htmlContainer.getContentLocation();
@@ -1060,7 +1060,7 @@ qx.Class.define("desk.meshView",
 				var selectedNode=shapesTree.getSelectedNodes()[0];
 				if (selectedNode.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 				{
-					var firstSelectedShape=_this.__shapesArray[selectedNode.nodeId];
+					var firstSelectedShape=_this.__meshes[selectedNode.nodeId];
 					var color=firstSelectedShape.material.color;
 					colorSelector.setRed(Math.round(ratio*color.r));
 					colorSelector.setGreen(Math.round(ratio*color.g));
@@ -1084,7 +1084,7 @@ qx.Class.define("desk.meshView",
 					var shapesArray=shapesTree.getSelectedNodes();
 					for (var i=0;i<shapesArray.length;i++)
 					{
-						var shape=_this.__shapesArray[shapesArray[i].nodeId];
+						var shape=_this.__meshes[shapesArray[i].nodeId];
 						if (shape!=null) {
 							var opacity=opacitySlider.getValue()/ratio;
 							shape.material.opacity=opacity;
@@ -1108,7 +1108,7 @@ qx.Class.define("desk.meshView",
 					var shapesArray=shapesTree.getSelectedNodes();
 					for (var i=0;i<shapesArray.length;i++)
 					{
-						var shape=_this.__shapesArray[shapesArray[i].nodeId];
+						var shape=_this.__meshes[shapesArray[i].nodeId];
 						if (shape!=null) {
 							shape.material.color.setRGB (colorSelector.getRed()/ratio,
 										colorSelector.getGreen()/ratio,
@@ -1125,7 +1125,7 @@ qx.Class.define("desk.meshView",
 					var shapesArray=shapesTree.getSelectedNodes();
 					for (var i=0;i<shapesArray.length;i++)
 					{
-						var shape=_this.__shapesArray[shapesArray[i].nodeId];
+						var shape=_this.__meshes[shapesArray[i].nodeId];
 						shape.material.wireframe=wireframeCheckBox.getValue();
 					}
 					console.log(wireframeCheckBox.getValue());
@@ -1139,7 +1139,7 @@ qx.Class.define("desk.meshView",
 					var shapesArray=shapesTree.getSelectedNodes();
 					for (var i=0;i<shapesArray.length;i++)
 					{
-						var shape=_this.__shapesArray[shapesArray[i].nodeId];
+						var shape=_this.__meshes[shapesArray[i].nodeId];
 						if (shape!=null) {
 							shape.renderDepth=renderDepthSpinner.getValue();
 						}
@@ -1151,13 +1151,29 @@ qx.Class.define("desk.meshView",
 			return (mainContainer);
 		},
 
+		removeMesh : function (node) {
+			var nodeId=node.nodeId;
+			var dataModel=this.__shapesList.getDataModel();
+			dataModel.prune(nodeId, true);
+			var mesh=this.__meshes[nodeId];
+			this.__scene.remove(mesh);
+			this.__meshes[nodeId]=0;
+			this.__meshesVisibility[nodeId]=0;
+			dataModel.setData();
+			var map=mesh.material.map;
+			if (map!=null) {
+				this.__renderer.deallocateTexture( map );
+			}
+			this.__renderer.deallocateObject( mesh );
+		},
+
 		__getContextMenu : function() {
 				//context menu to edit meshes appearance
 			var menu = new qx.ui.menu.Menu;
 			var propertiesButton = new qx.ui.menu.Button("properties");
 			propertiesButton.addListener("execute", function (){
 				var selectedShapeId=this.__shapesList.getSelectedNodes()[0].nodeId;
-				var shape=this.__shapesArray[selectedShapeId];
+				var shape=this.__meshes[selectedShapeId];
 				alert ("Mesh with "+shape.geometry.vertexPositionBuffer.numItems/3+" vertices and "+
 						shape.geometry.vertexIndexBuffer.numItems/3+" polygons");
 				},this);
@@ -1180,9 +1196,9 @@ qx.Class.define("desk.meshView",
 					if (shapesArray[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 					{
 						var shapeId=shapesArray[i].nodeId;
-						var shape=this.__shapesArray[shapeId];
+						var shape=this.__meshes[shapeId];
 						shape.visible=true;
-						this.__shapesVisibility[shapeId]=true;
+						this.__meshesVisibility[shapeId]=true;
 					}
 				}
 				this.render();		
@@ -1197,9 +1213,9 @@ qx.Class.define("desk.meshView",
 					if (shapesArray[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 					{
 						var shapeId=shapesArray[i].nodeId;
-						var shape=this.__shapesArray[shapeId];
+						var shape=this.__meshes[shapeId];
 						shape.visible=false;
-						this.__shapesVisibility[shapeId]=false;
+						this.__meshesVisibility[shapeId]=false;
 					}
 				}
 				this.render();		
@@ -1208,17 +1224,12 @@ qx.Class.define("desk.meshView",
 
 			var removeButton = new qx.ui.menu.Button("remove");
 			removeButton.addListener("execute", function (){
-				var shapesArray=this.__shapesList.getSelectedNodes();
-				for (var i=0;i<shapesArray.length;i++)
+				var meshes=this.__shapesList.getSelectedNodes();
+				for (var i=0;i<meshes.length;i++)
 				{
-					if (shapesArray[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+					if (meshes[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 					{
-						var shapeId=shapesArray[i].nodeId;
-						var dataModel=this.__shapesList.getDataModel();
-						dataModel.prune(shapeId, true);
-						this.__scene.removeObject(this.__shapesArray[shapeId]);
-						this.__shapesArray[shapeId]=0;
-						dataModel.setData();
+						this.removeMesh(meshes[i]);
 					}
 				}
 				this.render();		
