@@ -34,7 +34,8 @@ qx.Class.define("desk.segTools",
 								showMaximize: false,
 								allowMaximize: false,
 								showClose: true,
-								movable : true
+								movable : true,
+								caption :"segmentation tool"
 							});
 		this.setResizable(false, false, false, false);
 	//// Fill window with the tools widgets
@@ -520,6 +521,7 @@ qx.Class.define("desk.segTools",
 			window.setShowClose(true);
 			window.setShowMinimize(false);
 			window.setUseMoveFrame(true);
+			window.setCaption("label editor");
 			window.setResizable(false, false, false, false);
 
 			var topContainer=new qx.ui.container.Composite();
@@ -537,6 +539,33 @@ qx.Class.define("desk.segTools",
 
 
 			var doNotUpdate=false;
+
+			var labelDisplay=new qx.ui.basic.Label("Label :");
+			topLeftContainer.add(labelDisplay);
+			var labelValue=new qx.ui.form.TextField();
+			labelValue.addListener("changeValue", function (e) {
+				var target=this.__targetColorItem;
+				if ((target!=null)&&!doNotUpdate)
+				{
+					target.label=parseInt(labelValue.getValue());
+					target.updateWidget();
+				}
+				var count=0;
+				for (var i=0;i<this.__labels.length;i++) {
+					if (this.__labels[i].label==target.label) {
+						count++;
+					}
+				}
+				if (count>1) {
+					labelDisplay.setBackgroundColor("red");
+				}
+				else {
+					labelDisplay.setBackgroundColor("white");
+				}
+			}, this);
+			topLeftContainer.add(labelValue);
+			topLeftContainer.add(new qx.ui.core.Spacer(), {flex: 5});
+
 
 			var label1=new qx.ui.basic.Label("Name :");
 			topLeftContainer.add(label1);
@@ -689,11 +718,19 @@ qx.Class.define("desk.segTools",
 			window.add(new qx.ui.core.Spacer(0, 30), {flex: 5});
 			window.add(meshColorContainer);
 
-			var meshOpacityContainer=new qx.ui.container.Composite();
-			meshOpacityContainer.setLayout(new qx.ui.layout.HBox());
-			window.add(meshOpacityContainer);
+			var meshPropertiesContainer=new qx.ui.container.Composite();
+			meshPropertiesContainer.setLayout(new qx.ui.layout.HBox());
+			window.add(meshPropertiesContainer);
 
-			meshOpacityContainer.add(new qx.ui.basic.Label("Mesh opacity"));
+			var opacityContainer=new qx.ui.container.Composite();
+			opacityContainer.setLayout(new qx.ui.layout.VBox());
+			meshPropertiesContainer.add(opacityContainer);
+			meshPropertiesContainer.add(new qx.ui.core.Spacer(50), {flex: 5});
+			var depthContainer=new qx.ui.container.Composite();
+			depthContainer.setLayout(new qx.ui.layout.VBox());
+			meshPropertiesContainer.add(depthContainer);
+
+			opacityContainer.add(new qx.ui.basic.Label("Mesh opacity :"));
 			var meshOpacity=new qx.ui.form.TextField("1");
 			meshOpacity.addListener("changeValue", function (e) {
 				var target=this.__targetColorItem;
@@ -702,10 +739,11 @@ qx.Class.define("desk.segTools",
 					target.opacity=parseFloat(meshOpacity.getValue());
 				}
 			}, this);
-			meshOpacityContainer.add(meshOpacity);
-			meshOpacityContainer.add(new qx.ui.core.Spacer(50), {flex: 5});
-			meshOpacityContainer.add(new qx.ui.basic.Label("Mesh depth"));
+			opacityContainer.add(meshOpacity);
+
+			depthContainer.add(new qx.ui.basic.Label("Mesh depth :"));
 			var meshDepth=new qx.ui.form.Spinner(-100, 0, 100);
+			meshDepth.setToolTipText("change this field to solve problems with transparency");
 			meshDepth.addListener("changeValue", function (e) {
 				var target=this.__targetColorItem;
 				if ((target!=null)&&!doNotUpdate)
@@ -713,7 +751,7 @@ qx.Class.define("desk.segTools",
 					target.depth=meshDepth.getValue();
 				}
 			}, this);
-			meshOpacityContainer.add(meshDepth);
+			depthContainer.add(meshDepth);
 
 
 
@@ -724,6 +762,7 @@ qx.Class.define("desk.segTools",
 				var target=this.__targetColorItem;
 				if (target!=null) {
 					doNotUpdate=true;
+					labelValue.setValue(target.label+"");
 					labelName.setValue(target.labelName);
 					colorSelector.setRed(target.red);
 					colorSelector.setGreen(target.green);
