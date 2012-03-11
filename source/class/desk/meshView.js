@@ -53,29 +53,27 @@ qx.Class.define("desk.meshView",
 		topRightContainer.add(this.__getResetViewButton(), {flex : 1});
 		topRightContainer.add(this.__getSnapshotButton());
 
-		this.__shapesList=new qx.ui.treevirtual.TreeVirtual(["meshes","wireframe"],
+		this.__meshesTree=new qx.ui.treevirtual.TreeVirtual(["meshes","wireframe"],
 			{initiallyHiddenColumns : [1]});
-		this.__shapesList.setSelectionMode(qx.ui.treevirtual.TreeVirtual.SelectionMode.MULTIPLE_INTERVAL);
-		this.__shapesList.set({
+		this.__meshesTree.setSelectionMode(qx.ui.treevirtual.TreeVirtual.SelectionMode.MULTIPLE_INTERVAL);
+		this.__meshesTree.set({
 			width  : 180,
 			rowHeight: 22,
 			columnVisibilityButtonVisible : false});
 
 
-		var dataModel=this.__shapesList.getDataModel();
+		var dataModel=this.__meshesTree.getDataModel();
 		var filterBox = new qx.ui.container.Composite;
 		filterBox.setLayout(new qx.ui.layout.HBox(10));
 		var filterText=new qx.ui.basic.Label("search");
 		filterBox.add(filterText);
 
-		var meshView=this;
-
 		var filterField = new qx.ui.form.TextField();
 		filterField.setValue("");
 		filterField.addListener("input", function() {
 			dataModel.setData();
-			meshView.render();
-			});
+			this.render();
+			}, this);
 		filterBox.add(filterField);
 		elementsList.add(filterBox);//, {flex:1});
 
@@ -83,17 +81,17 @@ qx.Class.define("desk.meshView",
 			{
 				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 					var label = node.label;
-					var shape= meshView.__meshes[node.nodeId];
+					var mesh= this.__meshes[node.nodeId];
 					if (label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1)
 					{
-						if (shape)
-							shape.visible=meshView.__meshesVisibility[node.nodeId];
+						if (mesh)
+							mesh.visible=this.__meshesVisibility[node.nodeId];
 						return true;
 					}
 					else
 					{
-						if (shape)
-							shape.visible=false;
+						if (mesh)
+							mesh.visible=false;
 						return false;
 					}						
 				}
@@ -105,17 +103,17 @@ qx.Class.define("desk.meshView",
 		resetButton.addListener("execute",function(e){
 			filterField.setValue("");
 			dataModel.setData();
-			meshView.render();
-			});
+			this.render();
+			}, this);
 		filterBox.add(resetButton);
 		dataModel.setFilter(filter);
 
-		elementsList.add(this.__shapesList,{flex : 1});
+		elementsList.add(this.__meshesTree,{flex : 1});
 		this.__meshes=[];
 		this.__meshesVisibility = [];
 
 		var menu=this.__getContextMenu();
-		this.__shapesList.setContextMenu(menu);
+		this.__meshesTree.setContextMenu(menu);
 
 		if (fileBrowser!=null)
 		{
@@ -141,7 +139,7 @@ qx.Class.define("desk.meshView",
 		this.__meshes=0;
 
 		this.__meshesVisibility.length=0;
-		this._disposeObjects("__embededHTML","__shapesList");
+		this._disposeObjects("__embededHTML","__meshesTree");
 	},
 
 	properties : {
@@ -161,7 +159,7 @@ qx.Class.define("desk.meshView",
 		__fileBrowser : null,
 
 		// a treeVirtual element storing all meshes
-		__shapesList : null,
+		__meshesTree : null,
 
 		// the nodeId for meshes
 		__meshesRoot : null,
@@ -199,7 +197,7 @@ qx.Class.define("desk.meshView",
 				label=file.substring(lastSlashIndex+1, file.length);
 
 			var _this=this;
-			var dataModel=this.__shapesList.getDataModel();
+			var dataModel=this.__meshesTree.getDataModel();
 
 			if (this.__meshesRoot===null)
 				this.__meshesRoot=dataModel.addBranch(null,"meshes", true);
@@ -215,9 +213,9 @@ qx.Class.define("desk.meshView",
 			function loadMeshIntoScene(file)
 			{
 			
-				function callback (shape)
+				function callback (mesh)
 				{
-					_this.__meshes[ leaf ] = shape ;	
+					_this.__meshes[ leaf ] = mesh ;	
 					_this.__meshesVisibility[leaf] = true ;
 
 					if ( update == true )
@@ -229,7 +227,7 @@ qx.Class.define("desk.meshView",
 					}
 				}
 
-				if ( mtime === undefined )
+				if ( mtime == undefined )
 				{
 					mtime=Math.random();
 				}
@@ -391,13 +389,13 @@ qx.Class.define("desk.meshView",
 		viewAll : function ( ) {
 			var max=new THREE.Vector3(-1e10,-1e10,-1e10);
 			var min=new THREE.Vector3(1e10,1e10,1e10);
-			var shapes=this.__meshes;
+			var meshes=this.__meshes;
 
-			for (var i=0;i<shapes.length;i++)
+			for (var i=0;i<meshes.length;i++)
 			{
-				if (shapes[i]!=undefined)
+				if (meshes[i]!=undefined)
 				{
-					var bbox=shapes[i].geometry.boundingBox;
+					var bbox=meshes[i].geometry.boundingBox;
 
 					var bbmin=bbox.min;
 					if (min.x>bbmin.x)
@@ -515,7 +513,7 @@ qx.Class.define("desk.meshView",
 									case Math.floor(numberOfMeshes*3/4):
 									case 0:
 										_this.viewAll();
-										_this.__shapesList.getDataModel().setData();
+										_this.__meshesTree.getDataModel().setData();
 										break;
 									default:
 								}
@@ -573,7 +571,7 @@ qx.Class.define("desk.meshView",
 
 			mesh.__volumeSlice=volumeSlice;
 
-			var dataModel=this.__shapesList.getDataModel();
+			var dataModel=this.__meshesTree.getDataModel();
 
 			if (this.__slicesRoot===null)
 				this.__slicesRoot=dataModel.addBranch(null,"slices", true);
@@ -758,7 +756,7 @@ qx.Class.define("desk.meshView",
 					controls.mouseUp();});
 
 				htmlContainer.addListener("mousewheel", function (event)	{
-					var tree=_this.__shapesList;
+					var tree=_this.__meshesTree;
 					var root=_this.__slicesRoot;
 					if (root!==null)
 					{
@@ -1004,12 +1002,19 @@ qx.Class.define("desk.meshView",
 					meshView.__propagateLinks();
 				}
 			},this);
+
+			var menu = new qx.ui.menu.Menu;
+			var unlinkButton = new qx.ui.menu.Button("unlink");
+			unlinkButton.addListener("execute", this.unlink, this);
+			menu.add(unlinkButton);
+			dragLabel.setContextMenu(menu);
+
 			return dragLabel;
 		},
 
 		__getPropertyWidget : function (parentWindow){
 			var _this=this;
-			var shapesTree=this.__shapesList;
+			var meshesTree=this.__meshesTree;
 			
 			var mainContainer = new qx.ui.container.Composite;
 			mainContainer.setLayout(new qx.ui.layout.VBox());
@@ -1057,42 +1062,42 @@ qx.Class.define("desk.meshView",
 			var updateWidgets=function (event)
 			{
 				enableUpdate=false;
-				var selectedNode=shapesTree.getSelectedNodes()[0];
+				var selectedNode=meshesTree.getSelectedNodes()[0];
 				if (selectedNode.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 				{
-					var firstSelectedShape=_this.__meshes[selectedNode.nodeId];
-					var color=firstSelectedShape.material.color;
+					var firstSelectedMesh=_this.__meshes[selectedNode.nodeId];
+					var color=firstSelectedMesh.material.color;
 					colorSelector.setRed(Math.round(ratio*color.r));
 					colorSelector.setGreen(Math.round(ratio*color.g));
 					colorSelector.setBlue(Math.round(ratio*color.b));
 					colorSelector.setPreviousColor(Math.round(ratio*color.r),
 							Math.round(ratio*color.g),Math.round(ratio*color.b));
-			//		wireframeCheckBox.setValue(firstSelectedShape.material.wireframe);
-					opacitySlider.setValue(Math.round(firstSelectedShape.material.opacity*ratio));
-					renderDepthSpinner.setValue(firstSelectedShape.renderDepth);
+			//		wireframeCheckBox.setValue(firstSelectedMesh.material.wireframe);
+					opacitySlider.setValue(Math.round(firstSelectedMesh.material.opacity*ratio));
+					renderDepthSpinner.setValue(firstSelectedMesh.renderDepth);
 					enableUpdate=true;
 				}
 			}
 			
 			updateWidgets();
 
-			shapesTree.addListener("changeSelection",updateWidgets);
+			meshesTree.addListener("changeSelection",updateWidgets);
 
 			opacitySlider.addListener("changeValue", function(event){
 				if (enableUpdate)
 				{
-					var shapesArray=shapesTree.getSelectedNodes();
-					for (var i=0;i<shapesArray.length;i++)
+					var meshes=meshesTree.getSelectedNodes();
+					for (var i=0;i<meshes.length;i++)
 					{
-						var shape=_this.__meshes[shapesArray[i].nodeId];
-						if (shape!=null) {
+						var mesh=_this.__meshes[meshes[i].nodeId];
+						if (mesh!=null) {
 							var opacity=opacitySlider.getValue()/ratio;
-							shape.material.opacity=opacity;
+							mesh.material.opacity=opacity;
 							if (opacity<1) {
-								shape.material.transparent=true;
+								mesh.material.transparent=true;
 							}
 							else {
-								shape.material.transparent=false;
+								mesh.material.transparent=false;
 							}
 
 						}
@@ -1105,12 +1110,12 @@ qx.Class.define("desk.meshView",
 			colorSelector.addListener("changeValue", function(event){
 				if (enableUpdate)
 				{
-					var shapesArray=shapesTree.getSelectedNodes();
-					for (var i=0;i<shapesArray.length;i++)
+					var meshes=meshesTree.getSelectedNodes();
+					for (var i=0;i<meshes.length;i++)
 					{
-						var shape=_this.__meshes[shapesArray[i].nodeId];
-						if (shape!=null) {
-							shape.material.color.setRGB (colorSelector.getRed()/ratio,
+						var mesh=_this.__meshes[meshes[i].nodeId];
+						if (mesh!=null) {
+							mesh.material.color.setRGB (colorSelector.getRed()/ratio,
 										colorSelector.getGreen()/ratio,
 										colorSelector.getBlue()/ratio);
 						}
@@ -1122,7 +1127,7 @@ qx.Class.define("desk.meshView",
 /*			wireframeCheckBox.addListener('changeValue',function(event){
 				if (enableUpdate)
 				{
-					var shapesArray=shapesTree.getSelectedNodes();
+					var shapesArray=meshesTree.getSelectedNodes();
 					for (var i=0;i<shapesArray.length;i++)
 					{
 						var shape=_this.__meshes[shapesArray[i].nodeId];
@@ -1136,12 +1141,12 @@ qx.Class.define("desk.meshView",
 			renderDepthSpinner.addListener("changeValue", function(event){
 				if (enableUpdate)
 				{
-					var shapesArray=shapesTree.getSelectedNodes();
-					for (var i=0;i<shapesArray.length;i++)
+					var meshes=meshesTree.getSelectedNodes();
+					for (var i=0;i<meshes.length;i++)
 					{
-						var shape=_this.__meshes[shapesArray[i].nodeId];
-						if (shape!=null) {
-							shape.renderDepth=renderDepthSpinner.getValue();
+						var mesh=_this.__meshes[meshes[i].nodeId];
+						if (mesh!=null) {
+							mesh.renderDepth=renderDepthSpinner.getValue();
 						}
 					}
 					_this.render();
@@ -1153,7 +1158,7 @@ qx.Class.define("desk.meshView",
 
 		removeMesh : function (node) {
 			var nodeId=node.nodeId;
-			var dataModel=this.__shapesList.getDataModel();
+			var dataModel=this.__meshesTree.getDataModel();
 			dataModel.prune(nodeId, true);
 			var mesh=this.__meshes[nodeId];
 			this.__scene.remove(mesh);
@@ -1172,10 +1177,10 @@ qx.Class.define("desk.meshView",
 			var menu = new qx.ui.menu.Menu;
 			var propertiesButton = new qx.ui.menu.Button("properties");
 			propertiesButton.addListener("execute", function (){
-				var selectedShapeId=this.__shapesList.getSelectedNodes()[0].nodeId;
-				var shape=this.__meshes[selectedShapeId];
-				alert ("Mesh with "+shape.geometry.vertexPositionBuffer.numItems/3+" vertices and "+
-						shape.geometry.vertexIndexBuffer.numItems/3+" polygons");
+				var meshId=this.__meshesTree.getSelectedNodes()[0].nodeId;
+				var mesh=this.__meshes[meshId];
+				alert ("Mesh with "+mesh.geometry.vertexPositionBuffer.numItems/3+" vertices and "+
+						mesh.geometry.vertexIndexBuffer.numItems/3+" polygons");
 				},this);
 			menu.add(propertiesButton);
 
@@ -1190,15 +1195,15 @@ qx.Class.define("desk.meshView",
 
 			var showButton = new qx.ui.menu.Button("show");
 			showButton.addListener("execute", function (){
-				var shapesArray=this.__shapesList.getSelectedNodes();
-				for (var i=0;i<shapesArray.length;i++)
+				var meshes=this.__meshesTree.getSelectedNodes();
+				for (var i=0;i<meshes.length;i++)
 				{
-					if (shapesArray[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+					if (meshes[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 					{
-						var shapeId=shapesArray[i].nodeId;
-						var shape=this.__meshes[shapeId];
-						shape.visible=true;
-						this.__meshesVisibility[shapeId]=true;
+						var meshId=meshes[i].nodeId;
+						var mesh=this.__meshes[meshId];
+						mesh.visible=true;
+						this.__meshesVisibility[meshId]=true;
 					}
 				}
 				this.render();		
@@ -1207,15 +1212,15 @@ qx.Class.define("desk.meshView",
 
 			var hideButton = new qx.ui.menu.Button("hide");
 			hideButton.addListener("execute", function (){
-				var shapesArray=this.__shapesList.getSelectedNodes();
-				for (var i=0;i<shapesArray.length;i++)
+				var meshes=this.__meshesTree.getSelectedNodes();
+				for (var i=0;i<meshes.length;i++)
 				{
-					if (shapesArray[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+					if (meshes[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 					{
-						var shapeId=shapesArray[i].nodeId;
-						var shape=this.__meshes[shapeId];
-						shape.visible=false;
-						this.__meshesVisibility[shapeId]=false;
+						var meshId=meshes[i].nodeId;
+						var mesh=this.__meshes[meshId];
+						mesh.visible=false;
+						this.__meshesVisibility[meshId]=false;
 					}
 				}
 				this.render();		
@@ -1224,7 +1229,7 @@ qx.Class.define("desk.meshView",
 
 			var removeButton = new qx.ui.menu.Button("remove");
 			removeButton.addListener("execute", function (){
-				var meshes=this.__shapesList.getSelectedNodes();
+				var meshes=this.__meshesTree.getSelectedNodes();
 				for (var i=0;i<meshes.length;i++)
 				{
 					if (meshes[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
