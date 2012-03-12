@@ -80,6 +80,9 @@ qx.Class.define("desk.sliceView",
 		__rightContainer : null,
 
 		__viewPort : null,
+		__overlayCanvas : null,
+		__directionOverlays : null,
+
 
 		__paintWidth : 5,
 		__currentColor : null,
@@ -190,6 +193,13 @@ qx.Class.define("desk.sliceView",
 			var up=camera.up;
 			direction.crossSelf(up).normalize();
 			up.copy(direction);
+
+			var overlays=this.__directionOverlays;
+			var tempValue=overlays[3].getValue();
+			for (var i=3;i>0;i--) {
+				overlays[i].setValue(overlays[i-1].getValue());
+			}
+			overlays[0].setValue(tempValue);
 			this.render();
 		},
 
@@ -201,11 +211,25 @@ qx.Class.define("desk.sliceView",
 			direction.crossSelf(up).normalize().negate();
 			up.copy(direction);
 			this.render();
+
+			var overlays=this.__directionOverlays;
+			var tempValue=overlays[0].getValue();
+			for (var i=0;i<3;i++) {
+				overlays[i].setValue(overlays[i+1].getValue());
+			}
+			overlays[3].setValue(tempValue);
+			this.render();
 		},
 
 		flipX : function () {
 			var camera=this.__camera;
 			camera.position.setZ(-camera.position.z);
+			this.render();
+
+			var overlays=this.__directionOverlays;
+			var tempValue=overlays[1].getValue();
+			overlays[1].setValue(overlays[3].getValue());
+			overlays[3].setValue(tempValue);
 			this.render();
 		},
 
@@ -214,6 +238,10 @@ qx.Class.define("desk.sliceView",
 			camera.position.setZ(-camera.position.z);
 			camera.up.negate();
 			this.render();
+			var overlays=this.__directionOverlays;
+			var tempValue=overlays[0].getValue();
+			overlays[0].setValue(overlays[2].getValue());
+			overlays[2].setValue(tempValue);
 		},
 
 		getReorientationContainer : function () {
@@ -898,6 +926,7 @@ qx.Class.define("desk.sliceView",
 
 				this.__renderer=renderer;
 				renderer.setClearColorHex( 0xffffff, 1 );
+				renderer.setClearColorHex( 0x000000, 1 );
 				this.__resizeHTML();
 
 				container.appendChild( renderer.domElement );
@@ -958,7 +987,67 @@ qx.Class.define("desk.sliceView",
 		},
 
 		__createUI : function (file) {
-			this.add(this.__getRenderWindow(), {flex : 1});
+			var overlayCanvas=new qx.ui.container.Composite(new qx.ui.layout.Canvas());
+			this.__overlayCanvas=overlayCanvas;
+			var viewPort=this.__getRenderWindow();
+			overlayCanvas.addListener("resize", function () {
+				var size=overlayCanvas.getInnerSize();
+				viewPort.setWidth(size.width);
+				viewPort.setHeight(size.height);
+			}, this);
+
+			overlayCanvas.add(viewPort);
+			this.add(overlayCanvas, {flex : 1});
+
+			var directionOverlays=[];
+			this.__directionOverlays=directionOverlays;
+
+			var font= new qx.bom.Font(20, ["Verdana", "sans-serif"]);
+			var northLabel=new qx.ui.basic.Label("S");
+			northLabel.set({textColor : "yellow",
+					        font : font});
+			overlayCanvas.add(northLabel, {left:"50%", top:"1%"});
+
+			var southLabel=new qx.ui.basic.Label("I");
+			southLabel.set({textColor : "yellow",
+					        font : font});
+			overlayCanvas.add(southLabel, {left:"50%", bottom:"1%"});
+			var eastLabel=new qx.ui.basic.Label("L");
+			eastLabel.set({textColor : "yellow",
+					        font : font});
+			overlayCanvas.add(eastLabel, {left:"1%", top:"45%"});
+			var westLabel=new qx.ui.basic.Label("R");
+			westLabel.set({textColor : "yellow",
+					        font : font});
+			overlayCanvas.add(westLabel, {right:"1%", top:"45%"});
+			directionOverlays.push(northLabel);
+			directionOverlays.push(eastLabel);
+			directionOverlays.push(southLabel);
+			directionOverlays.push(westLabel);
+			switch (this.getOrientation())
+			{
+			default:
+			case 0 :
+				northLabel.setValue("A");
+				southLabel.setValue("P");
+				eastLabel.setValue("R");
+				westLabel.setValue("L");
+				break;
+			case 1 :
+				northLabel.setValue("A");
+				southLabel.setValue("P");
+				eastLabel.setValue("I");
+				westLabel.setValue("S");
+				break;
+			case 2 :
+				northLabel.setValue("I");
+				southLabel.setValue("S");
+				eastLabel.setValue("R");
+				westLabel.setValue("L");
+				break;
+			}
+
+
 			var rightContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox());
 			this.__rightContainer=rightContainer;
 
