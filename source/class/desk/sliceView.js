@@ -47,7 +47,7 @@ qx.Class.define("desk.sliceView",
 		}, this);
 
 		this.__initUndo();
-
+		this.add(this.getReorientationContainer());
 		return (this);		
 	},
 
@@ -179,6 +179,73 @@ qx.Class.define("desk.sliceView",
 					}
 				}
 			}
+		},
+
+		__reorientationContainer : null,
+
+		rotateLeft : function () {
+			var camera=this.__camera;
+			var direction=this.__controls.target.clone();
+			direction.subSelf(camera.position);
+			var up=camera.up;
+			direction.crossSelf(up).normalize();
+			up.copy(direction);
+			this.render();
+		},
+
+		rotateRight : function () {
+			var camera=this.__camera;
+			var direction=this.__controls.target.clone();
+			direction.subSelf(camera.position);
+			var up=camera.up;
+			direction.crossSelf(up).normalize().negate();
+			up.copy(direction);
+			this.render();
+		},
+
+		flipX : function () {
+			var camera=this.__camera;
+			camera.position.setZ(-camera.position.z);
+			this.render();
+		},
+
+		flipY : function () {
+			var camera=this.__camera;
+			camera.position.setZ(-camera.position.z);
+			camera.up.negate();
+			this.render();
+		},
+
+		getReorientationContainer : function () {
+			if (this.__reorientationContainer!=null) {
+				return this.__reorientationContainer;
+			}
+			var gridContainer=new qx.ui.container.Composite();
+			var gridLayout=new qx.ui.layout.Grid(3,3);
+			for (var i=0;i<2;i++) {
+				gridLayout.setRowFlex(i,1);
+				gridLayout.setColumnFlex(i,1);
+			}
+			gridContainer.set({layout : gridLayout,
+							decorator : "main"});
+
+			var rotateLeft = new qx.ui.form.Button("Rotate left");
+			rotateLeft.addListener("execute", this.rotateLeft, this);
+			gridContainer.add(rotateLeft, {row: 0, column: 0});
+
+			var rotateRight = new qx.ui.form.Button("Rotate right");
+			rotateRight.addListener("execute", this.rotateRight, this);
+			gridContainer.add(rotateRight, {row: 0, column: 1});
+
+			var flipX = new qx.ui.form.Button("Flip X");
+			flipX.addListener("execute", this.flipX, this);
+			gridContainer.add(flipX, {row: 1, column: 0});
+
+			var flipY = new qx.ui.form.Button("Flip Y");
+			flipY.addListener("execute", this.flipY, this);
+			gridContainer.add(flipY, {row: 1, column: 1});
+			this.__reorientationContainer=gridContainer;
+			return gridContainer;
 		},
 
 		__links : null,
@@ -729,9 +796,10 @@ qx.Class.define("desk.sliceView",
 
 					var z=this.__camera.position.z;
 					this.render();
+					var myViewer=this;
 					this.__master.applyToViewers (function (viewer) {
-						if (viewer!=this) {
-							viewer.__camera.position.z=z;
+						if (viewer!=myViewer) {
+							viewer.__camera.position.z*=Math.abs(z/viewer.__camera.position.z);
 							viewer.__propagateLinks();
 							viewer.render();
 							}

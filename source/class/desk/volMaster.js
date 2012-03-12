@@ -129,6 +129,16 @@ qx.Class.define("desk.volMaster",
 		},
 
 		__addViewers : function () {
+			var gridContainer=new qx.ui.container.Composite();
+			var gridLayout=new qx.ui.layout.Grid();
+			for (var i=0;i<2;i++) {
+				gridLayout.setRowFlex(i,1);
+				gridLayout.setColumnFlex(i,1);
+			}
+
+			gridContainer.setLayout(gridLayout);
+			this.__orientationContainer=gridContainer;
+
 			for(var i=0; i<this.__nbUsedOrientations; i++) {
 				var sliceView=  new desk.sliceView(this.__fileBrowser, this, i);
 				this.__viewers[i] =sliceView;	
@@ -147,9 +157,12 @@ qx.Class.define("desk.volMaster",
 			}
 		},
 
+		__orientationContainer : null,
+
 		__addViewerToGrid : function (sliceView, x, y) {
 			var fullscreen=false;
 			this.__gridContainer.add(sliceView, {row: x, column: y});
+			this.__orientationContainer.add(sliceView.getReorientationContainer(), {row: x, column: y});
 
 			var fullscreenButton=new qx.ui.form.Button("+");
 			sliceView.getRightContainer().add(fullscreenButton);
@@ -362,7 +375,7 @@ qx.Class.define("desk.volMaster",
 		__getVolumeContextMenu : function (volumeListItem) {
 				//context menu to edit meshes appearance
 			var menu = new qx.ui.menu.Menu;
-			var propertiesButton = new qx.ui.menu.Button("properties");
+			var propertiesButton = new qx.ui.menu.Button("properties/orientation");
 			propertiesButton.addListener("execute", function (){
 
 				function formatArray(array) {
@@ -383,6 +396,7 @@ qx.Class.define("desk.volMaster",
 				window.setLayout(new qx.ui.layout.VBox());
 				window.setShowClose(true);
 				window.setShowMinimize(false);
+				window.setResizable(false,false,false,false);
 				window.add(new qx.ui.basic.Label("volume : "+slice.getFileName()));
 				window.add(new qx.ui.basic.Label("dimensions : "+formatArray(slice.getDimensions())));
 				window.add(new qx.ui.basic.Label("extent : "+formatArray(slice.getExtent())));
@@ -390,6 +404,8 @@ qx.Class.define("desk.volMaster",
 				window.add(new qx.ui.basic.Label("spacing : "+formatArray(slice.getSpacing())));
 				window.add(new qx.ui.basic.Label("scalarType : "+slice.getScalarType()+" ("+slice.getScalarTypeAsString()+")"));
 				window.add(new qx.ui.basic.Label("scalar bounds : "+formatArray(slice.getScalarBounds())));
+				window.add(new qx.ui.basic.Label("Orientation :"));
+				window.add(this.__orientationContainer);
 				window.open();
 				},this);
 			menu.add(propertiesButton);
@@ -478,13 +494,26 @@ qx.Class.define("desk.volMaster",
 
 		__addLinkToViewerSupport : function () {
 			var viewers=this.__viewers;
+
+			var menu = new qx.ui.menu.Menu();
+			var unLinkButton = new qx.ui.menu.Button("unlink");
+			unLinkButton.addListener("execute", function() {
+				for (var i=0;i<viewers.length;i++) {
+					viewers[i].unLink();
+				}
+			},this);
+			menu.add(unLinkButton);
+
 			for (var i=0;i<viewers.length;i++) {
 				var label=viewers[i].getRightContainer().getChildren()[0];
+				
 				label.setDraggable(true);
 				label.addListener("dragstart", function(e) {
 					e.addAction("alias");
 					e.addType("volView");
 					});
+
+				label.setContextMenu(menu);
 
 				label.addListener("droprequest", function(e) {
 						var type = e.getCurrentType();
