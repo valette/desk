@@ -50,7 +50,7 @@ qx.Class.define("desk.volumeSlice",
 
 	members : {
 
-		__availableFormat : null,
+		__availableImageFormat : null,
 
 		__fileBrowser : null,
 		__file : null,
@@ -391,6 +391,8 @@ qx.Class.define("desk.volumeSlice",
 
 		__parseXMLresponse : function (xmlDoc, xmlURL) {
 
+			this.__availableImageFormat=this.getImageFormat();
+
 			var volume=xmlDoc.getElementsByTagName("volume")[0];
 			if (volume==null)
 				return;
@@ -502,7 +504,7 @@ qx.Class.define("desk.volumeSlice",
 			var shift=-min;
 			var scale=255/(max-min);
 			
-			if (this.getImageFormat()==0)
+			if (this.__availableImageFormat==0)
 			{
 				switch (this.__scalarSize)
 				{
@@ -685,7 +687,7 @@ qx.Class.define("desk.volumeSlice",
 			var greenArray=this.__lookupTableGreen;
 			var blueArray=this.__lookupTableBlue;
 
-			if (this.getImageFormat()==0)
+			if (this.__availableImageFormat==0)
 			{
 				switch (this.__scalarSize)
 				{
@@ -832,7 +834,7 @@ qx.Class.define("desk.volumeSlice",
 
 		__reallyUpdateImage : function() {
 			var fileSuffix;
-			if (this.getImageFormat()==0) {
+			if (this.__availableImageFormat==0) {
 				fileSuffix=".png";
 			}
 			else {
