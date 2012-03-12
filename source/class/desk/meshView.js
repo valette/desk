@@ -129,17 +129,10 @@ qx.Class.define("desk.meshView",
 
 	destruct : function(){
 		console.log("destructor");
+		this.removeAllMeshes();
 		this.unlink();
-		//clean the scene
-		var meshes=this.__meshes;
-		for (var i=0;i<meshes.length;i++)
-		{
-			meshes[i]=0;
-		}
-		this.__meshes=0;
 
-		this.__meshesVisibility.length=0;
-		this._disposeObjects("__embededHTML","__meshesTree");
+//		this._disposeObjects("__embededHTML","__meshesTree");
 	},
 
 	properties : {
@@ -370,6 +363,29 @@ qx.Class.define("desk.meshView",
 					viewer.render();
 				}
 			}
+		},
+
+		removeAllMeshes : function () {
+			var meshesTree=this.__meshesTree;
+			var meshesToRemove=[];
+
+			var meshes=meshesTree.nodeGet(this.__meshesRoot).children;
+			for (var i=0;i<meshes.length;i++) {
+				meshesToRemove.push(meshesTree.nodeGet(meshes[i]));
+			}
+
+			this.removeMeshes(meshesToRemove);
+
+			if (this.__slicesRoot==null) {
+				return;
+			}
+
+			meshes=meshesTree.nodeGet(this.__slicesRoot).children;
+			for (var i=0;i<meshes.length;i++) {
+				meshesToRemove.push(meshesTree.nodeGet(meshes[i]));
+			}
+
+			this.removeMeshes(meshesToRemove);
 		},
 
 		unlink : function () {
@@ -671,7 +687,7 @@ qx.Class.define("desk.meshView",
 			}, this);
 
 			this.__window.addListener("close", function(e) {
-				this.dispose();
+				this.removeAllMeshes();
 				},this);
 
 			htmlContainer.addListenerOnce("appear",function(e){
@@ -1156,20 +1172,22 @@ qx.Class.define("desk.meshView",
 			return (mainContainer);
 		},
 
-		removeMesh : function (node) {
-			var nodeId=node.nodeId;
+		removeMeshes : function (nodes) {
 			var dataModel=this.__meshesTree.getDataModel();
-			dataModel.prune(nodeId, true);
-			var mesh=this.__meshes[nodeId];
-			this.__scene.remove(mesh);
-			this.__meshes[nodeId]=0;
-			this.__meshesVisibility[nodeId]=0;
-			dataModel.setData();
-			var map=mesh.material.map;
-			if (map!=null) {
-				this.__renderer.deallocateTexture( map );
+			for (var i=0;i<nodes.length;i++) {
+				var nodeId=nodes[i].nodeId;
+				dataModel.prune(nodeId, true);
+				var mesh=this.__meshes[nodeId];
+				this.__scene.remove(mesh);
+				this.__meshes[nodeId]=0;
+				this.__meshesVisibility[nodeId]=0;
+				var map=mesh.material.map;
+				if (map!=null) {
+					this.__renderer.deallocateTexture( map );
+				}
+				this.__renderer.deallocateObject( mesh );
 			}
-			this.__renderer.deallocateObject( mesh );
+			dataModel.setData();
 		},
 
 		__getContextMenu : function() {
@@ -1229,16 +1247,9 @@ qx.Class.define("desk.meshView",
 
 			var removeButton = new qx.ui.menu.Button("remove");
 			removeButton.addListener("execute", function (){
-				var meshes=this.__meshesTree.getSelectedNodes();
-				for (var i=0;i<meshes.length;i++)
-				{
-					if (meshes[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-					{
-						this.removeMesh(meshes[i]);
-					}
-				}
+				this.removeMeshes(this.__meshesTree.getSelectedNodes());
 				this.render();		
-				},this);
+			},this);
 			menu.add(removeButton);
 			return menu;
 		}
