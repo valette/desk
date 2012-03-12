@@ -1,4 +1,5 @@
 /*
+#asset(desk/camera-photo.png)
 #asset(three.js/*)
 #ignore(THREE.*)
 #ignore(THREE)
@@ -846,7 +847,7 @@ qx.Class.define("desk.meshView",
 		__renderfunction : null,
 		__renderingTriggered : false,
 
-		render : function ( ) {
+		render : function ( force ) {
 			var _this=this;
 
 			if (this.__renderFunction==null) {
@@ -856,6 +857,11 @@ qx.Class.define("desk.meshView",
 						_this.__renderingTriggered = false;
 				};
 			}
+			if (force==true) {
+				this.__renderFunction();
+				return;
+			}			
+
 			if (!this.__renderingTriggered) {
 				this.__renderingTriggered=true;
 				requestAnimationFrame(this.__renderFunction);
@@ -946,7 +952,7 @@ qx.Class.define("desk.meshView",
 
 			if (factor==1)
 			{
-				this.render();
+				this.render(true);
 				var strData = this.__renderer.domElement.toDataURL("image/png");
 				var saveData=strData.replace("image/png", "image/octet-stream");
 				document.location.href = saveData;
@@ -981,7 +987,7 @@ qx.Class.define("desk.meshView",
 			x4button.addListener("execute", function (){factor=4;},this);
 			menu.add(x4button);
 
-			var button=new qx.ui.form.Button(null, "resource/desk/camera-photo.png");
+			var button=new qx.ui.form.Button(null, "desk/camera-photo.png");
 			button.addListener("execute", function(e) {
 				this.snapshot(factor);}, this);
 	
