@@ -368,12 +368,22 @@ qx.Class.define("desk.segTools",
 				}
 			});
 
+			var meshViewer=null;
+
 			meshingAction.addListener("actionUpdated", function ()
 			{
 				meshingButton.setEnabled(true);
 				tools.__startSegmentationButton.setEnabled(true);
-				var meshesViewer=new desk.meshView(tools.getSessionDirectory()+"/meshes/meshes.xml",
-								fileBrowser);
+				if (meshViewer==null) {
+					meshViewer=new desk.meshView(tools.getSessionDirectory()+
+						"/meshes/meshes.xml", fileBrowser);
+					meshViewer.addListener("close", function () {
+						meshViewer=null;
+					})
+				}
+				else {
+					meshViewer.update();
+				}
 			}, this);
 
 			tools.__seedsTypeSelectBox = tools.__getSeedsTypeSelectBox();

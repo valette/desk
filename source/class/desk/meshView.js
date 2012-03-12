@@ -115,20 +115,15 @@ qx.Class.define("desk.meshView",
 		var menu=this.__getContextMenu();
 		this.__meshesTree.setContextMenu(menu);
 
-		if (fileBrowser!=null)
-		{
-			this.__fileBrowser=fileBrowser;
-			this.openFile(file,mtime);
-		}
-		else
-		{
-			alert("error : no file browser provided to mesh viewer");
-		}
+		this.__fileBrowser=fileBrowser;
+
+		this.__firstFile=file;
+		this.__firstMTime=mtime;
+		this.openFile(file,mtime);
 		return (this);
 	},
 
 	destruct : function(){
-		console.log("destructor");
 		this.removeAllMeshes();
 		this.unlink();
 
@@ -141,7 +136,16 @@ qx.Class.define("desk.meshView",
 		convertVTK : { init : true, check: "Boolean"}
 	},
 
+	events : {
+		// the "changeSlice" event is fired whenever the image changes
+		"close" : "qx.event.type.Event"
+	},
+
 	members : {
+
+		__firstFile : null,
+
+		__firstMTime : null,
 
 		// the html element containing the 3D rendering
 		__embededHTML : null,
@@ -277,6 +281,10 @@ qx.Class.define("desk.meshView",
 			}
 		},
 
+		update : function () {
+			this.removeAllMeshes();
+			this.openFile(this.__firstFile, Math.random());
+		},
 		__links : null,
 
 		linkToMeshViewer : function (viewer) {
@@ -409,7 +417,7 @@ qx.Class.define("desk.meshView",
 
 			for (var i=0;i<meshes.length;i++)
 			{
-				if (meshes[i]!=undefined)
+				if ((typeof meshes[i]) =="object")
 				{
 					var bbox=meshes[i].geometry.boundingBox;
 
@@ -447,14 +455,11 @@ qx.Class.define("desk.meshView",
 			{
 				var ratio=bbdiaglength/this.__boudingBoxDiagonalLength;
 				this.__boudingBoxDiagonalLength=bbdiaglength;
-				if (ratio>1)
-				{
-					var backPedal=camera.position.clone();
-					backPedal.subSelf(this.__controls.target);
-					backPedal.multiplyScalar(ratio);
-					backPedal.addSelf(this.__controls.target);
-					camera.position.copy(backPedal);
-				}
+				var backPedal=camera.position.clone();
+				backPedal.subSelf(this.__controls.target);
+				backPedal.multiplyScalar(ratio);
+				backPedal.addSelf(this.__controls.target);
+				camera.position.copy(backPedal);
 			}
 			this.__controls.update();
 			this.render();
@@ -490,9 +495,13 @@ qx.Class.define("desk.meshView",
 						var xmlhttp=new XMLHttpRequest();
 						xmlhttp.open("GET",_this.__fileBrowser.getFileURL(file)+"?nocache=" + Math.random(),false);
 						xmlhttp.send();
-						var readString=xmlhttp.responseXML;
+						var rootDocument=xmlhttp.responseXML;
 
-						var meshes=readString.getElementsByTagName("mesh");
+						var meshes=rootDocument.getElementsByTagName("mesh");
+						var rootElement=rootDocument.childNodes[0];
+						if (rootElement.hasAttribute("timestamp")) {
+							mtime=parseFloat(rootElement.getAttribute("timestamp"));
+						}
 
 						var slashIndex=file.lastIndexOf("/");
 
@@ -514,10 +523,9 @@ qx.Class.define("desk.meshView",
 								var colors=colorstring.split(" ");
 								for (var j=0;j<4;j++)
 									color[j]=parseFloat(colors[j]);
+								color[4]=parseInt(colors[4]);
 							}
-							if (mesh.hasAttribute("depth")) {
-								color[4]=parseInt(mesh.getAttribute("depth"));
-							}
+
 							
 							var update=function()
 							{
@@ -688,6 +696,8 @@ qx.Class.define("desk.meshView",
 
 			this.__window.addListener("close", function(e) {
 				this.removeAllMeshes();
+				this.unlink();
+				this.fireEvent("close");
 				},this);
 
 			htmlContainer.addListenerOnce("appear",function(e){
@@ -913,7 +923,6 @@ qx.Class.define("desk.meshView",
 							var mesh = new THREE.Mesh(geom, material );
 							mesh.doubleSided=true;
 							mesh.renderDepth=color[4];
-
 							_this.__scene.add( mesh );
 
 							if(typeof parameters.callback == 'function') {
