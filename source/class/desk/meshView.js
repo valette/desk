@@ -389,6 +389,7 @@ qx.Class.define("desk.meshView",
 			}
 
 			meshes=meshesTree.nodeGet(this.__slicesRoot).children;
+			meshesToRemove=[];
 			for (var i=0;i<meshes.length;i++) {
 				meshesToRemove.push(meshesTree.nodeGet(meshes[i]));
 			}
