@@ -356,7 +356,7 @@ qx.Class.define("desk.sliceView",
 			if (!found) {
 				links.push(viewer);
 			}
-			viewer.__propagateLinks();
+			viewer.__propagateCameraToLinks();
 		},
 
 		applyToLinks : function (theFunction) {
@@ -371,7 +371,7 @@ qx.Class.define("desk.sliceView",
 			}
 		},
 
-		__propagateLinks : function () {
+		__propagateCameraToLinks : function () {
 			var _this=this;
 			this.applyToLinks( function () {
 				if (this!=_this) {
@@ -419,8 +419,8 @@ qx.Class.define("desk.sliceView",
 				HACKSetDirtyVertices(sliceGeometry);*/
 			}
 
-			this.__drawingMesh.renderDepth=2;
-			this.__crossMeshes[0].renderDepth=1;
+			this.__drawingMesh.renderDepth=3;
+			this.__crossMeshes[0].renderDepth=2;
 			this.__crossMeshes[1].renderDepth=1;
 			this.__brushMesh.renderDepth=0;
 /*
@@ -442,13 +442,14 @@ qx.Class.define("desk.sliceView",
 
 			var material = new THREE.LineBasicMaterial({
 				color : 0x4169FF,
-				linewidth : 1,
+				linewidth : 2,
+				opacity : 0.5,
 				transparent : true
 			});
 
 			var hGeometry=new THREE.Geometry();
-			hGeometry.vertices.push(new THREE.Vertex(new THREE.Vector3(coordinates[0],0,0.1)));
-			hGeometry.vertices.push(new THREE.Vertex(new THREE.Vector3(coordinates[2],0,0.1)));
+			hGeometry.vertices.push(new THREE.Vertex(new THREE.Vector3(coordinates[0],0,0)));
+			hGeometry.vertices.push(new THREE.Vertex(new THREE.Vector3(coordinates[2],0,0)));
 			var hline = new THREE.Line(hGeometry, material);
 			this.__scene.add(hline);
 
@@ -769,6 +770,16 @@ qx.Class.define("desk.sliceView",
 					_this.__setDrawingMesh(volumeSlice);
 					_this.__createBrushMesh(volumeSlice);
 					_this.__createCrossMeshes(volumeSlice);
+					switch (this.getOrientation())
+					{
+						case 2 :
+							_this.flipY();
+							break;
+						case 1 :
+							_this.rotateLeft();
+							break;
+						default:
+					}
 				}
 				_this.render();
 
@@ -959,11 +970,11 @@ qx.Class.define("desk.sliceView",
 					this.__master.applyToViewers (function () {
 						if (this!=myViewer) {
 							this.__camera.position.z*=Math.abs(z/this.__camera.position.z);
-							this.__propagateLinks();
+							this.__propagateCameraToLinks();
 							this.render();
 							}
 						});
-					this.__propagateLinks();
+					this.__propagateCameraToLinks();
 					break;
 				case 2 :
 					brushMesh.visible=false;
@@ -971,7 +982,7 @@ qx.Class.define("desk.sliceView",
 					controls.mouseMove(event.getDocumentLeft()-origin.left
 							, event.getDocumentTop()-origin.top);
 					this.render();
-					this.__propagateLinks();
+					this.__propagateCameraToLinks();
 					break;
 				case 3 :
 					brushMesh.visible=true;
@@ -1182,7 +1193,7 @@ qx.Class.define("desk.sliceView",
 				var sliceId=e.getData();
 				label.setValue(sliceId+"");
 				slider.setValue(this.getVolumeSliceToPaint().getNumberOfSlices()-1-sliceId)
-				this.__propagateLinks();
+				this.__propagateCameraToLinks();
 			}, this);
 
 			rightContainer.add(slider, {flex : 1});

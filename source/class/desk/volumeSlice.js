@@ -218,9 +218,9 @@ qx.Class.define("desk.volumeSlice",
 			default:
 				var z=this.__origin[2]+(this.getSlice()+this.__extent[4])*this.__spacing[2];
 				var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
-				var xmax=this.__origin[0]+this.__extent[1]*this.__spacing[0];
+				var xmax=this.__origin[0]+(this.__extent[1]+1)*this.__spacing[0];
 				var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
-				var ymax=this.__origin[1]+this.__extent[3]*this.__spacing[1];
+				var ymax=this.__origin[1]+(this.__extent[3]+1)*this.__spacing[1];
 				var coordinates=[];
 				coordinates[0]=xmin;
 				coordinates[1]=ymin;
@@ -239,9 +239,9 @@ qx.Class.define("desk.volumeSlice",
 			case 1 :
 				var x=this.__origin[0]+(this.getSlice()+this.__extent[0])*this.__spacing[0];
 				var ymin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
-				var ymax=this.__origin[2]+this.__extent[5]*this.__spacing[2];
+				var ymax=this.__origin[2]+(this.__extent[5]+1)*this.__spacing[2];
 				var zmin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
-				var zmax=this.__origin[1]+this.__extent[3]*this.__spacing[1];
+				var zmax=this.__origin[1]+(this.__extent[3]+1)*this.__spacing[1];
 				var coordinates=[];
 				coordinates[0]=x;
 				coordinates[1]=zmin;
@@ -260,9 +260,9 @@ qx.Class.define("desk.volumeSlice",
 			case 2 :
 				var y=this.__origin[1]+(this.getSlice()+this.__extent[2])*this.__spacing[1];
 				var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
-				var xmax=this.__origin[0]+this.__extent[1]*this.__spacing[0];
+				var xmax=this.__origin[0]+(this.__extent[1]+1)*this.__spacing[0];
 				var zmin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
-				var zmax=this.__origin[2]+this.__extent[5]*this.__spacing[2];
+				var zmax=this.__origin[2]+(this.__extent[5]+1)*this.__spacing[2];
 				var coordinates=[];
 				coordinates[0]=xmin;
 				coordinates[1]=y;
@@ -282,11 +282,11 @@ qx.Class.define("desk.volumeSlice",
 
 		getBoundingBoxDiagonalLength : function () {
 			var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
-			var xmax=this.__origin[0]+this.__extent[1]*this.__spacing[0];
+			var xmax=this.__origin[0]+(this.__extent[1]+1)*this.__spacing[0];
 			var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
-			var ymax=this.__origin[1]+this.__extent[3]*this.__spacing[1];
+			var ymax=this.__origin[1]+(this.__extent[3]+1)*this.__spacing[1];
 			var zmin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
-			var zmax=this.__origin[2]+this.__extent[5]*this.__spacing[2];
+			var zmax=this.__origin[2]+(this.__extent[5]+1)*this.__spacing[2];
 			return Math.sqrt((xmax-xmin)*(xmax-xmin)+
 								(ymax-ymin)*(ymax-ymin)+
 								(zmax-zmin)*(zmax-zmin));
@@ -316,11 +316,11 @@ qx.Class.define("desk.volumeSlice",
 
 		get2DCornersCoordinates : function () {
 			var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
-			var xmax=this.__origin[0]+this.__extent[1]*this.__spacing[0];
+			var xmax=this.__origin[0]+(this.__extent[1]+1)*this.__spacing[0];
 			var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
-			var ymax=this.__origin[1]+this.__extent[3]*this.__spacing[1];
+			var ymax=this.__origin[1]+(this.__extent[3]+1)*this.__spacing[1];
 			var zmin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
-			var zmax=this.__origin[2]+this.__extent[5]*this.__spacing[2];
+			var zmax=this.__origin[2]+(this.__extent[5]+1)*this.__spacing[2];
 			var coordinates=[];
 
 			switch(this.getOrientation())
