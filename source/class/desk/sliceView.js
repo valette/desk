@@ -6,6 +6,7 @@
 #ignore(Detector)
 #ignore(Uint8Array)
 #ignore(HACKSetDirtyVertices)
+@lint ignoreGlobal(THREE)
 */
 
 qx.Class.define("desk.sliceView", 
@@ -84,8 +85,7 @@ qx.Class.define("desk.sliceView",
 		__directionOverlays : null,
 
 		__paintWidth : 5,
-		__currentColor : null,
-		__currentWidth : null,
+		__paintColor : null,
 
 		//THREE.js objects
 		__scene : null,
@@ -136,7 +136,7 @@ qx.Class.define("desk.sliceView",
 			this.__updateBrush()
 		},
 
-		__renderfunction : null,
+		__renderFunction : null,
 		__renderingTriggered : false,
 
 		render : function ( ) {
@@ -398,19 +398,15 @@ qx.Class.define("desk.sliceView",
 
 
 		reorderMeshes : function () {
-			var z_space=0.01;
-			var mesh;
 			var slices=this.__slices;
-			var i,j;
-
 			var length=slices.length;
-			for (i=0;i<length;i++) {
+			for (var i=0;i<length;i++) {
 				var rank=slices[i].getUserData("rank");			
-				this.__slices[i].getUserData("mesh").renderDepth=4+length-rank;
+				this.__slices[i].getUserData("mesh").renderDepth=3+length-rank;
 			}
 
-			this.__drawingMesh.renderDepth=3;
-			this.__crossMeshes[0].renderDepth=2;
+			this.__drawingMesh.renderDepth=2;
+			this.__crossMeshes[0].renderDepth=1;
 			this.__crossMeshes[1].renderDepth=1;
 			this.__brushMesh.renderDepth=0;
 		},

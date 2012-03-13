@@ -60,6 +60,7 @@ qx.Class.define("desk.volumeSlice",
 		__prefix : null,
 		__image : null,
 		__canvas : null,
+		__originalImageCanvas : null,
 
 		__timestamp : null,
 		__fileFormatBox : null,
@@ -174,10 +175,6 @@ qx.Class.define("desk.volumeSlice",
 			this.__brightness=brightness;
 			this.__contrast=contrast;
 			this.redraw();
-		},
-
-		getDimensions : function () {
-			return this.__dimensions;
 		},
 
 		getSlicesIdOffset : function () {

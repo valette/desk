@@ -7,6 +7,7 @@
 #ignore(Detector)
 #ignore(Uint8Array)
 #ignore(HACKSetDirtyVertices)
+@lint ignoreGlobal(THREE)
 */
 qx.Class.define("desk.meshView", 
 {
@@ -651,8 +652,6 @@ qx.Class.define("desk.meshView",
 			var randomId=Math.random();
 			htmlContainer.setHtml("<div id=\"three.js"+randomId+"\"></div>");
 
-			var _this=this;
-
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
 			this.__window.setDroppable(true);
@@ -661,28 +660,11 @@ qx.Class.define("desk.meshView",
 				{
 					var fileBrowser=e.getData("fileBrowser");
 					var nodes=fileBrowser.getSelectedNodes();
-					var numberOfMeshes=nodes.length;
-					var numberOfRemainingMeshes=numberOfMeshes;
 					for (var i=0;i<nodes.length;i++)
 					{
 						var fileNode=nodes[i];
 						var fileName=fileBrowser.getNodeFile(fileNode);
 						var mTime=fileBrowser.getNodeMTime(fileNode);
-
-						var update=function()
-						{
-							numberOfRemainingMeshes--;
-							switch (numberOfRemainingMeshes)
-							{
-								case Math.floor(numberOfMeshes/4):
-								case Math.floor(numberOfMeshes/2):
-								case Math.floor(numberOfMeshes*3/4):
-								case 0:
-									_this.viewAll();
-									break;
-								default:
-							}
-						}
 						this.openFile(fileName, mTime);
 					}
 				}
@@ -844,7 +826,7 @@ qx.Class.define("desk.meshView",
 			this.__renderer.render( this.__scene, this.__camera );			
 		},*/
 
-		__renderfunction : null,
+		__renderFunction : null,
 		__renderingTriggered : false,
 
 		render : function ( force ) {

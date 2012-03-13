@@ -99,7 +99,7 @@ qx.Class.define("desk.segTools",
 		__topRightContainer : null,
 		__bottomRightContainer : null,
 		__mainBottomRightContainer : null,
-
+		__colorsContainer : null,
 		__seedsTypeSelectBox : null,
 
 		__startSegmentationButton : null,
