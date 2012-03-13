@@ -46,22 +46,22 @@ qx.Class.define("desk.segTools",
 		var _this=this;
 
 		var listenersIds=[];
-		master.applyToViewers( function (sliceView) {
-			listenersIds[sliceView]=sliceView.addListener("changeSlice", function ( event ) {
+		master.applyToViewers( function () {
+			listenersIds[this]=this.addListener("changeSlice", function ( event ) {
 				_this.__saveCurrentSeeds();
-				_this.__reloadSeedImage( sliceView );
-			});
+				_this.__reloadSeedImage( this );
+			}, this);
 		});
 
 		this.addListener("close", function (e) {
-			master.applyToViewers( function (sliceView) {
-				sliceView.removeListenerById(listenersIds[sliceView]);
-				sliceView.setPaintMode(false);
-				sliceView.setEraseMode(false);
-				var canvas=sliceView.getDrawingCanvas();
+			master.applyToViewers( function () {
+				this.removeListenerById(listenersIds[this]);
+				this.setPaintMode(false);
+				this.setEraseMode(false);
+				var canvas=this.getDrawingCanvas();
 				canvas.getContext2d().clearRect(0,0,
 							canvas.getCanvasWidth(), canvas.getCanvasHeight());
-				sliceView.fireEvent("changeDrawing");
+				this.fireEvent("changeDrawing");
 			});
 		});
 		this.__labels=[];
@@ -184,8 +184,8 @@ qx.Class.define("desk.segTools",
 			
             this.__penSize.addListener("changeValue", function(event)
 			{
-					this.__master.applyToViewers(function (viewer) {
-						viewer.setPaintWidth(event.getData());
+					this.__master.applyToViewers(function () {
+						this.setPaintWidth(event.getData());
 					});
 				}, this);
             this.__penSize.setValue(5);
@@ -199,8 +199,8 @@ qx.Class.define("desk.segTools",
 			
 			this.__eraserButton.addListener("changeValue", function(e)
 			{
-				this.__master.applyToViewers(function (viewer) {
-					viewer.setEraseMode(e.getData());
+				this.__master.applyToViewers(function () {
+					this.setEraseMode(e.getData());
 					});
 				}, this);
 
@@ -255,8 +255,8 @@ qx.Class.define("desk.segTools",
 			whileDrawingDrwngOpacitySlider.setValue(100);
 			whileDrawingDrwngOpacitySlider.addListener("changeValue", function(event)
 			{
-				this.__master.applyToViewers(function (viewer) {
-					viewer.setPaintOpacity(event.getData()/100);
+				this.__master.applyToViewers(function () {
+					this.setPaintOpacity(event.getData()/100);
 					});
 			},this);
 
@@ -610,8 +610,8 @@ qx.Class.define("desk.segTools",
 					target.blue=colorSelector.getBlue();
 					target.updateWidget();
 			        colorView.setBackgroundColor(e.getData());
-					this.__master.applyToViewers( function (viewer) {
-						viewer.setPaintColor(colorSelector.getValue());
+					this.__master.applyToViewers( function () {
+						this.setPaintColor(colorSelector.getValue());
 					});
 				}
 			}, this);
@@ -942,9 +942,9 @@ qx.Class.define("desk.segTools",
 					paint=false
 				}
 
-				this.__master.applyToViewers( function (viewer) {
-					viewer.setPaintColor(colorBox.getBackgroundColor());
-					viewer.setPaintMode(paint);
+				this.__master.applyToViewers( function () {
+					this.setPaintColor(colorBox.getBackgroundColor());
+					this.setPaintMode(paint);
 					});
             }, this);
     
@@ -1037,8 +1037,8 @@ qx.Class.define("desk.segTools",
 			var master=this.__master;
 			var _this=this;
 
-			master.applyToViewers ( function (sliceView) {
-				sliceView.setUserData("previousSlice", sliceView.getSlice());
+			master.applyToViewers ( function () {
+				this.setUserData("previousSlice", this.getSlice());
 			});
 
 			var loadSessionRequest = new XMLHttpRequest();
@@ -1066,13 +1066,13 @@ qx.Class.define("desk.segTools",
 								else {
 									sliceOrientation = 0;
 								}
-								master.applyToViewers ( function (sliceView) {
-									if(sliceOrientation==sliceView.getOrientation())
-										_this.__addNewSeedItemToList(sliceView, sliceId, k);
+								master.applyToViewers ( function () {
+									if(sliceOrientation==this.getOrientation())
+										_this.__addNewSeedItemToList(this, sliceId, k);
 									});
 							}
-						master.applyToViewers( function (sliceView) {
-								_this.__reloadSeedImage( sliceView );
+						master.applyToViewers( function () {
+								_this.__reloadSeedImage( this );
 							});
 						}
 						var colors=response.getElementsByTagName("color");
@@ -1087,16 +1087,16 @@ qx.Class.define("desk.segTools",
 					else {
 						alert("no seeds found");
 						_this.__loadColors();
-						master.applyToViewers( function (sliceView) {
-								_this.__reloadSeedImage( sliceView );
+						master.applyToViewers( function () {
+								_this.__reloadSeedImage( this );
 							});
 					}
 				}
 				else if (this.readyState == 4 && this.status != 200) {
 					alert("no seeds found");
 					_this.__loadColors();
-					master.applyToViewers( function (sliceView) {
-						_this.__reloadSeedImage( sliceView );
+					master.applyToViewers( function () {
+						_this.__reloadSeedImage( this );
 						});
 				}
 			};
@@ -1207,21 +1207,21 @@ qx.Class.define("desk.segTools",
 			
         	var wasAnySeedModified=false;
         	var _this=this;
-			this.__master.applyToViewers ( function ( sliceView ) {
-				var base64Img=_this.__getNewSeedsImage ( sliceView );
+			this.__master.applyToViewers ( function ( ) {
+				var base64Img=_this.__getNewSeedsImage ( this );
 				if ( base64Img!=false ) {
 					// save image
-					var sliceId=sliceView.getUserData( "previousSlice" );
+					var sliceId=this.getUserData( "previousSlice" );
 					var seedsType=_this.getSeedsType();
 					var fileName=_this.getSessionDirectory()+"/"+
-						_this.__getSeedFileName (sliceView, sliceId, seedsType);
+						_this.__getSeedFileName (this, sliceId, seedsType);
 
-					_this.__addNewSeedItemToList ( sliceView, sliceId, seedsType );
+					_this.__addNewSeedItemToList ( this, sliceId, seedsType );
 					wasAnySeedModified=true;
 
 					var parameterMap={
 					action : "save_binary_file",
-					file_name : _this.__getSeedFileName (sliceView, sliceId, seedsType),
+					file_name : _this.__getSeedFileName (this, sliceId, seedsType),
 					base64Data : base64Img,
 					output_directory : _this.getSessionDirectory()};
 					_this.__fileBrowser.getActions().launchAction(parameterMap, savecallback);
@@ -1229,8 +1229,8 @@ qx.Class.define("desk.segTools",
 				else {
 					savecallback();
 				}
-				sliceView.setUserData("previousSlice", sliceView.getSlice());
-				sliceView.setDrawingCanvasNotModified();
+				this.setUserData("previousSlice", this.getSlice());
+				this.setDrawingCanvasNotModified();
 			});
 			if (wasAnySeedModified) {
 				this.__saveSeedsXML(savecallback);
@@ -1357,9 +1357,9 @@ qx.Class.define("desk.segTools",
 			}
 
 			var _this=this;
-			this.__master.applyToViewers( function (sliceView) {
-				var seedsLists=sliceView.getUserData(desk.segTools.seedsListsString);
-				var orientation=sliceView.getOrientation();
+			this.__master.applyToViewers( function () {
+				var seedsLists=this.getUserData(desk.segTools.seedsListsString);
+				var orientation=this.getOrientation();
 
 				for (var seedsType=0; seedsType<2; seedsType++) {
 					var list=seedsLists[seedsType];
@@ -1370,7 +1370,7 @@ qx.Class.define("desk.segTools",
 						var sliceId=slices[i].getUserData("slice");
 						//~ theMaster.debug("352 : sliceId : " + sliceId);
 						xmlContent += element(filePrefix,
-								_this.__getSeedFileName(sliceView, sliceId, seedsType), 
+								_this.__getSeedFileName(this, sliceId, seedsType), 
 								{slice: sliceId + "", orientation: orientation + ""}) + '\n';
 					}
 				}
@@ -1405,11 +1405,11 @@ qx.Class.define("desk.segTools",
 			function updateSeedsListsVisibility (e) {
 				var newSeedsType=selectBox.getSelection()[0].getUserData("seedsType");
 				_this.setSeedsType(newSeedsType);
-				_this.__master.applyToViewers(function ( sliceView ) {
-					var seedsLists=sliceView.getUserData(desk.segTools.seedsListsString);
+				_this.__master.applyToViewers(function ( ) {
+					var seedsLists=this.getUserData(desk.segTools.seedsListsString);
 					seedsLists[newSeedsType].setVisibility("visible");
 					seedsLists[1-newSeedsType].setVisibility("excluded");
-					_this.__reloadSeedImage (sliceView);
+					_this.__reloadSeedImage (this);
 					});
 			}
 
@@ -1482,8 +1482,8 @@ qx.Class.define("desk.segTools",
 
 		__addSeedsListsToViews : function ( ) {
 			var _this=this;
-			this.__master.applyToViewers ( function (sliceView) {
-				_this.__addSeedsLists ( sliceView );
+			this.__master.applyToViewers ( function () {
+				_this.__addSeedsLists ( this );
 			});
 		},
 
@@ -1547,11 +1547,11 @@ qx.Class.define("desk.segTools",
 
 		__clearSeeds : function ( ) {
 			var master=this.__master;
-			this.__master.applyToViewers ( function (sliceView) {
-				sliceView.setUserData("previousSlice", sliceView.getSlice());
-				var seedsLists=sliceView.getUserData(desk.segTools.seedsListsString);
+			this.__master.applyToViewers ( function () {
+				this.setUserData("previousSlice", this.getSlice());
+				var seedsLists=this.getUserData(desk.segTools.seedsListsString);
 				for (var i=0;i<2;i++) {
-					var numberOfSlices=sliceView.getVolumeSliceToPaint().getNumberOfSlices();
+					var numberOfSlices=this.getVolumeSliceToPaint().getNumberOfSlices();
 					var seedsArray = [];
 					var cacheTagsArray = [];
 					for (var j=0;j!=numberOfSlices;j++)

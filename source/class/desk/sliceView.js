@@ -361,9 +361,7 @@ qx.Class.define("desk.sliceView",
 		applyToLinks : function (theFunction) {
 			var links=this.__links;
 			if (links==null) {
-				if (context!=null) {
-					theFunction.apply(this);
-				}
+				theFunction.apply(this);
 			}
 			else {
 				for (var i=0;i<links.length;i++) {
@@ -373,18 +371,14 @@ qx.Class.define("desk.sliceView",
 		},
 
 		__propagateLinks : function () {
-			var links=this.__links;
-			if (links==null) {
-				return;
-			}
-			for (var i=0;i<links.length;i++) {
-				var viewer=links[i];
-				if (viewer!=this) {
-					viewer.__controls.copy(this.__controls);
-					viewer.setSlice(this.getSlice());
-					viewer.render();
+			var _this=this;
+			this.applyToLinks( function () {
+				if (this!=_this) {
+					this.__controls.copy(_this.__controls);
+					this.setSlice(_this.getSlice());
+					this.render();
 				}
-			}
+			});
 		},
 
 		unLink : function () {
@@ -848,11 +842,11 @@ qx.Class.define("desk.sliceView",
 					var z=this.__camera.position.z;
 					this.render();
 					var myViewer=this;
-					this.__master.applyToViewers (function (viewer) {
-						if (viewer!=myViewer) {
-							viewer.__camera.position.z*=Math.abs(z/viewer.__camera.position.z);
-							viewer.__propagateLinks();
-							viewer.render();
+					this.__master.applyToViewers (function () {
+						if (this!=myViewer) {
+							this.__camera.position.z*=Math.abs(z/this.__camera.position.z);
+							this.__propagateLinks();
+							this.render();
 							}
 						});
 					this.__propagateLinks();

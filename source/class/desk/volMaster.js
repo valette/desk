@@ -97,7 +97,7 @@ qx.Class.define("desk.volMaster",
 		applyToViewers : function (theFunction) {
 			var viewers=this.__viewers;
 			for (var i=0;i<viewers.length;i++) {
-				theFunction (viewers[i]);
+				theFunction.apply(viewers[i]);
 			}
 		},
 
@@ -109,6 +109,12 @@ qx.Class.define("desk.volMaster",
 			return this.__viewers;
 		},
 
+		__renderAll : function () {
+			this.applyToViewers(function () {
+				this.render();
+			});
+		},
+
 		__reorderMeshes : function () {
 			var volumes=this.__volumes.getChildren();
 			for (var i=0;i<volumes.length;i++) {
@@ -117,8 +123,8 @@ qx.Class.define("desk.volMaster",
 					slices[j].setUserData("rank", i);
 				}
 			}
-			this.applyToViewers( function (sliceView) {
-				sliceView.reorderMeshes();
+			this.applyToViewers( function () {
+				this.reorderMeshes();
 			});
 		},
 
@@ -188,11 +194,11 @@ qx.Class.define("desk.volMaster",
 					this.__gridContainer.setVisibility("visible");
 
 					// render other viewers, fixes issues with window resize
-					this.applyToViewers(function (viewer) {
-						if (viewer!=sliceView){
-							viewer.addListenerOnce("appear", function () {
-								viewer.render();
-							});
+					this.applyToViewers(function () {
+						if (this!=sliceView){
+							this.addListenerOnce("appear", function () {
+								this.render();
+							}, this);
 						}
 					});
 				}
@@ -279,9 +285,7 @@ qx.Class.define("desk.volMaster",
 				for (var i=0;i<volumeSlices.length;i++) {
 					volumeSlices[i].getUserData("mesh").visible=e.getData();
 				}
-				this.applyToViewers(function (viewer) {
-					viewer.render();
-					});
+				this.__renderAll();
 			}, this)
 			settingsContainer.add(hideShowCheckbox);
 
@@ -318,9 +322,7 @@ qx.Class.define("desk.volMaster",
 				for (var i=0;i<volumeSlices.length;i++) {
 					volumeSlices[i].getUserData("mesh").material.opacity=event.getData()/100;
 				}
-				this.applyToViewers(function (viewer) {
-					viewer.render();
-					});
+				this.__renderAll();
 			},this);
 			settingsContainer.add(opacitySlider, {flex : 1});
 
@@ -445,9 +447,7 @@ qx.Class.define("desk.volMaster",
 					this.__volumes.addAt(volumeListItem, index+1);
 				}
 				this.__reorderMeshes();
-				this.applyToViewers(function (viewer) {
-					viewer.render();
-					});
+				this.__renderAll();
 				},this);
 			menu.add(moveForwardButton);
 
@@ -465,9 +465,7 @@ qx.Class.define("desk.volMaster",
 					this.__volumes.addAt(volumeListItem, index-1);
 				}
 				this.__reorderMeshes();
-				this.applyToViewers(function (viewer) {
-					viewer.render();
-					});
+				this.__renderAll();
 				},this);
 			menu.add(moveBackwardButton);
 
@@ -489,8 +487,8 @@ qx.Class.define("desk.volMaster",
 
 		removeVolume : function (volumeListItem) {
 			var slices=volumeListItem.getUserData("slices");
-			this.applyToViewers (function (sliceView) {
-				sliceView.removeVolumes(slices);
+			this.applyToViewers (function () {
+				this.removeVolumes(slices);
 			});
 
 			this.__volumes.remove(volumeListItem);
