@@ -187,61 +187,70 @@ qx.Class.define("desk.sliceView",
 		__reorientationContainer : null,
 
 		rotateLeft : function () {
-			var camera=this.__camera;
-			var direction=this.__controls.target.clone();
-			direction.subSelf(camera.position);
-			var up=camera.up;
-			direction.crossSelf(up).normalize();
-			up.copy(direction);
+			this.applyToLinks(function () {
+				var camera=this.__camera;
+				var direction=this.__controls.target.clone();
+				direction.subSelf(camera.position);
+				var up=camera.up;
+				direction.crossSelf(up).normalize();
+				up.copy(direction);
 
-			var overlays=this.__directionOverlays;
-			var tempValue=overlays[3].getValue();
-			for (var i=3;i>0;i--) {
-				overlays[i].setValue(overlays[i-1].getValue());
-			}
-			overlays[0].setValue(tempValue);
-			this.render();
+				var overlays=this.__directionOverlays;
+				var tempValue=overlays[3].getValue();
+				for (var i=3;i>0;i--) {
+					overlays[i].setValue(overlays[i-1].getValue());
+				}
+				overlays[0].setValue(tempValue);
+				this.render();
+			});
 		},
 
 		rotateRight : function () {
-			var camera=this.__camera;
-			var direction=this.__controls.target.clone();
-			direction.subSelf(camera.position);
-			var up=camera.up;
-			direction.crossSelf(up).normalize().negate();
-			up.copy(direction);
-			this.render();
+			this.applyToLinks(function () {
+				var camera=this.__camera;
+				var direction=this.__controls.target.clone();
+				direction.subSelf(camera.position);
+				var up=camera.up;
+				direction.crossSelf(up).normalize().negate();
+				up.copy(direction);
+				this.render();
 
-			var overlays=this.__directionOverlays;
-			var tempValue=overlays[0].getValue();
-			for (var i=0;i<3;i++) {
-				overlays[i].setValue(overlays[i+1].getValue());
-			}
-			overlays[3].setValue(tempValue);
-			this.render();
+				var overlays=this.__directionOverlays;
+				var tempValue=overlays[0].getValue();
+				for (var i=0;i<3;i++) {
+					overlays[i].setValue(overlays[i+1].getValue());
+				}
+				overlays[3].setValue(tempValue);
+				this.render();
+			});
 		},
 
 		flipX : function () {
-			var camera=this.__camera;
-			camera.position.setZ(-camera.position.z);
-			this.render();
+			this.applyToLinks(function () {
+				var camera=this.__camera;
+				camera.position.setZ(-camera.position.z);
+				this.render();
 
-			var overlays=this.__directionOverlays;
-			var tempValue=overlays[1].getValue();
-			overlays[1].setValue(overlays[3].getValue());
-			overlays[3].setValue(tempValue);
-			this.render();
+				var overlays=this.__directionOverlays;
+				var tempValue=overlays[1].getValue();
+				overlays[1].setValue(overlays[3].getValue());
+				overlays[3].setValue(tempValue);
+				this.render();
+			});
 		},
 
 		flipY : function () {
-			var camera=this.__camera;
-			camera.position.setZ(-camera.position.z);
-			camera.up.negate();
-			this.render();
-			var overlays=this.__directionOverlays;
-			var tempValue=overlays[0].getValue();
-			overlays[0].setValue(overlays[2].getValue());
-			overlays[2].setValue(tempValue);
+			this.applyToLinks(function () {
+				var camera=this.__camera;
+				camera.position.setZ(-camera.position.z);
+				camera.up.negate();
+				this.render();
+
+				var overlays=this.__directionOverlays;
+				var tempValue=overlays[0].getValue();
+				overlays[0].setValue(overlays[2].getValue());
+				overlays[2].setValue(tempValue);
+			});
 		},
 
 		getReorientationContainer : function () {
@@ -347,6 +356,20 @@ qx.Class.define("desk.sliceView",
 				links.push(viewer);
 			}
 			viewer.__propagateLinks();
+		},
+
+		applyToLinks : function (theFunction) {
+			var links=this.__links;
+			if (links==null) {
+				if (context!=null) {
+					theFunction.apply(this);
+				}
+			}
+			else {
+				for (var i=0;i<links.length;i++) {
+					theFunction.apply(links[i]);
+				}
+			}
 		},
 
 		__propagateLinks : function () {
@@ -1002,7 +1025,7 @@ qx.Class.define("desk.sliceView",
 			var directionOverlays=[];
 			this.__directionOverlays=directionOverlays;
 
-			var font= new qx.bom.Font(20, ["Verdana", "sans-serif"]);
+			var font= new qx.bom.Font(16, ["Verdana", "sans-serif"]);
 			var northLabel=new qx.ui.basic.Label("S");
 			northLabel.set({textColor : "yellow",
 					        font : font});
