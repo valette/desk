@@ -829,12 +829,25 @@ qx.Class.define("desk.volumeSlice",
 
 			var _this=this;
 			this.__image.onload=function(){
+				clearTimeout(this.__timeOut)
 				_this.__originalImageCanvas.getContext2d().drawImage(_this.__image, 0, 0);
 				_this.redraw();
 				_this.__updateInProgress=false;
 				_this.__updateImage();
 				};
+			this.__image.onerror=function(){
+				_this.__updateTriggered=true;
+				_this.__updateInProgress=false;
+				_this.__updateImage();
+				};
+			this.__image.onabort=function(){
+				_this.__updateTriggered=true;
+				_this.__updateInProgress=false;
+				_this.__updateImage();
+				};
 		},
+
+		__timeOut : null,
 
 		__updateImage : function () {
 			if (this.__updateInProgress) {
@@ -842,7 +855,15 @@ qx.Class.define("desk.volumeSlice",
 				return;
 			}
 			if (this.__updateTriggered) {
+				this.__timeOut=setTimeout(timeOut,5000);
 				this.__reallyUpdateImage();
+			}
+
+			var _this=this;
+			function timeOut () {
+				_this.__updateInProgress=false;
+				_this.__updateImage();
+				
 			}
 		},
 
