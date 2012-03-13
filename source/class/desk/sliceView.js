@@ -83,7 +83,6 @@ qx.Class.define("desk.sliceView",
 		__overlayCanvas : null,
 		__directionOverlays : null,
 
-
 		__paintWidth : 5,
 		__currentColor : null,
 		__currentWidth : null,
@@ -100,6 +99,8 @@ qx.Class.define("desk.sliceView",
 		__drawingMesh : null,
 
 		__brushMesh : null,
+
+		__crossMeshes : null,
 
 		__drawingCanvasModified : false,
 
@@ -405,7 +406,7 @@ qx.Class.define("desk.sliceView",
 			var length=slices.length;
 			for (i=0;i<length;i++) {
 				var rank=slices[i].getUserData("rank");			
-				this.__slices[i].getUserData("mesh").renderDepth=2+length-rank;
+				this.__slices[i].getUserData("mesh").renderDepth=4+length-rank;
 /*				var sliceGeometry=this.__slices[i].getUserData("mesh").geometry;
 				for (var j=0;j<sliceGeometry.length;j++) {
 					sliceGeometry[j].setZ(rank*z_space);
@@ -417,8 +418,11 @@ qx.Class.define("desk.sliceView",
 				sliceGeometry.computeBoundingBox();
 				HACKSetDirtyVertices(sliceGeometry);*/
 			}
+
+			this.__drawingMesh.renderDepth=2;
+			this.__crossMeshes[0].renderDepth=1;
+			this.__crossMeshes[1].renderDepth=1;
 			this.__brushMesh.renderDepth=0;
-			this.__drawingMesh.renderDepth=1;
 /*
 			var paintMeshGeometry=this.__drawingMesh.geometry;
 			for (j=0;j<paintMeshGeometry.length;j++) {
@@ -432,7 +436,35 @@ qx.Class.define("desk.sliceView",
 			HACKSetDirtyVertices(paintMeshGeometry);*/
 		},
 
-		__setBrushMesh : function (volumeSlice)
+		__createCrossMeshes : function (volumeSlice)
+		{
+			var coordinates=volumeSlice.get2DCornersCoordinates();
+
+			var material = new THREE.LineBasicMaterial({
+				color : 0x4169FF,
+				linewidth : 1,
+				transparent : true
+			});
+
+			var hGeometry=new THREE.Geometry();
+			hGeometry.vertices.push(new THREE.Vertex(new THREE.Vector3(coordinates[0],0,0.1)));
+			hGeometry.vertices.push(new THREE.Vertex(new THREE.Vector3(coordinates[2],0,0.1)));
+			var hline = new THREE.Line(hGeometry, material);
+			this.__scene.add(hline);
+
+			var vGeometry=new THREE.Geometry();
+			vGeometry.vertices.push(new THREE.Vertex(new THREE.Vector3(0,coordinates[1],0)));
+			vGeometry.vertices.push(new THREE.Vertex(new THREE.Vector3(0,coordinates[5],0)));
+			vGeometry.dynamic=true;
+			var vline = new THREE.Line(vGeometry, material);
+			this.__scene.add(vline);
+
+			this.__crossMeshes=[];
+			this.__crossMeshes.push(hline);
+			this.__crossMeshes.push(vline);
+		},
+
+		__createBrushMesh : function (volumeSlice)
 		{
 			var geometry=new THREE.Geometry();
 			geometry.dynamic=true;
@@ -679,6 +711,12 @@ qx.Class.define("desk.sliceView",
 					_this.__camera.position.setZ(_this.__camera.position.z+
 									volumeSlice.getBoundingBoxDiagonalLength()*0.6);
 
+					_this.__projector= new THREE.Projector();;
+					_this.__intersection=new THREE.Vector3();
+					_this.__2DCornersCoordinates=coordinates;
+					_this.__volume2DSpacing=volumeSlice.get2DSpacing();
+					_this.__volume2DDimensions=volumeSlice.get2DDimensions();
+
 					_this.__setupInteractionEvents();
 				}
 				else {
@@ -729,7 +767,8 @@ qx.Class.define("desk.sliceView",
 
 				if (_this.__slices.length==1) {
 					_this.__setDrawingMesh(volumeSlice);
-					_this.__setBrushMesh(volumeSlice)
+					_this.__createBrushMesh(volumeSlice);
+					_this.__createCrossMeshes(volumeSlice);
 				}
 				_this.render();
 
@@ -747,6 +786,77 @@ qx.Class.define("desk.sliceView",
 			this.__camera.updateProjectionMatrix();
 			this.__controls.setSize( elementSize.width , elementSize.height );
 			this.render();
+		},
+
+		__setCrossPositionFromEvent : function (event) {
+			var position=this.getPositionOnSlice(event);
+			var v=[position.i, position.j];
+			var dimensions=this.__volume2DDimensions;
+
+			for (var i=0;i<2;i++) {
+				if (v[i]<0) {
+					v[i]=0;
+				}
+				else if (v[i]>dimensions[i]-1) {
+					v[i]=dimensions[i]-1;
+				}
+			};
+			var i,j,k;
+			switch (this.getOrientation())
+			{
+			case 0 :
+				i=v[0];
+				j=v[1];
+				k=this.getSlice();
+				break;
+			case 1 :
+				i=this.getSlice();
+				j=v[1];
+				k=v[0];
+				break;
+			case 2 :
+				i=v[0];
+				j=this.getSlice();
+				k=v[1];
+			}
+			this.__master.applyToViewers(function () {
+				this.setCrossPosition(i,j,k);
+			})
+		},
+
+
+		setCrossPosition : function (i,j,k) {
+			var slice,x,y;
+
+			switch (this.getOrientation())
+			{
+			case 0 :
+				x=i;
+				y=j;
+				slice=k;
+				break;
+			case 1 :
+				x=k;
+				y=j;
+				slice=i;
+				break;
+			case 2 :
+				x=i;
+				y=k;
+				slice=j;
+			}
+
+			var spacing=this.__volume2DSpacing;
+			var coordinates=this.__2DCornersCoordinates;
+			x=coordinates[0]+(0.5+x)*spacing[0];
+			y=coordinates[1]-(0.5+y)*spacing[1];
+
+			this.applyToLinks (function () {
+				this.__crossMeshes[0].position.setY(y);
+				this.__crossMeshes[1].position.setX(x);
+				this.setSlice(slice);
+				this.render();
+			});
 		},
 
 		__setupInteractionEvents : function () {
@@ -817,6 +927,9 @@ qx.Class.define("desk.sliceView",
 					this.__drawingCanvasModified=true;
 					this.fireEvent("changeDrawing");
 				}
+				else {
+					this.__setCrossPositionFromEvent(event);
+				}
 			}, this);
 
 			htmlContainer.addListener("mousemove", function (event)	{
@@ -832,6 +945,7 @@ qx.Class.define("desk.sliceView",
 					}
 					break;
 				case 0 :
+					this.__setCrossPositionFromEvent(event);
 					break;
 				case 1 :
 					brushMesh.visible=false;
@@ -953,8 +1067,9 @@ qx.Class.define("desk.sliceView",
 		},
 
 		__intersection : null,
-		__cornersCoordinates : null,
-		__volumeDimensions : null,
+		__2DCornersCoordinates : null,
+		__volume2DDimensions : null,
+		__volume2DSpacing : null,
 		__projector : null,
 
 		getPositionOnSlice : function (event) {
@@ -967,26 +1082,10 @@ qx.Class.define("desk.sliceView",
 			var x2 = ( x / elementSize.width ) * 2 - 1;
 			var y2 = - ( y / elementSize.height ) * 2 + 1;
 
-			if (this.__projector==null){
-				var volumeSlice=this.getVolumeSliceToPaint();
-				var coordinates=volumeSlice.get2DCornersCoordinates();
-	/*			if (coordinates==null) {
-					return {i :0, j :0, x:0, y:0};
-				}*/
-				var projector = new THREE.Projector();
-				this.__projector=projector;
-				var intersection = new THREE.Vector3( x2, y2, 0);
-				this.__intersection=intersection;
-				this.__cornersCoordinates=coordinates;
-				var dimensions=volumeSlice.get2DDimensions();
-				this.__volumeDimensions=dimensions;
-			}
-			else {
-				var projector = this.__projector;
-				var intersection = this.__intersection.set( x2, y2, 0);
-				var coordinates=this.__cornersCoordinates;
-				var dimensions=this.__volumeDimensions;
-			}
+			var projector = this.__projector;
+			var intersection = this.__intersection.set( x2, y2, 0);
+			var coordinates=this.__2DCornersCoordinates;
+			var dimensions=this.__volume2DDimensions;
 
 			var camera=this.__camera;
 			projector.unprojectVector( intersection, camera );

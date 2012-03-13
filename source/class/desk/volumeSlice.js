@@ -108,6 +108,20 @@ qx.Class.define("desk.volumeSlice",
 			return this.__spacing;
 		},
 
+		get2DSpacing : function () {
+			var spacing=this.__spacing;
+			switch (this.getOrientation())
+			{
+				default:
+				case 0 :
+					return [spacing[0], spacing[1]];
+				case 1 :
+					return [spacing[2], spacing[1]];
+				case 2 :
+					return [spacing[0], spacing[2]];
+			}
+		},
+
 		getScalarType : function () {
 			return this.__scalarType;
 		},
