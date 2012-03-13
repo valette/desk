@@ -407,33 +407,12 @@ qx.Class.define("desk.sliceView",
 			for (i=0;i<length;i++) {
 				var rank=slices[i].getUserData("rank");			
 				this.__slices[i].getUserData("mesh").renderDepth=4+length-rank;
-/*				var sliceGeometry=this.__slices[i].getUserData("mesh").geometry;
-				for (var j=0;j<sliceGeometry.length;j++) {
-					sliceGeometry[j].setZ(rank*z_space);
-				}
-				sliceGeometry.computeCentroids();
-				sliceGeometry.computeFaceNormals();
-				sliceGeometry.computeVertexNormals();
-				sliceGeometry.computeBoundingSphere();
-				sliceGeometry.computeBoundingBox();
-				HACKSetDirtyVertices(sliceGeometry);*/
 			}
 
 			this.__drawingMesh.renderDepth=3;
 			this.__crossMeshes[0].renderDepth=2;
 			this.__crossMeshes[1].renderDepth=1;
 			this.__brushMesh.renderDepth=0;
-/*
-			var paintMeshGeometry=this.__drawingMesh.geometry;
-			for (j=0;j<paintMeshGeometry.length;j++) {
-					paintMeshGeometry[j].setZ((slices.length+3)*z_space);
-				}
-			paintMeshGeometry.computeCentroids();
-			paintMeshGeometry.computeFaceNormals();
-			paintMeshGeometry.computeVertexNormals();
-			paintMeshGeometry.computeBoundingSphere();
-			paintMeshGeometry.computeBoundingBox();
-			HACKSetDirtyVertices(paintMeshGeometry);*/
 		},
 
 		__createCrossMeshes : function (volumeSlice)
@@ -456,7 +435,6 @@ qx.Class.define("desk.sliceView",
 			var vGeometry=new THREE.Geometry();
 			vGeometry.vertices.push(new THREE.Vertex(new THREE.Vector3(0,coordinates[1],0)));
 			vGeometry.vertices.push(new THREE.Vertex(new THREE.Vector3(0,coordinates[5],0)));
-			vGeometry.dynamic=true;
 			var vline = new THREE.Line(vGeometry, material);
 			this.__scene.add(vline);
 
@@ -469,7 +447,6 @@ qx.Class.define("desk.sliceView",
 		{
 			var geometry=new THREE.Geometry();
 			geometry.dynamic=true;
-
 			var coordinates=volumeSlice.get2DCornersCoordinates();
 			var dimensions=volumeSlice.get2DDimensions();
 
@@ -576,7 +553,6 @@ qx.Class.define("desk.sliceView",
 		__setDrawingMesh : function (volumeSlice)
 		{
 			var geometry=new THREE.Geometry();
-			geometry.dynamic=true;
 
 			var coordinates=volumeSlice.get2DCornersCoordinates();
 			for (var i=0;i<4;i++) {
@@ -675,7 +651,6 @@ qx.Class.define("desk.sliceView",
 
 			function initSlice () {
 				var geometry=new THREE.Geometry();
-				geometry.dynamic=true;
 
 				var coordinates=volumeSlice.get2DCornersCoordinates();
 				for (var i=0;i<4;i++) {

@@ -37,7 +37,7 @@ qx.Class.define("desk.volumeSlice",
 	},
 
 	properties : {
-		slice : { init : 0, check: "Number", event : "changeSlice"},
+		slice : { init : -1, check: "Number", event : "changeSlice"},
 		imageFormat : { init : 1, check: "Number", event : "changeImageFormat"},
 		ready : { init : false, check: "Boolean", event : "changeReady"},
 		orientation : { init : 0, check: "Number", event : "changeOrientation"}
@@ -472,9 +472,7 @@ qx.Class.define("desk.volumeSlice",
 				height: dims[1],
 				syncDimension: true
 				});
-
-			this.__updateTriggered=true;
-			this.__updateImage();
+			this.setReady(true);
 		},
 
 		__applyBrightnessToCanvas : function () {
@@ -814,7 +812,6 @@ qx.Class.define("desk.volumeSlice",
 			else {
 				this.__applyBrightnessToCanvas();
 			}
-			this.setReady(true);
 			this.fireEvent("changeImage");
 		},
 
