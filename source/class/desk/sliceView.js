@@ -928,7 +928,12 @@ qx.Class.define("desk.sliceView",
 				}
 			}, this);
 
+	/*		this.addListener("mouseout", function (event)	{
+				this.__rightContainer.setVisibility("excluded");
+			},this);*/
+
 			htmlContainer.addListener("mousemove", function (event)	{
+	//			this.__rightContainer.setVisibility("visible");
 				var brushMesh=this.__brushMesh;
 				var position=this.getPositionOnSlice(event);
 				switch (interactionMode)
@@ -1140,7 +1145,7 @@ qx.Class.define("desk.sliceView",
 					        font : font,
 					        opacity : 0.5
 					        });
-			overlayCanvas.add(westLabel, {right:"1%", top:"45%"});
+			overlayCanvas.add(westLabel, {right:32, top:"45%"});
 			directionOverlays.push(northLabel);
 			directionOverlays.push(eastLabel);
 			directionOverlays.push(southLabel);
@@ -1173,11 +1178,12 @@ qx.Class.define("desk.sliceView",
 			this.__rightContainer=rightContainer;
 
 			var label = new qx.ui.basic.Label("0");
-			label.set({textAlign: "center", width : 30, decorator : "main"});
+			label.set({textAlign: "center", width : 30, font : font, textColor : "yellow"});
 			rightContainer.add(label);
+//			overlayCanvas.add(label, {top :0, left :0});
 			var slider=new qx.ui.form.Slider();
 			this.__slider=slider;
-			slider.set ({minimum : 0, maximum : 100, value : 0, width :30});
+			slider.set ({minimum : 0, maximum : 100, value : 0, width :30, opacity : 0.5, backgroundColor : "transparent"});
 			slider.setOrientation("vertical");
 			slider.addListener("changeValue",function(e){
 				this.setSlice(this.getVolumeSliceToPaint().getNumberOfSlices()-1-e.getData())
@@ -1215,7 +1221,8 @@ qx.Class.define("desk.sliceView",
 			}, this);
 
 			rightContainer.add(slider, {flex : 1});
-			this.add(rightContainer);
+//			rightContainer.setVisibility("excluded");
+			overlayCanvas.add(rightContainer, {right : 0, top : 0, height : "100%"});
 		},
 
 		__undoData : null,

@@ -170,7 +170,7 @@ qx.Class.define("desk.volMaster",
 			this.__gridContainer.add(sliceView, {row: x, column: y});
 			this.__orientationContainer.add(sliceView.getReorientationContainer(), {row: x, column: y});
 
-			var fullscreenButton=new qx.ui.form.Button("+");
+			var fullscreenButton=new qx.ui.form.Button("+").set({opacity: 0.5});
 			sliceView.getRightContainer().add(fullscreenButton);
 			fullscreenButton.addListener("execute", function () {
 				if (!fullscreen) {
