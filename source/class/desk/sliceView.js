@@ -1114,23 +1114,32 @@ qx.Class.define("desk.sliceView",
 			var directionOverlays=[];
 			this.__directionOverlays=directionOverlays;
 
-			var font= new qx.bom.Font(16, ["Verdana", "sans-serif"]);
+			var font= new qx.bom.Font(16, ["Arial"]);
+			font.setBold(true);
 			var northLabel=new qx.ui.basic.Label("S");
 			northLabel.set({textColor : "yellow",
-					        font : font});
+					        font : font,
+					        opacity : 0.5
+					        });
 			overlayCanvas.add(northLabel, {left:"50%", top:"1%"});
 
 			var southLabel=new qx.ui.basic.Label("I");
 			southLabel.set({textColor : "yellow",
-					        font : font});
+					        font : font,
+					        opacity : 0.5
+					        });
 			overlayCanvas.add(southLabel, {left:"50%", bottom:"1%"});
 			var eastLabel=new qx.ui.basic.Label("L");
 			eastLabel.set({textColor : "yellow",
-					        font : font});
+					        font : font,
+					        opacity : 0.5
+					        });
 			overlayCanvas.add(eastLabel, {left:"1%", top:"45%"});
 			var westLabel=new qx.ui.basic.Label("R");
 			westLabel.set({textColor : "yellow",
-					        font : font});
+					        font : font,
+					        opacity : 0.5
+					        });
 			overlayCanvas.add(westLabel, {right:"1%", top:"45%"});
 			directionOverlays.push(northLabel);
 			directionOverlays.push(eastLabel);
