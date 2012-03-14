@@ -469,7 +469,14 @@ qx.Class.define("desk.volumeSlice",
 				height: dims[1],
 				syncDimension: true
 				});
-			this.setReady(true);
+
+			if (this.isReady()) {
+				this.__updateTriggered=true;
+				this.__updateImage();
+			}
+			else {
+				this.setReady(true);
+			}
 		},
 
 		__applyBrightnessToCanvas : function () {

@@ -34,7 +34,8 @@ qx.Class.define("desk.fileBrowser",
 			rowHeight: 22,
 			alwaysShowOpenCloseSymbol : true,
 			columnVisibilityButtonVisible : true,
-			draggable : true});
+			draggable : true,
+			statusBarVisible : false});
 
 		var dataModel = virtualTree.getDataModel();
 

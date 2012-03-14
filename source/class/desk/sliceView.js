@@ -673,8 +673,8 @@ qx.Class.define("desk.sliceView",
 				volumeSlice.setUserData("updateListener", listener);
 
 				if (_this.__slices.length==1) {
-					_this.__slider.setMaximum(volumeSlice.getNumberOfSlices()-1);	
-					_this.setSlice(Math.round(0.5*volumeSlice.getNumberOfSlices()));
+					_this.__slider.setMaximum(volumeSlice.getNumberOfSlices()-1);
+//					_this.setSlice(Math.round(0.5*volumeSlice.getNumberOfSlices()));
 
 					_this.__camera.position.set(0.5*(coordinates[0]+coordinates[2]),
 												0.5*(coordinates[3]+coordinates[5]),
@@ -691,9 +691,9 @@ qx.Class.define("desk.sliceView",
 
 					_this.__setupInteractionEvents();
 				}
-				else {
-					volumeSlice.setSlice(_this.getSlice());
-				}
+//				else {
+//					volumeSlice.setSlice(_this.getSlice());
+//				}
 
 				var canvas=volumeSlice.getImageCanvas();
 		    	
@@ -751,7 +751,15 @@ qx.Class.define("desk.sliceView",
 							break;
 						default:
 					}
+					var dimensions=volumeSlice.getDimensions();
+					_this.setCrossPosition(Math.round(dimensions[0]/2),
+											Math.round(dimensions[1]/2),
+											Math.round(dimensions[2]/2));
 				}
+				else {
+					volumeSlice.setSlice(_this.getSlice());
+				}
+
 				_this.render();
 
 				if (typeof callback=="function")
@@ -806,6 +814,9 @@ qx.Class.define("desk.sliceView",
 			})
 		},
 
+		__positionI : null,
+		__positionJ : null,
+		__positionK : null,
 
 		setCrossPosition : function (i,j,k) {
 			var slice,x,y;
@@ -834,6 +845,9 @@ qx.Class.define("desk.sliceView",
 			y=coordinates[1]-(0.5+y)*spacing[1];
 
 			this.applyToLinks (function () {
+				this.__positionI=i;
+				this.__positionJ=j;
+				this.__positionK=k;
 				this.__crossMeshes[0].position.setY(y);
 				this.__crossMeshes[1].position.setX(x);
 				this.setSlice(slice);
@@ -1163,7 +1177,31 @@ qx.Class.define("desk.sliceView",
 			this.addListener("changeSlice", function (e) {
 				var sliceId=e.getData();
 				label.setValue(sliceId+"");
-				slider.setValue(this.getVolumeSliceToPaint().getNumberOfSlices()-1-sliceId)
+				slider.setValue(this.getVolumeSliceToPaint().getNumberOfSlices()-1-sliceId);
+
+				var i=this.__positionI;
+				var j=this.__positionJ;
+				var k=this.__positionK;
+				switch (this.getOrientation())
+				{
+				case 0 :
+					this.__positionK=sliceId
+					k=sliceId;
+					break;
+				case 1 :
+					this.__positionI=sliceId
+					i=sliceId;
+					break;
+				case 2 :
+					this.__positionJ=sliceId
+					j=sliceId;
+				}
+				var _this=this;
+				this.__master.applyToViewers (function () {
+					if ((this!=_this)&&(this.__slices[0].isReady())) {
+						this.setCrossPosition(i,j,k);
+					}
+				})
 				this.__propagateCameraToLinks();
 			}, this);
 
