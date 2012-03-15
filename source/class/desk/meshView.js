@@ -541,6 +541,14 @@ qx.Class.define("desk.meshView",
 							{
 								var colorstring=mesh.getAttribute("color");
 								var colors=colorstring.split(" ");
+								switch (colors.length)
+								{
+									case 3:
+										colors[3]="1";
+									case 4:
+										colors[4]="0";
+									default:
+								}
 								for (var j=0;j<4;j++)
 									color[j]=parseFloat(colors[j]);
 								color[4]=parseInt(colors[4]);
@@ -928,6 +936,7 @@ qx.Class.define("desk.meshView",
 							geom.computeBoundingBox();
 							var color=parameters.color;
 							var threecolor=new THREE.Color().setRGB(color[0],color[1],color[2]);
+
 							var material =  new THREE.MeshLambertMaterial( {
 								 color:threecolor.getHex(),
 								 opacity: color[3]} );
