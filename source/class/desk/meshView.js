@@ -15,7 +15,7 @@ qx.Class.define("desk.meshView",
 
 	construct : function(file, fileBrowser, mtime, parameters)
 	{
-//		this.base(arguments);
+	//	this.base();
 
 		if ( parameters != undefined )
 		{
@@ -40,14 +40,28 @@ qx.Class.define("desk.meshView",
 		window.add(pane,{flex : 1});
 
 		this.__createRenderWindow();
-//		pane.add(this.__overlayCanvas, 5);
-		pane.add(this.__htmlContainer, 5);
+		pane.add(this.__overlayCanvas, 5);
 		window.open();
 
 		var elementsList = new qx.ui.container.Composite;
 		elementsList.setLayout(new qx.ui.layout.VBox());
 		pane.add(elementsList, 1);
+		elementsList.setVisibility("excluded");
 
+		var button=new qx.ui.form.Button("+").set({opacity : 0.5});
+		this.__overlayCanvas.add (button, {right : 3, top : 3});
+		button.addListener("execute", function () {
+			if (elementsList.getVisibility()=="visible") {
+				elementsList.setVisibility("excluded");
+				button.setLabel("+");
+				this.render();
+			}
+			else {
+				elementsList.setVisibility("visible");
+				button.setLabel("-");
+				this.render();
+			}
+		}, this);
 
 		var topRightContainer = new qx.ui.container.Composite();
 		topRightContainer.setLayout(new qx.ui.layout.HBox());
@@ -62,7 +76,8 @@ qx.Class.define("desk.meshView",
 		this.__meshesTree.set({
 			width  : 180,
 			rowHeight: 22,
-			columnVisibilityButtonVisible : false});
+			columnVisibilityButtonVisible : false,
+			statusBarVisible : false});
 
 
 		var dataModel=this.__meshesTree.getDataModel();
@@ -140,7 +155,6 @@ qx.Class.define("desk.meshView",
 	},
 
 	events : {
-		// the "changeSlice" event is fired whenever the image changes
 		"close" : "qx.event.type.Event"
 	},
 
@@ -714,24 +728,16 @@ qx.Class.define("desk.meshView",
 				scene.add( camera );
 
 				// lights
-
 				var dirLight = new THREE.DirectionalLight( 0xffffff );
 				dirLight.position.set( 200, 200, 1000 ).normalize();
 				camera.add( dirLight );
 				camera.add( dirLight.target );
-				var dirLight2 = new THREE.DirectionalLight( 0xffffff );
-				dirLight2.position.set( -200, -200, -1000 ).normalize();
-				camera.add( dirLight2 );
-				camera.add( dirLight2.target );
 
 				// renderer
-
 				var renderer = new THREE.WebGLRenderer( { antialias: true } );
-
 				this.__renderer=renderer;
 				renderer.setClearColorHex( 0xffffff, 1 );
-				var _this=this;
-				resizeHTML();
+				resizeHTML.apply(this);
 
 				container.appendChild( renderer.domElement );
 
@@ -742,8 +748,8 @@ qx.Class.define("desk.meshView",
 					camera.aspect=elementSize.width / elementSize.height;
 					camera.updateProjectionMatrix();
 					controls.setSize( elementSize.width , elementSize.height );
-					_this.render();
-					}
+					this.render();
+				}
 
 				var draggingInProgress=false;
 				htmlContainer.addListener("mousedown", function (event)	{
@@ -761,7 +767,7 @@ qx.Class.define("desk.meshView",
 					controls.mouseDown(button,
 									event.getDocumentLeft()-origin.left,
 									event.getDocumentTop()-origin.top);
-					});
+				});
 
 				htmlContainer.addListener("mousemove", function (event)	{
 					if (draggingInProgress)
@@ -771,16 +777,18 @@ qx.Class.define("desk.meshView",
 								, event.getDocumentTop()-origin.top);
 						this.render();
 						this.__propagateLinks();
-					}}, this);
+					}
+				}, this);
 
 				htmlContainer.addListener("mouseup", function (event)	{
 					htmlContainer.releaseCapture();
 					draggingInProgress=false;
-					controls.mouseUp();});
+					controls.mouseUp();
+				});
 
 				htmlContainer.addListener("mousewheel", function (event)	{
-					var tree=_this.__meshesTree;
-					var root=_this.__slicesRoot;
+					var tree=this.__meshesTree;
+					var root=this.__slicesRoot;
 					if (root!==null)
 					{
 						var rootNode=tree.nodeGet(root);
@@ -790,8 +798,8 @@ qx.Class.define("desk.meshView",
 							var meshes=[];
 							for (var i=0;i<children.length;i++)
 							{
-								if (_this.__meshesVisibility[children[i]])
-									meshes.push(_this.__meshes[children[i]]);
+								if (this.__meshesVisibility[children[i]])
+									meshes.push(this.__meshes[children[i]]);
 							}
 
 							var origin=htmlContainer.getContentLocation();
@@ -825,7 +833,7 @@ qx.Class.define("desk.meshView",
 							}
 						}
 					}
-					});
+				}, this);
 
 				this.setReady(true);
 			}, this);
