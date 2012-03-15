@@ -733,6 +733,11 @@ qx.Class.define("desk.meshView",
 				camera.add( dirLight );
 				camera.add( dirLight.target );
 
+				var dirLight2 = new THREE.DirectionalLight( 0xffffff );
+				dirLight2.position.set( -200, -200, -1000 ).normalize();
+				camera.add( dirLight2 );
+				camera.add( dirLight2.target );
+
 				// renderer
 				var renderer = new THREE.WebGLRenderer( { antialias: true } );
 				this.__renderer=renderer;
