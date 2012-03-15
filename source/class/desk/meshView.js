@@ -39,8 +39,9 @@ qx.Class.define("desk.meshView",
 		var pane = new qx.ui.splitpane.Pane("horizontal")
 		window.add(pane,{flex : 1});
 
-		this.__embededHTML=this.__createRenderWindow();
-		pane.add(this.__embededHTML, 5);
+		this.__createRenderWindow();
+//		pane.add(this.__overlayCanvas, 5);
+		pane.add(this.__htmlContainer, 5);
 		window.open();
 
 		var elementsList = new qx.ui.container.Composite;
@@ -151,6 +152,8 @@ qx.Class.define("desk.meshView",
 
 		// the html element containing the 3D rendering
 		__embededHTML : null,
+
+		__overlayCanvas : null,
 
 		// qooxdoo window
 		__window : null,
@@ -649,6 +652,16 @@ qx.Class.define("desk.meshView",
 
 		__createRenderWindow : function(){
 			var htmlContainer = new qx.ui.embed.Html();
+			this.__htmlContainer=htmlContainer;
+
+			var overlayCanvas=new qx.ui.container.Composite(new qx.ui.layout.Canvas());
+			this.__overlayCanvas=overlayCanvas;
+			overlayCanvas.addListener("resize", function () {
+				var size=overlayCanvas.getInnerSize();
+				htmlContainer.setWidth(size.width);
+				htmlContainer.setHeight(size.height);
+			}, this);
+			overlayCanvas.add(htmlContainer);
 			var randomId=Math.random();
 			htmlContainer.setHtml("<div id=\"three.js"+randomId+"\"></div>");
 
@@ -816,9 +829,6 @@ qx.Class.define("desk.meshView",
 
 				this.setReady(true);
 			}, this);
-
-	
-			return (htmlContainer);
 		},
 
 /*		render : function ( ) {
