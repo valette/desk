@@ -46,6 +46,7 @@ qx.Class.define("desk.volMaster",
 		this.__window.setUseResizeFrame(true);
 		this.__window.setUseMoveFrame(true);
 
+		this.__window.add(this.__getToolBar());
 		this.__window.add(gridContainer, {flex : 1});
 		this.__window.add(fullscreenContainer, {flex : 1});
 
@@ -69,7 +70,6 @@ qx.Class.define("desk.volMaster",
 		this.__addViewers();
 		this.addVolume(globalFile);
 
-		this.__addLinkToViewerSupport();
 		this.__addDropFileSupport();
 
 		return (this.__viewers); //~ orion test : launch the 3 views at once ! ! !
@@ -135,12 +135,17 @@ qx.Class.define("desk.volMaster",
 		},
 
 		__addViewers : function () {
+			var window=new qx.ui.window.Window().set({caption : "Orientation"});
+			window.setLayout(new qx.ui.layout.VBox());
+			
 			var gridContainer=new qx.ui.container.Composite();
 			var gridLayout=new qx.ui.layout.Grid();
 			for (var i=0;i<2;i++) {
 				gridLayout.setRowFlex(i,1);
 				gridLayout.setColumnFlex(i,1);
 			}
+			window.add(gridContainer);
+			this.__orientationWindow=window;
 
 			gridContainer.setLayout(gridLayout);
 			this.__orientationContainer=gridContainer;
@@ -164,6 +169,7 @@ qx.Class.define("desk.volMaster",
 		},
 
 		__orientationContainer : null,
+		__orientationWindow : null,
 
 		__addViewerToGrid : function (sliceView, x, y) {
 			var fullscreen=false;
@@ -412,8 +418,6 @@ qx.Class.define("desk.volMaster",
 				window.add(new qx.ui.basic.Label("spacing : "+formatArray(slice.getSpacing())));
 				window.add(new qx.ui.basic.Label("scalarType : "+slice.getScalarType()+" ("+slice.getScalarTypeAsString()+")"));
 				window.add(new qx.ui.basic.Label("scalar bounds : "+formatArray(slice.getScalarBounds())));
-				window.add(new qx.ui.basic.Label("Orientation :"));
-				window.add(this.__orientationContainer);
 				window.open();
 				},this);
 			menu.add(propertiesButton);
@@ -496,41 +500,54 @@ qx.Class.define("desk.volMaster",
 			volumeListItem.dispose();
 		},
 
-		__addLinkToViewerSupport : function () {
-			var viewers=this.__viewers;
+		__getToolBar : function () {
+			var container=new qx.ui.container.Composite()
+			container.setLayout(new qx.ui.layout.HBox());
+			container.add(this.__getLinkButton());
+			container.add(new qx.ui.core.Spacer(10), {flex: 1});
+			container.add(this.__getOrientationButton());
+			return (container);
+		},
 
+		__getOrientationButton : function () {
+			var button=new qx.ui.form.Button("Orientation");
+			button.addListener ("execute", function () {
+				this.__orientationWindow.open();
+			}, this)
+			return (button);
+		},
+
+		__getLinkButton : function () {
 			var menu = new qx.ui.menu.Menu();
 			var unLinkButton = new qx.ui.menu.Button("unlink");
 			unLinkButton.addListener("execute", function() {
-				for (var i=0;i<viewers.length;i++) {
-					viewers[i].unLink();
-				}
+				this.applyToViewers (function () {
+					this.unLink();
+				});
 			},this);
 			menu.add(unLinkButton);
 
-			for (var i=0;i<viewers.length;i++) {
-				var label=viewers[i].getRightContainer().getChildren()[0];
-				
-				label.setDraggable(true);
-				label.addListener("dragstart", function(e) {
-					e.addAction("alias");
-					e.addType("volView");
-					});
+			var label=new qx.ui.basic.Label("Link").set({draggable : true,
+				decorator : "main", toolTipText : "click and drag to an other window to link"});
+			label.addListener("dragstart", function(e) {
+				e.addAction("alias");
+				e.addType("volView");
+				});
 
-				label.setContextMenu(menu);
+			label.setContextMenu(menu);
 
-				label.addListener("droprequest", function(e) {
-						var type = e.getCurrentType();
-						switch (type)
-						{
-						case "volView":
-							e.addData(type, this);
-							break;
-						default :
-							alert ("type "+type+"not supported for volume drag and drop");
-						}
-					}, this);
-			}
+			label.addListener("droprequest", function(e) {
+					var type = e.getCurrentType();
+					switch (type)
+					{
+					case "volView":
+						e.addData(type, this);
+						break;
+					default :
+						alert ("type "+type+"not supported for volume drag and drop");
+					}
+				}, this);
+
 
 			// enable linking between viewers by drag and drop
 			this.__window.setDroppable(true);
@@ -551,6 +568,7 @@ qx.Class.define("desk.volMaster",
 					}
 				}
 			},this);
+			return (label);
 		},
 
 		__createColormapWindow : function(volumeListItem) {
