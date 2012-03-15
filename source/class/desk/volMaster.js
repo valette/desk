@@ -18,10 +18,15 @@ qx.Class.define("desk.volMaster",
             qx.log.appender.Console;
         }
 		if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
-
+		this.__nbUsedOrientations = 3;
 		this.__file = globalFile;
 
 		this.__fileBrowser = globalFileBrowser;
+
+		this.__viewers = [];
+		for(var i=0; i<this.__nbUsedOrientations; i++) {
+			this.__viewers[i] = new desk.sliceView(this.__fileBrowser, this, i);
+		}
 
 		var gridLayout=new qx.ui.layout.Grid(3,3);
 		for (var i=0;i<2;i++) {
@@ -42,7 +47,6 @@ qx.Class.define("desk.volMaster",
 		this.__window.setLayout(new qx.ui.layout.VBox());
 		this.__window.setShowClose(true);
 		this.__window.setShowMinimize(false);
-	//	this.__window.setResizable(true,true,true,true);
 		this.__window.setUseResizeFrame(true);
 		this.__window.setUseMoveFrame(true);
 
@@ -64,22 +68,23 @@ qx.Class.define("desk.volMaster",
 
 		this.__createVolumesList();
 
-		this.__viewers = [];
-		this.__nbUsedOrientations = 3;
 
+		this.__createOrientationWindow();
 		this.__addViewers();
 		this.addVolume(globalFile);
 
 		this.__addDropFileSupport();
-
 		return (this.__viewers); //~ orion test : launch the 3 views at once ! ! !
 	},
 
 
 	events : {
-		"removeVolume" : "qx.event.type.Data"
+		"removeVolume" : "qx.event.type.Data",
 	},
 
+	properties : {
+		viewsLayout : { init : "ASC", check: "String", event : "changeViewsLayout", apply : "__applyViewsLayout"}
+	},
 
 	members :
 	{
@@ -135,9 +140,81 @@ qx.Class.define("desk.volMaster",
 		},
 
 		__addViewers : function () {
-			var window=new qx.ui.window.Window().set({caption : "Orientation"});
+			for(var i=0; i<this.__nbUsedOrientations; i++) {
+				var sliceView=this.__viewers[i];	
+				switch (i)
+				{
+				case 0 :
+					this.__addViewerToGrid(sliceView, 0, 0);
+					sliceView.setUserData("sliceOrientation", "Axial");
+					break;
+				case 1 : 
+					this.__addViewerToGrid(sliceView, 1, 0);
+					sliceView.setUserData("sliceOrientation", "Sagittal");
+					break;
+				case 2 : 
+					this.__addViewerToGrid(sliceView, 1, 1);
+					sliceView.setUserData("sliceOrientation", "Coronal");
+					break;
+				}
+			}
+		},
+
+		__applyViewsLayout : function (layout) {
+			var viewers=this.__viewers;
+			var gridContainer=this.__gridContainer;
+			var orientationContainer=this.__orientationContainer;
+			for (var i=0;i<viewers.length;i++)
+			{
+				gridContainer.remove(viewers[i]);
+			}
+
+			orientationContainer.removeAll();
+			var x,y;
+			for (var i=0;i<3;i++) {
+				var viewer;
+				var letter=layout.charAt(i);
+				for (var j=0;j<viewers.length;j++) {
+					viewer=viewers[j];
+					if (viewer.getUserData("sliceOrientation").charAt(0)==letter) {
+						break;
+					}
+				}
+				switch (i)
+				{
+				case 0 :
+					x=0;
+					y=0;
+					break;
+				case 1 : 
+					x=1;
+					y=0;
+					break;
+				case 2 :
+					x=1;
+					y=1; 
+					break;
+				}
+				gridContainer.add (viewer, {row: y, column: x});
+				orientationContainer.add(viewer.getReorientationContainer(), {row: y, column: x});
+			}
+		},
+
+		__orientationContainer : null,
+		__orientationWindow : null,
+
+		__createOrientationWindow : function () {
+			var window=new qx.ui.window.Window().set({caption : "Layout and Orientation"});
 			window.setLayout(new qx.ui.layout.VBox());
-			
+
+
+			window.add (new qx.ui.basic.Label("Windows layout :"));
+			window.add (new qx.ui.basic.Label("A : axial; S : Sagittal; C : Coronal"));
+			window.add(this.__getChangeLayoutContainer());
+			window.add(new qx.ui.core.Spacer(10,30), {flex: 5});
+
+			window.add (new qx.ui.basic.Label("Orientations :"));
+
 			var gridContainer=new qx.ui.container.Composite();
 			var gridLayout=new qx.ui.layout.Grid();
 			for (var i=0;i<2;i++) {
@@ -149,32 +226,14 @@ qx.Class.define("desk.volMaster",
 
 			gridContainer.setLayout(gridLayout);
 			this.__orientationContainer=gridContainer;
-
-			for(var i=0; i<this.__nbUsedOrientations; i++) {
-				var sliceView=  new desk.sliceView(this.__fileBrowser, this, i);
-				this.__viewers[i] =sliceView;	
-				switch (i)
-				{
-				case 0 :
-					this.__addViewerToGrid(sliceView, 0, 0);
-					break;
-				case 1 : 
-					this.__addViewerToGrid(sliceView, 0, 1);
-					break;
-				case 2 : 
-					this.__addViewerToGrid(sliceView, 1, 1);
-					break;
-				}
-			}
 		},
-
-		__orientationContainer : null,
-		__orientationWindow : null,
 
 		__addViewerToGrid : function (sliceView, x, y) {
 			var fullscreen=false;
-			this.__gridContainer.add(sliceView, {row: x, column: y});
-			this.__orientationContainer.add(sliceView.getReorientationContainer(), {row: x, column: y});
+			this.__gridContainer.add(sliceView, {row: y, column: x});
+			this.__orientationContainer.add(sliceView.getReorientationContainer(), {row: y, column: x});
+			sliceView.setUserData("positionInGrid", {row :y , column :x})
+
 
 			var fullscreenButton=new qx.ui.form.Button("+").set({opacity: 0.5});
 			sliceView.getRightContainer().add(fullscreenButton);
@@ -196,7 +255,7 @@ qx.Class.define("desk.volMaster",
 						this.__viewers[i].set ({width : Math.round((size.width-3)/2),
 								height : Math.round((size.height-3)/2)});
 					}
-					this.__gridContainer.add(sliceView, {row: x, column: y});
+					this.__gridContainer.add(sliceView, sliceView.getUserData("positionInGrid"));
 					this.__gridContainer.setVisibility("visible");
 
 					// render other viewers, fixes issues with window resize
@@ -510,11 +569,69 @@ qx.Class.define("desk.volMaster",
 		},
 
 		__getOrientationButton : function () {
-			var button=new qx.ui.form.Button("Orientation");
+			var button=new qx.ui.form.Button("Layout/Orientation");
 			button.addListener ("execute", function () {
 				this.__orientationWindow.open();
 			}, this)
 			return (button);
+		},
+
+		__getChangeLayoutContainer : function () {
+			var _this=this;
+			var radioGroup = new qx.ui.form.RadioGroup();
+
+			function getGrid(layout)
+			{
+				var gridContainer=new qx.ui.container.Composite().set(
+							{decorator : "main"});
+				var gridLayout=new qx.ui.layout.Grid();
+				gridContainer.setLayout(gridLayout);
+				for (var i=0;i<2;i++) {
+					gridLayout.setRowFlex(i,1);
+					gridLayout.setColumnFlex(i,1);
+				}
+				for (var i=0;i<3;i++)
+				{
+					var label=new qx.ui.basic.Label(layout.charAt(i));
+					switch (i)
+					{
+						case 0 :
+							gridContainer.add(label, {row: 0, column: 0});
+							break;
+						case 1 :
+							gridContainer.add(label, {row: 0, column: 1});
+							break;
+						case 2 :
+							gridContainer.add(label, {row: 1, column: 1});
+							break;
+					}
+				}
+				var button = new qx.ui.form.RadioButton();
+				gridContainer.add(button, {row: 1, column: 0});
+				radioGroup.add(button);
+				gridContainer.addListener("click", function () {
+					radioGroup.setSelection([button]);
+					_this.setViewsLayout(layout);
+				});
+				return gridContainer;
+			}
+
+			var gridContainer=new qx.ui.container.Composite();
+			var gridLayout=new qx.ui.layout.Grid();
+			gridContainer.setLayout(gridLayout);
+			for (var i=0;i<3;i++) {
+				gridLayout.setRowFlex(i,1);
+				gridLayout.setColumnFlex(i,1);
+			}
+
+			gridContainer.add(getGrid("ASC"), {row: 0, column: 0});
+			gridContainer.add(getGrid("SAC"), {row: 0, column: 1});
+			gridContainer.add(getGrid("CAS"), {row: 0, column: 2});
+			gridContainer.add(getGrid("ACS"), {row: 1, column: 0});
+			gridContainer.add(getGrid("SCA"), {row: 1, column: 1});
+			gridContainer.add(getGrid("CSA"), {row: 1, column: 2});
+			radioGroup.setSelection([radioGroup.getChildren()[0]]);
+			return (gridContainer);
 		},
 
 		__getLinkButton : function () {

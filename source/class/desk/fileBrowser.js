@@ -319,12 +319,12 @@ qx.Class.define("desk.fileBrowser",
 						var meshView=new desk.meshView(file, myBrowser, modificationTime);
 //						qx.core.Init.getApplication().getRoot().add(meshView);
 					}
-					else if (xmlDoc.getElementsByTagName("volume").length!=0)
+			/*		else if (xmlDoc.getElementsByTagName("volume").length!=0)
 					{
 						var volView=new desk.volView(file, myBrowser, modificationTime);
 						//~ var volView=new desk.volMaster(file, myBrowser, modificationTime); //~ orion test
 //						qx.core.Init.getApplication().getRoot().add(volView);
-					}
+					}*/
 					else
 						alert ("xml file of unknown type!");
 					break;
