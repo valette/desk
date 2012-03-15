@@ -79,7 +79,7 @@ qx.Class.define("desk.volMaster",
 
 
 	events : {
-		"removeVolume" : "qx.event.type.Data",
+		"removeVolume" : "qx.event.type.Data"
 	},
 
 	properties : {
