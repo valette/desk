@@ -209,7 +209,7 @@ qx.Class.define("desk.volMaster",
 
 
 			window.add (new qx.ui.basic.Label("Windows layout :"));
-			window.add (new qx.ui.basic.Label("A : axial; S : Sagittal; C : Coronal"));
+			window.add (new qx.ui.basic.Label("A : Axial; S : Sagittal; C : Coronal"));
 			window.add(this.__getChangeLayoutContainer());
 			window.add(new qx.ui.core.Spacer(10,30), {flex: 5});
 
@@ -322,7 +322,7 @@ qx.Class.define("desk.volMaster",
 			var label=new qx.ui.basic.Label(shortFileName);
 			label.setTextAlign("left");
 			labelcontainer.add(label, {flex : 1});
-			labelcontainer.setContextMenu(this.__getVolumeContextMenu(volumeListItem));
+			volumeListItem.setContextMenu(this.__getVolumeContextMenu(volumeListItem));
 
 			var numberOfRemainingMeshes=this.__nbUsedOrientations;
 
@@ -448,7 +448,7 @@ qx.Class.define("desk.volMaster",
 		__getVolumeContextMenu : function (volumeListItem) {
 				//context menu to edit meshes appearance
 			var menu = new qx.ui.menu.Menu;
-			var propertiesButton = new qx.ui.menu.Button("properties/orientation");
+			var propertiesButton = new qx.ui.menu.Button("properties");
 			propertiesButton.addListener("execute", function (){
 
 				function formatArray(array) {
