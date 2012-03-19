@@ -643,6 +643,17 @@ qx.Class.define("desk.segTools",
 			var adjacenciesField=new qx.ui.form.TextArea();
 			adjacenciesField.setValue("none");
 			adjacenciesField.setReadOnly(true);
+
+			adjacenciesField.setDroppable(true);
+			adjacenciesField.addListener("drop", function(e) {
+				if (e.supportsType("segmentationLabel"))
+				{
+					var label=e.getData("segmentationLabel");
+					this.__addEdge(label, this.__targetColorItem);
+					__updateAdjacenciesText();
+				}
+			}, this);
+
 			container.add(adjacenciesField, {flex : 2});
 
 			var container2=new qx.ui.container.Composite();
@@ -947,7 +958,25 @@ qx.Class.define("desk.segTools",
 					this.setPaintMode(paint);
 					});
             }, this);
-    
+
+			labelBox.setDraggable(true);
+			labelBox.addListener("dragstart", function(e) {
+				e.addAction("alias");
+				e.addType("segmentationLabel");
+			}, this);
+			labelBox.addListener("droprequest", function(e) {
+					var type = e.getCurrentType();
+					switch (type)
+					{
+					case "segmentationLabel":
+						e.addData(type, labelAttributes);
+						break;
+					default :
+						alert ("type "+type+"not supported for labels drag and drop");
+					}
+			}, this);
+
+
 			var boxLabel = new qx.ui.basic.Label().set({alignX:"left"});
 			labelBox.add(boxLabel);
 			labelBox.add(colorBox);
