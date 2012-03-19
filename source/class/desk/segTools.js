@@ -664,20 +664,15 @@ qx.Class.define("desk.segTools",
 			function __updateAdjacenciesText () {
 				var adjacencies=_this.__targetColorItem.adjacencies;
 				var children=adjacenciesField.getChildren();
-				for (;children.length>0;) {
+				while (children.length>0) {
 					children[0].destroy();
 				}
-			//	adjacenciesField.removeAll();
-				if (adjacencies.length==0) {
-					text="none"
-				}
-				else {
-					for (var i=0;i<adjacencies.length;i++) {
-						var neighbour=adjacencies[i];
-						var listItem=new qx.ui.form.ListItem(neighbour.label+" : "+neighbour.labelName);
-						listItem.setUserData("AdjacenciesItem", neighbour);
-						adjacenciesField.add(listItem);
-					}
+
+				for (var i=0;i<adjacencies.length;i++) {
+					var neighbour=adjacencies[i];
+					var listItem=new qx.ui.form.ListItem(neighbour.label+" : "+neighbour.labelName);
+					listItem.setUserData("AdjacenciesItem", neighbour);
+					adjacenciesField.add(listItem);
 				}
 			}
 
