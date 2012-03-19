@@ -568,9 +568,12 @@ qx.Class.define("desk.segTools",
 				}
 				if (count>1) {
 					labelDisplay.setBackgroundColor("red");
+					labelValue.setToolTipText("This label already exists");
+					alert("This label already exists");
 				}
 				else {
-					labelDisplay.setBackgroundColor("white");
+					labelDisplay.setBackgroundColor("transparent");
+					labelValue.resetToolTipText();
 				}
 			}, this);
 			topLeftContainer.add(labelValue);
@@ -639,12 +642,12 @@ qx.Class.define("desk.segTools",
 			container.setLayout(new qx.ui.layout.HBox());
 			topRightContainer.add(container);
 
+			var container2=new qx.ui.container.Composite();
+			container2.setLayout(new qx.ui.layout.VBox());
+			container.add(container2);
 
-			var adjacenciesField=new qx.ui.form.TextArea();
-			adjacenciesField.setValue("none");
-			adjacenciesField.setReadOnly(true);
-
-			adjacenciesField.setDroppable(true);
+			var adjacenciesField = new qx.ui.form.List().set(
+				{droppable : true, height : 120, selectionMode : "multi"});
 			adjacenciesField.addListener("drop", function(e) {
 				if (e.supportsType("segmentationLabel"))
 				{
@@ -654,54 +657,37 @@ qx.Class.define("desk.segTools",
 				}
 			}, this);
 
-			container.add(adjacenciesField, {flex : 2});
-
-			var container2=new qx.ui.container.Composite();
-			container2.setLayout(new qx.ui.layout.VBox());
-			container.add(container2);
+			container2.add(adjacenciesField, {flex : 2});
 
 			var _this=this;
 
 			function __updateAdjacenciesText () {
 				var adjacencies=_this.__targetColorItem.adjacencies;
-				var text="";
+				var children=adjacenciesField.getChildren();
+				for (;children.length>0;) {
+					children[0].destroy();
+				}
+			//	adjacenciesField.removeAll();
 				if (adjacencies.length==0) {
 					text="none"
 				}
 				else {
 					for (var i=0;i<adjacencies.length;i++) {
 						var neighbour=adjacencies[i];
-						text+=neighbour.label+" : "+neighbour.labelName+"\n";
+						var listItem=new qx.ui.form.ListItem(neighbour.label+" : "+neighbour.labelName);
+						listItem.setUserData("AdjacenciesItem", neighbour);
+						adjacenciesField.add(listItem);
 					}
 				}
-				adjacenciesField.setReadOnly(false);
-				adjacenciesField.setValue(text);
-				adjacenciesField.setReadOnly(true);
 			}
 
-			var inputField=new qx.ui.form.TextField();
-			container2.add(inputField);
-			var addButton=new qx.ui.form.Button("Add");
-			addButton.addListener("execute", function () {
-				var label=this.__getLabel(inputField.getValue());
-				if (label==false) {
-					return;
-				}
-
-				this.__addEdge(label, this.__targetColorItem);
-				__updateAdjacenciesText();
-				inputField.setValue("");
-			}, this);
-			container2.add(addButton);
-			var removeButton=new qx.ui.form.Button("Remove");
+			var removeButton=new qx.ui.form.Button("Remove Selection");
 			removeButton.addListener("execute", function () {
-				var label=this.__getLabel(inputField.getValue());
-				if (label==false) {
-					return;
+				var selection=adjacenciesField.getSelection();
+				for (var i=0;i<selection.length;i++) {
+					this.__removeEdge(selection[i].getUserData("AdjacenciesItem"), this.__targetColorItem);
 				}
-				this.__removeEdge(label, this.__targetColorItem);
 				__updateAdjacenciesText();
-				inputField.setValue("");
 			}, this);
 			container2.add(removeButton);
 
