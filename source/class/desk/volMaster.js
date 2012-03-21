@@ -230,6 +230,9 @@ qx.Class.define("desk.volMaster",
 
 		__addViewerToGrid : function (sliceView, x, y) {
 			var fullscreen=false;
+			var width = Math.round((this.__window.getWidth()-3)/2);
+			var height = Math.round((this.__window.getHeight()-3)/2);
+			sliceView.set({width : width, height : height});
 			this.__gridContainer.add(sliceView, {row: y, column: x});
 			this.__orientationContainer.add(sliceView.getReorientationContainer(), {row: y, column: x});
 			sliceView.setUserData("positionInGrid", {row :y , column :x})
@@ -315,13 +318,9 @@ qx.Class.define("desk.volMaster",
 
 			var shortFileName=file.substring(file.lastIndexOf("/")+1, file.length);
 
-			var labelcontainer=new qx.ui.container.Composite()
-			labelcontainer.setLayout(new qx.ui.layout.HBox());
-			volumeListItem.add(labelcontainer, {flex : 1});
-
 			var label=new qx.ui.basic.Label(shortFileName);
 			label.setTextAlign("left");
-			labelcontainer.add(label, {flex : 1});
+			volumeListItem.add(label);
 			volumeListItem.setContextMenu(this.__getVolumeContextMenu(volumeListItem));
 
 			var numberOfRemainingMeshes=this.__nbUsedOrientations;
