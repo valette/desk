@@ -20,6 +20,24 @@ qx.Class.define("desk.volumeSlice",
 		
 
 		this.__image=new Image();
+		var texture=new THREE.Texture(this.__image);
+		this.__texture = texture;
+		texture.generateMipmaps=false;
+		texture.magFilter=THREE.NearestFilter;
+		texture.minFilter=THREE.NearestFilter;
+
+		this.__material=new THREE.ShaderMaterial({
+			uniforms: {
+				texture: { type: "t", value: 0, texture: texture },
+				contrast : { type: "f", value: 1.0 },
+				brightness : { type: "f", value: 0.0 },
+				opacity : { type: "f", value: 1.0 }
+			},
+			vertexShader: desk.volumeSlice.VERTEXSHADER,
+			fragmentShader: desk.volumeSlice.FRAGMENTSHADER,
+			transparent : true
+		});
+
 		this.__canvas = new qx.ui.embed.Canvas();
 		this.__originalImageCanvas = new qx.ui.embed.Canvas();
 
@@ -46,6 +64,41 @@ qx.Class.define("desk.volumeSlice",
 	events : {
 		// the "changeSlice" event is fired whenever the image changes
 		"changeImage" : "qx.event.type.Event"
+	},
+
+	statics : {
+		VERTEXSHADER : [
+			"varying vec2 vUv;",
+			"varying vec3 vPosition;",
+			"void main( void ) {",
+			"vUv = uv;",
+			"vPosition = position;",
+			"gl_Position = projectionMatrix * modelViewMatrix * vec4(vPosition, 1);",
+			"}"
+		].join("\n"),
+
+		FRAGMENTSHADER : [
+			"uniform sampler2D texture;",
+			"uniform float contrast;",
+			"uniform float brightness;",
+			"uniform float opacity;",
+			"varying vec2 vUv;",
+			"varying vec3 vPosition;",
+			"void main() {",
+				
+				"vec4 rgba = texture2D( texture, vUv );",
+				"highp float Sign = 1.0 - step(128.0,rgba[0])*2.0;",
+				"highp float Exponent = 2.0 * mod(rgba[0],128.0) + step(128.0,rgba[1]) - 127.0;",
+				"highp float Mantissa = mod(rgba[1],128.0)*65536.0 + rgba[2]*256.0 +rgba[3];",// + (0x800000);",
+//				"highp float Mantissa = mod(rgba[1],128.0)*65536.0 + rgba[2]*256.0 +rgba[3] + float(0x800000);",
+				"highp float Result = Sign * Mantissa * pow(2.0,Exponent - 23.0);",
+
+				"vec4 textureColor = texture2D( texture, vUv );",
+				"vec4 middle=vec4(0.5);",
+				"vec4 color = ((textureColor-middle+brightness)*vec4(contrast))+middle;",
+				"gl_FragColor=vec4(color[0],color[1],color[2],opacity);",
+			"}"
+		].join("\n")
 	},
 
 	members : {
@@ -88,6 +141,9 @@ qx.Class.define("desk.volumeSlice",
 		__lookupTableRed : null,
 		__lookupTableGreen : null,
 		__lookupTableBlue : null,
+
+		__texture : null,
+		__material : null,
 
 		getFileName : function () {
 			return this.__file;
@@ -205,6 +261,10 @@ qx.Class.define("desk.volumeSlice",
 
 		getImageCanvas : function(){
 			return this.__canvas;
+		},
+
+		getMaterial : function (){
+			return this.__material;
 		},
 
 		getCornersCoordinates : function () {
@@ -834,6 +894,7 @@ qx.Class.define("desk.volumeSlice",
 				_this.__originalImageCanvas.getContext2d().drawImage(_this.__image, 0, 0);
 				_this.redraw();
 				_this.__updateInProgress=false;
+				_this.__texture.needsUpdate = true;
 				_this.__updateImage();
 				};
 			this.__image.onerror=function(){

@@ -665,8 +665,6 @@ qx.Class.define("desk.sliceView",
 					new THREE.UV( 0, 1 )
 					] );
 
-				
-
 				var listener=_this.addListener("changeSlice", function (e) {
 					volumeSlice.setSlice(e.getData());
 				});
@@ -692,26 +690,8 @@ qx.Class.define("desk.sliceView",
 
 					_this.__setupInteractionEvents();
 				}
-//				else {
-//					volumeSlice.setSlice(_this.getSlice());
-//				}
 
-				var canvas=volumeSlice.getImageCanvas();
-		    	
-				var width=canvas.getCanvasWidth();
-				var height=canvas.getCanvasHeight();
-
-				var length=width*height*4;
-				var dataColor = new Uint8Array( length);
-				var texture = new THREE.DataTexture(
-						dataColor, width, height, THREE.RGBAFormat );
-				texture.generateMipmaps=false;
-				texture.needsUpdate = true;
-				texture.magFilter=THREE.NearestFilter;
-				texture.minFilter=THREE.NearestFilter;
-
-				var material=new THREE.MeshBasicMaterial( 
-						{map:texture, transparent: true, opacity : opacity});//, combine :THREE.MixOperation});
+				var material=volumeSlice.getMaterial();
 				var mesh=new THREE.Mesh(geometry,material);
 				mesh.doubleSided=true;
 				_this.__scene.add(mesh);
@@ -722,21 +702,7 @@ qx.Class.define("desk.sliceView",
 				geometry.computeVertexNormals();
 				geometry.computeBoundingSphere();
 
-				function updateTexture()
-				{
-					var data=canvas.getContext2d().getImageData(0, 0,width, height).data;
-
-					for (var i=length;i--;)
-						dataColor[i]=data[i];
-					texture.needsUpdate = true;
-					_this.render();
-				}
-
-				volumeSlice.addListener('changeImage',function() {
-						updateTexture();
-						_this.render();
-					});
-				updateTexture();
+				volumeSlice.addListener('changeImage',_this.render, _this);
 
 				if (_this.__slices.length==1) {
 					_this.__setDrawingMesh(volumeSlice);
@@ -760,8 +726,6 @@ qx.Class.define("desk.sliceView",
 				else {
 					volumeSlice.setSlice(_this.getSlice());
 				}
-
-				_this.render();
 
 				if (typeof callback=="function")
 				{
