@@ -383,10 +383,10 @@ qx.Class.define("desk.volMaster",
 					toolTipText : "change opacity"});
 			opacitySlider.addListener("changeValue", function(event)
 			{
+				var opacity=event.getData()/100;
 				for (var i=0;i<volumeSlices.length;i++) {
-					volumeSlices[i].getUserData("mesh").material.opacity=event.getData()/100;
+					volumeSlices[i].setOpacity(opacity);
 				}
-				this.__renderAll();
 			},this);
 			settingsContainer.add(opacitySlider, {flex : 1});
 
@@ -423,7 +423,7 @@ qx.Class.define("desk.volMaster",
 					var contrast=volumeSlices[0].getContrast();
 					var brightness=volumeSlices[0].getBrightness();
 
-					brightness-=deltaY/3;
+					brightness-=deltaY/300;
 					contrast+=deltaX/200;
 					x=newX;
 					y=newY;

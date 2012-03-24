@@ -566,9 +566,8 @@ qx.Class.define("desk.sliceView",
 				new THREE.UV( 0, 1 )
 				] );
 
-			var canvas=volumeSlice.getImageCanvas();
-			var width=canvas.getCanvasWidth();
-			var height=canvas.getCanvasHeight();
+			var width=this.__volume2DDimensions[0];
+			var height=this.__volume2DDimensions[1];
 
 			this.__drawingCanvas.set({
 				canvasWidth: width,
