@@ -31,9 +31,31 @@ qx.Class.define("desk.volumeSlice",
 		texture.magFilter=THREE.NearestFilter;
 		texture.minFilter=THREE.NearestFilter;
 
+		var data=new Uint8Array( 256*4);
+		data[0]=255;
+		data[1]=0;
+		data[2]=0;
+		data[3]=255;
+		data[4]=0;
+		data[5]=255;
+		data[6]=255;
+		data[7]=255;
+		data[8]=0;
+		data[9]=0;
+		data[10]=255;
+		data[11]=255;
+
+		var lookupTable = new THREE.DataTexture( data , 256, 1, THREE.RGBAFormat );
+		lookupTable.generateMipmaps=false;
+		lookupTable.magFilter=THREE.NearestFilter;
+		lookupTable.minFilter=THREE.NearestFilter;
+		lookupTable.needsUpdate=true;
+
 		this.__material=new THREE.ShaderMaterial({
 			uniforms: {
 				texture: { type: "t", value: 0, texture: texture },
+				lookupTable: { type: "t", value: 1, texture: lookupTable },
+				lookupTableLength : { type: "i", value: 2 },
 				contrast : { type: "f", value: 1.0 },
 				brightness : { type: "f", value: 0.0 },
 				opacity : { type: "f", value: 1.0 }
@@ -81,9 +103,12 @@ qx.Class.define("desk.volumeSlice",
 
 		FRAGMENTSHADER : [
 			"uniform sampler2D texture;",
+			"uniform sampler2D lookupTable;",
+			"uniform int lookupTableLength;",
 			"uniform float contrast;",
 			"uniform float brightness;",
 			"uniform float opacity;",
+
 			"varying vec2 vUv;",
 			"varying vec3 vPosition;",
 			"void main() {",
@@ -98,8 +123,14 @@ qx.Class.define("desk.volumeSlice",
 				"vec4 textureColor = texture2D( texture, vUv );",
 //				"vec4 middle=vec4(0.5);",
 //				"vec4 color = ((textureColor-middle+brightness)*vec4(contrast))+middle;",
+
+
 				"vec4 color = (textureColor+brightness)*vec4(contrast);",
-				"gl_FragColor=vec4(color[0],color[1],color[2],opacity);",
+				"vec4 finalColor = vec4(color[0], color[1], color[2], opacity);",
+				"float value=color[0]*float(lookupTableLength);",
+				"vec2 colorIndex=vec2(value,0.0);",
+				"vec4 colorFromLookupTable = texture2D( lookupTable,colorIndex  );",
+				"gl_FragColor=finalColor;",
 			"}"
 		].join("\n")
 	},
