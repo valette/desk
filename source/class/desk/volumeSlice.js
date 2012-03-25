@@ -53,7 +53,7 @@ qx.Class.define("desk.volumeSlice",
 				texture: { type: "t", value: 0, texture: texture },
 				lookupTable: { type: "t", value: 1, texture: lookupTable },
 				lookupTableLength : { type: "i", value: 2 },
-				useLookupTable : { type: "i", value: 1 },
+				useLookupTable : { type: "f", value: 0 },
 				contrast : { type: "f", value: 1.0 },
 				brightness : { type: "f", value: 0.0 },
 				opacity : { type: "f", value: 1.0 }
@@ -103,6 +103,7 @@ qx.Class.define("desk.volumeSlice",
 			"uniform sampler2D texture;",
 			"uniform sampler2D lookupTable;",
 			"uniform int lookupTableLength;",
+			"uniform float useLookupTable;",
 			"uniform float contrast;",
 			"uniform float brightness;",
 			"uniform float opacity;",
@@ -128,7 +129,7 @@ qx.Class.define("desk.volumeSlice",
 				"vec2 colorIndex=vec2(clampedValue,0.0);",
 				"vec4 colorFromLookupTable = texture2D( lookupTable,colorIndex  );",
 				"colorFromLookupTable[3]=opacity;",
-				"gl_FragColor=correctedColor;",
+				"gl_FragColor=mix (correctedColor, colorFromLookupTable, useLookupTable);",
 //				"gl_FragColor=colorFromLookupTable;",
 			"}"
 		].join("\n")
@@ -278,9 +279,29 @@ qx.Class.define("desk.volumeSlice",
 			this.__lookupTableRed=luts[0];
 			this.__lookupTableGreen=luts[1];
 			this.__lookupTableBlue=luts[2];
-			if (this.isReady()) {
-				this.redraw();
+
+			var lookupTable=this.__material.uniforms.lookupTable.texture;
+			var numberOfColors=luts[0].length;
+			this.__material.uniforms.lookupTableLength.value=numberOfColors;
+			this.__material.uniforms.useLookupTable.value=1;
+			lookupTable.needsUpdate=true;
+			var image=lookupTable.image;
+			if (image.width!=numberOfColors) {
+				image.data=new Uint8Array(numberOfColors*4);
+				image.width=numberOfColors;
 			}
+			var data=image.data;
+			var lutR=luts[0];
+			var lutG=luts[1];
+			var lutB=luts[2];
+			var p=0;
+			for (var i=0;i<numberOfColors;i++) {
+				data[p++]=lutR[i];
+				data[p++]=lutG[i];
+				data[p++]=lutB[i];
+				data[p++]=255;
+			}
+			this.fireEvent("changeImage");
 		},
 
 		getLookupTables : function () {
@@ -291,9 +312,8 @@ qx.Class.define("desk.volumeSlice",
 			this.__lookupTableRed=null;
 			this.__lookupTableGreen=null;
 			this.__lookupTableBlue=null;
-			if (this.isReady()) {
-				this.redraw();
-			}
+			this.__material.uniforms.useLookupTable.value=0;
+			this.fireEvent("changeImage");
 		},
 
 		getMaterial : function (){
