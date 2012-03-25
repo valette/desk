@@ -491,7 +491,8 @@ qx.Class.define("desk.sliceView",
 
 			var mesh=new THREE.Mesh(geometry,material);
 			mesh.doubleSided=true;
-			mesh.visible=false;
+	//	maybe there's a bug to submit to three.js : the following line breaks renderDepth..
+	//		mesh.visible=false;
 			this.__scene.add(mesh);
 			this.__brushMesh=mesh;
 
