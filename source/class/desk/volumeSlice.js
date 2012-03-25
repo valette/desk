@@ -1,6 +1,7 @@
 /*
 #ignore(THREE.*)
 #ignore(THREE)
+#ignore(Uint8Array)
 */
 
 qx.Class.define("desk.volumeSlice", 
@@ -31,21 +32,17 @@ qx.Class.define("desk.volumeSlice",
 		texture.magFilter=THREE.NearestFilter;
 		texture.minFilter=THREE.NearestFilter;
 
-		var data=new Uint8Array( 256*4);
+		var data=new Uint8Array( 2*4);
 		data[0]=255;
 		data[1]=0;
 		data[2]=0;
 		data[3]=255;
 		data[4]=0;
-		data[5]=255;
+		data[5]=0;
 		data[6]=255;
 		data[7]=255;
-		data[8]=0;
-		data[9]=0;
-		data[10]=255;
-		data[11]=255;
 
-		var lookupTable = new THREE.DataTexture( data , 256, 1, THREE.RGBAFormat );
+		var lookupTable = new THREE.DataTexture( data , 2, 1, THREE.RGBAFormat );
 		lookupTable.generateMipmaps=false;
 		lookupTable.magFilter=THREE.NearestFilter;
 		lookupTable.minFilter=THREE.NearestFilter;
@@ -56,6 +53,7 @@ qx.Class.define("desk.volumeSlice",
 				texture: { type: "t", value: 0, texture: texture },
 				lookupTable: { type: "t", value: 1, texture: lookupTable },
 				lookupTableLength : { type: "i", value: 2 },
+				useLookupTable : { type: "i", value: 1 },
 				contrast : { type: "f", value: 1.0 },
 				brightness : { type: "f", value: 0.0 },
 				opacity : { type: "f", value: 1.0 }
@@ -121,16 +119,17 @@ qx.Class.define("desk.volumeSlice",
 				"highp float Result = Sign * Mantissa * pow(2.0,Exponent - 23.0);",
 
 				"vec4 textureColor = texture2D( texture, vUv );",
-//				"vec4 middle=vec4(0.5);",
-//				"vec4 color = ((textureColor-middle+brightness)*vec4(contrast))+middle;",
+				"float pixelValue=textureColor[0];",
+				"float correctedPixelValue=(pixelValue-0.5+brightness)*contrast+0.5;",
+				"vec4 correctedColor=vec4(correctedPixelValue);",
+				"correctedColor[3]=opacity;",
 
-
-				"vec4 color = (textureColor+brightness)*vec4(contrast);",
-				"vec4 finalColor = vec4(color[0], color[1], color[2], opacity);",
-				"float value=color[0]*float(lookupTableLength);",
-				"vec2 colorIndex=vec2(value,0.0);",
+				"float clampedValue=clamp(correctedPixelValue, 0.0, 1.0);",
+				"vec2 colorIndex=vec2(clampedValue,0.0);",
 				"vec4 colorFromLookupTable = texture2D( lookupTable,colorIndex  );",
-				"gl_FragColor=finalColor;",
+				"colorFromLookupTable[3]=opacity;",
+				"gl_FragColor=correctedColor;",
+//				"gl_FragColor=colorFromLookupTable;",
 			"}"
 		].join("\n")
 	},
