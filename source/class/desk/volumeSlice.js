@@ -54,6 +54,9 @@ qx.Class.define("desk.volumeSlice",
 				lookupTable: { type: "t", value: 1, texture: lookupTable },
 				lookupTableLength : { type: "i", value: 2 },
 				useLookupTable : { type: "f", value: 0 },
+				imageFormat : { type: "f", value: 0 },
+				scalarMin : { type: "f", value: 0 },
+				scalarMax : { type: "f", value: 1 },
 				contrast : { type: "f", value: 1.0 },
 				brightness : { type: "f", value: 0.0 },
 				opacity : { type: "f", value: 1.0 }
@@ -107,20 +110,30 @@ qx.Class.define("desk.volumeSlice",
 			"uniform float contrast;",
 			"uniform float brightness;",
 			"uniform float opacity;",
+			"uniform float imageFormat;",
+			"uniform float scalarMin;",
+			"uniform float scalarMax;",
 
 			"varying vec2 vUv;",
 			"varying vec3 vPosition;",
 			"void main() {",
 				
-				"vec4 rgba = texture2D( texture, vUv );",
-				"highp float Sign = 1.0 - step(128.0,rgba[0])*2.0;",
-				"highp float Exponent = 2.0 * mod(rgba[0],128.0) + step(128.0,rgba[1]) - 127.0;",
-				"highp float Mantissa = mod(rgba[1],128.0)*65536.0 + rgba[2]*256.0 +rgba[3];",// + (0x800000);",
-//				"highp float Mantissa = mod(rgba[1],128.0)*65536.0 + rgba[2]*256.0 +rgba[3] + float(0x800000);",
-				"highp float Result = Sign * Mantissa * pow(2.0,Exponent - 23.0);",
-
 				"vec4 textureColor = texture2D( texture, vUv );",
-				"float pixelValue=textureColor[0];",
+				"vec4 rgba = floor(textureColor*vec4(255)+vec4(0.5));",
+				"rgba.rgba=rgba.abgr;",
+
+				"float pixelValueJPG=textureColor[0];",
+
+		/*		"highp float Sign = 1.0 - step(128.0,rgba[0])*2.0;",
+				"highp float Exponent = 2.0 * mod(rgba[0],128.0) + step(128.0,rgba[1]) - 127.0;",
+				"highp float Mantissa = mod(rgba[1],128.0)*65536.0 + rgba[2]*256.0 +rgba[3]+ float(8388608.0);",
+				"highp float pixelValuePNG = (Sign * Mantissa * pow(2.0,Exponent - 23.0)-scalarMin)/(scalarMax-scalarMin);",*/
+				"float Sign = 1.0 - step(128.0,rgba[0])*2.0;",
+				"float Exponent = 2.0 * mod(rgba[0],128.0) + step(128.0,rgba[1]) - 127.0;",
+				"float Mantissa = mod(rgba[1],128.0)*65536.0 + rgba[2]*256.0 +rgba[3]+ float(8388608.0);",
+				"float pixelValuePNG = (Sign * Mantissa * pow(2.0,Exponent - 23.0)-scalarMin)/(scalarMax-scalarMin);",
+
+				"float pixelValue=mix(float(pixelValuePNG), pixelValueJPG, imageFormat);",
 				"float correctedPixelValue=(pixelValue-0.5+brightness)*contrast+0.5;",
 				"vec4 correctedColor=vec4(correctedPixelValue);",
 				"correctedColor[3]=opacity;",
@@ -136,7 +149,6 @@ qx.Class.define("desk.volumeSlice",
 	},
 
 	members : {
-
 		__availableImageFormat : null,
 
 		__fileBrowser : null,
@@ -516,7 +528,6 @@ qx.Class.define("desk.volumeSlice",
 		__parseXMLresponse : function (xmlDoc, xmlURL) {
 
 			this.__availableImageFormat=this.getImageFormat();
-
 			var volume=xmlDoc.getElementsByTagName("volume")[0];
 			if (volume==null)
 				return;
@@ -565,6 +576,11 @@ qx.Class.define("desk.volumeSlice",
 			if (slashIndex>0)
 				this.__path=xmlURL.substring(0,slashIndex)+"\/";
 
+			// feed shader with constants
+			this.__material.uniforms.imageFormat.value=this.__availableImageFormat;
+			this.__material.uniforms.scalarMin.value=this.__scalarMin;
+			this.__material.uniforms.scalarMax.value=this.__scalarMax;
+
 			if (this.isReady()) {
 				this.__updateTriggered=true;
 				this.__updateImage();
@@ -588,6 +604,7 @@ qx.Class.define("desk.volumeSlice",
 				clearTimeout(this.__timeOut)
 				_this.__updateInProgress=false;
 				_this.__texture.needsUpdate = true;
+				_this.__material.uniforms.imageFormat.value=_this.getImageFormat();
 				_this.fireEvent("changeImage");
 				};
 			this.__image.onerror=function(){
