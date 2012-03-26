@@ -604,7 +604,6 @@ qx.Class.define("desk.volumeSlice",
 				clearTimeout(this.__timeOut)
 				_this.__updateInProgress=false;
 				_this.__texture.needsUpdate = true;
-				_this.__material.uniforms.imageFormat.value=_this.getImageFormat();
 				_this.fireEvent("changeImage");
 				};
 			this.__image.onerror=function(){
