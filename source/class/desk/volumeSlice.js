@@ -81,8 +81,7 @@ qx.Class.define("desk.volumeSlice",
 			"varying vec2 vUv;",
 			"void main() {",
 				"vec4 rawData = texture2D( texture, vUv );",
-				"vec4 rawBytes = floor(rawData*vec4(255)+vec4(0.5));",
-				"float valueJPG=rawData[0];"
+				"vec4 rawBytes = floor(rawData*vec4(255.0)+vec4(0.5));",
 		].join("\n"),
 
 		/*		"highp float Sign = 1.0 - step(128.0,rawBytes[0])*2.0;",
@@ -107,20 +106,22 @@ qx.Class.define("desk.volumeSlice",
 		].join("\n"),
 
 		FRAGMENTSHADERFLOAT : [
-				"rawBytes.rgba=rawBytes.abgr;",
-				"float Sign = 1.0 - step(128.0,rawBytes[0])*2.0;",
-				"float Exponent = 2.0 * mod(rawBytes[0],128.0) + step(128.0,rawBytes[1]) - 127.0;",
-				"float Mantissa = mod(rawBytes[1],128.0)*65536.0 + rawBytes[2]*256.0 +rawBytes[3]+ float(8388608.0);",
+			// just discard rawBytes if the type is not float, otherwise it might affect JPG results...
+				"rawBytes=rawBytes* (1.0 - imageType);",
+				"float Sign = 1.0 - step(128.0,rawBytes[3])*2.0 ;",
+				"float Exponent = 2.0 * mod(rawBytes[3],128.0) + step(128.0,rawBytes[2]) - 127.0;",
+				"float Mantissa = mod(rawBytes[2],128.0)*65536.0 + rawBytes[1]*256.0 +rawBytes[0]+ 8388608.0;",
 				"float valuePNG = Sign * Mantissa * pow(2.0,Exponent - 23.0);"
 		].join("\n"),
 
-		FRAGMENTSHADEREMPTY : [
+	/*	FRAGMENTSHADEREMPTY : [
 				"float valuePNG = rawBytes[0];"
-		].join("\n"),
+		].join("\n"),*/
 
 		FRAGMENTSHADEREND : [
+				"float valueJPG=rawData[0];",
 				"float rescaledValuePNG = ( valuePNG - scalarMin ) / ( scalarMax - scalarMin );",
-				"float rescaledPixelValue=mix(rescaledValuePNG, valueJPG, imageType);",
+				"float rescaledPixelValue= (1.0 - imageType )*  rescaledValuePNG + imageType * valueJPG;",
 				"float correctedPixelValue=(rescaledPixelValue+brightness)*contrast;",
 				"vec4 correctedColor=vec4(correctedPixelValue);",
 				"correctedColor[3]=opacity;",
