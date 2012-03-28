@@ -81,7 +81,7 @@ qx.Class.define("desk.volumeSlice",
 			"varying vec2 vUv;",
 			"void main() {",
 				"vec4 rawData = texture2D( texture, vUv );",
-				"vec4 rawBytes = floor(rawData*vec4(255.0)+vec4(0.5));",
+				"vec4 rawBytes = floor(rawData*vec4(255.0)+vec4(0.5));"
 		].join("\n"),
 
 		/*		"highp float Sign = 1.0 - step(128.0,rawBytes[0])*2.0;",
