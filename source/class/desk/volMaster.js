@@ -318,10 +318,14 @@ qx.Class.define("desk.volMaster",
 
 			var shortFileName=file.substring(file.lastIndexOf("/")+1, file.length);
 
-			var label=new qx.ui.basic.Label(shortFileName);
-			label.setTextAlign("left");
-			volumeListItem.add(label);
-			volumeListItem.setContextMenu(this.__getVolumeContextMenu(volumeListItem));
+			var labelcontainer=new qx.ui.container.Composite()
+			labelcontainer.setLayout(new qx.ui.layout.HBox());
+			labelcontainer.setContextMenu(this.__getVolumeContextMenu(volumeListItem));
+			volumeListItem.add(labelcontainer, {flex : 1});
+
+ 			var label=new qx.ui.basic.Label(shortFileName);
+ 			label.setTextAlign("left");
+			labelcontainer.add(label, {flex : 1});
 
 			var numberOfRemainingMeshes=this.__nbUsedOrientations;
 
