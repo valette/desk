@@ -362,8 +362,6 @@ qx.Class.define("desk.volumeSlice",
 			lookupTable.minFilter=THREE.NearestFilter;
 			lookupTable.needsUpdate=true;
 
-			console.log("image format : "+this.__availableImageFormat);
-
 			var middleShader;
 			switch (this.__scalarType)
 			{
@@ -371,23 +369,18 @@ qx.Class.define("desk.volumeSlice",
 			case 15:
 				//char / signed char
 				middleShader=desk.volumeSlice.FRAGMENTSHADERCHAR;
-				console.log("type char")
 				break;
 			case 3:
 				middleShader=desk.volumeSlice.FRAGMENTSHADERUCHAR;
-				console.log("type uchar")
 				break;
 			case 4:
 				middleShader=desk.volumeSlice.FRAGMENTSHADERSHORT;
-				console.log("type short")
 				break;
 			case 5:
 				middleShader=desk.volumeSlice.FRAGMENTSHADERUSHORT;
-				console.log("type ushort")
 				break;
 			default:
 				middleShader=desk.volumeSlice.FRAGMENTSHADERFLOAT;
-				console.log("type float")
 				break;
 			}
 
