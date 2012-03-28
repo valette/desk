@@ -340,6 +340,7 @@ qx.Class.define("desk.volumeSlice",
 
 		getMaterial :function () {
 			var texture=new THREE.Texture(this.__image);
+			texture.needsUpdate = true;
 			texture.generateMipmaps=false;
 			texture.magFilter=THREE.NearestFilter;
 			texture.minFilter=THREE.NearestFilter;
