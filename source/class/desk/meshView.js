@@ -609,6 +609,7 @@ qx.Class.define("desk.meshView",
 				] );
 
 			var material=volumeSlice.getMaterial();
+			material.transparent=false;
 			var mesh=new THREE.Mesh(geometry,material);
 			mesh.doubleSided=true;
 			this.__scene.add(mesh);
