@@ -84,11 +84,6 @@ qx.Class.define("desk.volumeSlice",
 				"vec4 rawBytes = floor(rawData*vec4(255.0)+vec4(0.5));"
 		].join("\n"),
 
-		/*		"highp float Sign = 1.0 - step(128.0,rawBytes[0])*2.0;",
-				"highp float Exponent = 2.0 * mod(rawBytes[0],128.0) + step(128.0,rawBytes[1]) - 127.0;",
-				"highp float Mantissa = mod(rawBytes[1],128.0)*65536.0 + rawBytes[2]*256.0 +rawBytes[3]+ float(8388608.0);",
-				"highp float valuePNG = (Sign * Mantissa * pow(2.0,Exponent - 23.0)-scalarMin)/(scalarMax-scalarMin);",*/
-
 		FRAGMENTSHADERCHAR : [
 				"float valuePNG = rawBytes[0] - 256.0 * step ( 128.0, rawBytes[0] );"
 		].join("\n"),
@@ -113,10 +108,6 @@ qx.Class.define("desk.volumeSlice",
 				"float Mantissa = mod(rawBytes[2],128.0)*65536.0 + rawBytes[1]*256.0 +rawBytes[0]+ 8388608.0;",
 				"float valuePNG = Sign * Mantissa * pow(2.0,Exponent - 23.0);"
 		].join("\n"),
-
-	/*	FRAGMENTSHADEREMPTY : [
-				"float valuePNG = rawBytes[0];"
-		].join("\n"),*/
 
 		FRAGMENTSHADEREND : [
 				"float valueJPG=rawData[0];",
