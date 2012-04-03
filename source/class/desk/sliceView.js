@@ -141,7 +141,7 @@ qx.Class.define("desk.sliceView",
 
 		render : function ( ) {
 			var _this=this;
-
+//			console.log("render slice");
 			if (this.__renderFunction==null) {
 				this.__renderFunction=
 					function () {
@@ -534,10 +534,6 @@ qx.Class.define("desk.sliceView",
 				geometry.computeBoundingSphere();
 			}
 			this.__updateBrush=updateBrush;
-			this.addListener("mouseout", function (event) {
-				mesh.visible=false;
-				this.render();
-			}, this);
 
 			this.addListener("changePaintMode", function (event) {
 				updateBrush();
@@ -672,7 +668,6 @@ qx.Class.define("desk.sliceView",
 
 				if (_this.__slices.length==1) {
 					_this.__slider.setMaximum(volumeSlice.getNumberOfSlices()-1);
-//					_this.setSlice(Math.round(0.5*volumeSlice.getNumberOfSlices()));
 
 					_this.__camera.position.set(0.5*(coordinates[0]+coordinates[2]),
 												0.5*(coordinates[3]+coordinates[5]),
@@ -734,7 +729,8 @@ qx.Class.define("desk.sliceView",
 		},
 
 		__resizeHTML : function () {
-			var elementSize=this.__viewPort.getInnerSize();
+			var elementSize=this.__overlayCanvas.getInnerSize();
+			this.__viewPortSize=elementSize;
 			this.__renderer.setSize(  elementSize.width , elementSize.height );
 			this.__camera.aspect=elementSize.width / elementSize.height;
 			this.__camera.updateProjectionMatrix();
@@ -823,7 +819,7 @@ qx.Class.define("desk.sliceView",
 
 			var htmlContainer=this.__viewPort;
 			var controls=this.__controls;
-			htmlContainer.addListener("resize",this.__resizeHTML, this);
+			this.__overlayCanvas.addListener("resize",this.__resizeHTML, this);
 
 			//-1 : nothing
 			// 0 : left click
@@ -892,18 +888,28 @@ qx.Class.define("desk.sliceView",
 				}
 			}, this);
 
-	/*		this.addListener("mouseout", function (event)	{
-				this.__rightContainer.setVisibility("excluded");
-			},this);*/
+			this.addListener("mouseout", function (event) {
+				if (qx.ui.core.Widget.contains(this, event.getRelatedTarget()))
+				{
+					return;
+				}
+//				this.__rightContainer.setVisibility("hidden");
+				if ((this.isPaintMode()||this.isEraseMode())) {
+					this.__brushMesh.visible=false;
+					this.render();
+				}
+			}, this);
+
 
 			htmlContainer.addListener("mousemove", function (event)	{
-	//			this.__rightContainer.setVisibility("visible");
+//				this.__rightContainer.setVisibility("visible");
 				var brushMesh=this.__brushMesh;
-				var position=this.getPositionOnSlice(event);
+				var position;
 				switch (interactionMode)
 				{
 				case -1:
 					if ((this.isPaintMode()||this.isEraseMode())) {
+						position=this.getPositionOnSlice(event);
 						brushMesh.visible=true;
 						brushMesh.position.set(position.x, position.y, 0);
 						this.render();
@@ -939,6 +945,7 @@ qx.Class.define("desk.sliceView",
 					this.__propagateCameraToLinks();
 					break;
 				case 3 :
+					position=this.getPositionOnSlice(event);
 					brushMesh.visible=true;
 					brushMesh.position.set(position.x, position.y, 0);
 					var context=this.__drawingCanvas.getContext2d();
@@ -948,6 +955,7 @@ qx.Class.define("desk.sliceView",
 					this.__drawingCanvasModified=true;
 					break;
 				case 4 :
+					position=this.getPositionOnSlice(event);
 					brushMesh.visible=true;
 					brushMesh.position.set(position.x, position.y, 0);
 					var x=Math.round(position.i)+0.5;
@@ -1036,6 +1044,7 @@ qx.Class.define("desk.sliceView",
 		__volume2DDimensions : null,
 		__volume2DSpacing : null,
 		__projector : null,
+		__viewPortSize : null,
 
 		getPositionOnSlice : function (event) {
 			var viewPort=this.__viewPort;
@@ -1043,7 +1052,7 @@ qx.Class.define("desk.sliceView",
 			var x=event.getDocumentLeft()-origin.left;
 			var y=event.getDocumentTop()-origin.top;
 
-			var elementSize=viewPort.getInnerSize();
+			var elementSize=this.__viewPortSize;
 			var x2 = ( x / elementSize.width ) * 2 - 1;
 			var y2 = - ( y / elementSize.height ) * 2 + 1;
 
@@ -1071,13 +1080,8 @@ qx.Class.define("desk.sliceView",
 			var overlayCanvas=new qx.ui.container.Composite(new qx.ui.layout.Canvas());
 			this.__overlayCanvas=overlayCanvas;
 			var viewPort=this.__getRenderWindow();
-			overlayCanvas.addListener("resize", function () {
-				var size=overlayCanvas.getInnerSize();
-				viewPort.setWidth(size.width);
-				viewPort.setHeight(size.height);
-			}, this);
 
-			overlayCanvas.add(viewPort);
+			overlayCanvas.add(viewPort, {width : "100%", height : "100%"});
 			this.add(overlayCanvas, {flex : 1});
 
 			var directionOverlays=[];
@@ -1147,8 +1151,9 @@ qx.Class.define("desk.sliceView",
 //			overlayCanvas.add(label, {top :0, left :0});
 			var slider=new qx.ui.form.Slider();
 			this.__slider=slider;
-			slider.set ({minimum : 0, maximum : 100, value : 0, width :30, opacity : 0.5, backgroundColor : "transparent"});
-			slider.setOrientation("vertical");
+
+			slider.set ({minimum : 0, maximum : 100, value : 0, width :30, opacity : 0.5, backgroundColor : "transparent"
+					, orientation : "vertical", zIndex : 1000});
 			slider.addListener("changeValue",function(e){
 				this.setSlice(this.getVolumeSliceToPaint().getNumberOfSlices()-1-e.getData())
 				}, this);
@@ -1185,7 +1190,7 @@ qx.Class.define("desk.sliceView",
 			}, this);
 
 			rightContainer.add(slider, {flex : 1});
-//			rightContainer.setVisibility("excluded");
+//			rightContainer.setVisibility("hidden");
 			overlayCanvas.add(rightContainer, {right : 0, top : 0, height : "100%"});
 		},
 
