@@ -204,6 +204,8 @@ qx.Class.define("desk.meshView",
 		// stores the scene bounding box diagonal length, usefull for updating
 		__boudingBoxDiagonalLength : 0,
 
+		__htmlContainerSize : null,
+
 		__readFile : function (file, mtime, color, update, opt_updateDataModel) {
 			var label;
 			var lastSlashIndex=file.lastIndexOf("\/");
@@ -663,12 +665,7 @@ qx.Class.define("desk.meshView",
 
 			var overlayCanvas=new qx.ui.container.Composite(new qx.ui.layout.Canvas());
 			this.__overlayCanvas=overlayCanvas;
-			overlayCanvas.addListener("resize", function () {
-				var size=overlayCanvas.getInnerSize();
-				htmlContainer.setWidth(size.width);
-				htmlContainer.setHeight(size.height);
-			}, this);
-			overlayCanvas.add(htmlContainer);
+			overlayCanvas.add(htmlContainer, {width : "100%", height : "100%"});
 			var randomId=Math.random();
 			htmlContainer.setHtml("<div id=\"three.js"+randomId+"\"></div>");
 
@@ -721,15 +718,12 @@ qx.Class.define("desk.meshView",
 				scene.add( camera );
 
 				// lights
-				var dirLight = new THREE.DirectionalLight( 0xffffff );
+				var dirLight = new THREE.DirectionalLight( 0xcccccc );
 				dirLight.position.set( 200, 200, 1000 ).normalize();
 				camera.add( dirLight );
 				camera.add( dirLight.target );
-
-				var dirLight2 = new THREE.DirectionalLight( 0xffffff );
-				dirLight2.position.set( -200, -200, -1000 ).normalize();
-				camera.add( dirLight2 );
-				camera.add( dirLight2.target );
+		        var ambientLight = new THREE.AmbientLight(0x555555);
+				scene.add( ambientLight );
 
 				// renderer
 				var renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -742,6 +736,8 @@ qx.Class.define("desk.meshView",
 				htmlContainer.addListener("resize",resizeHTML, this);
 				function resizeHTML(){
 					var elementSize=htmlContainer.getInnerSize();
+					this.__htmlContainerSize=elementSize;
+
 					renderer.setSize(  elementSize.width , elementSize.height );
 					camera.aspect=elementSize.width / elementSize.height;
 					camera.updateProjectionMatrix();
@@ -804,7 +800,7 @@ qx.Class.define("desk.meshView",
 							var x=event.getDocumentLeft()-origin.left;
 							var y=event.getDocumentTop()-origin.top;
 
-							var elementSize=htmlContainer.getInnerSize();
+							var elementSize=this.__htmlContainerSize;
 							var x2 = ( x / elementSize.width ) * 2 - 1;
 							var y2 = - ( y / elementSize.height ) * 2 + 1;
 
@@ -837,15 +833,11 @@ qx.Class.define("desk.meshView",
 			}, this);
 		},
 
-/*		render : function ( ) {
-			this.__controls.update();
-			this.__renderer.render( this.__scene, this.__camera );			
-		},*/
-
 		__renderFunction : null,
 		__renderingTriggered : false,
 
 		render : function ( force ) {
+	//		console.log("render mesh");
 			var _this=this;
 
 			if (this.__renderFunction==null) {
@@ -922,10 +914,17 @@ qx.Class.define("desk.meshView",
 							var color=parameters.color;
 							var threecolor=new THREE.Color().setRGB(color[0],color[1],color[2]);
 
-							var material =  new THREE.MeshLambertMaterial( {
+							var material =  new THREE.MeshPhongMaterial( {
 								 color:threecolor.getHex(),
 								 opacity: color[3]} );
-							if (color[3]<0.999) material.transparent=true;
+							var factor=0.3;
+							material.ambient = new THREE.Color().setRGB(
+								factor*threecolor.r,factor*threecolor.g,factor*threecolor.b);
+							material.shininess=10;
+							material.specular= new THREE.Color( 0x303030 );
+							if (color[3]<0.999) {
+								material.transparent=true;
+							}
 							var mesh = new THREE.Mesh(geom, material );
 							mesh.doubleSided=true;
 							mesh.renderDepth=color[4];
@@ -933,7 +932,7 @@ qx.Class.define("desk.meshView",
 
 							if(typeof parameters.callback == 'function') {
 								parameters.callback(mesh);
-								}
+							}
 							_this.viewAll();
 							_this.__numberOfLoaders++;
 							_this.__loadQueue();
