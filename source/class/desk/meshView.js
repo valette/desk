@@ -920,7 +920,7 @@ qx.Class.define("desk.meshView",
 							var factor=0.3;
 							material.ambient = new THREE.Color().setRGB(
 								factor*threecolor.r,factor*threecolor.g,factor*threecolor.b);
-							material.shininess=10;
+							material.shininess=5;
 							material.specular= new THREE.Color( 0x303030 );
 							if (color[3]<0.999) {
 								material.transparent=true;
