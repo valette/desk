@@ -688,7 +688,7 @@ qx.Class.define("desk.sliceView",
 				var material=volumeSlice.getMaterial();
 				var mesh=new THREE.Mesh(geometry,material);
 				mesh.doubleSided=true;
-				_this.__scene.add(mesh);
+
 				volumeSlice.setUserData("mesh",mesh);
 
 				geometry.computeCentroids();
@@ -696,6 +696,9 @@ qx.Class.define("desk.sliceView",
 				geometry.computeVertexNormals();
 				geometry.computeBoundingSphere();
 
+				volumeSlice.addListenerOnce('changeImage',function () {
+					_this.__scene.add(mesh);
+					}, _this);
 				volumeSlice.addListener('changeImage',_this.render, _this);
 
 				if (_this.__slices.length==1) {
