@@ -160,7 +160,6 @@ foreach ($actions->children() as $action)
 
 					if ($parameterValue!=null) 
 					{
-						$prependPHP_DIR=false;
 						switch ($parameterType)
 						{
 							case "string":
@@ -177,21 +176,20 @@ foreach ($actions->children() as $action)
 								validatePath($parameterValue, true);
 								if (!is_file($parameterValue))
 									die ("$parameterName : file \"$parameterValue\" does not exist");
-								$prependPHP_DIR=true;
+								$parameterValue=realpath($parameterValue);
 								break;
 							case "directory":
 								validatePath($parameterValue, true);
 								if (!is_dir($parameterValue))
 									die ("$parameterName : directory \"$parameterValue\" does not exist");
-								$prependPHP_DIR=true;
+								$parameterValue=realpath($parameterValue);
 								break;
 							case "base64":
 								validateBase64($parameterValue);
-								$prependPHP_DIR=true;
 								break;
 							case "new_directory":
 								validatePath($parameterValue, true);
-								$prependPHP_DIR=true;
+								$parameterValue=realpath($parameterValue);
 								break;
 							case "int":
 								if (!(intval("$parameterValue")==floatval("$parameterValue")))
@@ -242,9 +240,6 @@ foreach ($actions->children() as $action)
 							$command.=" ".$prefix;
 						else
 							$command.=" ";
-
-						if ($prependPHP_DIR)
-							$parameterValue="$DIR_TO_PHP$parameterValue";
 
 						$command.=$parameterValue;
 
@@ -479,7 +474,8 @@ foreach ($actions->children() as $action)
 				}
 			}
 			fwrite($flog, "******************************************************\n");
-			fclose($flog);		}
+			fclose($flog);
+		}
 	}
 }
 ?>
