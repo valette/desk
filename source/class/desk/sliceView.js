@@ -1029,7 +1029,7 @@ qx.Class.define("desk.sliceView",
 
 				// renderer
 
-				var renderer = new THREE.WebGLRenderer( { antialias: true } );
+				var renderer = new THREE.WebGLRenderer( { antialias: false } );
 
 				this.__renderer=renderer;
 				renderer.setClearColorHex( 0xffffff, 1 );
