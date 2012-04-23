@@ -1,21 +1,24 @@
 <?php
-$dir=mysql_real_escape_string($_POST["dir"]);
+//$dir=mysql_real_escape_string($_POST["dir"]);
+$dir=$_POST["dir"];
 
 
-$DATA_ROOT_FROM_PHP="data";
-$CACHE_ROOT_FROM_PHP="cache";
-$ACTIONS_ROOT_FROM_PHP="action";
+$DATA_ROOT_FROM_PHP=realpath ( "data" );
+$CACHE_ROOT_FROM_PHP=realpath ( "cache");
+$ACTIONS_ROOT_FROM_PHP=realpath ( "action");
 
-$begining=substr($dir, 0, strlen($DATA_ROOT_FROM_PHP));
+$realDir=realpath ($dir);
+
+$begining=substr($realDir, 0, strlen($DATA_ROOT_FROM_PHP));
 if ($begining!=$DATA_ROOT_FROM_PHP)
 {
-	$begining=substr($dir, 0, strlen($CACHE_ROOT_FROM_PHP));
+	$begining=substr($realDir, 0, strlen($CACHE_ROOT_FROM_PHP));
 	if ($begining!=$CACHE_ROOT_FROM_PHP)
 	{
-		$begining=substr($dir, 0, strlen($ACTIONS_ROOT_FROM_PHP));
+		$begining=substr($realDir, 0, strlen($ACTIONS_ROOT_FROM_PHP));
 		if ($begining!=$ACTIONS_ROOT_FROM_PHP)
 		{
-			die ("bad directory : $file\n".
+			die ("bad directory : $realDir\n".
 			"begins with \"$begining\"\n".
 			"must begin with \"$DATA_ROOT_FROM_PHP\"");
 		}
