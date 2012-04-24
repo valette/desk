@@ -5,7 +5,7 @@ $dir=$_POST["dir"];
 
 $DATA_ROOT_FROM_PHP=realpath ( "data" );
 $CACHE_ROOT_FROM_PHP=realpath ( "cache");
-$ACTIONS_ROOT_FROM_PHP=realpath ( "action");
+$ACTIONS_ROOT_FROM_PHP=realpath ( "actions");
 
 $realDir=realpath ($dir);
 

@@ -1,11 +1,25 @@
 <?php
-$file=mysql_real_escape_string($_GET['fileName']);
+$file=$_GET['fileName'];
 
-if (substr_compare($file,"data/",0,5)!=0)
-{	if (substr_compare($file,"actions/",0,6)!=0)
+$DATA_ROOT_FROM_PHP=realpath ( "data" );
+$CACHE_ROOT_FROM_PHP=realpath ( "cache");
+$ACTIONS_ROOT_FROM_PHP=realpath ( "actions");
+
+$realFile=realpath ($file);
+
+$begining=substr($realFile, 0, strlen($DATA_ROOT_FROM_PHP));
+if ($begining!=$DATA_ROOT_FROM_PHP)
+{
+	$begining=substr($realFile, 0, strlen($CACHE_ROOT_FROM_PHP));
+	if ($begining!=$CACHE_ROOT_FROM_PHP)
 	{
-		if (substr_compare($file,"cache/",0,5)!=0)
-			die("download forbiden");
+		$begining=substr($realFile, 0, strlen($ACTIONS_ROOT_FROM_PHP));
+		if ($begining!=$ACTIONS_ROOT_FROM_PHP)
+		{
+			die ("bad directory : $realFile\n".
+			"begins with \"$begining\"\n".
+			"must begin with \"$DATA_ROOT_FROM_PHP\"");
+		}
 	}
 }
 
