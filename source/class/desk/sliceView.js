@@ -22,10 +22,12 @@ qx.Class.define("desk.sliceView",
 		this.__slices=[];
 		this.__fileBrowser=fileBrowser;
 
-		if (typeof orientation=="number")
+		if (typeof orientation=="number") {
 			this.setOrientation(orientation);
-		else
+		}
+		else {
 			this.setOrientation(0);
+		}
 
 		this.__master=master;		
 
@@ -999,10 +1001,12 @@ qx.Class.define("desk.sliceView",
 							var slider=this.__slider;
 							var delta=Math.round(event.getWheelDelta()/2);
 							var newValue=slider.getValue()+delta;
-							if (newValue>slider.getMaximum())
+							if (newValue>slider.getMaximum()) {
 								newValue=slider.getMaximum()
-							if (newValue<slider.getMinimum())
+							}
+							if (newValue<slider.getMinimum()) {
 								newValue=slider.getMinimum()
+							}
 							slider.setValue(newValue);
 					}, this);
 		},
