@@ -159,9 +159,6 @@ qx.Class.define("desk.volumeSlice",
 		__renderer : null,
 		__controls : null,
 
-		__brightness : 0,
-		__contrast : 1,
-
 		__lookupTableRed : null,
 		__lookupTableGreen : null,
 		__lookupTableBlue : null,
