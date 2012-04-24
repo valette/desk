@@ -74,8 +74,9 @@ qx.Class.define("desk.actions",
 			for (var i=0;i!=actions.length;i++)
 			{
 				var actionElement=actions[i];
-				if (actionElement.getAttribute("name")==actionName)
+				if (actionElement.getAttribute("name")==actionName) {
 					return actionElement;
+					}
 			}
 			console.log("action "+actionName+" not found");
 		},
