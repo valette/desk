@@ -19,8 +19,9 @@ qx.Class.define("desk.meshView",
 
 		if ( parameters != undefined )
 		{
-			if (parameters.convertVTK!==undefined)
+			if (parameters.convertVTK!==undefined) {
 				this.setConvertVTK(parameters.convertVTK);
+			}
 		}
 
 		var window=new qx.ui.window.Window();
@@ -100,16 +101,16 @@ qx.Class.define("desk.meshView",
 				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 					var label = node.label;
 					var mesh= this.__meshes[node.nodeId];
-					if (label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1)
-					{
-						if (mesh)
+					if (label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1) {
+						if (mesh) {
 							mesh.visible=this.__meshesVisibility[node.nodeId];
+						}
 						return true;
 					}
-					else
-					{
-						if (mesh)
+					else {
+						if (mesh) {
 							mesh.visible=false;
+						}
 						return false;
 					}						
 				}
@@ -209,20 +210,24 @@ qx.Class.define("desk.meshView",
 		__readFile : function (file, mtime, color, update, opt_updateDataModel) {
 			var label;
 			var lastSlashIndex=file.lastIndexOf("\/");
-			if (lastSlashIndex<0)
+			if (lastSlashIndex<0) {
 				label=file;
-			else
+			}
+			else {
 				label=file.substring(lastSlashIndex+1, file.length);
+			}
 
 			var _this=this;
 			var dataModel=this.__meshesTree.getDataModel();
 
-			if (this.__meshesRoot===null)
+			if (this.__meshesRoot===null) {
 				this.__meshesRoot=dataModel.addBranch(null,"meshes", true);
+			}
 
 			var leaf=dataModel.addLeaf(this.__meshesRoot,label, null);
-			if (opt_updateDataModel!=false)
+			if (opt_updateDataModel!=false) {
 				dataModel.setData();
+			}
 
 			var fileBrowser=this.__fileBrowser;
 
@@ -236,8 +241,9 @@ qx.Class.define("desk.meshView",
 					_this.__meshes[ leaf ] = mesh ;	
 					_this.__meshesVisibility[leaf] = true ;
 
-					if ( update == true )
+					if ( update == true ) {
 						_this.viewAll();
+					}
 					else {
 						if ( (update != null ) && ( update != false ) )	{
 							update();
@@ -245,16 +251,14 @@ qx.Class.define("desk.meshView",
 					}
 				}
 
-				if ( mtime == undefined )
-				{
+				if ( mtime == undefined ) {
 					mtime=Math.random();
 				}
 
 				switch (extension)
 				{
 				case ".vtk":
-					if (_this.isConvertVTK()===false)
-					{
+					if (_this.isConvertVTK()===false) {
 						_this.loadVTKURL(fileBrowser.getFileURL(file)+"?nocache="+mtime, callback, color);
 						break;
 					}
@@ -267,8 +271,7 @@ qx.Class.define("desk.meshView",
 			switch (extension)
 			{
 			case ".vtk":
-				if (this.isConvertVTK()===false)
-				{
+				if (this.isConvertVTK()===false) {
 					loadMeshIntoScene(file,mtime);
 					break;
 				}
@@ -437,27 +440,31 @@ qx.Class.define("desk.meshView",
 			var min=new THREE.Vector3(1e10,1e10,1e10);
 			var meshes=this.__meshes;
 
-			for (var i=0;i<meshes.length;i++)
-			{
-				if ((typeof meshes[i]) =="object")
-				{
+			for (var i=0;i<meshes.length;i++) {
+				if ((typeof meshes[i]) =="object") {
 					var bbox=meshes[i].geometry.boundingBox;
 
 					var bbmin=bbox.min;
-					if (min.x>bbmin.x)
+					if (min.x>bbmin.x) {
 						min.setX(bbmin.x);
-					if (min.y>bbmin.y)
+					}
+					if (min.y>bbmin.y) {
 						min.setY(bbmin.y);
-					if (min.z>bbmin.z)
+					}
+					if (min.z>bbmin.z) {
 						min.setZ(bbmin.z);
+					}
 
 					var bbmax=bbox.max;
-					if (max.x<bbmax.x)
+					if (max.x<bbmax.x) {
 						max.setX(bbmax.x);
-					if (max.y<bbmax.y)
+					}
+					if (max.y<bbmax.y) {
 						max.setY(bbmax.y);
-					if (max.z<bbmax.z)
+					}
+					if (max.z<bbmax.z) {
 						max.setZ(bbmax.z);
+					}
 				}
 			}
 
@@ -466,15 +473,13 @@ qx.Class.define("desk.meshView",
 
 			var camera=this.__camera;
 
-			if (this.__boudingBoxDiagonalLength==0)
-			{
+			if (this.__boudingBoxDiagonalLength==0) {
 				this.__boudingBoxDiagonalLength=bbdiaglength;
 				camera.position.copy(center);
 				camera.position.setZ(camera.position.z-bbdiaglength);
 				this.__controls.target.copy(center);
 			}
-			else
-			{
+			else {
 				var ratio=bbdiaglength/this.__boudingBoxDiagonalLength;
 				this.__boudingBoxDiagonalLength=bbdiaglength;
 				var backPedal=camera.position.clone();
@@ -492,15 +497,13 @@ qx.Class.define("desk.meshView",
 			if (this.isReady()) {
 				load();
 			}
-			else
-			{
+			else {
 				this.addListenerOnce("changeReady", load);
 			}
 			
 			function load ()
 			{
 				//open the file
-
 				var extension=file.substring(file.length-4, file.length);
 				switch (extension)
 				{
@@ -535,12 +538,10 @@ qx.Class.define("desk.meshView",
 
 						var numberOfRemainingMeshes=numberOfMeshes;
 
-						for (var n=0;n<numberOfMeshes;n++)
-						{
+						for (var n=0;n<numberOfMeshes;n++) {
 							var color=[1.0,1.0,1.0,1.0, 0];
 							var mesh=meshes[n];
-							if (mesh.hasAttribute("color"))
-							{
+							if (mesh.hasAttribute("color")) {
 								var colorstring=mesh.getAttribute("color");
 								var colors=colorstring.split(" ");
 								switch (colors.length)
@@ -551,8 +552,9 @@ qx.Class.define("desk.meshView",
 										colors[4]="0";
 									default:
 								}
-								for (var j=0;j<4;j++)
+								for (var j=0;j<4;j++) {
 									color[j]=parseFloat(colors[j]);
+								}
 								color[4]=parseInt(colors[4]);
 							}
 
@@ -576,10 +578,10 @@ qx.Class.define("desk.meshView",
 							var xmlName;
 							if (mesh.hasAttribute("Mesh")) {
 								xmlName=mesh.getAttribute("Mesh");
-								}
+							}
 							else {
 								xmlName=mesh.getAttribute("mesh");
-								}
+							}
 							_this.__readFile(path+"/"+xmlName, mtime, color, update, false);
 						}
 						break;
@@ -600,8 +602,9 @@ qx.Class.define("desk.meshView",
 		{
 			var geometry=new THREE.Geometry();
 			geometry.dynamic=true;
-			for (var i=0;i<4;i++)
+			for (var i=0;i<4;i++) {
 				geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( 0, 0, 0 ) ) );
+			}
 			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
 			geometry.faceVertexUvs[ 0 ].push( [
 				new THREE.UV( 0, 0),
@@ -620,9 +623,9 @@ qx.Class.define("desk.meshView",
 
 			var dataModel=this.__meshesTree.getDataModel();
 
-			if (this.__slicesRoot===null)
+			if (this.__slicesRoot===null) {
 				this.__slicesRoot=dataModel.addBranch(null,"slices", true);
-
+			}
 
 			var leaf=dataModel.addLeaf(this.__slicesRoot,volumeSlice.getFileName(), null);
 			dataModel.setData();
@@ -661,7 +664,6 @@ qx.Class.define("desk.meshView",
 
 		__createRenderWindow : function(){
 			var htmlContainer = new qx.ui.embed.Html();
-			this.__htmlContainer=htmlContainer;
 
 			var overlayCanvas=new qx.ui.container.Composite(new qx.ui.layout.Canvas());
 			this.__overlayCanvas=overlayCanvas;
@@ -673,20 +675,17 @@ qx.Class.define("desk.meshView",
 
 			this.__window.setDroppable(true);
 			this.__window.addListener("drop", function(e) {
-				if (e.supportsType("fileBrowser"))
-				{
+				if (e.supportsType("fileBrowser")) {
 					var fileBrowser=e.getData("fileBrowser");
 					var nodes=fileBrowser.getSelectedNodes();
-					for (var i=0;i<nodes.length;i++)
-					{
+					for (var i=0;i<nodes.length;i++) {
 						var fileNode=nodes[i];
 						var fileName=fileBrowser.getNodeFile(fileNode);
 						var mTime=fileBrowser.getNodeMTime(fileNode);
 						this.openFile(fileName, mTime);
 					}
 				}
-				if (e.supportsType("volumeSlices"))
-				{
+				if (e.supportsType("volumeSlices")) {
 					this.attachVolumeSlices(e.getData("volumeSlices"));
 				}
 
@@ -699,7 +698,7 @@ qx.Class.define("desk.meshView",
 				this.removeAllMeshes();
 				this.unlink();
 				this.fireEvent("close");
-				},this);
+			},this);
 
 			htmlContainer.addListenerOnce("appear",function(e){
 
@@ -751,12 +750,15 @@ qx.Class.define("desk.meshView",
 					var origin=htmlContainer.getContentLocation();
 					draggingInProgress=true;
 					var button=0;
-					if (event.isRightPressed())
+					if (event.isRightPressed()) {
 						button=1;
-					else if ((event.isMiddlePressed())||(event.isShiftPressed()))
+					}
+					else if ((event.isMiddlePressed())||(event.isShiftPressed())) {
 						button=2;
-					else if (event.isCtrlPressed())
+					}
+					else if (event.isCtrlPressed()) {
 						button=3;
+					}
 
 					controls.mouseDown(button,
 									event.getDocumentLeft()-origin.left,
@@ -764,8 +766,7 @@ qx.Class.define("desk.meshView",
 				});
 
 				htmlContainer.addListener("mousemove", function (event)	{
-					if (draggingInProgress)
-					{
+					if (draggingInProgress) {
 						var origin=htmlContainer.getContentLocation();
 						controls.mouseMove(event.getDocumentLeft()-origin.left
 								, event.getDocumentTop()-origin.top);
@@ -783,17 +784,15 @@ qx.Class.define("desk.meshView",
 				htmlContainer.addListener("mousewheel", function (event)	{
 					var tree=this.__meshesTree;
 					var root=this.__slicesRoot;
-					if (root!==null)
-					{
+					if (root!==null) {
 						var rootNode=tree.nodeGet(root);
 						var children=rootNode.children;
-						if (children.length!=0)
-						{
+						if (children.length!=0) {
 							var meshes=[];
-							for (var i=0;i<children.length;i++)
-							{
-								if (this.__meshesVisibility[children[i]])
+							for (var i=0;i<children.length;i++) {
+								if (this.__meshesVisibility[children[i]]) {
 									meshes.push(this.__meshes[children[i]]);
+								}
 							}
 
 							var origin=htmlContainer.getContentLocation();
@@ -887,8 +886,9 @@ qx.Class.define("desk.meshView",
 
 		loadCTMURL : function (url, callback, color) {
 
-			if (this.__meshesToLoad==null)
-				this.__meshesToLoad=new Array();
+			if (this.__meshesToLoad==null) {
+				this.__meshesToLoad=[];
+			}
 
 			var mesh={url : url, color : color, callback : callback};
 			this.__meshesToLoad[this.__meshesToLoad.length]=mesh;
@@ -942,21 +942,20 @@ qx.Class.define("desk.meshView",
 		},
 
 		snapshot : function (factor) {
-			if (factor==null)
+			if (factor==null) {
 				factor=1;
+			}
 
 			var width=this.__window.getWidth();
 			var height=this.__window.getHeight();
 
-			if (factor==1)
-			{
+			if (factor==1) {
 				this.render(true);
 				var strData = this.__renderer.domElement.toDataURL("image/png");
 				var saveData=strData.replace("image/png", "image/octet-stream");
 				document.location.href = saveData;
 			}
-			else
-			{
+			else {
 				this.__embededHTML.addListenerOnce("resize", function() {
 					var strData = this.__renderer.domElement.toDataURL("image/png");
 					var saveData=strData.replace("image/png", "image/octet-stream");
@@ -1025,8 +1024,7 @@ qx.Class.define("desk.meshView",
 			// enable linking between viewers by drag and drop
 			this.__window.setDroppable(true);
 			this.__window.addListener("drop", function(e) {
-				if (e.supportsType("meshView"))
-				{
+				if (e.supportsType("meshView")) {
 					var meshView=e.getData("meshView");
 					this.linkToMeshViewer(meshView);
 					meshView.__propagateLinks();
@@ -1070,8 +1068,7 @@ qx.Class.define("desk.meshView",
 			topBox.add(renderDepthSpinner);
 
 			topBox.add(new qx.ui.core.Spacer(10, 20),{flex:1});
-			if (parentWindow)
-			{
+			if (parentWindow) {
 				var alwaysOnTopCheckBox=new qx.ui.form.CheckBox("this window always on top");
 				alwaysOnTopCheckBox.setValue(true);
 				parentWindow.setAlwaysOnTop(true);
@@ -1089,12 +1086,10 @@ qx.Class.define("desk.meshView",
 			bottomBox.add(opacitySlider);
 
 			var enableUpdate=true;
-			var updateWidgets=function (event)
-			{
+			var updateWidgets=function (event) {
 				enableUpdate=false;
 				var selectedNode=meshesTree.getSelectedNodes()[0];
-				if (selectedNode.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-				{
+				if (selectedNode.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 					var firstSelectedMesh=_this.__meshes[selectedNode.nodeId];
 					var color=firstSelectedMesh.material.color;
 					colorSelector.setRed(Math.round(ratio*color.r));
@@ -1114,11 +1109,9 @@ qx.Class.define("desk.meshView",
 			meshesTree.addListener("changeSelection",updateWidgets);
 
 			opacitySlider.addListener("changeValue", function(event){
-				if (enableUpdate)
-				{
+				if (enableUpdate) {
 					var meshes=meshesTree.getSelectedNodes();
-					for (var i=0;i<meshes.length;i++)
-					{
+					for (var i=0;i<meshes.length;i++) {
 						var mesh=_this.__meshes[meshes[i].nodeId];
 						if (mesh!=null) {
 							var opacity=opacitySlider.getValue()/ratio;
@@ -1129,20 +1122,16 @@ qx.Class.define("desk.meshView",
 							else {
 								mesh.material.transparent=false;
 							}
-
 						}
 					}
 					_this.render();
 				}
-				});
-			
-			
+			});
+
 			colorSelector.addListener("changeValue", function(event){
-				if (enableUpdate)
-				{
+				if (enableUpdate) {
 					var meshes=meshesTree.getSelectedNodes();
-					for (var i=0;i<meshes.length;i++)
-					{
+					for (var i=0;i<meshes.length;i++) {
 						var mesh=_this.__meshes[meshes[i].nodeId];
 						if (mesh!=null) {
 							mesh.material.color.setRGB (colorSelector.getRed()/ratio,
@@ -1152,7 +1141,7 @@ qx.Class.define("desk.meshView",
 					}
 					_this.render();
 				}
-				});
+			});
 
 /*			wireframeCheckBox.addListener('changeValue',function(event){
 				if (enableUpdate)
@@ -1169,11 +1158,9 @@ qx.Class.define("desk.meshView",
 				});*/
 
 			renderDepthSpinner.addListener("changeValue", function(event){
-				if (enableUpdate)
-				{
+				if (enableUpdate) {
 					var meshes=meshesTree.getSelectedNodes();
-					for (var i=0;i<meshes.length;i++)
-					{
+					for (var i=0;i<meshes.length;i++) {
 						var mesh=_this.__meshes[meshes[i].nodeId];
 						if (mesh!=null) {
 							mesh.renderDepth=renderDepthSpinner.getValue();
@@ -1181,8 +1168,7 @@ qx.Class.define("desk.meshView",
 					}
 					_this.render();
 				}
-				});
-
+			});
 			return (mainContainer);
 		},
 
@@ -1205,7 +1191,7 @@ qx.Class.define("desk.meshView",
 		},
 
 		__getContextMenu : function() {
-				//context menu to edit meshes appearance
+			//context menu to edit meshes appearance
 			var menu = new qx.ui.menu.Menu;
 			var propertiesButton = new qx.ui.menu.Button("properties");
 			propertiesButton.addListener("execute", function (){
@@ -1213,7 +1199,7 @@ qx.Class.define("desk.meshView",
 				var mesh=this.__meshes[meshId];
 				alert ("Mesh with "+mesh.geometry.vertexPositionBuffer.numItems/3+" vertices and "+
 						mesh.geometry.vertexIndexBuffer.numItems/3+" polygons");
-				},this);
+			},this);
 			menu.add(propertiesButton);
 
 			var appearanceButton = new qx.ui.menu.Button("appearance");
@@ -1222,41 +1208,37 @@ qx.Class.define("desk.meshView",
 				propertyWindow.setLayout(new qx.ui.layout.HBox());
 				propertyWindow.add(this.__getPropertyWidget(propertyWindow));
 				propertyWindow.open();			
-				}, this);
+			}, this);
 			menu.add(appearanceButton);
 
 			var showButton = new qx.ui.menu.Button("show");
 			showButton.addListener("execute", function (){
 				var meshes=this.__meshesTree.getSelectedNodes();
-				for (var i=0;i<meshes.length;i++)
-				{
-					if (meshes[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-					{
+				for (var i=0;i<meshes.length;i++) {
+					if (meshes[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 						var meshId=meshes[i].nodeId;
 						var mesh=this.__meshes[meshId];
 						mesh.visible=true;
 						this.__meshesVisibility[meshId]=true;
 					}
 				}
-				this.render();		
-				},this);
+				this.render();
+			},this);
 			menu.add(showButton);
 
 			var hideButton = new qx.ui.menu.Button("hide");
 			hideButton.addListener("execute", function (){
 				var meshes=this.__meshesTree.getSelectedNodes();
-				for (var i=0;i<meshes.length;i++)
-				{
-					if (meshes[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-					{
+				for (var i=0;i<meshes.length;i++) {
+					if (meshes[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 						var meshId=meshes[i].nodeId;
 						var mesh=this.__meshes[meshId];
 						mesh.visible=false;
 						this.__meshesVisibility[meshId]=false;
 					}
 				}
-				this.render();		
-				},this);
+				this.render();
+			},this);
 			menu.add(hideButton);
 
 			var removeButton = new qx.ui.menu.Button("remove");
