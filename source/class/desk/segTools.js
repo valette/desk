@@ -1223,8 +1223,6 @@ qx.Class.define("desk.segTools",
 					// save image
 					var sliceId=this.getUserData( "previousSlice" );
 					var seedsType=_this.getSeedsType();
-					var fileName=_this.getSessionDirectory()+"/"+
-						_this.__getSeedFileName (this, sliceId, seedsType);
 
 					_this.__addNewSeedItemToList ( this, sliceId, seedsType );
 					wasAnySeedModified=true;
@@ -1266,7 +1264,7 @@ qx.Class.define("desk.segTools",
 				ESCAPED_QUOTE[APOS] = '&apos;';
 				var att_value;
 				var apos_pos, quot_pos;
-				var use_quote, escape, quote_to_escape;
+				var use_quote, escape;
 				var att_str;
 				var re;
 				var result = '';
@@ -1397,9 +1395,6 @@ qx.Class.define("desk.segTools",
 
 		__getSeedsTypeSelectBox : function()
 		{
-			var theMaster = this.__master;
-			var volFile = this.__file;
-			var fileBrowser = this.__fileBrowser;
 			var selectBox = new qx.ui.form.SelectBox();
 
 			var seedsItem = new qx.ui.form.ListItem("seeds");
@@ -1556,7 +1551,6 @@ qx.Class.define("desk.segTools",
 		},
 
 		__clearSeeds : function ( ) {
-			var master=this.__master;
 			this.__master.applyToViewers ( function () {
 				this.setUserData("previousSlice", this.getSlice());
 				var seedsLists=this.getUserData(desk.segTools.seedsListsString);
