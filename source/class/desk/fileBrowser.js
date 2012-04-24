@@ -10,13 +10,15 @@ qx.Class.define("desk.fileBrowser",
 	construct : function(baseDir, standAlone)
 	{
 		this.base(arguments);
-		if (baseDir!=null)
+		if (baseDir!=null) {
 			this.__baseDir=baseDir;
+		}
 
 		this.setLayout(new qx.ui.layout.VBox());
 
-		if (standAlone==false)
+		if (standAlone==false) {
 			this.__standAlone=false;
+		}
 
 		qx.Class.include(qx.ui.treevirtual.TreeVirtual,
 			qx.ui.treevirtual.MNode);
@@ -299,13 +301,13 @@ qx.Class.define("desk.fileBrowser",
 				case ".stl":
 				case ".ctm":
 				case ".off":
-					var meshView=new desk.meshView(file, myBrowser,modificationTime);
+					new desk.meshView(file, myBrowser,modificationTime);
 //					qx.core.Init.getApplication().getRoot().add(meshView);
 					break;
 				case ".png":
 				case ".jpg":
 				case ".bmp":
-					var imageView=new desk.imageView(file, myBrowser);
+					new desk.imageView(file, myBrowser);
 //					qx.core.Init.getApplication().getRoot().add(imageView);
 					break;
 				case ".xml":
@@ -316,7 +318,7 @@ qx.Class.define("desk.fileBrowser",
 					
 					if (xmlDoc.getElementsByTagName("mesh").length!=0)
 					{
-						var meshView=new desk.meshView(file, myBrowser, modificationTime);
+						new desk.meshView(file, myBrowser, modificationTime);
 //						qx.core.Init.getApplication().getRoot().add(meshView);
 					}
 			/*		else if (xmlDoc.getElementsByTagName("volume").length!=0)
@@ -336,7 +338,7 @@ qx.Class.define("desk.fileBrowser",
 					//~ qx.core.Init.getApplication().getRoot().add(volView);
 					
 				//~ orion test
-					var volViewers = new desk.volMaster(file, myBrowser);
+					new desk.volMaster(file, myBrowser);
 					
 					break;
 				case ".par":
@@ -367,13 +369,13 @@ qx.Class.define("desk.fileBrowser",
 
 			myBrowser.addAction("volViewSimple", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-					var volView=new desk.volViewSimple(myBrowser.getNodeFile(node), myBrowser);
+					new desk.volViewSimple(myBrowser.getNodeFile(node), myBrowser);
 				else
 					alert("Cannot view a directory!");});
 
 			myBrowser.addAction("sliceView", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-					var volView=new desk.sliceView(myBrowser.getNodeFile(node), myBrowser);
+					new desk.sliceView(myBrowser.getNodeFile(node), myBrowser);
 				else
 					alert("Cannot view a directory!");});
 
@@ -393,24 +395,26 @@ qx.Class.define("desk.fileBrowser",
 				} 
 				else
 				{
-					function getAnswer(e)
+			/*		function getAnswer(e)
 					{
-						var req = e.getTarget();
-						var response=req.getResponseText().split("\n")[0];
+						//var req = e.getTarget();
+						//var response=req.getResponseText().split("\n")[0];
 						//~ alert(response);
-					}
+					}*/
 					//~ alert(myBrowser.getNodeFile(node));
 					var parameterMap={
 						"action" : "dicom2meta",
 						"sourceDirectory" : myBrowser.getNodeFile(node),
 						"outputDirectory" : myBrowser.getNodeFile(node)};
-					myBrowser.getActions().launchAction(parameterMap, getAnswer, this);
+					myBrowser.getActions().launchAction(parameterMap);//, getAnswer, this);
 				}
 			});
 			
 			myBrowser.addAction("view/edit text", function (node) {
-				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-					var volView=new desk.textEditor(node, myBrowser);});
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+					new desk.textEditor(node, myBrowser);
+				}
+			});
 
 			myBrowser.addAction("info",function (node) {
 				alert ("file name : "+myBrowser.getNodeFile(node)
