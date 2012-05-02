@@ -425,14 +425,14 @@ qx.Class.define("desk.sliceView",
 			});
 
 			var hGeometry=new THREE.Geometry();
-			hGeometry.vertices.push(new THREE.Vertex(new THREE.Vector3(coordinates[0],0,0)));
-			hGeometry.vertices.push(new THREE.Vertex(new THREE.Vector3(coordinates[2],0,0)));
+			hGeometry.vertices.push( new THREE.Vector3(coordinates[0],0,0) );
+			hGeometry.vertices.push( new THREE.Vector3(coordinates[2],0,0) );
 			var hline = new THREE.Line(hGeometry, material);
 			this.__scene.add(hline);
 
 			var vGeometry=new THREE.Geometry();
-			vGeometry.vertices.push(new THREE.Vertex(new THREE.Vector3(0,coordinates[1],0)));
-			vGeometry.vertices.push(new THREE.Vertex(new THREE.Vector3(0,coordinates[5],0)));
+			vGeometry.vertices.push( new THREE.Vector3(0,coordinates[1],0) );
+			vGeometry.vertices.push( new THREE.Vector3(0,coordinates[5],0) );
 			var vline = new THREE.Line(vGeometry, material);
 			this.__scene.add(vline);
 
@@ -454,8 +454,7 @@ qx.Class.define("desk.sliceView",
 
 			for (var i=0;i<4;i++) {
 				geometry.vertices.push(
-					new THREE.Vertex(
-						new THREE.Vector3( coordinates[2*i],coordinates[2*i+1], 0 ) ) );
+					new THREE.Vector3( coordinates[2*i],coordinates[2*i+1], 0 ) );
 			}
 
 			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
@@ -552,8 +551,7 @@ qx.Class.define("desk.sliceView",
 			var coordinates=volumeSlice.get2DCornersCoordinates();
 			for (var i=0;i<4;i++) {
 				geometry.vertices.push(
-					new THREE.Vertex(
-						new THREE.Vector3( coordinates[2*i],coordinates[2*i+1], 0 ) ) );
+					new THREE.Vector3( coordinates[2*i],coordinates[2*i+1], 0 ) );
 			}
 
 			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
@@ -649,9 +647,8 @@ qx.Class.define("desk.sliceView",
 				var coordinates=volumeSlice.get2DCornersCoordinates();
 				for (var i=0;i<4;i++) {
 					geometry.vertices.push(
-						new THREE.Vertex(
-							new THREE.Vector3(
-								coordinates[2*i],coordinates[2*i+1],0)));
+						new THREE.Vector3(
+								coordinates[2*i],coordinates[2*i+1],0));
 				}
 
 				geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
