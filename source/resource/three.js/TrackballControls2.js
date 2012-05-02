@@ -2,10 +2,6 @@
  * @author Eberhard Graether / http://egraether.com/
  */
 
-HACKSetDirtyVertices = function (geometry) {
-geometry.__dirtyVertices = true;
-}
-
 THREE.TrackballControls2 = function ( object ) {
 
 	var _this = this,

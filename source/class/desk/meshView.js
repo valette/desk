@@ -6,7 +6,6 @@
 #ignore(requestAnimationFrame)
 #ignore(Detector)
 #ignore(Uint8Array)
-#ignore(HACKSetDirtyVertices)
 @lint ignoreGlobal(THREE)
 */
 qx.Class.define("desk.meshView", 
@@ -603,7 +602,7 @@ qx.Class.define("desk.meshView",
 			var geometry=new THREE.Geometry();
 			geometry.dynamic=true;
 			for (var i=0;i<4;i++) {
-				geometry.vertices.push( new THREE.Vertex( new THREE.Vector3( 0, 0, 0 ) ) );
+				geometry.vertices.push( new THREE.Vector3( 0, 0, 0 ) );
 			}
 			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
 			geometry.faceVertexUvs[ 0 ].push( [
@@ -638,15 +637,15 @@ qx.Class.define("desk.meshView",
 			{
 				var coords=volumeSlice.getCornersCoordinates();
 				for (var i=0;i<4;i++) {
-					geometry.vertices[i].position.set(coords[3*i],coords[3*i+1],coords[3*i+2]);
+					geometry.vertices[i].set(coords[3*i],coords[3*i+1],coords[3*i+2]);
 				}
-
 				geometry.computeCentroids();
 				geometry.computeFaceNormals();
 				geometry.computeVertexNormals();
 				geometry.computeBoundingSphere();
 				geometry.computeBoundingBox();
-				HACKSetDirtyVertices(geometry);
+				geometry.verticesNeedUpdate=true;
+
 				_this.render();
 			}
 

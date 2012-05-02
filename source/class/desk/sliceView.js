@@ -5,7 +5,6 @@
 #ignore(requestAnimationFrame)
 #ignore(Detector)
 #ignore(Uint8Array)
-#ignore(HACKSetDirtyVertices)
 @lint ignoreGlobal(THREE)
 */
 
@@ -523,12 +522,12 @@ qx.Class.define("desk.sliceView",
 				texture.needsUpdate = true;
 				var radius=_this.__paintWidth/2;
 
-				mesh.geometry.vertices[0].position.set(-radius*ratio[0], -radius*ratio[1], 0);
-				mesh.geometry.vertices[1].position.set(radius*ratio[0], -radius*ratio[1], 0);
-				mesh.geometry.vertices[2].position.set(radius*ratio[0], radius*ratio[1], 0);
-				mesh.geometry.vertices[3].position.set(-radius*ratio[0], radius*ratio[1], 0);
+				mesh.geometry.vertices[0].set(-radius*ratio[0], -radius*ratio[1], 0);
+				mesh.geometry.vertices[1].set(radius*ratio[0], -radius*ratio[1], 0);
+				mesh.geometry.vertices[2].set(radius*ratio[0], radius*ratio[1], 0);
+				mesh.geometry.vertices[3].set(-radius*ratio[0], radius*ratio[1], 0);
 
-				HACKSetDirtyVertices(geometry);
+				geometry.verticesNeedUpdate=true;
 				geometry.computeCentroids();
 				geometry.computeFaceNormals();
 				geometry.computeVertexNormals();
