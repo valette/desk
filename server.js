@@ -18,7 +18,6 @@ http.createServer(function (request, response) {
         request.on('end', function () {
 
             var POST = qs.parse(body);
-            console.log("listDir : "+POST.dir);
             // use POST
 
 			fs.readdir(POST.dir, function (err, files) {
