@@ -2,12 +2,42 @@ var libpath = require('path'),
     http = require("http"),
     fs = require('fs'),
     url = require("url"),
-    mime = require('mime');
+    mime = require('mime'),
+    qs = require('querystring');
 
-var path = ".";
+var path = "build";
 var port = 1337;
 
 http.createServer(function (request, response) {
+
+	if (request.method == 'POST') {
+        var body = '';
+        request.on('data', function (data) {
+            body += data;
+        });
+        request.on('end', function () {
+
+            var POST = qs.parse(body);
+            console.log("listDir : "+POST.dir);
+            // use POST
+
+			fs.readdir(POST.dir, function (err, files) {
+				response.writeHead(200, {
+					"Content-Type": "text/plain"
+				});
+				for (var i=0;i!=files.length;i++)
+				{
+					response.write(files[i]+" file 10 10");
+					if (i!=files.length-1) {
+						response.write("\n");
+					}
+				}
+				response.end();
+
+			});
+        });
+        return;
+    }
 
     var uri = url.parse(request.url).pathname;
     var filename = libpath.join(path, uri);
