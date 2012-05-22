@@ -40,41 +40,48 @@ var createServer=function () {
 		        body += data;
 		    });
 		    request.on('end', function () {
-
 		        var POST = qs.parse(body);
-		        // use POST
+				var uri = url.parse(request.url).pathname;
+				var filename = libpath.join(path, uri);
 
-				getDirectory(path+"/php/"+POST.dir, function (err, files) {
-					if (err) {
-						response.writeHead(500, {
-						  "Content-Type": "text/plain"
+				switch (uri) 
+				{
+				case "/php/listDir.php":
+					getDirectory(path+"/php/"+POST.dir, function (err, files) {
+						if (err) {
+							response.writeHead(500, {
+							  "Content-Type": "text/plain"
+							});
+							response.write(err + "\n");
+							response.end();
+							return;
+						}
+						response.writeHead(200, {
+							"Content-Type": "text/plain"
 						});
-						response.write(err + "\n");
+						for (var i=0;i!=files.length;i++)
+						{
+							var file=files[i];
+							var dirString;
+							if (file.isDirectory()) {
+								dirString="dir";
+							}
+							else {
+								dirString="file";
+							}
+
+							response.write(file.name+" "+dirString+" "+file.mtime.getTime()+" "+file.size);
+							if (i!=files.length-1) {
+								response.write("\n");
+							}
+						}
 						response.end();
-						return;
-					}
-					response.writeHead(200, {
-						"Content-Type": "text/plain"
+
 					});
-					for (var i=0;i!=files.length;i++)
-					{
-						var file=files[i];
-						var dirString;
-						if (file.isDirectory()) {
-							dirString="dir";
-						}
-						else {
-							dirString="file";
-						}
-
-						response.write(file.name+" "+dirString+" "+file.mtime.getTime()+" "+file.size);
-						if (i!=files.length-1) {
-							response.write("\n");
-						}
-					}
-					response.end();
-
-				});
+					break;
+				default:
+					return;
+				}
 		    });
 		    return;
 		}
