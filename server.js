@@ -4,11 +4,39 @@ var libpath = require('path'),
     url = require("url"),
     mime = require('mime'),
     qs = require('querystring'),
-	async = require('async');
+	async = require('async'),
+	DOMParser = require('xmldom').DOMParser;
 
 var path = "build";
 var port = 1337;
 
+
+var DOMParser = require('xmldom').DOMParser;
+var doc = new DOMParser().parseFromString(
+    '<xml xmlns="a" xmlns:c="./lite">\n'+
+        '\t<child>test</child>\n'+
+        '\t<child></child>\n'+
+        '\t<child/>\n'+
+    '</xml>'
+    ,'text/xml');
+doc.documentElement.setAttribute('x','y');
+doc.documentElement.setAttributeNS('./lite','c:x','y2');
+var nsAttr = doc.documentElement.getAttributeNS('./lite','x')
+console.info(nsAttr)
+console.info(doc)
+
+
+var setupActions=function (file, callback) {
+	fs.readFile(file, function (err, data) {
+		if (err) throw err;
+//		var json = parser.toJson(data, {object: true});
+	//	var doc = new DOMParser().parseFromString(data);
+		console.log(doc);
+	});
+};
+
+//setupActions(path+"/php/listDir.php");
+setupActions(path+"/php/actions.xml");
 var getDirectory=function (dir, callback) {
 	var realFiles=[];
 
