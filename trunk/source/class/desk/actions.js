@@ -38,6 +38,18 @@ qx.Class.define("desk.actions",
 			}
 			qx.core.Init.getApplication().getRoot().add(ongoingActions, { right : 0, top : 0});
 		}, this);
+
+		var loader=new qx.io.ScriptLoader();
+		loader.load("resource/three.js/Three.js", function () {
+			loader.load("resource/three.js/Detector.js", function () {
+				loader.load("resource/three.js/VTKLoader.js", function () {
+					loader.load("resource/three.js/TrackballControls2.js", function () {
+					loader.load("resource/three.js/ctm/CTMLoader.js");
+					});
+				});
+			});
+		});
+
 		return this;
 	},
 

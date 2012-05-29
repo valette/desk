@@ -7,7 +7,8 @@ var libpath = require('path'),
 	async = require('async'),
 	DOMParser = require('xmldom').DOMParser;
 
-var path = "build";
+var path = "trunk/demo/default/build";
+//var path = "trunk";
 var port = 1337;
 
 
@@ -36,7 +37,7 @@ var setupActions=function (file, callback) {
 };
 
 //setupActions(path+"/php/listDir.php");
-setupActions(path+"/php/actions.xml");
+//setupActions(path+"/php/actions.xml");
 var getDirectory=function (dir, callback) {
 	var realFiles=[];
 
@@ -62,6 +63,9 @@ var getDirectory=function (dir, callback) {
 var createServer=function () {
 	http.createServer(function (request, response) {
 
+		var uri = url.parse(request.url).pathname;
+		var filename = libpath.join(path, uri);
+
 		if (request.method == 'POST') {
 		    var body = '';
 		    request.on('data', function (data) {
@@ -69,12 +73,13 @@ var createServer=function () {
 		    });
 		    request.on('end', function () {
 		        var POST = qs.parse(body);
-				var uri = url.parse(request.url).pathname;
-				var filename = libpath.join(path, uri);
 
+				var filename = libpath.join(path, uri);
+				console.log(uri)
 				switch (uri) 
 				{
 				case "/php/listDir.php":
+					console.log("listDir");
 					getDirectory(path+"/php/"+POST.dir, function (err, files) {
 						if (err) {
 							response.writeHead(500, {
@@ -113,9 +118,6 @@ var createServer=function () {
 		    });
 		    return;
 		}
-
-		var uri = url.parse(request.url).pathname;
-		var filename = libpath.join(path, uri);
 
 		libpath.exists(filename, function (exists) {
 		    if (!exists) {
