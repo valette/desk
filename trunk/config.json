@@ -65,50 +65,6 @@
       ]
     }
     */
-/*
-    "build" :
-    {
-      "add-script" :
-      [
-        {
-          "uri" : "resource/three.js/Detector.js"
-        },
-        {
-          "uri" : "resource/three.js/Three.js"
-        },
-        {
-          "uri" : "resource/three.js/VTKLoader.js"
-        },
-        {
-          "uri" : "resource/three.js/TrackballControls2.js"
-        },
-        {
-          "uri" : "resource/three.js/ctm/CTMLoader.js"
-        }
-      ]
-    },
-    "source-hybrid" :
-    {
-      "add-script" :
-      [
-        {
-          "uri" : "resource/three.js/Detector.js"
-        },
-        {
-          "uri" : "resource/three.js/Three.js"
-        },
-        {
-          "uri" : "resource/three.js/VTKLoader.js"
-        },
-        {
-          "uri" : "resource/three.js/TrackballControls2.js"
-        },
-        {
-          "uri" : "resource/three.js/ctm/CTMLoader.js"
-        }
-      ]
-
-    }*/
 
     // If you want to tweak a job setting, see the following sample where
     // the "format" feature of the "build-script" job is overridden.

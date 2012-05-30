@@ -4,16 +4,16 @@
     "name" : "desk",
 
     "summary" : "desk Contribution",
-    "description" : "This is a skeleton for a qooxdoo contribution.",
+    "description" : "A framework for web-based medical image processing.",
     
-    "homepage" : "http://contrib.qooxdoo.org/project/desk",
+    "homepage" : "http://www.creatis.insa-lyon.fr/~valette",
 
     "license" : "LGPL/EPL",
     "authors" : 
     [
       {
-        "name" : "First Author (uid)",
-        "email" : "first.author@some.domain"
+        "name" : "Sebastien Valette",
+        "email" : "sebastien.valette@creatis.insa-lyon.fr"
       }
     ],
 
