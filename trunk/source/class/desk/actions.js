@@ -1,28 +1,22 @@
+/*
+#ignore(HackCTMWorkerURL)
+*/
+
 qx.Class.define("desk.actions", 
 {
 	extend : qx.core.Object,
 
 	type : "singleton",
 
+	environment : {
+		"desk.extURL" : "to define in config.json"
+	},
+
 	construct : function(fileBrowser)
 	{
 		this.base(arguments);
 
 		this.__actionsQueue=[];
-
-		var localAdress=window.location.href;
-		var slashIndex=localAdress.indexOf("/");
-		var slashIndex=localAdress.indexOf("/");
-		var slashIndex2=localAdress.indexOf("/", slashIndex+1);
-		var slashIndex3=localAdress.indexOf("/", slashIndex2+1);
-		var questionMarkIndex=localAdress.indexOf("?");
-		if (questionMarkIndex<0) {
-			questionMarkIndex=localAdress.length;
-			}
-
-		desk.actions.BASEURL=localAdress.substring(slashIndex3,
-												questionMarkIndex)+
-									"php/";
 
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.populateActionMenu();
@@ -39,17 +33,22 @@ qx.Class.define("desk.actions",
 			qx.core.Init.getApplication().getRoot().add(ongoingActions, { right : 0, top : 0});
 		}, this);
 
-		var loader=new qx.io.ScriptLoader();
-		loader.load("resource/three.js/Three.js", function () {
-			loader.load("resource/three.js/Detector.js", function () {
-				loader.load("resource/three.js/VTKLoader.js", function () {
-					loader.load("resource/three.js/TrackballControls2.js", function () {
-					loader.load("resource/three.js/ctm/CTMLoader.js");
-					});
-				});
-			});
-		});
+		// load external three.js files
+		var threeURL=qx.core.Environment.get("desk.extURL")+"three.js/";
 
+		HackCTMWorkerURL=threeURL+"ctm/CTMWorkerMin.js";
+
+		var files=["Three.js", "Detector.js", "VTKLoader.js","TrackballControls2.js","ctm/CTMLoader.js"];
+		var index=-1;
+
+		function myScriptLoader() {
+			index+=1;
+			if (index!=files.length) {
+				var loader=new qx.io.ScriptLoader().load(
+					threeURL+files[index], myScriptLoader);
+			}
+		}
+		myScriptLoader();
 		return this;
 	},
 
@@ -57,12 +56,7 @@ qx.Class.define("desk.actions",
 		ready : { init : false, check: "Boolean", event : "changeReady"}
 	},
 
-	statics : {
-		BASEURL : null
-	},
-
 	members : {
-		__actionsFile : "php/actions.xml",
 		__actionMenu : null,
 		__actions : null,
 		__fileBrowser : null,
@@ -121,7 +115,7 @@ qx.Class.define("desk.actions",
 			this.__ongoingActions.add(actionNotification);
 			var req = new qx.io.request.Xhr();
 
-			req.setUrl("php/actions.php");
+			req.setUrl(qx.core.Environment.get("desk.extURL")+"php/actions.php");
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData(actionParameters);
@@ -161,7 +155,7 @@ qx.Class.define("desk.actions",
 				numberOfRetries--;
 				if (numberOfRetries>0) {
 					req = new qx.io.request.Xhr();
-					req.setUrl("php/actions.php");
+					req.setUrl(qx.core.Environment.get("desk.extURL")+"php/actions.php");
 					req.setMethod("POST");
 					req.setAsync(true);
 					req.setRequestData(actionParameters);
@@ -222,8 +216,7 @@ qx.Class.define("desk.actions",
 					}
 				}
 			}
-
-			xmlhttp.open("GET",this.__actionsFile+"?nocache=" + Math.random(),true);
+			xmlhttp.open("GET",qx.core.Environment.get("desk.extURL")+"php/actions.xml?nocache=" + Math.random(),true);
 			xmlhttp.send();
 		},
 

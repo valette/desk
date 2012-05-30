@@ -42,7 +42,7 @@ qx.Class.define("desk.fileBrowser",
 		var dataModel = virtualTree.getDataModel();
 
 		this.__actionsHandler=desk.actions.getInstance();
-		this.__baseURL=desk.actions.BASEURL;
+		this.__baseURL=qx.core.Environment.get("desk.extURL")+"/php/";
 
 		// create the filter bar
 		var filterBox = new qx.ui.container.Composite;

@@ -1,5 +1,5 @@
 /*
-#asset(three.js/*)
+#oldasset(three.js/*)
 #ignore(THREE.*)
 #ignore(THREE)
 #ignore(requestAnimationFrame)
