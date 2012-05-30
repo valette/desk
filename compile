@@ -1,2 +1,0 @@
-nice /usr/local/python-2.6/bin/python generate.py build
-cp -r source/php build
