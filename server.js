@@ -5,8 +5,7 @@ var libpath = require('path'),
     mime = require('mime'),
     qs = require('querystring'),
 	async = require('async'),
-	DOMParser = require('xmldom').DOMParser;
-//	libxmljs = require("libxmljs");
+	libxmljs = require("libxmljs");
 
 
 
@@ -17,27 +16,55 @@ var setupActions=function (file, callback) {
 	fs.readFile(file, function (err, data) {
 		if (err) throw err;
 		console.log("read : "+file);
-		var doc = new DOMParser().parseFromString(data.toString(),'text/xml');
-	//	console.log(doc);
-		var elements=doc.documentElement.getElementsByTagName("action");
-		console.log(elements.length+" actions registered");
-		var actions=[];
-		for (var i=0;i!=elements.length;i++) {
-			var action={};
-			var element=elements[i];
-			action.name=element.getAttribute("name");
-			console.log("action : "+action.name);
-			var parameters=element.childNodes;
-			console.log(element.firstChild.nodeValue);
-			console.log("parameters :"+parameters.length);
-			for (var j=0;j<parameters.length;j++) {
-				var parameter=parameters[i];
-				//console.log(parameter);
-			}
-			console.log("************************");
-		}
+		var xmlDoc = libxmljs.parseXmlString(data.toString());
 
-		callback (err, doc);
+		var elements=xmlDoc.root().childNodes();
+
+		var actions=[];
+		var numberOfActions=0;
+		for (var i=0;i!=elements.length;i++) {
+			var action={parameters : []};
+			var element=elements[i];
+			if (element.name()=='action') {
+				action.name=element.attr('name').value();
+				console.log("action : "+action.name);
+				console.log("attributes : ");
+				var attributes=element.attrs();
+				var actionAttributes={};
+				for (var k=0;k!=attributes.length;k++) {
+					var attribute=attributes[k];
+					actionAttributes[attribute.name()]=attribute.value();
+				}
+				action.attributes=actionAttributes;
+				console.log(actionAttributes);
+				numberOfActions++;
+
+				var parameters=element.childNodes();
+				console.log("parameters : ");
+				for (var j=0;j<parameters.length;j++) {
+					var parameter=parameters[j];
+					switch (parameter.name())
+					{
+						case "parameter":
+						case "anchor":
+							var attributes=parameter.attrs();
+							var parameterAttributes={};
+							for (var k=0;k!=attributes.length;k++) {
+								var attribute=attributes[k];
+								parameterAttributes[attribute.name()]=attribute.value();
+							}
+							console.log(parameterAttributes);
+							action.parameters.push(parameterAttributes);
+							break;
+						default:
+					}
+				}
+				actions.push(action);
+				console.log("************************");
+			}
+		}
+		console.log(numberOfActions+" actions registered");
+		console.log(actions);
 	});
 };
 
