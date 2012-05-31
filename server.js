@@ -7,7 +7,7 @@ var libpath = require('path'),
 	async = require('async'),
 	DOMParser = require('xmldom').DOMParser;
 
-var path = "trunk/demo/default/build";
+var path = "trunk";
 //var path = "trunk";
 var port = 1337;
 

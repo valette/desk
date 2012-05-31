@@ -1,6 +1,5 @@
 /*
 #asset(desk/camera-photo.png)
-#oldasset(three.js/*)
 #ignore(THREE.*)
 #ignore(THREE)
 #ignore(requestAnimationFrame)
