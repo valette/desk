@@ -7,37 +7,25 @@ var libpath = require('path'),
 	async = require('async'),
 	DOMParser = require('xmldom').DOMParser;
 
+
 var path = "trunk";
-//var path = "trunk";
 var port = 1337;
-
-
-var DOMParser = require('xmldom').DOMParser;
-var doc = new DOMParser().parseFromString(
-    '<xml xmlns="a" xmlns:c="./lite">\n'+
-        '\t<child>test</child>\n'+
-        '\t<child></child>\n'+
-        '\t<child/>\n'+
-    '</xml>'
-    ,'text/xml');
-doc.documentElement.setAttribute('x','y');
-doc.documentElement.setAttributeNS('./lite','c:x','y2');
-var nsAttr = doc.documentElement.getAttributeNS('./lite','x')
-console.info(nsAttr)
-console.info(doc)
-
 
 var setupActions=function (file, callback) {
 	fs.readFile(file, function (err, data) {
 		if (err) throw err;
-//		var json = parser.toJson(data, {object: true});
-	//	var doc = new DOMParser().parseFromString(data);
-		console.log(doc);
+		console.log("read : "+file);
+		var doc = new DOMParser().parseFromString(data.toString(),'text/xml');
+		callback (err, doc);
 	});
 };
 
-//setupActions(path+"/php/listDir.php");
-//setupActions(path+"/php/actions.xml");
+var actions=null;
+
+setupActions(path+"/ext/php/actions.xml", function (err, doc) {
+	actions=doc;
+});
+
 var getDirectory=function (dir, callback) {
 	var realFiles=[];
 
@@ -78,9 +66,9 @@ var createServer=function () {
 				console.log(uri)
 				switch (uri) 
 				{
-				case "/php/listDir.php":
+				case "/ext//php/listDir.php":
 					console.log("listDir");
-					getDirectory(path+"/php/"+POST.dir, function (err, files) {
+					getDirectory(path+"/ext/php/"+POST.dir, function (err, files) {
 						if (err) {
 							response.writeHead(500, {
 							  "Content-Type": "text/plain"

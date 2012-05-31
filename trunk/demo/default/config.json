@@ -56,12 +56,14 @@
     {
       "environment" : {
         "desk.extURL" : "http://vip.creatis.insa-lyon.fr:8080/visu/desk/trunk/ext/"
+  //      "desk.extURL" : "/ext/"
       }
     },
     "source-hybrid" :
     {
       "environment" : {
         "desk.extURL" : "http://vip.creatis.insa-lyon.fr:8080/visu/desk/trunk/ext/"
+  //      "desk.extURL" : "/ext/"
       }
     },
 
