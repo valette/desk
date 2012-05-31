@@ -66,7 +66,7 @@ var createServer=function () {
 				console.log(uri)
 				switch (uri) 
 				{
-				case "/ext//php/listDir.php":
+				case "/ext/php/listDir.php":
 					console.log("listDir");
 					getDirectory(path+"/ext/php/"+POST.dir, function (err, files) {
 						if (err) {
