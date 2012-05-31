@@ -6,6 +6,8 @@ var libpath = require('path'),
     qs = require('querystring'),
 	async = require('async'),
 	DOMParser = require('xmldom').DOMParser;
+//	libxmljs = require("libxmljs");
+
 
 
 var path = "trunk";
@@ -16,14 +18,31 @@ var setupActions=function (file, callback) {
 		if (err) throw err;
 		console.log("read : "+file);
 		var doc = new DOMParser().parseFromString(data.toString(),'text/xml');
+	//	console.log(doc);
+		var elements=doc.documentElement.getElementsByTagName("action");
+		console.log(elements.length+" actions registered");
+		var actions=[];
+		for (var i=0;i!=elements.length;i++) {
+			var action={};
+			var element=elements[i];
+			action.name=element.getAttribute("name");
+			console.log("action : "+action.name);
+			var parameters=element.childNodes;
+			console.log(element.firstChild.nodeValue);
+			console.log("parameters :"+parameters.length);
+			for (var j=0;j<parameters.length;j++) {
+				var parameter=parameters[i];
+				//console.log(parameter);
+			}
+			console.log("************************");
+		}
+
 		callback (err, doc);
 	});
 };
 
-var actions=null;
-
 setupActions(path+"/ext/php/actions.xml", function (err, doc) {
-	actions=doc;
+	
 });
 
 var getDirectory=function (dir, callback) {
