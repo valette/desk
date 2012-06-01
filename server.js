@@ -146,7 +146,12 @@ var createServer=function () {
 
 					});
 					break;
+				case "/ext/php/actions.php":
+					console.log("action : POST =");
+					console.log(POST);
+					break;
 				default:
+					console.log("Warnin : POST request not implemented : "+uri);
 					return;
 				}
 		    });
