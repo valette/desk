@@ -5,12 +5,15 @@ var libpath = require('path'),
     mime = require('mime'),
     qs = require('querystring'),
 	async = require('async'),
-	libxmljs = require("libxmljs");
+	libxmljs = require("libxmljs"),
+	crypto = require('crypto');
 
-
-
-var path = "trunk";
+var path = "trunk/";
+var dataRoot=path+"ext/php/";
 var port = 1337;
+
+
+var actions=[];
 
 var setupActions=function (file, callback) {
 	fs.readFile(file, function (err, data) {
@@ -20,15 +23,14 @@ var setupActions=function (file, callback) {
 
 		var elements=xmlDoc.root().childNodes();
 
-		var actions=[];
 		var numberOfActions=0;
 		for (var i=0;i!=elements.length;i++) {
 			var action={parameters : []};
 			var element=elements[i];
 			if (element.name()=='action') {
 				action.name=element.attr('name').value();
-				console.log("action : "+action.name);
-				console.log("attributes : ");
+		//		console.log("action : "+action.name);
+		//		console.log("attributes : ");
 				var attributes=element.attrs();
 				var actionAttributes={};
 				for (var k=0;k!=attributes.length;k++) {
@@ -36,11 +38,11 @@ var setupActions=function (file, callback) {
 					actionAttributes[attribute.name()]=attribute.value();
 				}
 				action.attributes=actionAttributes;
-				console.log(actionAttributes);
+		//		console.log(actionAttributes);
 				numberOfActions++;
 
 				var parameters=element.childNodes();
-				console.log("parameters : ");
+		//		console.log("parameters : ");
 				for (var j=0;j<parameters.length;j++) {
 					var parameter=parameters[j];
 					switch (parameter.name())
@@ -53,23 +55,22 @@ var setupActions=function (file, callback) {
 								var attribute=attributes[k];
 								parameterAttributes[attribute.name()]=attribute.value();
 							}
-							console.log(parameterAttributes);
+		//					console.log(parameterAttributes);
 							action.parameters.push(parameterAttributes);
 							break;
 						default:
 					}
 				}
 				actions.push(action);
-				console.log("************************");
+		//		console.log("************************");
 			}
 		}
 		console.log(numberOfActions+" actions registered");
-		console.log(actions);
+	//	console.log(actions);
 	});
 };
 
-setupActions(path+"/ext/php/actions.xml", function (err, doc) {
-	
+setupActions(path+"/ext/php/actions.xml", function (err, doc) {	
 });
 
 var getDirectory=function (dir, callback) {
@@ -94,6 +95,115 @@ var getDirectory=function (dir, callback) {
 	});
 }
 
+function performAction(POST, callback) {
+
+	var action;
+
+	function parseParameters (POST, callback) {
+		var i;
+		var actionName=POST.action;
+		console.log("action : "+actionName+" POST=");
+		console.log(POST);
+
+		for (i=0;i<actions.length;i++) {
+			action=actions[i];
+			if (action.name==actionName) {
+				break;
+			}
+		}
+
+		if (i>=actions.length) {
+			callback("action "+actionName+" not found");
+			return;
+		}
+
+		var commandLine="";
+		commandLine+="ulimit -v 12000000; nice "+action.attributes.executable+" ";
+
+		var parameters=action.parameters;
+		for (i=0;i<parameters.length;i++) {
+			var parameter=parameters[i];
+			console.log("parameter : ");
+			console.log(parameter);
+			if (parameter.text!==undefined) {
+				// parameter is actually a text anchor
+				commandline+=parameter.text;
+			}
+			else {
+				var parameterValue=POST[parameter.name];
+				if (parameterValue===undefined){
+					if (parameter.required==="true") {
+						callback ("parameter "+parameter.name+" is required!");
+					}
+				}
+				else {
+					console.log ("parameter : "+parameter.name+"="+parameterValue);
+					if (parameter.prefix!==undefined) {
+						commandLine+=parameter.prefix;
+					}
+					commandLine+=parameterValue+" ";
+				}
+			}
+		}
+		callback (false, commandLine);
+	}
+
+
+	parseParameters(POST, function (err, commandLine) {
+		if (err) {
+			callback (err);
+		}
+		console.log("command line : "+commandLine);
+
+		var voidAction=false;
+		if (action.attributes.void==="true") {
+			voidAction=true;
+		}
+
+		var outputDirectory;
+
+		function handleOutputDirectory(callback) {
+			outputDirectory=POST.output_directory;
+			switch (outputDirectory) 
+			{
+			case "undefined" :
+			// TODO create actions directory 
+				callback ("TODO : create directory in actions");
+				break;
+			case "cache/" :
+				var shasum = crypto.createHash('sha1');
+				shasum.update(outputDirectory);
+				outputDirectory=dataRoot+"cache/"+shasum.digest('hex');
+				console.log("new output directory : "+outputDirectory);
+				fs.stat(outputDirectory, function (err, stats) {
+					if (err) {
+						// directory does not exist, create it
+						fs.mkdir(outputDirectory,0777 , function (err) {
+							callback (false, -1);
+						});
+						return;
+					}
+					callback (false, stats.mtime.getTime());
+				})
+				break;
+			default :
+				callback ("error output directory!");
+			}
+		}
+
+		handleOutputDirectory(function (err, mtime) {
+			if (err) {
+				callback (err);
+				return;
+			}
+			console.log(mtime);
+		})
+
+		callback("action not finished...");
+	});
+}
+
+
 var createServer=function () {
 	http.createServer(function (request, response) {
 
@@ -114,7 +224,7 @@ var createServer=function () {
 				{
 				case "/ext/php/listDir.php":
 					console.log("listDir");
-					getDirectory(path+"/ext/php/"+POST.dir, function (err, files) {
+					getDirectory(dataRoot+POST.dir, function (err, files) {
 						if (err) {
 							response.writeHead(500, {
 							  "Content-Type": "text/plain"
@@ -147,8 +257,12 @@ var createServer=function () {
 					});
 					break;
 				case "/ext/php/actions.php":
-					console.log("action : POST =");
-					console.log(POST);
+				console.log("ACTION");
+					performAction(POST, function (err, answer) {
+						response.writeHead(200, {"Content-Type": "text/plain"});
+						response.write(err);
+						response.end();
+					});
 					break;
 				default:
 					console.log("Warnin : POST request not implemented : "+uri);
