@@ -66,40 +66,20 @@ var setupActions=function (file, callback) {
 			}
 		}
 		console.log(numberOfActions+" actions registered");
+		callback ();
 	//	console.log(actions);
 	});
 };
 
-setupActions(path+"/ext/php/actions.xml", function (err, doc) {	
-});
 
-var getDirectory=function (dir, callback) {
-	var realFiles=[];
-
-	fs.readdir(dir, function (err, files) {
-		if (err) {
-			callback (err);
-			return;
-		}
-		
-		for (var i=0;i!=files.length;i++) {
-			realFiles.push(dir+"/"+files[i]);
-		}
-
-		async.map(realFiles, fs.stat, function(err, results){
-			for (var i=0;i!=files.length;i++) {
-				results[i].name=files[i];
-			}
-			callback (err, results);
-		});
-	});
-}
 
 function performAction(POST, callback) {
 
 	var action;
+	var commandLine="";
+	var outputMtime;
 
-	function parseParameters (POST, callback) {
+	function parseParameters (callback) {
 		var i;
 		var actionName=POST.action;
 		console.log("action : "+actionName+" POST=");
@@ -117,39 +97,73 @@ function performAction(POST, callback) {
 			return;
 		}
 
-		var commandLine="";
+
 		commandLine+="ulimit -v 12000000; nice "+action.attributes.executable+" ";
 
-		var parameters=action.parameters;
-		for (i=0;i<parameters.length;i++) {
-			var parameter=parameters[i];
+
+
+		function parseParameter (parameter, callback) {
 			console.log("parameter : ");
 			console.log(parameter);
 			if (parameter.text!==undefined) {
 				// parameter is actually a text anchor
 				commandline+=parameter.text;
+				callback (false);
+				return;
 			}
 			else {
 				var parameterValue=POST[parameter.name];
 				if (parameterValue===undefined){
 					if (parameter.required==="true") {
 						callback ("parameter "+parameter.name+" is required!");
+						return;
+					} else {
+						callback(false);
+						return;
 					}
 				}
 				else {
-					console.log ("parameter : "+parameter.name+"="+parameterValue);
-					if (parameter.prefix!==undefined) {
-						commandLine+=parameter.prefix;
+					console.log("parameter type : "+parameter.type);
+					switch (parameter.type)
+					{
+					case 'file':
+						fs.realpath(dataRoot+parameterValue, function (err, path) {
+							if (err) {
+								console.log("error in realpath:");
+								console.log(err);
+								callback (err);
+								return;
+							}
+							console.log("real path : "+path);
+							commandLine+=path+" ";
+							callback (false);
+						});
+						break;
+					case 'int':
+					case 'text':
+						console.log ("parameter : "+parameter.name+"="+parameterValue);
+						if (parameter.prefix!==undefined) {
+							commandLine+=parameter.prefix;
+						}
+						commandLine+=parameterValue+" ";
+						callback (false);
+						break;
+					default:
+						callback ("parameter type not handled : "+parameter.type);
 					}
-					commandLine+=parameterValue+" ";
 				}
 			}
 		}
-		callback (false, commandLine);
+
+		var parameters=action.parameters;
+
+		async.forEachSeries(parameters, parseParameter, function(err, results){
+			callback (false, commandLine);
+		});
 	}
 
 
-	parseParameters(POST, function (err, commandLine) {
+	parseParameters( function (err) {
 		if (err) {
 			callback (err);
 		}
@@ -179,11 +193,15 @@ function performAction(POST, callback) {
 					if (err) {
 						// directory does not exist, create it
 						fs.mkdir(outputDirectory,0777 , function (err) {
-							callback (false, -1);
+							outputMtime=-1;
+							callback (false);
 						});
 						return;
 					}
-					callback (false, stats.mtime.getTime());
+					else {
+						outputMtime=stats.mtime.getTime();
+						callback (false);
+					}
 				})
 				break;
 			default :
@@ -191,12 +209,12 @@ function performAction(POST, callback) {
 			}
 		}
 
-		handleOutputDirectory(function (err, mtime) {
+		handleOutputDirectory(function (err) {
 			if (err) {
 				callback (err);
 				return;
 			}
-			console.log(mtime);
+			console.log(outputMtime);
 		})
 
 		callback("action not finished...");
@@ -204,11 +222,34 @@ function performAction(POST, callback) {
 }
 
 
-var createServer=function () {
+function createServer() {
 	http.createServer(function (request, response) {
 
 		var uri = url.parse(request.url).pathname;
 		var filename = libpath.join(path, uri);
+
+
+		function getDirectory (dir, callback) {
+			var realFiles=[];
+
+			fs.readdir(dir, function (err, files) {
+				if (err) {
+					callback (err);
+					return;
+				}
+		
+				for (var i=0;i!=files.length;i++) {
+					realFiles.push(dir+"/"+files[i]);
+				}
+
+				async.map(realFiles, fs.stat, function(err, results){
+					for (var i=0;i!=files.length;i++) {
+						results[i].name=files[i];
+					}
+					callback (err, results);
+				});
+			});
+		}
 
 		if (request.method == 'POST') {
 		    var body = '';
@@ -316,7 +357,13 @@ var createServer=function () {
 		    });
 		});
 	}).listen(port);
+	console.log ("server running on port "+port+", serving path "+path);
 };
 
-createServer();
-console.log ("server running on port "+port+", serving path "+path);
+setupActions(dataRoot+"actions.xml", function (err, doc) {
+	createServer();
+	
+});
+
+
+
