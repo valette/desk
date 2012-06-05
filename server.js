@@ -82,8 +82,6 @@ function performAction(POST, callback) {
 	function parseParameters (callback) {
 		var i;
 		var actionName=POST.action;
-		console.log("action : "+actionName+" POST=");
-		console.log(POST);
 
 		for (i=0;i<actions.length;i++) {
 			action=actions[i];
@@ -97,14 +95,9 @@ function performAction(POST, callback) {
 			return;
 		}
 
-
 		commandLine+="ulimit -v 12000000; nice "+action.attributes.executable+" ";
 
-
-
 		function parseParameter (parameter, callback) {
-			console.log("parameter : ");
-			console.log(parameter);
 			if (parameter.text!==undefined) {
 				// parameter is actually a text anchor
 				commandline+=parameter.text;
@@ -123,18 +116,14 @@ function performAction(POST, callback) {
 					}
 				}
 				else {
-					console.log("parameter type : "+parameter.type);
 					switch (parameter.type)
 					{
 					case 'file':
 						fs.realpath(dataRoot+parameterValue, function (err, path) {
 							if (err) {
-								console.log("error in realpath:");
-								console.log(err);
 								callback (err);
 								return;
 							}
-							console.log("real path : "+path);
 							commandLine+=path+" ";
 							callback (false);
 						});
@@ -186,9 +175,9 @@ function performAction(POST, callback) {
 				break;
 			case "cache/" :
 				var shasum = crypto.createHash('sha1');
-				shasum.update(outputDirectory);
+				shasum.update(commandLine);
 				outputDirectory=dataRoot+"cache/"+shasum.digest('hex');
-				console.log("new output directory : "+outputDirectory);
+			//	console.log("new output directory : "+outputDirectory);
 				fs.stat(outputDirectory, function (err, stats) {
 					if (err) {
 						// directory does not exist, create it
@@ -214,7 +203,7 @@ function performAction(POST, callback) {
 				callback (err);
 				return;
 			}
-			console.log(outputMtime);
+		//	console.log(outputMtime);
 		})
 
 		callback("action not finished...");
@@ -260,11 +249,11 @@ function createServer() {
 		        var POST = qs.parse(body);
 
 				var filename = libpath.join(path, uri);
-				console.log(uri)
+			//	console.log(uri)
 				switch (uri) 
 				{
 				case "/ext/php/listDir.php":
-					console.log("listDir");
+				//	console.log("listDir");
 					getDirectory(dataRoot+POST.dir, function (err, files) {
 						if (err) {
 							response.writeHead(500, {
@@ -298,7 +287,6 @@ function createServer() {
 					});
 					break;
 				case "/ext/php/actions.php":
-				console.log("ACTION");
 					performAction(POST, function (err, answer) {
 						response.writeHead(200, {"Content-Type": "text/plain"});
 						response.write(err);
@@ -306,7 +294,7 @@ function createServer() {
 					});
 					break;
 				default:
-					console.log("Warnin : POST request not implemented : "+uri);
+					console.log("Warning : POST request not implemented : "+uri);
 					return;
 				}
 		    });
