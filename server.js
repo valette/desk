@@ -6,7 +6,8 @@ var libpath = require('path'),
     qs = require('querystring'),
 	async = require('async'),
 	libxmljs = require("libxmljs"),
-	crypto = require('crypto');
+	crypto = require('crypto'),
+	exec = require('child_process').exec;
 
 var path = "trunk/";
 var dataRoot=path+"ext/php/";
@@ -116,6 +117,7 @@ function performAction(POST, callback) {
 					}
 				}
 				else {
+					console.log ("parameter : "+parameter.name+"="+parameterValue);
 					switch (parameter.type)
 					{
 					case 'file':
@@ -130,7 +132,6 @@ function performAction(POST, callback) {
 						break;
 					case 'int':
 					case 'text':
-						console.log ("parameter : "+parameter.name+"="+parameterValue);
 						if (parameter.prefix!==undefined) {
 							commandLine+=parameter.prefix;
 						}
@@ -146,8 +147,8 @@ function performAction(POST, callback) {
 
 		var parameters=action.parameters;
 
-		async.forEachSeries(parameters, parseParameter, function(err, results){
-			callback (false, commandLine);
+		async.forEachSeries(parameters, parseParameter, function(err){
+			callback (false);
 		});
 	}
 
@@ -156,7 +157,6 @@ function performAction(POST, callback) {
 		if (err) {
 			callback (err);
 		}
-		console.log("command line : "+commandLine);
 
 		var voidAction=false;
 		if (action.attributes.void==="true") {
@@ -203,10 +203,19 @@ function performAction(POST, callback) {
 				callback (err);
 				return;
 			}
-		//	console.log(outputMtime);
+			//	console.log(outputMtime);
+			//	callback("action not finished...");
+			// excute wget using child_process' exec function
+		console.log("command line : "+commandLine);
+			var child = exec(commandLine, {cwd : outputDirectory}, function(err, stdout, stderr) {
+				if (err) {
+					callback (err.message);
+				}
+				else {
+					callback (null);
+				}
+			});
 		})
-
-		callback("action not finished...");
 	});
 }
 
@@ -287,9 +296,9 @@ function createServer() {
 					});
 					break;
 				case "/ext/php/actions.php":
-					performAction(POST, function (err, answer) {
+					performAction(POST, function (message) {
 						response.writeHead(200, {"Content-Type": "text/plain"});
-						response.write(err);
+						response.write(message);
 						response.end();
 					});
 					break;
