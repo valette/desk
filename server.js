@@ -177,13 +177,18 @@ function performAction(POST, callback) {
 				var shasum = crypto.createHash('sha1');
 				shasum.update(commandLine);
 				outputDirectory="cache/"+shasum.digest('hex');
-			//	console.log("new output directory : "+outputDirectory);
+				console.log("new output directory : "+outputDirectory);
 				fs.stat(dataRoot+outputDirectory, function (err, stats) {
 					if (err) {
 						// directory does not exist, create it
-						fs.mkdir(outputDirectory,0777 , function (err) {
-							outputMtime=-1;
-							callback (false);
+						fs.mkdir(dataRoot+outputDirectory,0777 , function (err) {
+							if (err) {
+								callback(err.message);
+							}
+							else {
+								outputMtime=-1;
+								callback (false);
+							}
 						});
 						return;
 					}
@@ -207,6 +212,7 @@ function performAction(POST, callback) {
 			//	callback("action not finished...");
 			// excute wget using child_process' exec function
 		console.log("command line : "+commandLine);
+		console.log("output directory : "+dataRoot+outputDirectory);
 			var child = exec(commandLine, {cwd : dataRoot+outputDirectory}, function(err, stdout, stderr) {
 				if (err) {
 					callback (err.message);
