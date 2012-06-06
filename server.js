@@ -80,9 +80,12 @@ function performAction(POST, callback) {
 	var commandLine="";
 	var outputMtime;
 
+	var actionParameters={};
+
 	function parseParameters (callback) {
 		var i;
 		var actionName=POST.action;
+		actionParameters.action=actionName;
 
 		for (i=0;i<actions.length;i++) {
 			action=actions[i];
@@ -107,6 +110,9 @@ function performAction(POST, callback) {
 			}
 			else {
 				var parameterValue=POST[parameter.name];
+
+				actionParameters[parameter.name]=parameterValue;
+
 				if (parameterValue===undefined){
 					if (parameter.required==="true") {
 						callback ("parameter "+parameter.name+" is required!");
@@ -117,7 +123,7 @@ function performAction(POST, callback) {
 					}
 				}
 				else {
-					console.log ("parameter : "+parameter.name+"="+parameterValue);
+				//	console.log ("parameter : "+parameter.name+"="+parameterValue);
 					switch (parameter.type)
 					{
 					case 'file':
@@ -158,15 +164,16 @@ function performAction(POST, callback) {
 			callback (err);
 		}
 
-		var voidAction=false;
-		if (action.attributes.void==="true") {
-			voidAction=true;
-		}
-
 		var outputDirectory;
+		var cachedAction=false;
 
 		function handleOutputDirectory(callback) {
+			if (action.attributes.void==="true") {
+				callback(null);
+			}
+
 			outputDirectory=POST.output_directory;
+			actionParameters.output_directory=outputDirectory;
 			switch (outputDirectory) 
 			{
 			case "undefined" :
@@ -176,8 +183,7 @@ function performAction(POST, callback) {
 			case "cache/" :
 				var shasum = crypto.createHash('sha1');
 				shasum.update(commandLine);
-				outputDirectory="cache/"+shasum.digest('hex');
-				console.log("new output directory : "+outputDirectory);
+				outputDirectory="cache/"+shasum.digest('hex')+"/";
 				fs.stat(dataRoot+outputDirectory, function (err, stats) {
 					if (err) {
 						// directory does not exist, create it
@@ -187,14 +193,14 @@ function performAction(POST, callback) {
 							}
 							else {
 								outputMtime=-1;
-								callback (false);
+								callback (null);
 							}
 						});
 						return;
 					}
 					else {
 						outputMtime=stats.mtime.getTime();
-						callback (false);
+						callback (null);
 					}
 				})
 				break;
@@ -203,25 +209,55 @@ function performAction(POST, callback) {
 			}
 		}
 
+		function executeAction (callback) {
+			var startTime=new Date().getTime();
+			var child = exec(commandLine+" | tee action.log", {cwd : dataRoot+outputDirectory}, function(err, stdout, stderr) {
+				if (err) {
+					callback (err.message);
+				}
+				else {
+					var string=JSON.stringify(actionParameters);
+					fs.writeFile(dataRoot+outputDirectory+"action.json", string, function (err) {
+						if (err) throw err;
+						callback (outputDirectory+"\n"+stdout+"\nOK ("+(new Date().getTime()-startTime)/1000+"s)\n");
+					});
+				}
+			});
+		}
+
 		handleOutputDirectory(function (err) {
 			if (err) {
 				callback (err);
 				return;
 			}
-			//	console.log(outputMtime);
-			//	callback("action not finished...");
-			// excute wget using child_process' exec function
-		console.log("command line : "+commandLine);
-		console.log("output directory : "+dataRoot+outputDirectory);
-			var child = exec(commandLine, {cwd : dataRoot+outputDirectory}, function(err, stdout, stderr) {
-				if (err) {
-					callback (err.message);
-				}
-				else {
-					console.log(stdout);
-					callback (outputDirectory+"\n"+stdout+"\nOK\n");
-				}
-			});
+
+			console.log("command line : "+commandLine);
+			console.log("output directory : "+dataRoot+outputDirectory);
+
+			if ((action.attributes.void==="true")||(POST.force_update==="true")){
+				executeAction(callback);
+			}
+			else {
+				// check if action was already performed
+				fs.readFile(dataRoot+outputDirectory+"/action.json", function (err, data) {
+				  if (err) {
+					executeAction(callback);
+				  }
+				  else {
+				  	if (data==JSON.stringify(actionParameters)) {
+				  		console.log("cached");
+				  		fs.readFile(dataRoot+outputDirectory+"action.log", function (err, string) {
+							if (err) throw err;
+							callback (outputDirectory+"\n"+string+"\nCACHED\n");
+					});
+				  		
+				  	}
+				  	else {
+						executeAction(callback);
+				  	}
+				  }
+				});
+			}
 		})
 	});
 }
