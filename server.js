@@ -77,8 +77,9 @@ var setupActions=function (file, callback) {
 function performAction(POST, callback) {
 
 	var action;
-	var commandLine="";
-	var outputMtime;
+	var commandLine="ulimit -v 12000000; nice ";
+
+	var inputMTime=-1;
 
 	var actionParameters={};
 
@@ -99,13 +100,13 @@ function performAction(POST, callback) {
 			return;
 		}
 
-		commandLine+="ulimit -v 12000000; nice "+action.attributes.executable+" ";
+		commandLine+=action.attributes.executable+" ";
 
 		function parseParameter (parameter, callback) {
 			if (parameter.text!==undefined) {
 				// parameter is actually a text anchor
 				commandline+=parameter.text;
-				callback (false);
+				callback (null);
 				return;
 			}
 			else {
@@ -118,7 +119,7 @@ function performAction(POST, callback) {
 						callback ("parameter "+parameter.name+" is required!");
 						return;
 					} else {
-						callback(false);
+						callback(null);
 						return;
 					}
 				}
@@ -133,7 +134,13 @@ function performAction(POST, callback) {
 								return;
 							}
 							commandLine+=path+" ";
-							callback (false);
+							fs.stat(dataRoot+parameterValue, function (err, stats) {
+								var time=stats.mtime.getTime();
+								if (time>inputMTime) {
+									inputMTime=time;
+								}
+								callback (null);
+							});
 						});
 						break;
 					case 'int':
@@ -142,7 +149,7 @@ function performAction(POST, callback) {
 							commandLine+=parameter.prefix;
 						}
 						commandLine+=parameterValue+" ";
-						callback (false);
+						callback (null);
 						break;
 					default:
 						callback ("parameter type not handled : "+parameter.type);
@@ -154,7 +161,7 @@ function performAction(POST, callback) {
 		var parameters=action.parameters;
 
 		async.forEachSeries(parameters, parseParameter, function(err){
-			callback (false);
+			callback (null);
 		});
 	}
 
@@ -192,14 +199,12 @@ function performAction(POST, callback) {
 								callback(err.message);
 							}
 							else {
-								outputMtime=-1;
 								callback (null);
 							}
 						});
 						return;
 					}
 					else {
-						outputMtime=stats.mtime.getTime();
 						callback (null);
 					}
 				})
@@ -239,23 +244,25 @@ function performAction(POST, callback) {
 			}
 			else {
 				// check if action was already performed
-				fs.readFile(dataRoot+outputDirectory+"/action.json", function (err, data) {
-				  if (err) {
-					executeAction(callback);
-				  }
-				  else {
-				  	if (data==JSON.stringify(actionParameters)) {
-				  		console.log("cached");
-				  		fs.readFile(dataRoot+outputDirectory+"/action.log", function (err, string) {
-							if (err) throw err;
-							callback (outputDirectory+"\n"+string+"\nCACHED\n");
-					});
-				  		
-				  	}
-				  	else {
+				var actionFile=dataRoot+outputDirectory+"/action.json";
+				fs.stat(actionFile, function (err, stats) {
+					if ((err)||(stats.mtime.getTime()<inputMTime)) {
 						executeAction(callback);
+					}
+					else {
+						fs.readFile(actionFile, function (err, data) {
+							if (data==JSON.stringify(actionParameters)) {
+						  		console.log("cached");
+						  		fs.readFile(dataRoot+outputDirectory+"/action.log", function (err, string) {
+									if (err) throw err;
+									callback (outputDirectory+"\n"+string+"\nCACHED\n")
+								});
+							}
+							else {
+								executeAction(callback);
+							}
+						});
 				  	}
-				  }
 				});
 			}
 		})
