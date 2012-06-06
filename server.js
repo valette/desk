@@ -246,7 +246,7 @@ function performAction(POST, callback) {
 				  else {
 				  	if (data==JSON.stringify(actionParameters)) {
 				  		console.log("cached");
-				  		fs.readFile(dataRoot+outputDirectory+"action.log", function (err, string) {
+				  		fs.readFile(dataRoot+outputDirectory+"/action.log", function (err, string) {
 							if (err) throw err;
 							callback (outputDirectory+"\n"+string+"\nCACHED\n");
 					});
@@ -404,6 +404,3 @@ setupActions(dataRoot+"actions.xml", function (err, doc) {
 	createServer();
 	
 });
-
-
-
