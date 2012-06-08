@@ -151,5 +151,6 @@ function createServer() {
 };
 
 actions.setupActions(dataRoot+"actions.xml", dataRoot, function (err, doc) {
+	actions.includeActions("ctm.json");
 	createServer();
 });

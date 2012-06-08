@@ -2,13 +2,41 @@ var fs = require('fs'),
 	async = require('async'),
 	libxmljs = require("libxmljs"),
 	crypto = require('crypto'),
-	exec = require('child_process').exec;
+	exec = require('child_process').exec,
+	pd = require('pretty-data').pd,
+	libpath = require('path');
+	
 
 var dataRoot;
 var actions=[];
 
-exports.setupActions=function (file, root, callback) {
-	dataRoot=root;
+exports.includeActions=function (file, callback) {
+	switch (libpath.extname(file).toLowerCase()) {
+	case ".xml":
+		exports.includeActionsXML(file, callback);
+		break;
+	case ".json":
+		exports.includeActionsJSON(file, callback);
+		break;
+	default:
+		console.log("cannot parse actions file : "+file);
+	}
+}
+
+exports.includeActionsJSON= function (file, callback) {
+	fs.readFile(file, function (err, data) {
+		var localActions=JSON.parse(data).actions;
+		console.log("importing "+localActions.length+" action(s) from "+file);
+		actions=actions.concat(localActions);
+		exportActions();
+		if ( typeof(callback) === "function" ) {
+			callback();
+		}
+	});
+}
+
+exports.includeActionsXML= function (file, callback) {
+
 	fs.readFile(file, function (err, data) {
 		if (err) throw err;
 		console.log("read : "+file);
@@ -22,8 +50,6 @@ exports.setupActions=function (file, root, callback) {
 			var element=elements[i];
 			if (element.name()=='action') {
 				action.name=element.attr('name').value();
-		//		console.log("action : "+action.name);
-		//		console.log("attributes : ");
 				var attributes=element.attrs();
 				var actionAttributes={};
 				for (var k=0;k!=attributes.length;k++) {
@@ -31,11 +57,9 @@ exports.setupActions=function (file, root, callback) {
 					actionAttributes[attribute.name()]=attribute.value();
 				}
 				action.attributes=actionAttributes;
-		//		console.log(actionAttributes);
 				numberOfActions++;
 
 				var parameters=element.childNodes();
-		//		console.log("parameters : ");
 				for (var j=0;j<parameters.length;j++) {
 					var parameter=parameters[j];
 					switch (parameter.name())
@@ -48,20 +72,31 @@ exports.setupActions=function (file, root, callback) {
 								var attribute=attributes[k];
 								parameterAttributes[attribute.name()]=attribute.value();
 							}
-		//					console.log(parameterAttributes);
 							action.parameters.push(parameterAttributes);
 							break;
 						default:
 					}
 				}
 				actions.push(action);
-		//		console.log("************************");
 			}
 		}
-		console.log(numberOfActions+" actions registered");
-		callback ();
-	//	console.log(actions);
+		exportActions(callback);
 	});
+}
+
+function exportActions( callback ) {
+	fs.writeFile(dataRoot+"actions.json", pd.json(JSON.stringify(actions)), function (err) {
+		if (err) throw err;
+		console.log("exported "+actions.length+" actions");
+		if (typeof callback === "function") {
+			callback();
+		}
+	});
+}
+
+exports.setupActions=function (file, root, callback) {
+	dataRoot=root;
+	exports.includeActions(file, callback);
 };
 
 
