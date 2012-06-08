@@ -5,7 +5,6 @@ var fs = require('fs'),
 	exec = require('child_process').exec,
 	pd = require('pretty-data').pd,
 	libpath = require('path');
-	
 
 var dataRoot;
 var actions=[];
@@ -13,33 +12,44 @@ var actions=[];
 exports.includeActions=function (file, callback) {
 	switch (libpath.extname(file).toLowerCase()) {
 	case ".xml":
-		exports.includeActionsXML(file, callback);
+		includeActionsXML(file, afterImport);
 		break;
 	case ".json":
-		exports.includeActionsJSON(file, callback);
+		includeActionsJSON(file, afterImport);
 		break;
 	default:
 		console.log("cannot parse actions file : "+file);
 	}
+
+	function afterImport (data) {
+		actions=actions.concat(data)
+		console.log("imported "+data.length+" action(s) from "+file+", total : "+actions.length+" actions");
+		exportActions( "actions.json", callback );
+	}
 }
 
-exports.includeActionsJSON= function (file, callback) {
+includeActionsJSON= function (file, callback) {
 	fs.readFile(file, function (err, data) {
 		var localActions=JSON.parse(data).actions;
-		console.log("importing "+localActions.length+" action(s) from "+file);
-		actions=actions.concat(localActions);
-		exportActions();
+		for (var i=0; i<localActions.length;i++) {
+			var attributes=localActions[i].attributes;
+			if ( typeof (attributes.js) === "string" ) {
+				console.log("loaded javascript from "+attributes.js);
+				attributes.js=require(attributes.js);
+			}
+		}
+
 		if ( typeof(callback) === "function" ) {
-			callback();
+			callback(localActions);
 		}
 	});
 }
 
-exports.includeActionsXML= function (file, callback) {
-
+includeActionsXML= function (file, callback) {
 	fs.readFile(file, function (err, data) {
 		if (err) throw err;
 		console.log("read : "+file);
+		var localActions=[];
 		var xmlDoc = libxmljs.parseXmlString(data.toString());
 
 		var elements=xmlDoc.root().childNodes();
@@ -55,6 +65,10 @@ exports.includeActionsXML= function (file, callback) {
 				for (var k=0;k!=attributes.length;k++) {
 					var attribute=attributes[k];
 					actionAttributes[attribute.name()]=attribute.value();
+				}
+				
+				if ( typeof (actionAttributes.js) === "string" ) {
+					actionAttributes.js=require(actionAttributes.js);
 				}
 				action.attributes=actionAttributes;
 				numberOfActions++;
@@ -77,17 +91,18 @@ exports.includeActionsXML= function (file, callback) {
 						default:
 					}
 				}
-				actions.push(action);
+				localActions.push(action);
 			}
 		}
-		exportActions(callback);
+		if ( typeof(callback) === "function" ) {
+			callback(localActions);
+		}
 	});
 }
 
-function exportActions( callback ) {
-	fs.writeFile(dataRoot+"actions.json", pd.json(JSON.stringify(actions)), function (err) {
+function exportActions( file, callback ) {
+	fs.writeFile(file, pd.json(JSON.stringify(actions)), function (err) {
 		if (err) throw err;
-		console.log("exported "+actions.length+" actions");
 		if (typeof callback === "function") {
 			callback();
 		}
@@ -98,8 +113,6 @@ exports.setupActions=function (file, root, callback) {
 	dataRoot=root;
 	exports.includeActions(file, callback);
 };
-
-
 
 exports.performAction= function (POST, callback) {
 
@@ -243,7 +256,16 @@ exports.performAction= function (POST, callback) {
 
 		function executeAction (callback) {
 			var startTime=new Date().getTime();
-			var child = exec(commandLine+" | tee action.log", {cwd : dataRoot+outputDirectory}, function(err, stdout, stderr) {
+
+			var js=action.attributes.js;
+			if ( typeof (js) === "object" ) {
+				js.execute(actionParameters, afterExecution);
+				return;
+			}
+
+			exec(commandLine+" | tee action.log", {cwd : dataRoot+outputDirectory}, afterExecution);
+
+			function afterExecution(err, stdout, stderr) {
 				if (err) {
 					callback (err.message);
 				}
@@ -254,7 +276,8 @@ exports.performAction= function (POST, callback) {
 						callback (outputDirectory+"\n"+stdout+"\nOK ("+(new Date().getTime()-startTime)/1000+"s)\n");
 					});
 				}
-			});
+			}
+
 		}
 
 		handleOutputDirectory(function (err) {
@@ -281,7 +304,7 @@ exports.performAction= function (POST, callback) {
 							if (data==JSON.stringify(actionParameters)) {
 						  		console.log("cached");
 						  		fs.readFile(dataRoot+outputDirectory+"/action.log", function (err, string) {
-									if (err) throw err;
+								//	if (err) throw err;
 									callback (outputDirectory+"\n"+string+"\nCACHED\n")
 								});
 							}

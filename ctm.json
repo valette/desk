@@ -12,7 +12,7 @@
         "attributes":
         {
             "name":"mesh2ctm",
-            "executable":"not needed",
+            "js" : "./mesh2ctm",
             "permissions":"0"
         }
     }
