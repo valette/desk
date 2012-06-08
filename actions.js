@@ -1,13 +1,36 @@
 var fs = require('fs'),
+	path = require('path'),
 	async = require('async'),
 	libxmljs = require("libxmljs"),
 	crypto = require('crypto'),
-	exec = require('child_process').exec;
+	exec = require('child_process').exec,
+	prettyPrint = require('pretty-data').pd;
+	
 
 var dataRoot;
 var actions=[];
 
-exports.setupActions=function (file, root, callback) {
+function exportActions() {
+	fs.writeFile(dataRoot+"actions.json", prettyPrint.json(JSON.stringify(actions))
+		,function (err, data) {});
+}
+
+exports.includeActions = function (file, callback){
+	fs.readFile(file, function (err, data) {
+		if (err) throw err;
+
+		var directory=path.basename(file);
+		var localActions=JSON.parse(data).actions;
+		console.log("before : "+actions.length);
+		actions.concat(localActions);
+		console.log("imported "+localActions.length+" action(s) from "+file);
+		console.log(localActions);
+		console.log("after : "+actions.length);
+		exportActions();
+	});
+}
+
+exports.setupActions = function (file, root, callback) {
 	dataRoot=root;
 	fs.readFile(file, function (err, data) {
 		if (err) throw err;
@@ -61,6 +84,7 @@ exports.setupActions=function (file, root, callback) {
 		console.log(numberOfActions+" actions registered");
 		callback ();
 	//	console.log(actions);
+		exportActions();
 	});
 };
 

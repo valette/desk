@@ -12,7 +12,6 @@ var path = "trunk/";
 var dataRoot=path+"ext/php/";
 var port = 1337;
 
-
 function createServer() {
 	http.createServer(function (request, response) {
 
@@ -151,5 +150,6 @@ function createServer() {
 };
 
 actions.setupActions(dataRoot+"actions.xml", dataRoot, function (err, doc) {
+	actions.includeActions("ctm.js");
 	createServer();
 });
