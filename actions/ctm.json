@@ -12,7 +12,7 @@
         "attributes":
         {
             "name":"mesh2ctm",
-            "js" : "./mesh2ctm",
+            "js" : "ctm/mesh2ctm",
             "permissions":"0"
         }
     }

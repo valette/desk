@@ -10,27 +10,34 @@ var dataRoot;
 var actions=[];
 
 function includeActionsFile (file, callback) {
-	switch (libpath.extname(file).toLowerCase()) {
-	case ".xml":
-		includeActionsXML(file, afterImport);
-		break;
-	case ".json":
-		includeActionsJSON(file, afterImport);
-		break;
-	default:
-		console.log("cannot parse actions file : "+file);
-	}
+	libpath.exists(file, function (exists) {
+		if (exists) {
+			switch (libpath.extname(file).toLowerCase()) {
+			case ".xml":
+				includeActionsXML(file, afterImport);
+				break;
+			case ".json":
+				includeActionsJSON(file, afterImport);
+				break;
+			default:
+		//		console.log("*: "+file+": format not handled");
+				callback(null);
+			}
 
-	function afterImport (data) {
-		actions=actions.concat(data)
-		console.log(file+" : "+data.length+" action(s), total : "+actions.length+" actions");
-		exportActions( "actions.json", callback );
-	}
+			function afterImport (data) {
+				actions=actions.concat(data)
+				console.log(data.length+'/'+actions.length+' actions from '+file);
+				callback(null);
+			}
+		}
+		else {
+			console.log("Warning : no file "+file+" found");
+			callback(null);
+		}
+	});
 }
 
-
 exports.includeActions=function (file, callback) {
-
 	switch (typeof (file))
 	{
 	case "string" :
@@ -41,23 +48,37 @@ exports.includeActions=function (file, callback) {
 		break;
 	default:
 		callback ("error in actions importations: cannot handle "+file);
+		afterImport();
+	}
+
+	function afterImport() {
+		exportActions( "actions.json", callback );
 	}
 }
 
 includeActionsJSON= function (file, callback) {
 	fs.readFile(file, function (err, data) {
-		var localActions=JSON.parse(data).actions;
+		var actionsObject=JSON.parse(data);
+		var localActions=actionsObject.actions || [];
+
+		var path=fs.realpathSync(libpath.dirname(file));
 		for (var i=0; i<localActions.length;i++) {
 			var attributes=localActions[i].attributes;
 			if ( typeof (attributes.js) === "string" ) {
 				console.log("loaded javascript from "+attributes.js);
-				attributes.js=require(attributes.js);
+				attributes.js=require(path+"/"+attributes.js);
+			}
+			if ( typeof (attributes.executable) === "string" ) {
+				attributes.executable=path+"/"+attributes.executable;
 			}
 		}
 
-		if ( typeof(callback) === "function" ) {
-			callback(localActions);
-		}
+		var includes=actionsObject.includes || [];
+		exports.includeActions( includes, function () {
+			if ( typeof(callback) === "function" ) {
+				callback(localActions);
+			}
+		});
 	});
 }
 
@@ -125,9 +146,14 @@ function exportActions( file, callback ) {
 	});
 }
 
-exports.setupActions=function (file, root, callback) {
+exports.setupActions=function (root, callback) {
 	dataRoot=root;
-	exports.includeActions(file, callback);
+	fs.readdir("actions", function (err, files) {
+		for (var i=0;i<files.length;i++) {
+			files[i]="actions/"+files[i];
+		}
+		exports.includeActions(files, callback);
+	});
 };
 
 exports.performAction= function (POST, callback) {
