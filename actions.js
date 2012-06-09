@@ -9,7 +9,7 @@ var fs = require('fs'),
 var dataRoot;
 var actions=[];
 
-exports.includeActions=function (file, callback) {
+function includeActionsFile (file, callback) {
 	switch (libpath.extname(file).toLowerCase()) {
 	case ".xml":
 		includeActionsXML(file, afterImport);
@@ -23,8 +23,24 @@ exports.includeActions=function (file, callback) {
 
 	function afterImport (data) {
 		actions=actions.concat(data)
-		console.log("imported "+data.length+" action(s) from "+file+", total : "+actions.length+" actions");
+		console.log(file+" : "+data.length+" action(s), total : "+actions.length+" actions");
 		exportActions( "actions.json", callback );
+	}
+}
+
+
+exports.includeActions=function (file, callback) {
+
+	switch (typeof (file))
+	{
+	case "string" :
+		includeActionsFile(file, callback);
+		break;
+	case "object" :
+		async.forEachSeries(file, includeActionsFile, callback);
+		break;
+	default:
+		callback ("error in actions importations: cannot handle "+file);
 	}
 }
 

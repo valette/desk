@@ -150,8 +150,8 @@ function createServer() {
 	console.log ("server running on port "+port+", serving path "+path);
 };
 
-actions.setupActions("base.json", dataRoot, function (err, doc) {
-	actions.includeActions("ctm.json");
-	actions.includeActions("vtkSurface.json");
+actions.setupActions(["base.json", "ctm.json", "vtkSurface.json"], dataRoot, function (err, doc) {
+//	actions.includeActions("ctm.json");
+//	actions.includeActions("vtkSurface.json");
 	createServer();
 });
