@@ -8,15 +8,12 @@ var ctmConvCommand=ctmConvPath+"ctmconv";
 var ctmVConvEnv={LD_LIBRARY_PATH : ctmConvPath};
 
 exports.execute=function (parameters, callback) {
-
-	console.log("launched mesh2ctm");
-	console.log(parameters);
-
 	var dataRoot=parameters.dataRoot;
 	var inputMesh=dataRoot+parameters.input_mesh;
 	var outputDirectory=dataRoot+parameters.output_directory;
 
 	var execOptions={cwd :outputDirectory, env: ctmVConvEnv};
+	var plyMesh="mesh.ply";
 
 	switch (libPath.extname(inputMesh))
 	{
@@ -27,13 +24,12 @@ exports.execute=function (parameters, callback) {
 		exec(vtkSurfacePath+"stl2ply "+inputMesh, execOptions, ctmConv);
 		break;
 	default:
-		exec(ctmConvCommand+" "+inputMesh+" mesh.ctm", execOptions, function (error) {
-			callback(null, "OK ");
-		});
+		plyMesh=inputMesh;
+		ctmConv(null);
 	}
 
 	function ctmConv(error) {
-		exec(ctmConvCommand+" mesh.ply mesh.ctm", execOptions, function (error) {
+		exec(ctmConvCommand+" "+plyMesh+" mesh.ctm", execOptions, function (error) {
 			callback(null, "OK ");
 		});
 	}
