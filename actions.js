@@ -1,6 +1,5 @@
 var fs = require('fs'),
 	async = require('async'),
-	libxmljs = require("libxmljs"),
 	crypto = require('crypto'),
 	exec = require('child_process').exec,
 	pd = require('pretty-data').pd,
@@ -9,13 +8,11 @@ var fs = require('fs'),
 var dataRoot;
 var actions=[];
 
+
 function includeActionsFile (file, callback) {
 	libpath.exists(file, function (exists) {
 		if (exists) {
 			switch (libpath.extname(file).toLowerCase()) {
-			case ".xml":
-				includeActionsXML(file, afterImport);
-				break;
 			case ".json":
 				includeActionsJSON(file, afterImport);
 				break;
@@ -79,61 +76,6 @@ includeActionsJSON= function (file, callback) {
 				callback(localActions);
 			}
 		});
-	});
-}
-
-includeActionsXML= function (file, callback) {
-	fs.readFile(file, function (err, data) {
-		if (err) throw err;
-		console.log("read : "+file);
-		var localActions=[];
-		var xmlDoc = libxmljs.parseXmlString(data.toString());
-
-		var elements=xmlDoc.root().childNodes();
-
-		var numberOfActions=0;
-		for (var i=0;i!=elements.length;i++) {
-			var action={parameters : []};
-			var element=elements[i];
-			if (element.name()=='action') {
-				action.name=element.attr('name').value();
-				var attributes=element.attrs();
-				var actionAttributes={};
-				for (var k=0;k!=attributes.length;k++) {
-					var attribute=attributes[k];
-					actionAttributes[attribute.name()]=attribute.value();
-				}
-				
-				if ( typeof (actionAttributes.js) === "string" ) {
-					actionAttributes.js=require(actionAttributes.js);
-				}
-				action.attributes=actionAttributes;
-				numberOfActions++;
-
-				var parameters=element.childNodes();
-				for (var j=0;j<parameters.length;j++) {
-					var parameter=parameters[j];
-					switch (parameter.name())
-					{
-						case "parameter":
-						case "anchor":
-							var attributes=parameter.attrs();
-							var parameterAttributes={};
-							for (var k=0;k!=attributes.length;k++) {
-								var attribute=attributes[k];
-								parameterAttributes[attribute.name()]=attribute.value();
-							}
-							action.parameters.push(parameterAttributes);
-							break;
-						default:
-					}
-				}
-				localActions.push(action);
-			}
-		}
-		if ( typeof(callback) === "function" ) {
-			callback(localActions);
-		}
 	});
 }
 
