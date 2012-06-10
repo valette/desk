@@ -243,7 +243,9 @@ exports.performAction= function (POST, callback) {
 
 			var js=action.attributes.js;
 			if ( typeof (js) === "object" ) {
-				js.execute(actionParameters, afterExecution);
+				var actionParameters2 = JSON.parse(JSON.stringify(actionParameters));
+				actionParameters2.dataRoot=dataRoot;
+				js.execute(actionParameters2, afterExecution);
 				return;
 			}
 
@@ -272,6 +274,8 @@ exports.performAction= function (POST, callback) {
 
 			console.log("command line : "+commandLine);
 			console.log("output directory : "+dataRoot+outputDirectory);
+
+			actionParameters.output_directory=outputDirectory;
 
 			if ((action.attributes.void==="true")||(POST.force_update==="true")){
 				executeAction(callback);

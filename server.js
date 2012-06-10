@@ -12,6 +12,8 @@ var path = "trunk/";
 var dataRoot=path+"ext/php/";
 var port = 1337;
 
+path=fs.realpathSync(path)+"/";
+dataRoot=fs.realpathSync(dataRoot)+"/";
 
 function createServer() {
 	http.createServer(function (request, response) {
