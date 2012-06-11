@@ -1,5 +1,5 @@
 {
-	"includes" : [
+	"include" : [
 	"your external json file",
 	"an other external json file"
     ]
