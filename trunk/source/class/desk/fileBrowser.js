@@ -266,10 +266,13 @@ qx.Class.define("desk.fileBrowser",
 					callback(newSessionId);
 				}
 
-				var newDir=file+"."+sessionType+"."+newSessionId;
+
+				var lastSlash=file.lastIndexOf("/");
+				var subdir=file.substring(lastSlash+1)+"."+sessionType+"."+newSessionId;
 				var parameterMap={
-					"action" : "create_directory",
-					"directory_name" : newDir};
+					"action" : "add_subdirectory",
+					"subdirectory_name" : subdir,
+					"output_directory" : file.substring(0,lastSlash)};
 				fileBrowser.getActions().launchAction(parameterMap, getAnswer);
 			}
 

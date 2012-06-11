@@ -4,21 +4,6 @@
 		{
 		    "parameters":[
 		        {
-		            "name":"input_file",
-		            "type":"file",
-		            "required":"true"
-		        }
-		    ],
-		    "name":"rgb2gray",
-		    "attributes":
-		    {
-		        "name":"rgb2gray",
-		        "executable":"/home/visu/src/gcBuild/rgb2gray"
-		    }
-		},
-		{
-		    "parameters":[
-		        {
 		            "text":"-r backup.zip"
 		        },
 		        {
@@ -31,104 +16,7 @@
 		    "attributes":
 		    {
 		        "name":"compress_to_zip",
-		        "executable":"zip"
-		    }
-		},
-		{
-		    "parameters":[
-		        {
-		            "name":"input_volume",
-		            "type":"file",
-		            "required":"true"
-		        },
-		        {
-		            "prefix":"-cn ",
-		            "name":"clusters_percentage",
-		            "type":"float",
-		            "min":"0.0001",
-		            "max":"1",
-		            "default":"0.01"
-		        },
-		        {
-		            "text":"-cs 50 -gfn 1 -n 1"
-		        }
-		    ],
-		    "name":"cvtseg2",
-		    "attributes":
-		    {
-		        "name":"cvtseg2",
-		        "executable":"/home/visu/src/thor/vtkSurfaceH/vtkSurfaceH-build/bin/cvtseg2"
-		    }
-		},
-		{
-		    "parameters":[
-		        {
-		            "prefix":"-i ",
-		            "name":"input_volume",
-		            "type":"file",
-		            "required":"true"
-		        },
-		        {
-		            "prefix":"-x ",
-		            "name":"seeds",
-		            "type":"file",
-		            "required":"true"
-		        },
-		        {
-		            "prefix":"-cf ",
-		            "name":"clustering",
-		            "type":"file",
-		            "required":"true"
-		        },
-		        {
-		            "text":"-op seg"
-		        }
-		    ],
-		    "name":"cvtgcbinseg",
-		    "attributes":
-		    {
-		        "name":"cvtgcbinseg",
-		        "executable":"/home/visu/src/gc2/gc/cvtgcbinseg"
-		    }
-		},
-		{
-		    "parameters":[
-		        {
-		            "prefix":"-i ",
-		            "name":"input_volume",
-		            "type":"file",
-		            "required":"true"
-		        },
-		        {
-		            "prefix":"-x ",
-		            "name":"seeds",
-		            "type":"file",
-		            "required":"true"
-		        },
-		        {
-		            "prefix":"-cf ",
-		            "name":"clustering",
-		            "type":"file",
-		            "required":"true"
-		        },
-		        {
-		            "prefix":"-t ",
-		            "name":"unary_binary_weight",
-		            "type":"float",
-		            "required":"true",
-		            "min":"0",
-		            "max":"1",
-		            "default":"0.2"
-		        },
-		        {
-		            "text":"-op seg"
-		        }
-		    ],
-		    "name":"cvtgcmultiseg",
-		    "attributes":
-		    {
-		        "name":"cvtgcmultiseg",
-		        "executable":"/home/visu/src/gc2/gc/cvtgcmultiseg"
+		        "command":"zip"
 		    }
 		},
 		{
@@ -212,22 +100,6 @@
 		{
 		    "parameters":[
 		        {
-		            "name":"directory_name",
-		            "type":"new_directory",
-		            "required":"true"
-		        }
-		    ],
-		    "name":"create_directory",
-		    "attributes":
-		    {
-		        "name":"create_directory",
-		        "executable":"mkdir",
-		        "void":"true"
-		    }
-		},
-		{
-		    "parameters":[
-		        {
 		            "name":"subdirectory_name",
 		            "type":"string",
 		            "required":"true"
@@ -237,7 +109,8 @@
 		    "attributes":
 		    {
 		        "name":"add_subdirectory",
-		        "executable":"not needed"
+		        "command":"mkdir",
+		        "void" : "true"
 		    }
 		},
 		{
@@ -252,15 +125,15 @@
 		    "attributes":
 		    {
 		        "name":"delete_directory",
-		        "executable":"rm -rf",
+		        "command":"rm -rf",
 		        "void":"true"
 		    }
 		},
 		{
 		    "parameters":[
 		        {
-		            "name":"xmlData",
-		            "type":"xmlcontent",
+		            "name":"data",
+		            "type":"string",
 		            "required":"true"
 		        },
 		        {
@@ -269,11 +142,11 @@
 		            "required":"true"
 		        }
 		    ],
-		    "name":"save_xml_file",
+		    "name":"write_string",
 		    "attributes":
 		    {
-		        "name":"save_xml_file",
-		        "executable":"not needed"
+		        "name":"write_string",
+		        "js":"lib/write_string.js"
 		    }
 		},
 		{
@@ -289,11 +162,11 @@
 		            "required":"true"
 		        }
 		    ],
-		    "name":"save_binary_file",
+		    "name":"write_binary",
 		    "attributes":
 		    {
-		        "name":"save_binary_file",
-		        "executable":"not needed"
+		        "name":"write_binary",
+		        "js":"lib/write_binary"
 		    }
 		}
 	]

@@ -4,9 +4,37 @@ var fs = require('fs'),
 	crypto = require('crypto'),
 	exec = require('child_process').exec,
 	prettyPrint = require('pretty-data').pd;
+
+var actionsDir="actions/";
 	
-var dataRoot;
+var filesRoot;
 var actions=[];
+
+var actionsRoot,cacheRoot,dataRoot;
+
+function validatePath(path, callback) {
+	fs.realpath(path, function (err, realPath) {
+		if (err) {
+			callback(err);
+			return;
+		}
+		else {
+			if (realPath.slice(0, actionsRoot.length) == actionsRoot) {
+				callback (null);
+				return;
+			}
+			if (realPath.slice(0, cacheRoot.length) == cacheRoot) {
+				callback (null);
+				return;
+			}
+			if (realPath.slice(0, dataRoot.length) == dataRoot) {
+				callback (null);
+				return;
+			}
+			callback("path "+realPath+" not allowed");
+		}
+	});
+}
 
 function includeActionsFile (file, callback) {
 	libpath.exists(file, function (exists) {
@@ -67,6 +95,9 @@ includeActionsJSON= function (file, callback) {
 			if ( typeof (attributes.executable) === "string" ) {
 				attributes.executable=path+"/"+attributes.executable;
 			}
+			if ( typeof (attributes.command) === "string" ) {
+				attributes.executable=attributes.command;
+			}
 		}
 		var includes=actionsObject.include || [];
 		exports.includeActions( includes, function () {
@@ -87,10 +118,14 @@ function exportActions( file, callback ) {
 }
 
 exports.setupActions=function (root, callback) {
-	dataRoot=root;
-	fs.readdir("actions", function (err, files) {
+	filesRoot=fs.realpathSync(root)+"/";
+	dataRoot=filesRoot+"data/";
+	cacheRoot=cacheRoot+"data/";
+	actionsRoot=actionsRoot+"data/";
+
+	fs.readdir(actionsDir, function (err, files) {
 		for (var i=0;i<files.length;i++) {
-			files[i]="actions/"+files[i];
+			files[i]=actionsDir+files[i];
 		}
 		exports.includeActions(files, callback);
 	});
@@ -127,7 +162,7 @@ exports.performAction= function (POST, callback) {
 		function parseParameter (parameter, callback) {
 			if (parameter.text!==undefined) {
 				// parameter is actually a text anchor
-				commandline+=parameter.text;
+				commandLine+=parameter.text;
 				callback (null);
 				return;
 			}
@@ -146,17 +181,20 @@ exports.performAction= function (POST, callback) {
 					}
 				}
 				else {
-				//	console.log ("parameter : "+parameter.name+"="+parameterValue);
+					console.log ("parameter : "+parameter.name+"="+parameterValue);
 					switch (parameter.type)
 					{
 					case 'file':
-						fs.realpath(dataRoot+parameterValue, function (err, path) {
+												console.log(filesRoot+parameterValue);
+						fs.realpath(filesRoot+parameterValue, function (err, path) {
 							if (err) {
+								console.log("error realpath");
 								callback (err);
 								return;
 							}
+							console.log(path);
 							commandLine+=path+" ";
-							fs.stat(dataRoot+parameterValue, function (err, stats) {
+							fs.stat(filesRoot+parameterValue, function (err, stats) {
 								var time=stats.mtime.getTime();
 								if (time>inputMTime) {
 									inputMTime=time;
@@ -165,8 +203,10 @@ exports.performAction= function (POST, callback) {
 							});
 						});
 						break;
+					case 'string':
 					case 'int':
 					case 'text':
+					case 'float':
 						if (parameter.prefix!==undefined) {
 							commandLine+=parameter.prefix;
 						}
@@ -183,7 +223,7 @@ exports.performAction= function (POST, callback) {
 		var parameters=action.parameters;
 
 		async.forEachSeries(parameters, parseParameter, function(err){
-			callback (null);
+			callback (err);
 		});
 	}
 
@@ -197,11 +237,15 @@ exports.performAction= function (POST, callback) {
 		var cachedAction=false;
 
 		function handleOutputDirectory(callback) {
-			if (action.attributes.void==="true") {
-				callback(null);
-			}
 
 			outputDirectory=POST.output_directory;
+
+			if (action.attributes.void==="true") {
+				console.log("output directory ignored as action is void");
+				callback(null);
+				return;
+			}
+
 			actionParameters.output_directory=outputDirectory;
 			switch (outputDirectory) 
 			{
@@ -213,10 +257,10 @@ exports.performAction= function (POST, callback) {
 				var shasum = crypto.createHash('sha1');
 				shasum.update(commandLine);
 				outputDirectory="cache/"+shasum.digest('hex')+"/";
-				fs.stat(dataRoot+outputDirectory, function (err, stats) {
+				fs.stat(filesRoot+outputDirectory, function (err, stats) {
 					if (err) {
 						// directory does not exist, create it
-						fs.mkdir(dataRoot+outputDirectory,0777 , function (err) {
+						fs.mkdir(filesRoot+outputDirectory,0777 , function (err) {
 							if (err) {
 								callback(err.message);
 							}
@@ -232,7 +276,7 @@ exports.performAction= function (POST, callback) {
 				})
 				break;
 			default :
-				callback ("error output directory!");
+				validatePath ( outputDirectory, callback );
 			}
 		}
 
@@ -242,20 +286,28 @@ exports.performAction= function (POST, callback) {
 			var js=action.attributes.js;
 			if ( typeof (js) === "object" ) {
 				var actionParameters2 = JSON.parse(JSON.stringify(actionParameters));
-				actionParameters2.dataRoot=dataRoot;
+				actionParameters2.filesRoot=filesRoot;
 				js.execute(actionParameters2, afterExecution);
 				return;
 			}
 
-			exec(commandLine+" | tee action.log", {cwd : dataRoot+outputDirectory}, afterExecution);
+			var commandOptions={cwd:"./"};
+			if ((action.attributes.void !=="true") || (action.name=="add_subdirectory")) {
+				commandOptions.cwd=filesRoot+outputDirectory;
+			}
+			console.log(commandLine);
+			console.log(commandOptions);
+			exec(commandLine+" | tee action.log", commandOptions, afterExecution);
 
 			function afterExecution(err, stdout, stderr) {
+			console.log(stdout);
+			console.log(stderr);
 				if (err) {
 					callback (err.message);
 				}
 				else {
 					var string=JSON.stringify(actionParameters);
-					fs.writeFile(dataRoot+outputDirectory+"action.json", string, function (err) {
+					fs.writeFile(filesRoot+outputDirectory+"action.json", string, function (err) {
 						if (err) throw err;
 						callback (outputDirectory+"\n"+stdout+"\nOK ("+(new Date().getTime()-startTime)/1000+"s)\n");
 					});
@@ -271,7 +323,7 @@ exports.performAction= function (POST, callback) {
 			}
 
 			console.log("command line : "+commandLine);
-			console.log("output directory : "+dataRoot+outputDirectory);
+			console.log("output directory : "+filesRoot+outputDirectory);
 
 			actionParameters.output_directory=outputDirectory;
 
@@ -280,7 +332,7 @@ exports.performAction= function (POST, callback) {
 			}
 			else {
 				// check if action was already performed
-				var actionFile=dataRoot+outputDirectory+"/action.json";
+				var actionFile=filesRoot+outputDirectory+"/action.json";
 				fs.stat(actionFile, function (err, stats) {
 					if ((err)||(stats.mtime.getTime()<inputMTime)) {
 						executeAction(callback);
@@ -289,7 +341,7 @@ exports.performAction= function (POST, callback) {
 						fs.readFile(actionFile, function (err, data) {
 							if (data==JSON.stringify(actionParameters)) {
 						  		console.log("cached");
-						  		fs.readFile(dataRoot+outputDirectory+"/action.log", function (err, string) {
+						  		fs.readFile(filesRoot+outputDirectory+"/action.log", function (err, string) {
 								//	if (err) throw err;
 									callback (outputDirectory+"\n"+string+"\nCACHED\n")
 								});
