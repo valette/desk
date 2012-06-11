@@ -68,7 +68,7 @@ includeActionsJSON= function (file, callback) {
 				attributes.executable=path+"/"+attributes.executable;
 			}
 		}
-		var includes=actionsObject.includes || [];
+		var includes=actionsObject.include || [];
 		exports.includeActions( includes, function () {
 			if ( typeof(callback) === "function" ) {
 				callback(localActions);
