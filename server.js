@@ -12,6 +12,9 @@ var path = "trunk/";
 var dataRoot=path+"ext/php/";
 var port = 1337;
 
+path=fs.realpathSync(path)+"/";
+dataRoot=fs.realpathSync(dataRoot)+"/";
+
 function createServer() {
 	http.createServer(function (request, response) {
 
@@ -149,7 +152,7 @@ function createServer() {
 	console.log ("server running on port "+port+", serving path "+path);
 };
 
-actions.setupActions(dataRoot+"actions.xml", dataRoot, function (err, doc) {
-	actions.includeActions("ctm.js");
+
+actions.setupActions(dataRoot, function (err, doc) {
 	createServer();
 });

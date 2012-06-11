@@ -1,0 +1,20 @@
+{
+  "name": "desk",
+  "description": "a web server and RPC framework",
+  "main": "./server",
+  "author": {
+    "name": "Sebastien Valette"
+  },
+  "version": "0.0.1",
+  "devDependencies": {
+    "pretty-data" : ">0.0.0",
+    "mime" : ">0.0.0",
+    "async" : ">0.0.0"
+  },
+
+  "dependencies": {},
+  "optionalDependencies": {},
+  "engines": {
+    "node": "*"
+  }
+}
