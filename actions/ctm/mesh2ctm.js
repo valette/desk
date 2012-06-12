@@ -8,9 +8,9 @@ var ctmConvCommand=ctmConvPath+"ctmconv";
 var ctmVConvEnv={LD_LIBRARY_PATH : ctmConvPath};
 
 exports.execute=function (parameters, callback) {
-	var dataRoot=parameters.dataRoot;
-	var inputMesh=dataRoot+parameters.input_mesh;
-	var outputDirectory=dataRoot+parameters.output_directory;
+	var filesRoot=parameters.filesRoot;
+	var inputMesh=filesRoot+parameters.input_mesh;
+	var outputDirectory=filesRoot+parameters.output_directory;
 
 	var execOptions={cwd :outputDirectory, env: ctmVConvEnv};
 	var plyMesh="mesh.ply";

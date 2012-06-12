@@ -175,16 +175,16 @@
 <parameter name="directory" type="directory" required="true"/>
 </action>
 
-<action name="save_xml_file" executable="not needed">
+<action name="write_string" executable="not needed">
 <description>save an xml content to a file</description>
-<parameter name="xmlData" type="xmlcontent" required="true"/>
+<parameter name="data" type="string" required="true"/>
 <parameter name="file_name" type="string" required="true"/>
 </action>
 
-<action name="save_binary_file" executable="not needed">
+<action name="write_binary" executable="not needed">
 <description>writes binary data (encoded in base64) to a file</description>
 <parameter name="file_name" type="string" required="true"/>
-<parameter name="base64Data" type="base64" required="true"/>
+<parameter name="base64data" type="string" required="true"/>
 </action>
 
 <action name="mesh2ctm" executable="not needed" permissions="0">

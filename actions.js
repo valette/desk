@@ -13,7 +13,7 @@ var actions=[];
 var actionsRoot,cacheRoot,dataRoot;
 
 function validatePath(path, callback) {
-	fs.realpath(path, function (err, realPath) {
+	fs.realpath(filesRoot+path, function (err, realPath) {
 		if (err) {
 			callback(err);
 			return;
@@ -119,9 +119,9 @@ function exportActions( file, callback ) {
 
 exports.setupActions=function (root, callback) {
 	filesRoot=fs.realpathSync(root)+"/";
-	dataRoot=filesRoot+"data/";
-	cacheRoot=cacheRoot+"data/";
-	actionsRoot=actionsRoot+"data/";
+	dataRoot=fs.realpathSync(root+"data/");
+	cacheRoot=fs.realpathSync(root+"cache/");
+	actionsRoot=fs.realpathSync(root+"actions/");
 
 	fs.readdir(actionsDir, function (err, files) {
 		for (var i=0;i<files.length;i++) {
@@ -181,18 +181,17 @@ exports.performAction= function (POST, callback) {
 					}
 				}
 				else {
-					console.log ("parameter : "+parameter.name+"="+parameterValue);
+				if (parameter.prefix!==undefined) {
+							commandLine+=parameter.prefix;
+						}
 					switch (parameter.type)
 					{
 					case 'file':
-												console.log(filesRoot+parameterValue);
 						fs.realpath(filesRoot+parameterValue, function (err, path) {
 							if (err) {
-								console.log("error realpath");
 								callback (err);
 								return;
 							}
-							console.log(path);
 							commandLine+=path+" ";
 							fs.stat(filesRoot+parameterValue, function (err, stats) {
 								var time=stats.mtime.getTime();
@@ -207,9 +206,7 @@ exports.performAction= function (POST, callback) {
 					case 'int':
 					case 'text':
 					case 'float':
-						if (parameter.prefix!==undefined) {
-							commandLine+=parameter.prefix;
-						}
+					case 'base64data':
 						commandLine+=parameterValue+" ";
 						callback (null);
 						break;
@@ -239,14 +236,13 @@ exports.performAction= function (POST, callback) {
 		function handleOutputDirectory(callback) {
 
 			outputDirectory=POST.output_directory;
+			actionParameters.output_directory=outputDirectory;
 
 			if (action.attributes.void==="true") {
-				console.log("output directory ignored as action is void");
 				callback(null);
 				return;
 			}
 
-			actionParameters.output_directory=outputDirectory;
 			switch (outputDirectory) 
 			{
 			case "undefined" :
@@ -296,18 +292,15 @@ exports.performAction= function (POST, callback) {
 				commandOptions.cwd=filesRoot+outputDirectory;
 			}
 			console.log(commandLine);
-			console.log(commandOptions);
 			exec(commandLine+" | tee action.log", commandOptions, afterExecution);
 
 			function afterExecution(err, stdout, stderr) {
-			console.log(stdout);
-			console.log(stderr);
 				if (err) {
 					callback (err.message);
 				}
 				else {
 					var string=JSON.stringify(actionParameters);
-					fs.writeFile(filesRoot+outputDirectory+"action.json", string, function (err) {
+					fs.writeFile(filesRoot+outputDirectory+"/action.json", string, function (err) {
 						if (err) throw err;
 						callback (outputDirectory+"\n"+stdout+"\nOK ("+(new Date().getTime()-startTime)/1000+"s)\n");
 					});
@@ -321,9 +314,6 @@ exports.performAction= function (POST, callback) {
 				callback (err);
 				return;
 			}
-
-			console.log("command line : "+commandLine);
-			console.log("output directory : "+filesRoot+outputDirectory);
 
 			actionParameters.output_directory=outputDirectory;
 

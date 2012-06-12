@@ -157,8 +157,8 @@
 		            "required":"true"
 		        },
 		        {
-		            "name":"base64Data",
-		            "type":"base64",
+		            "name":"base64data",
+		            "type":"string",
 		            "required":"true"
 		        }
 		    ],

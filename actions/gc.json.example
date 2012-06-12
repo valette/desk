@@ -28,7 +28,7 @@
 		    "attributes":
 		    {
 		        "name":"cvtgcbinseg",
-		        "executable":"/home/visu/src/gc2/gc/cvtgcbinseg"
+		        "executable":"cvtgcbinseg"
 		    }
 		},
 		{
@@ -68,7 +68,7 @@
 		    "attributes":
 		    {
 		        "name":"cvtgcmultiseg",
-		        "executable":"/home/visu/src/gc2/gc/cvtgcmultiseg"
+		        "executable":"cvtgcmultiseg"
 		    }
 		}
 	]

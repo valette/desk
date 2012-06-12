@@ -1228,9 +1228,9 @@ qx.Class.define("desk.segTools",
 					wasAnySeedModified=true;
 
 					var parameterMap={
-					action : "save_binary_file",
+					action : "write_binary",
 					file_name : _this.__getSeedFileName (this, sliceId, seedsType),
-					base64Data : base64Img,
+					base64data : base64Img,
 					output_directory : _this.getSessionDirectory()};
 					_this.__fileBrowser.getActions().launchAction(parameterMap, savecallback);
 				}
@@ -1385,9 +1385,9 @@ qx.Class.define("desk.segTools",
 			});
 
 			var parameterMap={
-				action : "save_xml_file",
+				action : "write_string",
 				file_name : "seeds.xml",
-				xmlData : element('seeds', xmlContent),
+				data : element('seeds', xmlContent),
 				output_directory : this.getSessionDirectory()};
 
 			this.__fileBrowser.getActions().launchAction(parameterMap, callback);
