@@ -1,8 +1,9 @@
 var exec = require('child_process').exec,
-	libPath=require('path');
+	libPath=require('path'),
+	settings=require('./config.json');
 
-var vtkSurfacePath="/home/valette/bin/bin/";
-var ctmConvPath="/home/valette/HD/prog/OpenCTM-1.0.3/tools/";
+var vtkSurfacePath=settings.vtkSurfacePath;
+var ctmConvPath=settings.ctmConvPath;
 
 var ctmConvCommand=ctmConvPath+"ctmconv";
 var ctmVConvEnv={LD_LIBRARY_PATH : ctmConvPath};

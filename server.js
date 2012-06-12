@@ -17,7 +17,7 @@ dataRoot=fs.realpathSync(dataRoot)+"/";
 
 function createServer() {
 	http.createServer(function (request, response) {
-
+		response.connection.setTimeout(0)
 		var uri = url.parse(request.url).pathname;
 		var filename = libpath.join(path, uri);
 

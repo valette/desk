@@ -227,7 +227,7 @@ exports.performAction= function (POST, callback) {
 
 	parseParameters( function (err) {
 		if (err) {
-			callback (err);
+			callback (err.message);
 		}
 
 		var outputDirectory;
