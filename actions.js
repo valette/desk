@@ -65,10 +65,10 @@ exports.includeActions=function (file, callback) {
 	switch (typeof (file))
 	{
 	case "string" :
-		includeActionsFile(file, callback);
+		includeActionsFile(file, afterImport);
 		break;
 	case "object" :
-		async.forEachSeries(file, includeActionsFile, callback);
+		async.forEachSeries(file, includeActionsFile, afterImport);
 		break;
 	default:
 		callback ("error in actions importations: cannot handle "+file);
@@ -76,7 +76,7 @@ exports.includeActions=function (file, callback) {
 	}
 
 	function afterImport() {
-		exportActions( "actions.json", callback );
+		exportActions( filesRoot+"/actions.json", callback );
 	}
 }
 
@@ -109,7 +109,8 @@ includeActionsJSON= function (file, callback) {
 }
 
 function exportActions( file, callback ) {
-	fs.writeFile(file, pd.json(JSON.stringify(actions)), function (err) {
+//	console.log("saving actions.json to "+file);
+	fs.writeFile(file, prettyPrint.json(JSON.stringify(actions)), function (err) {
 		if (err) throw err;
 		if (typeof callback === "function") {
 			callback();
