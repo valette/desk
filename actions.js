@@ -15,7 +15,7 @@ var actionsRoot,cacheRoot,dataRoot;
 function validatePath(path, callback) {
 	fs.realpath(filesRoot+path, function (err, realPath) {
 		if (err) {
-			callback(err);
+			callback(err.message);
 			return;
 		}
 		else {
@@ -110,11 +110,12 @@ includeActionsJSON= function (file, callback) {
 
 function exportActions( file, callback ) {
 //	console.log("saving actions.json to "+file);
-	fs.writeFile(file, prettyPrint.json(JSON.stringify(actions)), function (err) {
-		if (err) throw err;
-		if (typeof callback === "function") {
-			callback();
-		}
+	fs.writeFile(file, prettyPrint.json(JSON.stringify({ actions : actions , permissions : 1})),
+		function (err) {
+			if (err) throw err;
+			if (typeof callback === "function") {
+				callback();
+			}
 	});
 }
 
@@ -239,16 +240,40 @@ exports.performAction= function (POST, callback) {
 			outputDirectory=POST.output_directory;
 			actionParameters.output_directory=outputDirectory;
 
-			if (action.attributes.void==="true") {
+			if (action.attributes.voidAction==="true") {
 				callback(null);
 				return;
 			}
 
 			switch (outputDirectory) 
 			{
-			case "undefined" :
-			// TODO create actions directory 
-				callback ("TODO : create directory in actions");
+			case undefined :
+			// TODO create actions directory
+				var counterFile=filesRoot+"/actions/counter.json";
+				fs.readFile( counterFile , function (err, data) {
+					var index=1;
+					if (!err) {
+						index=JSON.parse(data).value;
+					}
+					outputDirectory="actions/"+index+"/";
+					fs.mkdir(filesRoot+"/actions/"+index, function (err) {
+						if ( err ) {
+							callback( err.message );
+						}
+						else {
+							fs.writeFile(counterFile, JSON.stringify({value : 1}), 
+								function(err) {
+									if (err) {
+										callback( err );
+									}
+									else {
+										callback( null );
+									}
+								}
+							);
+						}
+					});
+				});
 				break;
 			case "cache/" :
 				var shasum = crypto.createHash('sha1');
@@ -288,10 +313,11 @@ exports.performAction= function (POST, callback) {
 				return;
 			}
 
-			var commandOptions={cwd:"./"};
-			if ((action.attributes.void !=="true") || (action.name=="add_subdirectory")) {
-				commandOptions.cwd=filesRoot+outputDirectory;
+			var commandOptions={ cwd:filesRoot };
+			if ((action.attributes.voidAction !=="true") || (action.name=="add_subdirectory")) {
+				commandOptions.cwd+=outputDirectory;
 			}
+			console.log ("in : "+outputDirectory);
 			console.log(commandLine);
 			exec(commandLine+" | tee action.log", commandOptions, afterExecution);
 
@@ -318,7 +344,7 @@ exports.performAction= function (POST, callback) {
 
 			actionParameters.output_directory=outputDirectory;
 
-			if ((action.attributes.void==="true")||(POST.force_update==="true")){
+			if ((action.attributes.voidAction==="true")||(POST.force_update==="true")){
 				executeAction(callback);
 			}
 			else {

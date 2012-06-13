@@ -75,16 +75,17 @@ qx.Class.define("desk.actions",
 			return this.__permissionsLevel;
 		},
 
-		getActionXMLElement : function (actionName) {
+		getAction : function (name) {
 			var actions=this.__actionsArray;
 			for (var i=0;i!=actions.length;i++)
 			{
-				var actionElement=actions[i];
-				if (actionElement.getAttribute("name")==actionName) {
-					return actionElement;
-					}
+				var action=actions[i];
+				if (action.name==name) {
+					return (JSON.parse(JSON.stringify(action)));
+				}
 			}
-			console.log("action "+actionName+" not found");
+			console.log("action "+name+" not found");
+			return null;
 		},
 
 		getActionsMenu : function (fileBrowser) {
@@ -180,31 +181,21 @@ qx.Class.define("desk.actions",
 				 if(this.readyState == 4 && this.status == 200)
 				 {
 					// so far so good
-					if(xmlhttp.responseXML!=null)
+					if(xmlhttp.responseText!=null)
 					{
-						_this.__actions=xmlhttp.responseXML;
+						var settings=JSON.parse(xmlhttp.responseText);
+						console.log(settings);
+						_this.__actions=settings;
 
-						var permissions=_this.__actions.getElementsByTagName("permissions")[0];
-						_this.__permissionsLevel=parseInt(permissions.getAttribute("level"));
+						_this.__permissionsLevel=parseInt(settings.permissions);
 
-						var actions=_this.__actions.getElementsByTagName("action");
+						var actions=_this.__actions.actions;
 						_this.__actionsArray=actions;
 						var actionMenu=_this;
 
 						for (var n=0;n<actions.length;n++)
 						{
-							var action=actions[n];
-							var actionName=action.getAttribute("name");
-							var button=new qx.ui.menu.Button(actionName);
-							var descriptions=action.getElementsByTagName("description");
-							var tooltip=new qx.ui.tooltip.ToolTip("hello");
-							button.setToolTip(tooltip);//descriptions[0].nodeValue);
-							if (descriptions.length>0)
-							{
-						//		button.setToolTipText("hello");//descriptions[0].nodeValue);
-				//					if (n==0)
-					//				alert (descriptions[0]);
-							}
+							var button=new qx.ui.menu.Button(actions[n].name);
 
 							button.addListener("execute", function (e){
 								var action= new desk.action(this.getLabel());
@@ -216,7 +207,7 @@ qx.Class.define("desk.actions",
 					}
 				}
 			}
-			xmlhttp.open("GET",qx.core.Environment.get("desk.extURL")+"php/actions.xml?nocache=" + Math.random(),true);
+			xmlhttp.open("GET",qx.core.Environment.get("desk.extURL")+"php/actions.json?nocache=" + Math.random(),true);
 			xmlhttp.send();
 		},
 
