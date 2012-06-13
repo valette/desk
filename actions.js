@@ -253,7 +253,7 @@ exports.performAction= function (POST, callback) {
 				fs.readFile( counterFile , function (err, data) {
 					var index=1;
 					if (!err) {
-						index=JSON.parse(data).value;
+						index=JSON.parse(data).value + 1;
 					}
 					outputDirectory="actions/"+index+"/";
 					fs.mkdir(filesRoot+"/actions/"+index, function (err) {
