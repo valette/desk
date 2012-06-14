@@ -1,7 +1,8 @@
 var fs = require('fs');
 var express = require("express"),
     app     = express.createServer(),
-    qs      = require('querystring');
+    qs      = require('querystring'),
+   	exec    = require('child_process').exec;
 
 var actions=require('./actions');
 
@@ -11,11 +12,6 @@ var port = 1337;
 
 path=fs.realpathSync(path)+"/";
 dataRoot=fs.realpathSync(dataRoot)+"/";
-
-app.get("/", function(req, res) {
-  res.redirect("/index.html");
-});
-
 
 app.post('/ext/php/listDir.php', function(req, res){
 	var body = '';
@@ -45,6 +41,18 @@ app.post('/ext/php/actions.php', function(req, res){
 	});
 });
 
+app.get('/ext/php/clearcache.php', function(req, res){
+	exec("rm -rf *",{cwd:dataRoot+"/cache"}, function (err) {
+		res.send("cache cleared!");
+	});
+});
+
+app.get('/ext/php/clearactions.php', function(req, res){
+	exec("rm -rf *",{cwd:dataRoot+"/actions"}, function (err) {
+		res.send("actions cleared!");
+	});
+});
+
 app.configure(function(){
   app.use(express.methodOverride());
   app.use(express.bodyParser());
@@ -56,6 +64,7 @@ app.configure(function(){
   app.use(app.router);
 
 });
+
 actions.setupActions(dataRoot, function () {
 	app.listen(port);
 	console.log ("server running on port "+port+", serving path "+path);
