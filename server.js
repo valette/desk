@@ -116,36 +116,18 @@ function createServer() {
 		    }
 
 			fs.stat(filename, function (err, stats) {
-		      if (err) {
-		          response.writeHead(500, {
-		              "Content-Type": "text/plain"
-		          });
-		          response.write(err + "\n");
-		          response.end();
-		          return;
-		      }
+				if (err) {
+					response.writeHead(500, {"Content-Type": "text/plain"});
+					response.write(err + "\n");
+					response.end();
+					return;
+				}
 
-		      if (stats.isDirectory()) {
-		          filename += '/index.html';
-		      }
+				if (stats.isDirectory()) {
+					filename += '/index.html';
+				}
 
-		      fs.readFile(filename, "binary", function (err, file) {
-		          if (err) {
-		              response.writeHead(500, {
-		                  "Content-Type": "text/plain"
-		              });
-		              response.write(err + "\n");
-		              response.end();
-		              return;
-		          }
-
-		          var type = mime.lookup(filename);
-		          response.writeHead(200, {
-		              "Content-Type": type
-		          });
-		          response.write(file, "binary");
-		          response.end();
-		      });
+				fs.createReadStream(filename).pipe(response);
 		    });
 		});
 	}).listen(port);

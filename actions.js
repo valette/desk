@@ -261,7 +261,7 @@ exports.performAction= function (POST, callback) {
 							callback( err.message );
 						}
 						else {
-							fs.writeFile(counterFile, JSON.stringify({value : 1}), 
+							fs.writeFile(counterFile, JSON.stringify({value : index}), 
 								function(err) {
 									if (err) {
 										callback( err );
