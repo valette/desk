@@ -1,8 +1,7 @@
 var fs = require('fs');
 var express = require("express"),
     app     = express.createServer(),
-    qs      = require('querystring'),
-    async   = require ('async');
+    qs      = require('querystring');
 
 var actions=require('./actions');
 
