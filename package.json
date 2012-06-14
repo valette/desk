@@ -9,7 +9,8 @@
   "devDependencies": {
     "pretty-data" : ">0.0.0",
     "mime" : ">0.0.0",
-    "async" : ">0.0.0"
+    "async" : ">0.0.0",
+    "express" : ">0.0.0"
   },
 
   "dependencies": {},
