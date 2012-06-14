@@ -57,6 +57,7 @@ app.configure(function(){
   app.use(express.methodOverride());
   app.use(express.bodyParser());
   app.use(express.static(path));
+  app.use(express.directory(path));
   app.use(express.errorHandler({
     dumpExceptions: true, 
     showStack: true
