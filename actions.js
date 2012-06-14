@@ -373,3 +373,50 @@ exports.performAction= function (POST, callback) {
 		})
 	});
 }
+
+//**** listDir action
+
+function getDirectory (dir, callback) {
+	var realFiles=[];
+
+	fs.readdir(dir, function (err, files) {
+		if (err) {
+			callback (err);
+			return;
+		}
+
+		for (var i=0;i!=files.length;i++) {
+			realFiles.push(dir+"/"+files[i]);
+		}
+
+		async.map(realFiles, fs.stat, function(err, results){
+			for (var i=0;i!=files.length;i++) {
+				results[i].name=files[i];
+			}
+			callback (err, results);
+		});
+	});
+}
+
+exports.listDir= function (dir, callback) {
+	getDirectory (dir, function (err, files) {
+		var message='';
+		for (var i=0;i!=files.length;i++)
+		{
+			var file=files[i];
+			var dirString;
+			if (file.isDirectory()) {
+				dirString="dir";
+			}
+			else {
+				dirString="file";
+			}
+
+			message+=file.name+" "+dirString+" "+file.mtime.getTime()+" "+file.size;
+			if (i!=files.length-1) {
+				message+="\n";
+			}
+		}
+		callback( message );
+	});
+}
