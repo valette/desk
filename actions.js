@@ -381,7 +381,7 @@ function getDirectory (dir, callback) {
 
 	fs.readdir(dir, function (err, files) {
 		if (err) {
-			callback (err);
+			callback (null, []);
 			return;
 		}
 
@@ -399,7 +399,7 @@ function getDirectory (dir, callback) {
 }
 
 exports.listDir= function (dir, callback) {
-	getDirectory (dir, function (err, files) {
+	getDirectory (filesRoot+"/"+dir, function (err, files) {
 		var message='';
 		for (var i=0;i!=files.length;i++)
 		{

@@ -21,7 +21,7 @@ app.post('/ext/php/listDir.php', function(req, res){
 	req.on('end', function () {
         var POST = qs.parse(body);
 
-		actions.listDir(dataRoot+POST.dir, function (message) {
+		actions.listDir(POST.dir, function (message) {
 			res.send(message);
 		});
 	});
@@ -62,7 +62,6 @@ app.configure(function(){
     showStack: true
   }));
   app.use(app.router);
-
 });
 
 actions.setupActions(dataRoot, function () {
