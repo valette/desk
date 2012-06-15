@@ -1,0 +1,75 @@
+{
+	"actions": [
+		{
+		    "parameters":[
+		        {
+		            "prefix":"-i ",
+		            "name":"input_volume",
+		            "type":"file",
+		            "required":"true"
+		        },
+		        {
+		            "prefix":"-x ",
+		            "name":"seeds",
+		            "type":"file",
+		            "required":"true"
+		        },
+		        {
+		            "prefix":"-cf ",
+		            "name":"clustering",
+		            "type":"file",
+		            "required":"true"
+		        },
+		        {
+		            "text":"-op seg"
+		        }
+		    ],
+		    "name":"cvtgcbinseg",
+		    "attributes":
+		    {
+		        "name":"cvtgcbinseg",
+		        "executable":"cvtgcbinseg"
+		    }
+		},
+		{
+		    "parameters":[
+		        {
+		            "prefix":"-i ",
+		            "name":"input_volume",
+		            "type":"file",
+		            "required":"true"
+		        },
+		        {
+		            "prefix":"-x ",
+		            "name":"seeds",
+		            "type":"file",
+		            "required":"true"
+		        },
+		        {
+		            "prefix":"-cf ",
+		            "name":"clustering",
+		            "type":"file",
+		            "required":"true"
+		        },
+		        {
+		            "prefix":"-t ",
+		            "name":"unary_binary_weight",
+		            "type":"float",
+		            "required":"true",
+		            "min":"0",
+		            "max":"1",
+		            "defaultValue":"0.2"
+		        },
+		        {
+		            "text":"-op seg"
+		        }
+		    ],
+		    "name":"cvtgcmultiseg",
+		    "attributes":
+		    {
+		        "name":"cvtgcmultiseg",
+		        "executable":"cvtgcmultiseg"
+		    }
+		}
+	]
+}
