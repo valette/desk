@@ -3,6 +3,8 @@
 $DATA_ROOT_FROM_PHP="data/";
 $CACHE_ROOT_FROM_PHP="cache/";
 $ACTIONS_ROOT_FROM_PHP="actions/";
+$PHP_ROOT=realpath(".");
+
 
 $parametersFileName="action.par";
 
@@ -171,6 +173,7 @@ foreach ($action->children() as $parameter)
 
 		if ($parameterValue!=null) 
 		{
+			$parametersList[''.$parameterName] = "$parameterValue";
 			switch ($parameterType)
 			{
 				case "string":
@@ -243,8 +246,6 @@ foreach ($action->children() as $parameter)
 				default :
 					die ("no handler for type $parameterType");
 			}
-
-			$parametersList[''.$parameterName] = "$parameterValue";
 
 			$prefix=$parameter["prefix"];
 			if ($prefix!="")
@@ -412,7 +413,7 @@ case "mesh2ctm":
 	if ($cached==false)
 	{
 		echo ("Output : \n");
-		$meshFileName=$parametersList['input_mesh'];
+		$meshFileName=$PHP_ROOT."/".$parametersList['input_mesh'];
 		fwrite($flog, "$logHeader : converting $meshFileName to .ctm format\n");
 		$extension = strtolower(pathinfo($meshFileName, PATHINFO_EXTENSION));
 		echo("extension : $extension\n");
