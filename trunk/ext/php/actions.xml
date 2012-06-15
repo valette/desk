@@ -49,7 +49,7 @@
 <parameter name="input_file" type="file" required="true"/>
 </action>
 
-<action name="slice_volume" executable="/home/valette/git/vtkSurface/bin/VolumeSlice" permissions="0">
+<action name="slice_volume" executable="/home/visu/src/vtkSurfaceBuild/bin/VolumeSlice" permissions="0">
 <description>Slice a volume image into 2D images</description>
 <parameter name="input_volume" type="file" required="true"/>
 <parameter prefix="-f " name="format" type="int" min="0" max="1"/>
