@@ -183,9 +183,10 @@ exports.performAction= function (POST, callback) {
 					}
 				}
 				else {
-				if (parameter.prefix!==undefined) {
+					if (parameter.prefix!==undefined) {
 							commandLine+=parameter.prefix;
-						}
+					}
+
 					switch (parameter.type)
 					{
 					case 'file':
@@ -205,9 +206,33 @@ exports.performAction= function (POST, callback) {
 						});
 						break;
 					case 'string':
+						if (parameterValue.indexOf(" ")===-1) {
+							commandLine+=parameterValue+" ";
+							callback (null);
+						}
+						else {
+							callback ("parameter "+parameter.name+" must not contain spaces");
+						}
+						break;
 					case 'int':
-					case 'text':
+						if (isNaN(parseInt(parameterValue))) {
+							callback ("parameter "+parameter.name+" must be an integer value");
+						}
+						else {
+							commandLine+=parameterValue+" ";
+							callback (null);
+						}
+						break;
 					case 'float':
+						if (isNaN(parseFloat(parameterValue))) {
+							callback ("parameter "+parameter.name+" must be a floating point value");
+						}
+						else {
+							commandLine+=parameterValue+" ";
+							callback (null);
+						}
+						break;
+					case 'text':
 					case 'base64data':
 						commandLine+=parameterValue+" ";
 						callback (null);
