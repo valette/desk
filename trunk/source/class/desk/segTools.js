@@ -1385,9 +1385,9 @@ qx.Class.define("desk.segTools",
 			});
 
 			var parameterMap={
-				action : "write_string",
+				action : "write_binary",
 				file_name : "seeds.xml",
-				data : element('seeds', xmlContent),
+				base64data : qx.util.Base64.encode(element('seeds', xmlContent), true),
 				output_directory : this.getSessionDirectory()};
 
 			this.__fileBrowser.getActions().launchAction(parameterMap, callback);

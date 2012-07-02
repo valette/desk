@@ -133,26 +133,6 @@
 		{
 		    "parameters":[
 		        {
-		            "name":"data",
-		            "type":"string",
-		            "required":"true"
-		        },
-		        {
-		            "name":"file_name",
-		            "type":"string",
-		            "required":"true"
-		        }
-		    ],
-		    "name":"write_string",
-		    "attributes":
-		    {
-		        "name":"write_string",
-		        "js":"lib/write_string.js"
-		    }
-		},
-		{
-		    "parameters":[
-		        {
 		            "name":"file_name",
 		            "type":"string",
 		            "required":"true"
