@@ -37,7 +37,7 @@ function validatePath(path, callback) {
 }
 
 function includeActionsFile (file, callback) {
-	libpath.exists(file, function (exists) {
+	fs.exists(file, function (exists) {
 		if (exists) {
 			switch (libpath.extname(file).toLowerCase()) {
 			case ".json":
