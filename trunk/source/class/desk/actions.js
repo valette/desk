@@ -215,15 +215,7 @@ qx.Class.define("desk.actions",
 		{
 			var req = new qx.io.request.Xhr(fileURL+"?nocache=" + Math.random());
 			req.addListener("success", function(e) {
-				var req = e.getTarget();
-				var parametersText=req.getResponseText();
-				var parameters=[];
-				var splitParameters=parametersText.split("\n");
-				for (var i=0 ; i!=splitParameters.length;i++)
-				{
-					var splitString=splitParameters[i].split("=");
-					parameters[splitString[0]]=splitString[1];
-				}
+				var parameters=JSON.parse(e.getTarget().getResponseText());
 				var action=new desk.action (parameters["action"]);
 				action.setActionParameters(parameters);
 				action.buildUI();

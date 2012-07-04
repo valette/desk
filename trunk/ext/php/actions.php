@@ -1,4 +1,5 @@
 <?php
+include("jsonwrapper/jsonwrapper.php");
 
 $DATA_ROOT_FROM_PHP="data/";
 $CACHE_ROOT_FROM_PHP="cache/";
@@ -6,7 +7,7 @@ $ACTIONS_ROOT_FROM_PHP="actions/";
 $PHP_ROOT=realpath(".");
 
 
-$parametersFileName="action.par";
+$parametersFileName="action.json";
 
 $flog = fopen("actions.log", 'a');
 $logHeader=$_SERVER['REMOTE_ADDR']." ".date("D M j G:i:s");
@@ -15,21 +16,6 @@ $inputFilesLastMtime=0;
 
 // default permissions=0;
 $permissionsLevel=0;
-
-function readParameters($file) {
-	$parameters=array();
-	if (is_file($file))
-	{
-		$content = file_get_contents($file);
-		$parametersLines=explode("\n",$content);
-		foreach ($parametersLines as $line)
-		{
-			$parameter=explode("=",$line);
-			$parameters[''.$parameter[0]]=$parameter[1];
-		}
-	}
-	return ($parameters);
-}
 
 function validateBase64($buffer)
 {
@@ -354,16 +340,22 @@ if ($voidAction==false)
 
 	if (($newAction==false)&&($forceUpdate!="true"))
 	{
-		$oldParameters=readParameters("$parametersFileName");
-		if (isset($oldParameters['hash']))
+		$parameters=array();
+		if (is_file($parametersFileName))
 		{
-			$outputMtime=filemtime($parametersFileName);
-			if (($inputFilesLastMtime<= $outputMtime)&&
-					($oldParameters['hash']==$commandHash))
+			$content = file_get_contents($parametersFileName);
+			$oldParameters=json_decode ($content);
+
+			if (isset($oldParameters->{'hash'}))
 			{
-				$cached=true;
-				fwrite($flog, "$logHeader : cached because input files were not modified\n");
-				fwrite($flog, "$logHeader : directoryMtime : $outputMtime, inputFilesLastMtime : $inputFilesLastMtime\n");
+				$outputMtime=filemtime($parametersFileName);
+				if (($inputFilesLastMtime<= $outputMtime)&&
+						($oldParameters->{'hash'}==$commandHash))
+				{
+					$cached=true;
+					fwrite($flog, "$logHeader : cached because input files were not modified\n");
+					fwrite($flog, "$logHeader : directoryMtime : $outputMtime, inputFilesLastMtime : $inputFilesLastMtime\n");
+				}
 			}
 		}
 	}
@@ -428,11 +420,8 @@ case "mesh2ctm":
 
 		$duration=time()-$startTime;
 		$fp = fopen($parametersFileName, 'w+') or die("Could not open $parametersFileName");
-		$parametersList2=array();
-		foreach ($parametersList as $parameter => $value)
-			$parametersList2[]="$parameter=$value";
-
-		fwrite($fp, implode("\n", $parametersList2));
+		$jsonText=json_encode ( $parametersList );
+		fwrite($fp, $jsonText );
 		fclose($fp);
 		echo "\nOK ($duration s.)";
 	}
@@ -456,11 +445,8 @@ default:
 		if ($voidAction==false)
 		{
 			$fp = fopen($parametersFileName, 'w+') or die("Could not open $parametersFileName");
-			$parametersList2=array();
-			foreach ($parametersList as $parameter => $value)
-				$parametersList2[]="$parameter=$value";
-
-			fwrite($fp, implode("\n", $parametersList2));
+			$jsonText=json_encode ( $parametersList );
+			fwrite($fp, $jsonText );
 			fclose($fp);
 		}
 		echo "\nOK ($duration s.)";

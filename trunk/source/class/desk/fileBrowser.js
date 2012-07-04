@@ -295,7 +295,7 @@ qx.Class.define("desk.fileBrowser",
 				var modificationTime=myBrowser.getNodeMTime(node);
 				var file=myBrowser.getNodeFile(node);
 				var fileURL=myBrowser.getFileURL(file);
-				var extension=file.substring(file.length-4, file.length);
+				var extension=file.substring(file.lastIndexOf("."), file.length);
 				switch (extension)
 				{
 				case ".vtk":
@@ -344,7 +344,7 @@ qx.Class.define("desk.fileBrowser",
 					new desk.volMaster(file, myBrowser);
 					
 					break;
-				case ".par":
+				case ".json":
 					myBrowser.getActions().createActionWindowFromURL(myBrowser.getNodeURL(node));
 					break;
 				default:

@@ -70,19 +70,10 @@ qx.Class.define("desk.action",
 			this.__outputDirectory=directory;
 			// try to load parameters on server
 
-			var req = new qx.io.request.Xhr(desk.actions.BASEURL+
-						this.getOutputDirectory()+"/action.par?nocache=" + Math.random());
+			var req = new qx.io.request.Xhr(qx.core.Environment.get("desk.extURL")+"php/"+
+						this.getOutputDirectory()+"/action.json?nocache=" + Math.random());
 			req.addListener("success", function(e) {
-				var req = e.getTarget();
-				var parametersText=req.getResponseText();
-				var parameters=[];
-				var splitParameters=parametersText.split("\n");
-				for (var i=0 ; i!=splitParameters.length;i++)
-				{
-					var splitString=splitParameters[i].split("=");
-					parameters[splitString[0]]=splitString[1];
-				}
-				this.__loadedParameters=parameters;
+				this.__loadedParameters=JSON.parse(e.getTarget().getResponseText());
 				this.__updateUIParameters();
 			}, this);
 			req.send();
@@ -188,7 +179,7 @@ qx.Class.define("desk.action",
 						this.__embededFileBrowser.setUserData("action",this);
 						pane.add(this.__embededFileBrowser, 1);
 					}
-					logFileURL=desk.actions.BASEURL+outputDirectory+"/action.log";
+					logFileURL=qx.core.Environment.get("desk.extURL")+"php/"+outputDirectory+"/action.log";
 					showLogButton.setVisibility("visible");
 				}
 			}
@@ -470,7 +461,7 @@ qx.Class.define("desk.action",
 											this.__embededFileBrowser.updateRoot();
 										}
 									}
-									logFileURL=desk.actions.BASEURL+outputDirectory+"/action.log";
+									logFileURL=qx.core.Environment.get("desk.extURL")+"php/"+outputDirectory+"/action.log";
 									showLogButton.setVisibility("visible");
 								}
 								this.fireEvent("actionUpdated");
