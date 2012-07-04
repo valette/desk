@@ -5,7 +5,8 @@ qx.Class.define("desk.action",
 	construct : function (name, standalone)
 	{
 		this.base(arguments);
-		var actions=desk.actions.getInstance()
+		var actions=desk.actions.getInstance();
+		this.__actions=actions;
 		this.__action=actions.getAction(name);
 		this.__actionName=name;
 		if (standalone==false) {
@@ -28,6 +29,7 @@ qx.Class.define("desk.action",
 	},
 
 	members : {
+		__actions : null,
 
 		__connections : null,
 
@@ -70,7 +72,7 @@ qx.Class.define("desk.action",
 			this.__outputDirectory=directory;
 			// try to load parameters on server
 
-			var req = new qx.io.request.Xhr(qx.core.Environment.get("desk.extURL")+"php/"+
+			var req = new qx.io.request.Xhr(this.+"php/"+
 						this.getOutputDirectory()+"/action.json?nocache=" + Math.random());
 			req.addListener("success", function(e) {
 				this.__loadedParameters=JSON.parse(e.getTarget().getResponseText());
@@ -143,7 +145,7 @@ qx.Class.define("desk.action",
 			var action=this.__action;
 			this.setLayout(new qx.ui.layout.VBox());
 
-			var myAction=this;
+			var that=this;
 			var pane = null;
 
 			if (this.__standalone) {
@@ -179,7 +181,7 @@ qx.Class.define("desk.action",
 						this.__embededFileBrowser.setUserData("action",this);
 						pane.add(this.__embededFileBrowser, 1);
 					}
-					logFileURL=qx.core.Environment.get("desk.extURL")+"php/"+outputDirectory+"/action.log";
+					logFileURL=that.__actions.baseURL+"php/"+outputDirectory+"/action.log";
 					showLogButton.setVisibility("visible");
 				}
 			}
@@ -306,7 +308,7 @@ qx.Class.define("desk.action",
 							parameterForm.setValue(this.__fileBrowser.getNodeFile(fileNode));
 							var parentAction=this.__fileBrowser.getUserData("action");
 							if (parentAction!=null) {
-								myAction.connect(parameterForm.getPlaceholder(),parentAction,fileNode.label);
+								that.connect(parameterForm.getPlaceholder(),parentAction,fileNode.label);
 							}
 						}
 						parameterForm.setDroppable(true);
@@ -316,7 +318,7 @@ qx.Class.define("desk.action",
 								this.setValue(originFileBrowser.getNodeFile(fileNode));
 								var parentAction=originFileBrowser.getUserData("action");
 								if (parentAction!=null) {
-									myAction.connect(this.getPlaceholder(),parentAction,fileNode.label);
+									that.connect(this.getPlaceholder(),parentAction,fileNode.label);
 								}
 							}, parameterForm);
 
@@ -461,7 +463,7 @@ qx.Class.define("desk.action",
 											this.__embededFileBrowser.updateRoot();
 										}
 									}
-									logFileURL=qx.core.Environment.get("desk.extURL")+"php/"+outputDirectory+"/action.log";
+									logFileURL=that.__actions.baseURL+"php/"+outputDirectory+"/action.log";
 									showLogButton.setVisibility("visible");
 								}
 								this.fireEvent("actionUpdated");
@@ -475,7 +477,7 @@ qx.Class.define("desk.action",
 
 							function launchAction()
 							{
-								desk.actions.getInstance().launchAction (parameterMap, getAnswer, myAction);
+								desk.actions.getInstance().launchAction (parameterMap, getAnswer, that);
 							}
 
 							if (this.getOutputSubdirectory()==null) {
@@ -485,7 +487,7 @@ qx.Class.define("desk.action",
 								desk.actions.getInstance().launchAction({
 									"action" : "add_subdirectory",
 									"subdirectory_name" : this.getOutputSubdirectory(),
-									"output_directory" : this.__outputDirectory}, launchAction, myAction);
+									"output_directory" : this.__outputDirectory}, launchAction, that);
 							}
 						}
 					}

@@ -41,8 +41,7 @@ qx.Class.define("desk.fileBrowser",
 
 		var dataModel = virtualTree.getDataModel();
 
-		this.__actionsHandler=desk.actions.getInstance();
-		this.__baseURL=qx.core.Environment.get("desk.extURL")+"php/";
+		this.__actions=desk.actions.getInstance();
 
 		// create the filter bar
 		var filterBox = new qx.ui.container.Composite;
@@ -84,12 +83,12 @@ qx.Class.define("desk.fileBrowser",
 		this.__createDoubleClickActions();
 
 		// events handling
-		if (this.__actionsHandler.isReady()) {
+		if (this.__actions.isReady()) {
 			this.__createDefaultStaticActions();
 			console.log("ready");
 		}
 		else {
-			this.__actionsHandler.addListenerOnce("changeReady", function (e) {
+			this.__actions.addListenerOnce("changeReady", function (e) {
 			this.__createDefaultStaticActions();
 			console.log("ready");
 			}, this);
@@ -157,14 +156,13 @@ qx.Class.define("desk.fileBrowser",
 		__window : null,
 
 		__fileHandler : null,
-		__baseURL : null,
 		__baseDir : "data",
 		__virtualTree : null,
 		__rootId : null,
 
 		__actionNames : null,
 		__actionCallbacks : null,
-		__actionsHandler : null,
+		__actions : null,
 		__actionsMenuButton : null,
 
 		__updateDirectoryInProgress : null,
@@ -235,7 +233,7 @@ qx.Class.define("desk.fileBrowser",
 
 			// Instantiate request
 			var req = new qx.io.request.Xhr();
-			req.setUrl(this.__baseURL+"listDir.php");
+			req.setUrl(this.__actions.baseURL+"listDir.php");
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData({"dir" : directory});
@@ -286,7 +284,7 @@ qx.Class.define("desk.fileBrowser",
 
 		getActions : function ()
 		{
-			return this.__actionsHandler;
+			return this.__actions;
 		},
 
 		__createDoubleClickActions : function () {
@@ -357,17 +355,17 @@ qx.Class.define("desk.fileBrowser",
 
 		__createDefaultStaticActions : function ()
 		{
-			if (this.__actionsHandler.getPermissionsLevel()<1) {
+			if (this.__actions.getPermissionsLevel()<1) {
 				return;
 			}
 
 			var myBrowser=this;
 			myBrowser.addAction("redo action", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-					myBrowser.__actionsHandler.createActionWindowFromURL(
+					myBrowser.__actions.createActionWindowFromURL(
 						myBrowser.getNodeURL(node));
 				else
-					myBrowser.__actionsHandler.createActionWindowFromURL(
+					myBrowser.__actions.createActionWindowFromURL(
 						myBrowser.getNodeURL(node)+"\/parameters.txt");});
 
 			myBrowser.addAction("volViewSimple", function (node) {
@@ -386,7 +384,7 @@ qx.Class.define("desk.fileBrowser",
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 				{
 					var oIFrm = document.getElementById('myIFrm');
-					oIFrm.src = myBrowser.__baseURL+"download.php?fileName="+myBrowser.getNodeFile(node);
+					oIFrm.src = myBrowser.__actions.baseURL+"download.php?fileName="+myBrowser.getNodeFile(node);
 				} 
 				else
 					alert("Cannot download a directory!");});
@@ -477,12 +475,12 @@ qx.Class.define("desk.fileBrowser",
 
 		getNodeURL : function (node)
 		{
-			return (this.__baseURL+this.getNodeFile(node));
+			return (this.__actions.baseURL+this.getNodeFile(node));
 		},
 
 		getFileURL : function (file)
 		{
-			return (this.__baseURL+file);
+			return (this.__actions.baseURL+file);
 		},
 
 		getNodeFile : function (node)
@@ -537,7 +535,7 @@ qx.Class.define("desk.fileBrowser",
 
 			this.__virtualTree.setContextMenu(menu);
 			this.__virtualTree.addListener("contextmenu", function (e) {
-				actionsButton.setMenu(this.__actionsHandler.getActionsMenu(this));
+				actionsButton.setMenu(this.__actions.getActionsMenu(this));
 				}, this);
 		},
 		
@@ -555,7 +553,7 @@ qx.Class.define("desk.fileBrowser",
 
 			// Instantiate request
 			var req = new qx.io.request.Xhr();
-			req.setUrl(this.__baseURL+"listDir.php");
+			req.setUrl(this.__actions.baseURL+"listDir.php");
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData({"dir" : this.getNodeFile(node)});

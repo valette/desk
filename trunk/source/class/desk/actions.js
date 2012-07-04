@@ -33,8 +33,10 @@ qx.Class.define("desk.actions",
 			qx.core.Init.getApplication().getRoot().add(ongoingActions, { right : 0, top : 0});
 		}, this);
 
+		this.baseURL=qx.core.Environment.get("desk.extURL");
+
 		// load external three.js files
-		var threeURL=qx.core.Environment.get("desk.extURL")+"three.js/";
+		var threeURL=this.baseURL+"three.js/";
 
 		HackCTMWorkerURL=threeURL+"ctm/CTMWorkerMin.js";
 
@@ -57,6 +59,7 @@ qx.Class.define("desk.actions",
 	},
 
 	members : {
+		baseURL : null,
 		__actionMenu : null,
 		__actions : null,
 		__fileBrowser : null,
@@ -112,11 +115,12 @@ qx.Class.define("desk.actions",
 		},
 
 		__launchAction : function (actionParameters, successCallback, context) {
+			var that=this;
 			var actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
 			this.__ongoingActions.add(actionNotification);
 			var req = new qx.io.request.Xhr();
 
-			req.setUrl(qx.core.Environment.get("desk.extURL")+"php/actions.php");
+			req.setUrl(this.baseURL+"php/actions.php");
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData(actionParameters);
@@ -156,7 +160,7 @@ qx.Class.define("desk.actions",
 				numberOfRetries--;
 				if (numberOfRetries>0) {
 					req = new qx.io.request.Xhr();
-					req.setUrl(qx.core.Environment.get("desk.extURL")+"php/actions.php");
+					req.setUrl(that.baseURL+"php/actions.php");
 					req.setMethod("POST");
 					req.setAsync(true);
 					req.setRequestData(actionParameters);
@@ -207,7 +211,7 @@ qx.Class.define("desk.actions",
 					}
 				}
 			}
-			xmlhttp.open("GET",qx.core.Environment.get("desk.extURL")+"php/actions.json?nocache=" + Math.random(),true);
+			xmlhttp.open("GET",_this.baseURL+"php/actions.json?nocache=" + Math.random(),true);
 			xmlhttp.send();
 		},
 
