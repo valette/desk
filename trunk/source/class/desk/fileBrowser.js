@@ -480,7 +480,7 @@ qx.Class.define("desk.fileBrowser",
 
 		getFileURL : function (file)
 		{
-			return (this.__actions.baseURL+file);
+			return (this.__actions.baseURL+"php/"+file);
 		},
 
 		getNodeFile : function (node)
