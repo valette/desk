@@ -16,6 +16,7 @@ qx.Class.define("desk.actions",
 	{
 		this.base(arguments);
 
+		this.baseURL=qx.core.Environment.get("desk.extURL");
 		this.__actionsQueue=[];
 
 		this.__actionMenu = new qx.ui.menu.Menu;
@@ -32,8 +33,6 @@ qx.Class.define("desk.actions",
 			}
 			qx.core.Init.getApplication().getRoot().add(ongoingActions, { right : 0, top : 0});
 		}, this);
-
-		this.baseURL=qx.core.Environment.get("desk.extURL");
 
 		// load external three.js files
 		var threeURL=this.baseURL+"three.js/";

@@ -233,7 +233,7 @@ qx.Class.define("desk.fileBrowser",
 
 			// Instantiate request
 			var req = new qx.io.request.Xhr();
-			req.setUrl(this.__actions.baseURL+"listDir.php");
+			req.setUrl(this.__actions.baseURL+"php/listDir.php");
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData({"dir" : directory});
@@ -553,7 +553,7 @@ qx.Class.define("desk.fileBrowser",
 
 			// Instantiate request
 			var req = new qx.io.request.Xhr();
-			req.setUrl(this.__actions.baseURL+"listDir.php");
+			req.setUrl(this.__actions.baseURL+"php/listDir.php");
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData({"dir" : this.getNodeFile(node)});
