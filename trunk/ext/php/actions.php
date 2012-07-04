@@ -390,23 +390,14 @@ case "add_subdirectory":
 		fwrite($flog, "$logHeader : $newSubdir already exists. not created\n");
 	echo("\nOK");
 	break;
-case "save_binary_file":
-	$base64Data=$parametersList['base64Data'];
+case "write_binary":
+	$base64Data=$parametersList['base64data'];
 	$binaryData = base64_decode($base64Data);
 	$binaryFileName=$parametersList['file_name'];
 	$binaryFile = fopen( "$binaryFileName", 'wb' );
 	fwrite( $binaryFile, $binaryData);
 	fclose( $binaryFile );
 	fwrite($flog, "$logHeader : wrote binary data into $binaryFileName\n");
-	echo("\nOK");
-	break;
-case "save_xml_file":
-	$xmlData=$parametersList['xmlData'];
-	$xmlFileName=$parametersList['file_name'];
-	$xmlFile = fopen( "$xmlFileName", 'wb' );
-	fwrite( $xmlFile, $xmlData);
-	fclose( $xmlFile );
-	fwrite($flog, "$logHeader : wrote XML data into $xmlFileName\n");
 	echo("\nOK");
 	break;
 case "mesh2ctm":

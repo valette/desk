@@ -184,7 +184,7 @@
 <action name="write_binary" executable="not needed">
 <description>writes binary data (encoded in base64) to a file</description>
 <parameter name="file_name" type="string" required="true"/>
-<parameter name="base64data" type="string" required="true"/>
+<parameter name="base64data" type="base64" required="true"/>
 </action>
 
 <action name="mesh2ctm" executable="not needed" permissions="0">
