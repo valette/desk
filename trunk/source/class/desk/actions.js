@@ -15,13 +15,10 @@ qx.Class.define("desk.actions",
 	construct : function(fileBrowser)
 	{
 		this.base(arguments);
-
-		this.baseURL=qx.core.Environment.get("desk.extURL");
 		this.__actionsQueue=[];
 
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.populateActionMenu();
-
 
 		this.addListenerOnce("changeReady", function () {
 			var ongoingActions = new qx.ui.form.List().set({
@@ -58,7 +55,7 @@ qx.Class.define("desk.actions",
 	},
 
 	members : {
-		baseURL : null,
+		baseURL : "../../../ext/",
 		__actionMenu : null,
 		__actions : null,
 		__fileBrowser : null,
