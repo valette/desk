@@ -99,7 +99,7 @@
 </action>
 -->
 
-<action name="cvtseg2" executable="/home/visu/src/thor/vtkSurfaceH/vtkSurfaceH-build/bin/cvtseg2">
+<action name="cvtseg2" executable="/home/visu/src/vtkSurfaceBuild/bin/cvtseg2">
 <description>compute an image-based clustering of the input volume</description>
 <parameter name="input_volume" type="file" required="true"/>
 <parameter prefix="-cn " name="clusters_percentage" type="float" min="0.0001" max="1" default="0.01"/>
