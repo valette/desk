@@ -29,7 +29,7 @@
   {
     "APPLICATION"  : "desk",
     "APPLICATION_MAIN_CLASS" : "${APPLICATION}.demo.Demo",
-    "QOOXDOO_PATH" : "../../qooxdoo-1.6-sdk",
+    "QOOXDOO_PATH" : "../../qooxdoo-2.0.1-sdk",
     //"QXTHEME"      : "desk.theme.modern.Theme",
     "QXTHEME"      : "qx.theme.Modern",
     "API_EXCLUDE"  : ["qx.test.*", "desk.demo.*", "${APPLICATION}.theme.*", "${APPLICATION}.test.*"],
