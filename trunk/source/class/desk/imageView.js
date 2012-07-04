@@ -2,7 +2,7 @@ qx.Class.define("desk.imageView",
 {
   extend : qx.ui.window.Window,
 
-	construct : function(file,timestamp)
+	construct : function(file,fileBrowser)
 	{
 		this.base(arguments);
 
@@ -14,12 +14,9 @@ qx.Class.define("desk.imageView",
 		this.setUseMoveFrame(true);
 		this.setCaption(file);
 
-		if (timestamp!=null)
-			this.__image=new qx.ui.basic.Image(file+"?nocache="+timestamp);
-		else
-			this.__image=new qx.ui.basic.Image(file);
-
-		this.__image.setScale(true);
+		var url=fileBrowser.getFileURL(file);
+		this.__image=new qx.ui.basic.Image(url+"?nocache="+Math.random());
+	//	this.__image.setScale(true);
 		this.add(this.__image,{flex : 1});
 
 		this.open();
