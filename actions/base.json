@@ -62,7 +62,7 @@
 		    {
 		        "name":"set_permissions",
 		        "executable":"chmod g+rw",
-		        "void":"true"
+		        "voidAction":"true"
 		    }
 		},
 		{
@@ -79,7 +79,7 @@
 		    {
 		        "name":"sleep",
 		        "executable":"sleep",
-		        "void":"true"
+		        "voidAction":"true"
 		    }
 		},
 		{
@@ -94,8 +94,8 @@
 		    "attributes":
 		    {
 		        "name":"delete_file",
-		        "executable":"not needed",
-		        "void":"true"
+		        "command":"rm",
+		        "voidAction": "true"
 		    }
 		},
 		{
@@ -111,7 +111,7 @@
 		    {
 		        "name":"add_subdirectory",
 		        "command":"mkdir",
-		        "void" : "true"
+		        "voidAction" : "true"
 		    }
 		},
 		{
@@ -127,7 +127,7 @@
 		    {
 		        "name":"delete_directory",
 		        "command":"rm -rf",
-		        "void":"true"
+		        "voidAction":"true"
 		    }
 		},
 		{
@@ -147,7 +147,8 @@
 		    "attributes":
 		    {
 		        "name":"write_binary",
-		        "js":"lib/write_binary"
+		        "js":"lib/write_binary",
+		        "voidAction" : "true"
 		    }
 		}
 	]

@@ -351,6 +351,11 @@ exports.performAction= function (POST, callback) {
 					callback (err.message);
 				}
 				else {
+					if (action.attributes.voidAction ==="true") {
+						callback ("void\n"+stdout+"\nOK ("+(new Date().getTime()-startTime)/1000+"s)\n");
+						return;
+					}
+
 					var string=JSON.stringify(actionParameters);
 					fs.writeFile(filesRoot+outputDirectory+"/action.json", string, function (err) {
 						if (err) throw err;
