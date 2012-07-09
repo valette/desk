@@ -1,11 +1,9 @@
 var path = "trunk/";
-var dataRoot=path+"ext/php/";
+
 var port = 1337;
 
 var fs      = require('fs'),
-    express = require("express"),
-    qs      = require('querystring'),
-   	exec    = require('child_process').exec;
+    express = require("express");
 
 var app;
 
@@ -13,8 +11,8 @@ var privateKeyFile="privatekey.pem";
 var certificateFile="certificate.pem";
 var separator="********************************************************************************";
 
-
-var URLBase;
+var baseURL;
+path=fs.realpathSync(path)+"/";
 
 console.log(separator);
 
@@ -24,12 +22,12 @@ if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	var certificate = fs.readFileSync(certificateFile).toString();
 	app = express.createServer({key: privateKey, cert: certificate});
 	console.log("using secure https mode");
-	URLBase="https://";
+	baseURL="https://";
 }
 else {
 	app = express.createServer();
 	console.log("no certificate provided, using non secure mode");
-	URLBase="http://";
+	baseURL="http://";
 	console.log("you can generate a certificate with these 3 commands:");
 	console.log("(1) openssl genrsa -out privatekey.pem 1024");
 	console.log("(2) openssl req -new -key privatekey.pem -out certrequest.csr");
@@ -37,8 +35,7 @@ else {
 }
 console.log(separator);
 
-//path=fs.realpathSync(path)+"/";
-
+//configure server : static file serving, errors
 app.configure(function(){
   app.use(express.methodOverride());
   app.use(express.bodyParser());
@@ -53,10 +50,9 @@ app.configure(function(){
 
 // setup actions
 var actions=require('./actions');
-
-actions.setupActions(dataRoot, app, function () {
+actions.setup(path+"ext/php/", app, function () {
 	app.listen(port);
 	console.log(separator);
 	console.log ("server running on port "+port+", serving path "+path);
-	console.log(URLBase+"localhost:"+port);
+	console.log(baseURL+"localhost:"+port);
 });
