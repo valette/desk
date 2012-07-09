@@ -119,7 +119,7 @@ function exportActions( file, callback ) {
 	});
 }
 
-exports.setupActions=function (root, callback) {
+exports.setupActions=function (root, app, callback) {
 	filesRoot=fs.realpathSync(root)+"/";
 	dataRoot=fs.realpathSync(root+"data/");
 	cacheRoot=fs.realpathSync(root+"cache/");
@@ -131,9 +131,34 @@ exports.setupActions=function (root, callback) {
 		}
 		exports.includeActions(files, callback);
 	});
+
+	app.post('/ext/php/listDir.php', function(req, res){
+			listDir(req.body.dir, function (message) {
+				res.send(message);
+			});
+	});
+
+	app.post('/ext/php/actions.php', function(req, res){
+		res.connection.setTimeout(0);
+	    performAction(req.body, function (message) {
+			res.send(message);
+		});
+	});
+
+	app.get('/ext/php/clearcache.php', function(req, res){
+		exec("rm -rf *",{cwd:cacheRoot}, function (err) {
+			res.send("cache cleared!");
+		});
+	});
+
+	app.get('/ext/php/clearactions.php', function(req, res){
+		exec("rm -rf *",{cwd:actionsRoot}, function (err) {
+			res.send("actions cleared!");
+		});
+	});
 };
 
-exports.performAction= function (POST, callback) {
+function performAction (POST, callback) {
 
 	var action;
 	var commandLine="ulimit -v 12000000; nice ";
@@ -428,7 +453,7 @@ function getDirectory (dir, callback) {
 	});
 }
 
-exports.listDir= function (dir, callback) {
+function listDir (dir, callback) {
 	getDirectory (filesRoot+"/"+dir, function (err, files) {
 		var message='';
 		for (var i=0;i!=files.length;i++)
