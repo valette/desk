@@ -1,3 +1,7 @@
+var path = "trunk/";
+var dataRoot=path+"ext/php/";
+var port = 1337;
+
 var fs      = require('fs'),
     express = require("express"),
     qs      = require('querystring'),
@@ -9,9 +13,12 @@ var privateKeyFile="privatekey.pem";
 var certificateFile="certificate.pem";
 var separator="********************************************************************************";
 
+
 var URLBase;
 
 console.log(separator);
+
+// run the server in normal or secure mode depending on provided certificate
 if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	var privateKey = fs.readFileSync(privateKeyFile).toString();
 	var certificate = fs.readFileSync(certificateFile).toString();
@@ -30,11 +37,8 @@ else {
 }
 console.log(separator);
 
+// setup actions
 var actions=require('./actions');
-
-var path = "trunk/";
-var dataRoot=path+"ext/php/";
-var port = 1337;
 
 path=fs.realpathSync(path)+"/";
 dataRoot=fs.realpathSync(dataRoot)+"/";
