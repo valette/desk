@@ -383,8 +383,8 @@ qx.Class.define("desk.fileBrowser",
 			myBrowser.addAction("download",function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 				{
-					var oIFrm = document.getElementById('myIFrm');
-					oIFrm.src = myBrowser.__actions.baseURL+"download.php?fileName="+myBrowser.getNodeFile(node);
+					document.getElementById('myIFrm').src =
+						myBrowser.getFileURL(myBrowser.getNodeFile(node));
 				} 
 				else
 					alert("Cannot download a directory!");});
