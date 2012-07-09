@@ -1,8 +1,28 @@
-var fs = require('fs');
-var express = require("express"),
-    app     = express.createServer(),
+var fs      = require('fs'),
+    express = require("express"),
     qs      = require('querystring'),
    	exec    = require('child_process').exec;
+
+var app;
+
+var privateKeyFile="privatekey.pem";
+var certificateFile="certificate.pem";
+
+var URLBase;
+
+if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
+	var privateKey = fs.readFileSync(privateKeyFile).toString();
+	var certificate = fs.readFileSync(certificateFile).toString();
+    app = express.createServer({key: privateKey, cert: certificate});
+    console.log("using secure https mode");
+    URLBase="https://";
+}
+else {
+    app = express.createServer();
+    console.log("no certificate and/or private keys provided, using non secure mode");
+    URLBase="http://";
+}
+
 
 var actions=require('./actions');
 
@@ -68,4 +88,5 @@ app.configure(function(){
 actions.setupActions(dataRoot, function () {
 	app.listen(port);
 	console.log ("server running on port "+port+", serving path "+path);
+	console.log(URLBase+"localhost:"+port);
 });
