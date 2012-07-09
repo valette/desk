@@ -7,22 +7,28 @@ var app;
 
 var privateKeyFile="privatekey.pem";
 var certificateFile="certificate.pem";
+var separator="********************************************************************************";
 
 var URLBase;
 
+console.log(separator);
 if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	var privateKey = fs.readFileSync(privateKeyFile).toString();
 	var certificate = fs.readFileSync(certificateFile).toString();
-    app = express.createServer({key: privateKey, cert: certificate});
-    console.log("using secure https mode");
-    URLBase="https://";
+	app = express.createServer({key: privateKey, cert: certificate});
+	console.log("using secure https mode");
+	URLBase="https://";
 }
 else {
-    app = express.createServer();
-    console.log("no certificate and/or private keys provided, using non secure mode");
-    URLBase="http://";
+	app = express.createServer();
+	console.log("no certificate provided, using non secure mode");
+	URLBase="http://";
+	console.log("you can generate a certificate with these 3 commands:");
+	console.log("(1) openssl genrsa -out privatekey.pem 1024");
+	console.log("(2) openssl req -new -key privatekey.pem -out certrequest.csr");
+	console.log("(3) openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem");
 }
-
+console.log(separator);
 
 var actions=require('./actions');
 
@@ -87,6 +93,7 @@ app.configure(function(){
 
 actions.setupActions(dataRoot, function () {
 	app.listen(port);
+	console.log(separator);
 	console.log ("server running on port "+port+", serving path "+path);
 	console.log(URLBase+"localhost:"+port);
 });
