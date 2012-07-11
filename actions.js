@@ -162,15 +162,15 @@ function performAction (POST, callback) {
 
 	var action;
 	var commandLine="ulimit -v 12000000; nice ";
-
 	var inputMTime=-1;
-
 	var actionParameters={};
-
 	var outputDirectory;
 	var cachedAction=false;
 
-	function parseParameters (callback) {
+	async.series([
+
+	// first, parse parameters into actionParameters;
+	function (callback) {
 		var i;
 		var actionName=POST.action;
 		actionParameters.action=actionName;
@@ -277,13 +277,10 @@ function performAction (POST, callback) {
 		async.forEachSeries(parameters, parseParameter, function(err){
 			callback (err);
 		});
-	}
+	},
 
-
-	async.series([parseParameters,handleOutputDirectory, afterHandleOutputDirectory], callback);
-	
-
-	function handleOutputDirectory(callback) {
+	// then handle output directory in outputDirectory
+	function (callback) {
 
 		outputDirectory=POST.output_directory;
 		actionParameters.output_directory=outputDirectory;
@@ -348,9 +345,43 @@ function performAction (POST, callback) {
 		default :
 			validatePath ( outputDirectory, callback );
 		}
-	}
+	},
 
-	function executeAction (callback) {
+	// log the actionand  detect whether the action is already in cache 
+	function (callback) 
+	{
+		actionParameters.output_directory=outputDirectory;
+		console.log ("in : "+outputDirectory);
+		console.log(commandLine);
+
+		if ((action.attributes.voidAction==="true")||(POST.force_update==="true")){
+			callback();
+		}
+		else {
+			// check if action was already performed
+			var actionFile=filesRoot+outputDirectory+"/action.json";
+			fs.stat(actionFile, function (err, stats) {
+				if ((err)||(stats.mtime.getTime()<inputMTime)) {
+					callback();
+				}
+				else {
+					fs.readFile(actionFile, function (err, data) {
+						if (data==JSON.stringify(actionParameters)) {
+					  		console.log("cached");
+					  		cachedAction=true;
+							callback();
+						}
+						else {
+							callback();
+						}
+					});
+			  	}
+			});
+		}
+	},
+
+	// execute the action (or not when it is cached)
+	function (callback) {
 		if (cachedAction) {
 			fs.readFile(filesRoot+outputDirectory+"/action.log", function (err, string) {
 				callback (outputDirectory+"\n"+string+"\nCACHED\n")
@@ -392,40 +423,9 @@ function performAction (POST, callback) {
 				});
 			}
 		}
-	}
-
-
-	function afterHandleOutputDirectory(callback) 
-	{
-		actionParameters.output_directory=outputDirectory;
-		console.log ("in : "+outputDirectory);
-		console.log(commandLine);
-
-		if ((action.attributes.voidAction==="true")||(POST.force_update==="true")){
-			executeAction(callback);
-		}
-		else {
-			// check if action was already performed
-			var actionFile=filesRoot+outputDirectory+"/action.json";
-			fs.stat(actionFile, function (err, stats) {
-				if ((err)||(stats.mtime.getTime()<inputMTime)) {
-					executeAction(callback);
-				}
-				else {
-					fs.readFile(actionFile, function (err, data) {
-						if (data==JSON.stringify(actionParameters)) {
-					  		console.log("cached");
-					  		cachedAction=true;
-							executeAction(callback);
-						}
-						else {
-							executeAction(callback);
-						}
-					});
-			  	}
-			});
-		}
-	}
+	}],
+	
+	callback);
 }
 
 //**** listDir action
