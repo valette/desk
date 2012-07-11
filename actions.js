@@ -351,6 +351,13 @@ function performAction (POST, callback) {
 	}
 
 	function executeAction (callback) {
+		if (cachedAction) {
+			fs.readFile(filesRoot+outputDirectory+"/action.log", function (err, string) {
+				callback (outputDirectory+"\n"+string+"\nCACHED\n")
+			});
+			return;
+		}
+
 		var startTime=new Date().getTime();
 
 		var js=action.attributes.js;
@@ -408,10 +415,8 @@ function performAction (POST, callback) {
 					fs.readFile(actionFile, function (err, data) {
 						if (data==JSON.stringify(actionParameters)) {
 					  		console.log("cached");
-					  		fs.readFile(filesRoot+outputDirectory+"/action.log", function (err, string) {
-							//	if (err) throw err;
-								callback (outputDirectory+"\n"+string+"\nCACHED\n")
-							});
+					  		cachedAction=true;
+							executeAction(callback);
 						}
 						else {
 							executeAction(callback);
