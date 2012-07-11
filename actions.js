@@ -282,78 +282,76 @@ function performAction (POST, callback) {
 
 	parseParameters(afterParseParameters);
 
+	function handleOutputDirectory(callback) {
+
+		outputDirectory=POST.output_directory;
+		actionParameters.output_directory=outputDirectory;
+
+		if (action.attributes.voidAction==="true") {
+			callback(null);
+			return;
+		}
+
+		switch (outputDirectory) 
+		{
+		case undefined :
+		// TODO create actions directory
+			var counterFile=filesRoot+"/actions/counter.json";
+			fs.readFile( counterFile , function (err, data) {
+				var index=1;
+				if (!err) {
+					index=JSON.parse(data).value + 1;
+				}
+				outputDirectory="actions/"+index+"/";
+				fs.mkdir(filesRoot+"/actions/"+index, function (err) {
+					if ( err ) {
+						callback( err.message );
+					}
+					else {
+						fs.writeFile(counterFile, JSON.stringify({value : index}), 
+							function(err) {
+								if (err) {
+									callback( err );
+								}
+								else {
+									callback( null );
+								}
+							}
+						);
+					}
+				});
+			});
+			break;
+		case "cache/" :
+			var shasum = crypto.createHash('sha1');
+			shasum.update(commandLine);
+			outputDirectory="cache/"+shasum.digest('hex')+"/";
+			fs.stat(filesRoot+outputDirectory, function (err, stats) {
+				if (err) {
+					// directory does not exist, create it
+					fs.mkdir(filesRoot+outputDirectory,0777 , function (err) {
+						if (err) {
+							callback(err.message);
+						}
+						else {
+							callback (null);
+						}
+					});
+					return;
+				}
+				else {
+					callback (null);
+				}
+			})
+			break;
+		default :
+			validatePath ( outputDirectory, callback );
+		}
+	}
+
 	function afterParseParameters(err) {
 		if (err) {
 			callback (err.message);
-		}
-
-
-
-		function handleOutputDirectory(callback) {
-
-			outputDirectory=POST.output_directory;
-			actionParameters.output_directory=outputDirectory;
-
-			if (action.attributes.voidAction==="true") {
-				callback(null);
-				return;
-			}
-
-			switch (outputDirectory) 
-			{
-			case undefined :
-			// TODO create actions directory
-				var counterFile=filesRoot+"/actions/counter.json";
-				fs.readFile( counterFile , function (err, data) {
-					var index=1;
-					if (!err) {
-						index=JSON.parse(data).value + 1;
-					}
-					outputDirectory="actions/"+index+"/";
-					fs.mkdir(filesRoot+"/actions/"+index, function (err) {
-						if ( err ) {
-							callback( err.message );
-						}
-						else {
-							fs.writeFile(counterFile, JSON.stringify({value : index}), 
-								function(err) {
-									if (err) {
-										callback( err );
-									}
-									else {
-										callback( null );
-									}
-								}
-							);
-						}
-					});
-				});
-				break;
-			case "cache/" :
-				var shasum = crypto.createHash('sha1');
-				shasum.update(commandLine);
-				outputDirectory="cache/"+shasum.digest('hex')+"/";
-				fs.stat(filesRoot+outputDirectory, function (err, stats) {
-					if (err) {
-						// directory does not exist, create it
-						fs.mkdir(filesRoot+outputDirectory,0777 , function (err) {
-							if (err) {
-								callback(err.message);
-							}
-							else {
-								callback (null);
-							}
-						});
-						return;
-					}
-					else {
-						callback (null);
-					}
-				})
-				break;
-			default :
-				validatePath ( outputDirectory, callback );
-			}
 		}
 
 		function executeAction (callback) {
