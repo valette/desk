@@ -33,7 +33,7 @@ qx.Class.define("desk.volViewSimple",
 				input_volume : file,
 				slice_orientation : 0,				
 				output_directory : "cache\/"};
-			fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
+			desk.actions.getInstance().launchAction(parameterMap, getAnswer, this);
 
 			var label = new qx.ui.basic.Label("Computing slices, wait...").set({
 				font : new qx.bom.Font(28, ["Verdana", "sans-serif"])

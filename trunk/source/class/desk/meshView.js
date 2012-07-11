@@ -292,7 +292,7 @@ qx.Class.define("desk.meshView",
 					loadMeshIntoScene(outputDir+"\/"+"mesh.ctm",mtime);
 				}
 
-				fileBrowser.getActions().launchAction(parameterMap, getAnswer);
+				desk.actions.getInstance().launchAction(parameterMap, getAnswer);
 				break;
 
 			case ".ctm":

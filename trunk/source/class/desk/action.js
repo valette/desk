@@ -21,6 +21,21 @@ qx.Class.define("desk.action",
 		outputSubdirectory : { init : null}
 	},
 
+	statics :
+	{
+		CREATEFROMFILE : function (file)
+		{
+			var req = new qx.io.request.Xhr(desk.actions.getInstance().getFileURL(file)+"?nocache=" + Math.random());
+			req.addListenerOnce("success", function(e) {
+				var parameters=JSON.parse(e.getTarget().getResponseText());
+				var action=new desk.action (parameters["action"]);
+				action.setActionParameters(parameters);
+				action.buildUI();
+			}, this);
+			req.send();
+		}
+	},
+
 	events : {
 		// the "changeOutputDirectory" event is fired whenever __outputDirectory is changed
 		"changeOutputDirectory" : "qx.event.type.Event",

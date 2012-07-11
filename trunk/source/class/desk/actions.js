@@ -214,18 +214,6 @@ qx.Class.define("desk.actions",
 			}
 			xmlhttp.open("GET",_this.baseURL+"php/actions.json?nocache=" + Math.random(),true);
 			xmlhttp.send();
-		},
-
-		createActionWindowFromURL : function (fileURL)
-		{
-			var req = new qx.io.request.Xhr(fileURL+"?nocache=" + Math.random());
-			req.addListener("success", function(e) {
-				var parameters=JSON.parse(e.getTarget().getResponseText());
-				var action=new desk.action (parameters["action"]);
-				action.setActionParameters(parameters);
-				action.buildUI();
-			}, this);
-			req.send();
 		}
 	}
 });

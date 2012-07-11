@@ -89,26 +89,30 @@ qx.Class.define("desk.fileBrowser",
 		}
 		else {
 			this.__actions.addListenerOnce("changeReady", function (e) {
-			this.__createDefaultStaticActions();
-			console.log("ready");
+				this.__createDefaultStaticActions();
+				console.log("ready");
 			}, this);
 		}
 
 		virtualTree.addListener("cellDblclick", function (e) {
-			var node=this.getEventNode(e);
-			this.openNode(node);}, this);
+			var node=this.__virtualTree.getDataModel().getNodeFromRow(e.getRow());
+			this.openNode(node);
+		}, this);
 
 		virtualTree.addListener("treeOpenWhileEmpty",function (e) {
-			this.__expandDirectoryListing(e.getData().nodeId);}, this);
+			this.__expandDirectoryListing(e.getData().nodeId);
+		}, this);
+
 		virtualTree.addListener("treeOpenWithContent",function (e) {
-			this.__expandDirectoryListing(e.getData().nodeId);}, this);
+			this.__expandDirectoryListing(e.getData().nodeId);
+		}, this);
 
 		// drag and drop support
 		virtualTree.addListener("dragstart", function(e) {
 			e.addAction("move");
 			e.addType("fileBrowser");
 			e.addType("text");
-			});
+		});
 
 		virtualTree.addListener("droprequest", function(e) {
 				var type = e.getCurrentType();
@@ -126,7 +130,7 @@ qx.Class.define("desk.fileBrowser",
 				default :
 					alert ("type "+type+"not supported for drag and drop");
 				}
-			}, this);
+		}, this);
 
 
 		if (standAlone!=false)
@@ -271,7 +275,7 @@ qx.Class.define("desk.fileBrowser",
 					"action" : "add_subdirectory",
 					"subdirectory_name" : subdir,
 					"output_directory" : file.substring(0,lastSlash)};
-				fileBrowser.getActions().launchAction(parameterMap, getAnswer);
+				fileBrowser.__actions.launchAction(parameterMap, getAnswer);
 			}
 
 			this.getFileSessions(file, sessionType, success);
@@ -280,11 +284,6 @@ qx.Class.define("desk.fileBrowser",
 		updateRoot : function ()
 		{
 			this.__expandDirectoryListing(this.__rootId);
-		},
-
-		getActions : function ()
-		{
-			return this.__actions;
 		},
 
 		__createDoubleClickActions : function () {
@@ -343,7 +342,7 @@ qx.Class.define("desk.fileBrowser",
 					
 					break;
 				case ".json":
-					myBrowser.getActions().createActionWindowFromURL(myBrowser.__getNodeURL(node));
+					desk.action.CREATEFROMFILE(myBrowser.__getNodeFile(node));
 					break;
 				default:
 					alert("no file handler exists for extension "+extension);
@@ -362,23 +361,24 @@ qx.Class.define("desk.fileBrowser",
 			var myBrowser=this;
 			myBrowser.addAction("redo action", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-					myBrowser.__actions.createActionWindowFromURL(
-						myBrowser.__getNodeURL(node));
+					desk.action.CREATEFROMFILE(myBrowser.__getNodeFile(node));
 				else
-					myBrowser.__actions.createActionWindowFromURL(
-						myBrowser.__getNodeURL(node)+"\/parameters.txt");});
+					desk.action.CREATEFROMFILE(myBrowser.__getNodeFile(node)+"/parameters.txt");
+			});
 
 			myBrowser.addAction("volViewSimple", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 					new desk.volViewSimple(myBrowser.getNodeFile(node), myBrowser);
 				else
-					alert("Cannot view a directory!");});
+					alert("Cannot view a directory!");
+			});
 
 			myBrowser.addAction("sliceView", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 					new desk.sliceView(myBrowser.getNodeFile(node), myBrowser);
 				else
-					alert("Cannot view a directory!");});
+					alert("Cannot view a directory!");
+			});
 
 			myBrowser.addAction("download",function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
@@ -387,7 +387,8 @@ qx.Class.define("desk.fileBrowser",
 						myBrowser.getFileURL(myBrowser.getNodeFile(node));
 				} 
 				else
-					alert("Cannot download a directory!");});
+					alert("Cannot download a directory!");
+			});
 
 			myBrowser.addAction("dicom2meta",function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
@@ -407,7 +408,7 @@ qx.Class.define("desk.fileBrowser",
 						"action" : "dicom2meta",
 						"sourceDirectory" : myBrowser.getNodeFile(node),
 						"outputDirectory" : myBrowser.getNodeFile(node)};
-					myBrowser.getActions().launchAction(parameterMap);//, getAnswer, this);
+					myBrowser.__actions.launchAction(parameterMap);//, getAnswer, this);
 				}
 			});
 			
@@ -419,13 +420,15 @@ qx.Class.define("desk.fileBrowser",
 
 			myBrowser.addAction("info",function (node) {
 				alert ("file name : "+myBrowser.getNodeFile(node)
-					+"\n file URL : "+myBrowser.__getNodeURL(node));});
+					+"\n file URL : "+myBrowser.__getNodeURL(node));
+			});
 
 			myBrowser.addAction("update",function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 					myBrowser.__expandDirectoryListing(node.parentNodeId);
 				else
-					myBrowser.__expandDirectoryListing(node.nodeId);});
+					myBrowser.__expandDirectoryListing(node.nodeId);
+			});
 		},
 
 		addAction : function (actionName, callback)
@@ -461,11 +464,6 @@ qx.Class.define("desk.fileBrowser",
 		getSelectedNodes : function (e)
 		{
 			return (this.__virtualTree.getSelectedNodes());
-		},
-
-		getEventNode : function (e)
-		{
-			return (this.__virtualTree.getDataModel().getNodeFromRow(e.getRow()));
 		},
 
 		getNodeMTime : function (node)

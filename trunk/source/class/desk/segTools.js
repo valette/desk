@@ -1232,7 +1232,7 @@ qx.Class.define("desk.segTools",
 					file_name : _this.__getSeedFileName (this, sliceId, seedsType),
 					base64data : base64Img,
 					output_directory : _this.getSessionDirectory()};
-					_this.__fileBrowser.getActions().launchAction(parameterMap, savecallback);
+					desk.actions.getInstance().launchAction(parameterMap, savecallback);
 				}
 				else {
 					savecallback();
@@ -1390,7 +1390,7 @@ qx.Class.define("desk.segTools",
 				base64data : qx.util.Base64.encode(element('seeds', xmlContent), true),
 				output_directory : this.getSessionDirectory()};
 
-			this.__fileBrowser.getActions().launchAction(parameterMap, callback);
+			desk.actions.getInstance().launchAction(parameterMap, callback);
 		},
 
 		__getSeedsTypeSelectBox : function()
@@ -1530,7 +1530,7 @@ qx.Class.define("desk.segTools",
 						var sliceId = selectedChild.getUserData("slice");
 
 						////Erase image on the server
-						this.__fileBrowser.getActions().launchAction({action : "delete_file",
+						desk.actions.getInstance().launchAction({action : "delete_file",
 										"file_name" : this.getSessionDirectory()+"/"+
 										this.__getSeedFileName(sliceView, sliceId, seedsType)});
 						list.getUserData("seedsArray")[sliceId]=0;

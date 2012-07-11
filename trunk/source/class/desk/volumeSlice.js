@@ -238,7 +238,7 @@ qx.Class.define("desk.volumeSlice",
 					output_directory : "cache\/",
 					format : this.getImageFormat(),
 					slice_orientation : this.getOrientation()};
-				this.__fileBrowser.getActions().launchAction(parameterMap, getAnswer, this);
+				desk.actions.getInstance().launchAction(parameterMap, getAnswer, this);
 			}
 		},
 
