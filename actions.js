@@ -393,7 +393,8 @@ function performAction (POST, callback) {
 
 		}
 
-		handleOutputDirectory(function (err) {
+		function afterHandleOutputDirectory(err) 
+		{
 			if (err) {
 				callback (err);
 				return;
@@ -427,7 +428,9 @@ function performAction (POST, callback) {
 				  	}
 				});
 			}
-		})
+		}
+
+		handleOutputDirectory(afterHandleOutputDirectory)
 	};
 }
 
