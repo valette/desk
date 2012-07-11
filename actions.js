@@ -167,6 +167,10 @@ function performAction (POST, callback) {
 
 	var actionParameters={};
 
+
+	var outputDirectory;
+	var cachedAction=false;
+
 	function parseParameters (callback) {
 		var i;
 		var actionName=POST.action;
@@ -276,14 +280,14 @@ function performAction (POST, callback) {
 		});
 	}
 
+	parseParameters(afterParseParameters);
 
-	parseParameters( function (err) {
+	function afterParseParameters(err) {
 		if (err) {
 			callback (err.message);
 		}
 
-		var outputDirectory;
-		var cachedAction=false;
+
 
 		function handleOutputDirectory(callback) {
 
@@ -426,7 +430,7 @@ function performAction (POST, callback) {
 				});
 			}
 		})
-	});
+	};
 }
 
 //**** listDir action
