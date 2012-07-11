@@ -12,13 +12,13 @@ qx.Class.define("desk.actions",
 		"desk.extURL" : "to define in config.json"
 	},
 
-	construct : function(fileBrowser)
+	construct : function()
 	{
 		this.base(arguments);
 		this.__actionsQueue=[];
 
 		this.__actionMenu = new qx.ui.menu.Menu;
-		this.populateActionMenu();
+		this.__populateActionMenu();
 
 		this.addListenerOnce("changeReady", function () {
 			var ongoingActions = new qx.ui.form.List().set({
@@ -178,7 +178,7 @@ qx.Class.define("desk.actions",
 			req.send();
 		},
 
-		populateActionMenu : function()
+		__populateActionMenu : function()
 		{
 			var xmlhttp=new XMLHttpRequest();
 			var _this=this;

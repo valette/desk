@@ -99,9 +99,9 @@ qx.Class.define("desk.fileBrowser",
 			this.openNode(node);}, this);
 
 		virtualTree.addListener("treeOpenWhileEmpty",function (e) {
-			this.expandDirectoryListing(e.getData().nodeId);}, this);
+			this.__expandDirectoryListing(e.getData().nodeId);}, this);
 		virtualTree.addListener("treeOpenWithContent",function (e) {
-			this.expandDirectoryListing(e.getData().nodeId);}, this);
+			this.__expandDirectoryListing(e.getData().nodeId);}, this);
 
 		// drag and drop support
 		virtualTree.addListener("dragstart", function(e) {
@@ -279,7 +279,7 @@ qx.Class.define("desk.fileBrowser",
 
 		updateRoot : function ()
 		{
-			this.expandDirectoryListing(this.__rootId);
+			this.__expandDirectoryListing(this.__rootId);
 		},
 
 		getActions : function ()
@@ -423,9 +423,9 @@ qx.Class.define("desk.fileBrowser",
 
 			myBrowser.addAction("update",function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-					myBrowser.expandDirectoryListing(node.parentNodeId);
+					myBrowser.__expandDirectoryListing(node.parentNodeId);
 				else
-					myBrowser.expandDirectoryListing(node.nodeId);});
+					myBrowser.__expandDirectoryListing(node.nodeId);});
 		},
 
 		addAction : function (actionName, callback)
@@ -441,7 +441,7 @@ qx.Class.define("desk.fileBrowser",
 			}
 
 			this.__actionCallbacks[actionName]=callback;
-			this.updateContextMenu();
+			this.__updateContextMenu();
 		},
 
 		setFileHandler : function (callback) {
@@ -499,7 +499,7 @@ qx.Class.define("desk.fileBrowser",
 				this.__virtualTree.nodeToggleOpened(node);
 		},
 
-		updateContextMenu : function()
+		__updateContextMenu : function()
 		{
 			this.__virtualTree.setContextMenuFromDataCellsOnly(true);
 
@@ -540,7 +540,7 @@ qx.Class.define("desk.fileBrowser",
 		},
 		
 
-		expandDirectoryListing : function(node) {
+		__expandDirectoryListing : function(node) {
 			if (this.__updateDirectoryInProgress==true)
 			{
 				console.log("tried to update directory while update is already in progress");
