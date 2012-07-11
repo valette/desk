@@ -2,7 +2,7 @@ qx.Class.define("desk.textEditor",
 {
   extend : qx.ui.window.Window,
 
-	construct : function(file, fileBrowser)
+	construct : function(file)
 	{
 		this.base(arguments);
 		this.setLayout(new qx.ui.layout.VBox());
@@ -25,14 +25,7 @@ qx.Class.define("desk.textEditor",
 		this.add(this.__textArea,{flex : 1});
 		this.open();
 
-		if (file!=null)
-		{
-			if (fileBrowser!=null)
-				this.openFileURL(fileBrowser.getNodeURL(file));
-			else
-				this.openFileURL(file);
-		}
-		
+		this.openFileURL(desk.actions.getInstance().getFileURL(file));
 		return (this);
 	},
 

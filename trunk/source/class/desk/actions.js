@@ -70,6 +70,11 @@ qx.Class.define("desk.actions",
 		__actionsQueue : null,
 		__maximumNumberOfParallelActions : 20,
 
+		getFileURL : function (file)
+		{
+			return (this.baseURL+"php/"+file);
+		},
+
 		getPermissionsLevel : function () {
 			return this.__permissionsLevel;
 		},

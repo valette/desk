@@ -164,10 +164,10 @@ qx.Class.define("desk.action",
 				this.__window.add(pane, {flex : 1});
 			}
 
-			var logFileURL=null;
+			var logFile=null;
 			var showLogButton=new qx.ui.form.Button("Show console log");
 			showLogButton.addListener("execute",function (e) {
-				new desk.textEditor(logFileURL);
+				new desk.textEditor(logFile);
 				})
 			showLogButton.setVisibility("excluded");
 
@@ -181,7 +181,7 @@ qx.Class.define("desk.action",
 						this.__embededFileBrowser.setUserData("action",this);
 						pane.add(this.__embededFileBrowser, 1);
 					}
-					logFileURL=that.__actions.baseURL+"php/"+outputDirectory+"/action.log";
+					logFile=outputDirectory+"/action.log";
 					showLogButton.setVisibility("visible");
 				}
 			}
@@ -463,7 +463,7 @@ qx.Class.define("desk.action",
 											this.__embededFileBrowser.updateRoot();
 										}
 									}
-									logFileURL=that.__actions.baseURL+"php/"+outputDirectory+"/action.log";
+									logFile=outputDirectory+"/action.log";
 									showLogButton.setVisibility("visible");
 								}
 								this.fireEvent("actionUpdated");
