@@ -167,7 +167,6 @@ function performAction (POST, callback) {
 
 	var actionParameters={};
 
-
 	var outputDirectory;
 	var cachedAction=false;
 
@@ -280,7 +279,9 @@ function performAction (POST, callback) {
 		});
 	}
 
-	parseParameters(afterParseParameters);
+
+	async.series([parseParameters,handleOutputDirectory, afterHandleOutputDirectory], callback);
+	
 
 	function handleOutputDirectory(callback) {
 
@@ -364,8 +365,7 @@ function performAction (POST, callback) {
 		if ((action.attributes.voidAction !=="true") || (action.name=="add_subdirectory")) {
 			commandOptions.cwd+=outputDirectory;
 		}
-		console.log ("in : "+outputDirectory);
-		console.log(commandLine);
+
 		exec(commandLine+" | tee action.log", commandOptions, afterExecution);
 
 		function afterExecution(err, stdout, stderr) {
@@ -388,14 +388,11 @@ function performAction (POST, callback) {
 	}
 
 
-	function afterHandleOutputDirectory(err) 
+	function afterHandleOutputDirectory(callback) 
 	{
-		if (err) {
-			callback (err);
-			return;
-		}
-
 		actionParameters.output_directory=outputDirectory;
+		console.log ("in : "+outputDirectory);
+		console.log(commandLine);
 
 		if ((action.attributes.voidAction==="true")||(POST.force_update==="true")){
 			executeAction(callback);
@@ -424,14 +421,6 @@ function performAction (POST, callback) {
 			});
 		}
 	}
-
-	function afterParseParameters(err) {
-		if (err) {
-			callback (err.message);
-		}
-
-		handleOutputDirectory(afterHandleOutputDirectory)
-	};
 }
 
 //**** listDir action
