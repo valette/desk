@@ -349,85 +349,85 @@ function performAction (POST, callback) {
 		}
 	}
 
+	function executeAction (callback) {
+		var startTime=new Date().getTime();
+
+		var js=action.attributes.js;
+		if ( typeof (js) === "object" ) {
+			var actionParameters2 = JSON.parse(JSON.stringify(actionParameters));
+			actionParameters2.filesRoot=filesRoot;
+			js.execute(actionParameters2, afterExecution);
+			return;
+		}
+
+		var commandOptions={ cwd:filesRoot };
+		if ((action.attributes.voidAction !=="true") || (action.name=="add_subdirectory")) {
+			commandOptions.cwd+=outputDirectory;
+		}
+		console.log ("in : "+outputDirectory);
+		console.log(commandLine);
+		exec(commandLine+" | tee action.log", commandOptions, afterExecution);
+
+		function afterExecution(err, stdout, stderr) {
+			if (err) {
+				callback (err.message);
+			}
+			else {
+				if (action.attributes.voidAction ==="true") {
+					callback ("void\n"+stdout+"\nOK ("+(new Date().getTime()-startTime)/1000+"s)\n");
+					return;
+				}
+
+				var string=JSON.stringify(actionParameters);
+				fs.writeFile(filesRoot+outputDirectory+"/action.json", string, function (err) {
+					if (err) throw err;
+					callback (outputDirectory+"\n"+stdout+"\nOK ("+(new Date().getTime()-startTime)/1000+"s)\n");
+				});
+			}
+		}
+	}
+
+
+	function afterHandleOutputDirectory(err) 
+	{
+		if (err) {
+			callback (err);
+			return;
+		}
+
+		actionParameters.output_directory=outputDirectory;
+
+		if ((action.attributes.voidAction==="true")||(POST.force_update==="true")){
+			executeAction(callback);
+		}
+		else {
+			// check if action was already performed
+			var actionFile=filesRoot+outputDirectory+"/action.json";
+			fs.stat(actionFile, function (err, stats) {
+				if ((err)||(stats.mtime.getTime()<inputMTime)) {
+					executeAction(callback);
+				}
+				else {
+					fs.readFile(actionFile, function (err, data) {
+						if (data==JSON.stringify(actionParameters)) {
+					  		console.log("cached");
+					  		fs.readFile(filesRoot+outputDirectory+"/action.log", function (err, string) {
+							//	if (err) throw err;
+								callback (outputDirectory+"\n"+string+"\nCACHED\n")
+							});
+						}
+						else {
+							executeAction(callback);
+						}
+					});
+			  	}
+			});
+		}
+	}
+
 	function afterParseParameters(err) {
 		if (err) {
 			callback (err.message);
-		}
-
-		function executeAction (callback) {
-			var startTime=new Date().getTime();
-
-			var js=action.attributes.js;
-			if ( typeof (js) === "object" ) {
-				var actionParameters2 = JSON.parse(JSON.stringify(actionParameters));
-				actionParameters2.filesRoot=filesRoot;
-				js.execute(actionParameters2, afterExecution);
-				return;
-			}
-
-			var commandOptions={ cwd:filesRoot };
-			if ((action.attributes.voidAction !=="true") || (action.name=="add_subdirectory")) {
-				commandOptions.cwd+=outputDirectory;
-			}
-			console.log ("in : "+outputDirectory);
-			console.log(commandLine);
-			exec(commandLine+" | tee action.log", commandOptions, afterExecution);
-
-			function afterExecution(err, stdout, stderr) {
-				if (err) {
-					callback (err.message);
-				}
-				else {
-					if (action.attributes.voidAction ==="true") {
-						callback ("void\n"+stdout+"\nOK ("+(new Date().getTime()-startTime)/1000+"s)\n");
-						return;
-					}
-
-					var string=JSON.stringify(actionParameters);
-					fs.writeFile(filesRoot+outputDirectory+"/action.json", string, function (err) {
-						if (err) throw err;
-						callback (outputDirectory+"\n"+stdout+"\nOK ("+(new Date().getTime()-startTime)/1000+"s)\n");
-					});
-				}
-			}
-
-		}
-
-		function afterHandleOutputDirectory(err) 
-		{
-			if (err) {
-				callback (err);
-				return;
-			}
-
-			actionParameters.output_directory=outputDirectory;
-
-			if ((action.attributes.voidAction==="true")||(POST.force_update==="true")){
-				executeAction(callback);
-			}
-			else {
-				// check if action was already performed
-				var actionFile=filesRoot+outputDirectory+"/action.json";
-				fs.stat(actionFile, function (err, stats) {
-					if ((err)||(stats.mtime.getTime()<inputMTime)) {
-						executeAction(callback);
-					}
-					else {
-						fs.readFile(actionFile, function (err, data) {
-							if (data==JSON.stringify(actionParameters)) {
-						  		console.log("cached");
-						  		fs.readFile(filesRoot+outputDirectory+"/action.log", function (err, string) {
-								//	if (err) throw err;
-									callback (outputDirectory+"\n"+string+"\nCACHED\n")
-								});
-							}
-							else {
-								executeAction(callback);
-							}
-						});
-				  	}
-				});
-			}
 		}
 
 		handleOutputDirectory(afterHandleOutputDirectory)
