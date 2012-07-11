@@ -343,7 +343,7 @@ qx.Class.define("desk.fileBrowser",
 					
 					break;
 				case ".json":
-					myBrowser.getActions().createActionWindowFromURL(myBrowser.getNodeURL(node));
+					myBrowser.getActions().createActionWindowFromURL(myBrowser.__getNodeURL(node));
 					break;
 				default:
 					alert("no file handler exists for extension "+extension);
@@ -363,10 +363,10 @@ qx.Class.define("desk.fileBrowser",
 			myBrowser.addAction("redo action", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 					myBrowser.__actions.createActionWindowFromURL(
-						myBrowser.getNodeURL(node));
+						myBrowser.__getNodeURL(node));
 				else
 					myBrowser.__actions.createActionWindowFromURL(
-						myBrowser.getNodeURL(node)+"\/parameters.txt");});
+						myBrowser.__getNodeURL(node)+"\/parameters.txt");});
 
 			myBrowser.addAction("volViewSimple", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
@@ -419,7 +419,7 @@ qx.Class.define("desk.fileBrowser",
 
 			myBrowser.addAction("info",function (node) {
 				alert ("file name : "+myBrowser.getNodeFile(node)
-					+"\n file URL : "+myBrowser.getNodeURL(node));});
+					+"\n file URL : "+myBrowser.__getNodeURL(node));});
 
 			myBrowser.addAction("update",function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
@@ -473,9 +473,9 @@ qx.Class.define("desk.fileBrowser",
 			return (this.__virtualTree.getDataModel().getColumnData(node.nodeId, 1));
 		},
 
-		getNodeURL : function (node)
+		__getNodeURL : function (node)
 		{
-			return (this.__actions.baseURL+this.getNodeFile(node));
+			return (this.getFileURL(this.getNodeFile(node)));
 		},
 
 		getFileURL : function (file)
