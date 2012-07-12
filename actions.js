@@ -5,12 +5,17 @@ var fs = require('fs'),
 	exec = require('child_process').exec,
 	prettyPrint = require('pretty-data').pd;
 
+// directory wher user can add their own .json action definition files
 var actionsDir="actions/";
-	
-var filesRoot;
+
+// array storing all the actions
 var actions=[];
 
+var filesRoot;
 var actionsRoot,cacheRoot,dataRoot;
+
+// variable to enumerate actions for logging
+var actionsCounter=0;
 
 function validatePath(path, callback) {
 	fs.realpath(filesRoot+path, function (err, realPath) {
@@ -166,6 +171,9 @@ function performAction (POST, callback) {
 	var actionParameters={};
 	var outputDirectory;
 	var cachedAction=false;
+
+	actionsCounter++;
+	var header="["+actionsCounter+"] ";
 
 	async.series([
 
@@ -351,8 +359,8 @@ function performAction (POST, callback) {
 	function (callback) 
 	{
 		actionParameters.output_directory=outputDirectory;
-		console.log ("in : "+outputDirectory);
-		console.log(commandLine);
+		console.log (header+"in : "+outputDirectory);
+		console.log (header+commandLine);
 
 		if ((action.attributes.voidAction==="true")||(POST.force_update==="true")){
 			callback();
@@ -367,7 +375,7 @@ function performAction (POST, callback) {
 				else {
 					fs.readFile(actionFile, function (err, data) {
 						if (data==JSON.stringify(actionParameters)) {
-					  		console.log("cached");
+					  		console.log(header+"cached");
 					  		cachedAction=true;
 							callback();
 						}
@@ -430,47 +438,58 @@ function performAction (POST, callback) {
 
 //**** listDir action
 
-function getDirectory (dir, callback) {
-	var realFiles=[];
-
-	fs.readdir(dir, function (err, files) {
-		if (err) {
-			callback (null, []);
-			return;
-		}
-
-		for (var i=0;i!=files.length;i++) {
-			realFiles.push(dir+"/"+files[i]);
-		}
-
-		async.map(realFiles, fs.stat, function(err, results){
-			for (var i=0;i!=files.length;i++) {
-				results[i].name=files[i];
-			}
-			callback (err, results);
-		});
-	});
-}
-
 function listDir (dir, callback) {
-	getDirectory (filesRoot+"/"+dir, function (err, files) {
-		var message='';
-		for (var i=0;i!=files.length;i++)
-		{
-			var file=files[i];
-			var dirString;
-			if (file.isDirectory()) {
-				dirString="dir";
-			}
-			else {
-				dirString="file";
-			}
 
-			message+=file.name+" "+dirString+" "+file.mtime.getTime()+" "+file.size;
-			if (i!=files.length-1) {
-				message+="\n";
+	async.waterfall([
+		function (callback) {
+			validatePath(dir, callback);
+		},
+
+		function (callback) {
+			var realDir=filesRoot+"/"+dir+"/";
+			fs.readdir(realDir, function (err, files) {
+				if (err) {
+					callback (err);
+					return;
+				}
+
+				var realFiles=[];
+				for (var i=0;i!=files.length;i++) {
+					realFiles.push(realDir+files[i]);
+				}
+
+				async.map(realFiles, fs.stat, function(err, results){
+					for (var i=0;i!=files.length;i++) {
+						results[i].name=files[i];
+					}
+
+					callback (err, results);
+				});
+			});
+		},
+
+		function (files, callback) {
+			var message='';
+			for (var i=0;i!=files.length;i++)
+			{
+				var file=files[i];
+				var dirString;
+				if (file.isDirectory()) {
+					dirString="dir";
+				}
+				else {
+					dirString="file";
+				}
+
+				message+=file.name+" "+dirString+" "+file.mtime.getTime()+" "+file.size;
+				if (i!=files.length-1) {
+					message+="\n";
+				}
 			}
+			callback(null, message);
+		}],
+		function (error, message) {
+			callback(message);
 		}
-		callback( message );
-	});
+	);
 }
