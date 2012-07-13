@@ -301,6 +301,7 @@ qx.Class.define("desk.volMaster",
 			volumeListItem.addListener("dragstart", function(e) {
 				e.addAction("alias");
 				e.addType("volumeSlices");
+				e.addType("file");
 				});
 
 			volumeListItem.addListener("droprequest", function(e) {
@@ -309,6 +310,9 @@ qx.Class.define("desk.volMaster",
 					{
 					case "volumeSlices":
 						e.addData(type, volumeSlices);
+						break;
+					case "file":
+						e.addData(type, file);
 						break;
 					default :
 						alert ("type "+type+"not supported for drag and drop");
@@ -818,6 +822,8 @@ qx.Class.define("desk.volMaster",
 					for (var i=0;i<nodes.length;i++) {
 						this.addVolume(fileBrowser.getNodeFile(nodes[i]));
 					}
+				} else if (e.supportsType("file")) {
+					this.addVolume(e.getData("file"));
 				}
 
 				// activate the window
