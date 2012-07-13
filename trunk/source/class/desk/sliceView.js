@@ -697,6 +697,8 @@ qx.Class.define("desk.sliceView",
 					_this.__scene.add(mesh);
 					}, _this);
 				volumeSlice.addListener('changeImage',_this.render, _this);
+				volumeSlice.addListener("changeSlice", function (e) {
+					_this.setSlice(e.getData());});
 
 				if (_this.__slices.length==1) {
 					_this.__setDrawingMesh(volumeSlice);

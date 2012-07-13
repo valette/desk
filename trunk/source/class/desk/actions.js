@@ -189,7 +189,6 @@ qx.Class.define("desk.actions",
 					if(xmlhttp.responseText!=null)
 					{
 						var settings=JSON.parse(xmlhttp.responseText);
-						console.log(settings);
 						_this.__actions=settings;
 
 						_this.__permissionsLevel=parseInt(settings.permissions);

@@ -85,12 +85,10 @@ qx.Class.define("desk.fileBrowser",
 		// events handling
 		if (this.__actions.isReady()) {
 			this.__createDefaultStaticActions();
-			console.log("ready");
 		}
 		else {
 			this.__actions.addListenerOnce("changeReady", function (e) {
 				this.__createDefaultStaticActions();
-				console.log("ready");
 			}, this);
 		}
 
