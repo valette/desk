@@ -895,7 +895,7 @@ qx.Class.define("desk.sliceView",
 				{
 					return;
 				}
-//				this.__rightContainer.setVisibility("hidden");
+				this.__rightContainer.setVisibility("hidden");
 				if ((this.isPaintMode()||this.isEraseMode())) {
 					this.__brushMesh.visible=false;
 					this.render();
@@ -904,7 +904,8 @@ qx.Class.define("desk.sliceView",
 
 
 			htmlContainer.addListener("mousemove", function (event)	{
-//				this.__rightContainer.setVisibility("visible");
+				this.__rightContainer.setVisibility("visible");
+
 				var brushMesh=this.__brushMesh;
 				var position;
 				switch (interactionMode)
@@ -1152,7 +1153,7 @@ qx.Class.define("desk.sliceView",
 			var label = new qx.ui.basic.Label("0");
 			label.set({textAlign: "center", width : 30, font : font, textColor : "yellow"});
 			rightContainer.add(label);
-//			overlayCanvas.add(label, {top :0, left :0});
+			overlayCanvas.add(label, {top :0, left :0});
 			var slider=new qx.ui.form.Slider();
 			this.__slider=slider;
 
@@ -1194,7 +1195,7 @@ qx.Class.define("desk.sliceView",
 			}, this);
 
 			rightContainer.add(slider, {flex : 1});
-//			rightContainer.setVisibility("hidden");
+			rightContainer.setVisibility("hidden");
 			overlayCanvas.add(rightContainer, {right : 0, top : 0, height : "100%"});
 		},
 
