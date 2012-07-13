@@ -122,9 +122,6 @@ qx.Class.define("desk.fileBrowser",
 				case "fileBrowser":
 					e.addData(type, this);
 					break;
-				case "fileNode":
-					e.addData(type, this.getSelectedNode());
-					break;
 				default :
 					alert ("type "+type+"not supported for drag and drop");
 				}
