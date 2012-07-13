@@ -5,7 +5,7 @@ var fs = require('fs'),
 	exec = require('child_process').exec,
 	prettyPrint = require('pretty-data').pd;
 
-// directory wher user can add their own .json action definition files
+// directory where user can add their own .json action definition files
 var actionsDir="actions/";
 
 // array storing all the actions
@@ -355,7 +355,7 @@ function performAction (POST, callback) {
 		}
 	},
 
-	// log the actionand  detect whether the action is already in cache 
+	// log the action and  detect whether the action is already in cache 
 	function (callback) 
 	{
 		actionParameters.output_directory=outputDirectory;
@@ -439,7 +439,7 @@ function performAction (POST, callback) {
 //**** listDir action
 
 function listDir (dir, callback) {
-
+	console.log("listDir : "+dir);
 	async.waterfall([
 		function (callback) {
 			validatePath(dir, callback);
