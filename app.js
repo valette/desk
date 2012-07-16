@@ -1,4 +1,4 @@
-var path = "trunk/";
+var path = "www/";
 
 var port = 1337;
 
@@ -12,7 +12,8 @@ var privateKeyFile="privatekey.pem";
 var certificateFile="certificate.pem";
 var separator="********************************************************************************";
 
-var baseURL;
+var user="seb";
+
 path=fs.realpathSync(path)+"/";
 
 console.log(separator);
@@ -44,12 +45,12 @@ if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	var certificate = fs.readFileSync(certificateFile).toString();
 	app = express.createServer({key: privateKey, cert: certificate});
 	console.log("Using secure https mode");
-	baseURL="https://";
+	var baseURL="https://";
 }
 else {
 	app = express.createServer();
 	console.log("No certificate provided, using non secure mode");
-	baseURL="http://";
+	var baseURL="http://";
 	console.log("You can generate a certificate with these 3 commands:");
 	console.log("(1) openssl genrsa -out privatekey.pem 1024");
 	console.log("(2) openssl req -new -key privatekey.pem -out certrequest.csr");
@@ -73,7 +74,7 @@ app.configure(function(){
 
 // setup actions
 var actions=require('./actions');
-actions.setup(path+"ext/php/", app, function () {
+actions.setup("/"+user, path+user+"/ext/php/", app, function () {
 	app.listen(port);
 	console.log(separator);
 	console.log ("server running on port "+port+", serving path "+path);

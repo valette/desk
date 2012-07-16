@@ -124,7 +124,7 @@ function exportActions( file, callback ) {
 	});
 }
 
-exports.setup=function (root, app, callback) {
+exports.setup=function (basedDir, root, app, callback) {
 	filesRoot=fs.realpathSync(root)+"/";
 	dataRoot=fs.realpathSync(root+"data/");
 	cacheRoot=fs.realpathSync(root+"cache/");
@@ -137,26 +137,26 @@ exports.setup=function (root, app, callback) {
 		exports.includeActions(files, callback);
 	});
 
-	app.post('/ext/php/listDir.php', function(req, res){
+	app.post(basedDir+'/ext/php/listDir.php', function(req, res){
 			listDir(req.body.dir, function (message) {
 				res.send(message);
 			});
 	});
 
-	app.post('/ext/php/actions.php', function(req, res){
+	app.post(basedDir+'/ext/php/actions.php', function(req, res){
 		res.connection.setTimeout(0);
 	    performAction(req.body, function (message) {
 			res.send(message);
 		});
 	});
 
-	app.get('/ext/php/clearcache.php', function(req, res){
+	app.get(basedDir+'/ext/php/clearcache.php', function(req, res){
 		exec("rm -rf *",{cwd:cacheRoot}, function (err) {
 			res.send("cache cleared!");
 		});
 	});
 
-	app.get('/ext/php/clearactions.php', function(req, res){
+	app.get(basedDir+'/ext/php/clearactions.php', function(req, res){
 		exec("rm -rf *",{cwd:actionsRoot}, function (err) {
 			res.send("actions cleared!");
 		});
