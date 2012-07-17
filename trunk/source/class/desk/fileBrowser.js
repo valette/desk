@@ -385,6 +385,21 @@ qx.Class.define("desk.fileBrowser",
 					alert("Cannot download a directory!");
 			});
 
+			myBrowser.addAction("upload",function (node) {
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+				{
+					alert("Cannot upload to a file!");
+				} 
+				else
+				{
+					var win = new qx.ui.window.Window("Upload");
+					win.setLayout(new qx.ui.layout.VBox());
+					var iframe = new qx.ui.embed.Iframe(myBrowser.__actions.baseURL+"php/upload");
+					win.add(iframe, {flex : 1});
+					win.open();
+				}
+			});
+
 			myBrowser.addAction("dicom2meta",function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 				{
