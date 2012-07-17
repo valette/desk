@@ -10,14 +10,21 @@ var app;
 var passwordFile="./password.json";
 var privateKeyFile="privatekey.pem";
 var certificateFile="certificate.pem";
-var separator="********************************************************************************";
-
-var user="seb";
-
-path=fs.realpathSync(path)+"/";
+var separator="*******************************************************************************";
 
 console.log(separator);
 
+var user=process.env.USER;
+console.log("Running as user : "+user);
+if (!fs.existsSync("www")) {
+	fs.mkdirSync("www");
+}
+path=fs.realpathSync(path)+"/";
+if (!fs.existsSync("www/"+user)) {
+	fs.symlinkSync(fs.realpathSync("trunk"),"www/"+user, 'dir');
+}
+
+console.log(separator);
 // look for password.json file.
 if (fs.existsSync(passwordFile)) {
 	var identity=require(passwordFile);
