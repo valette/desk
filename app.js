@@ -1,15 +1,16 @@
 var fs      = require('fs'),
     express = require('express'),
     http    = require ('http'),
-    https   = require ('https');
+    https   = require ('https'),
+   	exec = require('child_process').exec;
 
 var	user=process.env.USER;
 
-// directory parameters
+// user parameters
 var path = 'trunk/',
+	phpSubdir='ext/php/',
 	port = 1337,
-	phpDir='trunk/ext/php/',
-	phpURL='/'+user+'/'+'ext/php/';
+	uploadDir=path+phpSubdir+'data/upload';
 
 // certificate default file names
 var passwordFile="./password.json",
@@ -17,6 +18,9 @@ var passwordFile="./password.json",
 	certificateFile="certificate.pem";
 
 var separator="*******************************************************************************";
+var phpDir='trunk/'+phpSubdir,
+	phpURL='/'+user+'/'+phpSubdir;
+
 console.log(separator);
 console.log(separator);
 console.log('Welcome to Desk');
@@ -56,7 +60,6 @@ app.configure(function(){
 	app.use(express.methodOverride());
 
 	// create upload directory if it does not exist
-	var uploadDir=phpDir+'/data/upload';
 	if (!fs.existsSync(uploadDir)) {
 		fs.mkdirSync(uploadDir);
 	}
