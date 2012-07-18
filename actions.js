@@ -124,47 +124,22 @@ function exportActions( file, callback ) {
 	});
 }
 
-exports.setup=function (basedDir, root, app, callback) {
+exports.setup=function (root, app, callback) {
 	filesRoot=fs.realpathSync(root)+"/";
 	dataRoot=fs.realpathSync(root+"data/");
 	cacheRoot=fs.realpathSync(root+"cache/");
 	actionsRoot=fs.realpathSync(root+"actions/");
 
+	// add actions
 	fs.readdir(actionsDir, function (err, files) {
 		for (var i=0;i<files.length;i++) {
 			files[i]=actionsDir+files[i];
 		}
 		exports.includeActions(files, callback);
 	});
-
-	app.post(basedDir+'/ext/php/listDir.php', function(req, res){
-			listDir(req.body.dir, function (message) {
-				res.send(message);
-			});
-	});
-
-	app.post(basedDir+'/ext/php/actions.php', function(req, res){
-		res.connection.setTimeout(0);
-	    performAction(req.body, function (message) {
-			res.send(message);
-		});
-	});
-
-	app.get(basedDir+'/ext/php/clearcache.php', function(req, res){
-		exec("rm -rf *",{cwd:cacheRoot}, function (err) {
-			res.send("cache cleared!");
-		});
-	});
-
-	app.get(basedDir+'/ext/php/clearactions.php', function(req, res){
-		exec("rm -rf *",{cwd:actionsRoot}, function (err) {
-			res.send("actions cleared!");
-		});
-	});
 };
 
-function performAction (POST, callback) {
-
+exports.performAction = function (POST, callback) {
 	var action;
 	var commandLine="ulimit -v 12000000; nice ";
 	var inputMTime=-1;
@@ -437,8 +412,7 @@ function performAction (POST, callback) {
 }
 
 //**** listDir action
-
-function listDir (dir, callback) {
+exports.listDir = function (dir, callback) {
 	console.log("listDir : "+dir);
 	async.waterfall([
 		function (callback) {

@@ -3,22 +3,27 @@ var fs      = require('fs'),
     http    = require ('http'),
     https   = require ('https');
 
-var path = "trunk/";
-var port = 1337;
+var	user=process.env.USER;
+
+// directory parameters
+var path = 'trunk/',
+	port = 1337,
+	phpDir='trunk/ext/php/',
+	phpURL='/'+user+'/'+'ext/php/';
+
+// certificate default file names
+var passwordFile="./password.json",
+	privateKeyFile="privatekey.pem",
+	certificateFile="certificate.pem";
+
+var separator="*******************************************************************************";
+console.log(separator);
+console.log(separator);
+console.log('Welcome to Desk');
+console.log('Running as user : '+user);
+console.log(separator);
 
 path=fs.realpathSync(path);
-
-var passwordFile="./password.json";
-var privateKeyFile="privatekey.pem";
-var certificateFile="certificate.pem";
-var separator="*******************************************************************************";
-
-console.log(separator);
-
-var user=process.env.USER;
-console.log("Running as user : "+user);
-
-console.log(separator);
 
 //configure server : static file serving, errors
 var app=express();
@@ -27,8 +32,7 @@ app.configure(function(){
 	// set upload limit
 	app.use(express.limit('20000mb'));
 
-	// look for password.json file.
-	// use basicAuth depending on password.json
+	// look for correctly formated password.json file.
 	var identity=null;
 	if (fs.existsSync(passwordFile)) {
 		var identity=require(passwordFile);
@@ -38,33 +42,53 @@ app.configure(function(){
 		}
 	}
 
-	function authorize(username, password) {
-		return identity.username === username & identity.password === password;
-	}
-
+	// use basicAuth depending on password.json
 	if (identity) {
-		app.use(express.basicAuth(authorize));
+		app.use(express.basicAuth( function (username, password) {
+				return identity.username === username & identity.password === password;}
+		));
 		console.log("Using basic authentication");
-		console.log(separator);
 	} else {
 		console.log("No password file "+passwordFile+" provided or incorrect file");
 		console.log("see "+passwordFile+".example file for an example");
-		console.log(separator);
 	}
 
-	// usual configration for express
 	app.use(express.methodOverride());
-	var uploadDir=path+'/ext/php/data/upload';
+
+	// create upload directory if it does not exist
+	var uploadDir=phpDir+'/data/upload';
 	if (!fs.existsSync(uploadDir)) {
 		fs.mkdirSync(uploadDir);
 	}
 
+	// handle body parsing and uploads
 	app.use(express.bodyParser({uploadDir: uploadDir }));
 	app.use('/'+user,express.static(path));
+
+	var homeURL='/'+user+'/demo/default/release';
+	// redirect from url '/user'
+	app.get('/'+user, function(req, res){
+		res.redirect(homeURL);
+	});
+
+	// redirect from url '/'
+	app.get('/', function(req, res){
+		res.redirect(homeURL);
+	});
+
+	// display directories
 	app.use('/'+user,express.directory(path));
 
+	// handle directory listing
+	console.log(phpURL+'listDir.php')
+	app.post(phpURL+'listDir.php', function(req, res){
+		actions.listDir(req.body.dir, function (message) {
+			res.send(message);
+		});
+	});
+
 	// handle uploads
-	app.post('/'+user+'/ext/php/upload', function(req, res) {
+	app.post(phpURL+'upload', function(req, res) {
 		var files=req.files.upload;
 		function dealFile(file) {
 			fs.rename(file.path.toString(), uploadDir+'/'+file.name.toString(), function(err) {
@@ -87,12 +111,34 @@ app.configure(function(){
 		res.send('files uploaded!');
 	});
 
-	app.get('/'+user+'/ext/php/upload', function(req, res){
-		res.send('<form action="/'+user+'/ext/php/upload" enctype="multipart/form-data" method="post">'+
+	app.get(phpURL+'upload', function(req, res){
+		res.send('<form action="'+phpURL+'upload" enctype="multipart/form-data" method="post">'+
 			'<input type="text" name="title"><br>'+
 			'<input type="file" name="upload" multiple="multiple"><br>'+
 			'<input type="submit" value="Upload">'+
 			'</form>');
+	});
+
+	// handle actions
+	app.post(phpURL+'actions.php', function(req, res){
+		res.connection.setTimeout(0);
+	    actions.performAction(req.body, function (message) {
+			res.send(message);
+		});
+	});
+
+	// handle cache clear
+	app.get(phpURL+'clearcache.php', function(req, res){
+		exec("rm -rf *",{cwd:phpDir+'cache'}, function (err) {
+			res.send('cache cleared!');
+		});
+	});
+
+	// handle actions clear
+	app.get(phpURL+'clearactions.php', function(req, res){
+		exec("rm -rf *",{cwd:phpDir+'actions'}, function (err) {
+			res.send('actions cleared!');
+		});
 	});
 
 	// handle errors
@@ -104,6 +150,8 @@ app.configure(function(){
 	// use router
 	app.use(app.router);
 });
+
+console.log(separator);
 
 var server;
 var baseURL;
@@ -130,7 +178,7 @@ console.log(separator);
 
 // setup actions
 var actions=require('./actions');
-actions.setup("/"+user, path+"/ext/php/", app, function () {
+actions.setup( phpDir, app, function () {
 	server.listen(port);
 	console.log(separator);
 	console.log ("server running on port "+port+", serving path "+path);
