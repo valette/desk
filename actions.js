@@ -124,7 +124,7 @@ function exportActions( file, callback ) {
 	});
 }
 
-exports.setup=function (root, app, callback) {
+exports.setup=function (root, callback) {
 	filesRoot=fs.realpathSync(root)+"/";
 	dataRoot=fs.realpathSync(root+"data/");
 	cacheRoot=fs.realpathSync(root+"cache/");

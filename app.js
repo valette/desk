@@ -27,8 +27,6 @@ console.log('Welcome to Desk');
 console.log('Running as user : '+user);
 console.log(separator);
 
-path=fs.realpathSync(path);
-
 //configure middleware : static file serving, errors
 var app=express();
 app.configure(function(){
@@ -188,7 +186,7 @@ console.log(separator);
 
 // setup actions
 var actions=require('./actions');
-actions.setup( phpDir, app, function () {
+actions.setup( phpDir, function () {
 	server.listen(port);
 	console.log(separator);
 	console.log ("server running on port "+port+", serving path "+path);
