@@ -29,7 +29,7 @@ console.log(separator);
 
 path=fs.realpathSync(path);
 
-//configure server : static file serving, errors
+//configure middleware : static file serving, errors
 var app=express();
 app.configure(function(){
 
@@ -153,8 +153,8 @@ app.configure(function(){
 
 	// handle errors
 	app.use(express.errorHandler({
-	dumpExceptions: true, 
-	showStack: true
+		dumpExceptions: true, 
+		showStack: true
 	}));
 
 	// use router
