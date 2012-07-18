@@ -61,11 +61,18 @@ app.configure(function(){
 		fs.mkdirSync(uploadDir);
 	}
 
-	// handle body parsing and uploads
+	// handle body parsing
 	app.use(express.bodyParser({uploadDir: uploadDir }));
+
+	// redirect from source dir
+	var homeURL='/'+user+'/demo/default/release';
+	app.get('/'+user+'/source/*', function(req, res){
+		res.redirect(homeURL);
+	});
+
+	// enable static file server
 	app.use('/'+user,express.static(path));
 
-	var homeURL='/'+user+'/demo/default/release';
 	// redirect from url '/user'
 	app.get('/'+user, function(req, res){
 		res.redirect(homeURL);
@@ -90,7 +97,7 @@ app.configure(function(){
 	// handle uploads
 	app.post(phpURL+'upload', function(req, res) {
 		var files=req.files.upload;
-		function dealFile(file) {
+		function renameFile(file) {
 			fs.rename(file.path.toString(), uploadDir+'/'+file.name.toString(), function(err) {
 				if (err) throw err;
 				// delete the temporary file, so that the explicitly set temporary upload dir does not get filled with unwanted files
@@ -102,11 +109,11 @@ app.configure(function(){
 
 		if (files.path === undefined ) {
 			for (var i=0;i<files.length;i++) {
-				dealFile(files[i]);		
+				renameFile(files[i]);		
 			}
 		}
 		else {
-			dealFile(files);
+			renameFile(files);
 		}
 		res.send('files uploaded!');
 	});
