@@ -63,14 +63,19 @@ app.configure(function(){
 		app.use(express.basicAuth(authorize));
 	}
 	app.use(express.methodOverride());
-	app.use(express.bodyParser({uploadDir:'./upload'}));
+	var uploadDir=path+'/ext/php/data/upload';
+	if (!fs.existsSync(uploadDir)) {
+		fs.mkdirSync(uploadDir);
+	}
+
+	app.use(express.bodyParser({uploadDir: uploadDir }));
 	app.use('/'+user,express.static(path));
 	app.use('/'+user,express.directory(path));
 
 	app.post('/'+user+'/ext/php/upload', function(req, res) {
 		var files=req.files.upload;
 		function dealFile(file) {
-			fs.rename(file.path.toString(), "upload/"+file.name.toString(), function(err) {
+			fs.rename(file.path.toString(), uploadDir+'/'+file.name.toString(), function(err) {
 				if (err) throw err;
 				// delete the temporary file, so that the explicitly set temporary upload dir does not get filled with unwanted files
 				fs.unlink(file.path.toString(), function() {
