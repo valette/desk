@@ -58,6 +58,7 @@ console.log(separator);
 
 //configure server : static file serving, errors
 app.configure(function(){
+	app.use(express.limit('20000mb'));
 	if (identity) {
 		app.use(express.basicAuth(authorize));
 	}
