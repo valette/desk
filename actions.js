@@ -3,9 +3,7 @@ var fs = require('fs'),
 	async = require('async'),
 	crypto = require('crypto'),
 	exec = require('child_process').exec,
-	prettyPrint = require('pretty-data').pd,
-	formidable = require ('formidable'),
-	util = require('util');
+	prettyPrint = require('pretty-data').pd;
 
 // directory where user can add their own .json action definition files
 var actionsDir="actions/";
@@ -161,48 +159,6 @@ exports.setup=function (basedDir, root, app, callback) {
 	app.get(basedDir+'/ext/php/clearactions.php', function(req, res){
 		exec("rm -rf *",{cwd:actionsRoot}, function (err) {
 			res.send("actions cleared!");
-		});
-	});
-
-	app.get(basedDir+'/ext/php/upload', function(req, res){
-		res.send('<form action="'+basedDir+'/ext/php/upload" enctype="multipart/form-data" method="post">'+
-			'<input type="text" name="title"><br>'+
-			'<input type="file" name="upload" multiple="multiple"><br>'+
-			'<input type="submit" value="Upload">'+
-			'</form>');
-	});
-
-
-	app.post(basedDir+'/ext/php/upload', function(req, res){
-	console.log("upload...");
-		var form = new formidable.IncomingForm();
-		form.uploadDir="upload";
-		form.addListener('file', function(name, file) {
-			console.log('File Fired');
-			console.log(name);
-			console.log(file);
-			fs.rename(file.path, "upload/"+file.name, function (err) {
-				console.log("error : ");
-				console.log(err);
-			});
-		});
-
-		// form.parse analyzes the incoming stream data, picking apart the different fields and files for you.
-		form.parse(req, function(err, fields, files) {
-		console.log("parse...");
-			if (err) {
-
-				// Check for and handle any errors here.
-
-				console.error(err.message);
-				return;
-			}
-		//	res.send("hello");
-			res.writeHead(200, {'content-type': 'text/plain'});
-			res.write('received upload:\n\n');
-
-			// This last line responds to the form submission with a list of the parsed data and files.
-			res.end(util.inspect({fields: fields, files: files}));
 		});
 	});
 };

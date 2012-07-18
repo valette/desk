@@ -1,10 +1,11 @@
-var path = "www/";
+var path = "trunk/";
 
 var port = 1337;
 
 var fs      = require('fs'),
     express = require("express");
 
+path=fs.realpathSync(path);
 var app;
 
 var passwordFile="./password.json";
@@ -16,13 +17,6 @@ console.log(separator);
 
 var user=process.env.USER;
 console.log("Running as user : "+user);
-if (!fs.existsSync("www")) {
-	fs.mkdirSync("www");
-}
-path=fs.realpathSync(path)+"/";
-if (!fs.existsSync("www/"+user)) {
-	fs.symlinkSync(fs.realpathSync("trunk"),"www/"+user, 'dir');
-}
 
 console.log(separator);
 // look for password.json file.
@@ -38,19 +32,16 @@ if (fs.existsSync(passwordFile)) {
 }
 
 function authorize(username, password) {
-	if (identity) {
-	    return identity.username === username & identity.password === password;
-    }
-    else {
-    	return true;
-    }
+    return identity.username === username & identity.password === password;
 }
 
 // run the server in normal or secure mode depending on provided certificate
 if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
-	var privateKey = fs.readFileSync(privateKeyFile).toString();
-	var certificate = fs.readFileSync(certificateFile).toString();
-	app = express.createServer({key: privateKey, cert: certificate});
+	var options = {
+		key: fs.readFileSync('privatekey.pem').toString(),
+		cert: fs.readFileSync('certificate.pem').toString()
+	};
+	app = express.createServer(options);
 	console.log("Using secure https mode");
 	var baseURL="https://";
 }
@@ -67,21 +58,54 @@ console.log(separator);
 
 //configure server : static file serving, errors
 app.configure(function(){
-  app.use(express.basicAuth(authorize)),
-  app.use(express.methodOverride());
-  app.use(express.bodyParser());
-  app.use(express.static(path));
-  app.use(express.directory(path));
-  app.use(express.errorHandler({
-    dumpExceptions: true, 
-    showStack: true
-  }));
-  app.use(app.router);
+	if (identity) {
+		app.use(express.basicAuth(authorize));
+	}
+	app.use(express.methodOverride());
+	app.use(express.bodyParser({uploadDir:'./upload'}));
+	app.use('/'+user,express.static(path));
+	app.use('/'+user,express.directory(path));
+
+	app.post('/'+user+'/ext/php/upload', function(req, res) {
+		var files=req.files.upload;
+		function dealFile(file) {
+			fs.rename(file.path.toString(), "upload/"+file.name.toString(), function(err) {
+				if (err) throw err;
+				// delete the temporary file, so that the explicitly set temporary upload dir does not get filled with unwanted files
+				fs.unlink(file.path.toString(), function() {
+				    if (err) throw err;
+				});
+			});
+		};
+
+		if (files.path === undefined ) {
+			for (var i=0;i<files.length;i++) {
+				dealFile(files[i]);		
+			}
+		}
+		else {
+			dealFile(files);
+		}
+		res.send('files uploaded!');
+	});
+
+	app.get('/'+user+'/ext/php/upload', function(req, res){
+		res.send('<form action="/'+user+'/ext/php/upload" enctype="multipart/form-data" method="post">'+
+			'<input type="text" name="title"><br>'+
+			'<input type="file" name="upload" multiple="multiple"><br>'+
+			'<input type="submit" value="Upload">'+
+			'</form>');
+	});
+	app.use(express.errorHandler({
+	dumpExceptions: true, 
+	showStack: true
+	}));
+	app.use(app.router);
 });
 
 // setup actions
 var actions=require('./actions');
-actions.setup("/"+user, path+user+"/ext/php/", app, function () {
+actions.setup("/"+user, path+"/ext/php/", app, function () {
 	app.listen(port);
 	console.log(separator);
 	console.log ("server running on port "+port+", serving path "+path);
