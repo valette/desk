@@ -1,12 +1,12 @@
-var path = "trunk/";
+var fs      = require('fs'),
+    express = require('express'),
+    http    = require ('http'),
+    https   = require ('https');
 
+var path = "trunk/";
 var port = 1337;
 
-var fs      = require('fs'),
-    express = require("express");
-
 path=fs.realpathSync(path);
-var app;
 
 var passwordFile="./password.json";
 var privateKeyFile="privatekey.pem";
@@ -19,49 +19,40 @@ var user=process.env.USER;
 console.log("Running as user : "+user);
 
 console.log(separator);
-// look for password.json file.
-if (fs.existsSync(passwordFile)) {
-	var identity=require(passwordFile);
-	console.log("Using basic authentication");
-	console.log(separator);
-} else {
-	console.log("No password file "+passwordFile+" provided");
-	console.log("see "+passwordFile+".example file for an example");
-	console.log(separator);
-	var identity=null;
-}
-
-function authorize(username, password) {
-    return identity.username === username & identity.password === password;
-}
-
-// run the server in normal or secure mode depending on provided certificate
-if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
-	var options = {
-		key: fs.readFileSync('privatekey.pem').toString(),
-		cert: fs.readFileSync('certificate.pem').toString()
-	};
-	app = express.createServer(options);
-	console.log("Using secure https mode");
-	var baseURL="https://";
-}
-else {
-	app = express.createServer();
-	console.log("No certificate provided, using non secure mode");
-	var baseURL="http://";
-	console.log("You can generate a certificate with these 3 commands:");
-	console.log("(1) openssl genrsa -out privatekey.pem 1024");
-	console.log("(2) openssl req -new -key privatekey.pem -out certrequest.csr");
-	console.log("(3) openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem");
-}
-console.log(separator);
 
 //configure server : static file serving, errors
+var app=express();
 app.configure(function(){
+
+	// set upload limit
 	app.use(express.limit('20000mb'));
+
+	// look for password.json file.
+	// use basicAuth depending on password.json
+	var identity=null;
+	if (fs.existsSync(passwordFile)) {
+		var identity=require(passwordFile);
+		if ( (typeof identity.username !== "string") ||
+			(typeof identity.password !== "string")) {
+			identity=null;
+		}
+	}
+
+	function authorize(username, password) {
+		return identity.username === username & identity.password === password;
+	}
+
 	if (identity) {
 		app.use(express.basicAuth(authorize));
+		console.log("Using basic authentication");
+		console.log(separator);
+	} else {
+		console.log("No password file "+passwordFile+" provided or incorrect file");
+		console.log("see "+passwordFile+".example file for an example");
+		console.log(separator);
 	}
+
+	// usual configration for express
 	app.use(express.methodOverride());
 	var uploadDir=path+'/ext/php/data/upload';
 	if (!fs.existsSync(uploadDir)) {
@@ -72,6 +63,7 @@ app.configure(function(){
 	app.use('/'+user,express.static(path));
 	app.use('/'+user,express.directory(path));
 
+	// handle uploads
 	app.post('/'+user+'/ext/php/upload', function(req, res) {
 		var files=req.files.upload;
 		function dealFile(file) {
@@ -102,18 +94,45 @@ app.configure(function(){
 			'<input type="submit" value="Upload">'+
 			'</form>');
 	});
+
+	// handle errors
 	app.use(express.errorHandler({
 	dumpExceptions: true, 
 	showStack: true
 	}));
+
+	// use router
 	app.use(app.router);
 });
+
+var server;
+var baseURL;
+// run the server in normal or secure mode depending on provided certificate
+if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
+	var options = {
+		key: fs.readFileSync('privatekey.pem').toString(),
+		cert: fs.readFileSync('certificate.pem').toString()
+	};
+	server = https.createServer(options, app);
+	console.log("Using secure https mode");
+	baseURL="https://";
+}
+else {
+	server=http.createServer(app);
+	console.log("No certificate provided, using non secure mode");
+	console.log("You can generate a certificate with these 3 commands:");
+	console.log("(1) openssl genrsa -out privatekey.pem 1024");
+	console.log("(2) openssl req -new -key privatekey.pem -out certrequest.csr");
+	console.log("(3) openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem");
+	baseURL="http://";
+}
+console.log(separator);
 
 // setup actions
 var actions=require('./actions');
 actions.setup("/"+user, path+"/ext/php/", app, function () {
-	app.listen(port);
+	server.listen(port);
 	console.log(separator);
 	console.log ("server running on port "+port+", serving path "+path);
-	console.log(baseURL+"localhost:"+port);
+	console.log(baseURL+"localhost:"+port+'/'+user);
 });
