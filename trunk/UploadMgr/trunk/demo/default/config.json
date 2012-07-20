@@ -1,5 +1,5 @@
 {
-  "name"    : "desk Demo",
+  "name"    : "UploadMgr Demo",
 
   "include" :
   [
@@ -36,9 +36,9 @@
 
   "let" :
   {
-    "APPLICATION"  : "desk.demo",
-    "QOOXDOO_PATH" : "qooxdoo-2.0.1-sdk",
-    "QXTHEME"      : "desk.demo.theme.Theme",
+    "APPLICATION"  : "uploadmgr.demo",
+    "QOOXDOO_PATH" : "../../../../../../../../Local/WebContent/public/grasshopper/qooxdoo-trunk",
+    "QXTHEME"      : "uploadmgr.demo.theme.Theme",
     "API_EXCLUDE"  : ["qx.test.*", "${APPLICATION}.theme.*", "${APPLICATION}.test.*", "${APPLICATION}.simulation.*"],
     "LOCALES"      : [ "en" ],
     "CACHE"        : "${TMPDIR}/qx${QOOXDOO_VERSION}/cache",
@@ -58,12 +58,26 @@
       [
         {
           "manifest" : "../../Manifest.json"
-        },
-        {
-         "manifest" : "../../UploadMgr/trunk/Manifest.json"
         }
-
+        
       ]
-    }
+    },
+
+    "source-script" :
+    {
+      "compile-options" : 
+      {
+        "uris" : {
+          "add-nocache-param" : false
+        }
+      }
+    },
+	"source-hybrid" : {
+		"compile-options": {
+			"code": {
+				"=except": [ "uploadmgr.demo.*", "com.zenesis.*" ]
+			}
+		}
+	}
   }
 }

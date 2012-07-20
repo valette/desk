@@ -97,28 +97,19 @@ app.configure(function(){
 
 	// handle uploads
 	app.post(phpURL+'upload', function(req, res) {
-		var files=req.files.upload;
-		function renameFile(file) {
-			fs.rename(file.path.toString(), uploadDir+'/'+file.name.toString(), function(err) {
-				if (err) throw err;
-				// delete the temporary file, so that the explicitly set temporary upload dir does not get filled with unwanted files
-				fs.unlink(file.path.toString(), function() {
-				    if (err) throw err;
-				});
+		var file=req.files.file;
+//		console.log(req.files);
+		fs.rename(file.path.toString(), uploadDir+'/'+file.name.toString(), function(err) {
+			if (err) throw err;
+			// delete the temporary file
+			fs.unlink(file.path.toString(), function() {
+			    if (err) throw err;
 			});
-		};
-
-		if (files.path === undefined ) {
-			for (var i=0;i<files.length;i++) {
-				renameFile(files[i]);		
-			}
-		}
-		else {
-			renameFile(files);
-		}
+		});
 		res.send('files uploaded!');
 	});
 
+	// generate webform for upload. Should not be used anymore...
 	app.get(phpURL+'upload', function(req, res){
 		res.send('<form action="'+phpURL+'upload" enctype="multipart/form-data" method="post">'+
 			'<input type="text" name="title"><br>'+
