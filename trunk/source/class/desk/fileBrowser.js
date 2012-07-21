@@ -386,7 +386,11 @@ qx.Class.define("desk.fileBrowser",
 			});
 
 			myBrowser.addAction("upload",function (node) {
-				var uploader=new desk.Uploader();
+				var uploadDir=myBrowser.getNodeFile(node);
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+					uploadDir=uploadDir.substring(0, uploadDir.lastIndexOf('/'));
+				}
+				var uploader=new desk.Uploader(uploadDir);
 			});
 
 			myBrowser.addAction("dicom2meta",function (node) {

@@ -2,8 +2,9 @@ qx.Class.define("desk.Uploader",
 {
 	extend : qx.ui.container.Composite,
 
-	construct : function(baseDir, standAlone)
+	construct : function(uploadDir)
 	{
+		uploadDir= uploadDir || 'data/upload';
 		this.base(arguments);
 		this.setLayout(new qx.ui.layout.HBox());
 
@@ -13,15 +14,14 @@ qx.Class.define("desk.Uploader",
 		var rightContainer = new qx.ui.container.Composite();
 		rightContainer.setLayout(new qx.ui.layout.VBox());
 
-		var win = new qx.ui.window.Window("Upload");
+		var win = new qx.ui.window.Window('Upload to '+uploadDir);
 		win.setLayout(new qx.ui.layout.VBox());
 
 		var pane=new qx.ui.splitpane.Pane("horizontal");
 
-	//	this.add(pane, {flex : 1});
 		pane.add(leftContainer);
 		pane.add(rightContainer, 1);
-		win.add(pane);
+		win.add(pane, {flex : 1});
 
   		var btn = new com.zenesis.qx.upload.UploadButton("Add File(s)");
   		var lst = new qx.ui.form.List();
@@ -43,7 +43,7 @@ qx.Class.define("desk.Uploader",
   			// Set a parameter - each uploaded file has their own set, which can override those set
   			//	globally against the upload manager
   			++uploadCount;
-      		file.setParam("myParam_" + uploadCount, "test");
+      		file.setParam('uploadDir', uploadDir);
       		if (uploadCount % 2 == 0)
           		file.setParam("myGlobalParam", "overridden-global-value");
       		
@@ -103,7 +103,7 @@ qx.Class.define("desk.Uploader",
   		leftContainer.add(cbx);
   		leftContainer.add(lst, {flex : 1});
   		leftContainer.add(btnCancel);
-		var uploadFileBrowser=new desk.fileBrowser('data/upload', false);
+		var uploadFileBrowser=new desk.fileBrowser(uploadDir, false);
 		uploadFileBrowser.setHeight(300);
 		rightContainer.add(uploadFileBrowser, {flex : 1});
   		win.open();

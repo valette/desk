@@ -7,7 +7,7 @@ var fs      = require('fs'),
 var	user=process.env.USER;
 
 // user parameters
-var path = 'trunk/',
+var path = fs.realpathSync('trunk')+'/',
 	phpSubdir='ext/php/',
 	port = 1337,
 	uploadDir=path+phpSubdir+'data/upload';
@@ -18,7 +18,7 @@ var passwordFile="./password.json",
 	certificateFile="certificate.pem";
 
 var separator="*******************************************************************************";
-var phpDir='trunk/'+phpSubdir,
+var phpDir=path+phpSubdir,
 	phpURL='/'+user+'/'+phpSubdir;
 
 console.log(separator);
@@ -98,8 +98,9 @@ app.configure(function(){
 	// handle uploads
 	app.post(phpURL+'upload', function(req, res) {
 		var file=req.files.file;
-//		console.log(req.files);
-		fs.rename(file.path.toString(), uploadDir+'/'+file.name.toString(), function(err) {
+		var outputDir=req.body.uploadDir.toString().replace('%2F','/') || uploadDir;
+		outputDir=phpDir+outputDir;
+		fs.rename(file.path.toString(), outputDir+'/'+file.name.toString(), function(err) {
 			if (err) throw err;
 			// delete the temporary file
 			fs.unlink(file.path.toString(), function() {
@@ -107,15 +108,6 @@ app.configure(function(){
 			});
 		});
 		res.send('files uploaded!');
-	});
-
-	// generate webform for upload. Should not be used anymore...
-	app.get(phpURL+'upload', function(req, res){
-		res.send('<form action="'+phpURL+'upload" enctype="multipart/form-data" method="post">'+
-			'<input type="text" name="title"><br>'+
-			'<input type="file" name="upload" multiple="multiple"><br>'+
-			'<input type="submit" value="Upload">'+
-			'</form>');
 	});
 
 	// handle actions
