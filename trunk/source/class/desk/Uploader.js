@@ -1,27 +1,19 @@
 qx.Class.define("desk.Uploader", 
 {
-	extend : qx.ui.container.Composite,
+	extend : qx.core.Object,
+
+	events : {
+		"upload" : "qx.event.type.Event"
+	},
 
 	construct : function(uploadDir)
 	{
 		uploadDir= uploadDir || 'data/upload';
 		this.base(arguments);
-		this.setLayout(new qx.ui.layout.HBox());
-
-		var leftContainer = new qx.ui.container.Composite();
-		leftContainer.setLayout(new qx.ui.layout.VBox());
-
-		var rightContainer = new qx.ui.container.Composite();
-		rightContainer.setLayout(new qx.ui.layout.VBox());
 
 		var win = new qx.ui.window.Window('Upload to '+uploadDir);
 		win.setLayout(new qx.ui.layout.VBox());
-
-		var pane=new qx.ui.splitpane.Pane("horizontal");
-
-		pane.add(leftContainer);
-		pane.add(rightContainer, 1);
-		win.add(pane, {flex : 1});
+		win.setWidth(450);
 
   		var btn = new com.zenesis.qx.upload.UploadButton("Add File(s)");
   		var lst = new qx.ui.form.List();
@@ -59,8 +51,10 @@ qx.Class.define("desk.Uploader",
   				
   				if (state == "uploading")
   					item.setLabel(file.getFilename() + " (Uploading...)");
-  				else if (state == "uploaded")
+  				else if (state == "uploaded") {
   					item.setLabel(file.getFilename() + " (Complete)");
+  					this.fireEvent("upload");
+  				}
   				else if (state == "cancelled")
   					item.setLabel(file.getFilename() + " (Cancelled)");
   				
@@ -68,12 +62,11 @@ qx.Class.define("desk.Uploader",
       				file.removeListenerById(stateListenerId);
       				file.removeListenerById(progressListenerId);
   				}
-  				uploadFileBrowser.updateRoot();
   			}, this);
   			
   		}, this);
   		
-  		leftContainer.add(btn);
+  		win.add(btn);
   		
   		// Create a button to cancel the upload selected in the list
   		var btnCancel = new qx.ui.form.Button("Cancel upload");
@@ -100,12 +93,9 @@ qx.Class.define("desk.Uploader",
   		}, this);
   		
   		// add them to the UI
-  		leftContainer.add(cbx);
-  		leftContainer.add(lst, {flex : 1});
-  		leftContainer.add(btnCancel);
-		var uploadFileBrowser=new desk.fileBrowser(uploadDir, false);
-		uploadFileBrowser.setHeight(300);
-		rightContainer.add(uploadFileBrowser, {flex : 1});
+  		win.add(cbx);
+  		win.add(lst, {flex : 1});
+  		win.add(btnCancel);
   		win.open();
 	}
 });

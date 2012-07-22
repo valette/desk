@@ -137,6 +137,7 @@ qx.Class.define("desk.fileBrowser",
 			window.setShowMinimize(false);
 			window.setUseMoveFrame(true);
 			window.setCaption("files");
+			window.setWidth(400);
 			window.setHeight(500);
 			window.add(this, {flex : 1});
 			this.__window.open();
@@ -386,11 +387,14 @@ qx.Class.define("desk.fileBrowser",
 			});
 
 			myBrowser.addAction("upload",function (node) {
-				var uploadDir=myBrowser.getNodeFile(node);
+				var nodeId=node.nodeId;
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-					uploadDir=uploadDir.substring(0, uploadDir.lastIndexOf('/'));
+					nodeId=node.parentNodeId;
 				}
-				var uploader=new desk.Uploader(uploadDir);
+				var uploader=new desk.Uploader(myBrowser.getNodeFile(nodeId));
+				uploader.addListener("upload", function () {
+					myBrowser.__expandDirectoryListing(nodeId);
+				})
 			});
 
 			myBrowser.addAction("dicom2meta",function (node) {
