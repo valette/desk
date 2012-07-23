@@ -457,7 +457,6 @@ qx.Class.define("desk.action",
 
 								var req = e.getTarget();
 								var response=req.getResponseText();
-								showLogButton.setVisibility("visible");
 								var splitResponse=response.split("\n");
 								outputDirectory=splitResponse[0];
 								if (this.getOutputDirectory()==null) {
@@ -465,7 +464,7 @@ qx.Class.define("desk.action",
 								}
 
 								executionStatus.setValue(splitResponse[splitResponse.length-2]);
-								if ( action.parameters.voidAction != "true" ) {
+								if ( action.attributes.voidAction != "true" ) {
 									if (this.__standalone) {
 										//display the results directory
 										if (this.__embededFileBrowser==null) {
