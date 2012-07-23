@@ -57,11 +57,6 @@ app.configure(function(){
 
 	app.use(express.methodOverride());
 
-	// create upload directory if it does not exist
-	if (!fs.existsSync(uploadDir)) {
-		fs.mkdirSync(uploadDir);
-	}
-
 	// handle body parsing
 	app.use(express.bodyParser({uploadDir: uploadDir }));
 
@@ -170,6 +165,11 @@ console.log(separator);
 // setup actions
 var actions=require('./actions');
 actions.setup( phpDir, function () {
+
+	// create upload directory if it does not exist
+	if (!fs.existsSync(uploadDir)) {
+		fs.mkdirSync(uploadDir);
+	}
 	server.listen(port);
 	console.log(separator);
 	console.log ("server running on port "+port+", serving path "+path);

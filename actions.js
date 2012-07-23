@@ -126,9 +126,19 @@ function exportActions( file, callback ) {
 
 exports.setup=function (root, callback) {
 	filesRoot=fs.realpathSync(root)+"/";
-	dataRoot=fs.realpathSync(root+"data/");
-	cacheRoot=fs.realpathSync(root+"cache/");
-	actionsRoot=fs.realpathSync(root+"actions/");
+
+	function getSubdir(subdir) {
+		var dir=filesRoot+'/'+subdir;
+		if (!fs.existsSync(dir)) {
+			console.log('Warning : directory '+subdir+' does not exist. Creating it');
+			fs.mkdirSync(dir);
+		}
+		return (fs.realpathSync(dir));
+	}
+
+	dataRoot=getSubdir('data');
+	cacheRoot=getSubdir('cache');
+	actionsRoot=getSubdir('actions');
 
 	// add actions
 	fs.readdir(actionsDir, function (err, files) {
