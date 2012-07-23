@@ -1,9 +1,17 @@
-var fs = require('fs'),
-	libpath = require('path'),
-	async = require('async'),
-	crypto = require('crypto'),
-	exec = require('child_process').exec,
-	prettyPrint = require('pretty-data').pd;
+var fs          = require('fs'),
+	libpath     = require('path'),
+	async       = require('async'),
+	crypto      = require('crypto'),
+	exec        = require('child_process').exec,
+	prettyPrint = require('pretty-data').pd,
+	winston     = require('winston');
+
+
+var myConsole={
+	log : function (text) {
+		winston.log ('info', text);
+	}
+}
 
 // directory where user can add their own .json action definition files
 var actionsDir="actions/";
@@ -49,18 +57,18 @@ function includeActionsFile (file, callback) {
 				includeActionsJSON(file, afterImport);
 				break;
 			default:
-		//		console.log("*: "+file+": format not handled");
+		//		myConsole.log("*: "+file+": format not handled");
 				callback(null);
 			}
 
 			function afterImport (data) {
 				actions=actions.concat(data)
-				console.log(data.length+'/'+actions.length+' actions from '+file);
+				myConsole.log(data.length+'/'+actions.length+' actions from '+file);
 				callback(null);
 			}
 		}
 		else {
-			console.log("Warning : no file "+file+" found");
+			myConsole.log("Warning : no file "+file+" found");
 			callback(null);
 		}
 	});
@@ -94,7 +102,7 @@ includeActionsJSON= function (file, callback) {
 		for (var i=0; i<localActions.length;i++) {
 			var attributes=localActions[i].attributes;
 			if ( typeof (attributes.js) === "string" ) {
-				console.log("loaded javascript from "+attributes.js);
+				myConsole.log("loaded javascript from "+attributes.js);
 				attributes.js=require(path+"/"+attributes.js);
 			}
 			if ( typeof (attributes.executable) === "string" ) {
@@ -114,7 +122,7 @@ includeActionsJSON= function (file, callback) {
 }
 
 function exportActions( file, callback ) {
-//	console.log("saving actions.json to "+file);
+//	myConsole.log("saving actions.json to "+file);
 	fs.writeFile(file, prettyPrint.json(JSON.stringify({ actions : actions , permissions : 1})),
 		function (err) {
 			if (err) throw err;
@@ -344,8 +352,8 @@ exports.performAction = function (POST, callback) {
 	function (callback) 
 	{
 		actionParameters.output_directory=outputDirectory;
-		console.log (header+"in : "+outputDirectory);
-		console.log (header+commandLine);
+		myConsole.log (header+"in : "+outputDirectory);
+		myConsole.log (header+commandLine);
 
 		if ((action.attributes.voidAction==="true")||(POST.force_update==="true")){
 			callback();
@@ -360,7 +368,7 @@ exports.performAction = function (POST, callback) {
 				else {
 					fs.readFile(actionFile, function (err, data) {
 						if (data==JSON.stringify(actionParameters)) {
-					  		console.log(header+"cached");
+					  		myConsole.log(header+"cached");
 					  		cachedAction=true;
 							callback();
 						}
@@ -423,7 +431,7 @@ exports.performAction = function (POST, callback) {
 
 //**** listDir action
 exports.listDir = function (dir, callback) {
-	console.log("listDir : "+dir);
+	myConsole.log("listDir : "+dir);
 	async.waterfall([
 		function (callback) {
 			validatePath(dir, callback);

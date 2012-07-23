@@ -2,7 +2,7 @@ var fs = require('fs'),
     https = require('https'),
     httpProxy = require('http-proxy');
 
-var options2 = {
+var options = {
 	https: {
 		key: fs.readFileSync('privatekey.pem', 'utf8'),
 		cert: fs.readFileSync('certificate.pem', 'utf8')
@@ -17,6 +17,6 @@ var options2 = {
 	}
 };
 
-var proxyServer2 = httpProxy.createServer(options2);
-proxyServer2.listen(80);
+var proxyServer = httpProxy.createServer(options);
+proxyServer.listen(80);
 
