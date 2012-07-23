@@ -18,5 +18,5 @@ var options = {
 };
 
 var proxyServer = httpProxy.createServer(options);
-proxyServer.listen(8080);
+proxyServer.listen(80);
 
