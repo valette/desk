@@ -117,8 +117,15 @@ qx.Class.define("desk.actions",
 
 		__launchAction : function (actionParameters, successCallback, context) {
 			var that=this;
-			var actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
-			this.__ongoingActions.add(actionNotification);
+			var actionFinished=false;
+			var actionNotification=null;
+			setTimeout(function(){
+				if (!actionFinished) {
+					actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
+					that.__ongoingActions.add(actionNotification);
+				}
+			}, 5000);
+
 			var req = new qx.io.request.Xhr();
 
 			req.setUrl(this.baseURL+"php/actions.php");
@@ -141,7 +148,10 @@ qx.Class.define("desk.actions",
 						alert ("error for action "+actionParameters.action+": \n"+splitResponse[0]);
 					}
 					else {
-						this.__ongoingActions.remove(actionNotification);
+						actionFinished=true;
+						if (actionNotification!=null) {
+							this.__ongoingActions.remove(actionNotification);
+						}
 						if (successCallback!=null) {
 							if (context!=null) {
 								successCallback.call(context,e);
