@@ -62,9 +62,9 @@ app.configure(function(){
 
 	// redirect from source dir
 	var homeURL='/'+user+'/demo/default/release';
-	app.get('/'+user+'/source/*', function(req, res){
+/*	app.get('/'+user+'/source/*', function(req, res){
 		res.redirect(homeURL);
-	});
+	});*/
 
 	// enable static file server
 	app.use('/'+user,express.static(path));
