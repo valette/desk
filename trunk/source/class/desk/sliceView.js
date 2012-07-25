@@ -1151,7 +1151,7 @@ qx.Class.define("desk.sliceView",
 			this.__rightContainer=rightContainer;
 
 			var label = new qx.ui.basic.Label("0");
-			label.set({textAlign: "center", width : 30, font : font, textColor : "yellow"});
+			label.set({textAlign: "center", width : 40, font : font, textColor : "yellow"});
 			rightContainer.add(label);
 			overlayCanvas.add(label, {top :0, left :0});
 			var slider=new qx.ui.form.Slider();
