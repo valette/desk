@@ -159,7 +159,7 @@ exports.setup=function (root, callback) {
 
 exports.performAction = function (POST, callback) {
 	var action;
-	var commandLine="ulimit -v 12000000; nice ";
+	var commandLine='';//"ulimit -v 12000000; nice ";
 	var inputMTime=-1;
 	var actionParameters={};
 	var outputDirectory;
