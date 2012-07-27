@@ -2,23 +2,26 @@ var fs = require('fs'),
     https = require('https'),
     http = require('http'),
     httpProxy = require('http-proxy');
-    express = require("express");
+
+require ('systemd');
 
 var options = {
 	https: {
-		key: fs.readFileSync('privatekey.pem', 'utf8'),
-		cert: fs.readFileSync('certificate.pem', 'utf8')
+		key: fs.readFileSync(__dirname+'/privatekey.pem', 'utf8'),
+		cert: fs.readFileSync(__dirname+'/certificate.pem', 'utf8')
 	},
 
 	router: {
 		'desk/valette': 'desk:1337/valette'
 	},
 
-	/*target: {
-		https: true
-	}*/
+//	target: {
+//		https: true
+//	}
 };
 
 var proxyServer = httpProxy.createServer(options);
-proxyServer.listen(8081);
+var port = process.env.LISTEN_PID > 0 ? 'systemd' : 8081;
+console.log('desk-proxy service listening on port '+port);
+proxyServer.listen(port);
 

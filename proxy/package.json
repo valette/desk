@@ -11,7 +11,8 @@
 
   "dependencies": {
     "express" : ">0.0.0",
-    "http-proxy" : ">0.0.0"
+    "http-proxy" : ">0.0.0",
+    "systemd" : ">0.0.0"
   },
   "optionalDependencies": {},
   "engines": {
