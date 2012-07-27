@@ -1,0 +1,20 @@
+{
+  "name": "proxy",
+  "description": "a simple proxy",
+  "main": "./proxy",
+  "author": {
+    "name": "Sebastien Valette"
+  },
+  "version": "0.0.1",
+  "devDependencies": {
+  },
+
+  "dependencies": {
+    "express" : ">0.0.0",
+    "http-proxy" : ">0.0.0"
+  },
+  "optionalDependencies": {},
+  "engines": {
+    "node": "*"
+  }
+}
