@@ -22,15 +22,3 @@ var options = {
 var proxyServer = httpProxy.createServer(options);
 proxyServer.listen(8081);
 
-// set up plain http server
-var http = express.createServer();
-
-// set up a route to redirect http to https
-http.get('*',function(req,res){ 
-console.log("ici"); 
-    res.redirect('https://desk'+req.url)
-})
-
-// have it listen on 8080
-http.listen(8080);
-
