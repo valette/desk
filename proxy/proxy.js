@@ -12,7 +12,7 @@ var options = {
 	},
 
 	router: {
-		'desk/valette': 'desk:1337/valette'
+		'desk.creatis.insa-lyon.fr/valette': 'desk.creatis.insa-lyon.fr:1337/valette'
 	},
 
 //	target: {
