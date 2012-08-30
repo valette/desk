@@ -8,6 +8,7 @@ var	user=process.env.USER;
 
 // user parameters
 var path = fs.realpathSync('trunk')+'/',
+	dataDir= '/home/'+user+'/desk/',
 	phpSubdir='ext/php/',
 	port = 1337,
 	uploadDir=path+phpSubdir+'data/upload';
@@ -61,18 +62,28 @@ app.configure(function(){
 	app.use(express.bodyParser({uploadDir: uploadDir }));
 
 	// redirect from source dir
-	var homeURL='/'+user+'/demo/default/release';
+//	var homeURL='/'+user+'/demo/default/release';
+	var homeURL='/'+user+'/';
 /*	app.get('/'+user+'/source/*', function(req, res){
 		res.redirect(homeURL);
 	});*/
 
-	// enable static file server
-	app.use('/'+user,express.static(path));
-
-	// redirect from url '/user'
+	app.use('/'+user,express.static(path+'demo/default/release'));
+//	app.use('/'+user,express.directory(path+'demo/default/release'));
 	app.get('/'+user, function(req, res){
 		res.redirect(homeURL);
 	});
+	// serve data files
+	app.use('/'+user+'/files',express.static(dataDir));
+	app.use('/'+user+'/files',express.directory(dataDir));
+
+	// enable static file server
+	app.use('/'+user,express.static(path));
+
+/*	// redirect from url '/user'
+	app.get('/'+user, function(req, res){
+		res.redirect(homeURL);
+	});*/
 
 	// redirect from url '/'
 	app.get('/', function(req, res){
@@ -142,7 +153,7 @@ console.log(separator);
 var server;
 var baseURL;
 // run the server in normal or secure mode depending on provided certificate
-if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
+if (0) {//fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	var options = {
 		key: fs.readFileSync('privatekey.pem').toString(),
 		cert: fs.readFileSync('certificate.pem').toString()
@@ -164,7 +175,8 @@ console.log(separator);
 
 // setup actions
 var actions=require('./actions');
-actions.setup( phpDir, function () {
+//actions.setup( phpDir, function () {
+actions.setup( dataDir, function () {
 
 	// create upload directory if it does not exist
 	if (!fs.existsSync(uploadDir)) {
@@ -172,6 +184,7 @@ actions.setup( phpDir, function () {
 	}
 	server.listen(port);
 	console.log(separator);
+	console.log(new Date().toLocaleString());
 	console.log ("server running on port "+port+", serving path "+path);
 	console.log(baseURL+"localhost:"+port+'/'+user);
 });

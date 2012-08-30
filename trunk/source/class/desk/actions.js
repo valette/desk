@@ -72,7 +72,8 @@ qx.Class.define("desk.actions",
 
 		getFileURL : function (file)
 		{
-			return (this.baseURL+"php/"+file);
+			return ('/valette/files/'+file);
+			//return (this.baseURL+"php/"+file);
 		},
 
 		getPermissionsLevel : function () {
