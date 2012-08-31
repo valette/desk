@@ -5,12 +5,13 @@ var fs      = require('fs'),
    	exec = require('child_process').exec;
 
 var	user=process.env.USER;
+console.log("UID : "+process.getuid());
 
 // user parameters
 var path = fs.realpathSync('trunk')+'/',
 	dataDir= '/home/'+user+'/desk/',
 	phpSubdir='ext/php/',
-	port = 1337,
+	port = process.getuid(),
 	uploadDir=path+phpSubdir+'data/upload';
 
 // certificate default file names

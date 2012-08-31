@@ -17,6 +17,14 @@ qx.Class.define("desk.actions",
 		this.base(arguments);
 		this.__actionsQueue=[];
 
+		var URLparser = document.createElement('a');
+		URLparser.href = document.href;
+
+		var pathname=URLparser.pathname;
+		this.user=URLparser.pathname.split("/")[1];
+		console.log("user : "+this.user);
+		this.baseURL='/'+this.user+'/ext/';
+
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.__populateActionMenu();
 
@@ -55,7 +63,9 @@ qx.Class.define("desk.actions",
 	},
 
 	members : {
-		baseURL : "../../../ext/",
+		baseURL : null,
+		user : null,
+
 		__actionMenu : null,
 		__actions : null,
 		__fileBrowser : null,
@@ -72,8 +82,7 @@ qx.Class.define("desk.actions",
 
 		getFileURL : function (file)
 		{
-			return ('/valette/files/'+file);
-			//return (this.baseURL+"php/"+file);
+			return '/'+this.user+'/files/'+file;
 		},
 
 		getPermissionsLevel : function () {
