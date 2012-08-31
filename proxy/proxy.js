@@ -13,6 +13,7 @@ var options = {
 
 	router: {
 		'desk.creatis.insa-lyon.fr/valette': 'desk.creatis.insa-lyon.fr:1337/valette'
+		'desk.creatis.insa-lyon.fr/jacinto' : 'desk.creatis.insa-lyon.fr:1338/jacinto'
 	},
 
 //	target: {
