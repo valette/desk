@@ -1,0 +1,1 @@
+forever stop app.js
