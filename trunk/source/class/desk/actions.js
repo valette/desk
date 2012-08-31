@@ -231,7 +231,7 @@ qx.Class.define("desk.actions",
 					}
 				}
 			}
-			xmlhttp.open("GET",_this.baseURL+"php/actions.json?nocache=" + Math.random(),true);
+			xmlhttp.open("GET", this.getFileURL("actions.json")+"?nocache=" + Math.random(),true);
 			xmlhttp.send();
 		}
 	}
