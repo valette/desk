@@ -11,9 +11,7 @@ var options = {
 		cert: fs.readFileSync(__dirname+'/certificate.pem', 'utf8')
 	},
 
-	router: {
-		'desk.creatis.insa-lyon.fr/valette': 'desk.creatis.insa-lyon.fr:1337/valette'
-	},
+	router: __dirname+'/routes.json',
 
 //	target: {
 //		https: true
