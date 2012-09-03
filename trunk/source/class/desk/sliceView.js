@@ -489,7 +489,8 @@ qx.Class.define("desk.sliceView",
 			var material=new THREE.MeshBasicMaterial( {map:texture, transparent: true});
 
 			var mesh=new THREE.Mesh(geometry,material);
-			mesh.doubleSided=true;
+			material.side=THREE.DoubleSide;
+
 	//	maybe there's a bug to submit to three.js : the following line breaks renderDepth..
 	//		mesh.visible=false;
 			this.__scene.add(mesh);
@@ -584,7 +585,8 @@ qx.Class.define("desk.sliceView",
 			var material=new THREE.MeshBasicMaterial( {map:texture, transparent: true});
 
 			var mesh=new THREE.Mesh(geometry,material);
-			mesh.doubleSided=true;
+			material.side=THREE.DoubleSide;
+
 			this.__scene.add(mesh);
 			this.__drawingMesh=mesh;
 
@@ -684,7 +686,7 @@ qx.Class.define("desk.sliceView",
 
 				var material=volumeSlice.getMaterial();
 				var mesh=new THREE.Mesh(geometry,material);
-				mesh.doubleSided=true;
+				material.side=THREE.DoubleSide;
 
 				volumeSlice.setUserData("mesh",mesh);
 
