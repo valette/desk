@@ -65,9 +65,11 @@ app.configure(function(){
 	// redirect from source dir
 //	var homeURL='/'+user+'/demo/default/release';
 	var homeURL='/'+user+'/';
-/*	app.get('/'+user+'/source/*', function(req, res){
+	/*
+	app.get('/'+user+'/source/*', function(req, res){
 		res.redirect(homeURL);
-	});*/
+	});
+	*/
 
 	app.use('/'+user,express.static(path+'demo/default/release'));
 //	app.use('/'+user,express.directory(path+'demo/default/release'));
@@ -78,13 +80,20 @@ app.configure(function(){
 	app.use('/'+user+'/files',express.static(dataDir));
 	app.use('/'+user+'/files',express.directory(dataDir));
 
+	var devDir='/home/'+user+'/desk/dev/';
+	app.use('/'+user+'/dev',express.static(devDir));
+	app.use('/'+user+'/dev',express.directory(devDir));
+
+
 	// enable static file server
 	app.use('/'+user,express.static(path));
 
-/*	// redirect from url '/user'
+	/*
+	// redirect from url '/user'
 	app.get('/'+user, function(req, res){
 		res.redirect(homeURL);
-	});*/
+	});
+	*/
 
 	// redirect from url '/'
 	app.get('/', function(req, res){

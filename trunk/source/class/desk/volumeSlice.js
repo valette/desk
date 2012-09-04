@@ -125,6 +125,7 @@ qx.Class.define("desk.volumeSlice",
 				"colorFromLookupTable[3]=opacity;",
 				"gl_FragColor=mix (correctedColor, colorFromLookupTable, useLookupTable);",
 			"}"
+<<<<<<< HEAD
 		].join("\n"),
 
 		FRAGMENTSHADERENDMULTICHANNEL : [
@@ -144,6 +145,8 @@ qx.Class.define("desk.volumeSlice",
 				"gl_FragColor=(texture2D( texture, vUv )+brightness)*contrast;",
 				"gl_FragColor[3]=opacity;",
 			"}"
+=======
+>>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 		].join("\n")
 	},
 
@@ -166,7 +169,10 @@ qx.Class.define("desk.volumeSlice",
 		__spacing : null,
 		__dimensions: null,
 
+<<<<<<< HEAD
 		__numberOfScalarComponents : null,
+=======
+>>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 		__scalarTypeString : null,
 		__scalarType : null,
 		__scalarSize : null,
@@ -392,6 +398,7 @@ qx.Class.define("desk.volumeSlice",
 				break;
 			}
 
+<<<<<<< HEAD
 			var shader;
 			if (this.__numberOfScalarComponents==1) {
 				shader=[desk.volumeSlice.FRAGMENTSHADERBEGIN,
@@ -401,6 +408,11 @@ qx.Class.define("desk.volumeSlice",
 			else {
 				shader=desk.volumeSlice.FRAGMENTSHADERENDMULTICHANNEL;
 			}
+=======
+			var shader=[desk.volumeSlice.FRAGMENTSHADERBEGIN,
+						middleShader,
+						desk.volumeSlice.FRAGMENTSHADEREND].join("\n");
+>>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 
 			var material=new THREE.ShaderMaterial({
 				uniforms: {
@@ -463,6 +475,7 @@ qx.Class.define("desk.volumeSlice",
 				var zmax=this.__origin[1]+(this.__extent[3]+1)*this.__spacing[1];
 				var coordinates=[];
 				coordinates[0]=x;
+<<<<<<< HEAD
 				coordinates[1]=zmin;
 				coordinates[2]=ymin;
 				coordinates[3]=x;
@@ -473,6 +486,18 @@ qx.Class.define("desk.volumeSlice",
 				coordinates[8]=ymax;
 				coordinates[9]=x;
 				coordinates[10]=zmax;
+=======
+				coordinates[1]=zmax;
+				coordinates[2]=ymin;
+				coordinates[3]=x;
+				coordinates[4]=zmax;
+				coordinates[5]=ymax;
+				coordinates[6]=x;
+				coordinates[7]=zmin;
+				coordinates[8]=ymax;
+				coordinates[9]=x;
+				coordinates[10]=zmin;
+>>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 				coordinates[11]=ymin;
 				return (coordinates);
 			// XZ Y
@@ -546,6 +571,10 @@ qx.Class.define("desk.volumeSlice",
 			{
 				// ZY X
 				case 1 :
+<<<<<<< HEAD
+=======
+				// Avec VolumeSlice corrigé :
+>>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 					coordinates[0]=zmin;
 					coordinates[1]=ymax;
 					coordinates[2]=zmax;
@@ -655,7 +684,10 @@ qx.Class.define("desk.volumeSlice",
 							parseFloat(XMLorigin.getAttribute("z")));
 
 			var XMLscalars=volume.getElementsByTagName("scalars")[0];
+<<<<<<< HEAD
 			this.__numberOfScalarComponents=parseInt(XMLscalars.getAttribute("numberOfScalarComponents"),10);
+=======
+>>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 			this.__scalarType=parseInt(XMLscalars.getAttribute("type"),10);
 			this.__scalarSize=parseInt(XMLscalars.getAttribute("size"),10);
 			this.__scalarMin=parseFloat(XMLscalars.getAttribute("min"),10);
