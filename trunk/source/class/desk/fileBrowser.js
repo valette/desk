@@ -46,7 +46,9 @@ qx.Class.define("desk.fileBrowser",
 		// create the filter bar
 		var filterBox = new qx.ui.container.Composite;
 		filterBox.setLayout(new qx.ui.layout.HBox(10));
-		this.add(filterBox);//, {flex:1});
+///////////////////////////////////////////////////////////////////////////////////////////////
+		if(this.__standAlone)
+			this.add(filterBox);//, {flex:1});
 		var filterText=new qx.ui.basic.Label("Filter files :");
 		filterBox.add(filterText);
 		var filterField = new qx.ui.form.TextField();
@@ -55,6 +57,7 @@ qx.Class.define("desk.fileBrowser",
 			dataModel.setData();
 			},this);
 		filterBox.add(filterField, {flex:1});
+		this.__filterField = filterField;
 
 		var filter = qx.lang.Function.bind(function(node)
 			{
@@ -122,6 +125,9 @@ qx.Class.define("desk.fileBrowser",
 				case "fileBrowser":
 					e.addData(type, this);
 					break;
+				case "fileNode":
+					e.addData(type, this.getSelectedNode());
+					break;
 				default :
 					alert ("type "+type+"not supported for drag and drop");
 				}
@@ -154,11 +160,11 @@ qx.Class.define("desk.fileBrowser",
 
 		// the window containing the widget when in standalone mode
 		__window : null,
-
 		__fileHandler : null,
 		__baseDir : "data",
 		__virtualTree : null,
 		__rootId : null,
+		__filterField : null,
 
 		__actionNames : null,
 		__actionCallbacks : null,
@@ -167,6 +173,13 @@ qx.Class.define("desk.fileBrowser",
 
 		__updateDirectoryInProgress : null,
 
+		getWindow : function() {
+			return this.__window;
+		},
+		getFileFilter : function() {
+			return this.__filterField;
+		},
+		
 		// returns the directory for the given file, session type and Id
 		getSessionDirectory : function (file,sessionType,sessionId)
 		{
@@ -186,15 +199,18 @@ qx.Class.define("desk.fileBrowser",
 			var directory=file.substring(0,lastSlashIndex);
 
 			var shortFileName=file.substring(lastSlashIndex+1,file.length);
+			
 			function readFileList(e)
 			{
 				var sessions=[];
 				var req = e.getTarget();
 				var files=req.getResponseText().split("\n");
+				
 				for (var i=0;i<files.length;i++)
 				{
 					var splitfile=files[i].split(" ");
 					var fileName=splitfile[0];
+					
 					if (fileName!="")
 					{
 						if (splitfile[1]=="dir")
@@ -319,8 +335,8 @@ qx.Class.define("desk.fileBrowser",
 					}
 			/*		else if (xmlDoc.getElementsByTagName("volume").length!=0)
 					{
-						var volView=new desk.volView(file, myBrowser, modificationTime);
-						//~ var volView=new desk.volMaster(file, myBrowser, modificationTime); //~ orion test
+						//~ var volView=new desk.volView(file, myBrowser, modificationTime);
+						var volView=new desk.volMaster(file, myBrowser, modificationTime); //~ orion test
 //						qx.core.Init.getApplication().getRoot().add(volView);
 					}*/
 					else
@@ -334,8 +350,13 @@ qx.Class.define("desk.fileBrowser",
 					//~ qx.core.Init.getApplication().getRoot().add(volView);
 					
 				//~ orion test
-					new desk.volMaster(file, myBrowser);
-					
+					if(this.__standAlone)
+					{
+						var volMaster = new desk.volMaster(file, myBrowser);
+						var volWindow = volMaster.getWindow();
+					}
+					else
+						new desk.volMaster(file, myBrowser);
 					break;
 				case ".json":
 					desk.action.CREATEFROMFILE(myBrowser.getNodeFile(node));
@@ -350,9 +371,8 @@ qx.Class.define("desk.fileBrowser",
 
 		__createDefaultStaticActions : function ()
 		{
-			if (this.__actions.getPermissionsLevel()<1) {
+			if (this.__actions.getPermissionsLevel()<1)
 				return;
-			}
 
 			var myBrowser=this;
 			myBrowser.addAction("redo action", function (node) {

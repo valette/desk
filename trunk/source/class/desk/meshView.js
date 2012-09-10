@@ -20,6 +20,8 @@ qx.Class.define("desk.meshView",
 			if (parameters.convertVTK!==undefined) {
 				this.setConvertVTK(parameters.convertVTK);
 			}
+			if(fileBrowser==parameters.__fileBrowser)
+				var volMaster = parameters;
 		}
 
 		var window=new qx.ui.window.Window();
@@ -33,10 +35,15 @@ qx.Class.define("desk.meshView",
 		window.setUseMoveFrame(true);
 		window.setContentPadding(2);
 		window.setCaption(file);
+		
+		if(typeof volMaster != "undefined")
+			window.setUserData("standAlone",true);
 		this.__window=window;
 
 		var pane = new qx.ui.splitpane.Pane("horizontal")
 		window.add(pane,{flex : 1});
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		this.__mainPane = pane;
 
 		this.__createRenderWindow();
 		pane.add(this.__overlayCanvas, 5);
@@ -170,6 +177,8 @@ qx.Class.define("desk.meshView",
 
 		// qooxdoo window
 		__window : null,
+		
+		__mainPane : null,
 
 		__fileBrowser : null,
 
@@ -204,6 +213,12 @@ qx.Class.define("desk.meshView",
 		__boudingBoxDiagonalLength : 0,
 
 		__htmlContainerSize : null,
+		
+		getMainPane : function()
+		{
+			this.__window.exclude();
+			return this.__mainPane;
+		},
 
 		__readFile : function (file, mtime, color, update, opt_updateDataModel) {
 			var label;

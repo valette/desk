@@ -6,7 +6,7 @@ qx.Class.define("desk.segTools",
 {
   extend : qx.ui.window.Window,
 
-	construct : function(master, globalFile, globalFileBrowser)
+	construct : function(master, globalFile, globalFileBrowser, appliCallback)
 	{	
 		this.base(arguments);
 
@@ -24,9 +24,12 @@ qx.Class.define("desk.segTools",
 		this.__master = master;
 
 		this.__file = globalFile;
-
+		
 		this.__fileBrowser = globalFileBrowser;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		this.__appliCallback = appliCallback;
+		
 	//// Set window
 		this.setLayout(new qx.ui.layout.VBox());
 		this.set({
@@ -65,13 +68,17 @@ qx.Class.define("desk.segTools",
 			});
 		});
 		this.__labels=[];
-
+		
 		this.open();
-
+		
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		if(typeof this.__appliCallback == "function")
+			this.__appliCallback(this.__master, this);
+			
 //		this.__createLabelsList();
 	//// Return the tools window aka : this
 		return (this);
-
+		
 	},
 
 	statics : {
@@ -82,6 +89,7 @@ qx.Class.define("desk.segTools",
 	},
 
 	events : {
+		"meshViewerCreated" : "qx.event.type.Data"
 	},
 
 	properties : {
@@ -91,10 +99,11 @@ qx.Class.define("desk.segTools",
 
 	members :
 	{
-		__defaultColorsFile : "data/xml/colors7.xml",
+		__defaultColorsFile : "data/xml/colorsKneeAdvanced.xml",
 		__master : null,
 		__file : null,
 		__fileBrowser : null,
+		__meshViewer : null,
 
 		__topRightContainer : null,
 		__bottomRightContainer : null,
@@ -119,7 +128,13 @@ qx.Class.define("desk.segTools",
 		__penSize : null,
 		__eraserButton : null,
 		__eraserCursor : null,
-
+		
+		getMeshViewer : function()
+		{
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			return this.__meshViewer;
+		},
+		
 		__reloadSeedImage : function (sliceView) {
 			if (this.getSessionDirectory()==null)
 				return;
@@ -207,6 +222,28 @@ qx.Class.define("desk.segTools",
 			tools.__topRightContainer.add(tools.__eraserButton);
 
 			
+			//~ /*
+		////Create test Marks on/off button
+            tools.__marksButton = new qx.ui.form.ToggleButton("Marks");
+			
+			this.__marksButton.addListener("changeValue", function(e)
+			{
+				this.__master.applyToViewers(function () {
+					this.__markerObject.setMarkMode(e.getData());
+					});
+			}, this);
+
+			tools.__topRightContainer.add(tools.__marksButton);
+			//~ */
+			var master = this.__master;
+			this.__master.applyToViewers( function()
+			{
+				this.__markerObject = new desk.Markers(this, master);
+				this.getMarkerObject = function() {
+					return this.__markerObject;
+				};
+			} );
+			
 			
 		////Create labels zone
 			var paintPage = new qx.ui.tabview.Page("paint");
@@ -247,7 +284,7 @@ qx.Class.define("desk.segTools",
 			this.add(tools.__mainBottomRightContainer, {flex : 1}); //~ resizing
 
 			tools.__mainBottomRightContainer.add(tabView); //~ resizing
-
+			
 			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
 			tools.__topRightContainer.add(whileDrawingDrwngOpacityLabel);
 			
@@ -314,12 +351,9 @@ qx.Class.define("desk.segTools",
 				clusteringAction.setOutputDirectory(directory);
 				segmentationAction.setOutputDirectory(directory);
 				meshingAction.setOutputDirectory(directory);
-				var adjacenciesXMLFileName = "data/adjacencies7.xml";
 				segmentationAction.setActionParameters({
 					"input_volume" : volFile,
-					"seeds" : tools.getSessionDirectory()+"/seeds.xml"
-					//,"adjacencies" : adjacenciesXMLFileName
-					});
+					"seeds" : tools.getSessionDirectory()+"/seeds.xml"});
 				clusteringAction.setActionParameters({
 					"input_volume" : volFile});
 				meshingAction.setActionParameters({
@@ -380,10 +414,13 @@ qx.Class.define("desk.segTools",
 					meshViewer.addListener("close", function () {
 						meshViewer=null;
 					})
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+					this.fireDataEvent("meshViewerCreated", meshViewer);
 				}
 				else {
 					meshViewer.update();
 				}
+				this.__meshViewer = meshViewer;
 			}, this);
 
 			tools.__seedsTypeSelectBox = tools.__getSeedsTypeSelectBox();
@@ -1127,7 +1164,7 @@ qx.Class.define("desk.segTools",
 			sessionsListLayout.setSpacing(4);
 			var sessionsListContainer=new qx.ui.container.Composite(sessionsListLayout);
 			var sessionsListLabel=new qx.ui.basic.Label("Sessions : ");
-			sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});
+			//~ sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});
 			sessionsListContainer.add(sessionsListLabel);
 			var button=new qx.ui.form.Button("new session");
 			sessionsListContainer.add(button);
@@ -1135,6 +1172,7 @@ qx.Class.define("desk.segTools",
 			var sessionType="gcSegmentation";
 			var sessionsList = new qx.ui.form.SelectBox();
 			sessionsListContainer.add(sessionsList);
+			//~ sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});
 
 			var updateInProgress=false;
 

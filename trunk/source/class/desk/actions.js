@@ -36,7 +36,10 @@ qx.Class.define("desk.actions",
 			if (this.__permissionsLevel<1) {
 				return;
 			}
-			qx.core.Init.getApplication().getRoot().add(ongoingActions, { right : 0, top : 0});
+/////////////////////////////////////////////////////////////////////////////////
+			var standAlone = qx.core.Init.getApplication().getAppliFlag();
+			if(standAlone)
+				qx.core.Init.getApplication().getRoot().add(ongoingActions, { right : 0, top : 0});
 		}, this);
 
 		// load external three.js files
@@ -105,6 +108,10 @@ qx.Class.define("desk.actions",
 		getActionsMenu : function (fileBrowser) {
 			this.__currentFileBrowser=fileBrowser;
 			return this.__actionMenu;
+		},
+		
+		getOnGoingContainer : function() {
+			return this.__ongoingActions;
 		},
 
 
