@@ -24,7 +24,7 @@ qx.Class.define("desk.segTools",
 		this.__master = master;
 
 		this.__file = globalFile;
-
+		
 		this.__fileBrowser = globalFileBrowser;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -230,14 +230,20 @@ qx.Class.define("desk.segTools",
 			this.__marksButton.addListener("changeValue", function(e)
 			{
 				this.__master.applyToViewers(function () {
-					this.__marker.setMarkMode(e.getData());
+					this.__markerObject.setMarkMode(e.getData());
 					});
 			}, this);
 
 			tools.__topRightContainer.add(tools.__marksButton);
 			//~ */
 			var master = this.__master;
-			this.__master.applyToViewers(function () { this.__marker = new desk.Markers(this, master); });
+			this.__master.applyToViewers( function()
+			{
+				this.__markerObject = new desk.Markers(this, master);
+				this.getMarkerObject = function() {
+					return this.__markerObject;
+				};
+			} );
 			
 			
 		////Create labels zone

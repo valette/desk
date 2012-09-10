@@ -123,6 +123,14 @@ qx.Class.define("desk.volMaster",
 		__file : null,
 		__fileBrowser : null,
 
+		getFile : function() {
+			return this.__file;
+		},
+		
+		getFileBrowser : function() {
+			return this.__fileBrowser;
+		},
+		
 		getWindow : function(){
 			return this.__window;
 		},
@@ -613,7 +621,7 @@ qx.Class.define("desk.volMaster",
 					brgthnssCntrstButtons[3] = new qx.ui.form.RepeatButton("-", null);
 					brgthnssCntrstButtons[3].setUserData("buttonID", "cl");
 					brgthnssCntrstButtons[3].setToolTipText("Contrast --");
-				mouseDownLstnr = function(event)
+				var mouseDownLstnr = function(event)
 				{
 					if (event.isRightPressed())
 					{
@@ -626,7 +634,7 @@ qx.Class.define("desk.volMaster",
 						y = 0;
 					}
 				};
-				mouseUpLstnr = function(event)
+				var mouseUpLstnr = function(event)
 				{
 					x = 0;
 					y = 0;
@@ -635,7 +643,7 @@ qx.Class.define("desk.volMaster",
 				y = 0;
 				var brtnssSpeed = 5;
 				var contrastSpeed = 5;
-				buttonExecuteFnct = function(event)
+				var buttonExecuteFnct = function(event)
 				{
 					var newX = x;
 					var newY = y;
