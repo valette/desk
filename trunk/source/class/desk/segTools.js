@@ -806,12 +806,12 @@ qx.Class.define("desk.segTools",
 					colorSelector.setRed(target.red);
 					colorSelector.setGreen(target.green);
 					colorSelector.setBlue(target.blue);
-					colorView.setBackgroundColor("#"+qx.util.ColorUtil.rgbToHexString
+					colorView.setBackgroundColor(qx.util.ColorUtil.rgbToHexString
 							([target.red, target.green, target.blue]));
 					meshColorSelector.setRed(target.meshRed);
 					meshColorSelector.setGreen(target.meshGreen);
 					meshColorSelector.setBlue(target.meshBlue);
-					meshColorView.setBackgroundColor("#"+qx.util.ColorUtil.rgbToHexString
+					meshColorView.setBackgroundColor(qx.util.ColorUtil.rgbToHexString
 							([target.meshRed, target.meshGreen, target.meshBlue]));
 					meshOpacity.setValue(target.opacity+"");
 					meshDepth.setValue(target.depth);

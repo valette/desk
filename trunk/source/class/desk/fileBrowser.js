@@ -133,21 +133,18 @@ qx.Class.define("desk.fileBrowser",
 				}
 		}, this);
 
-
-		if (standAlone!=false)
-		{
-			var window=new qx.ui.window.Window();
-			window.setLayout(new qx.ui.layout.VBox());
-			this.__window=window;
+		
+		var window=new qx.ui.window.Window();
+		window.setLayout(new qx.ui.layout.VBox());
+		this.__window=window;
 //			window.setShowClose(false);
-			window.setShowMinimize(false);
-			window.setUseMoveFrame(true);
-			window.setCaption("files");
-			window.setWidth(400);
-			window.setHeight(500);
-			window.add(this, {flex : 1});
-			this.__window.open();
-		}
+		window.setShowMinimize(false);
+		window.setUseMoveFrame(true);
+		window.setCaption("files");
+		window.setWidth(400);
+		window.setHeight(500);
+		window.add(this, {flex : 1});
+		this.__window.open();
 
 
 		return (this);
