@@ -135,14 +135,14 @@ app.configure(function(){
 
 	// handle cache clear
 	app.get(phpURL+'clearcache.php', function(req, res){
-		exec("rm -rf *",{cwd:phpDir+'cache'}, function (err) {
+		exec("rm -rf *",{cwd:dataDir+'cache'}, function (err) {
 			res.send('cache cleared!');
 		});
 	});
 
 	// handle actions clear
 	app.get(phpURL+'clearactions.php', function(req, res){
-		exec("rm -rf *",{cwd:phpDir+'actions'}, function (err) {
+		exec("rm -rf *",{cwd:dataDir+'actions'}, function (err) {
 			res.send('actions cleared!');
 		});
 	});
