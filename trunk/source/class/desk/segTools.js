@@ -89,6 +89,7 @@ qx.Class.define("desk.segTools",
 	},
 
 	events : {
+		"gotSegmentedVolume" : "qx.event.type.Data",
 		"meshViewerCreated" : "qx.event.type.Data"
 	},
 
@@ -222,7 +223,6 @@ qx.Class.define("desk.segTools",
 			tools.__topRightContainer.add(tools.__eraserButton);
 
 			
-			//~ /*
 		////Create test Marks on/off button
             tools.__marksButton = new qx.ui.form.ToggleButton("Marks");
 			
@@ -234,7 +234,6 @@ qx.Class.define("desk.segTools",
 			}, this);
 
 			tools.__topRightContainer.add(tools.__marksButton);
-			//~ */
 			var master = this.__master;
 			this.__master.applyToViewers( function()
 			{
@@ -268,9 +267,9 @@ qx.Class.define("desk.segTools",
 
 			paintPage.add(tools.__colorsContainer);
 
-			var bRCL=new qx.ui.layout.HBox();  //~ resizing
-			bRCL.setSpacing(spacing);  //~ resizing
-			tools.__mainBottomRightContainer = new qx.ui.container.Composite(bRCL);  //~ resizing
+			var bRCL=new qx.ui.layout.HBox();
+			bRCL.setSpacing(spacing);
+			tools.__mainBottomRightContainer = new qx.ui.container.Composite(bRCL);
 			
 			var tabView = new qx.ui.tabview.TabView();
 			tools.__tabView=tabView;
@@ -281,9 +280,9 @@ qx.Class.define("desk.segTools",
 			this.__addSeedsListsToViews();
 			this.add(sessionWdgt);
 			
-			this.add(tools.__mainBottomRightContainer, {flex : 1}); //~ resizing
+			this.add(tools.__mainBottomRightContainer, {flex : 1});
 
-			tools.__mainBottomRightContainer.add(tabView); //~ resizing
+			tools.__mainBottomRightContainer.add(tabView);
 			
 			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
 			tools.__topRightContainer.add(whileDrawingDrwngOpacityLabel);
@@ -394,6 +393,8 @@ qx.Class.define("desk.segTools",
 				{
 					theMaster.updateVolume(segmentationToken);
 				}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				tools.fireEvent("gotSegmentedVolume");
 			}, this);
 
 			tools.__master.addListener("removeVolume", function (e) {
@@ -415,7 +416,7 @@ qx.Class.define("desk.segTools",
 						meshViewer=null;
 					})
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-					this.fireDataEvent("meshViewerCreated", meshViewer);
+					tools.fireDataEvent("meshViewerCreated", meshViewer);
 				}
 				else {
 					meshViewer.update();
@@ -552,7 +553,6 @@ qx.Class.define("desk.segTools",
 					alert('Global Params : "Fetched the wrong page" OR "Network error"');
 				}
 			};
-			//~ colorsParamRequest.open("GET", "/visu/colorsKnee.xml?nocache="+Math.random(), true);
 			colorsParamRequest.open("GET",
 				this.__fileBrowser.getFileURL(file)+"?nocache="+Math.random(), true);
 			colorsParamRequest.send(null);
@@ -1164,7 +1164,7 @@ qx.Class.define("desk.segTools",
 			sessionsListLayout.setSpacing(4);
 			var sessionsListContainer=new qx.ui.container.Composite(sessionsListLayout);
 			var sessionsListLabel=new qx.ui.basic.Label("Sessions : ");
-			//~ sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});
+			//~ sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5}); // commented for oneFitAppli
 			sessionsListContainer.add(sessionsListLabel);
 			var button=new qx.ui.form.Button("new session");
 			sessionsListContainer.add(button);
@@ -1172,7 +1172,7 @@ qx.Class.define("desk.segTools",
 			var sessionType="gcSegmentation";
 			var sessionsList = new qx.ui.form.SelectBox();
 			sessionsListContainer.add(sessionsList);
-			//~ sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});
+			//~ sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});  // commented for oneFitAppli
 
 			var updateInProgress=false;
 
@@ -1414,7 +1414,6 @@ qx.Class.define("desk.segTools",
 					for (var i=0;i<slices.length;i++)
 					{
 						var sliceId=slices[i].getUserData("slice");
-						//~ theMaster.debug("352 : sliceId : " + sliceId);
 						xmlContent += element(filePrefix,
 								_this.__getSeedFileName(this, sliceId, seedsType), 
 								{slice: sliceId + "", orientation: orientation + ""}) + '\n';

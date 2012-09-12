@@ -86,7 +86,7 @@ qx.Class.define("desk.volMaster",
 			appliCallback(this);
 				
 //////////////////////////////////////////
-		return (this); //~ orion test : launch the 3 views at once ! ! !
+		return (this);
 	},
 
 
@@ -561,8 +561,8 @@ qx.Class.define("desk.volMaster",
 			settingsContainer.add(opacitySlider, {flex : 1});
 			
 			////Create brightness/contrast fixing
-			//~ var brightnessButton = new qx.ui.form.Button(null, "desk/Contrast_Logo_petit.PNG");
-			var brightnessButton = new qx.ui.form.Button(null, "resource/onefit/Contrast_Logo.png");
+			//~ var brightnessButton = new qx.ui.form.Button(null, "desk/Contrast_Logo_petit.PNG"); // commented for oneFitAppli
+			var brightnessButton = new qx.ui.form.Button(null, "onefit/Contrast_Logo.png");
 			brightnessButton.set({toolTipText : "Click and drag to change brightnes, right-click to reset brightness"});
 
 			var clicked=false;
@@ -890,6 +890,7 @@ qx.Class.define("desk.volMaster",
 				var viewLabel = new qx.ui.basic.Label( ""+(i+1));
 				viewLabel.setFont(qx.bom.Font.fromString("20px sans-serif bold"));
 				labelsContainer.add(viewLabel);
+				// Shows plane name...unfinished...
 				//~ var orientPlaneLabel = new qx.ui.basic.Label(_this.__viewsNames[i]);
 				//~ orientPlaneLabel.bind("value", _this.__viewers[i], "orientPlane");
 				//~ labelsContainer.add(orientPlaneLabel);

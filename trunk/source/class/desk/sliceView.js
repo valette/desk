@@ -49,7 +49,7 @@ qx.Class.define("desk.sliceView",
 		
 		this.__initUndo();
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//~ this.add(this.getReorientationContainer());
+		//~ this.add(this.getReorientationContainer());  // commented for oneFitAppli
 		return (this);		
 	},
 
@@ -760,6 +760,7 @@ qx.Class.define("desk.sliceView",
 					_this.__createBrushMesh(volumeSlice);
 					_this.__createCrossMeshes(volumeSlice);
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+					 // commented for oneFitAppli
 					//~ switch (this.getOrientation())
 					//~ {
 						//~ case 2 :

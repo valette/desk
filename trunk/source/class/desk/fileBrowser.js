@@ -332,21 +332,13 @@ qx.Class.define("desk.fileBrowser",
 					}
 			/*		else if (xmlDoc.getElementsByTagName("volume").length!=0)
 					{
-						//~ var volView=new desk.volView(file, myBrowser, modificationTime);
-						var volView=new desk.volMaster(file, myBrowser, modificationTime); //~ orion test
+						var volView=new desk.volView(file, myBrowser, modificationTime);
 //						qx.core.Init.getApplication().getRoot().add(volView);
 					}*/
 					else
 						alert ("xml file of unknown type!");
 					break;
 				case ".mhd":
-					//~ var volView=new desk.volView(file, myBrowser);
-					
-					//~ var volView = new desk.volMaster(file, myBrowser); //~ orion test
-					//~ 
-					//~ qx.core.Init.getApplication().getRoot().add(volView);
-					
-				//~ orion test
 					if(this.__standAlone)
 					{
 						var volMaster = new desk.volMaster(file, myBrowser);
@@ -425,9 +417,7 @@ qx.Class.define("desk.fileBrowser",
 					{
 						//var req = e.getTarget();
 						//var response=req.getResponseText().split("\n")[0];
-						//~ alert(response);
 					}*/
-					//~ alert(myBrowser.getNodeFile(node));
 					var parameterMap={
 						"action" : "dicom2meta",
 						"sourceDirectory" : myBrowser.getNodeFile(node),

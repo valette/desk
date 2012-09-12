@@ -88,6 +88,7 @@ qx.Class.define("desk.action",
 			// try to load parameters on server
 
 			var req = new qx.io.request.Xhr(this.__actions.baseURL+"php/"+
+			//~ var req = new qx.io.request.Xhr(this.__actions.baseURL+"php/"+"data/"+ // if upload directory/symbolicLink inside data directory
 						this.getOutputDirectory()+"/action.json?nocache=" + Math.random());
 			req.addListener("success", function(e) {
 				this.__loadedParameters=JSON.parse(e.getTarget().getResponseText());

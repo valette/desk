@@ -22,7 +22,7 @@ qx.Class.define("desk.actions",
 
 		var pathname=URLparser.pathname;
 		this.user=URLparser.pathname.split("/")[1];
-		console.log("user : "+this.user);
+		//~ console.log("user : "+this.user);
 		this.baseURL='/'+this.user+'/ext/';
 
 		this.__actionMenu = new qx.ui.menu.Menu;
@@ -134,15 +134,18 @@ qx.Class.define("desk.actions",
 
 		__launchAction : function (actionParameters, successCallback, context) {
 			var that=this;
-			var actionFinished=false;
-			var actionNotification=null;
-			setTimeout(function(){
-				if (!actionFinished) {
-					actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
-					that.__ongoingActions.add(actionNotification);
-				}
-			}, 5000);
-
+			//~ var actionFinished=false;
+			//~ var actionNotification=null;
+			//~ setTimeout(function(){
+				//~ if (!actionFinished) {
+					//~ actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
+					//~ that.__ongoingActions.add(actionNotification);
+				//~ }
+			//~ }, 5000);
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			var actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
+			this.__ongoingActions.add(actionNotification);
+			
 			var req = new qx.io.request.Xhr();
 
 			req.setUrl(this.baseURL+"php/actions.php");
