@@ -89,7 +89,7 @@ qx.Class.define("desk.segTools",
 	},
 
 	events : {
-		"gotSegmentedVolume" : "qx.event.type.Data",
+		"gotSegmentedVolume" : "qx.event.type.Event",
 		"meshViewerCreated" : "qx.event.type.Data"
 	},
 

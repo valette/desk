@@ -91,6 +91,7 @@ qx.Class.define("desk.volMaster",
 
 
 	events : {
+		"viewReady" : "qx.event.type.Event",
 		"removeVolume" : "qx.event.type.Data"
 	},
 
@@ -503,6 +504,8 @@ qx.Class.define("desk.volMaster",
 						if (numberOfRemainingMeshes==0) {
 							_this.__reorderMeshes();
 						}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+						_this.fireEvent("viewReady");
 					});
 				} ) (i));
 			}
@@ -612,18 +615,19 @@ qx.Class.define("desk.volMaster",
 			if(!_this.__standAlone)
 			{
 				var brgthnssCntrstButtons = [];
-					brgthnssCntrstButtons[0] = new qx.ui.form.RepeatButton("+", null);
+					brgthnssCntrstButtons[0] = new qx.ui.form.RepeatButton("B+", null);
 					brgthnssCntrstButtons[0].setUserData("buttonID", "bm");
 					brgthnssCntrstButtons[0].setToolTipText("Brightness ++");
-					brgthnssCntrstButtons[1] = new qx.ui.form.RepeatButton("-", null);
+					brgthnssCntrstButtons[1] = new qx.ui.form.RepeatButton("B-", null);
 					brgthnssCntrstButtons[1].setUserData("buttonID", "bl");
 					brgthnssCntrstButtons[1].setToolTipText("Brightness --");
-					brgthnssCntrstButtons[2] = new qx.ui.form.RepeatButton("+", null);
+					brgthnssCntrstButtons[2] = new qx.ui.form.RepeatButton("C+", null);
 					brgthnssCntrstButtons[2].setUserData("buttonID", "cm");
 					brgthnssCntrstButtons[2].setToolTipText("Contrast ++");
-					brgthnssCntrstButtons[3] = new qx.ui.form.RepeatButton("-", null);
+					brgthnssCntrstButtons[3] = new qx.ui.form.RepeatButton("C-", null);
 					brgthnssCntrstButtons[3].setUserData("buttonID", "cl");
 					brgthnssCntrstButtons[3].setToolTipText("Contrast --");
+				var canHover = false;
 				var mouseDownLstnr = function(event)
 				{
 					if (event.isRightPressed())
@@ -635,12 +639,31 @@ qx.Class.define("desk.volMaster",
 					{
 						x = 0;
 						y = 0;
+						canHover = true;
+						var thisButton = this;
+						thisButton.press();
 					}
 				};
 				var mouseUpLstnr = function(event)
 				{
 					x = 0;
 					y = 0;
+					canHover = false;
+				};
+				var _this = this;
+				var mouseOverLstnr = function(event)
+				{
+					if(canHover)
+					{
+						var thisButton = this;
+						thisButton.press();
+					}
+				};
+				var mouseOutLstnr = function(event)
+				{
+					var thisButton = this;
+					thisButton.release();
+					thisButton.releaseCapture();
 				};
 				x = 0;
 				y = 0;
@@ -648,9 +671,9 @@ qx.Class.define("desk.volMaster",
 				var contrastSpeed = 5;
 				var buttonExecuteFnct = function(event)
 				{
+					var thisButton = this;
 					var newX = x;
 					var newY = y;
-					var thisButton = this;
 					var buttonType = thisButton.getUserData("buttonID");
 					switch(buttonType)
 					{
@@ -675,9 +698,8 @@ qx.Class.define("desk.volMaster",
 					contrast+=deltaX/200;
 					x=newX;
 					y=newY;
-					for (var i=0;i<volumeSlices.length;i++) {
+					for (var i=0;i<volumeSlices.length;i++)
 						volumeSlices[i].setBrightnessAndContrast(brightness,contrast);
-					}
 				};
 				var buttonsContainer = new qx.ui.container.Composite();
 					buttonsContainer.setLayout(new qx.ui.layout.HBox());
@@ -686,6 +708,8 @@ qx.Class.define("desk.volMaster",
 					brgthnssCntrstButtons[i].addListener("mousedown", mouseDownLstnr, brgthnssCntrstButtons[i]);
 					brgthnssCntrstButtons[i].addListener("mouseup", mouseUpLstnr, brgthnssCntrstButtons[i]);
 					brgthnssCntrstButtons[i].addListener("execute", buttonExecuteFnct, brgthnssCntrstButtons[i]);
+					brgthnssCntrstButtons[i].addListener("mouseover", mouseOverLstnr, brgthnssCntrstButtons[i]);
+					brgthnssCntrstButtons[i].addListener("mouseout", mouseOutLstnr, brgthnssCntrstButtons[i]);
 					buttonsContainer.add(brgthnssCntrstButtons[i]);
 				}
 				settingsContainer.add(buttonsContainer);
