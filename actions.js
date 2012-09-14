@@ -400,7 +400,7 @@ exports.performAction = function (POST, callback) {
 			return;
 		}
 
-		var commandOptions={ cwd:filesRoot };
+		var commandOptions={ cwd:filesRoot , maxBuffer: 1024*1024};
 		if ((action.attributes.voidAction !=="true") || (action.name=="add_subdirectory")) {
 			commandOptions.cwd+=outputDirectory;
 		}

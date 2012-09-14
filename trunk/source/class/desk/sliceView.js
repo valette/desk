@@ -1029,6 +1029,7 @@ qx.Class.define("desk.sliceView",
 					this.fireEvent("changeDrawing");
 					break;
 				}
+				event.preventDefault(); // Prevent cursor changing to "text" cursor while drawing
 				this.fireDataEvent("viewMouseMove",event);
 			}, this);
 

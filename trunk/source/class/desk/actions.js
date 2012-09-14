@@ -143,7 +143,7 @@ qx.Class.define("desk.actions",
 				//~ }
 			//~ }, 5000);
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			var actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
+			var actionNotification=new qx.ui.basic.Label(actionParameters["action"]); // this allows to detect when an action is ongoing (used in oneFit Appli)
 			this.__ongoingActions.add(actionNotification);
 			
 			var req = new qx.io.request.Xhr();
