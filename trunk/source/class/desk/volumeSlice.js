@@ -404,8 +404,8 @@ qx.Class.define("desk.volumeSlice",
 
 			var material=new THREE.ShaderMaterial({
 				uniforms: {
-					texture: { type: "t", value: 0, texture: texture },
-					lookupTable: { type: "t", value: 1, texture: lookupTable },
+					texture: { type: "t", slot: 0, value: texture },
+					lookupTable: { type: "t", slot: 1, value: lookupTable },
 					lookupTableLength : { type: "f", value: 2 },
 					useLookupTable : { type: "f", value: 0 },
 					contrast : { type: "f", value: this.__contrast },
@@ -704,7 +704,7 @@ qx.Class.define("desk.volumeSlice",
 				_this.__updateInProgress=false;
 				var materials=_this.__materials;
 				for (var i=0;i<materials.length;i++){
-					materials[i].uniforms.texture.texture.needsUpdate = true;
+					materials[i].uniforms.texture.value.needsUpdate = true;
 				}
 				_this.fireEvent("changeImage");
 			};
