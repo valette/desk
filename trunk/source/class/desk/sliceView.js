@@ -688,7 +688,7 @@ qx.Class.define("desk.sliceView",
 
 			if (volumeSlice.isReady()) {
 				initSlice();
-				}
+			}
 			else
 			{
 				volumeSlice.addListenerOnce("changeReady",initSlice);
@@ -772,6 +772,11 @@ qx.Class.define("desk.sliceView",
 						//~ default:
 					//~ }
 					var dimensions=volumeSlice.getDimensions();
+					for (var coordinate=0;coordinate<3;coordinate++) {
+						if (dimensions[coordinate]==1) {
+							dimensions[coordinate]=0;
+						}
+					}
 					_this.setCrossPosition(Math.round(dimensions[0]/2),
 											Math.round(dimensions[1]/2),
 											Math.round(dimensions[2]/2));
@@ -1230,7 +1235,12 @@ qx.Class.define("desk.sliceView",
 			this.addListener("changeSlice", function (e) {
 				var sliceId=e.getData();
 				label.setValue(sliceId+"");
-				slider.setValue(this.getVolumeSliceToPaint().getNumberOfSlices()-1-sliceId);
+				// something fishy here : getNumberOfSlices should never be 0 but it is sometimes...
+				var newSliceId=this.getVolumeSliceToPaint().getNumberOfSlices()-1-sliceId;
+				if (newSliceId<0) {
+					newSliceId=0;
+				}
+				slider.setValue(newSliceId);
 
 				var i=this.__positionI;
 				var j=this.__positionJ;

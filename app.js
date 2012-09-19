@@ -2,7 +2,8 @@ var fs      = require('fs'),
     express = require('express'),
     http    = require ('http'),
     https   = require ('https'),
-   	exec = require('child_process').exec;
+   	exec = require('child_process').exec,
+   	os=require('os');
 
 var	user=process.env.USER;
 console.log("UID : "+process.getuid());
@@ -13,6 +14,13 @@ var path = fs.realpathSync('trunk')+'/',
 	phpSubdir='ext/php/',
 	port = process.getuid(),
 	uploadDir=path+phpSubdir+'data/upload';
+
+// use port 8080 if not running on desk.creatis.insa-lyon.fr
+var hostname=os.hostname();
+console.log('hostname : '+hostname);
+if (hostname!='desk.creatis.insa-lyon.fr') {
+	port=8080;
+}
 
 // certificate default file names
 var passwordFile="./password.json",
