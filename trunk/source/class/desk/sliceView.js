@@ -1079,7 +1079,7 @@ qx.Class.define("desk.sliceView",
 			var yinter=intersection.y;
 
 			var intxc=Math.floor((xinter-coordinates[0])*dimensions[0]/(coordinates[2]-coordinates[0]));
-			var intyc=Math.floor((yinter-coordinates[1])*dimensions[1]/(coordinates[5]-coordinates[1]));
+			var intyc=dimensions[1] - Math.floor((yinter-coordinates[1])*dimensions[1]/(coordinates[5]-coordinates[1]));
 			return {i :intxc, j :intyc, x:xinter, y:yinter};
 		},
 
