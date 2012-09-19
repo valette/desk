@@ -18,7 +18,7 @@ qx.Class.define("desk.Markers",
 		
 		this.addListener("changeMarkMode", function(event)
 		{
-			this.__markMesh.setVisible(true);
+			this.__markMesh.setVisible(event.getData());
 		});
 		
 		this.addListener("addPosMarker", function(event)
