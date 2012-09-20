@@ -708,11 +708,12 @@ qx.Class.define("desk.sliceView",
 					_this.__createCrossMeshes(volumeSlice);
 					switch (this.getOrientation())
 					{
-						case 2 :
+						case 0 :
 							_this.flipY();
 							break;
 						case 1 :
 							_this.rotateLeft();
+							_this.flipX();
 							break;
 						default:
 					}
@@ -784,22 +785,22 @@ qx.Class.define("desk.sliceView",
 
 		setCrossPosition : function (i,j,k) {
 			var slice,x,y;
-
+			var dimensions=this.__volume2DDimensions;
 			switch (this.getOrientation())
 			{
 			case 0 :
 				x=i;
-				y=j;
+				y=dimensions[1]-j;
 				slice=k;
 				break;
 			case 1 :
 				x=k;
-				y=j;
+				y=dimensions[1]-j;
 				slice=i;
 				break;
 			case 2 :
 				x=i;
-				y=k;
+				y=dimensions[1]-k;
 				slice=j;
 			}
 
