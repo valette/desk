@@ -81,7 +81,8 @@ qx.Class.define("desk.volumeSlice",
 			"varying vec2 vUv;",
 			"void main() {",
 				"vec4 rawData = texture2D( texture, vUv );",
-				"vec4 rawBytes = floor(rawData*vec4(255.0)+vec4(0.5));"
+				"vec4 rawBytes = floor(rawData*vec4(255.0)+vec4(0.5));",
+				"float valueJPG=rawData[0];"
 		].join("\n"),
 
 		FRAGMENTSHADERCHAR : [
@@ -110,7 +111,6 @@ qx.Class.define("desk.volumeSlice",
 		].join("\n"),
 
 		FRAGMENTSHADEREND : [
-				"float valueJPG=rawData[0];",
 				"float rescaledValuePNG = ( valuePNG - scalarMin ) / ( scalarMax - scalarMin );",
 				"float rescaledPixelValue= (1.0 - imageType )*  rescaledValuePNG + imageType * valueJPG;",
 				"float correctedPixelValue=(rescaledPixelValue+brightness)*contrast;",
