@@ -1,6 +1,7 @@
 /*
 #ignore(Detector)
 #ignore(Uint8Array)
+#asset(desk/Contrast_Logo_petit.PNG)
 */
 qx.Class.define("desk.volMaster", 
 {
