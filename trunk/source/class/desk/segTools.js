@@ -6,9 +6,11 @@ qx.Class.define("desk.segTools",
 {
   extend : qx.ui.window.Window,
 
-	construct : function(master, globalFile, globalFileBrowser)
+	construct : function(master, globalFile)
 	{	
 		this.base(arguments);
+
+		this.__fileSystem=desk.FileSystem.getInstance();
 
         // Enable logging in debug variant
         if(qx.core.Environment.get("qx.debug"))
@@ -24,8 +26,6 @@ qx.Class.define("desk.segTools",
 		this.__master = master;
 
 		this.__file = globalFile;
-
-		this.__fileBrowser = globalFileBrowser;
 
 	//// Set window
 		this.setLayout(new qx.ui.layout.VBox());
@@ -94,7 +94,7 @@ qx.Class.define("desk.segTools",
 		__defaultColorsFile : "data/xml/colors7.xml",
 		__master : null,
 		__file : null,
-		__fileBrowser : null,
+		__fileSystem : null,
 
 		__topRightContainer : null,
 		__bottomRightContainer : null,
@@ -144,7 +144,7 @@ qx.Class.define("desk.segTools",
 					sliceView.fireEvent("changeDrawing");
 					imageLoader.onload=0;
 				}
-				imageLoader.src=_this.__fileBrowser.getFileURL(_this.getSessionDirectory())+"/"+
+				imageLoader.src=_this.__fileSystem.getFileURL(_this.getSessionDirectory())+"/"+
 								_this.__getSeedFileName ( sliceView, sliceId, seedsType)+"?nocache="+
 								cacheTagsArray[sliceId];
 			}
@@ -162,7 +162,7 @@ qx.Class.define("desk.segTools",
 			
 			var volFile = tools.__file;
 			
-			var fileBrowser = tools.__fileBrowser;
+			var fileSystem = this.__fileSystem;
 			
 			
 			var spacing=5;
@@ -517,7 +517,7 @@ qx.Class.define("desk.segTools",
 			};
 			//~ colorsParamRequest.open("GET", "/visu/colorsKnee.xml?nocache="+Math.random(), true);
 			colorsParamRequest.open("GET",
-				this.__fileBrowser.getFileURL(file)+"?nocache="+Math.random(), true);
+				this.__fileSystem.getFileURL(file)+"?nocache="+Math.random(), true);
 			colorsParamRequest.send(null);
 		},
 
@@ -1112,7 +1112,7 @@ qx.Class.define("desk.segTools",
 			};
 
 			loadSessionRequest.open("GET",
-				this.__fileBrowser.getFileURL(
+				this.__fileSystem.getFileURL(
 					this.getSessionDirectory()+"/seeds.xml?nocache="+Math.random()), true);
 			loadSessionRequest.send(null);
 		},
@@ -1121,7 +1121,7 @@ qx.Class.define("desk.segTools",
 		{	
 			var tools = this;
 			var volFile = this.__file;
-			var fileBrowser = this.__fileBrowser;
+			var fileSystem = this.__fileSystem;
 			
 			var sessionsListLayout=new qx.ui.layout.HBox();
 			sessionsListLayout.setSpacing(4);
@@ -1163,7 +1163,7 @@ qx.Class.define("desk.segTools",
 					{
 						sessionsList.setSelection([sessionItemToSelect]);
 						tools.__tabView.setVisibility("visible");
-						tools.setSessionDirectory(fileBrowser.getSessionDirectory(
+						tools.setSessionDirectory(fileSystem.getSessionDirectory(
 							volFile,sessionType,sessionIdToSelect));
 						tools.__clearSeeds();
 						tools.__loadColors();
@@ -1173,7 +1173,7 @@ qx.Class.define("desk.segTools",
 					updateInProgress=false;
 				};
 
-				fileBrowser.getFileSessions(volFile, sessionType, buildSessionsItems);
+				fileSystem.getFileSessions(volFile, sessionType, buildSessionsItems);
 			}
 			
 			sessionsList.addListener("changeSelection", function(e)
@@ -1184,7 +1184,7 @@ qx.Class.define("desk.segTools",
 					if (listItem.getUserData("dummy")!=true)
 					{
 						tools.__tabView.setVisibility("visible");
-						tools.setSessionDirectory(fileBrowser.getSessionDirectory(
+						tools.setSessionDirectory(fileSystem.getSessionDirectory(
 							volFile,sessionType,listItem.getLabel()));
 						tools.loadSession();
 					}
@@ -1193,7 +1193,7 @@ qx.Class.define("desk.segTools",
 			});
 
 			button.addListener("execute", function (e){
-				this.__fileBrowser.createNewSession(volFile,sessionType, updateList);
+				this.__fileSystem.createNewSession(volFile,sessionType, updateList);
 				}, this);
 
 			updateList();

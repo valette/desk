@@ -7,7 +7,7 @@ qx.Class.define("desk.volMaster",
 {
 	extend : qx.core.Object,
 	
-	construct : function(globalFile, globalFileBrowser)
+	construct : function(globalFile)
 	{	
 		
         // Enable logging in debug variant
@@ -22,11 +22,11 @@ qx.Class.define("desk.volMaster",
 		this.__nbUsedOrientations = 3;
 		this.__file = globalFile;
 
-		this.__fileBrowser = globalFileBrowser;
+		this.__fileSystem = desk.FileSystem.getInstance();
 
 		this.__viewers = [];
 		for(var i=0; i<this.__nbUsedOrientations; i++) {
-			this.__viewers[i] = new desk.sliceView(this.__fileBrowser, this, i);
+			this.__viewers[i] = new desk.sliceView(this, i);
 		}
 
 		var gridLayout=new qx.ui.layout.Grid(3,3);
@@ -98,7 +98,7 @@ qx.Class.define("desk.volMaster",
 		__nbUsedOrientations : null,
 
 		__file : null,
-		__fileBrowser : null,
+		__fileSystem : null,
 
 		applyToViewers : function (theFunction) {
 			var viewers=this.__viewers;
@@ -499,7 +499,7 @@ qx.Class.define("desk.volMaster",
 			if (desk.actions.getInstance().getPermissionsLevel()>0) {
 				var paintButton=new qx.ui.menu.Button("segment");
 				paintButton.addListener("execute", function () {
-					new desk.segTools(this, this.__file, this.__fileBrowser);
+					new desk.segTools(this, this.__file);
 				},this);
 				menu.add(paintButton);
 			}

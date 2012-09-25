@@ -8,7 +8,7 @@ qx.Class.define("desk.volumeSlice",
 {
   extend : qx.core.Object,
 
-	construct : function(file, fileBrowser, orientation, parameters)
+	construct : function(file, orientation, parameters)
 	{
 		this.base(arguments);
 
@@ -32,7 +32,6 @@ qx.Class.define("desk.volumeSlice",
 			}
 		}
 
-		this.__fileBrowser=fileBrowser;
 		this.__file=file;
 		this.update();
 
@@ -150,7 +149,6 @@ qx.Class.define("desk.volumeSlice",
 	members : {
 		__availableImageFormat : 1,
 
-		__fileBrowser : null,
 		__file : null,
 
 		__path : null,
@@ -241,25 +239,20 @@ qx.Class.define("desk.volumeSlice",
 
 		update : function () {
 			var _this=this;
-			if (this.__fileBrowser==null)
-				alert ("error! no file browser was provided");
-			else
-			{
-				function getAnswer(e)
-					{
-						var req = e.getTarget();
-						var slicesDirectory=req.getResponseText().split("\n")[0];
-						_this.openXMLURL(_this.__fileBrowser.getFileURL(slicesDirectory)+"/volume.xml");
-					}
+			function getAnswer(e)
+				{
+					var req = e.getTarget();
+					var slicesDirectory=req.getResponseText().split("\n")[0];
+					_this.openXMLURL(desk.FileSystem.getInstance().getFileURL(slicesDirectory)+"/volume.xml");
+				}
 
-				var parameterMap={
-					action : "slice_volume",
-					input_volume : this.__file,
-					output_directory : "cache\/",
-					format : this.getImageFormat(),
-					slice_orientation : this.getOrientation()};
-				desk.actions.getInstance().launchAction(parameterMap, getAnswer, this);
-			}
+			var parameterMap={
+				action : "slice_volume",
+				input_volume : this.__file,
+				output_directory : "cache\/",
+				format : this.getImageFormat(),
+				slice_orientation : this.getOrientation()};
+			desk.actions.getInstance().launchAction(parameterMap, getAnswer, this);
 		},
 
 		getBrightness : function () {

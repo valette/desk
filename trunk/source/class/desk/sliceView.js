@@ -11,14 +11,13 @@ qx.Class.define("desk.sliceView",
 {
 	extend : qx.ui.container.Composite,
 
-	construct : function(fileBrowser, master, orientation)
+	construct : function(master, orientation)
 	{
 		this.base(arguments);
 		this.setLayout(new qx.ui.layout.HBox());
 		this.setDecorator("main");
 
 		this.__slices=[];
-		this.__fileBrowser=fileBrowser;
 
 		if (typeof orientation=="number") {
 			this.setOrientation(orientation);
@@ -73,7 +72,6 @@ qx.Class.define("desk.sliceView",
 
 	members : {
 
-		__fileBrowser : null,
 		__slices : null,
 
 		__slider : null,
@@ -627,7 +625,7 @@ qx.Class.define("desk.sliceView",
 				}
 			}
 
-			var volumeSlice=new desk.volumeSlice(file,this.__fileBrowser, this.getOrientation(), parameters);
+			var volumeSlice=new desk.volumeSlice(file, this.getOrientation(), parameters);
 			this.__slices.push(volumeSlice);
 			var _this=this;
 
