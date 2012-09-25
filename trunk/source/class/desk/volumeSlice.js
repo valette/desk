@@ -86,19 +86,19 @@ qx.Class.define("desk.volumeSlice",
 		].join("\n"),
 
 		FRAGMENTSHADERCHAR : [
-				"float valuePNG = rawBytes[0] - 256.0 * step ( 128.0, rawBytes[0] );"
+				"float color = rawBytes[0] - 256.0 * step ( 128.0, rawBytes[0] );"
 		].join("\n"),
 
 		FRAGMENTSHADERUCHAR : [
-				"float valuePNG = rawBytes[0];"
+				"float color = rawBytes[0];"
 		].join("\n"),
 
 		FRAGMENTSHADERSHORT : [
-				"float valuePNG = rawBytes[0]+ 256.0 * rawBytes[3] - 65536.0 * step ( 128.0, rawBytes[3] );"
+				"float color = rawBytes[0]+ 256.0 * rawBytes[3] - 65536.0 * step ( 128.0, rawBytes[3] );"
 		].join("\n"),
 
 		FRAGMENTSHADERUSHORT : [
-				"float valuePNG = rawBytes[0] + 256.0 * rawBytes[3];"
+				"float color = rawBytes[0] + 256.0 * rawBytes[3];"
 		].join("\n"),
 
 		FRAGMENTSHADERFLOAT : [
@@ -107,18 +107,18 @@ qx.Class.define("desk.volumeSlice",
 				"float Sign = 1.0 - step(128.0,rawBytes[3])*2.0 ;",
 				"float Exponent = 2.0 * mod(rawBytes[3],128.0) + step(128.0,rawBytes[2]) - 127.0;",
 				"float Mantissa = mod(rawBytes[2],128.0)*65536.0 + rawBytes[1]*256.0 +rawBytes[0]+ 8388608.0;",
-				"float valuePNG = Sign * Mantissa * pow(2.0,Exponent - 23.0);"
+				"float color = Sign * Mantissa * pow(2.0,Exponent - 23.0);"
 		].join("\n"),
 
 		FRAGMENTSHADEREND : [
-				"float rescaledValuePNG = ( valuePNG - scalarMin ) / ( scalarMax - scalarMin );",
+				"float rescaledValuePNG = ( color - scalarMin ) / ( scalarMax - scalarMin );",
 				"float rescaledPixelValue= (1.0 - imageType )*  rescaledValuePNG + imageType * valueJPG;",
 				"float correctedPixelValue=(rescaledPixelValue+brightness)*contrast;",
 				"vec4 correctedColor=vec4(correctedPixelValue);",
 				"correctedColor[3]=opacity;",
 
 				"float unscaledValueJPG=( scalarMax - scalarMin ) * valueJPG + scalarMin;",
-				"float pixelValue=mix(valuePNG, unscaledValueJPG, imageType);",
+				"float pixelValue=mix(color, unscaledValueJPG, imageType);",
 				"float clampedValue=clamp(pixelValue/ lookupTableLength, 0.0, 1.0);",
 				"vec2 colorIndex=vec2(clampedValue,0.0);",
 				"vec4 colorFromLookupTable = texture2D( lookupTable,colorIndex  );",
@@ -347,6 +347,31 @@ qx.Class.define("desk.volumeSlice",
 			this.fireEvent("changeImage");
 		},
 
+		updateMaterial : function (material) {
+			function addMembers(source, dest) {
+				for (var attr in source) {
+					if (source.hasOwnProperty(attr)) dest[attr] = source[attr];
+				}
+			}
+			material.uniforms={};
+			addMembers(material.baseShader.baseUniforms, material.uniforms);
+			var extraUniforms=material.baseShader.extraUniforms;
+			material.fragmentShader="";
+			for (var i=0;i!=extraUniforms.length;i++) {
+				var name=extraUniforms[i].name;
+				material.fragmentShader+="\n uniform float "+name+";";
+				material.uniforms[name]=extraUniforms[i];
+			}
+
+			material.fragmentShader+="\n"+material.baseShader.baseShaderBegin;
+			var extraShaders=material.baseShader.extraShaders;
+			for (var i=0;i!=extraShaders.length;i++) {
+				material.fragmentShader+="\n"+extraShaders[i];
+			}
+			material.fragmentShader+="\n"+material.baseShader.baseShaderEnd;
+			material.needsUpdate=true;
+		},
+
 		getMaterial :function () {
 			var texture=new THREE.Texture(this.__image);
 			texture.needsUpdate = true;
@@ -402,8 +427,7 @@ qx.Class.define("desk.volumeSlice",
 				shader=desk.volumeSlice.FRAGMENTSHADERENDMULTICHANNEL;
 			}
 
-			var material=new THREE.ShaderMaterial({
-				uniforms: {
+			var baseUniforms={
 					texture: { type: "t", value: 0, texture: texture },
 					lookupTable: { type: "t", value: 1, texture: lookupTable },
 					lookupTableLength : { type: "f", value: 2 },
@@ -414,11 +438,27 @@ qx.Class.define("desk.volumeSlice",
 					scalarMin : { type: "f", value: this.__scalarMin},
 					scalarMax : { type: "f", value: this.__scalarMax},
 					imageType : { type: "f", value: this.__availableImageFormat}
-				},
+				};
+
+			var baseShaderBegin=[desk.volumeSlice.FRAGMENTSHADERBEGIN,
+						middleShader].join("\n");
+
+			var baseShaderEnd=desk.volumeSlice.FRAGMENTSHADEREND;
+
+			var material=new THREE.ShaderMaterial({
+				uniforms: baseUniforms,
 				vertexShader: desk.volumeSlice.VERTEXSHADER,
 				fragmentShader: shader,
 				transparent : true
 			});
+
+			material.baseShader={
+				baseUniforms : baseUniforms,
+				baseShaderBegin : baseShaderBegin,
+				baseShaderEnd : baseShaderEnd,
+				extraUniforms : [],
+				extraShaders : []
+			};
 
 			var luts=this.getLookupTables();
 			if (luts[0]!=null) {
@@ -426,6 +466,11 @@ qx.Class.define("desk.volumeSlice",
 			}
 
 			this.__materials.push(material);
+//			material.baseShader.extraShaders.push("valueJPG=0.5;\n valueJPG=0.5;");
+//			material.baseShader.extraShaders.push("if (color < thresholdlow) \n color=0.0;");
+//			var thresholdValue=200.0;
+//			material.baseShader.extraUniforms.push({name : "thresholdlow", type: "f", value: thresholdValue });
+//			this.updateMaterial(material);
 			return material;
 		},
 
