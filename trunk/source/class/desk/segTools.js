@@ -376,7 +376,7 @@ qx.Class.define("desk.segTools",
 				tools.__startSegmentationButton.setEnabled(true);
 				if (meshViewer==null) {
 					meshViewer=new desk.meshView(tools.getSessionDirectory()+
-						"/meshes/meshes.xml", fileBrowser);
+						"/meshes/meshes.xml");
 					meshViewer.addListener("close", function () {
 						meshViewer=null;
 					})

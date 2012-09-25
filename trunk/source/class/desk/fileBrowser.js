@@ -297,13 +297,13 @@ qx.Class.define("desk.fileBrowser",
 				case ".stl":
 				case ".ctm":
 				case ".off":
-					new desk.meshView(file, myBrowser,modificationTime);
+					new desk.meshView(file, modificationTime);
 //					qx.core.Init.getApplication().getRoot().add(meshView);
 					break;
 				case ".png":
 				case ".jpg":
 				case ".bmp":
-					new desk.imageView(file, myBrowser);
+					new desk.imageView(file);
 //					qx.core.Init.getApplication().getRoot().add(imageView);
 					break;
 				case ".xml":
@@ -314,7 +314,7 @@ qx.Class.define("desk.fileBrowser",
 					
 					if (xmlDoc.getElementsByTagName("mesh").length!=0)
 					{
-						new desk.meshView(file, myBrowser, modificationTime);
+						new desk.meshView(file, modificationTime);
 //						qx.core.Init.getApplication().getRoot().add(meshView);
 					}
 			/*		else if (xmlDoc.getElementsByTagName("volume").length!=0)
