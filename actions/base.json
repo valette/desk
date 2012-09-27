@@ -78,7 +78,7 @@
 		    "attributes":
 		    {
 		        "name":"sleep",
-		        "executable":"sleep",
+		        "command":"sleep",
 		        "voidAction":"true"
 		    }
 		},
