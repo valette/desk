@@ -132,6 +132,19 @@ function exportActions( file, callback ) {
 	});
 }
 
+function updateActionsList (callback) {
+	// clear actions
+	actions=[];
+
+	// add actions
+	fs.readdir(actionsDir, function (err, files) {
+		for (var i=0;i<files.length;i++) {
+			files[i]=actionsDir+files[i];
+		}
+		exports.includeActions(files, callback);
+	});
+}
+
 exports.setup=function (root, callback) {
 	filesRoot=fs.realpathSync(root)+"/";
 
@@ -147,14 +160,7 @@ exports.setup=function (root, callback) {
 	dataRoot=getSubdir('data');
 	cacheRoot=getSubdir('cache');
 	actionsRoot=getSubdir('actions');
-
-	// add actions
-	fs.readdir(actionsDir, function (err, files) {
-		for (var i=0;i<files.length;i++) {
-			files[i]=actionsDir+files[i];
-		}
-		exports.includeActions(files, callback);
-	});
+	updateActionsList(callback);
 };
 
 exports.performAction = function (POST, callback) {
