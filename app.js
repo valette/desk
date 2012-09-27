@@ -127,7 +127,10 @@ app.configure(function(){
 
 	// handle actions
 	app.post(phpURL+'actions.php', function(req, res){
-		res.connection.setTimeout(0);
+		res.connection.setTimeout(3600000);
+		res.connection.setKeepAlive(true);
+		req.connection.setTimeout(3600000);
+		req.connection.setKeepAlive(true);
 	    actions.performAction(req.body, function (message) {
 			res.send(message);
 		});
