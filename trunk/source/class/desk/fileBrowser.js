@@ -32,11 +32,6 @@ qx.Class.define("desk.fileBrowser",
 		virtualTree.setSelectionMode(qx.ui.treevirtual.TreeVirtual.SelectionMode.MULTIPLE_INTERVAL);
 
 		virtualTree.set({
-<<<<<<< HEAD
-//			width  : 400,
-=======
-			//~ width  : 400,
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 			rowHeight: 22,
 			alwaysShowOpenCloseSymbol : true,
 			columnVisibilityButtonVisible : true,
@@ -50,13 +45,6 @@ qx.Class.define("desk.fileBrowser",
 		// create the filter bar
 		var filterBox = new qx.ui.container.Composite;
 		filterBox.setLayout(new qx.ui.layout.HBox(10));
-<<<<<<< HEAD
-		this.add(filterBox);//, {flex:1});
-=======
-///////////////////////////////////////////////////////////////////////////////////////////////
-		if(this.__standAlone)
-			this.add(filterBox);//, {flex:1});
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 		var filterText=new qx.ui.basic.Label("Filter files :");
 		filterBox.add(filterText);
 		var filterField = new qx.ui.form.TextField();
@@ -65,10 +53,6 @@ qx.Class.define("desk.fileBrowser",
 			dataModel.setData();
 			},this);
 		filterBox.add(filterField, {flex:1});
-<<<<<<< HEAD
-=======
-		this.__filterField = filterField;
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 
 		var filter = qx.lang.Function.bind(function(node)
 			{
@@ -99,18 +83,10 @@ qx.Class.define("desk.fileBrowser",
 		// events handling
 		if (this.__actions.isReady()) {
 			this.__createDefaultStaticActions();
-<<<<<<< HEAD
-=======
-			console.log("ready");
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 		}
 		else {
 			this.__actions.addListenerOnce("changeReady", function (e) {
 				this.__createDefaultStaticActions();
-<<<<<<< HEAD
-=======
-				console.log("ready");
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 			}, this);
 		}
 
@@ -144,45 +120,12 @@ qx.Class.define("desk.fileBrowser",
 				case "fileBrowser":
 					e.addData(type, this);
 					break;
-<<<<<<< HEAD
-=======
-				case "fileNode":
-					e.addData(type, this.getSelectedNode());
-					break;
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 				default :
 					alert ("type "+type+"not supported for drag and drop");
 				}
 		}, this);
 
 
-<<<<<<< HEAD
-		if (standAlone!=false)
-		{
-			var window=new qx.ui.window.Window();
-			window.setLayout(new qx.ui.layout.VBox());
-			this.__window=window;
-//			window.setShowClose(false);
-			window.setShowMinimize(false);
-			window.setUseMoveFrame(true);
-			window.setCaption("files");
-			window.setWidth(400);
-			window.setHeight(500);
-			window.add(this, {flex : 1});
-			this.__window.open();
-		}
-=======
-		var window=new qx.ui.window.Window();
-		window.setLayout(new qx.ui.layout.VBox());
-		this.__window=window;
-//			window.setShowClose(false);
-		window.setShowMinimize(false);
-		window.setUseMoveFrame(true);
-		window.setCaption("files");
-		window.setHeight(500);
-		window.add(this, {flex : 1});
-		this.__window.open();
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 
 
 		return (this);
@@ -195,19 +138,10 @@ qx.Class.define("desk.fileBrowser",
 
 		// the window containing the widget when in standalone mode
 		__window : null,
-<<<<<<< HEAD
-
-=======
-		
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 		__fileHandler : null,
 		__baseDir : "data",
 		__virtualTree : null,
 		__rootId : null,
-<<<<<<< HEAD
-=======
-		__filterField : null,
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 
 		__actionNames : null,
 		__actionCallbacks : null,
@@ -216,16 +150,6 @@ qx.Class.define("desk.fileBrowser",
 
 		__updateDirectoryInProgress : null,
 
-<<<<<<< HEAD
-=======
-		getWindow : function() {
-			return this.__window;
-		},
-		getFileFilter : function() {
-			return this.__filterField;
-		},
-		
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 		// returns the directory for the given file, session type and Id
 		getSessionDirectory : function (file,sessionType,sessionId)
 		{
@@ -243,35 +167,15 @@ qx.Class.define("desk.fileBrowser",
 		{
 			var lastSlashIndex=file.lastIndexOf("/");
 			var directory=file.substring(0,lastSlashIndex);
-<<<<<<< HEAD
-
-			var shortFileName=file.substring(lastSlashIndex+1,file.length);
-=======
-			//~ alert("directory : " + directory);
-
-			var shortFileName=file.substring(lastSlashIndex+1,file.length);
-			//~ alert("shortFileName : " + shortFileName);
-			
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 			function readFileList(e)
 			{
 				var sessions=[];
 				var req = e.getTarget();
 				var files=req.getResponseText().split("\n");
-<<<<<<< HEAD
-=======
-				//~ alert("files : " + files);
-				
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 				for (var i=0;i<files.length;i++)
 				{
 					var splitfile=files[i].split(" ");
 					var fileName=splitfile[0];
-<<<<<<< HEAD
-=======
-					//~ alert("fileName : " + fileName);
-					
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 					if (fileName!="")
 					{
 						if (splitfile[1]=="dir")
@@ -288,11 +192,6 @@ qx.Class.define("desk.fileBrowser",
 									if (childSession==(sessionType+"."))
 									{
 										var sessionId=parseInt(remaining.substring(sessionType.length+1,remaining.length));
-<<<<<<< HEAD
-=======
-										//~ alert("sessionId : " + sessionId);
-										
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 										sessions.push(sessionId);
 									}
 								}
@@ -401,13 +300,6 @@ qx.Class.define("desk.fileBrowser",
 					}
 			/*		else if (xmlDoc.getElementsByTagName("volume").length!=0)
 					{
-<<<<<<< HEAD
-						var volView=new desk.volView(file, myBrowser, modificationTime);
-						//~ var volView=new desk.volMaster(file, myBrowser, modificationTime); //~ orion test
-=======
-						//~ var volView=new desk.volView(file, myBrowser, modificationTime);
-						var volView=new desk.volMaster(file, myBrowser, modificationTime); //~ orion test
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 //						qx.core.Init.getApplication().getRoot().add(volView);
 					}*/
 					else
@@ -421,24 +313,6 @@ qx.Class.define("desk.fileBrowser",
 					//~ qx.core.Init.getApplication().getRoot().add(volView);
 					
 				//~ orion test
-<<<<<<< HEAD
-					new desk.volMaster(file, myBrowser);
-					
-					break;
-				case ".json":
-					desk.action.CREATEFROMFILE(myBrowser.getNodeFile(node));
-=======
-					if(this.__standAlone)
-					{
-						var volMaster = new desk.volMaster(file, myBrowser);
-						var volWindow = volMaster.getWindow();
-					}
-					else
-						new desk.volMaster(file, myBrowser);
-					break;
-				case ".json":
-					desk.action.CREATEFROMFILE(myBrowser.__getNodeFile(node));
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 					break;
 				default:
 					alert("no file handler exists for extension "+extension);
@@ -450,27 +324,10 @@ qx.Class.define("desk.fileBrowser",
 
 		__createDefaultStaticActions : function ()
 		{
-<<<<<<< HEAD
-			if (this.__actions.getPermissionsLevel()<1) {
-				return;
-			}
-=======
-			if (this.__actions.getPermissionsLevel()<1)
-				return;
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 
 			var myBrowser=this;
 			myBrowser.addAction("redo action", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-<<<<<<< HEAD
-					desk.action.CREATEFROMFILE(myBrowser.getNodeFile(node));
-				else
-					desk.action.CREATEFROMFILE(myBrowser.getNodeFile(node)+"/parameters.txt");
-=======
-					desk.action.CREATEFROMFILE(myBrowser.__getNodeFile(node));
-				else
-					desk.action.CREATEFROMFILE(myBrowser.__getNodeFile(node)+"/parameters.txt");
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 			});
 
 			myBrowser.addAction("volViewSimple", function (node) {
@@ -497,20 +354,6 @@ qx.Class.define("desk.fileBrowser",
 					alert("Cannot download a directory!");
 			});
 
-<<<<<<< HEAD
-			myBrowser.addAction("upload",function (node) {
-				var nodeId=node.nodeId;
-				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-					nodeId=node.parentNodeId;
-				}
-				var uploader=new desk.Uploader(myBrowser.getNodeFile(nodeId));
-				uploader.addListener("upload", function () {
-					myBrowser.__expandDirectoryListing(nodeId);
-				})
-			});
-
-=======
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 			myBrowser.addAction("dicom2meta",function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 				{
@@ -599,11 +442,6 @@ qx.Class.define("desk.fileBrowser",
 
 		getFileURL : function (file)
 		{
-<<<<<<< HEAD
-			return this.__actions.getFileURL(file);
-=======
-			return (this.__actions.baseURL+"php/"+file);
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 		},
 
 		getNodeFile : function (node)

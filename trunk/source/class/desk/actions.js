@@ -8,35 +8,12 @@ qx.Class.define("desk.actions",
 
 	type : "singleton",
 
-<<<<<<< HEAD
-	environment : {
-		"desk.extURL" : "to define in config.json"
-	},
-=======
-	//~ /*
-	environment : {
-		//~ "desk.extURL" : "to define in config.json"
-		"desk.extURL" : "http://vip.creatis.insa-lyon.fr:8080/visu/oneFitContrib/trunk/ext/"
-	},
-	//~ */
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 
 	construct : function()
 	{
 		this.base(arguments);
 		this.__actionsQueue=[];
 
-<<<<<<< HEAD
-		var URLparser = document.createElement('a');
-		URLparser.href = document.href;
-
-		var pathname=URLparser.pathname;
-		this.user=URLparser.pathname.split("/")[1];
-		console.log("user : "+this.user);
-		this.baseURL='/'+this.user+'/ext/';
-
-=======
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.__populateActionMenu();
 
@@ -48,14 +25,6 @@ qx.Class.define("desk.actions",
 			if (this.__permissionsLevel<1) {
 				return;
 			}
-<<<<<<< HEAD
-			qx.core.Init.getApplication().getRoot().add(ongoingActions, { right : 0, top : 0});
-=======
-/////////////////////////////////////////////////////////////////////////////////
-			var standAlone = qx.core.Init.getApplication().getAppliFlag();
-			if(standAlone)
-				qx.core.Init.getApplication().getRoot().add(ongoingActions, { right : 0, top : 0});
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 		}, this);
 
 		// load external three.js files
@@ -82,14 +51,6 @@ qx.Class.define("desk.actions",
 	},
 
 	members : {
-<<<<<<< HEAD
-		baseURL : null,
-		user : null,
-
-=======
-		//~ baseURL : "../../../ext/",
-		baseURL : "../../../oneFitContrib/trunk/ext/",
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 		__actionMenu : null,
 		__actions : null,
 		__fileBrowser : null,
@@ -106,11 +67,6 @@ qx.Class.define("desk.actions",
 
 		getFileURL : function (file)
 		{
-<<<<<<< HEAD
-			return '/'+this.user+'/files/'+file;
-=======
-			return (this.baseURL+"php/"+file);
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 		},
 
 		getPermissionsLevel : function () {
@@ -134,13 +90,6 @@ qx.Class.define("desk.actions",
 			this.__currentFileBrowser=fileBrowser;
 			return this.__actionMenu;
 		},
-<<<<<<< HEAD
-=======
-		
-		getOnGoingContainer : function() {
-			return this.__ongoingActions;
-		},
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 
 
 		__tryToLaunchActions : function () {
@@ -162,23 +111,6 @@ qx.Class.define("desk.actions",
 
 		__launchAction : function (actionParameters, successCallback, context) {
 			var that=this;
-<<<<<<< HEAD
-			var actionFinished=false;
-			var actionNotification=null;
-			setTimeout(function(){
-				if (!actionFinished) {
-					actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
-					that.__ongoingActions.add(actionNotification);
-				}
-			}, 5000);
-
-			var req = new qx.io.request.Xhr();
-
-=======
-			var actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
-			this.__ongoingActions.add(actionNotification);
-			var req = new qx.io.request.Xhr();
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 			req.setUrl(this.baseURL+"php/actions.php");
 			req.setMethod("POST");
 			req.setAsync(true);
@@ -199,17 +131,6 @@ qx.Class.define("desk.actions",
 						alert ("error for action "+actionParameters.action+": \n"+splitResponse[0]);
 					}
 					else {
-<<<<<<< HEAD
-						actionFinished=true;
-						if (actionNotification!=null) {
-							this.__ongoingActions.remove(actionNotification);
-						}
-						if (successCallback!=null) {
-=======
-						this.__ongoingActions.remove(actionNotification);
-						if (successCallback!=null) {
-							//~ alert("response  :  "+response);
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 							if (context!=null) {
 								successCallback.call(context,e);
 							}
@@ -256,10 +177,6 @@ qx.Class.define("desk.actions",
 					if(xmlhttp.responseText!=null)
 					{
 						var settings=JSON.parse(xmlhttp.responseText);
-<<<<<<< HEAD
-=======
-						console.log(settings);
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 						_this.__actions=settings;
 
 						_this.__permissionsLevel=parseInt(settings.permissions);
@@ -282,11 +199,6 @@ qx.Class.define("desk.actions",
 					}
 				}
 			}
-<<<<<<< HEAD
-			xmlhttp.open("GET", this.getFileURL("actions.json")+"?nocache=" + Math.random(),true);
-=======
-			xmlhttp.open("GET",_this.baseURL+"php/actions.json?nocache=" + Math.random(),true);
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 			xmlhttp.send();
 		}
 	}

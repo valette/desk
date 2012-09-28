@@ -6,11 +6,6 @@ qx.Class.define("desk.segTools",
 {
   extend : qx.ui.window.Window,
 
-<<<<<<< HEAD
-	construct : function(master, globalFile, globalFileBrowser)
-=======
-	construct : function(master, globalFile, globalFileBrowser, appliCallback)
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 	{	
 		this.base(arguments);
 
@@ -31,13 +26,6 @@ qx.Class.define("desk.segTools",
 
 		this.__fileBrowser = globalFileBrowser;
 
-<<<<<<< HEAD
-=======
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		this.__appliCallback = appliCallback;
-		
-		
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 	//// Set window
 		this.setLayout(new qx.ui.layout.VBox());
 		this.set({
@@ -69,10 +57,6 @@ qx.Class.define("desk.segTools",
 				this.removeListenerById(listenersIds[this]);
 				this.setPaintMode(false);
 				this.setEraseMode(false);
-<<<<<<< HEAD
-=======
-				//~ this.setMarkMode(false);
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 				var canvas=this.getDrawingCanvas();
 				canvas.getContext2d().clearRect(0,0,
 							canvas.getCanvasWidth(), canvas.getCanvasHeight());
@@ -80,26 +64,6 @@ qx.Class.define("desk.segTools",
 			});
 		});
 		this.__labels=[];
-<<<<<<< HEAD
-
-		this.open();
-
-//		this.__createLabelsList();
-	//// Return the tools window aka : this
-		return (this);
-
-=======
-		
-		this.open();
-		
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		if(typeof this.__appliCallback == "function")
-			this.__appliCallback(this.__master, this);
-			
-//		this.__createLabelsList();
-	//// Return the tools window aka : this
-		return (this);
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 	},
 
 	statics : {
@@ -110,10 +74,6 @@ qx.Class.define("desk.segTools",
 	},
 
 	events : {
-<<<<<<< HEAD
-=======
-		"meshViewerCreated" : "qx.event.type.Data"
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 	},
 
 	properties : {
@@ -123,18 +83,6 @@ qx.Class.define("desk.segTools",
 
 	members :
 	{
-<<<<<<< HEAD
-		__defaultColorsFile : "data/xml/colors7.xml",
-		__master : null,
-		__file : null,
-		__fileBrowser : null,
-=======
-		__defaultColorsFile : "data/xml/colorsKneeAdvanced.xml",
-		__master : null,
-		__file : null,
-		__fileBrowser : null,
-		__meshViewer : null,
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 
 		__topRightContainer : null,
 		__bottomRightContainer : null,
@@ -159,17 +107,6 @@ qx.Class.define("desk.segTools",
 		__penSize : null,
 		__eraserButton : null,
 		__eraserCursor : null,
-<<<<<<< HEAD
-
-=======
-		
-		getMeshViewer : function()
-		{
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			return this.__meshViewer;
-		},
-		
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 		__reloadSeedImage : function (sliceView) {
 			if (this.getSessionDirectory()==null)
 				return;
@@ -257,25 +194,6 @@ qx.Class.define("desk.segTools",
 			tools.__topRightContainer.add(tools.__eraserButton);
 
 			
-<<<<<<< HEAD
-=======
-			//~ /*
-		////Create test Marks on/off button
-            tools.__marksButton = new qx.ui.form.ToggleButton("Marks");
-			
-			this.__marksButton.addListener("changeValue", function(e)
-			{
-				this.__master.applyToViewers(function () {
-					this.__marker.setMarkMode(e.getData());
-					});
-			}, this);
-
-			tools.__topRightContainer.add(tools.__marksButton);
-			//~ */
-			var master = this.__master;
-			this.__master.applyToViewers(function () { this.__marker = new desk.Markers(this, master); });
-			
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 			
 		////Create labels zone
 			var paintPage = new qx.ui.tabview.Page("paint");
@@ -317,10 +235,6 @@ qx.Class.define("desk.segTools",
 
 			tools.__mainBottomRightContainer.add(tabView); //~ resizing
 
-<<<<<<< HEAD
-=======
-			
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
 			tools.__topRightContainer.add(whileDrawingDrwngOpacityLabel);
 			
@@ -383,26 +297,10 @@ qx.Class.define("desk.segTools",
 			tools.addListener("changeSessionDirectory", function (e)
 			{
 				var directory=e.getData();
-<<<<<<< HEAD
-=======
-				//~ console.log("directory="+directory);
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 				medianFilteringAction.setOutputDirectory(directory);
 				clusteringAction.setOutputDirectory(directory);
 				segmentationAction.setOutputDirectory(directory);
 				meshingAction.setOutputDirectory(directory);
-<<<<<<< HEAD
-				var adjacenciesXMLFileName = "data/adjacencies7.xml";
-				segmentationAction.setActionParameters({
-					"input_volume" : volFile,
-					"seeds" : tools.getSessionDirectory()+"/seeds.xml"
-					//,"adjacencies" : adjacenciesXMLFileName
-					});
-=======
-				segmentationAction.setActionParameters({
-					"input_volume" : volFile,
-					"seeds" : tools.getSessionDirectory()+"/seeds.xml"});
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 				clusteringAction.setActionParameters({
 					"input_volume" : volFile});
 				meshingAction.setActionParameters({
@@ -463,19 +361,10 @@ qx.Class.define("desk.segTools",
 					meshViewer.addListener("close", function () {
 						meshViewer=null;
 					})
-<<<<<<< HEAD
-=======
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-					this.fireDataEvent("meshViewerCreated", meshViewer);
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 				}
 				else {
 					meshViewer.update();
 				}
-<<<<<<< HEAD
-=======
-				this.__meshViewer = meshViewer;
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 			}, this);
 
 			tools.__seedsTypeSelectBox = tools.__getSeedsTypeSelectBox();
@@ -573,12 +462,6 @@ qx.Class.define("desk.segTools",
 			for (var i=0;i<adjacencies.length;i++)
 			{
 				var adjacency=adjacencies[i];
-<<<<<<< HEAD
-=======
-				if(adjacency.getAttribute("label2")!="0") // "0" is used in cvtgcmultiseg to list each label even if it has not a
-														// defined adjacency constraint
-														// (for example, if it has an already-defined adjaceny constraint with only one other label)
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 				this.__addEdge(this.__getLabel(adjacency.getAttribute("label1")),
 						this.__getLabel(adjacency.getAttribute("label2")));
 			}
@@ -884,18 +767,6 @@ qx.Class.define("desk.segTools",
 		},
 
 		__getLabel : function (label) {
-<<<<<<< HEAD
-			var intLabel=parseInt(label);
-			var labels=this.__labels;
-			for (var i=0;i<labels.length;i++) {
-=======
-	//~ this.debug("__getLabel(" + label + ")");
-			var intLabel=parseInt(label);
-			var labels=this.__labels;
-			for (var i=0;i<labels.length;i++) {
-	//~ this.debug("labels[i].label : " + labels[i].label);
-	//~ this.debug("intLabel : " + intLabel);
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 				if (labels[i].label==intLabel) {
 					return (labels[i]);
 				}
@@ -1034,10 +905,6 @@ qx.Class.define("desk.segTools",
 					}
 					paint=true;
 					this.__eraserButton.setValue(false);
-<<<<<<< HEAD
-=======
-					this.__marksButton.setValue(false);
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 				}
 				else
 				{
@@ -1238,10 +1105,6 @@ qx.Class.define("desk.segTools",
 			sessionsListLayout.setSpacing(4);
 			var sessionsListContainer=new qx.ui.container.Composite(sessionsListLayout);
 			var sessionsListLabel=new qx.ui.basic.Label("Sessions : ");
-<<<<<<< HEAD
-			sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});
-=======
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 			sessionsListContainer.add(sessionsListLabel);
 			var button=new qx.ui.form.Button("new session");
 			sessionsListContainer.add(button);
@@ -1249,10 +1112,6 @@ qx.Class.define("desk.segTools",
 			var sessionType="gcSegmentation";
 			var sessionsList = new qx.ui.form.SelectBox();
 			sessionsListContainer.add(sessionsList);
-<<<<<<< HEAD
-=======
-			sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 
 			var updateInProgress=false;
 
@@ -1268,27 +1127,11 @@ qx.Class.define("desk.segTools",
 						var sessionItem = new qx.ui.form.ListItem(""+sessionId);
 						sessionsList.add(sessionItem);
 						if (sessionId==sessionIdToSelect)
-<<<<<<< HEAD
-							sessionItemToSelect=sessionItem;
-=======
-						{
-							sessionItemToSelect=sessionItem;
-						}
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 					}
 
 					if (sessionIdToSelect==null)
 					{
 						var dummyItem = new qx.ui.form.ListItem("select a session");
-<<<<<<< HEAD
-						sessionsList.add(dummyItem);
-						dummyItem.setUserData("dummy",true);
-=======
-						//~ alert("dummyItem : " + dummyItem);
-						sessionsList.add(dummyItem);
-						dummyItem.setUserData("dummy",true);
-						//~ alert("sessionsList.getSelection() : " + sessionsList.getSelection());
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 					}
 					if (sessionItemToSelect!=null)
 					{
@@ -1300,15 +1143,6 @@ qx.Class.define("desk.segTools",
 						tools.__loadColors();
 					}
 					else
-<<<<<<< HEAD
-						sessionsList.setSelection([dummyItem]);					
-=======
-					{
-						//~ alert("sessionsList.getSelection() : " + sessionsList.getSelection());
-						//~ alert("dummyItem : " + dummyItem);
-						sessionsList.setSelection([dummyItem]);
-					}
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 					updateInProgress=false;
 				};
 
@@ -1479,13 +1313,6 @@ qx.Class.define("desk.segTools",
 			for(var i=0; i<labelColors.length; i++)
 			{
 				var label1=labelColors[i].label;
-<<<<<<< HEAD
-=======
-					//~ adjacencies+=element('adjacency',null, 
-						//~ {label1 : ""+label1, label2 : "0"})+"\n"; // "0" is used in cvtgcmultiseg to list each label even if it has not a
-																	// defined adjacency constraint
-																	// (for example, if it has an already-defined adjaceny constraint with only one other label)
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 				var adj=labelColors[i].adjacencies;
 				for (var j=0;j<adj.length;j++) {
 					var label2=adj[j].label;
@@ -1625,10 +1452,6 @@ qx.Class.define("desk.segTools",
 					var saveData=pngImg.replace("image/png", "image/octet-stream");
 					var commaIndex=pngImg.lastIndexOf(",");
 					var base64Img = pngImg.substring(commaIndex+1,pngImg.length);
-<<<<<<< HEAD
-=======
-					//~ this.debug("base64Img : " + base64Img);
->>>>>>> ca78c024b57c9e0b2483f09a397aa85ed242d91b
 					return base64Img;
 				}
 			}
