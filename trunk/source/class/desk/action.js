@@ -88,6 +88,7 @@ qx.Class.define("desk.action",
 			// try to load parameters on server
 
 			var req = new qx.io.request.Xhr(this.__actions.baseURL+"php/"+
+			//~ var req = new qx.io.request.Xhr(this.__actions.baseURL+"php/"+"data/"+ // if upload directory/symbolicLink inside data directory
 						this.getOutputDirectory()+"/action.json?nocache=" + Math.random());
 			req.addListener("success", function(e) {
 				this.__loadedParameters=JSON.parse(e.getTarget().getResponseText());
@@ -457,7 +458,6 @@ qx.Class.define("desk.action",
 
 								var req = e.getTarget();
 								var response=req.getResponseText();
-								//~ showLogButton.setVisibility("visible");
 								var splitResponse=response.split("\n");
 								outputDirectory=splitResponse[0];
 								if (this.getOutputDirectory()==null) {
@@ -466,7 +466,6 @@ qx.Class.define("desk.action",
 
 								executionStatus.setValue(splitResponse[splitResponse.length-2]);
 								if ( action.attributes.voidAction != "true" ) {
-								//~ if ( action.parameters.voidAction != "true" ) {
 									if (this.__standalone) {
 										//display the results directory
 										if (this.__embededFileBrowser==null) {

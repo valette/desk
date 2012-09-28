@@ -8,11 +8,22 @@ qx.Class.define("desk.actions",
 
 	type : "singleton",
 
+	environment : {
+		"desk.extURL" : "to define in config.json"
+	},
 
 	construct : function()
 	{
 		this.base(arguments);
 		this.__actionsQueue=[];
+
+		var URLparser = document.createElement('a');
+		URLparser.href = document.href;
+
+		var pathname=URLparser.pathname;
+		this.user=URLparser.pathname.split("/")[1];
+		//~ console.log("user : "+this.user);
+		this.baseURL='/'+this.user+'/ext/';
 
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.__populateActionMenu();
@@ -25,6 +36,10 @@ qx.Class.define("desk.actions",
 			if (this.__permissionsLevel<1) {
 				return;
 			}
+/////////////////////////////////////////////////////////////////////////////////
+			var standAlone = qx.core.Init.getApplication().getAppliFlag();
+			if(standAlone)
+				qx.core.Init.getApplication().getRoot().add(ongoingActions, { right : 0, top : 0});
 		}, this);
 
 		// load external three.js files
@@ -51,6 +66,9 @@ qx.Class.define("desk.actions",
 	},
 
 	members : {
+		baseURL : null,
+		user : null,
+
 		__actionMenu : null,
 		__actions : null,
 		__fileBrowser : null,
@@ -67,6 +85,7 @@ qx.Class.define("desk.actions",
 
 		getFileURL : function (file)
 		{
+			return '/'+this.user+'/files/'+file;
 		},
 
 		getPermissionsLevel : function () {
@@ -90,6 +109,10 @@ qx.Class.define("desk.actions",
 			this.__currentFileBrowser=fileBrowser;
 			return this.__actionMenu;
 		},
+		
+		getOnGoingContainer : function() {
+			return this.__ongoingActions;
+		},
 
 
 		__tryToLaunchActions : function () {
@@ -111,6 +134,20 @@ qx.Class.define("desk.actions",
 
 		__launchAction : function (actionParameters, successCallback, context) {
 			var that=this;
+			//~ var actionFinished=false;
+			//~ var actionNotification=null;
+			//~ setTimeout(function(){
+				//~ if (!actionFinished) {
+					//~ actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
+					//~ that.__ongoingActions.add(actionNotification);
+				//~ }
+			//~ }, 5000);
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			var actionNotification=new qx.ui.basic.Label(actionParameters["action"]); // this allows to detect when an action is ongoing (used in oneFit Appli)
+			this.__ongoingActions.add(actionNotification);
+			
+			var req = new qx.io.request.Xhr();
+
 			req.setUrl(this.baseURL+"php/actions.php");
 			req.setMethod("POST");
 			req.setAsync(true);
@@ -131,6 +168,11 @@ qx.Class.define("desk.actions",
 						alert ("error for action "+actionParameters.action+": \n"+splitResponse[0]);
 					}
 					else {
+						actionFinished=true;
+						if (actionNotification!=null) {
+							this.__ongoingActions.remove(actionNotification);
+						}
+						if (successCallback!=null) {
 							if (context!=null) {
 								successCallback.call(context,e);
 							}
@@ -199,6 +241,7 @@ qx.Class.define("desk.actions",
 					}
 				}
 			}
+			xmlhttp.open("GET", this.getFileURL("actions.json")+"?nocache=" + Math.random(),true);
 			xmlhttp.send();
 		}
 	}

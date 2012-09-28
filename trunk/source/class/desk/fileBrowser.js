@@ -32,6 +32,7 @@ qx.Class.define("desk.fileBrowser",
 		virtualTree.setSelectionMode(qx.ui.treevirtual.TreeVirtual.SelectionMode.MULTIPLE_INTERVAL);
 
 		virtualTree.set({
+//			width  : 400,
 			rowHeight: 22,
 			alwaysShowOpenCloseSymbol : true,
 			columnVisibilityButtonVisible : true,
@@ -45,6 +46,9 @@ qx.Class.define("desk.fileBrowser",
 		// create the filter bar
 		var filterBox = new qx.ui.container.Composite;
 		filterBox.setLayout(new qx.ui.layout.HBox(10));
+///////////////////////////////////////////////////////////////////////////////////////////////
+		if(this.__standAlone)
+			this.add(filterBox);//, {flex:1});
 		var filterText=new qx.ui.basic.Label("Filter files :");
 		filterBox.add(filterText);
 		var filterField = new qx.ui.form.TextField();
@@ -53,6 +57,7 @@ qx.Class.define("desk.fileBrowser",
 			dataModel.setData();
 			},this);
 		filterBox.add(filterField, {flex:1});
+		this.__filterField = filterField;
 
 		var filter = qx.lang.Function.bind(function(node)
 			{
@@ -120,12 +125,26 @@ qx.Class.define("desk.fileBrowser",
 				case "fileBrowser":
 					e.addData(type, this);
 					break;
+				case "fileNode":
+					e.addData(type, this.getSelectedNode());
+					break;
 				default :
 					alert ("type "+type+"not supported for drag and drop");
 				}
 		}, this);
 
-
+		
+		var window=new qx.ui.window.Window();
+		window.setLayout(new qx.ui.layout.VBox());
+		this.__window=window;
+//			window.setShowClose(false);
+		window.setShowMinimize(false);
+		window.setUseMoveFrame(true);
+		window.setCaption("files");
+		window.setWidth(400);
+		window.setHeight(500);
+		window.add(this, {flex : 1});
+		this.__window.open();
 
 
 		return (this);
@@ -142,6 +161,7 @@ qx.Class.define("desk.fileBrowser",
 		__baseDir : "data",
 		__virtualTree : null,
 		__rootId : null,
+		__filterField : null,
 
 		__actionNames : null,
 		__actionCallbacks : null,
@@ -150,6 +170,13 @@ qx.Class.define("desk.fileBrowser",
 
 		__updateDirectoryInProgress : null,
 
+		getWindow : function() {
+			return this.__window;
+		},
+		getFileFilter : function() {
+			return this.__filterField;
+		},
+		
 		// returns the directory for the given file, session type and Id
 		getSessionDirectory : function (file,sessionType,sessionId)
 		{
@@ -167,15 +194,20 @@ qx.Class.define("desk.fileBrowser",
 		{
 			var lastSlashIndex=file.lastIndexOf("/");
 			var directory=file.substring(0,lastSlashIndex);
+
+			var shortFileName=file.substring(lastSlashIndex+1,file.length);
+			
 			function readFileList(e)
 			{
 				var sessions=[];
 				var req = e.getTarget();
 				var files=req.getResponseText().split("\n");
+				
 				for (var i=0;i<files.length;i++)
 				{
 					var splitfile=files[i].split(" ");
 					var fileName=splitfile[0];
+					
 					if (fileName!="")
 					{
 						if (splitfile[1]=="dir")
@@ -300,19 +332,23 @@ qx.Class.define("desk.fileBrowser",
 					}
 			/*		else if (xmlDoc.getElementsByTagName("volume").length!=0)
 					{
+						var volView=new desk.volView(file, myBrowser, modificationTime);
 //						qx.core.Init.getApplication().getRoot().add(volView);
 					}*/
 					else
 						alert ("xml file of unknown type!");
 					break;
 				case ".mhd":
-					//~ var volView=new desk.volView(file, myBrowser);
-					
-					//~ var volView = new desk.volMaster(file, myBrowser); //~ orion test
-					//~ 
-					//~ qx.core.Init.getApplication().getRoot().add(volView);
-					
-				//~ orion test
+					if(this.__standAlone)
+					{
+						var volMaster = new desk.volMaster(file, myBrowser);
+						var volWindow = volMaster.getWindow();
+					}
+					else
+						new desk.volMaster(file, myBrowser);
+					break;
+				case ".json":
+					desk.action.CREATEFROMFILE(myBrowser.getNodeFile(node));
 					break;
 				default:
 					alert("no file handler exists for extension "+extension);
@@ -324,10 +360,15 @@ qx.Class.define("desk.fileBrowser",
 
 		__createDefaultStaticActions : function ()
 		{
+			if (this.__actions.getPermissionsLevel()<1)
+				return;
 
 			var myBrowser=this;
 			myBrowser.addAction("redo action", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+					desk.action.CREATEFROMFILE(myBrowser.getNodeFile(node));
+				else
+					desk.action.CREATEFROMFILE(myBrowser.getNodeFile(node)+"/parameters.txt");
 			});
 
 			myBrowser.addAction("volViewSimple", function (node) {
@@ -354,6 +395,17 @@ qx.Class.define("desk.fileBrowser",
 					alert("Cannot download a directory!");
 			});
 
+			myBrowser.addAction("upload",function (node) {
+				var nodeId=node.nodeId;
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+					nodeId=node.parentNodeId;
+				}
+				var uploader=new desk.Uploader(myBrowser.getNodeFile(nodeId));
+				uploader.addListener("upload", function () {
+					myBrowser.__expandDirectoryListing(nodeId);
+				})
+			});
+
 			myBrowser.addAction("dicom2meta",function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 				{
@@ -365,9 +417,7 @@ qx.Class.define("desk.fileBrowser",
 					{
 						//var req = e.getTarget();
 						//var response=req.getResponseText().split("\n")[0];
-						//~ alert(response);
 					}*/
-					//~ alert(myBrowser.getNodeFile(node));
 					var parameterMap={
 						"action" : "dicom2meta",
 						"sourceDirectory" : myBrowser.getNodeFile(node),
@@ -442,6 +492,7 @@ qx.Class.define("desk.fileBrowser",
 
 		getFileURL : function (file)
 		{
+			return this.__actions.getFileURL(file);
 		},
 
 		getNodeFile : function (node)

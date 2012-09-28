@@ -6,6 +6,7 @@ qx.Class.define("desk.segTools",
 {
   extend : qx.ui.window.Window,
 
+	construct : function(master, globalFile, globalFileBrowser, appliCallback)
 	{	
 		this.base(arguments);
 
@@ -23,9 +24,12 @@ qx.Class.define("desk.segTools",
 		this.__master = master;
 
 		this.__file = globalFile;
-
+		
 		this.__fileBrowser = globalFileBrowser;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		this.__appliCallback = appliCallback;
+		
 	//// Set window
 		this.setLayout(new qx.ui.layout.VBox());
 		this.set({
@@ -64,6 +68,17 @@ qx.Class.define("desk.segTools",
 			});
 		});
 		this.__labels=[];
+		
+		this.open();
+		
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		if(typeof this.__appliCallback == "function")
+			this.__appliCallback(this.__master, this);
+			
+//		this.__createLabelsList();
+	//// Return the tools window aka : this
+		return (this);
+		
 	},
 
 	statics : {
@@ -74,6 +89,8 @@ qx.Class.define("desk.segTools",
 	},
 
 	events : {
+		"gotSegmentedVolume" : "qx.event.type.Event",
+		"meshViewerCreated" : "qx.event.type.Data"
 	},
 
 	properties : {
@@ -83,6 +100,11 @@ qx.Class.define("desk.segTools",
 
 	members :
 	{
+		__defaultColorsFile : "data/xml/colorsKneeAdvanced.xml",
+		__master : null,
+		__file : null,
+		__fileBrowser : null,
+		__meshViewer : null,
 
 		__topRightContainer : null,
 		__bottomRightContainer : null,
@@ -107,6 +129,13 @@ qx.Class.define("desk.segTools",
 		__penSize : null,
 		__eraserButton : null,
 		__eraserCursor : null,
+		
+		getMeshViewer : function()
+		{
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			return this.__meshViewer;
+		},
+		
 		__reloadSeedImage : function (sliceView) {
 			if (this.getSessionDirectory()==null)
 				return;
@@ -194,6 +223,26 @@ qx.Class.define("desk.segTools",
 			tools.__topRightContainer.add(tools.__eraserButton);
 
 			
+		////Create test Marks on/off button
+            tools.__marksButton = new qx.ui.form.ToggleButton("Marks");
+			
+			this.__marksButton.addListener("changeValue", function(e)
+			{
+				this.__master.applyToViewers(function () {
+					this.__markerObject.setMarkMode(e.getData());
+					});
+			}, this);
+
+			tools.__topRightContainer.add(tools.__marksButton);
+			var master = this.__master;
+			this.__master.applyToViewers( function()
+			{
+				this.__markerObject = new desk.Markers(this, master);
+				this.getMarkerObject = function() {
+					return this.__markerObject;
+				};
+			} );
+			
 			
 		////Create labels zone
 			var paintPage = new qx.ui.tabview.Page("paint");
@@ -218,9 +267,9 @@ qx.Class.define("desk.segTools",
 
 			paintPage.add(tools.__colorsContainer);
 
-			var bRCL=new qx.ui.layout.HBox();  //~ resizing
-			bRCL.setSpacing(spacing);  //~ resizing
-			tools.__mainBottomRightContainer = new qx.ui.container.Composite(bRCL);  //~ resizing
+			var bRCL=new qx.ui.layout.HBox();
+			bRCL.setSpacing(spacing);
+			tools.__mainBottomRightContainer = new qx.ui.container.Composite(bRCL);
 			
 			var tabView = new qx.ui.tabview.TabView();
 			tools.__tabView=tabView;
@@ -231,10 +280,10 @@ qx.Class.define("desk.segTools",
 			this.__addSeedsListsToViews();
 			this.add(sessionWdgt);
 			
-			this.add(tools.__mainBottomRightContainer, {flex : 1}); //~ resizing
+			this.add(tools.__mainBottomRightContainer, {flex : 1});
 
-			tools.__mainBottomRightContainer.add(tabView); //~ resizing
-
+			tools.__mainBottomRightContainer.add(tabView);
+			
 			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
 			tools.__topRightContainer.add(whileDrawingDrwngOpacityLabel);
 			
@@ -272,7 +321,7 @@ qx.Class.define("desk.segTools",
 
 			segmentationAction.setOutputSubdirectory("segmentation");
 			segmentationAction.connect("clustering", clusteringAction, "clustering-index.mhd");
-
+			
 			segmentationAction.buildUI();
 			segmentationPage.add(segmentationAction);
 
@@ -298,9 +347,15 @@ qx.Class.define("desk.segTools",
 			{
 				var directory=e.getData();
 				medianFilteringAction.setOutputDirectory(directory);
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				if (segmentationToken!=null)
+					theMaster.removeVolume(segmentationToken);
 				clusteringAction.setOutputDirectory(directory);
 				segmentationAction.setOutputDirectory(directory);
 				meshingAction.setOutputDirectory(directory);
+				segmentationAction.setActionParameters({
+					"input_volume" : volFile,
+					"seeds" : tools.getSessionDirectory()+"/seeds.xml"});
 				clusteringAction.setActionParameters({
 					"input_volume" : volFile});
 				meshingAction.setActionParameters({
@@ -341,6 +396,8 @@ qx.Class.define("desk.segTools",
 				{
 					theMaster.updateVolume(segmentationToken);
 				}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				tools.fireEvent("gotSegmentedVolume");
 			}, this);
 
 			tools.__master.addListener("removeVolume", function (e) {
@@ -361,10 +418,13 @@ qx.Class.define("desk.segTools",
 					meshViewer.addListener("close", function () {
 						meshViewer=null;
 					})
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+					tools.fireDataEvent("meshViewerCreated", meshViewer);
 				}
 				else {
 					meshViewer.update();
 				}
+				this.__meshViewer = meshViewer;
 			}, this);
 
 			tools.__seedsTypeSelectBox = tools.__getSeedsTypeSelectBox();
@@ -496,7 +556,6 @@ qx.Class.define("desk.segTools",
 					alert('Global Params : "Fetched the wrong page" OR "Network error"');
 				}
 			};
-			//~ colorsParamRequest.open("GET", "/visu/colorsKnee.xml?nocache="+Math.random(), true);
 			colorsParamRequest.open("GET",
 				this.__fileBrowser.getFileURL(file)+"?nocache="+Math.random(), true);
 			colorsParamRequest.send(null);
@@ -750,12 +809,12 @@ qx.Class.define("desk.segTools",
 					colorSelector.setRed(target.red);
 					colorSelector.setGreen(target.green);
 					colorSelector.setBlue(target.blue);
-					colorView.setBackgroundColor("#"+qx.util.ColorUtil.rgbToHexString
+					colorView.setBackgroundColor(qx.util.ColorUtil.rgbToHexString
 							([target.red, target.green, target.blue]));
 					meshColorSelector.setRed(target.meshRed);
 					meshColorSelector.setGreen(target.meshGreen);
 					meshColorSelector.setBlue(target.meshBlue);
-					meshColorView.setBackgroundColor("#"+qx.util.ColorUtil.rgbToHexString
+					meshColorView.setBackgroundColor(qx.util.ColorUtil.rgbToHexString
 							([target.meshRed, target.meshGreen, target.meshBlue]));
 					meshOpacity.setValue(target.opacity+"");
 					meshDepth.setValue(target.depth);
@@ -767,6 +826,9 @@ qx.Class.define("desk.segTools",
 		},
 
 		__getLabel : function (label) {
+			var intLabel=parseInt(label);
+			var labels=this.__labels;
+			for (var i=0;i<labels.length;i++) {
 				if (labels[i].label==intLabel) {
 					return (labels[i]);
 				}
@@ -1105,6 +1167,7 @@ qx.Class.define("desk.segTools",
 			sessionsListLayout.setSpacing(4);
 			var sessionsListContainer=new qx.ui.container.Composite(sessionsListLayout);
 			var sessionsListLabel=new qx.ui.basic.Label("Sessions : ");
+			//~ sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5}); // commented for oneFitAppli
 			sessionsListContainer.add(sessionsListLabel);
 			var button=new qx.ui.form.Button("new session");
 			sessionsListContainer.add(button);
@@ -1112,6 +1175,7 @@ qx.Class.define("desk.segTools",
 			var sessionType="gcSegmentation";
 			var sessionsList = new qx.ui.form.SelectBox();
 			sessionsListContainer.add(sessionsList);
+			//~ sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});  // commented for oneFitAppli
 
 			var updateInProgress=false;
 
@@ -1127,11 +1191,14 @@ qx.Class.define("desk.segTools",
 						var sessionItem = new qx.ui.form.ListItem(""+sessionId);
 						sessionsList.add(sessionItem);
 						if (sessionId==sessionIdToSelect)
+							sessionItemToSelect=sessionItem;
 					}
 
 					if (sessionIdToSelect==null)
 					{
 						var dummyItem = new qx.ui.form.ListItem("select a session");
+						sessionsList.add(dummyItem);
+						dummyItem.setUserData("dummy",true);
 					}
 					if (sessionItemToSelect!=null)
 					{
@@ -1143,6 +1210,7 @@ qx.Class.define("desk.segTools",
 						tools.__loadColors();
 					}
 					else
+						sessionsList.setSelection([dummyItem]);					
 					updateInProgress=false;
 				};
 
@@ -1349,7 +1417,6 @@ qx.Class.define("desk.segTools",
 					for (var i=0;i<slices.length;i++)
 					{
 						var sliceId=slices[i].getUserData("slice");
-						//~ theMaster.debug("352 : sliceId : " + sliceId);
 						xmlContent += element(filePrefix,
 								_this.__getSeedFileName(this, sliceId, seedsType), 
 								{slice: sliceId + "", orientation: orientation + ""}) + '\n';

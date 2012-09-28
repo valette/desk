@@ -125,6 +125,25 @@ qx.Class.define("desk.volumeSlice",
 				"colorFromLookupTable[3]=opacity;",
 				"gl_FragColor=mix (correctedColor, colorFromLookupTable, useLookupTable);",
 			"}"
+		].join("\n"),
+
+		FRAGMENTSHADERENDMULTICHANNEL : [
+			"uniform sampler2D texture;",
+			"uniform sampler2D lookupTable;",
+			"uniform float lookupTableLength;",
+			"uniform float useLookupTable;",
+			"uniform float contrast;",
+			"uniform float brightness;",
+			"uniform float opacity;",
+			"uniform float imageType;",
+			"uniform float scalarMin;",
+			"uniform float scalarMax;",
+
+			"varying vec2 vUv;",
+			"void main() {",
+				"gl_FragColor=(texture2D( texture, vUv )+brightness)*contrast;",
+				"gl_FragColor[3]=opacity;",
+			"}"
 		].join("\n")
 	},
 
@@ -147,6 +166,7 @@ qx.Class.define("desk.volumeSlice",
 		__spacing : null,
 		__dimensions: null,
 
+		__numberOfScalarComponents : null,
 		__scalarTypeString : null,
 		__scalarType : null,
 		__scalarSize : null,
@@ -372,6 +392,15 @@ qx.Class.define("desk.volumeSlice",
 				break;
 			}
 
+			var shader;
+			if (this.__numberOfScalarComponents==1) {
+				shader=[desk.volumeSlice.FRAGMENTSHADERBEGIN,
+						middleShader,
+						desk.volumeSlice.FRAGMENTSHADEREND].join("\n");
+			}
+			else {
+				shader=desk.volumeSlice.FRAGMENTSHADERENDMULTICHANNEL;
+			}
 
 			var material=new THREE.ShaderMaterial({
 				uniforms: {
@@ -434,6 +463,29 @@ qx.Class.define("desk.volumeSlice",
 				var zmax=this.__origin[1]+(this.__extent[3]+1)*this.__spacing[1];
 				var coordinates=[];
 				coordinates[0]=x;
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				// commented for oneFitAppli
+				//~ coordinates[1]=zmin;
+				//~ coordinates[2]=ymin;
+				//~ coordinates[3]=x;
+				//~ coordinates[4]=zmin;
+				//~ coordinates[5]=ymax;
+				//~ coordinates[6]=x;
+				//~ coordinates[7]=zmax;
+				//~ coordinates[8]=ymax;
+				//~ coordinates[9]=x;
+				//~ coordinates[10]=zmax;
+				//~ coordinates[11]=ymin;
+				coordinates[1]=zmax;
+				coordinates[2]=ymin;
+				coordinates[3]=x;
+				coordinates[4]=zmax;
+				coordinates[5]=ymax;
+				coordinates[6]=x;
+				coordinates[7]=zmin;
+				coordinates[8]=ymax;
+				coordinates[9]=x;
+				coordinates[10]=zmin;
 				coordinates[11]=ymin;
 				return (coordinates);
 			// XZ Y
@@ -616,6 +668,7 @@ qx.Class.define("desk.volumeSlice",
 							parseFloat(XMLorigin.getAttribute("z")));
 
 			var XMLscalars=volume.getElementsByTagName("scalars")[0];
+			this.__numberOfScalarComponents=parseInt(XMLscalars.getAttribute("numberOfScalarComponents"),10);
 			this.__scalarType=parseInt(XMLscalars.getAttribute("type"),10);
 			this.__scalarSize=parseInt(XMLscalars.getAttribute("size"),10);
 			this.__scalarMin=parseFloat(XMLscalars.getAttribute("min"),10);
