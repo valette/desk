@@ -13,7 +13,7 @@ var path = fs.realpathSync('trunk')+'/',
 	dataDir= '/home/'+user+'/desk/',
 	phpSubdir='ext/php/',
 	port = process.getuid(),
-	uploadDir=path+phpSubdir+'data/upload';
+	uploadDir=dataDir+'upload/';
 
 // use port 8080 if not running on desk.creatis.insa-lyon.fr
 var hostname=os.hostname();
@@ -114,7 +114,9 @@ app.configure(function(){
 	app.post(phpURL+'upload', function(req, res) {
 		var file=req.files.file;
 		var outputDir=req.body.uploadDir.toString().replace('%2F','/') || uploadDir;
-		outputDir=phpDir+outputDir;
+		outputDir=dataDir+outputDir;
+		console.log("file : "+file.path.toString());
+		console.log("uploaded to "+ outputDir+'/'+file.name.toString());
 		fs.rename(file.path.toString(), outputDir+'/'+file.name.toString(), function(err) {
 			if (err) throw err;
 			// delete the temporary file
