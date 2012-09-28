@@ -321,7 +321,7 @@ qx.Class.define("desk.segTools",
 
 			segmentationAction.setOutputSubdirectory("segmentation");
 			segmentationAction.connect("clustering", clusteringAction, "clustering-index.mhd");
-
+			
 			segmentationAction.buildUI();
 			segmentationPage.add(segmentationAction);
 
@@ -347,6 +347,9 @@ qx.Class.define("desk.segTools",
 			{
 				var directory=e.getData();
 				medianFilteringAction.setOutputDirectory(directory);
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				if (segmentationToken!=null)
+					theMaster.removeVolume(segmentationToken);
 				clusteringAction.setOutputDirectory(directory);
 				segmentationAction.setOutputDirectory(directory);
 				meshingAction.setOutputDirectory(directory);

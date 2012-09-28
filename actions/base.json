@@ -23,34 +23,23 @@
 		{
 		    "parameters":[
 		        {
-		            "name":"sourceDirectory",
-		            "type":"directory",
+		            "name":"source_directory",
+		            "type":"file",
 		            "required":"true"
-		        },
-		        {
-		            "text":" -o "
-		        },
-		        {
-		            "name":"outputDirectory",
-		            "type":"directory",
-		            "required":"true"
-		        },
-		        {
-		            "text":" -f meta -x -u -v"
 		        }
 		    ],
 		    "name":"dicom2meta",
 		    "attributes":
 		    {
 		        "name":"dicom2meta",
-		        "executable":"/home/visu/src/bin_mcverter/mcverter"
+		        "executable":"/home/jacinto/git/dicom2meta/dicom2meta-build/Dicom2Meta"
 		    }
 		},
 		{
 		    "parameters":[
 		        {
 		            "name":"directory",
-		            "type":"directory",
+		            "type":"file",
 		            "required":"true"
 		        },
 		        {
@@ -78,7 +67,7 @@
 		    "attributes":
 		    {
 		        "name":"sleep",
-		        "executable":"sleep",
+		        "command":"sleep",
 		        "voidAction":"true"
 		    }
 		},
@@ -118,7 +107,7 @@
 		    "parameters":[
 		        {
 		            "name":"directory",
-		            "type":"directory",
+		            "type":"file",
 		            "required":"true"
 		        }
 		    ],

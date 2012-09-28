@@ -89,7 +89,8 @@ exports.includeActions=function (file, callback) {
 	}
 
 	function afterImport() {
-		exportActions( filesRoot+"/actions.json", callback );
+		//~ exportActions( filesRoot+"/actions.json", callback );
+		exportActions( filesRoot+"actions.json", callback );
 	}
 }
 
@@ -301,7 +302,8 @@ exports.performAction = function (POST, callback) {
 				if (!err) {
 					index=JSON.parse(data).value + 1;
 				}
-				outputDirectory="actions/"+index+"/";
+				//~ outputDirectory="actions/"+index+"/";
+				outputDirectory="actions/"+index;
 				fs.mkdir(filesRoot+"/actions/"+index, function (err) {
 					if ( err ) {
 						callback( err.message );
