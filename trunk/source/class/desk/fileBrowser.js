@@ -170,6 +170,7 @@ qx.Class.define("desk.fileBrowser",
 
 		__updateDirectoryInProgress : null,
 
+		/*
 		getWindow : function() {
 			return this.__window;
 		},
@@ -289,6 +290,7 @@ qx.Class.define("desk.fileBrowser",
 
 			this.getFileSessions(file, sessionType, success);
 		},
+		*/
 
 		updateRoot : function ()
 		{
@@ -310,13 +312,13 @@ qx.Class.define("desk.fileBrowser",
 				case ".stl":
 				case ".ctm":
 				case ".off":
-					new desk.meshView(file, myBrowser,modificationTime);
+					new desk.meshView(file, modificationTime);
 //					qx.core.Init.getApplication().getRoot().add(meshView);
 					break;
 				case ".png":
 				case ".jpg":
 				case ".bmp":
-					new desk.imageView(file, myBrowser);
+					new desk.imageView(file);
 //					qx.core.Init.getApplication().getRoot().add(imageView);
 					break;
 				case ".xml":
@@ -327,12 +329,13 @@ qx.Class.define("desk.fileBrowser",
 					
 					if (xmlDoc.getElementsByTagName("mesh").length!=0)
 					{
-						new desk.meshView(file, myBrowser, modificationTime);
+						new desk.meshView(file, modificationTime);
 //						qx.core.Init.getApplication().getRoot().add(meshView);
 					}
 			/*		else if (xmlDoc.getElementsByTagName("volume").length!=0)
 					{
 						var volView=new desk.volView(file, myBrowser, modificationTime);
+						//~ var volView=new desk.volMaster(file, modificationTime); //~ orion test
 //						qx.core.Init.getApplication().getRoot().add(volView);
 					}*/
 					else
@@ -346,6 +349,7 @@ qx.Class.define("desk.fileBrowser",
 					}
 					else
 						new desk.volMaster(file, myBrowser);
+						
 					break;
 				case ".json":
 					desk.action.CREATEFROMFILE(myBrowser.getNodeFile(node));

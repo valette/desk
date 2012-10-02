@@ -25,7 +25,7 @@ qx.Class.define("desk.action",
 	{
 		CREATEFROMFILE : function (file)
 		{
-			var req = new qx.io.request.Xhr(desk.actions.getInstance().getFileURL(file)+"?nocache=" + Math.random());
+			var req = new qx.io.request.Xhr(desk.FileSystem.getInstance().getFileURL(file)+"?nocache=" + Math.random());
 			req.addListenerOnce("success", function(e) {
 				var parameters=JSON.parse(e.getTarget().getResponseText());
 				var action=new desk.action (parameters["action"]);
@@ -87,9 +87,11 @@ qx.Class.define("desk.action",
 			this.__outputDirectory=directory;
 			// try to load parameters on server
 
-			var req = new qx.io.request.Xhr(this.__actions.baseURL+"php/"+
-			//~ var req = new qx.io.request.Xhr(this.__actions.baseURL+"php/"+"data/"+ // if upload directory/symbolicLink inside data directory
-						this.getOutputDirectory()+"/action.json?nocache=" + Math.random());
+			//~ var req = new qx.io.request.Xhr(this.__actions.baseURL+"php/"+
+						//~ this.getOutputDirectory()+"/action.json?nocache=" + Math.random());
+				//~ var req = new qx.io.request.Xhr(this.__actions.baseURL+"php/"+"data/"+ // if upload directory/symbolicLink inside data directory
+						//~ this.getOutputDirectory()+"/action.json?nocache=" + Math.random());
+			var req = new qx.io.request.Xhr(desk.FileSystem.getInstance().getFileURL(this.getOutputDirectory())+"action.json?nocache=" + Math.random());
 			req.addListener("success", function(e) {
 				this.__loadedParameters=JSON.parse(e.getTarget().getResponseText());
 				this.__updateUIParameters();

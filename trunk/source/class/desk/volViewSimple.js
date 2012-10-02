@@ -2,7 +2,7 @@ qx.Class.define("desk.volViewSimple",
 {
   extend : qx.ui.window.Window,
 
-	construct : function(file, fileBrowser)
+	construct : function(file)
 	{
 		this.base(arguments);
 
@@ -14,32 +14,26 @@ qx.Class.define("desk.volViewSimple",
 		this.setUseMoveFrame(true);
 
 		var volView=this;
-		if (fileBrowser==null)
-			alert ("error! no file browser was provided");
-		else
-		{
-			//file is a tree node...
-			this.setCaption(file);
 
-			function getAnswer(e)
-				{
-					var req = e.getTarget();
-					var slicesDirectory=req.getResponseText().split("\n")[0];
-					volView.openFile(fileBrowser.getFileURL(slicesDirectory)+"/volume.xml");
-				}
+		this.setCaption(file);
 
-			var parameterMap={
-				action : "slice_volume",
-				input_volume : file,
-				slice_orientation : 0,				
-				output_directory : "cache\/"};
-			desk.actions.getInstance().launchAction(parameterMap, getAnswer, this);
-
-			var label = new qx.ui.basic.Label("Computing slices, wait...").set({
-				font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
-				});
-			this.add(label, {flex : 1});
+		function getAnswer(e) {
+			var req = e.getTarget();
+			var slicesDirectory=req.getResponseText().split("\n")[0];
+			volView.openFile(desk.FileSystem.getInstance().getFileURL(slicesDirectory)+"/volume.xml");
 		}
+
+		var parameterMap={
+			action : "slice_volume",
+			input_volume : file,
+			slice_orientation : 0,				
+			output_directory : "cache\/"};
+		desk.actions.getInstance().launchAction(parameterMap, getAnswer, this);
+
+		var label = new qx.ui.basic.Label("Computing slices, wait...").set({
+			font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
+			});
+		this.add(label, {flex : 1});
 
 		// drag and drop support
 		this.setDraggable(true);

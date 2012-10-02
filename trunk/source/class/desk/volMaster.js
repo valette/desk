@@ -1,12 +1,15 @@
 /*
 #ignore(Detector)
 #ignore(Uint8Array)
+#asset(desk/Contrast_Logo_petit.PNG)
 */
 qx.Class.define("desk.volMaster", 
 {
 	extend : qx.core.Object,
 	
 	construct : function(globalFile, globalFileBrowser, standAlone, appliCallback)
+	//~ construct : function(globalFile, standAlone, appliCallback) // sebTest
+	//~ construct : function(globalFile)
 	{	
 		
         // Enable logging in debug variant
@@ -25,11 +28,11 @@ qx.Class.define("desk.volMaster",
 		this.__nbUsedOrientations = 3;
 		this.__file = globalFile;
 
-		this.__fileBrowser = globalFileBrowser;
+		this.__fileSystem = desk.FileSystem.getInstance();
 
 		this.__viewers = [];
 		for(var i=0; i<this.__nbUsedOrientations; i++) {
-			this.__viewers[i] = new desk.sliceView(this.__fileBrowser, this, i);
+			this.__viewers[i] = new desk.sliceView(this, i);
 		}
 
 		var gridLayout=new qx.ui.layout.Grid(3,3);
@@ -121,7 +124,7 @@ qx.Class.define("desk.volMaster",
 		__nbUsedOrientations : null,
 
 		__file : null,
-		__fileBrowser : null,
+		__fileSystem : null,
 
 		getFile : function() {
 			return this.__file;

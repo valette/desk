@@ -11,7 +11,7 @@ qx.Class.define("desk.meshView",
 {
 	extend : qx.core.Object,
 
-	construct : function(file, fileBrowser, mtime, parameters)
+	construct : function(file, mtime, parameters)
 	{
 	//	this.base();
 
@@ -139,7 +139,7 @@ qx.Class.define("desk.meshView",
 		var menu=this.__getContextMenu();
 		this.__meshesTree.setContextMenu(menu);
 
-		this.__fileBrowser=fileBrowser;
+		this.__fileSystem=desk.FileSystem.getInstance();
 
 		this.__firstFile=file;
 		this.__firstMTime=mtime;
@@ -180,7 +180,7 @@ qx.Class.define("desk.meshView",
 		
 		__mainPane : null,
 
-		__fileBrowser : null,
+		__fileSystem : null,
 
 		// a treeVirtual element storing all meshes
 		__meshesTree : null,
@@ -242,7 +242,7 @@ qx.Class.define("desk.meshView",
 				dataModel.setData();
 			}
 
-			var fileBrowser=this.__fileBrowser;
+			var fileSystem=this.__fileSystem;
 
 			var extension=file.substring(file.length-4, file.length);
 
@@ -272,11 +272,11 @@ qx.Class.define("desk.meshView",
 				{
 				case ".vtk":
 					if (_this.isConvertVTK()===false) {
-						_this.loadVTKURL(fileBrowser.getFileURL(file)+"?nocache="+mtime, callback, color);
+						_this.loadVTKURL(fileSystem.getFileURL(file)+"?nocache="+mtime, callback, color);
 						break;
 					}
 				default : 
-					_this.loadCTMURL(fileBrowser.getFileURL(file)+"?nocache="+mtime, callback, color);
+					_this.loadCTMURL(fileSystem.getFileURL(file)+"?nocache="+mtime, callback, color);
 				}
 			}
 
@@ -531,7 +531,7 @@ qx.Class.define("desk.meshView",
 
 					case ".xml":
 						var xmlhttp=new XMLHttpRequest();
-						xmlhttp.open("GET",_this.__fileBrowser.getFileURL(file)+"?nocache=" + Math.random(),false);
+						xmlhttp.open("GET",_this.__fileSystem.getFileURL(file)+"?nocache=" + Math.random(),false);
 						xmlhttp.send();
 						var rootDocument=xmlhttp.responseXML;
 
