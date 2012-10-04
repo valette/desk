@@ -16,8 +16,8 @@ qx.Class.define("desk.fileBrowser",
 
 		this.setLayout(new qx.ui.layout.VBox());
 
-		if (standAlone==false) {
-			this.__standAlone=false;
+		if ( standAlone === false ) {
+			this.__standAlone = false;
 		}
 
 		qx.Class.include(qx.ui.treevirtual.TreeVirtual,
@@ -133,19 +133,20 @@ qx.Class.define("desk.fileBrowser",
 				}
 		}, this);
 
-		
-		var window=new qx.ui.window.Window();
-		window.setLayout(new qx.ui.layout.VBox());
-		this.__window=window;
-//			window.setShowClose(false);
-		window.setShowMinimize(false);
-		window.setUseMoveFrame(true);
-		window.setCaption("files");
-		window.setWidth(400);
-		window.setHeight(500);
-		window.add(this, {flex : 1});
-		this.__window.open();
-
+		if (this.__standAlone)
+		{
+			var window=new qx.ui.window.Window();
+			window.setLayout(new qx.ui.layout.VBox());
+			this.__window=window;
+			window.setShowMinimize(false);
+			window.setUseMoveFrame(true);
+			window.setCaption("files");
+			window.setWidth(400);
+			window.setHeight(500);
+			window.add(this, {flex : 1});
+			console.log("standalone!");
+			this.__window.open();
+		}
 
 		return (this);
 	},
@@ -234,8 +235,6 @@ qx.Class.define("desk.fileBrowser",
 					break;
 				case ".mhd":
 						var volMaster = new desk.volMaster(file);
-						var volWindow = volMaster.getWindow();
-						
 					break;
 				case ".json":
 					desk.action.CREATEFROMFILE(myBrowser.getNodeFile(node));
