@@ -567,8 +567,7 @@ qx.Class.define("desk.volMaster",
 			settingsContainer.add(opacitySlider, {flex : 1});
 			
 			////Create brightness/contrast fixing
-			//~ var brightnessButton = new qx.ui.form.Button(null, "desk/Contrast_Logo_petit.PNG"); // commented for oneFitAppli
-			var brightnessButton = new qx.ui.form.Button(null, "onefit/Contrast_Logo.png");
+			var brightnessButton = new qx.ui.form.Button(null, "desk/Contrast_Logo_petit.PNG");
 			brightnessButton.set({toolTipText : "Click and drag to change brightnes, right-click to reset brightness"});
 
 			var clicked=false;
