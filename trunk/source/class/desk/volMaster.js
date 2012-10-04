@@ -527,7 +527,6 @@ qx.Class.define("desk.volMaster",
 				}
 				this.__renderAll();
 			}, this)
-			settingsContainer.add(hideShowCheckbox);
 
 			// create file format change widget
 			var fileFormatBox = new qx.ui.form.SelectBox();
@@ -540,7 +539,6 @@ qx.Class.define("desk.volMaster",
 			var SelectPNG = new qx.ui.form.ListItem("png");
 			SelectPNG.setUserData("imageFormat", 0);
 			fileFormatBox.add(SelectPNG);
-			settingsContainer.add(fileFormatBox);
 
 			if (imageFormat!=1) {
 				fileFormatBox.setSelection([SelectPNG]);
@@ -564,7 +562,6 @@ qx.Class.define("desk.volMaster",
 					volumeSlices[i].setOpacity(opacity);
 				}
 			},this);
-			settingsContainer.add(opacitySlider, {flex : 1});
 			
 			////Create brightness/contrast fixing
 			var brightnessButton = new qx.ui.form.Button(null, "desk/Contrast_Logo_petit.PNG");
@@ -615,7 +612,9 @@ qx.Class.define("desk.volMaster",
 			}, this);
 			
 			settingsContainer.add(brightnessButton);
-
+			settingsContainer.add(fileFormatBox);
+			settingsContainer.add(opacitySlider, {flex : 1});
+			settingsContainer.add(hideShowCheckbox);
 			this.__volumes.add(volumeListItem);
 			return (volumeListItem);
 		},
