@@ -6,7 +6,7 @@
 qx.Class.define("desk.volMaster", 
 {
 	extend : qx.core.Object,
-	include : desk.ActionLinkMixin,
+	//~ include : desk.ActionLinkMixin,
 
 	construct : function(globalFile, appliCallback)
 	{	
