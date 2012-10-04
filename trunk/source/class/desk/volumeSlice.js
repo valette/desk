@@ -501,29 +501,16 @@ qx.Class.define("desk.volumeSlice",
 				var zmax=this.__origin[1]+(this.__extent[3]+1)*this.__spacing[1];
 				var coordinates=[];
 				coordinates[0]=x;
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-				// commented for oneFitAppli
-				//~ coordinates[1]=zmin;
-				//~ coordinates[2]=ymin;
-				//~ coordinates[3]=x;
-				//~ coordinates[4]=zmin;
-				//~ coordinates[5]=ymax;
-				//~ coordinates[6]=x;
-				//~ coordinates[7]=zmax;
-				//~ coordinates[8]=ymax;
-				//~ coordinates[9]=x;
-				//~ coordinates[10]=zmax;
-				//~ coordinates[11]=ymin;
-				coordinates[1]=zmax;
+				coordinates[1]=zmin;
 				coordinates[2]=ymin;
 				coordinates[3]=x;
-				coordinates[4]=zmax;
+				coordinates[4]=zmin;
 				coordinates[5]=ymax;
 				coordinates[6]=x;
-				coordinates[7]=zmin;
+				coordinates[7]=zmax;
 				coordinates[8]=ymax;
 				coordinates[9]=x;
-				coordinates[10]=zmin;
+				coordinates[10]=zmax;
 				coordinates[11]=ymin;
 				return (coordinates);
 			// XZ Y

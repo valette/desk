@@ -12,8 +12,9 @@ qx.Class.define("desk.actions",
 		"desk.extURL" : "to define in config.json"
 	},
 
-	construct : function()
+	construct : function(standAlone)
 	{
+			standAlone=standAlone || true;
 		this.base(arguments);
 		this.__actionsQueue=[];
 
@@ -37,7 +38,7 @@ qx.Class.define("desk.actions",
 				return;
 			}
 /////////////////////////////////////////////////////////////////////////////////
-			var standAlone = qx.core.Init.getApplication().getAppliFlag();
+		//	var standAlone = qx.core.Init.getApplication().getAppliFlag();
 			if(standAlone)
 				qx.core.Init.getApplication().getRoot().add(ongoingActions, { right : 0, top : 0});
 		}, this);
@@ -133,17 +134,14 @@ qx.Class.define("desk.actions",
 
 		__launchAction : function (actionParameters, successCallback, context) {
 			var that=this;
-			//~ var actionFinished=false;
-			//~ var actionNotification=null;
-			//~ setTimeout(function(){
-				//~ if (!actionFinished) {
-					//~ actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
-					//~ that.__ongoingActions.add(actionNotification);
-				//~ }
-			//~ }, 5000);
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			var actionNotification=new qx.ui.basic.Label(actionParameters["action"]); // this allows to detect when an action is ongoing (used in oneFit Appli)
-			this.__ongoingActions.add(actionNotification);
+			var actionFinished=false;
+			var actionNotification=null;
+			setTimeout(function(){
+				if (!actionFinished) {
+					actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
+					that.__ongoingActions.add(actionNotification);
+				}
+			}, 5000);
 			
 			var req = new qx.io.request.Xhr();
 
