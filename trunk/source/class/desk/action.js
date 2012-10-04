@@ -86,12 +86,7 @@ qx.Class.define("desk.action",
 		setOutputDirectory : function (directory) {
 			this.__outputDirectory=directory;
 			// try to load parameters on server
-
-			var req = new qx.io.request.Xhr(this.__actions.baseURL+"php/"+
-						this.getOutputDirectory()+"/action.json?nocache=" + Math.random());
-				//~ var req = new qx.io.request.Xhr(this.__actions.baseURL+"php/"+"data/"+ // if   upload directory/symbolicLink   inside   ext/php/data  directory
-						//~ this.getOutputDirectory()+"/action.json?nocache=" + Math.random());
-			//~ var req = new qx.io.request.Xhr(desk.FileSystem.getInstance().getFileURL(this.getOutputDirectory())+"action.json?nocache=" + Math.random()); //sebTest
+			var req = new qx.io.request.Xhr(desk.FileSystem.getInstance().getFileURL(this.getOutputDirectory())+"action.json?nocache=" + Math.random());
 			req.addListener("success", function(e) {
 				this.__loadedParameters=JSON.parse(e.getTarget().getResponseText());
 				this.__updateUIParameters();
