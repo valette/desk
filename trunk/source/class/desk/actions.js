@@ -14,9 +14,10 @@ qx.Class.define("desk.actions",
 
 	construct : function(standAlone)
 	{
-			standAlone=standAlone || true;
 		this.base(arguments);
 		this.__actionsQueue=[];
+
+		if (standAlone !== false) standAlone= true;
 
 		var URLparser = document.createElement('a');
 		URLparser.href = document.href;

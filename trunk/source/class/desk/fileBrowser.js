@@ -144,7 +144,6 @@ qx.Class.define("desk.fileBrowser",
 			window.setWidth(400);
 			window.setHeight(500);
 			window.add(this, {flex : 1});
-			console.log("standalone!");
 			this.__window.open();
 		}
 

@@ -290,7 +290,7 @@ qx.Class.define("desk.volumeSlice",
 		},
 
 		__setLookupTablesToMaterial : function ( luts , material ) {
-			var lookupTable=material.uniforms.lookupTable.texture;
+			var lookupTable=material.uniforms.lookupTable.value;
 			var numberOfColors=luts[0].length;
 			material.uniforms.lookupTableLength.value=numberOfColors;
 			material.uniforms.useLookupTable.value=1;

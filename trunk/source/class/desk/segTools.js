@@ -100,7 +100,7 @@ qx.Class.define("desk.segTools",
 
 	members :
 	{
-		__defaultColorsFile : "data/xml/colorsKneeAdvanced.xml",
+		__defaultColorsFile : "data/xml/colors7.xml",
 		__master : null,
 		__file : null,
 		__fileSystem : null,
@@ -309,7 +309,7 @@ qx.Class.define("desk.segTools",
 			clusteringAction.setOutputSubdirectory("clustering");
 			
 			clusteringAction.buildUI();
-			clusteringPage.add(clusteringAction);
+			clusteringPage.add(clusteringAction.getTabView());
 
 			var segmentationPage = new qx.ui.tabview.Page("segmentation");
             segmentationPage.setLayout(new qx.ui.layout.VBox());
@@ -322,7 +322,7 @@ qx.Class.define("desk.segTools",
 			segmentationAction.connect("clustering", clusteringAction, "clustering-index.mhd");
 			
 			segmentationAction.buildUI();
-			segmentationPage.add(segmentationAction);
+			segmentationPage.add(segmentationAction.getTabView());
 
 			var medianFilteringPage = new qx.ui.tabview.Page("cleaning");
             medianFilteringPage.setLayout(new qx.ui.layout.VBox());
@@ -332,7 +332,7 @@ qx.Class.define("desk.segTools",
 			medianFilteringAction.connect("input_volume", 
 										segmentationAction, "seg-cvtgcmultiseg.mhd");
 			medianFilteringAction.buildUI();
-			medianFilteringPage.add(medianFilteringAction);
+			medianFilteringPage.add(medianFilteringAction.getTabView());
 
 			var meshingPage = new qx.ui.tabview.Page("meshing");
             meshingPage.setLayout(new qx.ui.layout.VBox());
@@ -340,7 +340,7 @@ qx.Class.define("desk.segTools",
 			var meshingAction=new desk.action("extract_meshes", false);
 			meshingAction.setOutputSubdirectory("meshes");
 			meshingAction.buildUI();
-			meshingPage.add(meshingAction);
+			meshingPage.add(meshingAction.getTabView());
 
 			tools.addListener("changeSessionDirectory", function (e)
 			{
@@ -387,7 +387,7 @@ qx.Class.define("desk.segTools",
 				tools.__startSegmentationButton.setEnabled(true);
 				if (segmentationToken==null)
 				{
-					segmentationToken=theMaster.addVolume(medianFilteringAction.getOutputDirectory()+"/output.mhd",
+					segmentationToken=theMaster.addVolume(medianFilteringAction.getOutputDirectory()+"output.mhd",
 								{opacity : 0.5, imageFormat : 0,
 								colors : [tools.__labelColorsRed, tools.__labelColorsGreen, tools.__labelColorsBlue]});
 				}
