@@ -629,7 +629,7 @@ qx.Class.define("desk.meshView",
 			var material=volumeSlice.getMaterial();
 			material.transparent=false;
 			var mesh=new THREE.Mesh(geometry,material);
-			mesh.doubleSided=true;
+			material.side=THREE.DoubleSide;
 			this.__scene.add(mesh);
 
 			mesh.__volumeSlice=volumeSlice;
@@ -885,7 +885,7 @@ qx.Class.define("desk.meshView",
 							 opacity: color[3]} );
 						if (color[3]<0.999) material.transparent=true;
 						var mesh = new THREE.Mesh(geom, material );
-						mesh.doubleSided=true;
+						material.side=THREE.DoubleSide;
 						mesh.renderDepth=color[4];
 
 						_this.__scene.add( mesh );
@@ -939,7 +939,7 @@ qx.Class.define("desk.meshView",
 								material.transparent=true;
 							}
 							var mesh = new THREE.Mesh(geom, material );
-							mesh.doubleSided=true;
+							material.side=THREE.DoubleSide;
 							mesh.renderDepth=color[4];
 							_this.__scene.add( mesh );
 

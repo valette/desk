@@ -542,7 +542,8 @@ qx.Class.define("desk.sliceView",
 			var material=new THREE.MeshBasicMaterial( {map:texture, transparent: true});
 
 			var mesh=new THREE.Mesh(geometry,material);
-			mesh.doubleSided=true;
+			material.side=THREE.DoubleSide;
+
 	//	maybe there's a bug to submit to three.js : the following line breaks renderDepth..
 	//		mesh.visible=false;
 			this.__scene.add(mesh);
@@ -637,7 +638,8 @@ qx.Class.define("desk.sliceView",
 			var material=new THREE.MeshBasicMaterial( {map:texture, transparent: true});
 
 			var mesh=new THREE.Mesh(geometry,material);
-			mesh.doubleSided=true;
+			material.side=THREE.DoubleSide;
+
 			this.__scene.add(mesh);
 			this.__drawingMesh=mesh;
 
@@ -740,7 +742,7 @@ qx.Class.define("desk.sliceView",
 
 				var material=volumeSlice.getMaterial();
 				var mesh=new THREE.Mesh(geometry,material);
-				mesh.doubleSided=true;
+				material.side=THREE.DoubleSide;
 
 				volumeSlice.setUserData("mesh",mesh);
 
@@ -760,8 +762,7 @@ qx.Class.define("desk.sliceView",
 					_this.__setDrawingMesh(volumeSlice);
 					_this.__createBrushMesh(volumeSlice);
 					_this.__createCrossMeshes(volumeSlice);
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-					 // commented for oneFitAppli
+
 					//~ switch (this.getOrientation())
 					//~ {
 						//~ case 2 :
@@ -772,6 +773,7 @@ qx.Class.define("desk.sliceView",
 							//~ break;
 						//~ default:
 					//~ }
+
 					var dimensions=volumeSlice.getDimensions();
 					for (var coordinate=0;coordinate<3;coordinate++) {
 						if (dimensions[coordinate]==1) {
@@ -845,22 +847,22 @@ qx.Class.define("desk.sliceView",
 
 		setCrossPosition : function (i,j,k) {
 			var slice,x,y;
-
+			var dimensions=this.__volume2DDimensions;
 			switch (this.getOrientation())
 			{
 			case 0 :
 				x=i;
-				y=j;
+				y=dimensions[1]-j;
 				slice=k;
 				break;
 			case 1 :
 				x=k;
-				y=j;
+				y=dimensions[1]-j;
 				slice=i;
 				break;
 			case 2 :
 				x=i;
-				y=k;
+				y=dimensions[1]-k;
 				slice=j;
 			}
 
@@ -1147,7 +1149,7 @@ qx.Class.define("desk.sliceView",
 			var yinter=intersection.y;
 
 			var intxc=Math.floor((xinter-coordinates[0])*dimensions[0]/(coordinates[2]-coordinates[0]));
-			var intyc=Math.floor((yinter-coordinates[1])*dimensions[1]/(coordinates[5]-coordinates[1]));
+			var intyc=dimensions[1] - Math.floor((yinter-coordinates[1])*dimensions[1]/(coordinates[5]-coordinates[1]));
 			return {i :intxc, j :intyc, x:xinter, y:yinter};
 		},
 

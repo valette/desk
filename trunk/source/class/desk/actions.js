@@ -48,7 +48,7 @@ qx.Class.define("desk.actions",
 
 		HackCTMWorkerURL=threeURL+"ctm/CTMWorkerMin.js";
 
-		var files=["Three.js", "Detector.js", "VTKLoader.js","TrackballControls2.js","ctm/CTMLoader.js"];
+		var files=["three.min.js", "Detector.js", "VTKLoader.js","TrackballControls2.js","ctm/CTMLoader.js"];
 		var index=-1;
 
 		function myScriptLoader() {
