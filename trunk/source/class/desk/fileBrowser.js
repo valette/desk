@@ -170,7 +170,6 @@ qx.Class.define("desk.fileBrowser",
 
 		__updateDirectoryInProgress : null,
 
-		/*
 		getWindow : function() {
 			return this.__window;
 		},
@@ -183,114 +182,6 @@ qx.Class.define("desk.fileBrowser",
 		{
 			return file+"."+sessionType+"."+sessionId;
 		},
-
-		// creates an array containing sessions of given type (string)
-		// sessions are directories for which the name contains in order:
-		// -the file name
-		// -the sessionType
-		// -the session number
-		// all separated by a "."
-		// the array as passed as parameter to the callback function
-		getFileSessions : function (file, sessionType, callback)
-		{
-			var lastSlashIndex=file.lastIndexOf("/");
-			var directory=file.substring(0,lastSlashIndex);
-
-			var shortFileName=file.substring(lastSlashIndex+1,file.length);
-			
-			function readFileList(e)
-			{
-				var sessions=[];
-				var req = e.getTarget();
-				var files=req.getResponseText().split("\n");
-				
-				for (var i=0;i<files.length;i++)
-				{
-					var splitfile=files[i].split(" ");
-					var fileName=splitfile[0];
-					
-					if (fileName!="")
-					{
-						if (splitfile[1]=="dir")
-						{
-							//first, test if the directory begins like the file
-							var childLabel=splitfile[0];
-							var begining=childLabel.substring(0,shortFileName.length+1);
-							if (begining==(shortFileName+"."))
-							{
-								var remaining=childLabel.substring(shortFileName.length+1, childLabel.length);
-								if (sessionType!=null)
-								{
-									var childSession=remaining.substring(0,sessionType.length+1);
-									if (childSession==(sessionType+"."))
-									{
-										var sessionId=parseInt(remaining.substring(sessionType.length+1,remaining.length));
-										sessions.push(sessionId);
-									}
-								}
-								else
-								{
-									alert("error : no session type asked");
-								}
-							}
-						}
-					}
-				}
-				// we need to tweak the .sort() method so that it generates correct output for ints
-				function sortNumber(a,b)
-				{
-					return b - a;
-				}
-				sessions.sort(sortNumber);
-				callback(sessions);
-			}
-
-			// Instantiate request
-			var req = new qx.io.request.Xhr();
-			req.setUrl(this.__actions.baseURL+"php/listDir.php");
-			req.setMethod("POST");
-			req.setAsync(true);
-			req.setRequestData({"dir" : directory});
-			req.addListener("success", readFileList, this);
-			req.send();
-		},
-
-
-		// returns a newly created directory node 
-		// executes the callback with the new session Id as parameter when finished
-		createNewSession : function (file, sessionType, callback)
-		{
-			var fileBrowser=this;
-			function success(sessions)
-			{
-				var maxId=-1;
-				for (var i=0;i<sessions.length;i++)
-				{
-					var sessionId=sessions[i];
-					if (sessionId>maxId)
-						maxId=sessionId;
-				}
-
-				var newSessionId=maxId+1;
-
-				function getAnswer(e)
-				{
-					callback(newSessionId);
-				}
-
-
-				var lastSlash=file.lastIndexOf("/");
-				var subdir=file.substring(lastSlash+1)+"."+sessionType+"."+newSessionId;
-				var parameterMap={
-					"action" : "add_subdirectory",
-					"subdirectory_name" : subdir,
-					"output_directory" : file.substring(0,lastSlash)};
-				fileBrowser.__actions.launchAction(parameterMap, getAnswer);
-			}
-
-			this.getFileSessions(file, sessionType, success);
-		},
-		*/
 
 		updateRoot : function ()
 		{
@@ -342,13 +233,8 @@ qx.Class.define("desk.fileBrowser",
 						alert ("xml file of unknown type!");
 					break;
 				case ".mhd":
-					if(this.__standAlone)
-					{
-						var volMaster = new desk.volMaster(file, myBrowser);
+						var volMaster = new desk.volMaster(file);
 						var volWindow = volMaster.getWindow();
-					}
-					else
-						new desk.volMaster(file, myBrowser);
 						
 					break;
 				case ".json":

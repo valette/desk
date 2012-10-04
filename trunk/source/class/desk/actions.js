@@ -22,8 +22,6 @@ qx.Class.define("desk.actions",
 
 		var pathname=URLparser.pathname;
 		this.user=URLparser.pathname.split("/")[1];
-		//~ console.log("user : "+this.user);
-		//~ this.baseURL='/'+this.user+'/ext/';
 		this.__fileSystem=desk.FileSystem.getInstance();
 		this.baseURL=this.__fileSystem.getBaseURL()+"ext/";
 

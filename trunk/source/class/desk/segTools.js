@@ -6,9 +6,7 @@ qx.Class.define("desk.segTools",
 {
   extend : qx.ui.window.Window,
 
-	construct : function(master, globalFile, globalFileBrowser, appliCallback)
-	//~ construct : function(master, globalFile, appliCallback) // sebTest
-	//~ construct : function(master, globalFile)
+	construct : function(master, globalFile, appliCallback)
 	{	
 		this.base(arguments);
 
@@ -29,8 +27,6 @@ qx.Class.define("desk.segTools",
 
 		this.__file = globalFile;
 		
-		this.__fileBrowser = globalFileBrowser; // sebTest
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		this.__appliCallback = appliCallback;
 		
@@ -107,8 +103,6 @@ qx.Class.define("desk.segTools",
 		__defaultColorsFile : "data/xml/colorsKneeAdvanced.xml",
 		__master : null,
 		__file : null,
-		__fileBrowser : null, // sebTest
-		__meshViewer : null, // sebTest
 		__fileSystem : null,
 
 		__topRightContainer : null,
