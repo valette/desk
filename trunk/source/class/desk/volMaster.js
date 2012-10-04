@@ -6,7 +6,8 @@
 qx.Class.define("desk.volMaster", 
 {
 	extend : qx.core.Object,
-	
+	include : desk.ActionLinkMixin,
+
 	construct : function(globalFile, appliCallback)
 	{	
 		
@@ -716,6 +717,13 @@ qx.Class.define("desk.volMaster",
 			return menu;
 		},
 
+		updateAll : function () {
+			var volumes=this.__volumes.getChildren();
+			for (var i=0;i!=volumes.length;i++) {
+				this.updateVolume(volumes[i]);
+			}
+		},
+
 		updateVolume : function (volumeListItem) {
 			var slices=volumeListItem.getUserData("slices");
 			for (var i=0;i<slices.length;i++) {
@@ -738,6 +746,7 @@ qx.Class.define("desk.volMaster",
 		__getToolBar : function () {
 			var container=new qx.ui.container.Composite()
 			container.setLayout(new qx.ui.layout.HBox());
+			container.add(this.getUpdateButton(this.updateAll, this));
 			container.add(this.__getLinkButton());
 			container.add(new qx.ui.core.Spacer(10), {flex: 1});
 			container.add(this.__getOrientationButton());

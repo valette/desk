@@ -718,6 +718,9 @@ qx.Class.define("desk.sliceView",
 
 				if (_this.__slices.length==1) {
 					_this.__slider.setMaximum(volumeSlice.getNumberOfSlices()-1);
+					if (volumeSlice.getNumberOfSlices()==1) {
+						_this.__slider.setVisibility("hidden");
+					}
 
 					_this.__camera.position.set(0.5*(coordinates[0]+coordinates[2]),
 												0.5*(coordinates[3]+coordinates[5]),
