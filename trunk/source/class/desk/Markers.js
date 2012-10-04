@@ -1,3 +1,6 @@
+/*
+#ignore(THREE)
+*/
 qx.Class.define("desk.Markers", 
 {
 	extend : qx.core.Object,
