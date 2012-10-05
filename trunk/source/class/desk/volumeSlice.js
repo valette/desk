@@ -290,7 +290,7 @@ qx.Class.define("desk.volumeSlice",
 		},
 
 		__setLookupTablesToMaterial : function ( luts , material ) {
-			var lookupTable=material.uniforms.lookupTable.texture;
+			var lookupTable=material.uniforms.lookupTable.value;
 			var numberOfColors=luts[0].length;
 			material.uniforms.lookupTableLength.value=numberOfColors;
 			material.uniforms.useLookupTable.value=1;
@@ -421,8 +421,8 @@ qx.Class.define("desk.volumeSlice",
 			}
 
 			var baseUniforms={
-					texture: { type: "t", value: 0, texture: texture },
-					lookupTable: { type: "t", value: 1, texture: lookupTable },
+					texture: { type: "t", slot: 0, value: texture },
+					lookupTable: { type: "t", slot: 1, value: lookupTable },
 					lookupTableLength : { type: "f", value: 2 },
 					useLookupTable : { type: "f", value: 0 },
 					contrast : { type: "f", value: this.__contrast },
@@ -480,16 +480,16 @@ qx.Class.define("desk.volumeSlice",
 				var ymax=this.__origin[1]+(this.__extent[3]+1)*this.__spacing[1];
 				var coordinates=[];
 				coordinates[0]=xmin;
-				coordinates[1]=ymin;
+				coordinates[1]=ymax;
 				coordinates[2]=z;
 				coordinates[3]=xmax;
-				coordinates[4]=ymin;
+				coordinates[4]=ymax;
 				coordinates[5]=z;
 				coordinates[6]=xmax;
-				coordinates[7]=ymax;
+				coordinates[7]=ymin;
 				coordinates[8]=z;
 				coordinates[9]=xmin;
-				coordinates[10]=ymax;
+				coordinates[10]=ymin;
 				coordinates[11]=z;
 				return (coordinates);
 			// ZY X
@@ -501,16 +501,16 @@ qx.Class.define("desk.volumeSlice",
 				var zmax=this.__origin[1]+(this.__extent[3]+1)*this.__spacing[1];
 				var coordinates=[];
 				coordinates[0]=x;
-				coordinates[1]=zmin;
+				coordinates[1]=zmax;
 				coordinates[2]=ymin;
 				coordinates[3]=x;
-				coordinates[4]=zmin;
+				coordinates[4]=zmax;
 				coordinates[5]=ymax;
 				coordinates[6]=x;
-				coordinates[7]=zmax;
+				coordinates[7]=zmin;
 				coordinates[8]=ymax;
 				coordinates[9]=x;
-				coordinates[10]=zmax;
+				coordinates[10]=zmin;
 				coordinates[11]=ymin;
 				return (coordinates);
 			// XZ Y
@@ -523,16 +523,16 @@ qx.Class.define("desk.volumeSlice",
 				var coordinates=[];
 				coordinates[0]=xmin;
 				coordinates[1]=y;
-				coordinates[2]=zmin;
+				coordinates[2]=zmax;
 				coordinates[3]=xmax;
 				coordinates[4]=y;
-				coordinates[5]=zmin;
+				coordinates[5]=zmax;
 				coordinates[6]=xmax;
 				coordinates[7]=y;
-				coordinates[8]=zmax;
+				coordinates[8]=zmin;
 				coordinates[9]=xmin;
 				coordinates[10]=y;
-				coordinates[11]=zmax;
+				coordinates[11]=zmin;
 				return (coordinates);
 			}
 		},
@@ -742,7 +742,7 @@ qx.Class.define("desk.volumeSlice",
 				_this.__updateInProgress=false;
 				var materials=_this.__materials;
 				for (var i=0;i<materials.length;i++){
-					materials[i].uniforms.texture.texture.needsUpdate = true;
+					materials[i].uniforms.texture.value.needsUpdate = true;
 				}
 				_this.fireEvent("changeImage");
 			};

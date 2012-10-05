@@ -31,7 +31,7 @@ qx.Class.define("desk.action",
 				var action=new desk.action (parameters["action"]);
 				action.setActionParameters(parameters);
 				action.buildUI();
-			}, this);
+			});
 			req.send();
 		}
 	},
@@ -44,6 +44,8 @@ qx.Class.define("desk.action",
 	},
 
 	members : {
+		__tabView : null,
+
 		__actions : null,
 
 		__connections : null,
@@ -86,15 +88,14 @@ qx.Class.define("desk.action",
 		setOutputDirectory : function (directory) {
 			this.__outputDirectory=directory;
 			// try to load parameters on server
-
-			var req = new qx.io.request.Xhr(this.__actions.baseURL+"php/"+
-						this.getOutputDirectory()+"/action.json?nocache=" + Math.random());
-				//~ var req = new qx.io.request.Xhr(this.__actions.baseURL+"php/"+"data/"+ // if   upload directory/symbolicLink   inside   ext/php/data  directory
-						//~ this.getOutputDirectory()+"/action.json?nocache=" + Math.random());
-			//~ var req = new qx.io.request.Xhr(desk.FileSystem.getInstance().getFileURL(this.getOutputDirectory())+"action.json?nocache=" + Math.random()); //sebTest
+			var req = new qx.io.request.Xhr(desk.FileSystem.getInstance().getFileURL(this.getOutputDirectory())+"action.json?nocache=" + Math.random());
 			req.addListener("success", function(e) {
 				this.__loadedParameters=JSON.parse(e.getTarget().getResponseText());
+				
 				this.__updateUIParameters();
+				if (this.__tabView) {
+					this.__addOutputTab();
+				}
 			}, this);
 			req.send();
 			this.fireEvent("changeOutputDirectory");
@@ -134,18 +135,29 @@ qx.Class.define("desk.action",
 		},
 
 		getOutputDirectory : function () {
+			var directory = this.__outputDirectory;
+			if (directory == null) {
+				return null;
+			}
+
 			var subDir=this.getOutputSubdirectory();
-			if (subDir!=null) {
-				return this.__outputDirectory+"/"+subDir;
+			if ( subDir != null ) {
+				directory += '/' + subDir;
 			}
-			else {
-				return this.__outputDirectory;
+
+			if ( directory.charAt( directory.length - 1 ) != '/' ) {
+				directory += '/';
 			}
+			return directory;
 		},
 
 		setActionParameters : function (parameters)
 		{
 			this.__providedParameters=parameters;
+			var outputDirectory=parameters.output_directory;
+			if (typeof outputDirectory == "string")	{
+				this.__outputDirectory=outputDirectory;
+			}
 			this.__updateUIParameters();
 		},
 
@@ -159,27 +171,53 @@ qx.Class.define("desk.action",
 			this.__validationManager.validate();
 		},
 
+		getTabView : function () {
+			if ( this.__tabView != null ) {
+				return this.__tabView;
+			}
+			var tabView = this.__tabView = new qx.ui.tabview.TabView ();
+			var page = new qx.ui.tabview.Page("Input");
+			page.setLayout(new qx.ui.layout.HBox());
+			page.add(this, {flex : 1});
+			tabView.add(page);
+			return tabView;
+		},
+
+		__addOutputTab : function () {
+			if ( this.__embededFileBrowser != null ) {
+				return;
+			}
+			var outputDirectory = this.getOutputDirectory();
+			this.__embededFileBrowser = new desk.fileBrowser( outputDirectory , false );
+			this.__embededFileBrowser.setUserData( "action" , this );
+			var page = new qx.ui.tabview.Page("Output");
+			page.setLayout(new qx.ui.layout.HBox());
+			page.add( this.__embededFileBrowser , { flex : 1 } );
+			this.__tabView.add( page );
+
+			this.addListener( "actionUpdated" , function () {
+				this.__embededFileBrowser.updateRoot();
+			} , this );
+			this.addListener("changeOutputDirectory", function () {
+				this.__embededFileBrowser.updateRoot();
+			} , this );
+		},
+
 		buildUI : function () {
 			var action=this.__action;
 			this.setLayout(new qx.ui.layout.VBox());
 
 			var that=this;
-			var pane = null;
 
 			if (this.__standalone) {
 				this.__window=new qx.ui.window.Window();
 				this.__window.setLayout(new qx.ui.layout.HBox());
-
-		//			this.__window.setHeight(300);
 				this.__window.setWidth(300);
 				this.__window.setShowClose(true);
 				this.__window.setShowMinimize(false);
 				this.__window.setUseMoveFrame(true);
 				this.__window.setCaption(action.name);
-				
-				pane=new qx.ui.splitpane.Pane("horizontal");
-				pane.add(this);
-				this.__window.add(pane, {flex : 1});
+				this.__window.add(this.getTabView(), {flex : 1});
 			}
 
 			var logFile=null;
@@ -194,33 +232,13 @@ qx.Class.define("desk.action",
 				outputDirectory=this.__providedParameters["output_directory"];
 				if (outputDirectory) {
 					if (this.__standalone) {
-						this.__window.setWidth(600);
-						this.__embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
-						this.__embededFileBrowser.setUserData("action",this);
-						pane.add(this.__embededFileBrowser, 1);
+						this.__addOutputTab();
 					}
 					logFile=outputDirectory+"/action.log";
 					showLogButton.setVisibility("visible");
 				}
 			}
 
-			if (!this.__standalone) {
-				// add context menu to get a filebrowser
-				var menu = new qx.ui.menu.Menu;
-				var fileButton = new qx.ui.menu.Button("open output directory");
-				fileButton.addListener("execute", function (){
-					var outputDir=this.getOutputDirectory();
-					if (outputDir==null) {
-						alert ("There is no output yet. You need to execute the action first");
-					}
-					else {
-						var newFileBrowser=new desk.fileBrowser(outputDir);
-						newFileBrowser.setUserData("action",this);
-					}},this);
-				menu.add(fileButton);
-				this.setContextMenu(menu);
-			}
-		
 			// create the form manager
 			var manager = new qx.ui.form.validation.Manager();
 			this.__validationManager=manager;
@@ -471,13 +489,7 @@ qx.Class.define("desk.action",
 									if (this.__standalone) {
 										//display the results directory
 										if (this.__embededFileBrowser==null) {
-											this.__window.setWidth(600);
-											this.__embededFileBrowser=new desk.fileBrowser(outputDirectory, false);
-											pane.add(this.__embededFileBrowser, 1);
-											this.__embededFileBrowser.setUserData("action",this);
-										}
-										else {
-											this.__embededFileBrowser.updateRoot();
+											this.__addOutputTab();
 										}
 									}
 									logFile=outputDirectory+"/action.log";

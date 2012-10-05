@@ -17,6 +17,8 @@ qx.Class.define("desk.actions",
 		this.base(arguments);
 		this.__actionsQueue=[];
 
+		if (standAlone !== false) standAlone= true;
+
 		var URLparser = document.createElement('a');
 		URLparser.href = document.href;
 
@@ -47,7 +49,7 @@ qx.Class.define("desk.actions",
 
 		HackCTMWorkerURL=threeURL+"ctm/CTMWorkerMin.js";
 
-		var files=["Three.js", "Detector.js", "VTKLoader.js","TrackballControls2.js","ctm/CTMLoader.js"];
+		var files=["three.min.js", "Detector.js", "VTKLoader.js","TrackballControls2.js","ctm/CTMLoader.js"];
 		var index=-1;
 
 		function myScriptLoader() {
