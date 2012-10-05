@@ -241,6 +241,25 @@ exports.performAction = function (POST, callback) {
 							});
 						});
 						break;
+					case 'directory':
+						fs.realpath(filesRoot+parameterValue, function (err, path) {
+							if (err) {
+								callback (err);
+								return;
+							}
+							commandLine+=path+" ";
+							fs.stat(filesRoot+parameterValue, function (err, stats) {
+								var time=stats.mtime.getTime();
+								if (time>inputMTime) {
+									inputMTime=time;
+								}
+								if (!stats.isDirectory()) {
+									callback ("error : "+parameterValue+" is not a directory");
+								}
+								callback (null);
+							});
+						});
+						break;
 					case 'string':
 						if (parameterValue.indexOf(" ")===-1) {
 							commandLine+=parameterValue+" ";
