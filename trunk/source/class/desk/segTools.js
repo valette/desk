@@ -90,7 +90,7 @@ qx.Class.define("desk.segTools",
 
 	events : {
 		"gotSegmentedVolume" : "qx.event.type.Event",
-		"meshViewerCreated" : "qx.event.type.Data"
+		"meshingActionUpdated" : "qx.event.type.Data"
 	},
 
 	properties : {
@@ -417,12 +417,12 @@ qx.Class.define("desk.segTools",
 					meshViewer.addListener("close", function () {
 						meshViewer=null;
 					})
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-					tools.fireDataEvent("meshViewerCreated", meshViewer);
 				}
 				else {
 					meshViewer.update();
 				}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				tools.fireDataEvent("meshingActionUpdated", meshViewer);
 				this.__meshViewer = meshViewer;
 			}, this);
 

@@ -20,8 +20,6 @@ qx.Class.define("desk.meshView",
 			if (parameters.convertVTK!==undefined) {
 				this.setConvertVTK(parameters.convertVTK);
 			}
-			if(fileBrowser==parameters.__fileBrowser)
-				var volMaster = parameters;
 		}
 
 		var window=new qx.ui.window.Window();
@@ -36,8 +34,6 @@ qx.Class.define("desk.meshView",
 		window.setContentPadding(2);
 		window.setCaption(file);
 		
-		if(typeof volMaster != "undefined")
-			window.setUserData("standAlone",true);
 		this.__window=window;
 
 		var pane = new qx.ui.splitpane.Pane("horizontal")
