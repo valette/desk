@@ -844,30 +844,30 @@ qx.Class.define("desk.sliceView",
 		__positionK : null,
 
 		setCrossPosition : function (i,j,k) {
-			var slice,x,y;
-			var dimensions=this.__volume2DDimensions;
-			switch (this.getOrientation())
+			var slice, x, y;
+			var dimensions = this.__volume2DDimensions;
+			switch ( this.getOrientation() )
 			{
 			case 0 :
-				x=i;
-				y=dimensions[1]-j;
-				slice=k;
+				x = i;
+				y = dimensions[1] - 1 -j;
+				slice = k;
 				break;
 			case 1 :
-				x=k;
-				y=dimensions[1]-j;
-				slice=i;
+				x = k;
+				y = dimensions[1]- 1 - j;
+				slice = i;
 				break;
 			case 2 :
-				x=i;
-				y=dimensions[1]-k;
-				slice=j;
+				x = i;
+				y = dimensions[1]- 1 - k;
+				slice = j;
 			}
 
-			var spacing=this.__volume2DSpacing;
-			var coordinates=this.__2DCornersCoordinates;
-			x=coordinates[0]+(0.5+x)*spacing[0];
-			y=coordinates[1]-(0.5+y)*spacing[1];
+			var spacing = this.__volume2DSpacing;
+			var coordinates = this.__2DCornersCoordinates;
+			x = coordinates[0] + ( 0.5 + x )*spacing[0];
+			y = coordinates[1] - ( 0.5 + y )*spacing[1];
 
 			this.applyToLinks (function () {
 				this.__positionI=i;
@@ -1147,7 +1147,7 @@ qx.Class.define("desk.sliceView",
 			var yinter=intersection.y;
 
 			var intxc=Math.floor((xinter-coordinates[0])*dimensions[0]/(coordinates[2]-coordinates[0]));
-			var intyc=dimensions[1] - Math.floor((yinter-coordinates[1])*dimensions[1]/(coordinates[5]-coordinates[1]));
+			var intyc=dimensions[1] - 1- Math.floor((yinter-coordinates[1])*dimensions[1]/(coordinates[5]-coordinates[1]));
 			return {i :intxc, j :intyc, x:xinter, y:yinter};
 		},
 
