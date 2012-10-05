@@ -233,9 +233,9 @@ qx.Class.define("desk.fileBrowser",
 						alert ("xml file of unknown type!");
 					break;
 				case ".mhd":
-						var coordinates =  {viewers : [{c:0,r:0}, {c:1,r:0}, {c:1,r:1}],
-											volList : {c:0,r:1} };
-						var volMaster = new desk.volMaster( file, {nbOrientations:3, inGridCoord:coordinates} );
+				//		var coordinates =  {viewers : [{c:0,r:0}, {c:1,r:0}, {c:1,r:1}],
+				//							volList : {c:0,r:1} };
+						var volMaster = new desk.volMaster( file );
 						var volWindow = volMaster.getWindow();
 						
 					break;

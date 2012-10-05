@@ -17,8 +17,6 @@ qx.Class.define("desk.actions",
 		this.base(arguments);
 		this.__actionsQueue=[];
 
-		if (standAlone !== false) standAlone= true;
-
 		var URLparser = document.createElement('a');
 		URLparser.href = document.href;
 
@@ -38,10 +36,6 @@ qx.Class.define("desk.actions",
 			if (this.__permissionsLevel<1) {
 				return;
 			}
-/////////////////////////////////////////////////////////////////////////////////
-			var standAlone = qx.core.Init.getApplication().getAppliFlag();
-			if(standAlone)
-				qx.core.Init.getApplication().getRoot().add(ongoingActions, { right : 0, top : 0});
 		}, this);
 
 		// load external three.js files

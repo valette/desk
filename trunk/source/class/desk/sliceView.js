@@ -763,16 +763,14 @@ qx.Class.define("desk.sliceView",
 					_this.__createBrushMesh(volumeSlice);
 					_this.__createCrossMeshes(volumeSlice);
 
-					//~ switch (this.getOrientation())
-					//~ {
-						//~ case 2 :
-							//~ _this.flipY();
-							//~ break;
-						//~ case 1 :
-							//~ _this.rotateLeft();
-							//~ break;
-						//~ default:
-					//~ }
+					switch (this.getOrientation())
+					{
+						case 0 :
+						case 1 :
+							_this.flipY();
+							break;
+						default:
+					}
 
 					var dimensions=volumeSlice.getDimensions();
 					for (var coordinate=0;coordinate<3;coordinate++) {
@@ -1201,20 +1199,28 @@ qx.Class.define("desk.sliceView",
 			case 0 :
 				northLabel.setValue("A");
 				southLabel.setValue("P");
-				eastLabel.setValue("R");
-				westLabel.setValue("L");
+				//~ eastLabel.setValue("R");
+				//~ westLabel.setValue("L");
+				eastLabel.setValue("L");
+				westLabel.setValue("R");
 				break;
 			case 1 :
 				northLabel.setValue("A");
 				southLabel.setValue("P");
-				eastLabel.setValue("I");
-				westLabel.setValue("S");
+				//~ eastLabel.setValue("I");
+				//~ westLabel.setValue("S");
+				eastLabel.setValue("S");
+				westLabel.setValue("I");
 				break;
 			case 2 :
-				northLabel.setValue("I");
-				southLabel.setValue("S");
-				eastLabel.setValue("R");
-				westLabel.setValue("L");
+				//~ northLabel.setValue("I");
+				//~ southLabel.setValue("S");
+				//~ eastLabel.setValue("R");
+				//~ westLabel.setValue("L");
+				northLabel.setValue("S");
+				southLabel.setValue("I");
+				eastLabel.setValue("L");
+				westLabel.setValue("R");
 				break;
 			}
 
