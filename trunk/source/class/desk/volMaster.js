@@ -8,7 +8,7 @@ qx.Class.define("desk.volMaster",
 	extend : qx.core.Object,
 	include : desk.ActionLinkMixin,
 
-	construct : function(globalFile, appliCallback)
+	construct : function(globalFile, parameters, appliCallback)
 	{	
 		
         // Enable logging in debug variant
@@ -25,7 +25,15 @@ qx.Class.define("desk.volMaster",
 			this.__standAlone = false;
         
 		if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
-		this.__nbUsedOrientations = 3;
+		
+		if(parameters != null)
+		{
+			if(parameters.nbOrientations!=null)
+				this.__nbUsedOrientations = parameters.nbOrientations;
+			if(parameters.inGridCoord!=null)
+				this.__windowsInGridCoord = parameters.inGridCoord;
+		}
+		
 		this.__file = globalFile;
 
 		this.__fileSystem = desk.FileSystem.getInstance();
@@ -114,14 +122,12 @@ qx.Class.define("desk.volMaster",
 		__dataTabs : null,
 		__viewers : null,
 		__windowsInGridCoord : {
-			view1 : {c:0,r:0},
-			view2 : {c:1,r:0},
-			view3 : {c:0,r:1},
+			viewers : [{c:0,r:0}, {c:1,r:0}, {c:0,r:1}],
 			volList : {c:1,r:1}
 		},
-		__viewsNames : [],
+		__viewsNames : ["Axial", "Sagittal", "Coronal"],
 
-		__nbUsedOrientations : null,
+		__nbUsedOrientations : 3,
 
 		__file : null,
 		__fileSystem : null,
@@ -138,7 +144,7 @@ qx.Class.define("desk.volMaster",
 			return this.__window;
 		},
 		
-		getGridContainer : function()
+		getVolListGridContainer : function()
 		{
 			var volumesGridCoor = this.__windowsInGridCoord.volList;
 			this.__gridContainer.setUserData("freeRow", volumesGridCoor.r);
@@ -152,7 +158,7 @@ qx.Class.define("desk.volMaster",
 		
 		applyToViewers : function (theFunction) {
 			var viewers=this.__viewers;
-			for (var i=0;i<viewers.length;i++) {
+			for (var i=0;i<this.__nbUsedOrientations;i++) {
 				theFunction.apply(viewers[i]);
 			}
 		},
@@ -195,25 +201,9 @@ qx.Class.define("desk.volMaster",
 		__addViewers : function () {
 			for(var i=0; i<this.__nbUsedOrientations; i++) {
 				var sliceView=this.__viewers[i];
-				var viewGridCoor;
-				switch (i)
-				{
-				case 0 :
-					viewGridCoor = this.__windowsInGridCoord.view1;
-					this.__addViewerToGrid(sliceView, viewGridCoor.r, viewGridCoor.c);
-					sliceView.setOrientPlane(this.__viewsNames[0]);
-					break;
-				case 1 : 
-					viewGridCoor = this.__windowsInGridCoord.view2;
-					this.__addViewerToGrid(sliceView, viewGridCoor.r, viewGridCoor.c);
-					sliceView.setOrientPlane(this.__viewsNames[1]);
-					break;
-				case 2 : 
-					viewGridCoor = this.__windowsInGridCoord.view3;
-					this.__addViewerToGrid(sliceView, viewGridCoor.r, viewGridCoor.c);
-					sliceView.setOrientPlane(this.__viewsNames[2]);
-					break;
-				}
+				var viewGridCoor = this.__windowsInGridCoord.viewers[i];
+				this.__addViewerToGrid(sliceView, viewGridCoor.r, viewGridCoor.c);
+				sliceView.setOrientPlane(this.__viewsNames[i]);
 			}
 		},
 
@@ -221,41 +211,25 @@ qx.Class.define("desk.volMaster",
 			var viewers=this.__viewers;
 			var gridContainer=this.__gridContainer;
 			var orientationContainer=this.__orientationContainer;
-			for (var i=0;i<viewers.length;i++)
+			for (var i=0;i<this.__nbUsedOrientations;i++)
 			{
 				gridContainer.remove(viewers[i]);
 			}
 			orientationContainer.removeAll();
 			var r,c;
-			for (var i=0;i<3;i++) {
+			for (var i=0;i<this.__nbUsedOrientations;i++) {
 				var viewer;
 				//// Use  layout.charAt(i)-1  since layout uses 1,2,3  but  __layoutSelectBoxes  goes from 0 to 2 !
 				var letter = this.__layoutSelectBoxes[layout.charAt(i)-1].getSelection()[0].getLabel().charAt(0);
-				for (var j=0;j<viewers.length;j++)
+				for (var j=0;j<this.__nbUsedOrientations;j++)
 				{
 					viewer=viewers[j];
 					if (viewer.getOrientPlane().charAt(0)==letter)
 						break;
 				}
-				var viewGridCoor;
-				switch (i)
-				{
-				case 0 :
-					viewGridCoor = this.__windowsInGridCoord.view1;
-					r=viewGridCoor.r;
-					c=viewGridCoor.c;
-					break;
-				case 1 : 
-					viewGridCoor = this.__windowsInGridCoord.view2;
-					r=viewGridCoor.r;
-					c=viewGridCoor.c;
-					break;
-				case 2 :
-					viewGridCoor = this.__windowsInGridCoord.view3;
-					r=viewGridCoor.r;
-					c=viewGridCoor.c;
-					break;
-				}
+				var viewGridCoor = this.__windowsInGridCoord.viewers[i];
+				var r = viewGridCoor.r;
+				var c = viewGridCoor.c;
 				gridContainer.add (viewer, {row: r, column: c});
 				orientationContainer.add(viewer.getReorientationContainer(this.__orientationButtonGroup), {row: r, column: c});
 			}
@@ -269,21 +243,15 @@ qx.Class.define("desk.volMaster",
 		__createOrientationWindow : function () {
 			var _this = this;
 			
-			_this.__viewsNames[0] = "Axial";
-			_this.__viewsNames[1] = "Sagittal";
-			_this.__viewsNames[2] = "Coronal";
-			
 			var window=new qx.ui.window.Window().set({caption : "Layout and Orientation"});
 			window.setLayout(new qx.ui.layout.VBox());
 
 			window.add (new qx.ui.basic.Label("Windows layout :"));
 			var planesContainer = new qx.ui.container.Composite();
 			planesContainer.setLayout(new qx.ui.layout.HBox(5));
-			// Creates one item per plane
-			var axialItem = new qx.ui.form.ListItem(_this.__viewsNames[0]);
-			var sagittalItem = new qx.ui.form.ListItem(_this.__viewsNames[1]);
-			var coronalItem = new qx.ui.form.ListItem(_this.__viewsNames[2]);
+			
 			var layoutSelectBoxes = [];
+			var nbUsedOrientations = _this.__nbUsedOrientations;
 			// Define function for change event
 			var onChangeSelect = function(event)
 			{
@@ -291,8 +259,6 @@ qx.Class.define("desk.volMaster",
 				var selectItemLabel = selectedItem.getLabel();
 				var thisSelectBox = this;
 				var tempBoxes = _this.__layoutSelectBoxes;
-				var tempLabelPreviousSel = thisSelectBox.getUserData("previousSelect");
-				thisSelectBox.setUserData("previousSelect",selectItemLabel);
 				var currentLabel;
 				var doubledBox;
 				var viewers = _this.__viewers;
@@ -304,7 +270,7 @@ qx.Class.define("desk.volMaster",
 					index++;
 				tempViewer = viewers[index];
 				tempViewer.setOrientPlane(selectItemLabel);
-				for(var i=0; i<3; i++)
+				for(var i=0; i<nbUsedOrientations; i++)
 				{
 					currentLabel = tempBoxes[i].getSelection()[0].getLabel();
 					if((currentLabel==selectItemLabel)&&(tempBoxes[i]!=thisSelectBox))
@@ -322,7 +288,9 @@ qx.Class.define("desk.volMaster",
 						//// Update "prevousSelect" field
 						doubledBox = tempBoxes[i];
 						var tempSelectables = doubledBox.getSelectables();
-						for(var j=0; j<3; j++)
+						var tempLabelPreviousSel = thisSelectBox.getUserData("previousSelect");
+						thisSelectBox.setUserData("previousSelect",selectItemLabel);
+						for(var j=0; j<nbUsedOrientations; j++)
 							if(tempSelectables[j].getLabel()==tempLabelPreviousSel)
 							{
 								doubledBox.setUserData("previousSelect",tempLabelPreviousSel);
@@ -336,7 +304,7 @@ qx.Class.define("desk.volMaster",
 			// Define function to load items on selectBox
 			var setBox = function(inSelectBox, startItemID)
 			{
-				for(var i=0; i<3; i++)
+				for(var i=0; i<nbUsedOrientations; i++)
 				{
 					var tempItem = new qx.ui.form.ListItem(_this.__viewsNames[i]);
 					inSelectBox.add(tempItem);
@@ -349,7 +317,7 @@ qx.Class.define("desk.volMaster",
 			}
 			// Create selectBoxes
 			var selectBox;
-			for(var i=0; i<3; i++)
+			for(var i=0; i<nbUsedOrientations; i++)
 			{
 				planesContainer.add (new qx.ui.basic.Label((i+1) + " : "));
 				selectBox = new qx.ui.form.SelectBox();
@@ -420,7 +388,7 @@ qx.Class.define("desk.volMaster",
 					fullscreen=false;
 					this.__fullscreenContainer.remove(sliceView);
 					var size=this.__gridContainer.getInnerSize();
-					for (var i=0;i<this.__viewers.length;i++) {
+					for (var i=0;i<this.__nbUsedOrientations;i++) {
 						this.__viewers[i].set ({width : Math.round((size.width-3)/2),
 								height : Math.round((size.height-3)/2)});
 					}
@@ -767,14 +735,14 @@ qx.Class.define("desk.volMaster",
 			
 			var gridContainer=new qx.ui.container.Composite();
 			var gridLayout=new qx.ui.layout.Grid();
-			for (var i=0;i<3;i++) {
+			for (var i=0;i<this.__nbUsedOrientations;i++) {
 				gridLayout.setRowFlex(i,30);
 				gridLayout.setColumnFlex(i,1);
 			}
 			gridContainer.setLayout(gridLayout);
 			
 			var viewGridCoor = this.__windowsInGridCoord;
-			for(var i=0; i<3; i++)
+			for(var i=0; i<this.__nbUsedOrientations; i++)
 			{
 				var labelsContainer = new qx.ui.container.Composite();
 				labelsContainer.set({draggable : true,
@@ -813,31 +781,20 @@ qx.Class.define("desk.volMaster",
 						droppedLabel.setValue(selfViewerID);
 						selfLabel.setValue(droppedViewerID);
 						var tempGridContChildren = gridContainer.getChildren();
-						var layout = "" + tempGridContChildren[0].getChildren()[0].getValue()
-										+ tempGridContChildren[1].getChildren()[0].getValue()
-										+ tempGridContChildren[2].getChildren()[0].getValue();
+						var layout = "";
+						for(var i=0; i<_this.__nbUsedOrientations; i++)
+							layout += tempGridContChildren[i].getChildren()[0].getValue();
 						_this.setViewsLayout(layout);
 					}
 				}, labelsContainer);
 				var viewLabel = new qx.ui.basic.Label( ""+(i+1));
 				viewLabel.setFont(qx.bom.Font.fromString("20px sans-serif bold"));
 				labelsContainer.add(viewLabel);
-				// Shows plane name...unfinished...
-				//~ var orientPlaneLabel = new qx.ui.basic.Label(_this.__viewsNames[i]);
-				//~ orientPlaneLabel.bind("value", _this.__viewers[i], "orientPlane");
-				//~ labelsContainer.add(orientPlaneLabel);
-				switch (i)
-				{
-					case 0 :
-					gridContainer.add(labelsContainer, {row: viewGridCoor.view1.r, column: viewGridCoor.view1.c});
-					break;
-					case 1 :
-					gridContainer.add(labelsContainer, {row: viewGridCoor.view2.r, column: viewGridCoor.view2.c});
-					break;
-					case 2 :
-					gridContainer.add(labelsContainer, {row: viewGridCoor.view3.r, column: viewGridCoor.view3.c});
-					break;
-				}
+					// Shows plane name...unused and unfinished...
+					//~ var orientPlaneLabel = new qx.ui.basic.Label(_this.__viewsNames[i]);
+					//~ orientPlaneLabel.bind("value", _this.__viewers[i], "orientPlane");
+					//~ labelsContainer.add(orientPlaneLabel);
+				gridContainer.add(labelsContainer, {row: viewGridCoor.viewers[i].r, column: viewGridCoor.viewers[i].c});
 			}
 			
 			return (gridContainer);
@@ -883,15 +840,18 @@ qx.Class.define("desk.volMaster",
 					var volView=e.getData("volView");
 					var viewers=this.__viewers;
 					var viewers2=volView.__viewers;
-					for (var i=0;i<viewers.length;i++) {
-						var viewer=viewers[i];
-						var orientation=viewer.getOrientation();
-						for (var j=0;j<viewers2.length;j++) {
-							if (viewers2[j].getOrientation()==orientation) {
-								viewer.linkToViewer(viewers2[j]);
+					if(this.__nbUsedOrientations==viewers2.length)
+						for (var i=0;i<this.__nbUsedOrientations;i++) {
+							var viewer=viewers[i];
+							var orientation=viewer.getOrientation();
+							for (var j=0;j<this.__nbUsedOrientations;j++) {
+								if (viewers2[j].getOrientation()==orientation) {
+									viewer.linkToViewer(viewers2[j]);
+								}
 							}
 						}
-					}
+					else
+						alert("Cannot link viewers : number of orientations incoherent");
 				}
 			},this);
 			return (label);

@@ -12,9 +12,8 @@ qx.Class.define("desk.actions",
 		"desk.extURL" : "to define in config.json"
 	},
 
-	construct : function(standAlone)
+	construct : function()
 	{
-			standAlone=standAlone || true;
 		this.base(arguments);
 		this.__actionsQueue=[];
 
@@ -38,7 +37,7 @@ qx.Class.define("desk.actions",
 				return;
 			}
 /////////////////////////////////////////////////////////////////////////////////
-		//	var standAlone = qx.core.Init.getApplication().getAppliFlag();
+			var standAlone = qx.core.Init.getApplication().getAppliFlag();
 			if(standAlone)
 				qx.core.Init.getApplication().getRoot().add(ongoingActions, { right : 0, top : 0});
 		}, this);
