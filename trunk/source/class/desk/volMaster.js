@@ -10,7 +10,13 @@ qx.Class.define("desk.volMaster",
 
 	construct : function(globalFile, parameters, appliCallback)
 	{	
-		
+
+		this.__windowsInGridCoord = {
+			viewers : [{c:0,r:0}, {c:1,r:0}, {c:0,r:1}],
+			volList : {c:1,r:1}
+		};
+		this.__viewsNames = ["Axial", "Sagittal", "Coronal"];
+
         // Enable logging in debug variant
         if(qx.core.Environment.get("qx.debug"))
         {
@@ -21,17 +27,22 @@ qx.Class.define("desk.volMaster",
         }
         
         //~ if(standAlone==false)
-        if(typeof appliCallback=="function")
+        if(typeof appliCallback=="function") {
 			this.__standAlone = false;
+		}
         
-		if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+		if ( ! Detector.webgl ) {
+			Detector.addGetWebGLMessage();
+		}
 		
 		if(parameters != null)
 		{
-			if(parameters.nbOrientations!=null)
+			if( parameters.nbOrientations != null ) {
 				this.__nbUsedOrientations = parameters.nbOrientations;
-			if(parameters.inGridCoord!=null)
+			}
+			if( parameters.inGridCoord != null ) {
 				this.__windowsInGridCoord = parameters.inGridCoord;
+			}
 		}
 		
 		this.__file = globalFile;
@@ -39,14 +50,15 @@ qx.Class.define("desk.volMaster",
 		this.__fileSystem = desk.FileSystem.getInstance();
 
 		this.__viewers = [];
-		for(var i=0; i<this.__nbUsedOrientations; i++) {
+		var i;
+		for( i=0; i < this.__nbUsedOrientations; i++ ) {
 			this.__viewers[i] = new desk.sliceView(this, i);
 		}
 
 		var gridLayout=new qx.ui.layout.Grid(3,3);
-		for (var i=0;i<2;i++) {
-			gridLayout.setRowFlex(i,1);
-			gridLayout.setColumnFlex(i,1);
+		for ( i=0 ; i<2 ; i++ ) {
+			gridLayout.setRowFlex( i , 1 );
+			gridLayout.setColumnFlex( i, 1 );
 		}
 
 		var gridContainer=new qx.ui.container.Composite();
@@ -56,7 +68,7 @@ qx.Class.define("desk.volMaster",
 		var fullscreenContainer=new qx.ui.container.Composite();
 		fullscreenContainer.setLayout(new qx.ui.layout.HBox());
 		this.__fullscreenContainer=fullscreenContainer;
-		fullscreenContainer.setVisibility("excluded")
+		fullscreenContainer.setVisibility("excluded");
 
 		this.__window=new qx.ui.window.Window();
 		this.__window.setLayout(new qx.ui.layout.VBox());
@@ -66,8 +78,9 @@ qx.Class.define("desk.volMaster",
 		this.__window.setUseMoveFrame(true);
 
 /////////////////////////////////////////////////////////////////////////////
-		if(this.__standAlone)
-			this.__window.add(this.__getToolBar());
+		if ( this.__standAlone ) {
+			this.__window.add( this.__getToolBar() );
+		}
 		this.__window.add(gridContainer, {flex : 1});
 		this.__window.add(fullscreenContainer, {flex : 1});
 
@@ -93,8 +106,9 @@ qx.Class.define("desk.volMaster",
 		this.__addDropFileSupport();
 		
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		if(typeof appliCallback == "function")
+		if(typeof appliCallback == "function") {
 			appliCallback(this);
+		}
 				
 //////////////////////////////////////////
 		return (this);
@@ -121,11 +135,8 @@ qx.Class.define("desk.volMaster",
 		__volumes : null,
 		__dataTabs : null,
 		__viewers : null,
-		__windowsInGridCoord : {
-			viewers : [{c:0,r:0}, {c:1,r:0}, {c:0,r:1}],
-			volList : {c:1,r:1}
-		},
-		__viewsNames : ["Axial", "Sagittal", "Coronal"],
+		__windowsInGridCoord :null,
+		__viewsNames : null,
 
 		__nbUsedOrientations : 3,
 
@@ -211,21 +222,23 @@ qx.Class.define("desk.volMaster",
 			var viewers=this.__viewers;
 			var gridContainer=this.__gridContainer;
 			var orientationContainer=this.__orientationContainer;
-			for (var i=0;i<this.__nbUsedOrientations;i++)
+			var i;
+			for ( i=0; i < this.__nbUsedOrientations; i++ )
 			{
-				gridContainer.remove(viewers[i]);
+				gridContainer.remove( viewers[i] );
 			}
 			orientationContainer.removeAll();
-			var r,c;
-			for (var i=0;i<this.__nbUsedOrientations;i++) {
+
+			for ( i=0; i < this.__nbUsedOrientations; i++ ) {
 				var viewer;
 				//// Use  layout.charAt(i)-1  since layout uses 1,2,3  but  __layoutSelectBoxes  goes from 0 to 2 !
 				var letter = this.__layoutSelectBoxes[layout.charAt(i)-1].getSelection()[0].getLabel().charAt(0);
 				for (var j=0;j<this.__nbUsedOrientations;j++)
 				{
 					viewer=viewers[j];
-					if (viewer.getOrientPlane().charAt(0)==letter)
+					if ( viewer.getOrientPlane().charAt(0) == letter ) {
 						break;
+					}
 				}
 				var viewGridCoor = this.__windowsInGridCoord.viewers[i];
 				var r = viewGridCoor.r;
@@ -266,8 +279,9 @@ qx.Class.define("desk.volMaster",
 				var labels2give = [];
 				var dirOverLays2get;
 				var index = 0;
-				while(tempBoxes[index]!=thisSelectBox)
+				while( tempBoxes[index] != thisSelectBox ) {
 					index++;
+				}
 				tempViewer = viewers[index];
 				tempViewer.setOrientPlane(selectItemLabel);
 				for(var i=0; i<nbUsedOrientations; i++)
@@ -275,28 +289,33 @@ qx.Class.define("desk.volMaster",
 					currentLabel = tempBoxes[i].getSelection()[0].getLabel();
 					if((currentLabel==selectItemLabel)&&(tempBoxes[i]!=thisSelectBox))
 					{
+						var j;
 						//// Swtich direction overlays labels
-						for(var j=0; j<4; j++)
+						for( j = 0; j < 4; j++ ) {
 							labels2give[j] = tempViewer.getOverLays()[j].getValue();
+						}
 						dirOverLays2get = viewers[i].getOverLays();
-						for(var j=0; j<4; j++)
+						for( j = 0; j < 4; j++ ) {
 							tempViewer.getOverLays()[j].setValue(dirOverLays2get[j].getValue());
+						}
 						tempViewer.render();
-						for(var j=0; j<4; j++)
+						for( j = 0; j < 4; j++) {
 							viewers[i].getOverLays()[j].setValue(labels2give[j]);
+						}
 						viewers[i].render();
 						//// Update "prevousSelect" field
 						doubledBox = tempBoxes[i];
 						var tempSelectables = doubledBox.getSelectables();
 						var tempLabelPreviousSel = thisSelectBox.getUserData("previousSelect");
 						thisSelectBox.setUserData("previousSelect",selectItemLabel);
-						for(var j=0; j<nbUsedOrientations; j++)
+						for( j = 0; j < nbUsedOrientations; j++ ) {
 							if(tempSelectables[j].getLabel()==tempLabelPreviousSel)
 							{
 								doubledBox.setUserData("previousSelect",tempLabelPreviousSel);
 								doubledBox.setSelection([tempSelectables[j]]);
 								break;
 							}
+						}
 						break;
 					}
 				}
@@ -314,17 +333,16 @@ qx.Class.define("desk.volMaster",
 						inSelectBox.setUserData("previousSelect", _this.__viewsNames[startItemID]);
 					}
 				}
-			}
+			};
 			// Create selectBoxes
-			var selectBox;
-			for(var i=0; i<nbUsedOrientations; i++)
-			{
-				planesContainer.add (new qx.ui.basic.Label((i+1) + " : "));
+			var selectBox, i;
+			for ( i = 0; i < nbUsedOrientations; i++ ) {
+				planesContainer.add ( new qx.ui.basic.Label( (i+1) + " : ") );
 				selectBox = new qx.ui.form.SelectBox();
 				layoutSelectBoxes[i] = selectBox;
-				setBox(selectBox,i,layoutSelectBoxes);
-				selectBox.addListener("changeSelection", onChangeSelect, selectBox);
-				planesContainer.add(selectBox, {flex:1});
+				setBox( selectBox, i, layoutSelectBoxes );
+				selectBox.addListener( "changeSelection", onChangeSelect, selectBox);
+				planesContainer.add( selectBox, { flex:1 } );
 			}
 			this.__layoutSelectBoxes = layoutSelectBoxes;
 			window.add(planesContainer);
@@ -351,15 +369,15 @@ qx.Class.define("desk.volMaster",
 			
 			var gridContainer=new qx.ui.container.Composite();
 			var gridLayout=new qx.ui.layout.Grid();
-			for (var i=0;i<2;i++) {
-				gridLayout.setRowFlex(i,1);
-				gridLayout.setColumnFlex(i,1);
+			for ( i = 0; i < 2; i++ ) {
+				gridLayout.setRowFlex( i, 1 );
+				gridLayout.setColumnFlex( i, 1 );
 			}
-			window.add(gridContainer);
-			this.__orientationWindow=window;
+			window.add( gridContainer );
+			this.__orientationWindow = window;
 
-			gridContainer.setLayout(gridLayout);
-			this.__orientationContainer=gridContainer;
+			gridContainer.setLayout( gridLayout );
+			this.__orientationContainer = gridContainer;
 		},
 
 		__addViewerToGrid : function (sliceView, r, c) {
@@ -369,10 +387,9 @@ qx.Class.define("desk.volMaster",
 			sliceView.set({width : width, height : height});
 			this.__gridContainer.add(sliceView, {row: r, column: c});
 			this.__orientationContainer.add(sliceView.getReorientationContainer(this.__orientationButtonGroup), {row: r, column: c});
-			sliceView.setUserData("positionInGrid", {row :r , column :c})
+			sliceView.setUserData( "positionInGrid", { row :r , column :c } );
 
-
-			var fullscreenButton=new qx.ui.form.Button("+").set({opacity: 0.5});
+			var fullscreenButton = new qx.ui.form.Button("+").set( { opacity: 0.5 } );
 			sliceView.getRightContainer().add(fullscreenButton);
 			fullscreenButton.addListener("execute", function () {
 				if (!fullscreen) {
@@ -414,17 +431,17 @@ qx.Class.define("desk.volMaster",
 			var opacity=1;
 			var imageFormat=1;
 			
-			if (parameters!=null) {
-				if (parameters.opacity!=null) {
-					opacity=parameters.opacity;
+			if ( parameters != null ) {
+				if ( parameters.opacity != null ) {
+					opacity = parameters.opacity;
 				}
-				if (parameters.imageFormat!=null) {
-					imageFormat=parameters.imageFormat;
+				if ( parameters.imageFormat != null ) {
+					imageFormat = parameters.imageFormat;
 				}
 			}
 
-			var volumeListItem=new qx.ui.container.Composite()
-			volumeListItem.setLayout(new qx.ui.layout.VBox());
+			var volumeListItem = new qx.ui.container.Composite();
+			volumeListItem.setLayout( new qx.ui.layout.VBox() );
 			volumeListItem.setDecorator("main");
 			volumeListItem.set({toolTipText : file});
 			volumeListItem.setUserData("slices", volumeSlices);
@@ -450,16 +467,17 @@ qx.Class.define("desk.volMaster",
 						break;
 					default :
 						alert ("type "+type+"not supported for drag and drop");
+						break;
 					}
 				}, this);
 
 
 			var shortFileName=file.substring(file.lastIndexOf("/")+1, file.length);
 
-			var labelcontainer=new qx.ui.container.Composite()
-			labelcontainer.setLayout(new qx.ui.layout.HBox());
-			labelcontainer.setContextMenu(this.__getVolumeContextMenu(volumeListItem));
-			volumeListItem.add(labelcontainer, {flex : 1});
+			var labelcontainer=new qx.ui.container.Composite();
+			labelcontainer.setLayout( new qx.ui.layout.HBox() );
+			labelcontainer.setContextMenu( this.__getVolumeContextMenu( volumeListItem ) );
+			volumeListItem.add(labelcontainer, { flex : 1 } );
 
  			var label=new qx.ui.basic.Label(shortFileName);
  			label.setTextAlign("left");
@@ -472,7 +490,7 @@ qx.Class.define("desk.volMaster",
 					return (function (volumeSlice) {
 						volumeSlices[myI]=volumeSlice;
 						numberOfRemainingMeshes--;
-						if (numberOfRemainingMeshes==0) {
+						if ( numberOfRemainingMeshes == 0 ) {
 							_this.__reorderMeshes();
 						}
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -489,12 +507,12 @@ qx.Class.define("desk.volMaster",
 			var hideShowCheckbox=new qx.ui.form.CheckBox();
 			hideShowCheckbox.set({value : true,
 					toolTipText : "visible/hidden"});
-			hideShowCheckbox.addListener("changeValue", function (e) {
-				for (var i=0;i<volumeSlices.length;i++) {
-					volumeSlices[i].getUserData("mesh").visible=e.getData();
+			hideShowCheckbox.addListener( "changeValue", function (e) {
+				for ( var i = 0; i < volumeSlices.length; i++ ) {
+					volumeSlices[i].getUserData("mesh").visible = e.getData();
 				}
 				this.__renderAll();
-			}, this)
+			}, this );
 
 			// create file format change widget
 			var fileFormatBox = new qx.ui.form.SelectBox();
@@ -574,10 +592,10 @@ qx.Class.define("desk.volMaster",
 				}
 			}, this);
 
-			brightnessButton.addListener("mouseup", function(event)	{
-				brightnessButton.releaseCapture()
-				clicked=false;
-			}, this);
+			brightnessButton.addListener( "mouseup", function(event)	{
+				brightnessButton.releaseCapture();
+				clicked = false;
+			}, this );
 			
 			settingsContainer.add(brightnessButton);
 			settingsContainer.add(fileFormatBox);
@@ -630,7 +648,7 @@ qx.Class.define("desk.volMaster",
 			menu.add(colormapButton);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-			if(this.__standAlone)
+			if(this.__standAlone) {
 				if (desk.actions.getInstance().getPermissionsLevel()>0) {
 					var paintButton=new qx.ui.menu.Button("segment");
 					paintButton.addListener("execute", function () {
@@ -638,10 +656,11 @@ qx.Class.define("desk.volMaster",
 					},this);
 					menu.add(paintButton);
 				}
+			}
 
 			var moveForwardButton = new qx.ui.menu.Button("move forward");
 			moveForwardButton.addListener("execute", function () {
-				var volumes=this.__volumes.getChildren();;
+				var volumes=this.__volumes.getChildren();
 				for (var index=0;index<volumes.length; index++) {
 					if (volumes[index]==volumeListItem) {
 						break;
@@ -659,14 +678,14 @@ qx.Class.define("desk.volMaster",
 
 			var moveBackwardButton = new qx.ui.menu.Button("move backward");
 			moveBackwardButton.addListener("execute", function (){
-				var volumes=this.__volumes.getChildren();;
-				for (var index=0;index<volumes.length; index++) {
-					if (volumes[index]==volumeListItem) {
+				var volumes = this.__volumes.getChildren();
+				for ( var index = 0; index < volumes.length; index++ ) {
+					if ( volumes[index] == volumeListItem ) {
 						break;
 					}
 				}
 
-				if (index>0) {
+				if ( index > 0 ) {
 					this.__volumes.remove(volumeListItem);
 					this.__volumes.addAt(volumeListItem, index-1);
 				}
@@ -710,7 +729,7 @@ qx.Class.define("desk.volMaster",
 		},
 
 		__getToolBar : function () {
-			var container=new qx.ui.container.Composite()
+			var container=new qx.ui.container.Composite();
 			container.setLayout(new qx.ui.layout.HBox());
 			container.add(this.getUpdateButton(this.updateAll, this));
 			container.add(this.__getLinkButton());
@@ -721,26 +740,26 @@ qx.Class.define("desk.volMaster",
 
 		__getOrientationButton : function () {
 			var button=new qx.ui.form.Button("Layout/Orientation");
-			button.addListener ("execute", function () {
+			button.addListener ( "execute", function () {
 				this.__orientationWindow.open();
-			}, this)
+			}, this );
 			return (button);
 		},
 
 		__getChangeLayoutContainer : function ()
 		{
 			var _this=this;
-			
+			var i;
 			var gridContainer=new qx.ui.container.Composite();
 			var gridLayout=new qx.ui.layout.Grid();
-			for (var i=0;i<this.__nbUsedOrientations;i++) {
+			for ( i=0;i<this.__nbUsedOrientations;i++) {
 				gridLayout.setRowFlex(i,30);
 				gridLayout.setColumnFlex(i,1);
 			}
 			gridContainer.setLayout(gridLayout);
 			
 			var viewGridCoor = this.__windowsInGridCoord;
-			for(var i=0; i<this.__nbUsedOrientations; i++)
+			for( i=0; i < this.__nbUsedOrientations; i++ )
 			{
 				var labelsContainer = new qx.ui.container.Composite();
 				labelsContainer.set({draggable : true,
@@ -765,6 +784,7 @@ qx.Class.define("desk.volMaster",
 							break;
 						default :
 							alert ("type "+type+"not supported for thisLabelContainer drag and drop");
+							break;
 						}
 				}, labelsContainer);
 				labelsContainer.setDroppable(true);
@@ -780,9 +800,10 @@ qx.Class.define("desk.volMaster",
 						selfLabel.setValue(droppedViewerID);
 						var tempGridContChildren = gridContainer.getChildren();
 						var layout = "";
-						for(var i=0; i<_this.__nbUsedOrientations; i++)
+						for( var i=0; i < _this.__nbUsedOrientations; i++ ) {
 							layout += tempGridContChildren[i].getChildren()[0].getValue();
-						_this.setViewsLayout(layout);
+						}
+						_this.setViewsLayout( layout );
 					}
 				}, labelsContainer);
 				var viewLabel = new qx.ui.basic.Label( ""+(i+1));
@@ -826,6 +847,7 @@ qx.Class.define("desk.volMaster",
 						break;
 					default :
 						alert ("type "+type+"not supported for volume drag and drop");
+						break;
 					}
 				}, this);
 
@@ -838,7 +860,7 @@ qx.Class.define("desk.volMaster",
 					var volView=e.getData("volView");
 					var viewers=this.__viewers;
 					var viewers2=volView.__viewers;
-					if(this.__nbUsedOrientations==viewers2.length)
+					if(this.__nbUsedOrientations==viewers2.length) {
 						for (var i=0;i<this.__nbUsedOrientations;i++) {
 							var viewer=viewers[i];
 							var orientation=viewer.getOrientation();
@@ -848,8 +870,11 @@ qx.Class.define("desk.volMaster",
 								}
 							}
 						}
+					}
 					else
+					{
 						alert("Cannot link viewers : number of orientations incoherent");
+					}
 				}
 			},this);
 			return (label);
@@ -873,9 +898,10 @@ qx.Class.define("desk.volMaster",
 
 			var ramp=new Uint8Array(256);
 			var zeros=new Uint8Array(256);
-			for (var i=0;i<256;i++) {
-				ramp[i]=i;
-				zeros[i]=0;
+			var i;
+			for ( i=0; i < 256; i++ ) {
+				ramp[i] = i;
+				zeros[i] = 0;
 			}
 
 			var redColors=new qx.ui.form.RadioButton("reds");
@@ -902,16 +928,16 @@ qx.Class.define("desk.volMaster",
 			var randomGreen=new Uint8Array(256);
 			var randomBlue=new Uint8Array(256);
 
-			for (var i=0;i<256;i++) {
-				randomRed[i]=Math.floor(Math.random()*255);
-				randomGreen[i]=Math.floor(Math.random()*255);
-				randomBlue[i]=Math.floor(Math.random()*255);
+			for ( i = 0; i < 256; i++ ) {
+				randomRed[i] = Math.floor(Math.random()*255);
+				randomGreen[i] = Math.floor(Math.random()*255);
+				randomBlue[i] = Math.floor(Math.random()*255);
 			}
 			var randomColorsArray=[randomRed, randomGreen, randomBlue];
 
 			var currentColors=slices[0].getLookupTables();
 			var otherColors=null;
-			if (currentColors[0]!=null) {
+			if ( currentColors[0] != null ) {
 				otherColors=new qx.ui.form.RadioButton("other");
 				colormapGroup.add(otherColors);
 				colormapGroup.setSelection([otherColors]);
@@ -921,53 +947,59 @@ qx.Class.define("desk.volMaster",
 			}
 
 			colormapGroup.addListener("changeSelection", function (e) {
+				var i;
 				switch (colormapGroup.getSelection()[0])
 				{
-				case noColors :
-				default :
-					for (var i=0;i<slices.length;i++) {
-						slices[i].removeLookupTables();
-					}
-					break;
 				case redColors :
-					for (var i=0;i<slices.length;i++) {
+					for ( i = 0; i < slices.length; i++ ) {
 						slices[i].setLookupTables([ramp, zeros, zeros]);
 					}
 					break;
 				case greenColors :
-					for (var i=0;i<slices.length;i++) {
+					for ( i = 0; i < slices.length; i++ ) {
 						slices[i].setLookupTables([zeros, ramp, zeros]);
 					}
 					break;
 				case blueColors :
-					for (var i=0;i<slices.length;i++) {
+					for ( i = 0; i < slices.length; i++ ) {
 						slices[i].setLookupTables([zeros, zeros, ramp]);
 					}
 					break;
 				case randomRedColors :
-					for (var i=0;i<slices.length;i++) {
+					for ( i = 0; i < slices.length; i++ ) {
 						slices[i].setLookupTables([randomRed, zeros, zeros]);
 					}
 					break;
 				case randomGreenColors :
-					for (var i=0;i<slices.length;i++) {
+					for ( i = 0; i < slices.length; i++ ) {
 						slices[i].setLookupTables([zeros, randomGreen, zeros]);
 					}
 					break;
 				case randomBlueColors :
-					for (var i=0;i<slices.length;i++) {
+					for ( i = 0; i < slices.length ; i++ ) {
 						slices[i].setLookupTables([zeros, zeros, randomBlue]);
 					}
 					break;
 				case randomColors :
-					for (var i=0;i<slices.length;i++) {
+					for ( i = 0; i < slices.length; i++ ) {
 						slices[i].setLookupTables(randomColorsArray);
 					}
 					break;
 				case otherColors :
-					for (var i=0;i<slices.length;i++) {
+					for ( i = 0; i < slices.length; i++ ) {
 						slices[i].setLookupTables(currentColors);
 					}
+					break;
+				case noColors :
+					for ( i = 0; i < slices.length; i++ ) {
+						slices[i].removeLookupTables();
+					}
+					break;
+				default :
+					for ( i = 0; i < slices.length; i++ ) {
+						slices[i].removeLookupTables();
+					}
+					break;
 				}
 			});
 			window.open();
