@@ -1199,24 +1199,16 @@ qx.Class.define("desk.sliceView",
 			case 0 :
 				northLabel.setValue("A");
 				southLabel.setValue("P");
-				//~ eastLabel.setValue("R");
-				//~ westLabel.setValue("L");
 				eastLabel.setValue("L");
 				westLabel.setValue("R");
 				break;
 			case 1 :
 				northLabel.setValue("A");
 				southLabel.setValue("P");
-				//~ eastLabel.setValue("I");
-				//~ westLabel.setValue("S");
 				eastLabel.setValue("S");
 				westLabel.setValue("I");
 				break;
 			case 2 :
-				//~ northLabel.setValue("I");
-				//~ southLabel.setValue("S");
-				//~ eastLabel.setValue("R");
-				//~ westLabel.setValue("L");
 				northLabel.setValue("S");
 				southLabel.setValue("I");
 				eastLabel.setValue("L");
