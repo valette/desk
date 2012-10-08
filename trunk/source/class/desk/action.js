@@ -180,11 +180,13 @@ qx.Class.define("desk.action",
 			page.setLayout(new qx.ui.layout.HBox());
 			page.add(this, {flex : 1});
 			tabView.add(page);
+			this.addListener("actionUpdated", this.__addOutputTab, this);
 			return tabView;
 		},
 
 		__addOutputTab : function () {
-			if ( this.__embededFileBrowser != null ) {
+			if ( ( this.__action.attributes.voidAction == "true") ||
+					( this.__embededFileBrowser != null )) {
 				return;
 			}
 			var outputDirectory = this.getOutputDirectory();
@@ -486,12 +488,6 @@ qx.Class.define("desk.action",
 
 								executionStatus.setValue(splitResponse[splitResponse.length-2]);
 								if ( action.attributes.voidAction != "true" ) {
-									if (this.__standalone) {
-										//display the results directory
-										if (this.__embededFileBrowser==null) {
-											this.__addOutputTab();
-										}
-									}
 									logFile=outputDirectory+"/action.log";
 									showLogButton.setVisibility("visible");
 								}
