@@ -15,7 +15,6 @@ qx.Class.define("desk.FileSystem",
 
 		var pathname=URLparser.pathname;
 		this.__user=URLparser.pathname.split("/")[1];
-		console.log('user : '+this.__user);
 		this.__baseURL='/'+this.__user+'/';
 		this.__phpURL=this.__baseURL+'ext/php/';
 		this.__filesURL=this.__baseURL+'files/';
