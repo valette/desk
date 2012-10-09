@@ -1,4 +1,4 @@
-qx.Class.define("desk.textEditor", 
+qx.Class.define("desk.TextEditor", 
 {
   extend : qx.ui.window.Window,
 

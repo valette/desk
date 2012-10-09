@@ -313,7 +313,7 @@ qx.Class.define("desk.fileBrowser",
 			
 			myBrowser.addAction("view/edit text", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-					new desk.textEditor(myBrowser.getNodeFile(node));
+					new desk.TextEditor(myBrowser.getNodeFile(node));
 				}
 			});
 
