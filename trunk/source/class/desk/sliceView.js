@@ -682,7 +682,7 @@ qx.Class.define("desk.sliceView",
 				}
 			}
 
-			var volumeSlice=new desk.volumeSlice(file, this.getOrientation(), parameters);
+			var volumeSlice=new desk.VolumeSlice(file, this.getOrientation(), parameters);
 			this.__slices.push(volumeSlice);
 			var _this=this;
 
