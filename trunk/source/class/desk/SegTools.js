@@ -82,6 +82,7 @@ qx.Class.define("desk.SegTools",
 	},
 
 	statics : {
+		defaultColorsFile : null,
 		filePrefixes : ["seed","correction"],
 		seedsListsString : "seedsLists",
 		seedsArrayString : "seedsArray",
@@ -100,7 +101,12 @@ qx.Class.define("desk.SegTools",
 
 	members :
 	{
-		__defaultColorsFile : "data/xml/colors7.xml",
+		__defaultColors : ['<colors>',
+		'<color red="255" green="0" blue="0" name="object1" label="1"/>',
+		'<color red="0" green="255" blue="0" name="object2" label="2"/>',
+		'<color red="0" green="0" blue="255" name="object3" label="3"/>',
+		'</colors>'].join('\n'),
+
 		__master : null,
 		__file : null,
 		__fileSystem : null,
@@ -527,37 +533,32 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__loadColors : function (file) {
-			if (file==null) {
-				file=this.__defaultColorsFile;
+			if (file == null) {
+				file = desk.SegTools.defaultColorsFile;
+				if (file == null) {
+					var parser = new DOMParser();
+					var xmlDoc = parser.parseFromString(this.__defaultColors, "text/xml");
+					this.__setColorsFromElements(xmlDoc.getElementsByTagName("color"),
+								xmlDoc.getElementsByTagName("adjacency"));
+				}
 			}
-			var tools=this;
-		////Fill labels zone width data from the xml file
 
-			var colorsParamRequest = new XMLHttpRequest();
-			colorsParamRequest.onreadystatechange = function()
-			{
-				 if(this.readyState == 4 && this.status == 200)
-				 {
-					// so far so good
-					if(this.responseXML!=null)
-					{
-						var response = this.responseXML;
-						tools.__setColorsFromElements(response.getElementsByTagName("color"),
+			var req = new qx.io.request.Xhr();
+			req.setUrl(this.__fileSystem.getFileURL(file) + "?nocache=" + Math.random());
+			req.setMethod("GET");
+			req.setAsync(true);
+
+			req.addListener("success", function (e) {
+				var req = e.getTarget();
+				var response=req.getResponse();
+				this.__setColorsFromElements(response.getElementsByTagName("color"),
 								response.getElementsByTagName("adjacency"));
+			}, this);
 
-					}
-					else
-						alert("Global Params : Failure...");
-				}
-				else if (this.readyState == 4 && this.status != 200)
-				{
-					// fetched the wrong page or network error...
-					alert('Global Params : "Fetched the wrong page" OR "Network error"');
-				}
-			};
-			colorsParamRequest.open("GET",
-				this.__fileSystem.getFileURL(file)+"?nocache="+Math.random(), true);
-			colorsParamRequest.send(null);
+			req.addListener("error", function (e) {
+				alert('Global Params : "Fetched the wrong page" OR "Network error"');
+			}, this);
+			req.send();
 		},
 
 		__targetColorItem : null,
