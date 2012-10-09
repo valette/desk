@@ -2,7 +2,7 @@
 #ignore(HackCTMWorkerURL)
 */
 
-qx.Class.define("desk.actions", 
+qx.Class.define("desk.Actions", 
 {
 	extend : qx.core.Object,
 

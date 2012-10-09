@@ -5,7 +5,7 @@ qx.Class.define("desk.action",
 	construct : function (name, standalone)
 	{
 		this.base(arguments);
-		var actions=desk.actions.getInstance();
+		var actions=desk.Actions.getInstance();
 		this.__actions=actions;
 		this.__action=actions.getAction(name);
 		this.__actionName=name;
@@ -306,14 +306,14 @@ qx.Class.define("desk.action",
 						var that=this;
 						function launchAction()
 						{
-							desk.actions.getInstance().launchAction (parameterMap, getAnswer, that);
+							desk.Actions.getInstance().launchAction (parameterMap, getAnswer, that);
 						}
 
 						if (this.getOutputSubdirectory()==null) {
 							launchAction();
 						}
 						else {
-							desk.actions.getInstance().launchAction({
+							desk.Actions.getInstance().launchAction({
 								"action" : "add_subdirectory",
 								"subdirectory_name" : this.getOutputSubdirectory(),
 								"output_directory" : this.__outputDirectory}, launchAction, that);

@@ -649,7 +649,7 @@ qx.Class.define("desk.VolumeViewer",
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 			if(this.__standAlone) {
-				if (desk.actions.getInstance().getPermissionsLevel()>0) {
+				if (desk.Actions.getInstance().getPermissionsLevel()>0) {
 					var paintButton=new qx.ui.menu.Button("segment");
 					paintButton.addListener("execute", function () {
 						new desk.SegTools(this, this.__file);

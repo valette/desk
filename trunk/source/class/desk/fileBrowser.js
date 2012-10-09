@@ -41,7 +41,7 @@ qx.Class.define("desk.fileBrowser",
 
 		var dataModel = virtualTree.getDataModel();
 
-		this.__actions=desk.actions.getInstance();
+		this.__actions=desk.Actions.getInstance();
 
 		// create the filter bar
 		var filterBox = new qx.ui.container.Composite;

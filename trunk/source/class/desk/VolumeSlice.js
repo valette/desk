@@ -252,7 +252,7 @@ qx.Class.define("desk.VolumeSlice",
 				output_directory : "cache\/",
 				format : this.getImageFormat(),
 				slice_orientation : this.getOrientation()};
-			desk.actions.getInstance().launchAction(parameterMap, getAnswer, this);
+			desk.Actions.getInstance().launchAction(parameterMap, getAnswer, this);
 		},
 
 		getBrightness : function () {

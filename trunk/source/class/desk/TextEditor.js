@@ -25,7 +25,7 @@ qx.Class.define("desk.TextEditor",
 		this.add(this.__textArea,{flex : 1});
 		this.open();
 
-		this.openFileURL(desk.actions.getInstance().getFileURL(file));
+		this.openFileURL(desk.Actions.getInstance().getFileURL(file));
 		return (this);
 	},
 

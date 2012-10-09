@@ -176,7 +176,7 @@ qx.Class.define("desk.FileSystem",
 					"action" : "add_subdirectory",
 					"subdirectory_name" : subdir,
 					"output_directory" : file.substring(0,lastSlash)};
-				desk.actions.getInstance().launchAction(parameterMap, getAnswer);
+				desk.Actions.getInstance().launchAction(parameterMap, getAnswer);
 			}
 
 			this.getFileSessions(file, sessionType, success);
