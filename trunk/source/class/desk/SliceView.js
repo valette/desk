@@ -7,7 +7,7 @@
 @lint ignoreGlobal(THREE)
 */
 
-qx.Class.define("desk.sliceView", 
+qx.Class.define("desk.SliceView", 
 {
 	extend : qx.ui.container.Composite,
 

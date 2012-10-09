@@ -52,7 +52,7 @@ qx.Class.define("desk.volMaster",
 		this.__viewers = [];
 		var i;
 		for( i=0; i < this.__nbUsedOrientations; i++ ) {
-			this.__viewers[i] = new desk.sliceView(this, i);
+			this.__viewers[i] = new desk.SliceView(this, i);
 		}
 
 		var gridLayout=new qx.ui.layout.Grid(3,3);
