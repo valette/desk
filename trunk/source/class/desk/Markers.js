@@ -17,6 +17,12 @@ qx.Class.define("desk.Markers",
 			qx.log.appender.Console;
         }
         
+		this.__mrkrsList = [];
+		
+		this.__master = master;
+		
+		this.__sliceView = sliceView;
+		
 		this.__createMarkMesh(sliceView);
 		
 		this.addListener("changeMarkMode", function(event)
@@ -43,12 +49,6 @@ qx.Class.define("desk.Markers",
 		sliceView.addListener("viewMouseOut", function(event){ this.__onMouseOut(event.getData()); }, this );
 		sliceView.addListener("changeSlice", function(event){ this.__onChangeSlice(event); }, this );
 		
-		this.__mrkrsList = [];
-		
-		this.__master = master;
-		
-		this.__sliceView = sliceView;
-		
 		return this;
 	},
 	
@@ -59,31 +59,48 @@ qx.Class.define("desk.Markers",
 
 	properties :
 	{
-		markMode : { init : false, check: "Boolean", event : "changeMarkMode"}
+		markMode : { init : false, check: "Boolean", event : "changeMarkMode"},
+		rndmL : { init : 1, check: "Number"},
+		mrksNb : { init : 0, check: "Number"},
+		mrksRndrDpth : { init : -1, check: "Number"}
 	},
 
 	members :
 	{
-		__marksButton : null,
-		__mrkrsList : null,
-		__visibleMarkers :null,
-		
-		__rndmL : 1,
-		__mrksNb : 0,
-		__mrksZ : 0.001,
-		__mrksRndrDpth : -1,
-		
 		__master : null,
 		__sliceView : null,
 		
-		getMarkersList : function() {
+		__mrkrsList : null,
+		__visibleMarkers :null,
+		
+		__mrksZ : 0.001,
+		
+		getMrksZ : function() {
+			var z;
+			if(this.__sliceView.getOrientation()==2)
+				z = this.__mrksZ;
+			else
+				z = -this.__mrksZ;
+			
+			return z;
+		},
+		
+		getSliceView : function() {
+			return this.__sliceView;
+		},
+		
+		getMarkMesh : function() {
+			return this.__markMesh;
+		},
+		
+		getMrkrsList : function() {
 			return this.__mrkrsList;
 		},
 		
 		__createMarkMesh : function(sliceView)
 		{
 			var scene = sliceView.getScene();
-			var rndmL = this.__rndmL;
+			var rndmL = this.getRndmL();
 			var spacing = sliceView.getVolume2DSpacing();
 			
 			var x = 0;
@@ -95,19 +112,18 @@ qx.Class.define("desk.Markers",
 			
 			var markMat = new THREE.LineBasicMaterial({color: 0x41A0FF, lineWidth: 100, opacity:1.0, transparent:false});
 			
-			this.__markMesh = this.__createCross(x, y, xMin, xMax, yMin, yMax, markMat, scene);
+			this.__markMesh = this.createCross(x, y, xMin, xMax, yMin, yMax, markMat, scene);
 			this.__markMesh.setVisible(false);
 		},
 		
-		__createNewPosMarker : function(mouseDownEvent, mrkrId)
+		createNewPosMarker : function(mouseDownEvent, mrkrId)
 		{
+			var position = this.getMarkPositionFromEvent(mouseDownEvent);
+			var onScenePos = {x:position.x, y:position.y, z:this.getMrksZ()};
 			
-			var position = this.__getMarkPositionFromEvent(mouseDownEvent);
-			var onScenePos = {x:position.x, y:position.y, z:this.__mrksZ};
+			var onSlicePos = this.getOnVolumeCoordinates(mouseDownEvent);
 			
-			var onSlicePos = this.__getOnVolumeCoordinates(mouseDownEvent);
-			
-			var mrkrsList = this.__mrkrsList;
+			var mrkrsList = this.getMrkrsList();
 			var mrkrsNb = mrkrsList.length;
 			var alreadyExists = false;
 			var curMrkr;
@@ -120,11 +136,11 @@ qx.Class.define("desk.Markers",
 			}
 			if(!alreadyExists)
 			{
-				this.__setNewPosMarker(onScenePos, onSlicePos, mrkrId);
+				this.setNewPosMarker(onScenePos, onSlicePos, mrkrId);
 				
 				// Get coordinates on volume according the first orientation (x,y,z)
 				var x, y ,z;
-				switch(this.__sliceView.getOrientation())
+				switch(this.getSliceView().getOrientation())
 				{
 					case 0 :
 						x = onSlicePos.x;
@@ -153,13 +169,13 @@ qx.Class.define("desk.Markers",
 		reproduceNewPosMarker : function(eventData)
 		{
 			var mrkrId = eventData.id;
-			if(this.__mrkrsList[mrkrId]==null)
+			if(this.getMrkrsList().length<=mrkrId)
 			{
 				var inX = eventData.x;
 				var inY = eventData.y;
 				var inZ = eventData.z;
 				var x, y, z;
-				switch(this.__sliceView.getOrientation())
+				switch(this.getSliceView().getOrientation())
 				{
 					case 0 :
 						x = inX;
@@ -177,21 +193,22 @@ qx.Class.define("desk.Markers",
 						z = inY;
 						break;
 				}
-				var onScenePos = this.__returnOnScenePosition(x, y);
+				
+				var onScenePos = this.returnOnScenePosition(x, y);
 				
 				var onSlicePos = {x:inX, y:inY, z:z};
 				
-				this.__setNewPosMarker(onScenePos, onSlicePos, mrkrId);
+				this.setNewPosMarker(onScenePos, onSlicePos, mrkrId);
 				
-				this.__mrksNb++;
+				this.setMrksNb(this.getMrksNb()+1);
 			}
 		},
 		
-		__setNewPosMarker : function(onScenePos, onSlicePos, mrkrId)
+		setNewPosMarker : function(onScenePos, onSlicePos, mrkrId)
 		{
-			var sliceView = this.__sliceView;
+			var sliceView = this.getSliceView();
 			var scene = sliceView.getScene();
-			var rndmL = this.__rndmL;
+			var rndmL = this.getRndmL();
 			var spacing = sliceView.getVolume2DSpacing();
 			
 			var x = onScenePos.x;
@@ -203,23 +220,24 @@ qx.Class.define("desk.Markers",
 			
 			var markMat = new THREE.LineBasicMaterial({color:0x41FF41, lineWidth:100, opacity:1.0, transparent:false});
 			
-			var newMarker = this.__createCross(x, y, xMin, xMax, yMin, yMax, markMat, scene);
+			var newMarker = this.createCross(x, y, xMin, xMax, yMin, yMax, markMat, scene);
 			
 			sliceView.render();
 			
-			this.__mrkrsList[mrkrId] = {cross:newMarker, x:onSlicePos.x, y:onSlicePos.y, z:onSlicePos.z};
+			var mrkrsList = this.getMrkrsList();
+			mrkrsList[mrkrId] = {cross:newMarker, x:onSlicePos.x, y:onSlicePos.y, z:onSlicePos.z};
 		},
 		
-		__createCross : function(x, y, xMin, xMax, yMin, yMax, material, scene)
+		createCross : function(x, y, xMin, xMax, yMin, yMax, material, scene)
 		{
-			var z = this.__mrksZ;
+			var z = this.getMrksZ();
 			
 			// Create the horizontal line
 			var xGeometry=new THREE.Geometry();
 				xGeometry.vertices.push( new THREE.Vector3(xMin, y, z) );
 				xGeometry.vertices.push( new THREE.Vector3(xMax, y, z) );
 			var xline = new THREE.Line(xGeometry, material);
-				xline.renderDepth = this.__mrksRndrDpth;
+				xline.renderDepth = this.getMrksRndrDpth();
 			scene.add(xline);
 			
 			// Create the vertical line
@@ -227,7 +245,7 @@ qx.Class.define("desk.Markers",
 				yGeometry.vertices.push( new THREE.Vector3(x, yMin, z) );
 				yGeometry.vertices.push( new THREE.Vector3(x, yMax, z) );
 			var yline = new THREE.Line(yGeometry, material);
-				yline.renderDepth = this.__mrksRndrDpth;
+				yline.renderDepth = this.getMrksRndrDpth();
 			scene.add(yline);
 			
 			var cross = {hl:xline, vl:yline};
@@ -246,19 +264,19 @@ qx.Class.define("desk.Markers",
 			return cross;
 		},
 		
-		__getMarkPositionFromEvent : function(inEvent)
+		getMarkPositionFromEvent : function(inEvent)
 		{
-			var sliceView = this.__sliceView;
+			var sliceView = this.getSliceView();
 			var position = sliceView.getPositionOnSlice(inEvent);
-			
-			return this.__returnOnScenePosition(position.i, position.j);
+			return this.returnOnScenePosition(position.i, position.j);
 		},
 		
-		__returnOnScenePosition : function(onSliceX, onSliceY)
+		returnOnScenePosition : function(onSliceX, onSliceY)
 		{
-			var sliceView = this.__sliceView;
+			var sliceView = this.getSliceView();
 			
-			var v = [onSliceX, onSliceY];
+			//~ var v = [onSliceX, onSliceY];
+			var v = [onSliceX, sliceView.getVolume2DDimensions()[1]-1 - onSliceY]; // needed to work with modifs in sliceView.js corresponding to update of THREE.js to version 51 
 			var dimensions = sliceView.getVolume2DDimensions();
 			for (var i=0; i<2; i++)
 			{
@@ -267,49 +285,21 @@ qx.Class.define("desk.Markers",
 				else if (v[i]>dimensions[i]-1)
 					v[i] = dimensions[i] - 1;
 			};
-			var x,y;
-			switch(sliceView.getOrientation())
-			{
-				case 0 :
-					x = v[0];
-					y = v[1];
-					break;
-				case 1 :
-					x = v[0];
-					y = v[1];
-					break;
-				case 2 :
-					x = v[0];
-					y = v[1];
-			}
 			var spacing = sliceView.getVolume2DSpacing();
 			var coordinates = sliceView.get2DCornersCoordinates();
-			x = coordinates[0]+(0.5+x)*spacing[0];
-			y = coordinates[1]-(0.5+y)*spacing[1];
+			var x = coordinates[0]+(0.5+v[0])*spacing[0];
+			var y = coordinates[1]-(0.5+v[1])*spacing[1];
 			
 			return {x:x, y:y};
 		},
 		
-		__getOnVolumeCoordinates : function(mouseDownEvent)
+		getOnVolumeCoordinates : function(mouseDownEvent)
 		{
 			var volCoor = {};
-			var sliceView = this.__sliceView;
-			var volDims = sliceView.getVolume2DDimensions();
+			var sliceView = this.getSliceView();
 			var onSlicePos = sliceView.getPositionOnSlice(mouseDownEvent);
-			var i = onSlicePos.i;
-			var j = onSlicePos.j;
-			if((0<i)&&(i<volDims[0]-1))
-				volCoor.x = i;
-			if(i<0)
-				volCoor.x = 0;
-			if(volDims[0]-1<i)
-				volCoor.x = volDims[0]-1;
-			if((0<j)&&(j<volDims[1]-1))
-				volCoor.y = j;
-			if(j<0)
-				volCoor.y = 0;
-			if(volDims[1]-1<j)
-				volCoor.y = volDims[1]-1;
+			volCoor.x = onSlicePos.i;
+			volCoor.y = onSlicePos.j;
 			volCoor.z = sliceView.getSlice();
 			
 			return volCoor;
@@ -319,20 +309,23 @@ qx.Class.define("desk.Markers",
 		{
 			if(!inEvent.isRightPressed()&&!inEvent.isMiddlePressed()&&!inEvent.isShiftPressed())
 				if(this.isMarkMode())
-					this.__createNewPosMarker(inEvent, this.__mrksNb++);
+				{
+					this.createNewPosMarker(inEvent, this.getMrksNb());
+					this.setMrksNb(this.getMrksNb()+1);
+				}
 		},
 		
 		__onMouseMove : function(inEvent)
 		{
 			if(this.isMarkMode())
 			{
-				var markMesh = this.__markMesh;
+				var markMesh = this.getMarkMesh();
 				if(!inEvent.isRightPressed()&&!inEvent.isMiddlePressed()&&!inEvent.isShiftPressed())
 				{
-					var position = this.__getMarkPositionFromEvent(inEvent);
+					var position = this.getMarkPositionFromEvent(inEvent);
 					markMesh.setVisible(true);
-					markMesh.setPosition(position.x, position.y, this.__mrksZ);
-					this.__sliceView.render();
+					markMesh.setPosition(position.x, position.y, this.getMrksZ());
+					this.getSliceView().render();
 				}
 				else
 				{
@@ -345,14 +338,14 @@ qx.Class.define("desk.Markers",
 		{
 			if(this.isMarkMode())
 			{
-				this.__markMesh.setVisible(false);
-				this.__sliceView.render();
+				this.getMarkMesh().setVisible(false);
+				this.getSliceView().render();
 			}
 		},
 		
 		__onChangeSlice : function(inEvent)
 		{
-			var mrkrsList  = this.__mrkrsList;
+			var mrkrsList  = this.getMrkrsList();
 			var mrkrsNb = mrkrsList.length;
 			var slice = inEvent.getData();
 			var i, marker;

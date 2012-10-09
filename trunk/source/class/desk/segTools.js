@@ -221,7 +221,7 @@ qx.Class.define("desk.segTools",
 
 			tools.__topRightContainer.add(tools.__eraserButton);
 
-			
+			/*
 		////Create test Marks on/off button
             tools.__marksButton = new qx.ui.form.ToggleButton("Marks");
 			
@@ -240,7 +240,7 @@ qx.Class.define("desk.segTools",
 				this.getMarkerObject = function() {
 					return this.__markerObject;
 				};
-			} );
+			} );*/
 			
 			
 		////Create labels zone
