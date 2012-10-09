@@ -209,7 +209,7 @@ qx.Class.define("desk.fileBrowser",
 				case ".png":
 				case ".jpg":
 				case ".bmp":
-					new desk.imageView(file);
+					new desk.ImageView(file);
 //					qx.core.Init.getApplication().getRoot().add(imageView);
 					break;
 				case ".xml":
