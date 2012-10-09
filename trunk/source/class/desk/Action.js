@@ -1,4 +1,4 @@
-qx.Class.define("desk.action", 
+qx.Class.define("desk.Action", 
 {
 	extend : qx.ui.container.Composite,
 
@@ -28,7 +28,7 @@ qx.Class.define("desk.action",
 			var req = new qx.io.request.Xhr(desk.FileSystem.getInstance().getFileURL(file)+"?nocache=" + Math.random());
 			req.addListenerOnce("success", function(e) {
 				var parameters=JSON.parse(e.getTarget().getResponseText());
-				var action=new desk.action (parameters["action"]);
+				var action=new desk.Action (parameters["action"]);
 				action.setActionParameters(parameters);
 				action.buildUI();
 			});

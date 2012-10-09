@@ -224,7 +224,7 @@ qx.Class.define("desk.Actions",
 							var button=new qx.ui.menu.Button(actions[n].name);
 
 							button.addListener("execute", function (e){
-								var action= new desk.action(this.getLabel());
+								var action= new desk.Action(this.getLabel());
 								action.setOriginFileBrowser(actionMenu.__currentFileBrowser);
 								action.buildUI();},button);
 							_this.__actionMenu.add(button);

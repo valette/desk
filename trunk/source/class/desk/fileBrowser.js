@@ -239,7 +239,7 @@ qx.Class.define("desk.fileBrowser",
 						
 					break;
 				case ".json":
-					desk.action.CREATEFROMFILE(myBrowser.getNodeFile(node));
+					desk.Action.CREATEFROMFILE(myBrowser.getNodeFile(node));
 					break;
 				default:
 					alert("no file handler exists for extension "+extension);
@@ -257,9 +257,9 @@ qx.Class.define("desk.fileBrowser",
 			var myBrowser=this;
 			myBrowser.addAction("redo action", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-					desk.action.CREATEFROMFILE(myBrowser.getNodeFile(node));
+					desk.Action.CREATEFROMFILE(myBrowser.getNodeFile(node));
 				else
-					desk.action.CREATEFROMFILE(myBrowser.getNodeFile(node)+"/parameters.txt");
+					desk.Action.CREATEFROMFILE(myBrowser.getNodeFile(node)+"/parameters.txt");
 			});
 
 			myBrowser.addAction("VolViewSimple", function (node) {
