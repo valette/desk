@@ -47,22 +47,20 @@ qx.Class.define("desk.Actions",
 		var files=["three.min.js", "Detector.js", "VTKLoader.js","TrackballControls2.js","ctm/CTMLoader.js"];
 		var index=-1;
 
-		var that=this;
-
 		function myScriptLoader() {
 			index+=1;
 			if (index!=files.length) {
 				var loader=new qx.io.ScriptLoader().load(
-					threeURL+files[index], myScriptLoader);
+					threeURL+files[index], myScriptLoader, this );
 			}
 			else {
-				that.__scriptsLoaded = true;
-				if ( that.__actionsLoaded ) {
-					that.setReady(true);
+				this.__scriptsLoaded = true;
+				if ( this.__actionsLoaded ) {
+					this.setReady(true);
 				}
 			}
 		}
-		myScriptLoader();
+		myScriptLoader.apply( this );
 		return this;
 	},
 
