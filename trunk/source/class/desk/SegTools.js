@@ -2,7 +2,7 @@
 #ignore(Uint8Array)
 */
 
-qx.Class.define("desk.segTools",
+qx.Class.define("desk.SegTools",
 {
   extend : qx.ui.window.Window,
 
@@ -146,9 +146,9 @@ qx.Class.define("desk.segTools",
 			var context=canvas.getContext2d();
 			context.clearRect(0, 0, width, height);
 			var seedsType=_this.getSeedsType();
-			var seedsList=sliceView.getUserData(desk.segTools.seedsListsString)[seedsType];
-			var seedsArray=seedsList.getUserData(desk.segTools.seedsArrayString);
-			var cacheTagsArray=seedsList.getUserData(desk.segTools.cacheTagsArrayString);
+			var seedsList=sliceView.getUserData(desk.SegTools.seedsListsString)[seedsType];
+			var seedsArray=seedsList.getUserData(desk.SegTools.seedsArrayString);
+			var cacheTagsArray=seedsList.getUserData(desk.SegTools.cacheTagsArrayString);
 			var sliceId=sliceView.getSlice();
 
 			if (seedsArray[sliceId]!=0) {
@@ -1406,12 +1406,12 @@ qx.Class.define("desk.segTools",
 
 			var _this=this;
 			this.__master.applyToViewers( function () {
-				var seedsLists=this.getUserData(desk.segTools.seedsListsString);
+				var seedsLists=this.getUserData(desk.SegTools.seedsListsString);
 				var orientation=this.getOrientation();
 
 				for (var seedsType=0; seedsType<2; seedsType++) {
 					var list=seedsLists[seedsType];
-					var filePrefix=desk.segTools.filePrefixes[seedsType];
+					var filePrefix=desk.SegTools.filePrefixes[seedsType];
 					var slices=list.getChildren();
 					for (var i=0;i<slices.length;i++)
 					{
@@ -1450,7 +1450,7 @@ qx.Class.define("desk.segTools",
 				var newSeedsType=selectBox.getSelection()[0].getUserData("seedsType");
 				_this.setSeedsType(newSeedsType);
 				_this.__master.applyToViewers(function ( ) {
-					var seedsLists=this.getUserData(desk.segTools.seedsListsString);
+					var seedsLists=this.getUserData(desk.SegTools.seedsListsString);
 					seedsLists[newSeedsType].setVisibility("visible");
 					seedsLists[1-newSeedsType].setVisibility("excluded");
 					_this.__reloadSeedImage (this);
@@ -1549,7 +1549,7 @@ qx.Class.define("desk.segTools",
 			var lists=[];
 			lists.push(seedsList);
 			lists.push(correctionsList);
-			sliceView.setUserData(desk.segTools.seedsListsString, lists);
+			sliceView.setUserData(desk.SegTools.seedsListsString, lists);
 
 		/*	seedsList.addListener("removeItem", function(event) {
 				if (seedsList.getChildren().length==0)
@@ -1592,7 +1592,7 @@ qx.Class.define("desk.segTools",
 		__clearSeeds : function ( ) {
 			this.__master.applyToViewers ( function () {
 				this.setUserData("previousSlice", this.getSlice());
-				var seedsLists=this.getUserData(desk.segTools.seedsListsString);
+				var seedsLists=this.getUserData(desk.SegTools.seedsListsString);
 				for (var i=0;i<2;i++) {
 					var numberOfSlices=this.getVolumeSliceToPaint().getNumberOfSlices();
 					var seedsArray = [];
@@ -1603,15 +1603,15 @@ qx.Class.define("desk.segTools",
 						cacheTagsArray[j]=Math.random();
 					}
 					seedsLists[i].removeAll();
-					seedsLists[i].setUserData(desk.segTools.seedsArrayString, seedsArray);
-					seedsLists[i].setUserData(desk.segTools.cacheTagsArrayString, cacheTagsArray);
+					seedsLists[i].setUserData(desk.SegTools.seedsArrayString, seedsArray);
+					seedsLists[i].setUserData(desk.SegTools.cacheTagsArrayString, cacheTagsArray);
 				}
 			});
 		},
 
 		__addNewSeedItemToList : function ( sliceView, sliceId, seedsType )
 		{
-			var seedsList = sliceView.getUserData(desk.segTools.seedsListsString)[seedsType];
+			var seedsList = sliceView.getUserData(desk.SegTools.seedsListsString)[seedsType];
 			var seeds = seedsList.getChildren();
 			var tempPos = 0;
 
@@ -1622,7 +1622,7 @@ qx.Class.define("desk.segTools",
 					tempPos++;
 				}
 				if (currentId==sliceId) {
-					seedsList.getUserData(desk.segTools.cacheTagsArrayString)[sliceId]=Math.random();
+					seedsList.getUserData(desk.SegTools.cacheTagsArrayString)[sliceId]=Math.random();
 					return;
 				}
 			}
@@ -1634,8 +1634,8 @@ qx.Class.define("desk.segTools",
 			});
 
 			seedsList.addAt(sliceItem, tempPos);
-			seedsList.getUserData(desk.segTools.seedsArrayString)[sliceId]=sliceItem;
-			seedsList.getUserData(desk.segTools.cacheTagsArrayString)[sliceId]=Math.random();
+			seedsList.getUserData(desk.SegTools.seedsArrayString)[sliceId]=sliceItem;
+			seedsList.getUserData(desk.SegTools.cacheTagsArrayString)[sliceId]=Math.random();
 		},
 
 		__getSeedFileName : function(sliceView, sliceId, seedType) {			
@@ -1793,4 +1793,4 @@ qx.Class.define("desk.segTools",
 
 	} //// END of   members :
 
-}); //// END of   qx.Class.define("desk.segTools",
+}); //// END of   qx.Class.define("desk.SegTools",
