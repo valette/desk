@@ -203,7 +203,7 @@ qx.Class.define("desk.fileBrowser",
 				case ".stl":
 				case ".ctm":
 				case ".off":
-					new desk.meshView(file, modificationTime);
+					new desk.MeshView(file, modificationTime);
 //					qx.core.Init.getApplication().getRoot().add(meshView);
 					break;
 				case ".png":
@@ -220,7 +220,7 @@ qx.Class.define("desk.fileBrowser",
 					
 					if (xmlDoc.getElementsByTagName("mesh").length!=0)
 					{
-						new desk.meshView(file, modificationTime);
+						new desk.MeshView(file, modificationTime);
 					}
 			/*		else if (xmlDoc.getElementsByTagName("volume").length!=0)
 					{
