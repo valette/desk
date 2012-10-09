@@ -8,35 +8,36 @@ qx.Class.define("desk.Actions",
 
 	type : "singleton",
 
-	environment : {
-		"desk.extURL" : "to define in config.json"
+	statics :
+	{
+		WAITFORINIT : function (callback)
+		{
+			var actions = desk.Actions.getInstance();
+			if ( actions.isReady() ) {
+				callback();
+			}
+			else {
+				actions.addListenerOnce( "changeReady", callback );
+			}
+		}
 	},
 
 	construct : function()
 	{
-		this.base(arguments);
-		this.__actionsQueue=[];
+		this.base( arguments );
+		this.__actionsQueue = [];
 
-		var URLparser = document.createElement('a');
+		var URLparser = document.createElement( 'a' );
 		URLparser.href = document.href;
 
-		var pathname=URLparser.pathname;
-		this.user=URLparser.pathname.split("/")[1];
-		this.__fileSystem=desk.FileSystem.getInstance();
-		this.baseURL=this.__fileSystem.getBaseURL()+"ext/";
+		var pathname = URLparser.pathname;
+		this.user = URLparser.pathname.split( "/" )[1];
+		this.__fileSystem = desk.FileSystem.getInstance();
+		this.baseURL = this.__fileSystem.getBaseURL() + "ext/";
 
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.__populateActionMenu();
-
-		this.addListenerOnce("changeReady", function () {
-			var ongoingActions = new qx.ui.form.List().set({
-				width: 200
-			});
-			this.__ongoingActions=ongoingActions;
-			if (this.__permissionsLevel<1) {
-				return;
-			}
-		}, this);
+		this.__ongoingActions=new qx.ui.form.List().setWidth( 200 );
 
 		// load external three.js files
 		var threeURL=this.baseURL+"three.js/";
@@ -46,11 +47,19 @@ qx.Class.define("desk.Actions",
 		var files=["three.min.js", "Detector.js", "VTKLoader.js","TrackballControls2.js","ctm/CTMLoader.js"];
 		var index=-1;
 
+		var that=this;
+
 		function myScriptLoader() {
 			index+=1;
 			if (index!=files.length) {
 				var loader=new qx.io.ScriptLoader().load(
 					threeURL+files[index], myScriptLoader);
+			}
+			else {
+				that.__scriptsLoaded = true;
+				if ( that.__actionsLoaded ) {
+					that.setReady(true);
+				}
 			}
 		}
 		myScriptLoader();
@@ -62,11 +71,15 @@ qx.Class.define("desk.Actions",
 	},
 
 	members : {
+
+		__scriptsLoaded : false,
+
+		__actionsLoaded : false,
+
 		__fileSystem : null,
 
 		__actionMenu : null,
 		__actions : null,
-		__fileBrowser : null,
 		__ongoingActions : null,
 
 		__actionsList : null,
@@ -229,7 +242,10 @@ qx.Class.define("desk.Actions",
 								action.buildUI();},button);
 							_this.__actionMenu.add(button);
 						}
-						_this.setReady(true);
+						_this.__actionsLoaded = true;
+						if ( _this.__scriptsLoaded ) {
+							_this.setReady(true);
+						}
 					}
 				}
 			}
