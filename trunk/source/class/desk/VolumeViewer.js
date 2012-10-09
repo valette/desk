@@ -3,7 +3,7 @@
 #ignore(Uint8Array)
 #asset(desk/Contrast_Logo_petit.PNG)
 */
-qx.Class.define("desk.volMaster", 
+qx.Class.define("desk.VolumeViewer", 
 {
 	extend : qx.core.Object,
 	include : desk.ActionLinkMixin,
@@ -1023,7 +1023,5 @@ qx.Class.define("desk.volMaster",
 				windowManager.bringToFront(this.__window);
 			}, this);
 		}
-	} //// END of   members :
-
-	
-}); //// END of   qx.Class.define("desk.volMaster",
+	}
+});

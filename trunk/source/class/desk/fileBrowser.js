@@ -221,7 +221,6 @@ qx.Class.define("desk.fileBrowser",
 					if (xmlDoc.getElementsByTagName("mesh").length!=0)
 					{
 						new desk.meshView(file, modificationTime);
-//						qx.core.Init.getApplication().getRoot().add(meshView);
 					}
 			/*		else if (xmlDoc.getElementsByTagName("volume").length!=0)
 					{
@@ -235,8 +234,8 @@ qx.Class.define("desk.fileBrowser",
 				case ".mhd":
 				//		var coordinates =  {viewers : [{c:0,r:0}, {c:1,r:0}, {c:1,r:1}],
 				//							volList : {c:0,r:1} };
-						var volMaster = new desk.volMaster( file );
-						var volWindow = volMaster.getWindow();
+						var viewer = new desk.VolumeViewer( file );
+						var volWindow = viewer.getWindow();
 						
 					break;
 				case ".json":
