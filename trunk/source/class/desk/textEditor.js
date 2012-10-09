@@ -41,7 +41,7 @@ qx.Class.define("desk.textEditor",
 			var req = new qx.io.request.Xhr(this.__fileURL+"?nocache=" + Math.random());
 			req.setAsync(true);
 			req.addListener('load', function (e){
-				this.__textArea.setValue(req.getResponse());
+				this.__textArea.setValue(req.getResponseText());
 				this.setCaption(fileURL);
 				this.__reloadButton.setEnabled(true);
 				}, this);
