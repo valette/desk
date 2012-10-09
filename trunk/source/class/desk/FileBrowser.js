@@ -3,7 +3,7 @@
 #asset(desk/img.png)
 */
 
-qx.Class.define("desk.fileBrowser", 
+qx.Class.define("desk.FileBrowser", 
 {
 	extend : qx.ui.container.Composite,
 

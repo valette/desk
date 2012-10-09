@@ -190,7 +190,7 @@ qx.Class.define("desk.Action",
 				return;
 			}
 			var outputDirectory = this.getOutputDirectory();
-			this.__embededFileBrowser = new desk.fileBrowser( outputDirectory , false );
+			this.__embededFileBrowser = new desk.FileBrowser( outputDirectory , false );
 			this.__embededFileBrowser.setUserData( "action" , this );
 			var page = new qx.ui.tabview.Page("Output");
 			page.setLayout(new qx.ui.layout.HBox());
