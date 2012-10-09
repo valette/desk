@@ -327,8 +327,7 @@ exports.performAction = function (POST, callback) {
 				if (!err) {
 					index=JSON.parse(data).value + 1;
 				}
-				//~ outputDirectory="actions/"+index+"/";
-				outputDirectory="actions/"+index;
+				outputDirectory="actions/"+index+"/";
 				fs.mkdir(filesRoot+"/actions/"+index, function (err) {
 					if ( err ) {
 						callback( err.message );
