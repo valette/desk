@@ -263,9 +263,9 @@ qx.Class.define("desk.fileBrowser",
 					desk.action.CREATEFROMFILE(myBrowser.getNodeFile(node)+"/parameters.txt");
 			});
 
-			myBrowser.addAction("volViewSimple", function (node) {
+			myBrowser.addAction("VolViewSimple", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-					new desk.volViewSimple(myBrowser.getNodeFile(node), myBrowser);
+					new desk.VolViewSimple(myBrowser.getNodeFile(node), myBrowser);
 				else
 					alert("Cannot view a directory!");
 			});

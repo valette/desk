@@ -1,4 +1,4 @@
-qx.Class.define("desk.volViewSimple", 
+qx.Class.define("desk.VolViewSimple", 
 {
   extend : qx.ui.window.Window,
 
@@ -218,14 +218,14 @@ qx.Class.define("desk.volViewSimple",
 
 			this.addListener("keypress",
 				function(event) {if (event.getKeyIdentifier()=="S") 
-					desk.volViewSimple.LINKEDWINDOW=this;},this);
+					desk.VolViewSimple.LINKEDWINDOW=this;},this);
 			this.addListener("click",
 				function(event) {
-					if ((desk.volViewSimple.LINKEDWINDOW!=null)&&(desk.volViewSimple.LINKEDWINDOW!=this))
+					if ((desk.VolViewSimple.LINKEDWINDOW!=null)&&(desk.VolViewSimple.LINKEDWINDOW!=this))
 					{
-						this.__slider.bind("value", desk.volViewSimple.LINKEDWINDOW.__slider, "value");
-						desk.volViewSimple.LINKEDWINDOW.__slider.bind("value", this.__slider, "value");
-						desk.volViewSimple.LINKEDWINDOW=null;
+						this.__slider.bind("value", desk.VolViewSimple.LINKEDWINDOW.__slider, "value");
+						desk.VolViewSimple.LINKEDWINDOW.__slider.bind("value", this.__slider, "value");
+						desk.VolViewSimple.LINKEDWINDOW=null;
 					}},this);				
 		},
 
