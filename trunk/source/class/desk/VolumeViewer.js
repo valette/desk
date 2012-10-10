@@ -452,6 +452,7 @@ qx.Class.define("desk.VolumeViewer",
 			volumeListItem.addListener("dragstart", function(e) {
 				e.addAction("alias");
 				e.addType("volumeSlices");
+				e.addType("VolumeViewer");
 				e.addType("file");
 				});
 
@@ -461,6 +462,9 @@ qx.Class.define("desk.VolumeViewer",
 					{
 					case "volumeSlices":
 						e.addData(type, volumeSlices);
+						break;
+					case "VolumeViewer":
+						e.addData(type, this);
 						break;
 					case "file":
 						e.addData(type, file);
@@ -1015,6 +1019,11 @@ qx.Class.define("desk.VolumeViewer",
 						this.addVolume(fileBrowser.getNodeFile(nodes[i]));
 					}
 				} else if (e.supportsType("file")) {
+					if (e.supportsType("VolumeViewer")) {
+						if (this == e.getData("VolumeViewer")) {
+							return;
+						}
+					}						
 					this.addVolume(e.getData("file"));
 				}
 
