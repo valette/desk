@@ -37,7 +37,7 @@ qx.Class.define("desk.Actions",
 
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.__populateActionMenu();
-		this.__ongoingActions=new qx.ui.form.List().setWidth( 200 );
+		this.__ongoingActions=new qx.ui.form.List().set({width : 200});
 
 		// load external three.js files
 		var threeURL=this.baseURL+"three.js/";
