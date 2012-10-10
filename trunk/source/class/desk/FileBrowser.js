@@ -9,14 +9,14 @@ qx.Class.define("desk.FileBrowser",
 
 	construct : function(baseDir, standAlone)
 	{
-		if(baseDir.substr(-1) == '/') {
-			baseDir = baseDir.substr(0, baseDir.length - 1);
+		if (baseDir!=null) {
+			if(baseDir.substr(-1) == '/') {
+				baseDir = baseDir.substr(0, baseDir.length - 1);
+			}
+			this.__baseDir=baseDir;
 		}
 
 		this.base(arguments);
-		if (baseDir!=null) {
-			this.__baseDir=baseDir;
-		}
 
 		this.setLayout(new qx.ui.layout.VBox());
 
@@ -331,6 +331,45 @@ qx.Class.define("desk.FileBrowser",
 				else
 					myBrowser.__expandDirectoryListing(node.nodeId);
 			});
+
+			myBrowser.addAction("new directory", function (node) {
+				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+					node = node.parentNodeId;
+				}
+				else {
+					node = node.nodeId;
+				}
+				var dir = prompt('Name of the directory to create','new_dir');
+				if (dir) {
+					myBrowser.__actions.launchAction(
+						{"action" : "create_directory",
+						"directory" : myBrowser.getNodeFile(node) + '/' + dir},
+						function () {
+							myBrowser.__expandDirectoryListing(node);
+						}
+					);
+				}
+			});
+
+			myBrowser.addAction("delete directory", function (node) {
+				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+					alert('This is not a directory');
+				}
+				else {
+					var dir = myBrowser.getNodeFile(node.nodeId);
+					if (confirm ('Are you sure you want to delete the directory \n'
+							+ dir + '\n'+
+							'This action cannot be undone')) {
+						myBrowser.__actions.launchAction(
+							{"action" : "delete_directory",
+							"directory" : dir},
+							function () {
+								myBrowser.__expandDirectoryListing(node.parentNodeId);
+							}
+						);
+					}
+				}
+			});
 		},
 
 		addAction : function (actionName, callback)
@@ -441,11 +480,11 @@ qx.Class.define("desk.FileBrowser",
 		
 
 		__expandDirectoryListing : function(node) {
-			if (this.__updateDirectoryInProgress==true)
+/*			if (this.__updateDirectoryInProgress==true)
 			{
 				console.log("tried to update directory while update is already in progress");
 				return;
-			}
+			}*/
 			this.__updateDirectoryInProgress=true;
 
 			var dataModel=this.__virtualTree.getDataModel();
@@ -489,7 +528,7 @@ qx.Class.define("desk.FileBrowser",
 				filesArray.sort();
 
 				for (var i=0;i<directoriesArray.length;i++)
-					dataModel.addBranch(node	, directoriesArray[i]);
+					dataModel.addBranch(node , directoriesArray[i]);
 
 				for (var i=0;i<filesArray.length;i++)
 				{

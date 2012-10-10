@@ -122,6 +122,22 @@
 		{
 		    "parameters":[
 		        {
+		            "name":"directory",
+		            "type":"string",
+		            "required":"true"
+		        }
+		    ],
+		    "name":"create_directory",
+		    "attributes":
+		    {
+		        "name":"create_directory",
+		        "command":"mkdir",
+		        "voidAction":"true"
+		    }
+		},
+		{
+		    "parameters":[
+		        {
 		            "name":"file_name",
 		            "type":"string",
 		            "required":"true"
