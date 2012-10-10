@@ -1,4 +1,4 @@
-qx.Class.define("desk.volViewSimple", 
+qx.Class.define("desk.VolViewSimple", 
 {
   extend : qx.ui.window.Window,
 
@@ -28,7 +28,7 @@ qx.Class.define("desk.volViewSimple",
 			input_volume : file,
 			slice_orientation : 0,				
 			output_directory : "cache\/"};
-		desk.actions.getInstance().launchAction(parameterMap, getAnswer, this);
+		desk.Actions.getInstance().launchAction(parameterMap, getAnswer, this);
 
 		var label = new qx.ui.basic.Label("Computing slices, wait...").set({
 			font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
@@ -218,14 +218,14 @@ qx.Class.define("desk.volViewSimple",
 
 			this.addListener("keypress",
 				function(event) {if (event.getKeyIdentifier()=="S") 
-					desk.volViewSimple.LINKEDWINDOW=this;},this);
+					desk.VolViewSimple.LINKEDWINDOW=this;},this);
 			this.addListener("click",
 				function(event) {
-					if ((desk.volViewSimple.LINKEDWINDOW!=null)&&(desk.volViewSimple.LINKEDWINDOW!=this))
+					if ((desk.VolViewSimple.LINKEDWINDOW!=null)&&(desk.VolViewSimple.LINKEDWINDOW!=this))
 					{
-						this.__slider.bind("value", desk.volViewSimple.LINKEDWINDOW.__slider, "value");
-						desk.volViewSimple.LINKEDWINDOW.__slider.bind("value", this.__slider, "value");
-						desk.volViewSimple.LINKEDWINDOW=null;
+						this.__slider.bind("value", desk.VolViewSimple.LINKEDWINDOW.__slider, "value");
+						desk.VolViewSimple.LINKEDWINDOW.__slider.bind("value", this.__slider, "value");
+						desk.VolViewSimple.LINKEDWINDOW=null;
 					}},this);				
 		},
 

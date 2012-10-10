@@ -1,11 +1,11 @@
-qx.Class.define("desk.action", 
+qx.Class.define("desk.Action", 
 {
 	extend : qx.ui.container.Composite,
 
 	construct : function (name, standalone)
 	{
 		this.base(arguments);
-		var actions=desk.actions.getInstance();
+		var actions=desk.Actions.getInstance();
 		this.__actions=actions;
 		this.__action=actions.getAction(name);
 		this.__actionName=name;
@@ -28,7 +28,7 @@ qx.Class.define("desk.action",
 			var req = new qx.io.request.Xhr(desk.FileSystem.getInstance().getFileURL(file)+"?nocache=" + Math.random());
 			req.addListenerOnce("success", function(e) {
 				var parameters=JSON.parse(e.getTarget().getResponseText());
-				var action=new desk.action (parameters["action"]);
+				var action=new desk.Action (parameters["action"]);
 				action.setActionParameters(parameters);
 				action.buildUI();
 			});
@@ -180,15 +180,17 @@ qx.Class.define("desk.action",
 			page.setLayout(new qx.ui.layout.HBox());
 			page.add(this, {flex : 1});
 			tabView.add(page);
+			this.addListener("actionUpdated", this.__addOutputTab, this);
 			return tabView;
 		},
 
 		__addOutputTab : function () {
-			if ( this.__embededFileBrowser != null ) {
+			if ( ( this.__action.attributes.voidAction == "true") ||
+					( this.__embededFileBrowser != null )) {
 				return;
 			}
 			var outputDirectory = this.getOutputDirectory();
-			this.__embededFileBrowser = new desk.fileBrowser( outputDirectory , false );
+			this.__embededFileBrowser = new desk.FileBrowser( outputDirectory , false );
 			this.__embededFileBrowser.setUserData( "action" , this );
 			var page = new qx.ui.tabview.Page("Output");
 			page.setLayout(new qx.ui.layout.HBox());
@@ -201,6 +203,139 @@ qx.Class.define("desk.action",
 			this.addListener("changeOutputDirectory", function () {
 				this.__embededFileBrowser.updateRoot();
 			} , this );
+		},
+
+		__updateButton : null,
+
+		__forceUpdateCheckBox : null,
+
+		__executionStatus : null,
+
+		__showLogButton : null,
+
+		__afterValidation : function () {
+			var manager = this.__validationManager;
+			var send = this.__updateButton;
+			var connections=this.__connections;
+
+			// check the validation status
+			if (manager.getValid()) {
+				// configure the send button
+				send.setEnabled(false);
+				send.setLabel("Updating Parents...");
+
+				var parameterMap={"action" : this.__actionName};
+				var items=manager.getItems();
+				// add all parameters
+				for (var i=0;i<items.length;i++) {
+					var currentItem=items[i];
+					var value=currentItem.getValue();
+					if (value!=null) {
+						parameterMap[currentItem.getPlaceholder()]=value;
+					}
+				}
+
+				// add output directory if provided
+				if (this.__outputDirectory!=null) {
+					parameterMap["output_directory"]=this.__outputDirectory;
+				}
+
+				// add the value of the "force update" checkbox
+				parameterMap["force_update"]=this.__forceUpdateCheckBox.getValue();
+				this.__executionStatus.setValue("Processing...");
+
+				// update parent Actions
+				var parentActions=[];
+				for (var i=0;i<connections.length;i++) {
+					var parentAction=connections[i].action;
+					var found=false;
+					for (var j=0;j<parentActions.length;j++) {
+						if (parentActions[j]==parentAction) {
+							found=true;
+							break;
+						}
+					}
+					if (!found) {
+						parentActions.push(parentAction);
+					}
+				}
+				var numberOfFinishedParentActions=parentActions.length;
+				
+				function afterParentActionProcessed (event){
+					numberOfFinishedParentActions++;
+					if (event) {
+						var finishedAction=event.getTarget();
+						//locate action in connections array
+						for (var i=0;i<connections.length;i++) {
+							var currentConnection=connections[i];
+							if (currentConnection.action==finishedAction) {
+								var currentParameter=currentConnection.parameter;
+								var currentFile=currentConnection.file;
+								parameterMap[currentParameter]=
+									currentConnection.action.getOutputDirectory()+"/"+currentFile;
+							}
+						}
+					}
+					if (numberOfFinishedParentActions>=parentActions.length) {
+						send.setLabel("Processing...");
+						function getAnswer (e)
+						{
+							// configure the send button
+							send.setEnabled(true);
+							send.setLabel("Update");
+
+							var req = e.getTarget();
+							var response=req.getResponseText();
+							var splitResponse=response.split("\n");
+							if (this.getOutputDirectory()==null) {
+								this.setOutputDirectory(splitResponse[0]);
+							}
+
+							this.__executionStatus.setValue(splitResponse[splitResponse.length-2]);
+							if ( this.__action.attributes.voidAction != "true" ) {
+								this.__showLogButton.setVisibility("visible");
+							}
+							this.fireEvent("actionUpdated");
+						}
+
+						var out=this.getOutputDirectory();
+						if (out) {
+							parameterMap["output_directory"]=out;
+						}
+			
+						var that=this;
+						function launchAction()
+						{
+							desk.Actions.getInstance().launchAction (parameterMap, getAnswer, that);
+						}
+
+						if (this.getOutputSubdirectory()==null) {
+							launchAction();
+						}
+						else {
+							desk.Actions.getInstance().launchAction({
+								"action" : "add_subdirectory",
+								"subdirectory_name" : this.getOutputSubdirectory(),
+								"output_directory" : this.__outputDirectory}, launchAction, that);
+						}
+					}
+				}
+
+				if (parentActions.length>0) {
+					for (var i=0;i!=parentActions.length;i++) {
+						var currentParentAction=parentActions[i];
+						currentParentAction.addListenerOnce("actionUpdated", afterParentActionProcessed, this);
+						currentParentAction.executeAction();
+					}
+				}
+				else {
+					afterParentActionProcessed.apply(this);
+				}
+
+			}
+			else {
+				alert(manager.getInvalidMessages().join("\n"));
+			}
 		},
 
 		buildUI : function () {
@@ -220,11 +355,11 @@ qx.Class.define("desk.action",
 				this.__window.add(this.getTabView(), {flex : 1});
 			}
 
-			var logFile=null;
 			var showLogButton=new qx.ui.form.Button("Show console log");
+			this.__showLogButton=showLogButton;
 			showLogButton.addListener("execute",function (e) {
-				new desk.textEditor(logFile);
-				})
+				new desk.textEditor(this.getOutputDirectory()+"/action.log");
+				}, this)
 			showLogButton.setVisibility("excluded");
 
 			var outputDirectory=null;
@@ -234,7 +369,6 @@ qx.Class.define("desk.action",
 					if (this.__standalone) {
 						this.__addOutputTab();
 					}
-					logFile=outputDirectory+"/action.log";
 					showLogButton.setVisibility("visible");
 				}
 			}
@@ -396,148 +530,23 @@ qx.Class.define("desk.action",
 			this.add(executeBox);
 
 			var send = new qx.ui.form.Button("Process");
+			this.__updateButton=send;
 			executeBox.add(send);
 			send.addListener("execute", function() {
 				manager.validate();}, this);
 
 			var forceUpdateCheckBox = new qx.ui.form.CheckBox("force");
-			var executionStatus=new qx.ui.form.TextField().set({
+			this.__forceUpdateCheckBox = forceUpdateCheckBox;
+
+			this.__executionStatus = new qx.ui.form.TextField().set({
 				readOnly: true});
 
-			executeBox.add(forceUpdateCheckBox);
-			executeBox.add(executionStatus);
+			executeBox.add( forceUpdateCheckBox );
+			executeBox.add( this.__executionStatus );
 			this.add(showLogButton, {flex : 1});
 
 			// add a listener to the form manager for the validation complete
-			manager.addListener("complete", function() {
-				// check the validation status
-				if (manager.getValid()) {
-					// configure the send button
-					send.setEnabled(false);
-					send.setLabel("Updating Parents...");
-
-					var parameterMap={"action" : this.__actionName};
-					var items=manager.getItems();
-					// add all parameters
-					for (var i=0;i<items.length;i++) {
-						var currentItem=items[i];
-						var value=currentItem.getValue();
-						if (value!=null) {
-							parameterMap[currentItem.getPlaceholder()]=value;
-						}
-					}
-
-					// add output directory if provided
-					if (outputDirectory!=null) {
-						parameterMap["output_directory"]=outputDirectory;
-					}
-
-					// add the value of the "force update" checkbox
-					parameterMap["force_update"]=forceUpdateCheckBox.getValue();
-					executionStatus.setValue("Processing...");
-
-					// update parent Actions
-					var parentActions=[];
-					for (var i=0;i<connections.length;i++) {
-						var parentAction=connections[i].action;
-						var found=false;
-						for (var j=0;j<parentActions.length;j++) {
-							if (parentActions[j]==parentAction) {
-								found=true;
-								break;
-							}
-						}
-						if (!found) {
-							parentActions.push(parentAction);
-						}
-					}
-					var numberOfFinishedParentActions=parentActions.length;
-					
-					function afterParentActionProcessed (event){
-						numberOfFinishedParentActions++;
-						if (event) {
-							var finishedAction=event.getTarget();
-							//locate action in connections array
-							for (var i=0;i<connections.length;i++) {
-								var currentConnection=connections[i];
-								if (currentConnection.action==finishedAction) {
-									var currentParameter=currentConnection.parameter;
-									var currentFile=currentConnection.file;
-									parameterMap[currentParameter]=
-										currentConnection.action.getOutputDirectory()+"/"+currentFile;
-								}
-							}
-						}
-						if (numberOfFinishedParentActions>=parentActions.length) {
-							send.setLabel("Processing...");
-							function getAnswer (e)
-							{
-								// configure the send button
-								send.setEnabled(true);
-								send.setLabel("Update");
-
-								var req = e.getTarget();
-								var response=req.getResponseText();
-								var splitResponse=response.split("\n");
-								outputDirectory=splitResponse[0];
-								if (this.getOutputDirectory()==null) {
-									this.setOutputDirectory(outputDirectory);
-								}
-
-								executionStatus.setValue(splitResponse[splitResponse.length-2]);
-								if ( action.attributes.voidAction != "true" ) {
-									if (this.__standalone) {
-										//display the results directory
-										if (this.__embededFileBrowser==null) {
-											this.__addOutputTab();
-										}
-									}
-									logFile=outputDirectory+"/action.log";
-									showLogButton.setVisibility("visible");
-								}
-								this.fireEvent("actionUpdated");
-							}
-
-							var out=this.getOutputDirectory();
-							if (out) {
-								parameterMap["output_directory"]=out;
-							}
-				
-
-							function launchAction()
-							{
-								desk.actions.getInstance().launchAction (parameterMap, getAnswer, that);
-							}
-
-							if (this.getOutputSubdirectory()==null) {
-								launchAction();
-							}
-							else {
-								desk.actions.getInstance().launchAction({
-									"action" : "add_subdirectory",
-									"subdirectory_name" : this.getOutputSubdirectory(),
-									"output_directory" : this.__outputDirectory}, launchAction, that);
-							}
-						}
-					}
-
-					if (parentActions.length>0) {
-						for (var i=0;i!=parentActions.length;i++) {
-							var currentParentAction=parentActions[i];
-							currentParentAction.addListenerOnce("actionUpdated", afterParentActionProcessed, this);
-							currentParentAction.executeAction();
-						}
-					}
-					else {
-						afterParentActionProcessed.apply(this);
-					}
-
-				}
-				else {
-					alert(manager.getInvalidMessages().join("\n"));
-				}
-			}, this);
+			manager.addListener("complete", this.__afterValidation, this);
 		}
-
 	}
 });

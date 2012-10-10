@@ -1,4 +1,4 @@
-qx.Class.define("desk.textEditor", 
+qx.Class.define("desk.TextEditor", 
 {
   extend : qx.ui.window.Window,
 
@@ -25,7 +25,7 @@ qx.Class.define("desk.textEditor",
 		this.add(this.__textArea,{flex : 1});
 		this.open();
 
-		this.openFileURL(desk.actions.getInstance().getFileURL(file));
+		this.openFileURL(desk.Actions.getInstance().getFileURL(file));
 		return (this);
 	},
 
@@ -41,7 +41,7 @@ qx.Class.define("desk.textEditor",
 			var req = new qx.io.request.Xhr(this.__fileURL+"?nocache=" + Math.random());
 			req.setAsync(true);
 			req.addListener('load', function (e){
-				this.__textArea.setValue(req.getResponse());
+				this.__textArea.setValue(req.getResponseText());
 				this.setCaption(fileURL);
 				this.__reloadButton.setEnabled(true);
 				}, this);

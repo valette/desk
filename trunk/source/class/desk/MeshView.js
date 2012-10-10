@@ -7,7 +7,7 @@
 #ignore(Uint8Array)
 @lint ignoreGlobal(THREE)
 */
-qx.Class.define("desk.meshView", 
+qx.Class.define("desk.MeshView", 
 {
 	extend : qx.core.Object,
 
@@ -303,7 +303,7 @@ qx.Class.define("desk.meshView",
 					loadMeshIntoScene(outputDir+"\/"+"mesh.ctm",mtime);
 				}
 
-				desk.actions.getInstance().launchAction(parameterMap, getAnswer);
+				desk.Actions.getInstance().launchAction(parameterMap, getAnswer);
 				break;
 
 			case ".ctm":

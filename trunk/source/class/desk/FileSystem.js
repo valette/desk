@@ -15,7 +15,6 @@ qx.Class.define("desk.FileSystem",
 
 		var pathname=URLparser.pathname;
 		this.__user=URLparser.pathname.split("/")[1];
-		console.log('user : '+this.__user);
 		this.__baseURL='/'+this.__user+'/';
 		this.__phpURL=this.__baseURL+'ext/php/';
 		this.__filesURL=this.__baseURL+'files/';
@@ -177,7 +176,7 @@ qx.Class.define("desk.FileSystem",
 					"action" : "add_subdirectory",
 					"subdirectory_name" : subdir,
 					"output_directory" : file.substring(0,lastSlash)};
-				desk.actions.getInstance().launchAction(parameterMap, getAnswer);
+				desk.Actions.getInstance().launchAction(parameterMap, getAnswer);
 			}
 
 			this.getFileSessions(file, sessionType, success);

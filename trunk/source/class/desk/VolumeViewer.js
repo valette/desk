@@ -3,7 +3,7 @@
 #ignore(Uint8Array)
 #asset(desk/Contrast_Logo_petit.PNG)
 */
-qx.Class.define("desk.volMaster", 
+qx.Class.define("desk.VolumeViewer", 
 {
 	extend : qx.core.Object,
 	include : desk.ActionLinkMixin,
@@ -52,7 +52,7 @@ qx.Class.define("desk.volMaster",
 		this.__viewers = [];
 		var i;
 		for( i=0; i < this.__nbUsedOrientations; i++ ) {
-			this.__viewers[i] = new desk.sliceView(this, i);
+			this.__viewers[i] = new desk.SliceView(this, i);
 		}
 
 		var gridLayout=new qx.ui.layout.Grid(3,3);
@@ -649,10 +649,10 @@ qx.Class.define("desk.volMaster",
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 			if(this.__standAlone) {
-				if (desk.actions.getInstance().getPermissionsLevel()>0) {
+				if (desk.Actions.getInstance().getPermissionsLevel()>0) {
 					var paintButton=new qx.ui.menu.Button("segment");
 					paintButton.addListener("execute", function () {
-						new desk.segTools(this, this.__file);
+						new desk.SegTools(this, this.__file);
 					},this);
 					menu.add(paintButton);
 				}
@@ -1023,7 +1023,5 @@ qx.Class.define("desk.volMaster",
 				windowManager.bringToFront(this.__window);
 			}, this);
 		}
-	} //// END of   members :
-
-	
-}); //// END of   qx.Class.define("desk.volMaster",
+	}
+});

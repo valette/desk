@@ -4,7 +4,7 @@
 #ignore(Uint8Array)
 */
 
-qx.Class.define("desk.volumeSlice", 
+qx.Class.define("desk.VolumeSlice", 
 {
   extend : qx.core.Object,
 
@@ -252,7 +252,7 @@ qx.Class.define("desk.volumeSlice",
 				output_directory : "cache\/",
 				format : this.getImageFormat(),
 				slice_orientation : this.getOrientation()};
-			desk.actions.getInstance().launchAction(parameterMap, getAnswer, this);
+			desk.Actions.getInstance().launchAction(parameterMap, getAnswer, this);
 		},
 
 		getBrightness : function () {
@@ -394,30 +394,30 @@ qx.Class.define("desk.volumeSlice",
 			case 2 :
 			case 15:
 				//char / signed char
-				middleShader=desk.volumeSlice.FRAGMENTSHADERCHAR;
+				middleShader=desk.VolumeSlice.FRAGMENTSHADERCHAR;
 				break;
 			case 3:
-				middleShader=desk.volumeSlice.FRAGMENTSHADERUCHAR;
+				middleShader=desk.VolumeSlice.FRAGMENTSHADERUCHAR;
 				break;
 			case 4:
-				middleShader=desk.volumeSlice.FRAGMENTSHADERSHORT;
+				middleShader=desk.VolumeSlice.FRAGMENTSHADERSHORT;
 				break;
 			case 5:
-				middleShader=desk.volumeSlice.FRAGMENTSHADERUSHORT;
+				middleShader=desk.VolumeSlice.FRAGMENTSHADERUSHORT;
 				break;
 			default:
-				middleShader=desk.volumeSlice.FRAGMENTSHADERFLOAT;
+				middleShader=desk.VolumeSlice.FRAGMENTSHADERFLOAT;
 				break;
 			}
 
 			var shader;
 			if (this.__numberOfScalarComponents==1) {
-				shader=[desk.volumeSlice.FRAGMENTSHADERBEGIN,
+				shader=[desk.VolumeSlice.FRAGMENTSHADERBEGIN,
 						middleShader,
-						desk.volumeSlice.FRAGMENTSHADEREND].join("\n");
+						desk.VolumeSlice.FRAGMENTSHADEREND].join("\n");
 			}
 			else {
-				shader=desk.volumeSlice.FRAGMENTSHADERENDMULTICHANNEL;
+				shader=desk.VolumeSlice.FRAGMENTSHADERENDMULTICHANNEL;
 			}
 
 			var baseUniforms={
@@ -433,14 +433,14 @@ qx.Class.define("desk.volumeSlice",
 					imageType : { type: "f", value: this.__availableImageFormat}
 				};
 
-			var baseShaderBegin=[desk.volumeSlice.FRAGMENTSHADERBEGIN,
+			var baseShaderBegin=[desk.VolumeSlice.FRAGMENTSHADERBEGIN,
 						middleShader].join("\n");
 
-			var baseShaderEnd=desk.volumeSlice.FRAGMENTSHADEREND;
+			var baseShaderEnd=desk.VolumeSlice.FRAGMENTSHADEREND;
 
 			var material=new THREE.ShaderMaterial({
 				uniforms: baseUniforms,
-				vertexShader: desk.volumeSlice.VERTEXSHADER,
+				vertexShader: desk.VolumeSlice.VERTEXSHADER,
 				fragmentShader: shader,
 				transparent : true
 			});

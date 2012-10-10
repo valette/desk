@@ -2,7 +2,7 @@
 #ignore(Uint8Array)
 */
 
-qx.Class.define("desk.segTools",
+qx.Class.define("desk.SegTools",
 {
   extend : qx.ui.window.Window,
 
@@ -82,6 +82,7 @@ qx.Class.define("desk.segTools",
 	},
 
 	statics : {
+		defaultColorsFile : null,
 		filePrefixes : ["seed","correction"],
 		seedsListsString : "seedsLists",
 		seedsArrayString : "seedsArray",
@@ -100,7 +101,12 @@ qx.Class.define("desk.segTools",
 
 	members :
 	{
-		__defaultColorsFile : "data/xml/colors7.xml",
+		__defaultColors : ['<colors>',
+		'<color red="255" green="0" blue="0" name="object1" label="1"/>',
+		'<color red="0" green="255" blue="0" name="object2" label="2"/>',
+		'<color red="0" green="0" blue="255" name="object3" label="3"/>',
+		'</colors>'].join('\n'),
+
 		__master : null,
 		__file : null,
 		__fileSystem : null,
@@ -146,9 +152,9 @@ qx.Class.define("desk.segTools",
 			var context=canvas.getContext2d();
 			context.clearRect(0, 0, width, height);
 			var seedsType=_this.getSeedsType();
-			var seedsList=sliceView.getUserData(desk.segTools.seedsListsString)[seedsType];
-			var seedsArray=seedsList.getUserData(desk.segTools.seedsArrayString);
-			var cacheTagsArray=seedsList.getUserData(desk.segTools.cacheTagsArrayString);
+			var seedsList=sliceView.getUserData(desk.SegTools.seedsListsString)[seedsType];
+			var seedsArray=seedsList.getUserData(desk.SegTools.seedsArrayString);
+			var cacheTagsArray=seedsList.getUserData(desk.SegTools.cacheTagsArrayString);
 			var sliceId=sliceView.getSlice();
 
 			if (seedsArray[sliceId]!=0) {
@@ -302,7 +308,7 @@ qx.Class.define("desk.segTools",
 			var clusteringPage = new qx.ui.tabview.Page("clustering");
             clusteringPage.setLayout(new qx.ui.layout.VBox());
 			tabView.add(clusteringPage);
-			var clusteringAction=new desk.action("cvtseg2", false);
+			var clusteringAction=new desk.Action("cvtseg2", false);
 			clusteringAction.setActionParameters(
 				{"input_volume" : volFile});
 
@@ -314,7 +320,7 @@ qx.Class.define("desk.segTools",
 			var segmentationPage = new qx.ui.tabview.Page("segmentation");
             segmentationPage.setLayout(new qx.ui.layout.VBox());
 			tabView.add(segmentationPage);
-			var segmentationAction=new desk.action("cvtgcmultiseg", false);
+			var segmentationAction=new desk.Action("cvtgcmultiseg", false);
 			clusteringAction.setActionParameters({
 				"input_volume" : volFile});
 
@@ -327,7 +333,7 @@ qx.Class.define("desk.segTools",
 			var medianFilteringPage = new qx.ui.tabview.Page("cleaning");
             medianFilteringPage.setLayout(new qx.ui.layout.VBox());
 			tabView.add(medianFilteringPage);
-			var medianFilteringAction=new desk.action("volume_median_filtering", false);
+			var medianFilteringAction=new desk.Action("volume_median_filtering", false);
 			medianFilteringAction.setOutputSubdirectory("filtering");
 			medianFilteringAction.connect("input_volume", 
 										segmentationAction, "seg-cvtgcmultiseg.mhd");
@@ -337,7 +343,7 @@ qx.Class.define("desk.segTools",
 			var meshingPage = new qx.ui.tabview.Page("meshing");
             meshingPage.setLayout(new qx.ui.layout.VBox());
 			tabView.add(meshingPage);
-			var meshingAction=new desk.action("extract_meshes", false);
+			var meshingAction=new desk.Action("extract_meshes", false);
 			meshingAction.setOutputSubdirectory("meshes");
 			meshingAction.buildUI();
 			meshingPage.add(meshingAction.getTabView());
@@ -412,7 +418,7 @@ qx.Class.define("desk.segTools",
 				meshingButton.setEnabled(true);
 				tools.__startSegmentationButton.setEnabled(true);
 				if (meshViewer==null) {
-					meshViewer=new desk.meshView(tools.getSessionDirectory()+
+					meshViewer=new desk.MeshView(tools.getSessionDirectory()+
 						"/meshes/meshes.xml");
 					meshViewer.addListener("close", function () {
 						meshViewer=null;
@@ -527,37 +533,32 @@ qx.Class.define("desk.segTools",
 		},
 
 		__loadColors : function (file) {
-			if (file==null) {
-				file=this.__defaultColorsFile;
+			if (file == null) {
+				file = desk.SegTools.defaultColorsFile;
+				if (file == null) {
+					var parser = new DOMParser();
+					var xmlDoc = parser.parseFromString(this.__defaultColors, "text/xml");
+					this.__setColorsFromElements(xmlDoc.getElementsByTagName("color"),
+								xmlDoc.getElementsByTagName("adjacency"));
+				}
 			}
-			var tools=this;
-		////Fill labels zone width data from the xml file
 
-			var colorsParamRequest = new XMLHttpRequest();
-			colorsParamRequest.onreadystatechange = function()
-			{
-				 if(this.readyState == 4 && this.status == 200)
-				 {
-					// so far so good
-					if(this.responseXML!=null)
-					{
-						var response = this.responseXML;
-						tools.__setColorsFromElements(response.getElementsByTagName("color"),
+			var req = new qx.io.request.Xhr();
+			req.setUrl(this.__fileSystem.getFileURL(file) + "?nocache=" + Math.random());
+			req.setMethod("GET");
+			req.setAsync(true);
+
+			req.addListener("success", function (e) {
+				var req = e.getTarget();
+				var response=req.getResponse();
+				this.__setColorsFromElements(response.getElementsByTagName("color"),
 								response.getElementsByTagName("adjacency"));
+			}, this);
 
-					}
-					else
-						alert("Global Params : Failure...");
-				}
-				else if (this.readyState == 4 && this.status != 200)
-				{
-					// fetched the wrong page or network error...
-					alert('Global Params : "Fetched the wrong page" OR "Network error"');
-				}
-			};
-			colorsParamRequest.open("GET",
-				this.__fileSystem.getFileURL(file)+"?nocache="+Math.random(), true);
-			colorsParamRequest.send(null);
+			req.addListener("error", function (e) {
+				alert('Global Params : "Fetched the wrong page" OR "Network error"');
+			}, this);
+			req.send();
 		},
 
 		__targetColorItem : null,
@@ -1272,7 +1273,7 @@ qx.Class.define("desk.segTools",
 					file_name : _this.__getSeedFileName (this, sliceId, seedsType),
 					base64data : base64Img,
 					output_directory : _this.getSessionDirectory()};
-					desk.actions.getInstance().launchAction(parameterMap, savecallback);
+					desk.Actions.getInstance().launchAction(parameterMap, savecallback);
 				}
 				else {
 					savecallback();
@@ -1406,12 +1407,12 @@ qx.Class.define("desk.segTools",
 
 			var _this=this;
 			this.__master.applyToViewers( function () {
-				var seedsLists=this.getUserData(desk.segTools.seedsListsString);
+				var seedsLists=this.getUserData(desk.SegTools.seedsListsString);
 				var orientation=this.getOrientation();
 
 				for (var seedsType=0; seedsType<2; seedsType++) {
 					var list=seedsLists[seedsType];
-					var filePrefix=desk.segTools.filePrefixes[seedsType];
+					var filePrefix=desk.SegTools.filePrefixes[seedsType];
 					var slices=list.getChildren();
 					for (var i=0;i<slices.length;i++)
 					{
@@ -1429,7 +1430,7 @@ qx.Class.define("desk.segTools",
 				base64data : qx.util.Base64.encode(element('seeds', xmlContent), true),
 				output_directory : this.getSessionDirectory()};
 
-			desk.actions.getInstance().launchAction(parameterMap, callback);
+			desk.Actions.getInstance().launchAction(parameterMap, callback);
 		},
 
 		__getSeedsTypeSelectBox : function()
@@ -1450,7 +1451,7 @@ qx.Class.define("desk.segTools",
 				var newSeedsType=selectBox.getSelection()[0].getUserData("seedsType");
 				_this.setSeedsType(newSeedsType);
 				_this.__master.applyToViewers(function ( ) {
-					var seedsLists=this.getUserData(desk.segTools.seedsListsString);
+					var seedsLists=this.getUserData(desk.SegTools.seedsListsString);
 					seedsLists[newSeedsType].setVisibility("visible");
 					seedsLists[1-newSeedsType].setVisibility("excluded");
 					_this.__reloadSeedImage (this);
@@ -1549,7 +1550,7 @@ qx.Class.define("desk.segTools",
 			var lists=[];
 			lists.push(seedsList);
 			lists.push(correctionsList);
-			sliceView.setUserData(desk.segTools.seedsListsString, lists);
+			sliceView.setUserData(desk.SegTools.seedsListsString, lists);
 
 		/*	seedsList.addListener("removeItem", function(event) {
 				if (seedsList.getChildren().length==0)
@@ -1569,7 +1570,7 @@ qx.Class.define("desk.segTools",
 						var sliceId = selectedChild.getUserData("slice");
 
 						////Erase image on the server
-						desk.actions.getInstance().launchAction({action : "delete_file",
+						desk.Actions.getInstance().launchAction({action : "delete_file",
 										"file_name" : this.getSessionDirectory()+"/"+
 										this.__getSeedFileName(sliceView, sliceId, seedsType)});
 						list.getUserData("seedsArray")[sliceId]=0;
@@ -1592,7 +1593,7 @@ qx.Class.define("desk.segTools",
 		__clearSeeds : function ( ) {
 			this.__master.applyToViewers ( function () {
 				this.setUserData("previousSlice", this.getSlice());
-				var seedsLists=this.getUserData(desk.segTools.seedsListsString);
+				var seedsLists=this.getUserData(desk.SegTools.seedsListsString);
 				for (var i=0;i<2;i++) {
 					var numberOfSlices=this.getVolumeSliceToPaint().getNumberOfSlices();
 					var seedsArray = [];
@@ -1603,15 +1604,15 @@ qx.Class.define("desk.segTools",
 						cacheTagsArray[j]=Math.random();
 					}
 					seedsLists[i].removeAll();
-					seedsLists[i].setUserData(desk.segTools.seedsArrayString, seedsArray);
-					seedsLists[i].setUserData(desk.segTools.cacheTagsArrayString, cacheTagsArray);
+					seedsLists[i].setUserData(desk.SegTools.seedsArrayString, seedsArray);
+					seedsLists[i].setUserData(desk.SegTools.cacheTagsArrayString, cacheTagsArray);
 				}
 			});
 		},
 
 		__addNewSeedItemToList : function ( sliceView, sliceId, seedsType )
 		{
-			var seedsList = sliceView.getUserData(desk.segTools.seedsListsString)[seedsType];
+			var seedsList = sliceView.getUserData(desk.SegTools.seedsListsString)[seedsType];
 			var seeds = seedsList.getChildren();
 			var tempPos = 0;
 
@@ -1622,7 +1623,7 @@ qx.Class.define("desk.segTools",
 					tempPos++;
 				}
 				if (currentId==sliceId) {
-					seedsList.getUserData(desk.segTools.cacheTagsArrayString)[sliceId]=Math.random();
+					seedsList.getUserData(desk.SegTools.cacheTagsArrayString)[sliceId]=Math.random();
 					return;
 				}
 			}
@@ -1634,8 +1635,8 @@ qx.Class.define("desk.segTools",
 			});
 
 			seedsList.addAt(sliceItem, tempPos);
-			seedsList.getUserData(desk.segTools.seedsArrayString)[sliceId]=sliceItem;
-			seedsList.getUserData(desk.segTools.cacheTagsArrayString)[sliceId]=Math.random();
+			seedsList.getUserData(desk.SegTools.seedsArrayString)[sliceId]=sliceItem;
+			seedsList.getUserData(desk.SegTools.cacheTagsArrayString)[sliceId]=Math.random();
 		},
 
 		__getSeedFileName : function(sliceView, sliceId, seedType) {			
@@ -1793,4 +1794,4 @@ qx.Class.define("desk.segTools",
 
 	} //// END of   members :
 
-}); //// END of   qx.Class.define("desk.segTools",
+}); //// END of   qx.Class.define("desk.SegTools",

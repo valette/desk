@@ -3,7 +3,7 @@
 #asset(desk/img.png)
 */
 
-qx.Class.define("desk.fileBrowser", 
+qx.Class.define("desk.FileBrowser", 
 {
 	extend : qx.ui.container.Composite,
 
@@ -41,7 +41,7 @@ qx.Class.define("desk.fileBrowser",
 
 		var dataModel = virtualTree.getDataModel();
 
-		this.__actions=desk.actions.getInstance();
+		this.__actions=desk.Actions.getInstance();
 
 		// create the filter bar
 		var filterBox = new qx.ui.container.Composite;
@@ -203,13 +203,13 @@ qx.Class.define("desk.fileBrowser",
 				case ".stl":
 				case ".ctm":
 				case ".off":
-					new desk.meshView(file, modificationTime);
+					new desk.MeshView(file, modificationTime);
 //					qx.core.Init.getApplication().getRoot().add(meshView);
 					break;
 				case ".png":
 				case ".jpg":
 				case ".bmp":
-					new desk.imageView(file);
+					new desk.ImageView(file);
 //					qx.core.Init.getApplication().getRoot().add(imageView);
 					break;
 				case ".xml":
@@ -220,8 +220,7 @@ qx.Class.define("desk.fileBrowser",
 					
 					if (xmlDoc.getElementsByTagName("mesh").length!=0)
 					{
-						new desk.meshView(file, modificationTime);
-//						qx.core.Init.getApplication().getRoot().add(meshView);
+						new desk.MeshView(file, modificationTime);
 					}
 			/*		else if (xmlDoc.getElementsByTagName("volume").length!=0)
 					{
@@ -235,12 +234,12 @@ qx.Class.define("desk.fileBrowser",
 				case ".mhd":
 				//		var coordinates =  {viewers : [{c:0,r:0}, {c:1,r:0}, {c:1,r:1}],
 				//							volList : {c:0,r:1} };
-						var volMaster = new desk.volMaster( file );
-						var volWindow = volMaster.getWindow();
+						var viewer = new desk.VolumeViewer( file );
+						var volWindow = viewer.getWindow();
 						
 					break;
 				case ".json":
-					desk.action.CREATEFROMFILE(myBrowser.getNodeFile(node));
+					desk.Action.CREATEFROMFILE(myBrowser.getNodeFile(node));
 					break;
 				default:
 					alert("no file handler exists for extension "+extension);
@@ -258,21 +257,14 @@ qx.Class.define("desk.fileBrowser",
 			var myBrowser=this;
 			myBrowser.addAction("redo action", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-					desk.action.CREATEFROMFILE(myBrowser.getNodeFile(node));
+					desk.Action.CREATEFROMFILE(myBrowser.getNodeFile(node));
 				else
-					desk.action.CREATEFROMFILE(myBrowser.getNodeFile(node)+"/parameters.txt");
+					desk.Action.CREATEFROMFILE(myBrowser.getNodeFile(node)+"/parameters.txt");
 			});
 
-			myBrowser.addAction("volViewSimple", function (node) {
+			myBrowser.addAction("VolViewSimple", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-					new desk.volViewSimple(myBrowser.getNodeFile(node), myBrowser);
-				else
-					alert("Cannot view a directory!");
-			});
-
-			myBrowser.addAction("sliceView", function (node) {
-				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-					new desk.sliceView(myBrowser.getNodeFile(node), myBrowser);
+					new desk.VolViewSimple(myBrowser.getNodeFile(node), myBrowser);
 				else
 					alert("Cannot view a directory!");
 			});
@@ -320,7 +312,7 @@ qx.Class.define("desk.fileBrowser",
 			
 			myBrowser.addAction("view/edit text", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-					new desk.textEditor(myBrowser.getNodeFile(node));
+					new desk.TextEditor(myBrowser.getNodeFile(node));
 				}
 			});
 

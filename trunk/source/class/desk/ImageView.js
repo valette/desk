@@ -1,4 +1,4 @@
-qx.Class.define("desk.imageView", 
+qx.Class.define("desk.ImageView", 
 {
   extend : qx.ui.window.Window,
 
