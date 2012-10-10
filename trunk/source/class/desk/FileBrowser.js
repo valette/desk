@@ -9,6 +9,10 @@ qx.Class.define("desk.FileBrowser",
 
 	construct : function(baseDir, standAlone)
 	{
+		if(baseDir.substr(-1) == '/') {
+			baseDir = baseDir.substr(0, baseDir.length - 1);
+		}
+
 		this.base(arguments);
 		if (baseDir!=null) {
 			this.__baseDir=baseDir;
