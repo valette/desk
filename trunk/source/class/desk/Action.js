@@ -474,21 +474,21 @@ qx.Class.define("desk.Action",
 					case "file":
 						if ((!fileAlreadyPickedFromBrowser) && (this.__fileBrowser!=null)) {
 							fileAlreadyPickedFromBrowser=true;
-							var fileNode=this.__fileBrowser.getSelectedNode();
-							parameterForm.setValue(this.__fileBrowser.getNodeFile(fileNode));
+							var file=this.__fileBrowser.getSelectedFiles()[0];
+							parameterForm.setValue(file);
 							var parentAction=this.__fileBrowser.getUserData("action");
-							if (parentAction!=null) {
-								that.connect(parameterForm.getPlaceholder(),parentAction,fileNode.label);
+							if (parentAction != null) {
+								that.connect(parameterForm.getPlaceholder(), parentAction, file);
 							}
 						}
 						parameterForm.setDroppable(true);
 						parameterForm.addListener("drop", function(e) {
 								var originFileBrowser=e.getData("fileBrowser");
-								var fileNode=originFileBrowser.getSelectedNode();
-								this.setValue(originFileBrowser.getNodeFile(fileNode));
+								var file=originFileBrowser.getSelectedFiles()[0];
+								this.setValue(file);
 								var parentAction=originFileBrowser.getUserData("action");
 								if (parentAction!=null) {
-									that.connect(this.getPlaceholder(),parentAction,fileNode.label);
+									that.connect(this.getPlaceholder(), parentAction, file);
 								}
 							}, parameterForm);
 
@@ -498,11 +498,9 @@ qx.Class.define("desk.Action",
 						parameterForm.setDroppable(true);
 						parameterForm.addListener("drop", function(e) {
 							if (e.supportsType("fileBrowser")) {
-								var origin_fileBrowser=e.getData("fileBrowser");
-								var fileNode=origin_fileBrowser.getSelectedNode();
-								this.setValue(origin_fileBrowser.getNodeFile(fileNode));
+								this.setValue(e.getData("fileBrowser").getSelectedFiles()[0]);
 							}
-							}, parameterForm);
+						}, parameterForm);
 						manager.add(parameterForm, stringValidator, parameter);
 						break;
 					case "xmlcontent":

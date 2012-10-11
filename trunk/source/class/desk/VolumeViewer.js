@@ -1013,10 +1013,9 @@ qx.Class.define("desk.VolumeViewer",
 			this.__window.setDroppable(true);
 			this.__window.addListener("drop", function(e) {
 				if (e.supportsType("fileBrowser")) {
-					var fileBrowser=e.getData("fileBrowser");
-					var nodes=fileBrowser.getSelectedNodes();
-					for (var i=0;i<nodes.length;i++) {
-						this.addVolume(fileBrowser.getNodeFile(nodes[i]));
+					var files=e.getData("fileBrowser").getSelectedFiles();
+					for (var i = 0; i < files.length; i++) {
+						this.addVolume(files[i]);
 					}
 				} else if (e.supportsType("file")) {
 					if (e.supportsType("VolumeViewer")) {
