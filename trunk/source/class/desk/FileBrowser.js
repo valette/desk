@@ -137,6 +137,45 @@ qx.Class.define("desk.FileBrowser",
 				}
 		}, this);
 
+		virtualTree.setDroppable(true);
+		virtualTree.addListener('drop', function (e) {
+			if (e.supportsType('fileBrowser')) {
+				var browser = e.getData('fileBrowser');
+				var files = browser.getSelectedFiles();
+				var row = this.__virtualTree.getFocusedRow();
+				var node = this.__virtualTree.getDataModel().getNodeFromRow(row);
+
+				var nodeId=node.nodeId;
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+					nodeId=node.parentNodeId;
+				}
+				var destination = this.getNodeFile(nodeId);
+				var filesString='';
+				for (var i=0; i < files.length; i++) {
+					filesString += files[i] + '\n';
+				}
+				if (confirm ('Are you sure you want to move these files:\n' +
+					filesString + 'to :\n' + destination)) {
+					var index = -1;
+					var that = this;
+					function moveFile () {
+						index++;
+						if (index < files.length) {
+							desk.Actions.getInstance().launchAction(
+							{ action : "move",
+								source : files[index],
+								destination : destination},
+							moveFile);
+						}
+						else {
+							that.__expandDirectoryListing(nodeId);
+						}
+					}
+					moveFile();
+				}
+			}
+		}, this);
+
 		if (this.__standAlone)
 		{
 			var window=new qx.ui.window.Window();
@@ -402,9 +441,19 @@ qx.Class.define("desk.FileBrowser",
 			return (this.__virtualTree.getSelectedNodes()[0]);
 		},
 
-		getSelectedNodes : function (e)
+		getSelectedNodes : function ()
 		{
 			return (this.__virtualTree.getSelectedNodes());
+		},
+
+		getSelectedFiles : function ()
+		{
+			var selectedNodes = this.__virtualTree.getSelectedNodes();
+			var files = [];
+			for (var i=0; i < selectedNodes.length; i++) {
+				files.push(this.getNodeFile(selectedNodes[i]));
+			}
+			return files;
 		},
 
 		getNodeMTime : function (node)

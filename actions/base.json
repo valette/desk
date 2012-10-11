@@ -121,6 +121,27 @@
 		},
 		{
 		    "parameters":[
+				{
+					"name":"source",
+					"type":"file",
+					"required":"true"
+				},
+				{
+					"name":"destination",
+					"type":"string",
+					"required":"true"
+				}
+		    ],
+		    "name":"move",
+		    "attributes":
+		    {
+		        "name":"move",
+		        "command":"mv",
+		        "voidAction":"true"
+		    }
+		},
+		{
+		    "parameters":[
 		        {
 		            "name":"directory",
 		            "type":"string",
