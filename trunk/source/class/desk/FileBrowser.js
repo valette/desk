@@ -214,6 +214,7 @@ qx.Class.define("desk.FileBrowser",
 		getWindow : function() {
 			return this.__window;
 		},
+
 		getFileFilter : function() {
 			return this.__filterField;
 		},
@@ -230,11 +231,7 @@ qx.Class.define("desk.FileBrowser",
 		},
 
 		__createDoubleClickActions : function () {
-			var myBrowser=this;
-			function fileClicked(node) {
-				var modificationTime=myBrowser.__getNodeMTime(node);
-				var file=myBrowser.__getNodeFile(node);
-				var fileURL=myBrowser.getFileURL(file);
+			this.setFileHandler(function (file) {
 				var extension=file.substring(file.lastIndexOf("."), file.length);
 				switch (extension)
 				{
@@ -244,51 +241,35 @@ qx.Class.define("desk.FileBrowser",
 				case ".stl":
 				case ".ctm":
 				case ".off":
-					new desk.MeshView(file, modificationTime);
-//					qx.core.Init.getApplication().getRoot().add(meshView);
+					new desk.MeshView(file);
 					break;
 				case ".png":
 				case ".jpg":
 				case ".bmp":
 					new desk.ImageView(file);
-//					qx.core.Init.getApplication().getRoot().add(imageView);
 					break;
 				case ".xml":
-					var xmlhttp=new XMLHttpRequest();
-					xmlhttp.open("GET",fileURL+"?nocache=" +modificationTime,false);
-					xmlhttp.send();
-					var xmlDoc=xmlhttp.responseXML;
-					
-					if (xmlDoc.getElementsByTagName("mesh").length!=0)
-					{
-						new desk.MeshView(file, modificationTime);
-					}
-			/*		else if (xmlDoc.getElementsByTagName("volume").length!=0)
-					{
-						var volView=new desk.volView(file, myBrowser, modificationTime);
-						//~ var volView=new desk.volMaster(file, modificationTime); //~ orion test
-//						qx.core.Init.getApplication().getRoot().add(volView);
-					}*/
-					else {
-						alert ("xml file of unknown type!");
-					}
+					desk.FileSystem.readFile(file, function (request) {
+						var xmlDoc = request.getResponse();
+						if (xmlDoc.getElementsByTagName("mesh").length != 0) {
+							new desk.MeshView(file);
+						}
+						else {
+							alert ('xml file of unknown type!');
+						}
+					});
 					break;
 				case ".mhd":
-				//		var coordinates =  {viewers : [{c:0,r:0}, {c:1,r:0}, {c:1,r:1}],
-				//							volList : {c:0,r:1} };
-						var viewer = new desk.VolumeViewer( file );
-						var volWindow = viewer.getWindow();
-						
+					var viewer = new desk.VolumeViewer(file);
 					break;
 				case ".json":
 					desk.Action.CREATEFROMFILE(file);
 					break;
 				default:
 					alert("no file handler exists for extension "+extension);
-				}
-				
-			}
-			myBrowser.setFileHandler(fileClicked);
+					break;
+				}				
+			});
 		},
 
 		__createDefaultStaticActions : function ()
@@ -470,10 +451,10 @@ qx.Class.define("desk.FileBrowser",
 		},
 
 		__openNode : function (node) {
-			if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
+			if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 			{
-				if (this.__fileHandler!=null)
-						this.__fileHandler(node);
+				if (this.__fileHandler != null)
+						this.__fileHandler(this.__getNodeFile(node));
 			}
 			else
 				this.__virtualTree.nodeToggleOpened(node);
