@@ -66,52 +66,19 @@ if (identity) {
 
 app.use(express.methodOverride());
 
-//~ <<<<<<< HEAD
-	//~ // redirect from source dir
-//~ //	var homeURL='/'+user+'/demo/default/release';
-	//~ var homeURL='/'+user+'/';
-	//~ /*
-	//~ app.get('/'+user+'/source/*', function(req, res){
-		//~ res.redirect(homeURL);
-	//~ });
-	//~ */
-//~ =======
 // handle body parsing
 app.use(express.bodyParser({uploadDir: uploadDir }));
 
-// redirect from source dir
 var homeURL='/'+user+'/';
-/*	app.get('/'+user+'/source/*', function(req, res){
-	res.redirect(homeURL);
-});*/
-//~ >>>>>>> 8bc507d4fb6693cc8a3418ac05b6cbaa50986039
 
 app.use('/'+user,express.static(serverPath+'demo/default/release/'));
-//	app.use('/'+user,express.directory(serverPath+'demo/default/release'));
 
-//~ <<<<<<< HEAD
-	//~ var devDir='/home/'+user+'/desk/dev/';
-	//~ app.use('/'+user+'/dev',express.static(devDir));
-	//~ app.use('/'+user+'/dev',express.directory(devDir));
-//~ 
-//~ 
-	//~ // enable static file server
-	//~ app.use('/'+user,express.static(path));
-//~ 
-	//~ /*
-	//~ // redirect from url '/user'
-	//~ app.get('/'+user, function(req, res){
-		//~ res.redirect(homeURL);
-	//~ });
-	//~ */
-//~ =======
 // serve data files
 app.use('/'+user+'/files',express.static(deskPath));
 app.use('/'+user+'/files',express.directory(deskPath));
 
 // enable static file server
 app.use('/'+user,express.static(serverPath));
-//~ >>>>>>> 8bc507d4fb6693cc8a3418ac05b6cbaa50986039
 
 // display directories
 app.use('/'+user,express.directory(serverPath));
@@ -149,34 +116,18 @@ app.post(phpURL+'actions.php', function(req, res){
 	});
 });
 
-//~ <<<<<<< HEAD
-	// handle cache clear
-	app.get(phpURL+'clearcache.php', function(req, res){
-		exec("rm -rf *",{cwd:phpDir+'cache', maxBuffer: 1024*1024}, function (err) {
-			res.send('cache cleared!');
-		});
-//~ =======
-//~ // handle cache clear
-//~ app.get(phpURL+'clearcache.php', function(req, res){
-	//~ exec("rm -rf *",{cwd:deskPath+'cache'}, function (err) {
-		//~ res.send('cache cleared!');
-//~ >>>>>>> 8bc507d4fb6693cc8a3418ac05b6cbaa50986039
-	//~ });
+// handle cache clear
+app.get(phpURL+'clearcache.php', function(req, res){
+	exec("rm -rf *",{cwd:phpDir+'cache', maxBuffer: 1024*1024}, function (err) {
+		res.send('cache cleared!');
+	});
 });
 
-//~ <<<<<<< HEAD
-	// handle actions clear
-	app.get(phpURL+'clearactions.php', function(req, res){
-		exec("rm -rf *",{cwd:phpDir+'actions', maxBuffer: 1024*1024}, function (err) {
-			res.send('actions cleared!');
-		});
-//~ =======
-//~ // handle actions clear
-//~ app.get(phpURL+'clearactions.php', function(req, res){
-	//~ exec("rm -rf *",{cwd:deskPath+'actions'}, function (err) {
-		//~ res.send('actions cleared!');
-//~ >>>>>>> 8bc507d4fb6693cc8a3418ac05b6cbaa50986039
-	//~ });
+// handle actions clear
+app.get(phpURL+'clearactions.php', function(req, res){
+	exec("rm -rf *",{cwd:phpDir+'actions', maxBuffer: 1024*1024}, function (err) {
+		res.send('actions cleared!');
+	});
 });
 
 // handle errors
@@ -187,7 +138,6 @@ app.use(express.errorHandler({
 
 // use router
 app.use(app.router);
-
 console.log(separator);
 
 var server;
@@ -215,7 +165,6 @@ console.log(separator);
 
 // setup actions
 var actions=require('./actions');
-//actions.setup( phpDir, function () {
 actions.setup( deskPath, function () {
 	server.listen(port);
 	console.log(separator);

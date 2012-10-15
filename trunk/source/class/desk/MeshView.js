@@ -36,7 +36,7 @@ qx.Class.define("desk.MeshView",
 		
 		this.__window=window;
 
-		var pane = new qx.ui.splitpane.Pane("horizontal")
+		var pane = new qx.ui.splitpane.Pane("horizontal");
 		window.add(pane,{flex : 1});
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		this.__mainPane = pane;
@@ -690,13 +690,9 @@ qx.Class.define("desk.MeshView",
 			this.__window.setDroppable(true);
 			this.__window.addListener("drop", function(e) {
 				if (e.supportsType("fileBrowser")) {
-					var fileBrowser=e.getData("fileBrowser");
-					var nodes=fileBrowser.getSelectedNodes();
-					for (var i=0;i<nodes.length;i++) {
-						var fileNode=nodes[i];
-						var fileName=fileBrowser.getNodeFile(fileNode);
-						var mTime=fileBrowser.getNodeMTime(fileNode);
-						this.openFile(fileName, mTime);
+					var files = e.getData("fileBrowser").getSelectedFiles();
+					for (var i = 0; i < files.length; i++) {
+						this.openFile(files[i]);
 					}
 				}
 				if (e.supportsType("volumeSlices")) {

@@ -261,12 +261,8 @@ qx.Class.define("desk.SegTools",
 
 			tools.__colorsContainer.setDroppable(true);
 			tools.__colorsContainer.addListener("drop", function(e) {
-				if (e.supportsType("fileBrowser"))
-				{
-					var fileBrowser=e.getData("fileBrowser");
-					var fileNode=fileBrowser.getSelectedNodes()[0];
-					var fileName=fileBrowser.getNodeFile(fileNode);
-					this.__loadColors(fileName);
+				if (e.supportsType("fileBrowser")) {
+					this.__loadColors(e.getData("fileBrowser").getSelectedFiles()[0]);
 				}
 			}, this);
 

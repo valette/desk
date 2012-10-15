@@ -121,6 +121,43 @@
 		},
 		{
 		    "parameters":[
+				{
+					"name":"source",
+					"type":"file",
+					"required":"true"
+				},
+				{
+					"name":"destination",
+					"type":"string",
+					"required":"true"
+				}
+		    ],
+		    "name":"move",
+		    "attributes":
+		    {
+		        "name":"move",
+		        "command":"mv",
+		        "voidAction":"true"
+		    }
+		},
+		{
+		    "parameters":[
+		        {
+		            "name":"directory",
+		            "type":"string",
+		            "required":"true"
+		        }
+		    ],
+		    "name":"create_directory",
+		    "attributes":
+		    {
+		        "name":"create_directory",
+		        "command":"mkdir",
+		        "voidAction":"true"
+		    }
+		},
+		{
+		    "parameters":[
 		        {
 		            "name":"file_name",
 		            "type":"string",

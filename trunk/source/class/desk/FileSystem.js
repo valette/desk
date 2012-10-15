@@ -21,12 +21,38 @@ qx.Class.define("desk.FileSystem",
 		return this;
 	},
 
+	statics : {
+		/**
+		* Loads a file into memory
+		*
+		* @param file {String} the file to load
+		* @param callback {Function} success callback, with request as first parameter
+		* @param context {Object} optional context for the callback
+		* 
+		* example :
+		*  <pre class="javascript">
+		* desk.FileSystem.readFile ("myFilePath", function (request) {
+		*   var answer = request.getResponseText(); //to get the raw text response
+		*   var xmlAnswer = request.getResponse(); //to get parsed xml
+		* });
+		* </pre>
+		*/
+		readFile : function (file, callback, context) {
+			var req = new qx.io.request.Xhr(
+				desk.FileSystem.getInstance().getFileURL(file)+
+				"?nocache=" + Math.random());
+			req.setAsync(true);
+			req.addListener('load', function (e) {
+				callback.call(context, e.getTarget())});
+			req.send();
+		}
+	},
+
 	members : {
 		__baseURL : null,
 		__filesURL : null,
 		__phpURL : null,
 		__user : null,
-
 
 		/**
 		* Returns the base URL string
@@ -42,7 +68,7 @@ qx.Class.define("desk.FileSystem",
 		*
 		* @param file {String} file path
 		*
-		* @return {String} URL
+		* @return {String} the file URL
 		*/
 		getFileURL : function (file) {
 			return this.__filesURL+file;
