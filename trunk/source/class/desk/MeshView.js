@@ -157,6 +157,7 @@ qx.Class.define("desk.MeshView",
 	},
 
 	events : {
+		"meshesLoaded" : "qx.event.type.Data",
 		"close" : "qx.event.type.Event"
 	},
 
@@ -445,6 +446,7 @@ qx.Class.define("desk.MeshView",
 		},
 
 		viewAll : function ( ) {
+			
 			var max=new THREE.Vector3(-1e10,-1e10,-1e10);
 			var min=new THREE.Vector3(1e10,1e10,1e10);
 			var meshes=this.__meshes;
@@ -567,7 +569,7 @@ qx.Class.define("desk.MeshView",
 								color[4]=parseInt(colors[4]);
 							}
 
-							
+							var updatesTimes = 4; // ...only after 4 updates when  numberOfRemainingMeshes = 0 all the meshes are loaded
 							var update=function()
 							{
 								numberOfRemainingMeshes--;
@@ -579,6 +581,9 @@ qx.Class.define("desk.MeshView",
 									case 0:
 										_this.viewAll();
 										_this.__meshesTree.getDataModel().setData();
+										--updatesTimes;
+										if(updatesTimes==0)
+											_this.fireDataEvent("meshesLoaded", _this.__meshes);
 										break;
 									default:
 								}
@@ -873,6 +878,7 @@ qx.Class.define("desk.MeshView",
 			var _this=this;
 
 			loader.load (url, function(geom){
+							geom.dynamic = true;
 						geom.computeBoundingBox();
 
 						var threecolor=new THREE.Color().setRGB(color[0],color[1],color[2]);
@@ -919,6 +925,7 @@ qx.Class.define("desk.MeshView",
 				var loader = new THREE.CTMLoader( this.__renderer.context );
 				loader.load (parameters.url,
 					function(geom){
+								geom.dynamic = true;
 							geom.computeBoundingBox();
 							var color=parameters.color;
 							var threecolor=new THREE.Color().setRGB(color[0],color[1],color[2]);

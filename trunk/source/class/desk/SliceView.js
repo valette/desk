@@ -116,7 +116,18 @@ qx.Class.define("desk.SliceView",
 		getScene : function() {
 			return this.__scene;
 		},
-		
+
+		projectOnSlice : function (x, y, z) {
+			switch (this.getOrientation()) {
+				case 0:
+					return {x: x, y:y};
+				case 1:
+					return {x: z, y:y};
+				case 0:
+					return {x: x, y:z};
+			}
+		},
+
 		getVolume2DDimensions : function() {
 			return this.__volume2DDimensions;
 		},
@@ -1120,7 +1131,12 @@ qx.Class.define("desk.SliceView",
 		__volume2DSpacing : null,
 		__projector : null,
 		__viewPortSize : null,
-
+		
+		get3DPosition : function (event) {
+			//TODO
+			return {i :0, j :0, k : 0, x:0, y:0, z:0};
+		},
+		
 		getPositionOnSlice : function (event) {
 			var viewPort=this.__viewPort;
 			var origin=viewPort.getContentLocation();

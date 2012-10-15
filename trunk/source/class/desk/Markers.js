@@ -199,8 +199,6 @@ qx.Class.define("desk.Markers",
 				var onSlicePos = {x:inX, y:inY, z:z};
 				
 				this.setNewPosMarker(onScenePos, onSlicePos, mrkrId);
-				
-				this.setMrksNb(this.getMrksNb()+1);
 			}
 		},
 		
@@ -226,6 +224,8 @@ qx.Class.define("desk.Markers",
 			
 			var mrkrsList = this.getMrkrsList();
 			mrkrsList[mrkrId] = {cross:newMarker, x:onSlicePos.x, y:onSlicePos.y, z:onSlicePos.z};
+			
+			this.setMrksNb(mrkrId+1);
 		},
 		
 		createCross : function(x, y, xMin, xMax, yMin, yMax, material, scene)
@@ -309,10 +309,7 @@ qx.Class.define("desk.Markers",
 		{
 			if(!inEvent.isRightPressed()&&!inEvent.isMiddlePressed()&&!inEvent.isShiftPressed())
 				if(this.isMarkMode())
-				{
 					this.createNewPosMarker(inEvent, this.getMrksNb());
-					this.setMrksNb(this.getMrksNb()+1);
-				}
 		},
 		
 		__onMouseMove : function(inEvent)
