@@ -140,6 +140,7 @@ qx.Class.define("desk.MeshView",
 		this.__firstFile=file;
 		this.__firstMTime=mtime;
 		this.openFile(file,mtime);
+		
 		return (this);
 	},
 
@@ -250,7 +251,6 @@ qx.Class.define("desk.MeshView",
 				{
 					_this.__meshes[ leaf ] = mesh ;	
 					_this.__meshesVisibility[leaf] = true ;
-
 					if ( update == true ) {
 						_this.viewAll();
 					}
@@ -569,7 +569,6 @@ qx.Class.define("desk.MeshView",
 								color[4]=parseInt(colors[4]);
 							}
 
-							var updatesTimes = 4; // ...only after 4 updates when  numberOfRemainingMeshes = 0 all the meshes are loaded
 							var update=function()
 							{
 								numberOfRemainingMeshes--;
@@ -581,9 +580,7 @@ qx.Class.define("desk.MeshView",
 									case 0:
 										_this.viewAll();
 										_this.__meshesTree.getDataModel().setData();
-										--updatesTimes;
-										if(updatesTimes==0)
-											_this.fireDataEvent("meshesLoaded", _this.__meshes);
+										_this.fireDataEvent("meshesLoaded", _this.__meshes);
 										break;
 									default:
 								}
@@ -1259,6 +1256,28 @@ qx.Class.define("desk.MeshView",
 				this.render();		
 			},this);
 			menu.add(removeButton);
+			
+			var analysisButton = new qx.ui.menu.Button("Mesh analysis");
+			analysisButton.addListener("execute", function (){
+				var meshes=this.__meshesTree.getSelectedNodes();
+				for (var i=0;i<meshes.length;i++) {
+					if (meshes[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+						var meshId=meshes[i].nodeId;
+						var mesh=this.__meshes[meshId];
+						
+						var extAnalyser = new THREE.MeshAnalyser(mesh);
+						if(typeof extAnalyser == "object")
+						{
+							extAnalyser.findMeshExtremeVertices();
+						}
+						else
+							this.debug("extAnalyser : " + extAnalyser);
+						
+					}
+				}
+			},this);
+			menu.add(analysisButton);
+			
 			return menu;
 		}
 	}
