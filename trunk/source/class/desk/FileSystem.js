@@ -29,8 +29,8 @@ qx.Class.define("desk.FileSystem",
 		* @param callback {Function} success callback, with request as first parameter
 		* @param context {Object} optional context for the callback
 		* 
-		* example :
-		*  <pre class="javascript">
+		* <pre class="javascript">
+		* example : 
 		* desk.FileSystem.readFile ("myFilePath", function (request) {
 		*   var answer = request.getResponseText(); //to get the raw text response
 		*   var xmlAnswer = request.getResponse(); //to get parsed xml

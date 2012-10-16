@@ -123,7 +123,8 @@ qx.Class.define("desk.SliceView",
 					return {x: x, y:y};
 				case 1:
 					return {x: z, y:y};
-				case 0:
+				case 2:
+				default:
 					return {x: x, y:z};
 			}
 		},
@@ -162,12 +163,12 @@ qx.Class.define("desk.SliceView",
 
 		setPaintColor : function (color) {
 			this.__paintColor=color;
-			this.__updateBrush()
+			this.__updateBrush();
 		},
 
 		setPaintWidth : function (width) {
 			this.__paintWidth=width;
-			this.__updateBrush()
+			this.__updateBrush();
 		},
 
 		__renderFunction : null,
@@ -362,6 +363,7 @@ qx.Class.define("desk.SliceView",
 			var links2=viewer.__links;
 			var found;
 			var viewer2;
+			var i;
 
 			if (links==null){
 				if (links2==null) {
@@ -380,7 +382,7 @@ qx.Class.define("desk.SliceView",
 					//need to merge links
 					links=this.__links;
 					links2=viewer.__links;
-					for (var i=0;i<links2.length;i++) {
+					for (i=0;i<links2.length;i++) {
 						viewer2=links2[i];
 						found=false;
 						for (var j=0;j<links.length;j++) {
@@ -398,7 +400,7 @@ qx.Class.define("desk.SliceView",
 
 			links=this.__links;
 			found=false;
-			for (var i=0;i<links.length;i++){
+			for (i=0;i<links.length;i++){
 				viewer2=links[i];
 				if (viewer2==this) {
 					found=true;
@@ -410,7 +412,7 @@ qx.Class.define("desk.SliceView",
 			}
 
 			found=false;
-			for (var i=0;i<links.length;i++){
+			for (i=0;i<links.length;i++){
 				viewer2=links[i];
 				if (viewer2==viewer) {
 					found=true;
@@ -538,7 +540,7 @@ qx.Class.define("desk.SliceView",
 				height: height
 			});
 
-			var context=canvas.getContext2d()
+			var context=canvas.getContext2d();
 			context.clearRect(0,0,width,height);
 
 			var length=width*height*4;
@@ -574,10 +576,10 @@ qx.Class.define("desk.SliceView",
 					context.lineWidth = 0;
 					context.strokeStyle = _this.__paintColor;
 					context.fillStyle = _this.__paintColor;
-					context.beginPath()
+					context.beginPath();
 					context.arc(width/2, height/2, width/2, 0, 2*Math.PI, false);
 					context.closePath();
-					context.fill()
+					context.fill();
 				}
 				var data=context.getImageData(0, 0,width, height).data;
 				for (var i=length;i--;) {
@@ -662,8 +664,8 @@ qx.Class.define("desk.SliceView",
 			var _this=this;
 			function updateTexture()
 			{
-				var data=_this.__drawingCanvas.getContext2d().getImageData
-									(0, 0,width, height).data;
+				var data=_this.__drawingCanvas.getContext2d().getImageData(
+					0, 0,width, height).data;
 				for (var i=length;i--;) {
 					dataColor[i]=data[i];
 				}
@@ -742,12 +744,13 @@ qx.Class.define("desk.SliceView",
 					_this.__camera.position.setZ(_this.__camera.position.z+
 									volumeSlice.getBoundingBoxDiagonalLength()*0.6);
 
-					_this.__projector= new THREE.Projector();;
+					_this.__projector= new THREE.Projector();
 					_this.__intersection=new THREE.Vector3();
 					_this.__2DCornersCoordinates=coordinates;
 					_this.__volume2DSpacing=volumeSlice.get2DSpacing();
 					_this.__volume2DDimensions=volumeSlice.get2DDimensions();
-
+					_this.__volumeOrigin=volumeSlice.getOrigin();
+					_this.__volumeSpacing=volumeSlice.getSpacing();
 					_this.__setupInteractionEvents();
 				}
 
@@ -781,6 +784,7 @@ qx.Class.define("desk.SliceView",
 							_this.flipY();
 							break;
 						default:
+							break;
 					}
 
 					var dimensions=volumeSlice.getDimensions();
@@ -818,16 +822,16 @@ qx.Class.define("desk.SliceView",
 			var position=this.getPositionOnSlice(event);
 			var v=[position.i, position.j];
 			var dimensions=this.__volume2DDimensions;
+			var i,j,k;
 
-			for (var i=0;i<2;i++) {
+			for (i=0;i<2;i++) {
 				if (v[i]<0) {
 					v[i]=0;
 				}
 				else if (v[i]>dimensions[i]-1) {
 					v[i]=dimensions[i]-1;
 				}
-			};
-			var i,j,k;
+			}
 			switch (this.getOrientation())
 			{
 			case 0 :
@@ -841,13 +845,15 @@ qx.Class.define("desk.SliceView",
 				k=v[0];
 				break;
 			case 2 :
+			default :
 				i=v[0];
 				j=this.getSlice();
 				k=v[1];
+				break;
 			}
 			this.__master.applyToViewers(function () {
 				this.setCrossPosition(i,j,k);
-			})
+			});
 		},
 
 		__positionI : null,
@@ -870,9 +876,11 @@ qx.Class.define("desk.SliceView",
 				slice = i;
 				break;
 			case 2 :
+			default :
 				x = i;
 				y = dimensions[1]- 1 - k;
 				slice = j;
+				break;
 			}
 
 			var spacing = this.__volume2DSpacing;
@@ -908,17 +916,17 @@ qx.Class.define("desk.SliceView",
 			htmlContainer.addListener("mousedown", function (event)	{
 				htmlContainer.capture();
 				interactionMode=0;
-
+				var origin, position, width;
 				if (event.isRightPressed()) {
 					interactionMode=1;
-					var origin=htmlContainer.getContentLocation();
+					origin=htmlContainer.getContentLocation();
 					controls.mouseDown(interactionMode,
 						event.getDocumentLeft()-origin.left,
 						event.getDocumentTop()-origin.top);
 				}
 				else if ((event.isMiddlePressed())||(event.isShiftPressed())) {
 					interactionMode=2;
-					var origin=htmlContainer.getContentLocation();
+					origin=htmlContainer.getContentLocation();
 					controls.mouseDown(interactionMode,
 						event.getDocumentLeft()-origin.left,
 						event.getDocumentTop()-origin.top);
@@ -926,19 +934,19 @@ qx.Class.define("desk.SliceView",
 				else if (this.isPaintMode()) {
 					interactionMode=3;
 					this.__saveDrawingToUndoStack();
-					var position=this.getPositionOnSlice(event);
+					position=this.getPositionOnSlice(event);
 					var context=this.__drawingCanvas.getContext2d();
 					var i=position.i+0.5;
 					var j=position.j+0.5;
 					var paintColor=this.__paintColor;
-					var width=this.__paintWidth;
+					width=this.__paintWidth;
 					context.lineWidth = 0;
 					context.strokeStyle = paintColor;
 					context.fillStyle = paintColor;
-					context.beginPath()
+					context.beginPath();
 					context.arc(i, j, width/2, 0, 2*Math.PI, false);
 					context.closePath();
-					context.fill()
+					context.fill();
 					context.lineJoin = "round";
 					context.lineWidth = width;
 					context.beginPath();
@@ -950,10 +958,10 @@ qx.Class.define("desk.SliceView",
 				else if (this.isEraseMode()) {
 					interactionMode=4;
 					this.__saveDrawingToUndoStack();
-					var position=this.getPositionOnSlice(event);
+					position=this.getPositionOnSlice(event);
 					var x=Math.round(position.i)+0.5;
 					var y=Math.round(position.j)+0.5;
-					var width=this.__paintWidth;
+					width=this.__paintWidth;
 					var radius=width/2;
 					this.__drawingCanvas.getContext2d().clearRect(x-radius, y-radius, width, width);
 					this.__drawingCanvasModified=true;
@@ -1000,8 +1008,8 @@ qx.Class.define("desk.SliceView",
 				case 1 :
 					brushMesh.visible=false;
 					var origin=htmlContainer.getContentLocation();
-					controls.mouseMove(event.getDocumentLeft()-origin.left
-							, event.getDocumentTop()-origin.top);
+					controls.mouseMove(event.getDocumentLeft()-origin.left,
+						event.getDocumentTop()-origin.top);
 
 					var z=this.__camera.position.z;
 					this.render();
@@ -1017,9 +1025,9 @@ qx.Class.define("desk.SliceView",
 					break;
 				case 2 :
 					brushMesh.visible=false;
-					var origin=htmlContainer.getContentLocation();
-					controls.mouseMove(event.getDocumentLeft()-origin.left
-							, event.getDocumentTop()-origin.top);
+					origin=htmlContainer.getContentLocation();
+					controls.mouseMove(event.getDocumentLeft()-origin.left,
+							event.getDocumentTop()-origin.top);
 					this.render();
 					this.__propagateCameraToLinks();
 					break;
@@ -1034,6 +1042,7 @@ qx.Class.define("desk.SliceView",
 					this.__drawingCanvasModified=true;
 					break;
 				case 4 :
+				default :
 					position=this.getPositionOnSlice(event);
 					brushMesh.visible=true;
 					brushMesh.position.set(position.x, position.y, 0);
@@ -1065,7 +1074,7 @@ qx.Class.define("desk.SliceView",
 					context.lineWidth = 0;
 					context.strokeStyle = paintColor;
 					context.fillStyle = paintColor;
-					context.beginPath()
+					context.beginPath();
 					context.arc(i, j, width/2, 0, 2*Math.PI, false);
 					context.closePath();
 					context.fill();
@@ -1080,10 +1089,10 @@ qx.Class.define("desk.SliceView",
 							var delta=Math.round(event.getWheelDelta()/2);
 							var newValue=slider.getValue()+delta;
 							if (newValue>slider.getMaximum()) {
-								newValue=slider.getMaximum()
+								newValue=slider.getMaximum();
 							}
 							if (newValue<slider.getMinimum()) {
-								newValue=slider.getMinimum()
+								newValue=slider.getMinimum();
 							}
 							slider.setValue(newValue);
 							this.fireDataEvent("viewMouseWheel",event);
@@ -1129,12 +1138,45 @@ qx.Class.define("desk.SliceView",
 		__2DCornersCoordinates : null,
 		__volume2DDimensions : null,
 		__volume2DSpacing : null,
+		__volumeOrigin : null,
+		__volumeSpacing : null,
 		__projector : null,
 		__viewPortSize : null,
 		
 		get3DPosition : function (event) {
-			//TODO
-			return {i :0, j :0, k : 0, x:0, y:0, z:0};
+			var coordinates = this.getPositionOnSlice(event);
+			var slice = this.getSlice();
+			switch (this.getOrientation()) {
+			case 0 :
+				return {
+					i : coordinates.i,
+					j : coordinates.j,
+					k : slice,
+					x : coordinates.x,
+					y : coordinates.y,
+					z : this.__volumeOrigin[2] + this.__volumeSpacing[2]*slice
+				};
+				
+			case 1 :
+				return {
+					i : slice,
+					j : coordinates.j,
+					k : coordinates.i,
+					x : this.__volumeOrigin[0] + this.__volumeSpacing[0]*slice,
+					y : coordinates.y,
+					z : coordinates.x
+				};
+			case 2 :
+			default :
+				return {
+					i : coordinates.i,
+					j : slice,
+					k : coordinates.j,
+					x : coordinates.x,
+					y : this.__volumeOrigin[1] + this.__volumeSpacing[1]*slice,
+					z : coordinates.y
+				};
+			}
 		},
 		
 		getPositionOnSlice : function (event) {
@@ -1211,7 +1253,6 @@ qx.Class.define("desk.SliceView",
 			directionOverlays.push(westLabel);
 			switch (this.getOrientation())
 			{
-			default:
 			case 0 :
 				northLabel.setValue("A");
 				southLabel.setValue("P");
@@ -1225,13 +1266,13 @@ qx.Class.define("desk.SliceView",
 				westLabel.setValue("I");
 				break;
 			case 2 :
+			default:
 				northLabel.setValue("S");
 				southLabel.setValue("I");
 				eastLabel.setValue("L");
 				westLabel.setValue("R");
 				break;
 			}
-
 
 			var rightContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox());
 			this.__rightContainer=rightContainer;
@@ -1243,11 +1284,11 @@ qx.Class.define("desk.SliceView",
 			var slider=new qx.ui.form.Slider();
 			this.__slider=slider;
 
-			slider.set ({minimum : 0, maximum : 100, value : 0, width :30, opacity : 0.5, backgroundColor : "transparent"
-					, orientation : "vertical", zIndex : 1000});
+			slider.set ({minimum : 0, maximum : 100, value : 0, width :30, opacity : 0.5, backgroundColor : "transparent",
+					orientation : "vertical", zIndex : 1000});
 			slider.addListener("changeValue",function(e){
-				this.setSlice(this.getVolumeSliceToPaint().getNumberOfSlices()-1-e.getData())
-				}, this);
+				this.setSlice(this.getVolumeSliceToPaint().getNumberOfSlices()-1-e.getData());
+			}, this);
 
 			this.addListener("changeSlice", function (e) {
 				var sliceId=e.getData();
@@ -1265,23 +1306,25 @@ qx.Class.define("desk.SliceView",
 				switch (this.getOrientation())
 				{
 				case 0 :
-					this.__positionK=sliceId
+					this.__positionK=sliceId;
 					k=sliceId;
 					break;
 				case 1 :
-					this.__positionI=sliceId
+					this.__positionI=sliceId;
 					i=sliceId;
 					break;
 				case 2 :
-					this.__positionJ=sliceId
+				default :
+					this.__positionJ=sliceId;
 					j=sliceId;
+					break;
 				}
 				var _this=this;
 				this.__master.applyToViewers (function () {
 					if ((this!=_this)&&(this.__slices[0].isReady())) {
 						this.setCrossPosition(i,j,k);
 					}
-				})
+				});
 				this.__propagateCameraToLinks();
 			}, this);
 

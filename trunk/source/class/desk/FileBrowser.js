@@ -469,7 +469,7 @@ qx.Class.define("desk.FileBrowser",
 			// the default "open" button
 			var openButton = new qx.ui.menu.Button("Open");
 			openButton.addListener("execute", function (){
-				this.__openNode (this.getSelectedNode());}, this);
+				this.__openNode (this.__getSelectedNodes()[0]);}, this);
 			menu.add(openButton);
 
 			menu.addSeparator();
@@ -488,7 +488,7 @@ qx.Class.define("desk.FileBrowser",
 				button.addListener("execute", function () {
 					var buttonFileBrowser=this.getUserData("fileBrowser");
 					var buttonActionName=this.getUserData("actionName");
-					var node=buttonFileBrowser.getSelectedNode();
+					var node=buttonFileBrowser.__getSelectedNodes()[0];
 					buttonFileBrowser.__actionCallbacks[buttonActionName](node);
 					}, button);
 				menu.add(button);
