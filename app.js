@@ -10,12 +10,16 @@ console.log("UID : "+process.getuid());
 
 // user parameters
 var serverPath = fs.realpathSync('trunk')+'/',
-	deskPath= '/home/'+user+'/desk/',
-	phpSubdir='ext/php/',
-	phpDir=serverPath+phpSubdir,
-	phpURL='/'+user+'/'+phpSubdir;
+	deskPath = '/home/' + user + '/desk/',
+	phpSubdir = 'ext/php/',
+	phpDir = serverPath + phpSubdir,
+	phpURL = '/' + user + '/' + phpSubdir;
 	port = process.getuid(),
-	uploadDir=deskPath+'upload/';
+	uploadDir = deskPath + 'upload/';
+
+if (!fs.existsSync(deskPath)) {
+	fs.mkdirSync(deskPath);
+}
 
 // use port 8080 if not running on desk.creatis.insa-lyon.fr
 var hostname=os.hostname();
@@ -25,9 +29,9 @@ if (hostname!='desk.creatis.insa-lyon.fr') {
 }
 
 // certificate default file names
-var passwordFile="./password.json",
-	privateKeyFile="privatekey.pem",
-	certificateFile="certificate.pem";
+var passwordFile = deskPath + "./password.json",
+	privateKeyFile = "privatekey.pem",
+	certificateFile = "certificate.pem";
 
 var separator="*******************************************************************************";
 
@@ -84,7 +88,6 @@ app.use('/'+user,express.static(serverPath));
 app.use('/'+user,express.directory(serverPath));
 
 // handle directory listing
-console.log(phpURL+'listDir.php')
 app.post(phpURL+'listDir.php', function(req, res){
 	actions.listDir(req.body.dir, function (message) {
 		res.send(message);
