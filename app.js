@@ -13,13 +13,16 @@ var serverPath = fs.realpathSync('trunk')+'/',
 	deskPath = '/home/' + user + '/desk/',
 	phpSubdir = 'ext/php/',
 	phpDir = serverPath + phpSubdir,
-	phpURL = '/' + user + '/' + phpSubdir;
+	phpURL = '/' + user + '/' + phpSubdir,
 	port = process.getuid(),
 	uploadDir = deskPath + 'upload/';
 
+// make desk directory if not existent
 if (!fs.existsSync(deskPath)) {
 	fs.mkdirSync(deskPath);
 }
+
+// make upload directory if not existent
 if (!fs.existsSync(uploadDir)) {
 	fs.mkdirSync(uploadDir);
 }
