@@ -20,6 +20,9 @@ var serverPath = fs.realpathSync('trunk')+'/',
 if (!fs.existsSync(deskPath)) {
 	fs.mkdirSync(deskPath);
 }
+if (!fs.existsSync(uploadDir)) {
+	fs.mkdirSync(uploadDir);
+}
 
 // use port 8080 if not running on desk.creatis.insa-lyon.fr
 var hostname=os.hostname();
