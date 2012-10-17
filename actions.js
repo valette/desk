@@ -27,6 +27,7 @@ var actionsCounter=0;
 
 function validatePath(path, callback) {
 	fs.realpath(filesRoot+path, function (err, realPath) {
+		var publicPath='/public/'
 		if (err) {
 			callback(err.message);
 			return;
@@ -41,6 +42,10 @@ function validatePath(path, callback) {
 				return;
 			}
 			if (realPath.slice(0, dataRoot.length) == dataRoot) {
+				callback (null);
+				return;
+			}
+			if (realPath.slice(0, publicPath.length) == publicPath) {
 				callback (null);
 				return;
 			}
