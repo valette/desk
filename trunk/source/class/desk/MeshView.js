@@ -1269,6 +1269,7 @@ qx.Class.define("desk.MeshView",
 						if(typeof extAnalyser == "object")
 						{
 							extAnalyser.findMeshExtremeVertices();
+							extAnalyser.buildLinks();
 						}
 						else
 							this.debug("extAnalyser : " + extAnalyser);
