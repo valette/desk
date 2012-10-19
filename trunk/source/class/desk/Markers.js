@@ -118,10 +118,14 @@ qx.Class.define("desk.Markers",
 		
 		createNewPosMarker : function(mouseDownEvent, mrkrId)
 		{
-			var position = this.getMarkPositionFromEvent(mouseDownEvent);
-			var onScenePos = {x:position.x, y:position.y, z:this.getMrksZ()};
+			var sliceView = this.getSliceView();
 			
-			var onSlicePos = this.getOnVolumeCoordinates(mouseDownEvent);
+			var onScenePos = this.getOnPixelCoordsFromEvent(mouseDownEvent);
+				onScenePos.z = this.getMrksZ();
+			
+			var onVolCoords = sliceView.get3DPosition(mouseDownEvent);
+			var onSlicePos = sliceView.projectOnSlice(onVolCoords.i, onVolCoords.j, onVolCoords.k);
+				onSlicePos.z = sliceView.getSlice();
 			
 			var mrkrsList = this.getMrkrsList();
 			var mrkrsNb = mrkrsList.length;
@@ -137,28 +141,8 @@ qx.Class.define("desk.Markers",
 			if(!alreadyExists)
 			{
 				this.setNewPosMarker(onScenePos, onSlicePos, mrkrId);
-				
-				// Get coordinates on volume according the first orientation (x,y,z)
-				var x, y ,z;
-				switch(this.getSliceView().getOrientation())
-				{
-					case 0 :
-						x = onSlicePos.x;
-						y = onSlicePos.y;
-						z = onSlicePos.z;
-						break;
-					case 1 :
-						x = onSlicePos.z;
-						y = onSlicePos.y;
-						z = onSlicePos.x;
-						break;
-					case 2 :
-						x = onSlicePos.x;
-						y = onSlicePos.z;
-						z = onSlicePos.y;
-						break;
-				}
-				this.fireDataEvent("addPosMarker", {x:x, y:y, z:z, id:mrkrId});
+				// Transmit on volume absolute int coordinates and marker id to the other views
+				this.fireDataEvent("addPosMarker", {x:onVolCoords.i, y:onVolCoords.j, z:onVolCoords.k, id:mrkrId});
 			}
 			else
 			{
@@ -171,32 +155,10 @@ qx.Class.define("desk.Markers",
 			var mrkrId = eventData.id;
 			if(this.getMrkrsList().length<=mrkrId)
 			{
-				var inX = eventData.x;
-				var inY = eventData.y;
-				var inZ = eventData.z;
-				var x, y, z;
-				switch(this.getSliceView().getOrientation())
-				{
-					case 0 :
-						x = inX;
-						y = inY;
-						z = inZ;
-						break;
-					case 1 :
-						x = inZ;
-						y = inY;
-						z = inX;
-						break;
-					case 2 :
-						x = inX;
-						y = inZ;
-						z = inY;
-						break;
-				}
+				var onSlicePos = this.getSliceView().projectOnSlice( eventData.x, eventData.y, eventData.z);
+					onSlicePos.z = this.getSliceView().getSlice();
 				
-				var onScenePos = this.returnOnScenePosition(x, y);
-				
-				var onSlicePos = {x:inX, y:inY, z:z};
+				var onScenePos = this.getOnPixelCoordsFromInts(onSlicePos.x, onSlicePos.y);
 				
 				this.setNewPosMarker(onScenePos, onSlicePos, mrkrId);
 			}
@@ -264,14 +226,14 @@ qx.Class.define("desk.Markers",
 			return cross;
 		},
 		
-		getMarkPositionFromEvent : function(inEvent)
+		getOnPixelCoordsFromEvent : function(inEvent)
 		{
 			var sliceView = this.getSliceView();
 			var position = sliceView.getPositionOnSlice(inEvent);
-			return this.returnOnScenePosition(position.i, position.j);
+			return this.getOnPixelCoordsFromInts(position.i, position.j);
 		},
 		
-		returnOnScenePosition : function(onSliceX, onSliceY)
+		getOnPixelCoordsFromInts : function(onSliceX, onSliceY)
 		{
 			var sliceView = this.getSliceView();
 			
@@ -293,7 +255,7 @@ qx.Class.define("desk.Markers",
 			return {x:x, y:y};
 		},
 		
-		getOnVolumeCoordinates : function(mouseDownEvent)
+		getOnSliceViewCoordinates : function(mouseDownEvent)
 		{
 			var volCoor = {};
 			var sliceView = this.getSliceView();
@@ -319,7 +281,7 @@ qx.Class.define("desk.Markers",
 				var markMesh = this.getMarkMesh();
 				if(!inEvent.isRightPressed()&&!inEvent.isMiddlePressed()&&!inEvent.isShiftPressed())
 				{
-					var position = this.getMarkPositionFromEvent(inEvent);
+					var position = this.getOnPixelCoordsFromEvent(inEvent);
 					markMesh.setVisible(true);
 					markMesh.setPosition(position.x, position.y, this.getMrksZ());
 					this.getSliceView().render();
