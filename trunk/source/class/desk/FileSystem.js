@@ -48,6 +48,30 @@ qx.Class.define("desk.FileSystem",
 		},
 
 		/**
+		* Writes a string to a file
+		*
+		* @param file {String} the file to write to
+		* @param content {String} the string to write
+		* @param callback {Function} callback when done
+		* 
+		* <pre class="javascript">
+		* example : 
+		* desk.FileSystem.readFile ("myFilePath", function (request) {
+		*   var answer = request.getResponseText(); //to get the raw text response
+		*   var xmlAnswer = request.getResponse(); //to get parsed xml
+		* });
+		* </pre>
+		*/
+		writeFile : function (file, content, callback) {
+			desk.Actions.getInstance().launchAction({
+				action : "write_binary",
+				file_name : desk.FileSystem.getFileName(file),
+				base64data : qx.util.Base64.encode(content, true),
+				output_directory : desk.FileSystem.getFileDirectory(file)},
+				callback);
+		},
+
+		/**
 		* extracts the directory from input file.
 		*
 		* @param file {String} the file
