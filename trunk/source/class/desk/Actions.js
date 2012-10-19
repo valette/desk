@@ -10,7 +10,7 @@ qx.Class.define("desk.Actions",
 
 	statics :
 	{
-		WAITFORINIT : function (callback)
+		init : function (callback)
 		{
 			var actions = desk.Actions.getInstance();
 			if ( actions.isReady() ) {
@@ -58,7 +58,7 @@ qx.Class.define("desk.Actions",
 			else {
 				this.__scriptsLoaded = true;
 				if ( this.__actionsLoaded ) {
-					this.setReady(true);
+					this.__setReady(true);
 				}
 			}
 		}
@@ -66,11 +66,21 @@ qx.Class.define("desk.Actions",
 		return this;
 	},
 
-	properties : {
-		ready : { init : false, check: "Boolean", event : "changeReady"}
+	events : {
+		"changeReady" : "qx.event.type.Event"
 	},
 
 	members : {
+		__ready : false,
+
+		isReady : function () {
+			return this.__ready;
+		},
+
+		__setReady : function () {
+			this.__ready = true;
+			this.fireEvent('changeReady');
+		},
 
 		__scriptsLoaded : false,
 
@@ -231,7 +241,7 @@ qx.Class.define("desk.Actions",
 				}
 				this.__actionsLoaded = true;
 				if ( this.__scriptsLoaded ) {
-					this.setReady(true);
+					this.__setReady(true);
 				}
 			}, this);
 		}
