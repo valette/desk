@@ -49,15 +49,11 @@ qx.Class.define("desk.TextEditor",
 		{
 			this.__file = file;
 			this.__reloadButton.setEnabled(false);
-			var fileURL = desk.FileSystem.getInstance().getFileURL(file);
-			var req = new qx.io.request.Xhr(fileURL + "?nocache=" + Math.random());
-			req.setAsync(true);
-			req.addListener('load', function (e){
-				this.__textArea.setValue(req.getResponseText());
-				this.setCaption(fileURL);
+			desk.FileSystem.readFile(file, function (request){
+				this.__textArea.setValue(request.getResponseText());
+				this.setCaption(file);
 				this.__reloadButton.setEnabled(true);
-				}, this);
-			req.send();
+			}, this);
 		}
 	}
 });

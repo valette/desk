@@ -39,7 +39,7 @@ qx.Class.define("desk.FileSystem",
 		*/
 		readFile : function (file, callback, context) {
 			var req = new qx.io.request.Xhr(
-				desk.FileSystem.getInstance().getFileURL(file)+
+				desk.FileSystem.getFileURL(file)+
 				"?nocache=" + Math.random());
 			req.setAsync(true);
 			req.addListener('load', function (e) {
@@ -53,6 +53,7 @@ qx.Class.define("desk.FileSystem",
 		* @param file {String} the file to write to
 		* @param content {String} the string to write
 		* @param callback {Function} callback when done
+		* @param context {Object} optional context for the callback
 		* 
 		* <pre class="javascript">
 		* example : 
@@ -62,13 +63,13 @@ qx.Class.define("desk.FileSystem",
 		* });
 		* </pre>
 		*/
-		writeFile : function (file, content, callback) {
+		writeFile : function (file, content, callback, context) {
 			desk.Actions.getInstance().launchAction({
 				action : "write_binary",
 				file_name : desk.FileSystem.getFileName(file),
 				base64data : qx.util.Base64.encode(content, true),
 				output_directory : desk.FileSystem.getFileDirectory(file)},
-				callback);
+				callback, context);
 		},
 
 		/**
@@ -93,7 +94,7 @@ qx.Class.define("desk.FileSystem",
 		},
 
 		/**
-		* extracts the name from input file (without fill path)
+		* extracts the name from input file (without full path)
 		*
 		* @param file {String} the file
 		* @return {string} name of the file
@@ -111,6 +112,17 @@ qx.Class.define("desk.FileSystem",
 			else {
 				return file;
 			}
+		},
+
+		/**
+		* Translates a file path to an URL
+		*
+		* @param file {String} file path
+		*
+		* @return {String} the file URL
+		*/
+		getFileURL : function (file) {
+			return desk.FileSystem.getInstance().__filesURL+file;
 		}
 	},
 
@@ -127,17 +139,6 @@ qx.Class.define("desk.FileSystem",
 		*/
 		getBaseURL : function () {
 			return this.__baseURL;
-		},
-
-		/**
-		* Translates a file path to an URL
-		*
-		* @param file {String} file path
-		*
-		* @return {String} the file URL
-		*/
-		getFileURL : function (file) {
-			return this.__filesURL+file;
 		},
 
 		/**

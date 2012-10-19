@@ -293,7 +293,7 @@ qx.Class.define("desk.FileBrowser",
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
 				{
 					document.getElementById('myIFrm').src =
-						myBrowser.getFileURL(myBrowser.__getNodeFile(node));
+						desk.FileSystem.getFileURL(myBrowser.__getNodeFile(node));
 				} 
 				else
 					alert("Cannot download a directory!");
@@ -447,12 +447,7 @@ qx.Class.define("desk.FileBrowser",
 
 		__getNodeURL : function (node)
 		{
-			return (this.getFileURL(this.__getNodeFile(node)));
-		},
-
-		getFileURL : function (file)
-		{
-			return this.__actions.getFileURL(file);
+			return (desk.FileSystem.getFileURL(this.__getNodeFile(node)));
 		},
 
 		__getNodeFile : function (node)

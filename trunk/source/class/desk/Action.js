@@ -25,14 +25,12 @@ qx.Class.define("desk.Action",
 	{
 		CREATEFROMFILE : function (file)
 		{
-			var req = new qx.io.request.Xhr(desk.FileSystem.getInstance().getFileURL(file)+"?nocache=" + Math.random());
-			req.addListenerOnce("success", function(e) {
-				var parameters=JSON.parse(e.getTarget().getResponseText());
+			desk.FileSystem.readFile(file, function (request) {
+				var parameters=JSON.parse(request.getResponseText());
 				var action=new desk.Action (parameters["action"]);
 				action.setActionParameters(parameters);
 				action.buildUI();
 			});
-			req.send();
 		}
 	},
 
@@ -88,7 +86,7 @@ qx.Class.define("desk.Action",
 		setOutputDirectory : function (directory) {
 			this.__outputDirectory=directory;
 			// try to load parameters on server
-			var req = new qx.io.request.Xhr(desk.FileSystem.getInstance().getFileURL(this.getOutputDirectory())+"action.json?nocache=" + Math.random());
+			var req = new qx.io.request.Xhr(desk.FileSystem.getFileURL(this.getOutputDirectory())+"action.json?nocache=" + Math.random());
 			req.addListener("success", function(e) {
 				this.__loadedParameters=JSON.parse(e.getTarget().getResponseText());
 				

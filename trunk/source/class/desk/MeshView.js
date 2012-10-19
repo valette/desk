@@ -529,7 +529,7 @@ qx.Class.define("desk.MeshView",
 
 					case ".xml":
 						var xmlhttp=new XMLHttpRequest();
-						xmlhttp.open("GET",_this.__fileSystem.getFileURL(file)+"?nocache=" + Math.random(),false);
+						xmlhttp.open("GET", desk.FileSystem.getFileURL(file) + "?nocache=" + Math.random(),false);
 						xmlhttp.send();
 						var rootDocument=xmlhttp.responseXML;
 

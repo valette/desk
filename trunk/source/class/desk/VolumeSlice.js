@@ -243,7 +243,7 @@ qx.Class.define("desk.VolumeSlice",
 				{
 					var req = e.getTarget();
 					var slicesDirectory=req.getResponseText().split("\n")[0];
-					_this.openXMLURL(desk.FileSystem.getInstance().getFileURL(slicesDirectory)+"/volume.xml");
+					_this.openXMLURL(desk.FileSystem.getFileURL(slicesDirectory)+"/volume.xml");
 				}
 
 			var parameterMap={

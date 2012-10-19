@@ -13,7 +13,7 @@ qx.Class.define("desk.ImageView",
 		this.setUseMoveFrame(true);
 		this.setCaption(file);
 
-		var url=desk.FileSystem.getInstance().getFileURL(file);
+		var url=desk.FileSystem.getFileURL(file);
 		this.__image=new qx.ui.basic.Image(url+"?nocache="+Math.random());
 	//	this.__image.setScale(true);
 		this.add(this.__image,{flex : 1});

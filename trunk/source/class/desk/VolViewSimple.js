@@ -20,7 +20,7 @@ qx.Class.define("desk.VolViewSimple",
 		function getAnswer(e) {
 			var req = e.getTarget();
 			var slicesDirectory=req.getResponseText().split("\n")[0];
-			volView.openFile(desk.FileSystem.getInstance().getFileURL(slicesDirectory)+"/volume.xml");
+			volView.openFile(desk.FileSystem.getFileURL(slicesDirectory)+"/volume.xml");
 		}
 
 		var parameterMap={
