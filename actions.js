@@ -105,7 +105,9 @@ includeActionsJSON= function (file, callback) {
 		var localActions=actionsObject.actions || [];
 
 		var path=fs.realpathSync(libpath.dirname(file));
+		var libraryName = libpath.basename(file, '.json');
 		for (var i=0; i<localActions.length;i++) {
+			localActions[i].lib = libraryName;
 			var attributes=localActions[i].attributes;
 			if ( typeof (attributes.js) === "string" ) {
 				myConsole.log("loaded javascript from "+attributes.js);

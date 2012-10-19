@@ -229,15 +229,27 @@ qx.Class.define("desk.Actions",
 				this.__actionsArray=actions;
 				var actionMenu=this;
 
+				var menus = [];
+
 				for (var n=0;n<actions.length;n++)
 				{
-					var button=new qx.ui.menu.Button(actions[n].name);
-
+					var action = actions[n];
+					var actionName = action.name
+					var button=new qx.ui.menu.Button(actionName);
+					var lib = action.lib;
+					var menu = menus[lib];
+					if (!menu) {
+						menu = new qx.ui.menu.Menu();
+						var menubutton = new qx.ui.menu.Button(lib, null, null, menu);
+						menus[lib] = menu;
+						this.__actionMenu.add(menubutton);
+					}
+					
 					button.addListener("execute", function (e){
 						var action= new desk.Action(this.getLabel());
 						action.setOriginFileBrowser(actionMenu.__currentFileBrowser);
 						action.buildUI();},button);
-					this.__actionMenu.add(button);
+					menu.add(button);
 				}
 				this.__actionsLoaded = true;
 				if ( this.__scriptsLoaded ) {

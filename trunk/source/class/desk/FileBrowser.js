@@ -276,11 +276,6 @@ qx.Class.define("desk.FileBrowser",
 				return;
 
 			var myBrowser=this;
-			myBrowser.addAction("redo action", function (node) {
-				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-					desk.Action.CREATEFROMFILE(myBrowser.__getNodeFile(node));
-				}
-			});
 
 			myBrowser.addAction("VolViewSimple", function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
