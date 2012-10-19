@@ -45,6 +45,48 @@ qx.Class.define("desk.FileSystem",
 			req.addListener('load', function (e) {
 				callback.call(context, e.getTarget())});
 			req.send();
+		},
+
+		/**
+		* extracts the directory from input file.
+		*
+		* @param file {String} the file
+		* @return {string} the directory the file resides in
+		* <pre class="javascript">
+		* example : 
+		* desk.FileSystem.getFileDirectory ('data/test/foo.txt');
+		* returns 'data/test/'
+		* </pre>
+		*/
+		getFileDirectory : function (file) {
+			var slashIndex = file.lastIndexOf('/');
+			if (slashIndex >= 0) {
+				return file.substring(0, slashIndex+1);
+			}
+			else {
+				return '/';
+			}
+		},
+
+		/**
+		* extracts the name from input file (without fill path)
+		*
+		* @param file {String} the file
+		* @return {string} name of the file
+		* <pre class="javascript">
+		* example : 
+		* desk.FileSystem.getFileName ('data/test/foo.txt');
+		* returns 'foo.txt'
+		* </pre>
+		*/	
+		getFileName  : function (file) {
+			var slashIndex = file.lastIndexOf('/');
+			if (slashIndex >= 0) {
+				return file.substring(slashIndex+1, file.length);
+			}
+			else {
+				return file;
+			}
 		}
 	},
 

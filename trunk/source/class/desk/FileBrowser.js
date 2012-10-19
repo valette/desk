@@ -220,13 +220,11 @@ qx.Class.define("desk.FileBrowser",
 		},
 		
 		// returns the directory for the given file, session type and Id
-		getSessionDirectory : function (file,sessionType,sessionId)
-		{
+		getSessionDirectory : function (file,sessionType,sessionId) {
 			return file+"."+sessionType+"."+sessionId;
 		},
 
-		updateRoot : function ()
-		{
+		updateRoot : function () {
 			this.__expandDirectoryListing(this.__rootId);
 		},
 
@@ -385,6 +383,19 @@ qx.Class.define("desk.FileBrowser",
 							}
 						);
 					}
+				}
+			});
+
+			myBrowser.addAction('rename', function (node) {
+				var file = myBrowser.__getNodeFile(node.nodeId);
+				var newFile = prompt('enter new file name : ', desk.FileSystem.getFileName(file));
+				if ( newFile !== null) {
+					newFile = desk.FileSystem.getFileDirectory(file) + newFile;
+					desk.Actions.getInstance().launchAction(
+							{ action : "move",
+								source : file,
+								destination : newFile},
+							function () {myBrowser.__expandDirectoryListing(node.parentNodeId);});
 				}
 			});
 		},
