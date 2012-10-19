@@ -21,6 +21,7 @@ var actions=[];
 
 var filesRoot;
 var actionsRoot,cacheRoot,dataRoot;
+var publicPath='/public'
 
 // variable to enumerate actions for logging
 var actionsCounter=0;
@@ -41,6 +42,10 @@ function validatePath(path, callback) {
 				return;
 			}
 			if (realPath.slice(0, dataRoot.length) == dataRoot) {
+				callback (null);
+				return;
+			}
+			if (realPath.slice(0, publicPath.length) == publicPath) {
 				callback (null);
 				return;
 			}
@@ -147,15 +152,24 @@ function updateActionsList (callback) {
 }
 
 exports.setup=function (root, callback) {
-	filesRoot=fs.realpathSync(root)+"/";
+	filesRoot=fs.realpathSync(root)+'/';
 
 	function getSubdir(subdir) {
-		var dir=filesRoot+'/'+subdir;
+		var dir=filesRoot+subdir;
 		if (!fs.existsSync(dir)) {
 			console.log('Warning : directory '+subdir+' does not exist. Creating it');
 			fs.mkdirSync(dir);
 		}
 		return (fs.realpathSync(dir));
+	}
+
+	var publicDir = '/public',
+	publicLink = filesRoot + 'data/public';
+
+	// make symlink to public dir if not present
+	if  (!fs.existsSync(publicLink) && 
+			(fs.existsSync(publicDir))) {
+		fs.symlinkSync(publicDir, publicLink);
 	}
 
 	dataRoot=getSubdir('data');
