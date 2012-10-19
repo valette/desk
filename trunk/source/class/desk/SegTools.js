@@ -165,7 +165,7 @@ qx.Class.define("desk.SegTools",
 					sliceView.fireEvent("changeDrawing");
 					imageLoader.onload=0;
 				}
-				imageLoader.src=_this.__fileSystem.getFileURL(_this.getSessionDirectory())+"/"+
+				imageLoader.src = desk.FileSystem.getFileURL(_this.getSessionDirectory())+"/"+
 								_this.__getSeedFileName ( sliceView, sliceId, seedsType)+"?nocache="+
 								cacheTagsArray[sliceId];
 			}
@@ -538,23 +538,13 @@ qx.Class.define("desk.SegTools",
 								xmlDoc.getElementsByTagName("adjacency"));
 				}
 			}
-
-			var req = new qx.io.request.Xhr();
-			req.setUrl(this.__fileSystem.getFileURL(file) + "?nocache=" + Math.random());
-			req.setMethod("GET");
-			req.setAsync(true);
-
-			req.addListener("success", function (e) {
-				var req = e.getTarget();
-				var response=req.getResponse();
-				this.__setColorsFromElements(response.getElementsByTagName("color"),
-								response.getElementsByTagName("adjacency"));
-			}, this);
-
-			req.addListener("error", function (e) {
-				alert('Global Params : "Fetched the wrong page" OR "Network error"');
-			}, this);
-			req.send();
+			else {
+				desk.FileSystem.readFile(file, function (request) {
+					var response=request.getResponse();
+					this.__setColorsFromElements(response.getElementsByTagName("color"),
+									response.getElementsByTagName("adjacency"));
+				}, this);
+			}
 		},
 
 		__targetColorItem : null,
@@ -1148,7 +1138,7 @@ qx.Class.define("desk.SegTools",
 			};
 
 			loadSessionRequest.open("GET",
-				this.__fileSystem.getFileURL(
+				desk.FileSystem.getFileURL(
 					this.getSessionDirectory()+"/seeds.xml?nocache="+Math.random()), true);
 			loadSessionRequest.send(null);
 		},

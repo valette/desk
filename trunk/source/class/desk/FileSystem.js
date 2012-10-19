@@ -39,12 +39,90 @@ qx.Class.define("desk.FileSystem",
 		*/
 		readFile : function (file, callback, context) {
 			var req = new qx.io.request.Xhr(
-				desk.FileSystem.getInstance().getFileURL(file)+
+				desk.FileSystem.getFileURL(file)+
 				"?nocache=" + Math.random());
 			req.setAsync(true);
 			req.addListener('load', function (e) {
 				callback.call(context, e.getTarget())});
 			req.send();
+		},
+
+		/**
+		* Writes a string to a file
+		*
+		* @param file {String} the file to write to
+		* @param content {String} the string to write
+		* @param callback {Function} callback when done
+		* @param context {Object} optional context for the callback
+		* 
+		* <pre class="javascript">
+		* example : 
+		* desk.FileSystem.readFile ("myFilePath", function (request) {
+		*   var answer = request.getResponseText(); //to get the raw text response
+		*   var xmlAnswer = request.getResponse(); //to get parsed xml
+		* });
+		* </pre>
+		*/
+		writeFile : function (file, content, callback, context) {
+			desk.Actions.getInstance().launchAction({
+				action : "write_binary",
+				file_name : desk.FileSystem.getFileName(file),
+				base64data : qx.util.Base64.encode(content, true),
+				output_directory : desk.FileSystem.getFileDirectory(file)},
+				callback, context);
+		},
+
+		/**
+		* extracts the directory from input file.
+		*
+		* @param file {String} the file
+		* @return {string} the directory the file resides in
+		* <pre class="javascript">
+		* example : 
+		* desk.FileSystem.getFileDirectory ('data/test/foo.txt');
+		* returns 'data/test/'
+		* </pre>
+		*/
+		getFileDirectory : function (file) {
+			var slashIndex = file.lastIndexOf('/');
+			if (slashIndex >= 0) {
+				return file.substring(0, slashIndex+1);
+			}
+			else {
+				return '/';
+			}
+		},
+
+		/**
+		* extracts the name from input file (without full path)
+		*
+		* @param file {String} the file
+		* @return {string} name of the file
+		* <pre class="javascript">
+		* example : 
+		* desk.FileSystem.getFileName ('data/test/foo.txt');
+		* returns 'foo.txt'
+		* </pre>
+		*/	
+		getFileName  : function (file) {
+			var slashIndex = file.lastIndexOf('/');
+			if (slashIndex >= 0) {
+				return file.substring(slashIndex+1, file.length);
+			}
+			else {
+				return file;
+			}
+		},
+
+		/**
+		* Translates a file path to an URL
+		*
+		* @param file {String} file path
+		*
+		* @return {String} the file URL
+		*/
+		getFileURL : function (file) {
+			return desk.FileSystem.getInstance().__filesURL+file;
 		}
 	},
 
@@ -61,17 +139,6 @@ qx.Class.define("desk.FileSystem",
 		*/
 		getBaseURL : function () {
 			return this.__baseURL;
-		},
-
-		/**
-		* Translates a file path to an URL
-		*
-		* @param file {String} file path
-		*
-		* @return {String} the file URL
-		*/
-		getFileURL : function (file) {
-			return this.__filesURL+file;
 		},
 
 		/**

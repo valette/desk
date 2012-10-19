@@ -16,36 +16,44 @@ qx.Class.define("desk.TextEditor",
 
 		this.__reloadButton = new qx.ui.form.Button("Reload");
 		this.__reloadButton.addListener("execute", function(e) {
-			this.openFileURL(this.__fileURL);
+			this.openFile(this.__file);
 			}, this);
 
-		this.add(this.__reloadButton);
+		var saveButton = new qx.ui.form.Button("Save");
+		saveButton.addListener("execute", function(e) {
+			saveButton.setEnabled(false);
+			desk.FileSystem.writeFile(this.__file, this.__textArea.getValue(),
+				function () {saveButton.setEnabled(true);});
+			}, this);
+
+		var buttonsContainer = new qx.ui.container.Composite;
+		buttonsContainer.setLayout(new qx.ui.layout.HBox());
+		buttonsContainer.add(this.__reloadButton, {flex : 1});
+		buttonsContainer.add(saveButton);
+		this.add(buttonsContainer);
 
 		this.__textArea = new qx.ui.form.TextArea();
 		this.add(this.__textArea,{flex : 1});
 		this.open();
 
-		this.openFileURL(desk.Actions.getInstance().getFileURL(file));
+		this.openFile(file);
 		return (this);
 	},
 
 	members : {
 		__textArea : null,
-		__fileURL : null,
+		__file : null,
 		__reloadButton : null,
 
-		openFileURL : function (fileURL)
+		openFile : function (file)
 		{
-			this.__fileURL=fileURL;
+			this.__file = file;
 			this.__reloadButton.setEnabled(false);
-			var req = new qx.io.request.Xhr(this.__fileURL+"?nocache=" + Math.random());
-			req.setAsync(true);
-			req.addListener('load', function (e){
-				this.__textArea.setValue(req.getResponseText());
-				this.setCaption(fileURL);
+			desk.FileSystem.readFile(file, function (request){
+				this.__textArea.setValue(request.getResponseText());
+				this.setCaption(file);
 				this.__reloadButton.setEnabled(true);
-				}, this);
-			req.send();
+			}, this);
 		}
 	}
 });

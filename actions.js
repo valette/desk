@@ -163,15 +163,6 @@ exports.setup=function (root, callback) {
 		return (fs.realpathSync(dir));
 	}
 
-	var publicDir = '/public',
-	publicLink = filesRoot + 'data/public';
-
-	// make symlink to public dir if not present
-	if  (!fs.existsSync(publicLink) && 
-			(fs.existsSync(publicDir))) {
-		fs.symlinkSync(publicDir, publicLink);
-	}
-
 	dataRoot=getSubdir('data');
 	cacheRoot=getSubdir('cache');
 	actionsRoot=getSubdir('actions');

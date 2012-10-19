@@ -91,11 +91,6 @@ qx.Class.define("desk.Actions",
 		__actionsQueue : null,
 		__maximumNumberOfParallelActions : 20,
 
-		getFileURL : function (file)
-		{
-			return this.__fileSystem.getFileURL(file);
-		},
-
 		getPermissionsLevel : function () {
 			return this.__permissionsLevel;
 		},
@@ -215,42 +210,30 @@ qx.Class.define("desk.Actions",
 
 		__populateActionMenu : function()
 		{
-			var xmlhttp=new XMLHttpRequest();
-			var _this=this;
-			xmlhttp.onreadystatechange = function() {
-				 if(this.readyState == 4 && this.status == 200)
-				 {
-					// so far so good
-					if(xmlhttp.responseText!=null)
-					{
-						var settings=JSON.parse(xmlhttp.responseText);
-						_this.__actions=settings;
+			desk.FileSystem.readFile('actions.json', function (request) {
+				var settings = JSON.parse(request.getResponseText());
+				this.__actions=settings;
+				this.__permissionsLevel=parseInt(settings.permissions);
 
-						_this.__permissionsLevel=parseInt(settings.permissions);
+				var actions=this.__actions.actions;
+				this.__actionsArray=actions;
+				var actionMenu=this;
 
-						var actions=_this.__actions.actions;
-						_this.__actionsArray=actions;
-						var actionMenu=_this;
+				for (var n=0;n<actions.length;n++)
+				{
+					var button=new qx.ui.menu.Button(actions[n].name);
 
-						for (var n=0;n<actions.length;n++)
-						{
-							var button=new qx.ui.menu.Button(actions[n].name);
-
-							button.addListener("execute", function (e){
-								var action= new desk.Action(this.getLabel());
-								action.setOriginFileBrowser(actionMenu.__currentFileBrowser);
-								action.buildUI();},button);
-							_this.__actionMenu.add(button);
-						}
-						_this.__actionsLoaded = true;
-						if ( _this.__scriptsLoaded ) {
-							_this.setReady(true);
-						}
-					}
+					button.addListener("execute", function (e){
+						var action= new desk.Action(this.getLabel());
+						action.setOriginFileBrowser(actionMenu.__currentFileBrowser);
+						action.buildUI();},button);
+					this.__actionMenu.add(button);
 				}
-			}
-			xmlhttp.open("GET", this.getFileURL("actions.json")+"?nocache=" + Math.random(),true);
-			xmlhttp.send();
+				this.__actionsLoaded = true;
+				if ( this.__scriptsLoaded ) {
+					this.setReady(true);
+				}
+			}, this);
 		}
 	}
 });

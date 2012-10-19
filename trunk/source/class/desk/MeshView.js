@@ -240,8 +240,6 @@ qx.Class.define("desk.MeshView",
 				dataModel.setData();
 			}
 
-			var fileSystem=this.__fileSystem;
-
 			var extension=file.substring(file.length-4, file.length);
 
 			function loadMeshIntoScene(file)
@@ -269,11 +267,11 @@ qx.Class.define("desk.MeshView",
 				{
 				case ".vtk":
 					if (_this.isConvertVTK()===false) {
-						_this.loadVTKURL(fileSystem.getFileURL(file)+"?nocache="+mtime, callback, color);
+						_this.loadVTKURL(desk.FileSystem.getFileURL(file)+"?nocache="+mtime, callback, color);
 						break;
 					}
 				default : 
-					_this.loadCTMURL(fileSystem.getFileURL(file)+"?nocache="+mtime, callback, color);
+					_this.loadCTMURL(desk.FileSystem.getFileURL(file)+"?nocache="+mtime, callback, color);
 				}
 			}
 
@@ -529,7 +527,7 @@ qx.Class.define("desk.MeshView",
 
 					case ".xml":
 						var xmlhttp=new XMLHttpRequest();
-						xmlhttp.open("GET",_this.__fileSystem.getFileURL(file)+"?nocache=" + Math.random(),false);
+						xmlhttp.open("GET", desk.FileSystem.getFileURL(file) + "?nocache=" + Math.random(),false);
 						xmlhttp.send();
 						var rootDocument=xmlhttp.responseXML;
 
