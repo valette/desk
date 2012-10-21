@@ -9,7 +9,7 @@ var	user=process.env.USER;
 console.log("UID : "+process.getuid());
 
 // user parameters
-var serverPath = fs.realpathSync('trunk')+'/',
+var serverPath = fs.realpathSync('../client/')+'/',
 	deskPath = '/home/' + user + '/desk/',
 	phpSubdir = 'ext/php/',
 	phpDir = serverPath + phpSubdir,
@@ -35,7 +35,7 @@ if (hostname!='desk.creatis.insa-lyon.fr') {
 }
 
 // certificate default file names
-var passwordFile = deskPath + "./password.json",
+var passwordFile = deskPath + "password.json",
 	privateKeyFile = "privatekey.pem",
 	certificateFile = "certificate.pem";
 
@@ -54,13 +54,17 @@ var app=express();
 app.use(express.limit('20000mb'));
 
 // look for correctly formated password.json file.
-var identity=null;
+var identity = null;
 if (fs.existsSync(passwordFile)) {
-	var identity=require(passwordFile);
+	var identity = require(passwordFile);
 	if ( (typeof identity.username !== "string") ||
 		(typeof identity.password !== "string")) {
-		identity=null;
+		identity = null;
 	}
+}
+else {
+	var example = {username : "joe", password : "pass"};
+	fs.writeFileSync(passwordFile + '.example', JSON.stringify(example));
 }
 
 // use basicAuth depending on password.json
