@@ -1,1 +1,1 @@
-forever -a start app.js
+forever -a start server.js

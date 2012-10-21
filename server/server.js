@@ -177,7 +177,7 @@ else {
 console.log(separator);
 
 // setup actions
-var actions=require('./actions');
+var actions=require('./actions/actions');
 actions.setup( deskPath, function () {
 	server.listen(port);
 	console.log(separator);
