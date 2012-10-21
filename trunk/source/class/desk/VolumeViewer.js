@@ -476,14 +476,19 @@ qx.Class.define("desk.VolumeViewer",
 				}, this);
 
 
-			var shortFileName=file.substring(file.lastIndexOf("/")+1, file.length);
+			var baseName=desk.FileSystem.getFileName(file);
+			var baseLength = baseName.length;
+			if (baseLength > 25) {
+				baseName = baseName.substring(0, 10) + '...' +
+					baseName.substring(baseLength - 10);
+			}
 
 			var labelcontainer=new qx.ui.container.Composite();
 			labelcontainer.setLayout( new qx.ui.layout.HBox() );
 			labelcontainer.setContextMenu( this.__getVolumeContextMenu( volumeListItem ) );
 			volumeListItem.add(labelcontainer, { flex : 1 } );
 
- 			var label=new qx.ui.basic.Label(shortFileName);
+ 			var label=new qx.ui.basic.Label(baseName);
  			label.setTextAlign("left");
 			labelcontainer.add(label, {flex : 1});
 
