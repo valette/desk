@@ -515,7 +515,7 @@ qx.Class.define("desk.FileBrowser",
 
 			// Instantiate request
 			var req = new qx.io.request.Xhr();
-			req.setUrl(this.__actions.baseURL+"php/listDir.php");
+			req.setUrl(desk.FileSystem.getActionURL('ls'));
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData({"dir" : this.__getNodeFile(node)});

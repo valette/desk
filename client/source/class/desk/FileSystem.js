@@ -15,9 +15,9 @@ qx.Class.define("desk.FileSystem",
 
 		var pathname=URLparser.pathname;
 		this.__user=URLparser.pathname.split("/")[1];
-		this.__baseURL='/'+this.__user+'/';
-		this.__phpURL=this.__baseURL+'ext/php/';
-		this.__filesURL=this.__baseURL+'files/';
+		this.__baseURL = '/' + this.__user + '/';
+		this.__actionsURL = this.__baseURL + 'rpc/';
+		this.__filesURL = this.__baseURL + 'files/';
 		return this;
 	},
 
@@ -122,14 +122,24 @@ qx.Class.define("desk.FileSystem",
 		* @return {String} the file URL
 		*/
 		getFileURL : function (file) {
-			return desk.FileSystem.getInstance().__filesURL+file;
+			return desk.FileSystem.getInstance().__filesURL + file;
+		},
+
+		/**
+		* Returns the URL for a specific action
+		* @param action {String}
+		* 
+		* @return {String} actionsURL
+		*/
+		getActionURL : function (action) {
+			return desk.FileSystem.getInstance().__actionsURL + action;
 		}
 	},
 
 	members : {
 		__baseURL : null,
 		__filesURL : null,
-		__phpURL : null,
+		__actionsURL : null,
 		__user : null,
 
 		/**
@@ -221,7 +231,7 @@ qx.Class.define("desk.FileSystem",
 
 			// Instantiate request
 			var req = new qx.io.request.Xhr();
-			req.setUrl(this.__phpURL+"listDir.php");
+			req.setUrl(this.__actionsURL + 'ls');
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData({"dir" : directory});

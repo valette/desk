@@ -10,10 +10,9 @@ console.log("UID : "+process.getuid());
 
 // user parameters
 var serverPath = fs.realpathSync('../client/')+'/',
+	homeURL = '/' + user + '/';
 	deskPath = '/home/' + user + '/desk/',
-	phpSubdir = 'ext/php/',
-	phpDir = serverPath + phpSubdir,
-	phpURL = '/' + user + '/' + phpSubdir,
+	actionsBaseURL = homeURL + 'rpc/',
 	port = process.getuid(),
 	uploadDir = deskPath + 'upload/';
 
@@ -28,10 +27,10 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 // use port 8080 if not running on desk.creatis.insa-lyon.fr
-var hostname=os.hostname();
-console.log('hostname : '+hostname);
-if (hostname!='desk.creatis.insa-lyon.fr') {
-	port=8080;
+var hostname = os.hostname();
+console.log('hostname : ' + hostname);
+if (hostname != 'desk.creatis.insa-lyon.fr') {
+	port = 8080;
 }
 
 // certificate default file names
@@ -48,7 +47,7 @@ console.log('Running as user : '+user);
 console.log(separator);
 
 //configure middleware : static file serving, errors
-var app=express();
+var app = express();
 
 // set upload limit
 app.use(express.limit('20000mb'));
@@ -74,44 +73,41 @@ if (identity) {
 	));
 	console.log("Using basic authentication");
 } else {
-	console.log("No password file "+passwordFile+" provided or incorrect file");
-	console.log("see "+passwordFile+".example file for an example");
+	console.log("No password file " + passwordFile + " provided or incorrect file");
+	console.log("see " + passwordFile + ".example file for an example");
 }
 
 app.use(express.methodOverride());
 
 // handle body parsing
 app.use(express.bodyParser({uploadDir: uploadDir }));
-
-var homeURL='/'+user+'/';
-
-app.use('/'+user,express.static(serverPath+'demo/default/release/'));
+app.use(homeURL ,express.static(serverPath + 'demo/default/release/'));
 
 // serve data files
-app.use('/'+user+'/files',express.static(deskPath));
-app.use('/'+user+'/files',express.directory(deskPath));
+app.use(homeURL + 'files',express.static(deskPath));
+app.use(homeURL + 'files',express.directory(deskPath));
 
 // enable static file server
-app.use('/'+user,express.static(serverPath));
+app.use(homeURL, express.static(serverPath));
 
 // display directories
-app.use('/'+user,express.directory(serverPath));
+app.use(homeURL, express.directory(serverPath));
 
 // handle directory listing
-app.post(phpURL+'listDir.php', function(req, res){
+app.post(actionsBaseURL + 'ls', function(req, res){
 	actions.listDir(req.body.dir, function (message) {
 		res.send(message);
 	});
 });
 
 // handle uploads
-app.post(phpURL+'upload', function(req, res) {
-	var file=req.files.file;
-	var outputDir=req.body.uploadDir.toString().replace('%2F','/') || 'upload';
-	outputDir=deskPath+outputDir;
-	console.log("file : "+file.path.toString());
-	console.log("uploaded to "+ outputDir+'/'+file.name.toString());
-	fs.rename(file.path.toString(), outputDir+'/'+file.name.toString(), function(err) {
+app.post(actionsBaseURL + 'upload', function(req, res) {
+	var file = req.files.file;
+	var outputDir = req.body.uploadDir.toString().replace(/%2F/g,'/') || 'upload';
+	outputDir = deskPath + outputDir;
+	console.log("file : " + file.path.toString());
+	console.log("uploaded to " +  outputDir + '/' + file.name.toString());
+	fs.rename(file.path.toString(), outputDir+'/' + file.name.toString(), function(err) {
 		if (err) throw err;
 		// delete the temporary file
 		fs.unlink(file.path.toString(), function() {
@@ -122,7 +118,7 @@ app.post(phpURL+'upload', function(req, res) {
 });
 
 // handle actions
-app.post(phpURL+'actions.php', function(req, res){
+app.post(actionsBaseURL + 'action', function(req, res){
 	res.connection.setTimeout(0);
     actions.performAction(req.body, function (message) {
 		res.send(message);
@@ -130,15 +126,15 @@ app.post(phpURL+'actions.php', function(req, res){
 });
 
 // handle cache clear
-app.get(phpURL+'clearcache.php', function(req, res){
-	exec("rm -rf *",{cwd:phpDir+'cache', maxBuffer: 1024*1024}, function (err) {
+app.get(actionsBaseURL + 'clearcache', function(req, res){
+	exec("rm -rf *",{cwd: deskPath + 'cache', maxBuffer: 1024*1024}, function (err) {
 		res.send('cache cleared!');
 	});
 });
 
 // handle actions clear
-app.get(phpURL+'clearactions.php', function(req, res){
-	exec("rm -rf *",{cwd:phpDir+'actions', maxBuffer: 1024*1024}, function (err) {
+app.get(actionsBaseURL + 'clearactions', function(req, res){
+	exec("rm -rf *",{cwd: deskPath + 'actions', maxBuffer: 1024*1024}, function (err) {
 		res.send('actions cleared!');
 	});
 });

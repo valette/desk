@@ -33,7 +33,8 @@ qx.Class.define("desk.Actions",
 		var pathname = URLparser.pathname;
 		this.user = URLparser.pathname.split( "/" )[1];
 		this.__fileSystem = desk.FileSystem.getInstance();
-		this.baseURL = this.__fileSystem.getBaseURL() + "ext/";
+		var baseURL = this.__fileSystem.getBaseURL()
+		this.__baseActionsURL = baseURL + 'rpc/';
 
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.__populateActionMenu();
@@ -42,9 +43,9 @@ qx.Class.define("desk.Actions",
 		this.__ongoingActions.setWidth( 200 );
 
 		// load external three.js files
-		var threeURL=this.baseURL+"three.js/";
+		var threeURL = baseURL + 'ext/three.js/';
 
-		HackCTMWorkerURL=threeURL+"ctm/CTMWorkerMin.js";
+		HackCTMWorkerURL = threeURL + "ctm/CTMWorkerMin.js";
 
 		var files=["three.min.js", "Detector.js", "VTKLoader.js","TrackballControls2.js","ctm/CTMLoader.js"];
 		var index=-1;
@@ -71,6 +72,7 @@ qx.Class.define("desk.Actions",
 	},
 
 	members : {
+		__baseActionsURL : null,
 		__ready : false,
 
 		isReady : function () {
@@ -158,7 +160,7 @@ qx.Class.define("desk.Actions",
 			
 			var req = new qx.io.request.Xhr();
 
-			req.setUrl(this.baseURL+"php/actions.php");
+			req.setUrl(desk.FileSystem.getActionURL('action'));
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData(actionParameters);
@@ -201,7 +203,7 @@ qx.Class.define("desk.Actions",
 				numberOfRetries--;
 				if (numberOfRetries>0) {
 					req = new qx.io.request.Xhr();
-					req.setUrl(that.baseURL+"php/actions.php");
+					req.setUrl(that.__baseActionsURL + 'actions');
 					req.setMethod("POST");
 					req.setAsync(true);
 					req.setRequestData(actionParameters);
