@@ -15,6 +15,7 @@ var serverPath = fs.realpathSync('../client/')+'/',
 	actionsBaseURL = homeURL + 'rpc/',
 	port = process.getuid(),
 	uploadDir = deskPath + 'upload/';
+	extensionsDir = deskPath + 'extensions/';
 
 // make desk directory if not existent
 if (!fs.existsSync(deskPath)) {
@@ -125,6 +126,13 @@ app.post(actionsBaseURL + 'action', function(req, res){
 	});
 });
 
+// handle actions list reset
+app.post(actionsBaseURL + 'reset', function(req, res){
+    actions.update(function (message) {
+		res.send(message);
+	});
+});
+
 // handle cache clear
 app.get(actionsBaseURL + 'clearcache', function(req, res){
 	exec("rm -rf *",{cwd: deskPath + 'cache', maxBuffer: 1024*1024}, function (err) {
@@ -173,8 +181,15 @@ else {
 console.log(separator);
 
 // setup actions
-var actions=require('./actions/actions');
-actions.setup( deskPath, function () {
+var actions = require('./actions/actions');
+actions.addDirectory(__dirname + '/actions/');
+// make extensions directory if not present
+if (!fs.existsSync(extensionsDir)) {
+	fs.mkdirSync(extensionsDir);
+}
+actions.addDirectory(extensionsDir);
+actions.setRoot(deskPath);
+actions.update(function () {
 	server.listen(port);
 	console.log(separator);
 	console.log(new Date().toLocaleString());

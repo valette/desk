@@ -14,10 +14,10 @@ var myConsole={
 }
 
 // directory where user can add their own .json action definition files
-var actionsDir="actions/";
+var actionsDirectories = [];
 
 // array storing all the actions
-var actions=[];
+var actions;
 
 var filesRoot;
 var actionsRoot,cacheRoot,dataRoot;
@@ -140,35 +140,38 @@ function exportActions( file, callback ) {
 	});
 }
 
-function updateActionsList (callback) {
-	// clear actions
-	actions=[];
-
-	// add actions
-	fs.readdir(actionsDir, function (err, files) {
-		for (var i=0;i<files.length;i++) {
-			files[i]=actionsDir+files[i];
-		}
-		exports.includeActions(files, callback);
-	});
+exports.addDirectory = function (directory) {
+	actionsDirectories.push(directory);
 }
 
-exports.setup=function (root, callback) {
-	filesRoot=fs.realpathSync(root)+'/';
+exports.update = function (callback) {
+	// clear actions
+	actions = [];
+	async.forEach(actionsDirectories, function (directory, callback) {
+		fs.readdir(directory, function (err, files) {
+			for (var i = 0; i < files.length; i++) {
+				files[i] = directory + files[i];
+			}
+			exports.includeActions(files, callback);
+		});
+	}, callback);
+}
+
+exports.setRoot = function (root) {
+	filesRoot = fs.realpathSync(root) + '/';
 
 	function getSubdir(subdir) {
-		var dir=filesRoot+subdir;
+		var dir = filesRoot + subdir;
 		if (!fs.existsSync(dir)) {
-			console.log('Warning : directory '+subdir+' does not exist. Creating it');
+			console.log('Warning : directory ' + subdir + ' does not exist. Creating it');
 			fs.mkdirSync(dir);
 		}
 		return (fs.realpathSync(dir));
 	}
 
-	dataRoot=getSubdir('data');
-	cacheRoot=getSubdir('cache');
-	actionsRoot=getSubdir('actions');
-	updateActionsList(callback);
+	dataRoot = getSubdir('data');
+	cacheRoot = getSubdir('cache');
+	actionsRoot = getSubdir('actions');
 };
 
 exports.performAction = function (POST, callback) {

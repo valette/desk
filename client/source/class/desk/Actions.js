@@ -35,8 +35,6 @@ qx.Class.define("desk.Actions",
 		this.__fileSystem = desk.FileSystem.getInstance();
 		var baseURL = this.__fileSystem.getBaseURL()
 		this.__baseActionsURL = baseURL + 'rpc/';
-
-		this.__actionMenu = new qx.ui.menu.Menu;
 		this.__populateActionMenu();
 		
 		this.__ongoingActions = this.__createOngoingActions();
@@ -86,6 +84,17 @@ qx.Class.define("desk.Actions",
 			forceButton.bind('value', this, 'forceUpdate');
 			this.bind('forceUpdate', forceButton, 'value');
 			menu.add(forceButton);
+
+			var reloadButton = new qx.ui.menu.Button('reset');
+			reloadButton.addListener('execute', function () {
+				var req = new qx.io.request.Xhr();
+				req.setUrl(this.__baseActionsURL + 'reset');
+				req.setMethod('POST');
+				req.addListener('success', this.__populateActionMenu, this);
+				req.send();
+			}, this);
+			menu.add(reloadButton);
+
 			list.setContextMenu(menu);
 			return list;
 		},
@@ -244,22 +253,22 @@ qx.Class.define("desk.Actions",
 
 		__populateActionMenu : function()
 		{
+			this.__actionMenu = new qx.ui.menu.Menu;
 			desk.FileSystem.readFile('actions.json', function (request) {
 				var settings = JSON.parse(request.getResponseText());
-				this.__actions=settings;
-				this.__permissionsLevel=parseInt(settings.permissions);
+				this.__actions = settings;
+				this.__permissionsLevel = parseInt(settings.permissions);
 
-				var actions=this.__actions.actions;
-				this.__actionsArray=actions;
-				var actionMenu=this;
-
+				var actions = this.__actions.actions;
+				this.__actionsArray = actions;
+				var that = this;
 				var menus = [];
 
-				for (var n=0;n<actions.length;n++)
+				for (var n = 0; n < actions.length; n++)
 				{
 					var action = actions[n];
 					var actionName = action.name
-					var button=new qx.ui.menu.Button(actionName);
+					var button = new qx.ui.menu.Button(actionName);
 					var lib = action.lib;
 					var menu = menus[lib];
 					if (!menu) {
@@ -270,9 +279,10 @@ qx.Class.define("desk.Actions",
 					}
 					
 					button.addListener("execute", function (e){
-						var action= new desk.Action(this.getLabel());
-						action.setOriginFileBrowser(actionMenu.__currentFileBrowser);
-						action.buildUI();},button);
+						var action = new desk.Action(this.getLabel());
+						action.setOriginFileBrowser(that.__currentFileBrowser);
+						action.buildUI();
+					},button);
 					menu.add(button);
 				}
 				this.__actionsLoaded = true;
