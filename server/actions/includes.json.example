@@ -1,6 +1,7 @@
 {
 	"include" : [
-	"/home/valette/git/vtkSurface/bin/vtkSurface.json",
-	"/home/valette/CVSROOT/gc/gc.json"
+	"/opt/vtkSurface/bin/vtkSurface.json",
+	"/opt/gc/gc.json",
+	"/opt/OpenCTM/OpenCTM.json"
     ]
 }
