@@ -143,33 +143,41 @@ qx.Class.define("desk.FileBrowser",
 				var row = this.__virtualTree.getFocusedRow();
 				var node = this.__virtualTree.getDataModel().getNodeFromRow(row);
 
-				var nodeId=node.nodeId;
-				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+				var nodeId = node.nodeId;
+				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 					nodeId=node.parentNodeId;
 				}
 				var destination = this.__getNodeFile(nodeId);
-				var filesString='';
+				var filesString = '';
 				for (var i=0; i < files.length; i++) {
 					filesString += files[i] + '\n';
 				}
-				if (confirm ('Are you sure you want to move these files:\n' +
+				var actionType = prompt('Copy or move? \n0 : copy,  1 : move', '0');
+				if (actionType == '1') {
+					actionType = 'move';
+				}
+				else {
+					actionType = 'copy';
+				}
+
+				if (confirm ('Are you sure you want to ' + actionType + ' move these files:\n' +
 					filesString + 'to :\n' + destination)) {
 					var index = -1;
 					var that = this;
-					function moveFile () {
+					function moveOrCopyFile () {
 						index++;
 						if (index < files.length) {
 							desk.Actions.getInstance().launchAction(
-							{ action : "move",
+							{ action : actionType,
 								source : files[index],
 								destination : destination},
-							moveFile);
+							moveOrCopyFile);
 						}
 						else {
 							that.__expandDirectoryListing(nodeId);
 						}
 					}
-					moveFile();
+					moveOrCopyFile();
 				}
 			}
 		}, this);
@@ -391,6 +399,23 @@ qx.Class.define("desk.FileBrowser",
 								source : file,
 								destination : newFile},
 							function () {myBrowser.__expandDirectoryListing(node.parentNodeId);});
+				}
+			});
+
+			myBrowser.addAction('new file', function (node) {
+				var file = desk.FileSystem.getFileName(myBrowser.__getNodeFile(node.nodeId));
+				if (node.type !== qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+					alert ('error : select a file, not a directory');
+				}
+				var file = myBrowser.__getNodeFile(node.nodeId);
+				var baseName = desk.FileSystem.getFileName(file);
+				var nameLength = baseName.length;
+				baseName = baseName.substring(0, baseName.length - 3) + 'txt';
+				var baseName = prompt('enter new file name : ', baseName);
+				if ( baseName !== null) {
+					desk.FileSystem.writeFile( desk.FileSystem.getFileDirectory(file) + baseName,
+						'edit me',
+						function () {myBrowser.__expandDirectoryListing(node.parentNodeId);});
 				}
 			});
 		},

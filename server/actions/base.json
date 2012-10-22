@@ -142,6 +142,27 @@
 		},
 		{
 		    "parameters":[
+				{
+					"name":"source",
+					"type":"file",
+					"required":"true"
+				},
+				{
+					"name":"destination",
+					"type":"string",
+					"required":"true"
+				}
+		    ],
+		    "name":"copy",
+		    "attributes":
+		    {
+		        "name":"copy",
+		        "command":"cp",
+		        "voidAction":"true"
+		    }
+		},
+		{
+		    "parameters":[
 		        {
 		            "name":"directory",
 		            "type":"string",
