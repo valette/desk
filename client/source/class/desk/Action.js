@@ -85,18 +85,15 @@ qx.Class.define("desk.Action",
 
 		setOutputDirectory : function (directory) {
 			this.__outputDirectory=directory;
-			// try to load parameters on server
-			var req = new qx.io.request.Xhr(desk.FileSystem.getFileURL(this.getOutputDirectory())+"action.json?nocache=" + Math.random());
-			req.addListener("success", function(e) {
-				this.__loadedParameters=JSON.parse(e.getTarget().getResponseText());
-				
-				this.__updateUIParameters();
-				if (this.__tabView) {
-					this.__addOutputTab();
-				}
-			}, this);
-			req.send();
-			this.fireEvent("changeOutputDirectory");
+			desk.FileSystem.readFile(this.getOutputDirectory() + 'action.json', 
+				function(request) {
+					this.__loadedParameters=JSON.parse(request.getResponseText());
+					this.__updateUIParameters();
+					if (this.__tabView) {
+						this.__addOutputTab();
+					}
+					this.fireEvent("changeOutputDirectory");
+				}, this);
 		},
 
 		__updateUIParameters : function () {

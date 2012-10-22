@@ -1071,76 +1071,50 @@ qx.Class.define("desk.SegTools",
 		{
 			this.__clearSeeds();
 			var master=this.__master;
-			var _this=this;
 
 			master.applyToViewers ( function () {
 				this.setUserData("previousSlice", this.getSlice());
 			});
 
-			var loadSessionRequest = new XMLHttpRequest();
-			
-			loadSessionRequest.onreadystatechange = function( ) {
-				 if(this.readyState == 4 && this.status == 200) {
-					// so far so good
-					if(this.responseXML!=null) {
-						var response = this.responseXML;
-						for (var k=0;k<2;k++) {
-							var slices;
-							if (k==0) {
-								slices=response.getElementsByTagName("seed");
-							}
-							else {
-								slices=response.getElementsByTagName("correction");
-							}
-
-							for(var j=0; j<slices.length; j++) {
-								var sliceId = parseInt(slices[j].getAttribute("slice"),10);
-								var sliceOrientation;
-								if (slices[j].hasAttribute("orientation")){
-									sliceOrientation = parseInt(slices[j].getAttribute("orientation"),10);
-								}
-								else {
-									sliceOrientation = 0;
-								}
-								master.applyToViewers ( function () {
-									if(sliceOrientation==this.getOrientation())
-										_this.__addNewSeedItemToList(this, sliceId, k);
-									});
-							}
-						master.applyToViewers( function () {
-								_this.__reloadSeedImage( this );
-							});
-						}
-						var colors=response.getElementsByTagName("color");
-						var adjacencies=response.getElementsByTagName("adjacency");
-						if (colors.length>0) {
-							_this.__setColorsFromElements(colors, adjacencies);
-						}
-						else {
-							_this.__loadColors();
-						}
+			desk.FileSystem.readFile( this.getSessionDirectory() + '/seeds.xml', function(request) {
+				var response = request.getResponse();
+				var _this = this;
+				for (var k = 0; k < 2; k++) {
+					var slices;
+					if (k == 0) {
+						slices = response.getElementsByTagName("seed");
 					}
 					else {
-						alert("no seeds found");
-						_this.__loadColors();
-						master.applyToViewers( function () {
-								_this.__reloadSeedImage( this );
-							});
+						slices = response.getElementsByTagName("correction");
 					}
-				}
-				else if (this.readyState == 4 && this.status != 200) {
-					alert("no seeds found");
-					_this.__loadColors();
-					master.applyToViewers( function () {
-						_this.__reloadSeedImage( this );
-						});
-				}
-			};
 
-			loadSessionRequest.open("GET",
-				desk.FileSystem.getFileURL(
-					this.getSessionDirectory()+"/seeds.xml?nocache="+Math.random()), true);
-			loadSessionRequest.send(null);
+					for(var j = 0; j < slices.length; j++) {
+						var sliceId = parseInt(slices[j].getAttribute("slice"),10);
+						var sliceOrientation;
+						if (slices[j].hasAttribute("orientation")){
+							sliceOrientation = parseInt(slices[j].getAttribute("orientation"),10);
+						}
+						else {
+							sliceOrientation = 0;
+						}
+						master.applyToViewers ( function () {
+							if(sliceOrientation == this.getOrientation())
+								_this.__addNewSeedItemToList(this, sliceId, k);
+						});
+					}
+					master.applyToViewers( function () {
+							_this.__reloadSeedImage( this );
+					});
+				}
+				var colors = response.getElementsByTagName("color");
+				var adjacencies = response.getElementsByTagName("adjacency");
+				if (colors.length > 0) {
+					this.__setColorsFromElements(colors, adjacencies);
+				}
+				else {
+					this.__loadColors();
+				}
+			}, this);
 		},
 
 		__getSessionsWidget : function()
