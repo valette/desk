@@ -39,8 +39,7 @@ qx.Class.define("desk.Actions",
 		this.__actionMenu = new qx.ui.menu.Menu;
 		this.__populateActionMenu();
 		
-		this.__ongoingActions=new qx.ui.form.List();
-		this.__ongoingActions.setWidth( 200 );
+		this.__ongoingActions = this.__createOngoingActions();
 
 		// load external three.js files
 		var threeURL = baseURL + 'ext/three.js/';
@@ -67,6 +66,10 @@ qx.Class.define("desk.Actions",
 		return this;
 	},
 
+	properties : {
+		forceUpdate : { init : false, check: "Boolean", event : "changeForceUpdate"}
+	},
+
 	events : {
 		"changeReady" : "qx.event.type.Event"
 	},
@@ -74,6 +77,18 @@ qx.Class.define("desk.Actions",
 	members : {
 		__baseActionsURL : null,
 		__ready : false,
+
+		__createOngoingActions : function () {
+			var list = new qx.ui.form.List();
+			list.setWidth(200);
+			var menu = new qx.ui.menu.Menu;
+			var forceButton = new qx.ui.menu.CheckBox("Force Update");
+			forceButton.bind('value', this, 'forceUpdate');
+			this.bind('forceUpdate', forceButton, 'value');
+			menu.add(forceButton);
+			list.setContextMenu(menu);
+			return list;
+		},
 
 		isReady : function () {
 			return this.__ready;
@@ -129,6 +144,9 @@ qx.Class.define("desk.Actions",
 			return this.__ongoingActions;
 		},
 
+		buildUI : function () {
+			qx.core.Init.getApplication().getRoot().add(this.__ongoingActions, {top : 0, right : 0});
+		},
 
 		__tryToLaunchActions : function () {
 			if ((this.__actionsQueue.length==0)||(this.__maximumNumberOfParallelActions==0)) {
@@ -148,6 +166,10 @@ qx.Class.define("desk.Actions",
 		},
 
 		__launchAction : function (actionParameters, successCallback, context) {
+			actionParameters = JSON.parse(JSON.stringify(actionParameters));
+			if (this.isForceUpdate()) {
+				actionParameters.force_update = true;
+			}
 			var that=this;
 			var actionFinished=false;
 			var actionNotification=null;
