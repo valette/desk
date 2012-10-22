@@ -3,7 +3,7 @@ var fs    = require('fs'),
     async = require('async');
 
 var users = require ('./users.json').users;
-var publicDir='/public'
+var publicDir='/public/'
 
 function makePubDir (user, callback) {
 	var pubDir = publicDir + user;
