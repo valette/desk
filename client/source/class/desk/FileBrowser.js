@@ -36,7 +36,6 @@ qx.Class.define("desk.FileBrowser",
 		virtualTree.setSelectionMode(qx.ui.treevirtual.TreeVirtual.SelectionMode.MULTIPLE_INTERVAL);
 
 		virtualTree.set({
-//			width  : 400,
 			rowHeight: 22,
 			alwaysShowOpenCloseSymbol : true,
 			columnVisibilityButtonVisible : true,
@@ -50,11 +49,11 @@ qx.Class.define("desk.FileBrowser",
 		// create the filter bar
 		var filterBox = new qx.ui.container.Composite;
 		filterBox.setLayout(new qx.ui.layout.HBox(10));
-///////////////////////////////////////////////////////////////////////////////////////////////
+
 		if(this.__standAlone) {
-			this.add(filterBox);//, {flex:1});
+			this.add(filterBox);
 		}
-		var filterText=new qx.ui.basic.Label("Filter files :");
+		var filterText = new qx.ui.basic.Label("Filter files :");
 		filterBox.add(filterText);
 		var filterField = new qx.ui.form.TextField();
 		filterField.setValue("");
@@ -64,25 +63,25 @@ qx.Class.define("desk.FileBrowser",
 		filterBox.add(filterField, {flex:1});
 		this.__filterField = filterField;
 
-		var filter = qx.lang.Function.bind(function(node)
-			{
-				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-					var label = node.label;
-					return label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1;
-				}
-				return true;
-			}, this);
+		var filter = qx.lang.Function.bind(function(node) {
+			if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+				var label = node.label;
+				return label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1;
+			}
+			return true;
+		}, this);
+
 		var resetButton=new qx.ui.form.Button("Reset filter");
 		resetButton.setAllowGrowY(false);
 		resetButton.addListener("execute",function(e){
 			filterField.setValue("");
 			dataModel.setData();
-			});
+		});
+
 		filterBox.add(resetButton);
 		dataModel.setFilter(filter);
 
 		this.add(virtualTree,{flex: 1});
-
 
 		// add root directory
 		this.__rootId = dataModel.addBranch(null, this.__baseDir, true);
@@ -121,18 +120,18 @@ qx.Class.define("desk.FileBrowser",
 		});
 
 		virtualTree.addListener("droprequest", function(e) {
-				var type = e.getCurrentType();
-				switch (type)
-				{
-				case "text":
-					e.addData(type, this.getSelectedFiles()[0]);
-					break;
-				case "fileBrowser":
-					e.addData(type, this);
-					break;
-				default :
-					break;
-				}
+			var type = e.getCurrentType();
+			switch (type)
+			{
+			case "text":
+				e.addData(type, this.getSelectedFiles()[0]);
+				break;
+			case "fileBrowser":
+				e.addData(type, this);
+				break;
+			default :
+				break;
+			}
 		}, this);
 
 		virtualTree.setDroppable(true);
@@ -174,7 +173,9 @@ qx.Class.define("desk.FileBrowser",
 							moveOrCopyFile);
 						}
 						else {
-							that.__expandDirectoryListing(nodeId);
+							//that.__expandDirectoryListing(nodeId);
+							files.push(destination);
+							that.updateDirectories(files);
 						}
 					}
 					moveOrCopyFile();
@@ -182,8 +183,7 @@ qx.Class.define("desk.FileBrowser",
 			}
 		}, this);
 
-		if (this.__standAlone)
-		{
+		if (this.__standAlone) {
 			var window=new qx.ui.window.Window();
 			window.setLayout(new qx.ui.layout.VBox());
 			this.__window=window;
@@ -216,8 +216,6 @@ qx.Class.define("desk.FileBrowser",
 		__actionCallbacks : null,
 		__actions : null,
 		__actionsMenuButton : null,
-
-		__updateDirectoryInProgress : null,
 
 		getWindow : function() {
 			return this.__window;
@@ -440,45 +438,115 @@ qx.Class.define("desk.FileBrowser",
 			this.__fileHandler=callback;
 		},
 
-		getTree : function ()
-		{
+		getTree : function () {
 			return (this.__virtualTree);
 		},
 
-		__getSelectedNodes : function ()
-		{
+		__getSelectedNodes : function () {
 			return (this.__virtualTree.getSelectedNodes());
 		},
 
-		getSelectedFiles : function ()
-		{
+		getSelectedFiles : function () {
 			var selectedNodes = this.__getSelectedNodes();
 			var files = [];
-			for (var i=0; i < selectedNodes.length; i++) {
+			for (var i = 0; i < selectedNodes.length; i++) {
 				files.push(this.__getNodeFile(selectedNodes[i]));
 			}
 			return files;
 		},
 
-		__getNodeMTime : function (node)
-		{
+		__getNodeMTime : function (node) {
 			return (this.__virtualTree.getDataModel().getColumnData(node.nodeId, 1));
 		},
 
-		__getNodeURL : function (node)
-		{
+		__getNodeURL : function (node) {
 			return (desk.FileSystem.getFileURL(this.__getNodeFile(node)));
 		},
 
-		__getNodeFile : function (node)
-		{
-			var hierarchy=this.__virtualTree.getHierarchy(node);
+		__getNodeFile : function (node) {
+			var hierarchy = this.__virtualTree.getHierarchy(node);
 			return (hierarchy.join("\/"));
 		},
 
+		getRootDir : function () {
+			var baseDir = this.__baseDir + '/';
+			if (baseDir.charAt(baseDir.length - 1) === '/') {
+				baseDir = baseDir.substring(0, baseDir.length -1);
+			}
+			return baseDir;
+		},
+
+		__getFileNode : function (file) {
+			var baseDir = this.getRootDir();
+			if (file.indexOf(baseDir) !== 0) {
+				return null;
+			}
+			var inFile = file.substring(baseDir.length + 1);
+			var hierarchy;
+			if (inFile.length !== 0) {
+				hierarchy = inFile.split('/');
+			}
+			else {
+				hierarchy = [];
+			}
+			
+			var nodeId = this.__rootId;
+			var data = this.__virtualTree.getDataModel().getData();
+			var node = data[nodeId];
+			for (var i = 0; i != hierarchy.length; i++) {
+				var children = node.children;
+				var found = false;
+				for (var j = 0; j!= children.length; j++) {
+					var testNode = data[children[j]];
+					if (testNode.label === hierarchy[i]) {
+						node = testNode;
+						found = true;
+						break;
+					}
+				}
+				if (!found) {
+					return null;
+				}
+			}
+			return (node);
+		},
+
+		updateDirectory : function (file) {
+			var nodeId = this.__getFileNode(file);
+			if (nodeId) {
+				this.__expandDirectoryListing(nodeId);
+			}
+		},
+
+		getFileDirectory : function (file) {
+			var node = this.__getFileNode(file);
+			if (!node) {
+				return null;
+			}
+			if (node.type !== qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+				return this.__getNodeFile(node);
+			}
+			return this.__getNodeFile(node.parentNodeId);
+		},
+
+		updateDirectories : function (files) {
+			var foldersObject = {};
+			var foldersArray = [];
+			var i;
+			for (i = 0; i < files.length; i++) {
+				var folder = this.getFileDirectory(files[i]);
+				if (foldersObject[folder] === undefined) {
+					foldersObject[folder] = true;
+					foldersArray.push(folder);
+				}
+			}
+			for (i = 0; i < foldersArray.length; i++) {
+				this.updateDirectory(foldersArray[i]);
+			}
+		},
+
 		__openNode : function (node) {
-			if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-			{
+			if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 				if (this.__fileHandler != null)
 						this.__fileHandler(this.__getNodeFile(node));
 			}
@@ -486,10 +554,8 @@ qx.Class.define("desk.FileBrowser",
 				this.__virtualTree.nodeToggleOpened(node);
 		},
 
-		__updateContextMenu : function()
-		{
+		__updateContextMenu : function() {
 			this.__virtualTree.setContextMenuFromDataCellsOnly(true);
-
 			var menu = new qx.ui.menu.Menu;
 
 			// the default "open" button
@@ -497,16 +563,14 @@ qx.Class.define("desk.FileBrowser",
 			openButton.addListener("execute", function (){
 				this.__openNode (this.__getSelectedNodes()[0]);}, this);
 			menu.add(openButton);
-
 			menu.addSeparator();
 
-			var actionsButton=new qx.ui.menu.Button("Actions");
+			var actionsButton = new qx.ui.menu.Button("Actions");
 			menu.add(actionsButton);
 			menu.addSeparator();
 			// other actions buttons
-			for (var i=0;i<this.__actionNames.length;i++)
-			{
-				var actionName=this.__actionNames[i];
+			for (var i = 0; i < this.__actionNames.length; i++) {
+				var actionName = this.__actionNames[i];
 				var button = new qx.ui.menu.Button(actionName);
 				button.setUserData("fileBrowser",this);
 				button.setUserData("actionName",actionName);
@@ -525,61 +589,58 @@ qx.Class.define("desk.FileBrowser",
 				actionsButton.setMenu(this.__actions.getActionsMenu(this));
 				}, this);
 		},
-		
 
-		__expandDirectoryListing : function(node) {
-/*			if (this.__updateDirectoryInProgress==true)
-			{
-				console.log("tried to update directory while update is already in progress");
-				return;
-			}*/
-			this.__updateDirectoryInProgress=true;
-
-			var dataModel=this.__virtualTree.getDataModel();
-			dataModel.prune(node,false);
+		__expandDirectoryListing : function(nodeId) {
+			var directory = this.__getNodeFile(nodeId);
+			var dataModel = this.__virtualTree.getDataModel();
+			dataModel.prune(nodeId,false);
 
 			// Instantiate request
 			var req = new qx.io.request.Xhr();
 			req.setUrl(desk.FileSystem.getActionURL('ls'));
 			req.setMethod("POST");
 			req.setAsync(true);
-			req.setRequestData({"dir" : this.__getNodeFile(node)});
+			req.setRequestData({"dir" : directory});
 			req.addListener("success", readFileList, this);
 			req.send();
 
 			function readFileList(e)
 			{
 				var req = e.getTarget();
-				var files=req.getResponseText().split("\n");
-				var filesArray=new Array();
-				var directoriesArray=new Array();
-				var modificationTimes=new Array();
-				var sizes=new Array();
-				for (var i=0;i<files.length;i++)
+				var files = req.getResponseText().split("\n");
+				var filesArray = new Array();
+				var directoriesArray = new Array();
+				var modificationTimes = new Array();
+				var sizes = new Array();
+				var node = this.__getFileNode(directory);
+				if (node === null) {
+					return;
+				}
+				nodeId = node.nodeId;
+				for (var i = 0; i < files.length; i++)
 				{
-					var splitfile=files[i].split(" ");
-					var fileName=splitfile[0];
-					if (fileName!="")
+					var splitfile = files[i].split(" ");
+					var fileName = splitfile[0];
+					if (fileName != "")
 					{
-						if (splitfile[1]=="file")
+						if (splitfile[1] == "file")
 						{
 							filesArray.push(fileName);
-							sizes[fileName]=parseInt(splitfile[3]);
+							sizes[fileName] = parseInt(splitfile[3]);
 						}
 						else
 							directoriesArray.push(fileName);
 
-						modificationTimes[fileName]=parseInt(splitfile[2]);
+						modificationTimes[fileName] = parseInt(splitfile[2]);
 					}
 				}
 				directoriesArray.sort();
 				filesArray.sort();
 
-				for (var i=0;i<directoriesArray.length;i++)
-					dataModel.addBranch(node , directoriesArray[i]);
+				for (var i = 0; i < directoriesArray.length; i++)
+					dataModel.addBranch(nodeId , directoriesArray[i]);
 
-				for (var i=0;i<filesArray.length;i++)
-				{
+				for (var i = 0; i < filesArray.length; i++) {
 					var newNode;
 					switch (filesArray[i].substring(filesArray[i].length-4, filesArray[i].length))
 					{
@@ -587,22 +648,21 @@ qx.Class.define("desk.FileBrowser",
 					case ".ply":
 					case ".obj":
 					case ".stl":
-						newNode=dataModel.addLeaf(node, filesArray[i],"desk/tris.png");
+						newNode = dataModel.addLeaf(nodeId, filesArray[i],"desk/tris.png");
 						break;
 					case ".mhd":
 					case ".jpg":
 					case ".png":
-						newNode=dataModel.addLeaf(node, filesArray[i],"desk/img.png");
+						newNode = dataModel.addLeaf(nodeId, filesArray[i],"desk/img.png");
 						break;
 					default:
-						newNode=dataModel.addLeaf(node, filesArray[i]);
+						newNode = dataModel.addLeaf(nodeId, filesArray[i]);
 						break;
 					}
 					dataModel.setColumnData(newNode, 1, modificationTimes[filesArray[i]]);
 					dataModel.setColumnData(newNode, 2, sizes[filesArray[i]]);
 				}
 				dataModel.setData();
-				this.__updateDirectoryInProgress=false;
 			}
 		}
 	}
