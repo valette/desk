@@ -17,6 +17,7 @@ qx.Class.define("desk.FileBrowser",
 		}
 
 		this.base(arguments);
+		this.__fileBrowsers.push(this);
 
 		this.setLayout(new qx.ui.layout.VBox());
 
@@ -200,6 +201,9 @@ qx.Class.define("desk.FileBrowser",
 	},
 
 	members : {
+		// array to store all file browsers, usefull for updates
+		__fileBrowsers : [],
+
 		// defines whether the file browser is a standalone one
 		// i.e. whether it needs to create a window
 		__standAlone : true,
@@ -512,6 +516,7 @@ qx.Class.define("desk.FileBrowser",
 		},
 
 		updateDirectory : function (file) {
+			console.log(file);
 			var nodeId = this.__getFileNode(file);
 			if (nodeId) {
 				this.__expandDirectoryListing(nodeId);
@@ -530,6 +535,7 @@ qx.Class.define("desk.FileBrowser",
 		},
 
 		updateDirectories : function (files) {
+			console.log(files);
 			var foldersObject = {};
 			var foldersArray = [];
 			var i;
@@ -540,6 +546,7 @@ qx.Class.define("desk.FileBrowser",
 					foldersArray.push(folder);
 				}
 			}
+			console.log(foldersArray);
 			for (i = 0; i < foldersArray.length; i++) {
 				this.updateDirectory(foldersArray[i]);
 			}
@@ -613,7 +620,7 @@ qx.Class.define("desk.FileBrowser",
 				var modificationTimes = new Array();
 				var sizes = new Array();
 				var node = this.__getFileNode(directory);
-				if (node === null) {
+				if (node == null) {
 					return;
 				}
 				nodeId = node.nodeId;
