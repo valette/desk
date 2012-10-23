@@ -174,9 +174,13 @@ qx.Class.define("desk.FileBrowser",
 							moveOrCopyFile);
 						}
 						else {
+							var directories = [];
+							for (var i = 0; i != files.length; i++) {
+								directories.push(browser.__getFileDirectory(files[i]));
+							}
 							//that.__expandDirectoryListing(nodeId);
-							files.push(destination);
-							that.updateDirectories(files);
+							directories.push(destination);
+							that.__updateDirectories(directories);
 						}
 					}
 					moveOrCopyFile();
@@ -516,14 +520,17 @@ qx.Class.define("desk.FileBrowser",
 		},
 
 		updateDirectory : function (file) {
-			console.log(file);
-			var nodeId = this.__getFileNode(file);
-			if (nodeId) {
-				this.__expandDirectoryListing(nodeId);
+			var browsers = this.__fileBrowsers;
+			for (var i = 0; i != browsers.length; i++) {
+				var browser = browsers[i];
+				var nodeId = browser.__getFileNode(file);
+				if (nodeId) {
+					browser.__expandDirectoryListing(nodeId);
+				}
 			}
 		},
 
-		getFileDirectory : function (file) {
+		__getFileDirectory : function (file) {
 			var node = this.__getFileNode(file);
 			if (!node) {
 				return null;
@@ -534,19 +541,17 @@ qx.Class.define("desk.FileBrowser",
 			return this.__getNodeFile(node.parentNodeId);
 		},
 
-		updateDirectories : function (files) {
-			console.log(files);
+		__updateDirectories : function (files) {
 			var foldersObject = {};
 			var foldersArray = [];
 			var i;
 			for (i = 0; i < files.length; i++) {
-				var folder = this.getFileDirectory(files[i]);
+				var folder = files[i];
 				if (foldersObject[folder] === undefined) {
 					foldersObject[folder] = true;
 					foldersArray.push(folder);
 				}
 			}
-			console.log(foldersArray);
 			for (i = 0; i < foldersArray.length; i++) {
 				this.updateDirectory(foldersArray[i]);
 			}
