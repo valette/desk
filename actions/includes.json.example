@@ -1,6 +1,0 @@
-{
-	"include" : [
-	"/home/valette/git/vtkSurface/bin/vtkSurface.json",
-	"/home/valette/CVSROOT/gc/gc.json"
-    ]
-}
