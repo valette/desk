@@ -299,7 +299,7 @@ qx.Class.define("desk.Markers",
 			
 			var mrkrId = mrkrParams.id;
 			
-			var spaceCoords = mrkrParams.coords;
+			var space3DSceneCoords = mrkrParams.coords;
 			
 			var scene = meshView.getScene();
 			
@@ -307,11 +307,14 @@ qx.Class.define("desk.Markers",
 			var pMaterial = new THREE.MeshLambertMaterial({color:0x41FF41, opacity:1.0, transparent:false});
 			var sphere = new THREE.Mesh(pGeometry, pMaterial);
 			//~ sphere.overdraw = true;
-			sphere.translateX(spaceCoords.x);
-			sphere.translateY(spaceCoords.y);
-			sphere.translateZ(spaceCoords.z);
+			sphere.translateX(space3DSceneCoords.x);
+			sphere.translateY(space3DSceneCoords.y);
+			sphere.translateZ(space3DSceneCoords.z);
 			
 			scene.add(sphere);
+			
+			return sphere;
+			
 		}
 		
 	} //// END of   members :

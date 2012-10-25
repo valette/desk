@@ -997,36 +997,7 @@ qx.Class.define("desk.MeshViewer",
 						var meshId=meshes[i].nodeId;
 						var mesh=this.__meshes[meshId];
 						
-						//~ var analyser = new desk.MeshTools(this);
-						var _this = this;
-						if(_this.__extAnalyser==null)
-						{
-							_this.debug("new THREE.MeshAnalyser !");
-							var extAnalyserOutput = new THREE.MeshAnalyser(mesh);
-							if(extAnalyserOutput.status==0)
-							{
-								var extAnalyser = extAnalyserOutput.analyser;
-								_this.debug("extAnalyser : " + extAnalyser);
-								_this.debug("extAnalyser.findMeshExtremeVertices() !");
-								extAnalyser.findMeshExtremeVertices();
-								//~ _this.debug("extAnalyser.buildLinks() !");
-								//~ extAnalyser.buildLinks();
-								_this.__extAnalyser = extAnalyser;
-							}
-							else
-							{
-								_this.debug("Error : " + extAnalyserOutput.status + " -> could not load mesh...");
-								_this.__extAnalyser = null;
-							}
-						}
-						else
-						{
-							_this.debug("_this.__extAnalyser.setMesh(mesh)");
-							var extAnalyserOutput = _this.__extAnalyser.setMesh(mesh);
-							_this.debug("extAnalyserOutput.status : " + extAnalyserOutput.status);
-							if(extAnalyserOutput.status!=0)
-								_this.debug("Error : " + extAnalyserOutput.status + " -> could not load mesh...");
-						}
+						var meshTools = new desk.MeshTools( {meshView:this, specMesh:mesh} );
 						
 					}
 				}
