@@ -1200,6 +1200,8 @@ qx.Class.define("desk.MeshView",
 			dataModel.setData();
 		},
 
+		__animator : null,
+
 		__getContextMenu : function() {
 			//context menu to edit meshes appearance
 			var menu = new qx.ui.menu.Menu;
@@ -1257,6 +1259,24 @@ qx.Class.define("desk.MeshView",
 				this.render();		
 			},this);
 			menu.add(removeButton);
+
+			var animateButton = new qx.ui.menu.Button('animate');
+			animateButton.addListener('execute', function () {
+				var nodes = this.__meshesTree.getSelectedNodes();
+				if (!this.__animator) {
+					var that = this;
+					this.__animator = new desk.Animator(function () {that.render();});
+					this.__animator.addListener('close', function () {
+						this.__animator = null;
+					}, this);
+				}
+
+				for (var i = 0; i !=nodes.length; i++) {
+					this.__animator.addObject(this.__meshes[nodes[i].nodeId], nodes[i].label);
+				}
+			},this);
+			menu.add(animateButton);
+
 			return menu;
 		}
 	}
