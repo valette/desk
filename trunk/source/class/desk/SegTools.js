@@ -227,28 +227,6 @@ qx.Class.define("desk.SegTools",
 
 			tools.__topRightContainer.add(tools.__eraserButton);
 
-			/*
-		////Create test Marks on/off button
-            tools.__marksButton = new qx.ui.form.ToggleButton("Marks");
-			
-			this.__marksButton.addListener("changeValue", function(e)
-			{
-				this.__master.applyToViewers(function () {
-					this.__markerObject.setMarkMode(e.getData());
-					});
-			}, this);
-
-			tools.__topRightContainer.add(tools.__marksButton);
-			var master = this.__master;
-			this.__master.applyToViewers( function()
-			{
-				this.__markerObject = new desk.Markers(this, master);
-				this.getMarkerObject = function() {
-					return this.__markerObject;
-				};
-			} );*/
-			
-			
 		////Create labels zone
 			var paintPage = new qx.ui.tabview.Page("paint");
 			var paintPageLayout=new qx.ui.layout.VBox();

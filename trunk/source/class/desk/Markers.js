@@ -5,8 +5,8 @@ qx.Class.define("desk.Markers",
 {
 	extend : qx.core.Object,
 	
-	construct : function(sliceView, master)
-	{	
+	construct : function(inParams)
+	{
 		
 		// Enable logging in debug variant
 		if(qx.core.Environment.get("qx.debug"))
@@ -19,42 +19,34 @@ qx.Class.define("desk.Markers",
         
 		this.__mrkrsList = [];
 		
-		this.__master = master;
-		
-		this.__sliceView = sliceView;
-		
-		this.__createMarkMesh(sliceView);
-		
-		this.addListener("changeMarkMode", function(event)
+		if(inParams.sliceView!=null)
 		{
-			this.__markMesh.setVisible(event.getData());
-		});
-		
-		this.addListener("addPosMarker", function(event)
-		{
-			var struct = event.getData();
-			var viewers = master.getViewers();
-			var viewersNb = viewers.length;
-			var curViewer;
-			for(var i=0; i<viewersNb; i++)
+			this.__sliceView = inParams.sliceView;
+			
+			this.__createMarkMesh(this.__sliceView);
+			this.addListener("changeMarkMode", function(event)
 			{
-				curViewer = viewers[i];
-				if(curViewer!=sliceView)
-					curViewer.getMarkerObject().reproduceNewPosMarker(struct);
-			}
-		});
+				this.__markMesh.setVisible(event.getData());
+			});
+			
+			this.__sliceView.addListener("viewMouseDown", function(event){ this.onMouseDown(event.getData()); }, this );
+			this.__sliceView.addListener("viewMouseMove", function(event){ this.onMouseMove(event.getData()); }, this );
+			this.__sliceView.addListener("viewMouseOut", function(event){ this.onMouseOut(event.getData()); }, this );
+			this.__sliceView.addListener("changeSlice", function(event){ this.onChangeSlice(event); }, this );
+			
+		}
 		
-		sliceView.addListener("viewMouseDown", function(event){ this.__onMouseDown(event.getData()); }, this );
-		sliceView.addListener("viewMouseMove", function(event){ this.__onMouseMove(event.getData()); }, this );
-		sliceView.addListener("viewMouseOut", function(event){ this.__onMouseOut(event.getData()); }, this );
-		sliceView.addListener("changeSlice", function(event){ this.__onChangeSlice(event); }, this );
+		if(inParams.meshView!=null)
+			this.__meshView = inParams.meshView;
+		
 		
 		return this;
 	},
 	
 	events :
 	{
-		"addPosMarker" : "qx.event.type.Data"
+		"posMrkrAdded" : "qx.event.type.Data",
+		"posMrkrSelected" : "qx.event.type.Data"
 	},
 
 	properties :
@@ -67,30 +59,34 @@ qx.Class.define("desk.Markers",
 
 	members :
 	{
-		__master : null,
 		__sliceView : null,
+		__meshView : null,
 		
 		__mrkrsList : null,
-		__visibleMarkers :null,
+		__visibleMarkers : null,
 		
-		__mrksZ : 0.001,
+		__mrks2DZ : 0.001,
 		
 		getMrksZ : function() {
 			var z;
 			if(this.__sliceView.getOrientation()==2)
-				z = this.__mrksZ;
+				z = this.__mrks2DZ;
 			else
-				z = -this.__mrksZ;
+				z = -this.__mrks2DZ;
 			
 			return z;
 		},
 		
-		getSliceView : function() {
-			return this.__sliceView;
-		},
-		
 		getMarkMesh : function() {
 			return this.__markMesh;
+		},
+		
+		getMeshView : function() {
+			return this.__meshView;
+		},
+		
+		getSliceView : function() {
+			return this.__sliceView;
 		},
 		
 		getMrkrsList : function() {
@@ -110,127 +106,99 @@ qx.Class.define("desk.Markers",
 			var yMin = -rndmL*spacing[1];
 			var yMax =  rndmL*spacing[1];
 			
-			var markMat = new THREE.LineBasicMaterial({color: 0x41A0FF, lineWidth: 100, opacity:1.0, transparent:false});
+			var markMat = new THREE.LineBasicMaterial({color: 0x41A0FF, lineWidth: 100, opacity:1.0, transparent:true});
 			
-			this.__markMesh = this.createCross(x, y, xMin, xMax, yMin, yMax, markMat, scene);
+			this.__markMesh = this.setCross(x, y, xMin, xMax, yMin, yMax, markMat, scene);
 			this.__markMesh.setVisible(false);
 		},
 		
-		createNewPosMarker : function(mouseDownEvent, mrkrId)
+		onMouseDown : function(inEvent)
 		{
-			var sliceView = this.getSliceView();
-			
-			var onScenePos = this.getOnPixelCoordsFromEvent(mouseDownEvent);
-				onScenePos.z = this.getMrksZ();
-			
-			var onVolCoords = sliceView.get3DPosition(mouseDownEvent);
-			var onSlicePos = sliceView.projectOnSlice(onVolCoords.i, onVolCoords.j, onVolCoords.k);
-				onSlicePos.z = sliceView.getSlice();
-			
-			var mrkrsList = this.getMrkrsList();
+			if(!inEvent.isRightPressed()&&!inEvent.isMiddlePressed()&&!inEvent.isShiftPressed())
+			{
+				if(this.isMarkMode())
+				{
+					var mrkrId = this.getMrksNb();
+					var mrkrsList = this.getMrkrsList();
+						/* This doesn't allow to use the same int coordinates for two different markers with different coordinates in the scene of the meshes
+							var mrkrsNb = mrkrsList.length;
+							var alreadyExists = false;
+							var curMrkr;
+							for(var i=0; i<mrkrsNb; i++)
+							{
+								curMrkr = mrkrsList[i];
+								if(curMrkr.z==onSliceIntPos.z) // if on the given slice
+									if((curMrkr.x==onSliceIntPos.x)&&(curMrkr.y==onSliceIntPos.y)) // if on the given 2D coordinates
+										alreadyExists = true;
+							}
+							if(!alreadyExists)
+						*/
+					if(mrkrsList[mrkrId]==null)
+					{
+						var mrkrId = this.getMrksNb();
+						var absVolCoords = this.getSliceView().get3DPosition(inEvent);
+						this.setNewPosMarker( {id:mrkrId, coords:absVolCoords} );
+						// Transmit marker id and on-volume absolute int coordinates of the new marker to the other views
+						this.fireDataEvent("posMrkrAdded", {id:mrkrId, coords:absVolCoords});
+						if(this.getMeshView()!=null)
+							this.setNewMeshMarker({id:mrkrId, coords:absVolCoords});
+					}
+					else
+					{
+						this.debug("Do a marker is selected thing");
+					}
+				}
+			}
+		},
+		
+		onMouseMove : function(inEvent)
+		{
+			if(this.isMarkMode())
+			{
+				var markMesh = this.getMarkMesh();
+				if(!inEvent.isRightPressed()&&!inEvent.isMiddlePressed()&&!inEvent.isShiftPressed())
+				{
+					var sliceView = this.getSliceView();
+					var position = sliceView.getPositionOnSlice(inEvent);
+					var onScenePos = this.getOnPixelCoordsFromInts(position.i, position.j);
+					markMesh.setVisible(true);
+					markMesh.setPosition(onScenePos.x, onScenePos.y, this.getMrksZ());
+					this.getSliceView().render();
+				}
+				else
+				{
+					markMesh.setVisible(false);
+				}
+			}
+		},
+		
+		onMouseOut : function(inEvent)
+		{
+			if(this.isMarkMode())
+			{
+				this.getMarkMesh().setVisible(false);
+				this.getSliceView().render();
+			}
+		},
+		
+		onChangeSlice : function(inEvent)
+		{
+			var mrkrsList  = this.getMrkrsList();
 			var mrkrsNb = mrkrsList.length;
-			var alreadyExists = false;
-			var curMrkr;
-			for(var i=0; i<mrkrsNb; i++)
+			var slice = inEvent.getData();
+			var i, marker;
+			for(i=0; i<mrkrsNb; i++)
 			{
-				curMrkr = mrkrsList[i];
-				if(curMrkr.z==onSlicePos.z) // if on the given slice
-					if((curMrkr.x==onSlicePos.x)&&(curMrkr.y==onSlicePos.y)) // if on the given 2D coordinates
-						alreadyExists = true;
+				marker = mrkrsList[i];
+				if(slice==marker.z)
+				{
+					marker.cross.setVisible(true);
+				}
+				else
+				{
+					marker.cross.setVisible(false);
+				}
 			}
-			if(!alreadyExists)
-			{
-				this.setNewPosMarker(onScenePos, onSlicePos, mrkrId);
-				// Transmit on volume absolute int coordinates and marker id to the other views
-				this.fireDataEvent("addPosMarker", {x:onVolCoords.i, y:onVolCoords.j, z:onVolCoords.k, id:mrkrId});
-			}
-			else
-			{
-				this.debug("Do a marker is selected thing");
-			}
-		},
-		
-		reproduceNewPosMarker : function(eventData)
-		{
-			var mrkrId = eventData.id;
-			if(this.getMrkrsList().length<=mrkrId)
-			{
-				var onSlicePos = this.getSliceView().projectOnSlice( eventData.x, eventData.y, eventData.z);
-					onSlicePos.z = this.getSliceView().getSlice();
-				
-				var onScenePos = this.getOnPixelCoordsFromInts(onSlicePos.x, onSlicePos.y);
-				
-				this.setNewPosMarker(onScenePos, onSlicePos, mrkrId);
-			}
-		},
-		
-		setNewPosMarker : function(onScenePos, onSlicePos, mrkrId)
-		{
-			var sliceView = this.getSliceView();
-			var scene = sliceView.getScene();
-			var rndmL = this.getRndmL();
-			var spacing = sliceView.getVolume2DSpacing();
-			
-			var x = onScenePos.x;
-			var y = onScenePos.y;
-			var xMin = x - rndmL*spacing[0];
-			var xMax = x + rndmL*spacing[0];
-			var yMin = y - rndmL*spacing[1];
-			var yMax = y + rndmL*spacing[1];
-			
-			var markMat = new THREE.LineBasicMaterial({color:0x41FF41, lineWidth:100, opacity:1.0, transparent:false});
-			
-			var newMarker = this.createCross(x, y, xMin, xMax, yMin, yMax, markMat, scene);
-			
-			sliceView.render();
-			
-			var mrkrsList = this.getMrkrsList();
-			mrkrsList[mrkrId] = {cross:newMarker, x:onSlicePos.x, y:onSlicePos.y, z:onSlicePos.z};
-			
-			this.setMrksNb(mrkrId+1);
-		},
-		
-		createCross : function(x, y, xMin, xMax, yMin, yMax, material, scene)
-		{
-			var z = this.getMrksZ();
-			
-			// Create the horizontal line
-			var xGeometry=new THREE.Geometry();
-				xGeometry.vertices.push( new THREE.Vector3(xMin, y, z) );
-				xGeometry.vertices.push( new THREE.Vector3(xMax, y, z) );
-			var xline = new THREE.Line(xGeometry, material);
-				xline.renderDepth = this.getMrksRndrDpth();
-			scene.add(xline);
-			
-			// Create the vertical line
-			var yGeometry=new THREE.Geometry();
-				yGeometry.vertices.push( new THREE.Vector3(x, yMin, z) );
-				yGeometry.vertices.push( new THREE.Vector3(x, yMax, z) );
-			var yline = new THREE.Line(yGeometry, material);
-				yline.renderDepth = this.getMrksRndrDpth();
-			scene.add(yline);
-			
-			var cross = {hl:xline, vl:yline};
-			
-			cross.setPosition = function(x, y, z)
-			{
-				cross.hl.position.set(x, y, z);
-				cross.vl.position.set(x, y, z);
-			};
-			cross.setVisible = function(newVis)
-			{
-				cross.hl.visible = newVis;
-				cross.vl.visible = newVis;
-			};
-			
-			return cross;
-		},
-		
-		getOnPixelCoordsFromEvent : function(inEvent)
-		{
-			var sliceView = this.getSliceView();
-			var position = sliceView.getPositionOnSlice(inEvent);
-			return this.getOnPixelCoordsFromInts(position.i, position.j);
 		},
 		
 		getOnPixelCoordsFromInts : function(onSliceX, onSliceY)
@@ -255,72 +223,97 @@ qx.Class.define("desk.Markers",
 			return {x:x, y:y};
 		},
 		
-		getOnSliceViewCoordinates : function(mouseDownEvent)
+		setNewPosMarker : function(mrkrParams)
 		{
-			var volCoor = {};
 			var sliceView = this.getSliceView();
-			var onSlicePos = sliceView.getPositionOnSlice(mouseDownEvent);
-			volCoor.x = onSlicePos.i;
-			volCoor.y = onSlicePos.j;
-			volCoor.z = sliceView.getSlice();
 			
-			return volCoor;
+			var mrkrId = mrkrParams.id;
+			
+			var absVolCoords = mrkrParams.coords;
+			var onSliceIntPos = sliceView.projectOnSlice(absVolCoords.i, absVolCoords.j, absVolCoords.k);
+				onSliceIntPos.z = sliceView.getSlice();
+			var onScenePos = this.getOnPixelCoordsFromInts(onSliceIntPos.x, onSliceIntPos.y);
+			
+			var scene = sliceView.getScene();
+			var rndmL = this.getRndmL();
+			var spacing = sliceView.getVolume2DSpacing();
+			
+			var x = onScenePos.x;
+			var y = onScenePos.y;
+			var xMin = x - rndmL*spacing[0];
+			var xMax = x + rndmL*spacing[0];
+			var yMin = y - rndmL*spacing[1];
+			var yMax = y + rndmL*spacing[1];
+			
+			var markMat = new THREE.LineBasicMaterial({color:0x41FF41, lineWidth:100, opacity:1.0, transparent:false});
+			
+			var newMarker = this.setCross(x, y, xMin, xMax, yMin, yMax, markMat, scene);
+			
+			sliceView.render();
+			
+			var mrkrsList = this.getMrkrsList();
+			mrkrsList[mrkrId] = {cross:newMarker, x:onSliceIntPos.x, y:onSliceIntPos.y, z:onSliceIntPos.z};
+			
+			this.setMrksNb(mrkrId+1);
 		},
 		
-		__onMouseDown : function(inEvent)
+		setCross : function(x, y, xMin, xMax, yMin, yMax, material, scene)
 		{
-			if(!inEvent.isRightPressed()&&!inEvent.isMiddlePressed()&&!inEvent.isShiftPressed())
-				if(this.isMarkMode())
-					this.createNewPosMarker(inEvent, this.getMrksNb());
-		},
-		
-		__onMouseMove : function(inEvent)
-		{
-			if(this.isMarkMode())
+			var z = this.getMrksZ();
+			
+			// Create the horizontal line
+			var xGeometry=new THREE.Geometry();
+				xGeometry.vertices.push( new THREE.Vector3(xMin, y, z) );
+				xGeometry.vertices.push( new THREE.Vector3(xMax, y, z) );
+			var xline = new THREE.Line(xGeometry, material);
+				xline.renderDepth = this.getMrksRndrDpth();
+			scene.add(xline);
+			
+			// Create the vertical line
+			var yGeometry=new THREE.Geometry();
+				yGeometry.vertices.push( new THREE.Vector3(x, yMin, z) );
+				yGeometry.vertices.push( new THREE.Vector3(x, yMax, z) );
+			var yline = new THREE.Line(yGeometry, material);
+				yline.renderDepth = this.getMrksRndrDpth();
+			scene.add(yline);
+			
+			var cross = {hl:xline, vl:yline};
+			
+			cross.setPosition = function(x, y, z)
 			{
-				var markMesh = this.getMarkMesh();
-				if(!inEvent.isRightPressed()&&!inEvent.isMiddlePressed()&&!inEvent.isShiftPressed())
-				{
-					var position = this.getOnPixelCoordsFromEvent(inEvent);
-					markMesh.setVisible(true);
-					markMesh.setPosition(position.x, position.y, this.getMrksZ());
-					this.getSliceView().render();
-				}
-				else
-				{
-					markMesh.setVisible(false);
-				}
-			}
+				xline.position.set(x, y, z);
+				yline.position.set(x, y, z);
+			};
+			cross.setVisible = function(newVis)
+			{
+				xline.visible = newVis;
+				yline.visible = newVis;
+			};
+			
+			return cross;
 		},
 		
-		__onMouseOut : function(inEvent)
+		setNewMeshMarker : function(mrkrParams)
 		{
-			if(this.isMarkMode())
-			{
-				this.getMarkMesh().setVisible(false);
-				this.getSliceView().render();
-			}
-		},
-		
-		__onChangeSlice : function(inEvent)
-		{
-			var mrkrsList  = this.getMrkrsList();
-			var mrkrsNb = mrkrsList.length;
-			var slice = inEvent.getData();
-			var i, marker;
-			for(i=0; i<mrkrsNb; i++)
-			{
-				marker = mrkrsList[i];
-				if(slice==marker.z)
-				{
-					marker.cross.setVisible(true);
-				}
-				else
-				{
-					marker.cross.setVisible(false);
-				}
-			}
+			var meshView = this.getMeshView();
+			
+			var mrkrId = mrkrParams.id;
+			
+			var spaceCoords = mrkrParams.coords;
+			
+			var scene = meshView.getScene();
+			
+			var pGeometry = new THREE.SphereGeometry(3, 18, 18);
+			var pMaterial = new THREE.MeshLambertMaterial({color:0x41FF41, opacity:1.0, transparent:false});
+			var sphere = new THREE.Mesh(pGeometry, pMaterial);
+			//~ sphere.overdraw = true;
+			sphere.translateX(spaceCoords.x);
+			sphere.translateY(spaceCoords.y);
+			sphere.translateZ(spaceCoords.z);
+			
+			scene.add(sphere);
 		}
-	}
+		
+	} //// END of   members :
 	
 }); //// END of   qx.Class.define("desk.Markers",

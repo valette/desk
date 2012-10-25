@@ -158,7 +158,7 @@ qx.Class.define("desk.MeshView",
 	},
 
 	events : {
-		"meshesLoaded" : "qx.event.type.Data",
+		"meshesLoaded" : "qx.event.type.Event",
 		"close" : "qx.event.type.Event"
 	},
 
@@ -217,7 +217,15 @@ qx.Class.define("desk.MeshView",
 			this.__window.exclude();
 			return this.__mainPane;
 		},
-
+		
+		getScene : function() {
+			return this.__scene;
+		},
+		
+		getMeshes : function() {
+			return this.__meshes;
+		},
+		
 		__readFile : function (file, mtime, color, update, opt_updateDataModel) {
 			var label;
 			var lastSlashIndex=file.lastIndexOf("\/");
@@ -578,7 +586,7 @@ qx.Class.define("desk.MeshView",
 									case 0:
 										_this.viewAll();
 										_this.__meshesTree.getDataModel().setData();
-										_this.fireDataEvent("meshesLoaded", _this.__meshes);
+										_this.fireEvent("meshesLoaded");
 										break;
 									default:
 								}
@@ -1255,7 +1263,7 @@ qx.Class.define("desk.MeshView",
 			},this);
 			menu.add(removeButton);
 			
-			var analysisButton = new qx.ui.menu.Button("Mesh analysis");
+			var analysisButton = new qx.ui.menu.Button("Mesh Tools");
 			analysisButton.addListener("execute", function (){
 				var meshes=this.__meshesTree.getSelectedNodes();
 				for (var i=0;i<meshes.length;i++) {
@@ -1263,14 +1271,36 @@ qx.Class.define("desk.MeshView",
 						var meshId=meshes[i].nodeId;
 						var mesh=this.__meshes[meshId];
 						
-						var extAnalyser = new THREE.MeshAnalyser(mesh);
-						if(typeof extAnalyser == "object")
+						//~ var analyser = new desk.MeshTools(this);
+						var _this = this;
+						if(_this.__extAnalyser==null)
 						{
-							extAnalyser.findMeshExtremeVertices();
-							extAnalyser.buildLinks();
+							_this.debug("new THREE.MeshAnalyser !");
+							var extAnalyserOutput = new THREE.MeshAnalyser(mesh);
+							if(extAnalyserOutput.status==0)
+							{
+								var extAnalyser = extAnalyserOutput.analyser;
+								_this.debug("extAnalyser : " + extAnalyser);
+								_this.debug("extAnalyser.findMeshExtremeVertices() !");
+								extAnalyser.findMeshExtremeVertices();
+								//~ _this.debug("extAnalyser.buildLinks() !");
+								//~ extAnalyser.buildLinks();
+								_this.__extAnalyser = extAnalyser;
+							}
+							else
+							{
+								_this.debug("Error : " + extAnalyserOutput.status + " -> could not load mesh...");
+								_this.__extAnalyser = null;
+							}
 						}
 						else
-							this.debug("extAnalyser : " + extAnalyser);
+						{
+							_this.debug("_this.__extAnalyser.setMesh(mesh)");
+							var extAnalyserOutput = _this.__extAnalyser.setMesh(mesh);
+							_this.debug("extAnalyserOutput.status : " + extAnalyserOutput.status);
+							if(extAnalyserOutput.status!=0)
+								_this.debug("Error : " + extAnalyserOutput.status + " -> could not load mesh...");
+						}
 						
 					}
 				}
