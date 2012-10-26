@@ -247,6 +247,11 @@ qx.Class.define("desk.FileBrowser",
 				var extension=file.substring(file.lastIndexOf("."), file.length);
 				switch (extension)
 				{
+				case '.log':
+				case '.txt':
+				case '.js':
+					new desk.TextEditor (file);
+					break;
 				case ".vtk":
 				case ".ply":
 				case ".obj":
