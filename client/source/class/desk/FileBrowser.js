@@ -263,7 +263,7 @@ qx.Class.define("desk.FileBrowser",
 				case ".png":
 				case ".jpg":
 				case ".bmp":
-					new desk.ImageView(file);
+					new desk.ImageViewer(file);
 					break;
 				case ".xml":
 					desk.FileSystem.readFile(file, function (request) {
