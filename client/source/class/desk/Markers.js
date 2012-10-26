@@ -313,6 +313,8 @@ qx.Class.define("desk.Markers",
 			
 			scene.add(sphere);
 			
+			meshView.render(true);
+			
 			return sphere;
 			
 		}
