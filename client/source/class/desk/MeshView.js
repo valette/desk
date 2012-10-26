@@ -327,7 +327,7 @@ qx.Class.define("desk.MeshView",
 		},
 		__links : null,
 
-		linkToMeshViewer : function (viewer) {
+		link : function (viewer) {
 			if (viewer==this) {
 				return;
 			}
@@ -1041,7 +1041,7 @@ qx.Class.define("desk.MeshView",
 			this.__window.addListener("drop", function(e) {
 				if (e.supportsType("meshView")) {
 					var meshView=e.getData("meshView");
-					this.linkToMeshViewer(meshView);
+					this.link(meshView);
 					meshView.__propagateLinks();
 				}
 			},this);

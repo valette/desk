@@ -828,6 +828,26 @@ qx.Class.define("desk.VolumeViewer",
 			return (gridContainer);
 		},
 
+		link : function (volumeViewer) {
+			var viewers=this.__viewers;
+			var viewers2=volumeViewer.__viewers;
+			if(this.__nbUsedOrientations === viewers2.length) {
+				for (var i = 0; i < this.__nbUsedOrientations; i++) {
+					var viewer = viewers[i];
+					var orientation = viewer.getOrientation();
+					for (var j = 0; j < this.__nbUsedOrientations; j++) {
+						if (viewers2[j].getOrientation() === orientation) {
+							viewer.linkToViewer(viewers2[j]);
+						}
+					}
+				}
+			}
+			else
+			{
+				alert("Cannot link viewers : number of orientations incoherent");
+			}
+		},
+
 		__getLinkButton : function () {
 			var menu = new qx.ui.menu.Menu();
 			var unLinkButton = new qx.ui.menu.Button("unlink");
@@ -863,29 +883,11 @@ qx.Class.define("desk.VolumeViewer",
 
 			// enable linking between viewers by drag and drop
 			this.__window.setDroppable(true);
-			this.__window.addListener("drop", function(e) {
-				if (e.supportsType("volView"))
-				{
-					var volView=e.getData("volView");
-					var viewers=this.__viewers;
-					var viewers2=volView.__viewers;
-					if(this.__nbUsedOrientations==viewers2.length) {
-						for (var i=0;i<this.__nbUsedOrientations;i++) {
-							var viewer=viewers[i];
-							var orientation=viewer.getOrientation();
-							for (var j=0;j<this.__nbUsedOrientations;j++) {
-								if (viewers2[j].getOrientation()==orientation) {
-									viewer.linkToViewer(viewers2[j]);
-								}
-							}
-						}
-					}
-					else
-					{
-						alert("Cannot link viewers : number of orientations incoherent");
-					}
+			this.__window.addListener('drop', function(e) {
+				if (e.supportsType('volView')) {
+					this.link(e.getData('volView'));
 				}
-			},this);
+			}, this);
 			return (label);
 		},
 
