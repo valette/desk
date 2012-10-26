@@ -7,7 +7,7 @@
 #ignore(Uint8Array)
 @lint ignoreGlobal(THREE)
 */
-qx.Class.define("desk.MeshView", 
+qx.Class.define("desk.MeshViewer", 
 {
 	extend : qx.core.Object,
 
