@@ -258,7 +258,7 @@ qx.Class.define("desk.FileBrowser",
 				case ".stl":
 				case ".ctm":
 				case ".off":
-					new desk.MeshView(file);
+					new desk.MeshViewer(file);
 					break;
 				case ".png":
 				case ".jpg":
@@ -269,7 +269,7 @@ qx.Class.define("desk.FileBrowser",
 					desk.FileSystem.readFile(file, function (request) {
 						var xmlDoc = request.getResponse();
 						if (xmlDoc.getElementsByTagName("mesh").length != 0) {
-							new desk.MeshView(file);
+							new desk.MeshViewer(file);
 						}
 						else {
 							alert ('xml file of unknown type!');
