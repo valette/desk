@@ -304,13 +304,12 @@ qx.Class.define("desk.FileBrowser",
 			});
 
 			myBrowser.addAction("download",function (node) {
-				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF)
-				{
-					document.getElementById('myIFrm').src =
-						desk.FileSystem.getFileURL(myBrowser.__getNodeFile(node));
+				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+					new qx.html.Iframe(desk.FileSystem.getFileURL(myBrowser.__getNodeFile(node)));
 				} 
-				else
+				else {
 					alert("Cannot download a directory!");
+				}
 			});
 
 			myBrowser.addAction("upload",function (node) {
