@@ -609,21 +609,11 @@ qx.Class.define("desk.FileBrowser",
 		__expandDirectoryListing : function(nodeId) {
 			var directory = this.__getNodeFile(nodeId);
 			var dataModel = this.__virtualTree.getDataModel();
-			dataModel.prune(nodeId,false);
 
-			// Instantiate request
-			var req = new qx.io.request.Xhr();
-			req.setUrl(desk.FileSystem.getActionURL('ls'));
-			req.setMethod("POST");
-			req.setAsync(true);
-			req.setRequestData({"dir" : directory});
-			req.addListener("success", readFileList, this);
-			req.send();
+			desk.FileSystem.readDir(directory, readFileList, this);
 
-			function readFileList(e)
+			function readFileList(files)
 			{
-				var req = e.getTarget();
-				var files = req.getResponseText().split("\n");
 				var filesArray = new Array();
 				var directoriesArray = new Array();
 				var modificationTimes = new Array();
@@ -633,22 +623,20 @@ qx.Class.define("desk.FileBrowser",
 					return;
 				}
 				nodeId = node.nodeId;
-				for (var i = 0; i < files.length; i++)
-				{
-					var splitfile = files[i].split(" ");
-					var fileName = splitfile[0];
-					if (fileName != "")
-					{
-						if (splitfile[1] == "file")
-						{
-							filesArray.push(fileName);
-							sizes[fileName] = parseInt(splitfile[3]);
-						}
-						else
-							directoriesArray.push(fileName);
+				dataModel.prune(nodeId,false);
 
-						modificationTimes[fileName] = parseInt(splitfile[2]);
+				for (var i = 0; i < files.length; i++) {
+					var file = files[i];
+					var fileName = file.name;
+
+					if (!file.isDirectory) {
+						filesArray.push(fileName);
+						sizes[fileName] = file.size;
 					}
+					else {
+						directoriesArray.push(fileName);
+					}
+					modificationTimes[fileName] = file.mtime;
 				}
 				directoriesArray.sort();
 				filesArray.sort();

@@ -95,13 +95,6 @@ app.use(homeURL, express.static(serverPath));
 // display directories
 app.use(homeURL, express.directory(serverPath));
 
-// handle directory listing
-app.post(actionsBaseURL + 'ls', function(req, res){
-	actions.listDir(req.body.dir, function (message) {
-		res.send(message);
-	});
-});
-
 // handle uploads
 app.post(actionsBaseURL + 'upload', function(req, res) {
 	var file = req.files.file;
@@ -145,9 +138,14 @@ app.get(actionsBaseURL+':action', function (req, res) {
 		});
 		break;
 	case 'exists' :
-		fs.exists(deskPath + req.query["path"], function (exists) {
+		fs.exists(deskPath + req.query.path, function (exists) {
 			console.log('exists : ' + req.query["path"]	+ ' : ' + exists);
 			res.send(JSON.stringify({exists : exists}));
+		});
+		break;
+	case 'ls' : 
+		actions.getDirectoryContent(req.query.path, function (message) {
+			res.send(message);
 		});
 		break;
 	default : 

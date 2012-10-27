@@ -462,56 +462,42 @@ exports.performAction = function (POST, callback) {
 	callback);
 }
 
-//**** listDir action
-exports.listDir = function (dir, callback) {
-	myConsole.log("listDir : "+dir);
+exports.getDirectoryContent = function (path, callback) {
+	myConsole.log('listDir : ' + path);
 	async.waterfall([
 		function (callback) {
-			validatePath(dir, callback);
+			validatePath(path, callback);
 		},
 
 		function (callback) {
-			var realDir=filesRoot+"/"+dir+"/";
+			var realDir = filesRoot + "/" + path + "/";
 			fs.readdir(realDir, function (err, files) {
 				if (err) {
 					callback (err);
 					return;
 				}
 
-				var realFiles=[];
-				for (var i=0;i!=files.length;i++) {
-					realFiles.push(realDir+files[i]);
+				var realFiles = [];
+				for (var i = 0; i != files.length; i++) {
+					realFiles.push(realDir + files[i]);
 				}
 
 				async.map(realFiles, fs.stat, function(err, results){
-					for (var i=0;i!=files.length;i++) {
-						results[i].name=files[i];
+					for (var i = 0; i != files.length; i++) {
+						results[i].name = files[i];
 					}
-
 					callback (err, results);
 				});
 			});
 		},
 
 		function (files, callback) {
-			var message='';
-			for (var i=0;i!=files.length;i++)
-			{
-				var file=files[i];
-				var dirString;
-				if (file.isDirectory()) {
-					dirString="dir";
-				}
-				else {
-					dirString="file";
-				}
-
-				message+=file.name+" "+dirString+" "+file.mtime.getTime()+" "+file.size;
-				if (i!=files.length-1) {
-					message+="\n";
-				}
+			for (var i = 0; i != files.length; i++) {
+				var file = files[i];
+				file.isDirectory = file.isDirectory();
+				file.mtime = file.mtime.getTime();
 			}
-			callback(null, message);
+			callback(null, JSON.stringify(files));
 		}],
 		function (error, message) {
 			callback(message);

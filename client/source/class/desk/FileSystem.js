@@ -151,14 +151,35 @@ qx.Class.define("desk.FileSystem",
 			});
 		},
 
-		exists : function (file, callback, context) {
-			desk.FileSystem.xhr('GET', 'exists', {path : file}, function (request) {
-				var response = JSON.parse(request.getResponseText());
-				callback.call(context, JSON.parse(request.getResponseText()).exists);
+		/**
+		* tests whether a file (or directory) exists or not
+		* @param path {String} the path to test
+		* @param callback {Function} callback with boolean as parameter when done
+		* @param context {Object} optional context for the callback
+		*/
+		exists : function (path, callback, context) {
+			desk.FileSystem.get('exists', {path : path}, function (result) {
+				callback.call(context, result.exists);
 			});
 		},
 
-		xhr : function (method, action, requestData, callback, context) {
+		/**
+		* gets the lists of files in a directory
+		* @param path {String} the directory to list
+		* @param callback {Function} callback with array of files as parameter
+		* @param context {Object} optional context for the callback
+		*/
+		readDir : function (path, callback, context) {
+			desk.FileSystem.get('ls', {path : path}, callback, context);
+		},
+
+		get : function (action, params, callback, context) {
+			desk.FileSystem.__xhr('GET', action, params, function (request) {
+				callback.call(context, JSON.parse(request.getResponseText()));
+			});		
+		},
+
+		__xhr : function (method, action, requestData, callback, context) {
 			var fs = desk.FileSystem.getInstance();
 			var req = new qx.io.request.Xhr();
 			req.setUrl(fs.__actionsURL + action);
@@ -215,42 +236,29 @@ qx.Class.define("desk.FileSystem",
 		*/ 
 		getFileSessions : function (file, sessionType, callback)
 		{
-			var lastSlashIndex=file.lastIndexOf("/");
-			var directory=file.substring(0,lastSlashIndex);
+			if (sessionType == null) {
+				alert('error : no session type asked');
+				return;
+			}
 
-			var shortFileName=file.substring(lastSlashIndex+1,file.length);
-			function readFileList(e)
-			{
+			var directory = desk.FileSystem.getFileDirectory(file);
+			var shortFileName = desk.FileSystem.getFileName(file);
+			desk.FileSystem.readDir(directory, function (files) {
 				var sessions=[];
-				var req = e.getTarget();
-				var files=req.getResponseText().split("\n");
-				for (var i=0;i<files.length;i++)
-				{
-					var splitfile=files[i].split(" ");
-					var fileName=splitfile[0];
-					if (fileName!="")
-					{
-						if (splitfile[1]=="dir")
-						{
-							//first, test if the directory begins like the file
-							var childLabel=splitfile[0];
-							var begining=childLabel.substring(0,shortFileName.length+1);
-							if (begining==(shortFileName+"."))
-							{
-								var remaining=childLabel.substring(shortFileName.length+1, childLabel.length);
-								if (sessionType!=null)
-								{
-									var childSession=remaining.substring(0,sessionType.length+1);
-									if (childSession==(sessionType+"."))
-									{
-										var sessionId=parseInt(remaining.substring(sessionType.length+1,remaining.length));
-										sessions.push(sessionId);
-									}
-								}
-								else
-								{
-									alert("error : no session type asked");
-								}
+				for (var i = 0; i != files.length; i++) {
+					var child = files[i];
+					var childName = child.name;
+					if (child.isDirectory) {
+						//first, test if the directory begins like the file
+						if (childName.substring(0, shortFileName.length + 1) == (shortFileName + ".")) {
+							console.log("childname" + childName);
+							var remaining = childName.substring(shortFileName.length + 1);
+							console.log("remaining: "+ remaining);
+							var childSession = remaining.substring(0, sessionType.length + 1);
+							console.log("childsession: "+ childSession);
+							if (childSession == (sessionType + ".")) {
+								var sessionId=parseInt(remaining.substring(childSession.length));
+								sessions.push(sessionId);
 							}
 						}
 					}
@@ -262,16 +270,7 @@ qx.Class.define("desk.FileSystem",
 				}
 				sessions.sort(sortNumber);
 				callback(sessions);
-			}
-
-			// Instantiate request
-			var req = new qx.io.request.Xhr();
-			req.setUrl(this.__actionsURL + 'ls');
-			req.setMethod("POST");
-			req.setAsync(true);
-			req.setRequestData({"dir" : directory});
-			req.addListener("success", readFileList, this);
-			req.send();
+			});
 		},
 
 		/**
@@ -289,35 +288,25 @@ qx.Class.define("desk.FileSystem",
 		*/
 		createNewSession : function (file, sessionType, callback)
 		{
-			var that=this;
-			function success(sessions)
-			{
-				var maxId=-1;
-				for (var i=0;i<sessions.length;i++)
-				{
-					var sessionId=sessions[i];
-					if (sessionId>maxId)
-						maxId=sessionId;
+			this.getFileSessions(file, sessionType, function (sessions) {
+				var maxId = -1;
+				for (var i = 0; i < sessions.length; i++) {
+					var sessionId = sessions[i];
+					if (sessionId > maxId)
+						maxId = sessionId;
 				}
+				var newSessionId = maxId + 1;
+				var lastSlash = file.lastIndexOf("/");
+				var subdir = file.substring(lastSlash+1) + "." + sessionType + "." + newSessionId;
 
-				var newSessionId=maxId+1;
-
-				function getAnswer(e)
-				{
-					callback(newSessionId);
-				}
-
-
-				var lastSlash=file.lastIndexOf("/");
-				var subdir=file.substring(lastSlash+1)+"."+sessionType+"."+newSessionId;
-				var parameterMap={
+				desk.Actions.getInstance().launchAction({
 					"action" : "add_subdirectory",
 					"subdirectory_name" : subdir,
-					"output_directory" : file.substring(0,lastSlash)};
-				desk.Actions.getInstance().launchAction(parameterMap, getAnswer);
-			}
-
-			this.getFileSessions(file, sessionType, success);
+					"output_directory" : file.substring(0,lastSlash)},
+					function () {
+					callback(newSessionId);
+				});
+			});
 		}
 	}
 });
