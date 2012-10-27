@@ -133,6 +133,22 @@ qx.Class.define("desk.FileSystem",
 		*/
 		getActionURL : function (action) {
 			return desk.FileSystem.getInstance().__actionsURL + action;
+		},
+
+		/**
+		* executes the javascript code in file
+		* @param file {String} the file to execute
+		* @param callback {Function} callback when done
+		* @param context {Object} optional context for the callback
+		*/
+		executeScript : function (file, callback, context) {
+			desk.Actions.init(function () {
+				desk.FileSystem.readFile(file, function (request) {
+					var code = new Function(request.getResponseText());
+					code();
+					callback.call(context);
+				});
+			});
 		}
 	},
 

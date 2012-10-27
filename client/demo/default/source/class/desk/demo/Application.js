@@ -63,9 +63,15 @@ qx.Class.define("desk.demo.Application",
 				return results[1];
 			}
 
-			desk.Actions.getInstance().buildUI();
-			var myActions=new desk.FileBrowser("actions/");
-			var myDesk=new desk.FileBrowser(getParameter("rootDir"));
+			var startupScript = getParameter("script");
+			if (startupScript) {
+				desk.FileSystem.executeScript(startupScript);
+			}
+			else {
+				desk.Actions.getInstance().buildUI();
+				var myActions=new desk.FileBrowser("actions/");
+				var myDesk=new desk.FileBrowser(getParameter("rootDir"));
+			}
 		}
 	}
 });
