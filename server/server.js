@@ -147,6 +147,15 @@ app.get(actionsBaseURL + 'clearactions', function(req, res){
 	});
 });
 
+// handle 'exists' file rpc
+app.get(actionsBaseURL + 'exists', function(req, res){
+	console.log('exists : '+req.query["path"]);
+	fs.exists(deskPath + req.query["path"], function (exists) {
+		console.log(exists);
+		res.send(JSON.stringify({exists : exists}));
+	});
+});
+
 // handle errors
 app.use(express.errorHandler({
 	dumpExceptions: true, 

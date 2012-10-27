@@ -63,14 +63,33 @@ qx.Class.define("desk.demo.Application",
 				return results[1];
 			}
 
-			var startupScript = getParameter("script");
-			if (startupScript) {
-				desk.FileSystem.executeScript(startupScript);
+			var initScript = 'code/init.js'
+			// first try to automatically launch startup script if it exists
+			if (getParameter("noauto") === null) {
+				desk.FileSystem.exists(initScript, function (exists) {
+					if (exists) {
+						desk.FileSystem.executeScript(initScript);
+					}
+					else {
+						Init();
+					}
+				});
 			}
 			else {
-				desk.Actions.getInstance().buildUI();
-				var myActions=new desk.FileBrowser("actions/");
-				var myDesk=new desk.FileBrowser(getParameter("rootDir"));
+				Init();
+			}
+
+			function Init() {
+				var startupScript = getParameter("script");
+				if (startupScript) {
+					desk.FileSystem.executeScript(startupScript);
+				}
+				else {
+					desk.Actions.getInstance().buildUI();
+					var myCode=new desk.FileBrowser("code/");
+					var myActions=new desk.FileBrowser("actions/");
+					var myDesk=new desk.FileBrowser(getParameter("rootDir"));
+				}
 			}
 		}
 	}

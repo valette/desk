@@ -149,6 +149,25 @@ qx.Class.define("desk.FileSystem",
 					callback.call(context);
 				});
 			});
+		},
+
+		exists : function (file, callback, context) {
+			desk.FileSystem.xhr('GET', 'exists', {path : file}, function (request) {
+				var response = JSON.parse(request.getResponseText());
+				callback.call(context, JSON.parse(request.getResponseText()).exists);
+			});
+		},
+
+		xhr : function (method, action, requestData, callback, context) {
+			var fs = desk.FileSystem.getInstance();
+			var req = new qx.io.request.Xhr();
+			req.setUrl(fs.__actionsURL + action);
+			req.setRequestData(requestData)
+			req.setMethod(method);
+			req.setAsync(true);
+			req.addListener('load', function (e) {
+				callback.call(context, e.getTarget())});
+			req.send();
 		}
 	},
 
