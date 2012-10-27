@@ -1,9 +1,10 @@
 var fs      = require('fs'),
+	os      = require('os');
     express = require('express'),
-    http    = require ('http'),
-    https   = require ('https'),
-   	exec = require('child_process').exec,
-   	os=require('os');
+    http    = require('http'),
+    https   = require('https'),
+   	exec    = require('child_process').exec,
+	actions = require('./actions/actions');
 
 var	user=process.env.USER;
 console.log("UID : "+process.getuid());
@@ -133,27 +134,26 @@ app.post(actionsBaseURL + 'reset', function(req, res){
 	});
 });
 
-// handle cache clear
-app.get(actionsBaseURL + 'clearcache', function(req, res){
-	exec("rm -rf *",{cwd: deskPath + 'cache', maxBuffer: 1024*1024}, function (err) {
-		res.send('cache cleared!');
-	});
-});
-
-// handle actions clear
-app.get(actionsBaseURL + 'clearactions', function(req, res){
-	exec("rm -rf *",{cwd: deskPath + 'actions', maxBuffer: 1024*1024}, function (err) {
-		res.send('actions cleared!');
-	});
-});
-
-// handle 'exists' file rpc
-app.get(actionsBaseURL + 'exists', function(req, res){
-	console.log('exists : '+req.query["path"]);
-	fs.exists(deskPath + req.query["path"], function (exists) {
-		console.log(exists);
-		res.send(JSON.stringify({exists : exists}));
-	});
+app.get(actionsBaseURL+':action', function (req, res) {
+	var action = req.params.action;
+	switch (action) {
+	case 'clearcache' :
+//	case 'clearactions' :
+		var dir = action.substring(5);
+		exec("rm -rf *",{cwd: deskPath + dir}, function (err) {
+			res.send(dir + ' cleared');
+		});
+		break;
+	case 'exists' :
+		fs.exists(deskPath + req.query["path"], function (exists) {
+			console.log('exists : ' + req.query["path"]	+ ' : ' + exists);
+			res.send(JSON.stringify({exists : exists}));
+		});
+		break;
+	default : 
+		res.send('action not found');
+		break;
+   }
 });
 
 // handle errors
@@ -190,7 +190,6 @@ else {
 console.log(separator);
 
 // setup actions
-var actions = require('./actions/actions');
 actions.addDirectory(__dirname + '/actions/');
 // make extensions directory if not present
 if (!fs.existsSync(extensionsDir)) {
