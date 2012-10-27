@@ -19,8 +19,13 @@ var actionsDirectories = [];
 // array storing all the actions
 var actions;
 
+// base directory where all data files are (data, cache, actions, ..)
 var filesRoot;
-var actionsRoot,cacheRoot,dataRoot;
+
+// allowed sub-directories in filesRoot. They are automatically created if not existent
+var directories = [];
+
+// last allowed directory : the /public path
 var publicPath='/public'
 
 // variable to enumerate actions for logging
@@ -33,21 +38,12 @@ function validatePath(path, callback) {
 			return;
 		}
 		else {
-			if (realPath.slice(0, actionsRoot.length) == actionsRoot) {
-				callback (null);
-				return;
-			}
-			if (realPath.slice(0, cacheRoot.length) == cacheRoot) {
-				callback (null);
-				return;
-			}
-			if (realPath.slice(0, dataRoot.length) == dataRoot) {
-				callback (null);
-				return;
-			}
-			if (realPath.slice(0, publicPath.length) == publicPath) {
-				callback (null);
-				return;
+			for (var i = 0; i != directories.length; i++) {
+				var subDir = directories[i];
+				if (realPath.slice(0, subDir.length) == subDir) {
+					callback (null);
+					return;
+				}
 			}
 			callback("path "+realPath+" not allowed");
 		}
@@ -163,15 +159,17 @@ exports.setRoot = function (root) {
 	function getSubdir(subdir) {
 		var dir = filesRoot + subdir;
 		if (!fs.existsSync(dir)) {
-			console.log('Warning : directory ' + subdir + ' does not exist. Creating it');
+			console.log('Warning : directory ' + dir + ' does not exist. Creating it');
 			fs.mkdirSync(dir);
 		}
 		return (fs.realpathSync(dir));
 	}
 
-	dataRoot = getSubdir('data');
-	cacheRoot = getSubdir('cache');
-	actionsRoot = getSubdir('actions');
+	directories.push(getSubdir('data'));
+	directories.push(getSubdir('cache'));
+	directories.push(getSubdir('actions'));
+	directories.push(getSubdir('code'));
+	directories.push('/public/');
 };
 
 exports.performAction = function (POST, callback) {
@@ -330,7 +328,6 @@ exports.performAction = function (POST, callback) {
 		switch (outputDirectory) 
 		{
 		case undefined :
-		// TODO create actions directory
 			var counterFile=filesRoot+"/actions/counter.json";
 			fs.readFile( counterFile , function (err, data) {
 				var index=1;
