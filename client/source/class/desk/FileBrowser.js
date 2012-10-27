@@ -189,16 +189,16 @@ qx.Class.define("desk.FileBrowser",
 		}, this);
 
 		if (this.__standAlone) {
-			var window=new qx.ui.window.Window();
-			window.setLayout(new qx.ui.layout.VBox());
-			this.__window=window;
-			window.setShowMinimize(false);
-			window.setUseMoveFrame(true);
-			window.setCaption("files");
-			window.setWidth(400);
-			window.setHeight(500);
+			var window = new qx.ui.window.Window();
+			window.set({ShowMinimize : false,
+					layout : new qx.ui.layout.VBox(),
+					useMoveFrame : true,
+					caption : this.__baseDir,
+					width : 400,
+					height : 500});
 			window.add(this, {flex : 1});
-			this.__window.open();
+			this.__window = window;
+			window.open();
 		}
 
 		return (this);
