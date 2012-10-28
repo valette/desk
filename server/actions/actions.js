@@ -31,8 +31,8 @@ var publicPath='/public'
 // variable to enumerate actions for logging
 var actionsCounter=0;
 
-function validatePath(path, callback) {
-	fs.realpath(filesRoot+path, function (err, realPath) {
+exports.validatePath = function (path, callback) {
+	fs.realpath(filesRoot + path, function (err, realPath) {
 		if (err) {
 			callback(err.message);
 			return;
@@ -45,7 +45,7 @@ function validatePath(path, callback) {
 					return;
 				}
 			}
-			callback("path "+realPath+" not allowed");
+			callback("path " + realPath + " not allowed");
 		}
 	});
 }
@@ -377,7 +377,7 @@ exports.performAction = function (POST, callback) {
 			})
 			break;
 		default :
-			validatePath ( outputDirectory, callback );
+			exports.validatePath ( outputDirectory, callback );
 		}
 	},
 
@@ -466,7 +466,7 @@ exports.getDirectoryContent = function (path, callback) {
 	myConsole.log('listDir : ' + path);
 	async.waterfall([
 		function (callback) {
-			validatePath(path, callback);
+			exports.validatePath(path, callback);
 		},
 
 		function (callback) {

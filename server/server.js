@@ -1,5 +1,6 @@
 var fs      = require('fs'),
-	os      = require('os');
+	os      = require('os'),
+	libPath = require('path'),
     express = require('express'),
     http    = require('http'),
     https   = require('https'),
@@ -146,6 +147,20 @@ app.get(actionsBaseURL+':action', function (req, res) {
 	case 'ls' : 
 		actions.getDirectoryContent(req.query.path, function (message) {
 			res.send(message);
+		});
+		break;
+	case 'download' :
+		var file = req.query.file;
+		actions.validatePath(file, function (error) {
+			if (error) {
+				res.send(error);
+				return;
+			}
+//			res.setHeader('Content-Type', 'application/octet-stream');
+			res.setHeader('Content-Disposition','attachment; filename=' +
+				libPath.basename(file));
+			var fileStream = fs.createReadStream(deskPath + file);
+			fileStream.pipe(res);
 		});
 		break;
 	default : 

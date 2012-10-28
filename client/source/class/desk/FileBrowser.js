@@ -305,7 +305,8 @@ qx.Class.define("desk.FileBrowser",
 
 			myBrowser.addAction("download",function (node) {
 				if (node.type==qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-					new qx.html.Iframe(desk.FileSystem.getFileURL(myBrowser.__getNodeFile(node)));
+					new qx.html.Iframe(desk.FileSystem.getActionURL('download') +
+						'?file=' + myBrowser.__getNodeFile(node));
 				} 
 				else {
 					alert("Cannot download a directory!");
