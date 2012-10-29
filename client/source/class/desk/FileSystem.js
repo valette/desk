@@ -57,9 +57,8 @@ qx.Class.define("desk.FileSystem",
 		* 
 		* <pre class="javascript">
 		* example : 
-		* desk.FileSystem.readFile ("myFilePath", function (request) {
-		*   var answer = request.getResponseText(); //to get the raw text response
-		*   var xmlAnswer = request.getResponse(); //to get parsed xml
+		* desk.FileSystem.writeFile ("myFilePath", function () {
+		* // here, the file has been written to disk
 		* });
 		* </pre>
 		*/
