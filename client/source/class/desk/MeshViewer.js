@@ -24,26 +24,24 @@ qx.Class.define("desk.MeshViewer",
 		}
 
 		var window=new qx.ui.window.Window();
-		window.setLayout(new qx.ui.layout.VBox());
-		window.setShowClose(true);
-		window.setWidth(600);
-		window.setHeight(400);
-		window.setShowMinimize(false);
+		window.set({layout : new qx.ui.layout.VBox(),
+			showClose : true,
+			width : 600,
+			height : 400,
+			showMinimize : false,
+			useResizeFrame : true,
+			useMoveFrame : true,
+			contentPadding : 2,
+			caption : file});
 		window.setResizable(true,true,true,true);
-		window.setUseResizeFrame(true);
-		window.setUseMoveFrame(true);
-		window.setContentPadding(2);
-		window.setCaption(file);
-		
 		this.__window=window;
 
 		var pane = new qx.ui.splitpane.Pane("horizontal");
-		window.add(pane,{flex : 1});
-
+		window.add(pane, {flex : 1});
 		this.__mainPane = pane;
 
 		this.__createRenderWindow();
-		pane.add(this.__overlayCanvas, 5);
+		pane.add(this.__threeCanvas, 5);
 		window.open();
 
 		var elementsList = new qx.ui.container.Composite;
@@ -52,7 +50,7 @@ qx.Class.define("desk.MeshViewer",
 		elementsList.setVisibility("excluded");
 
 		var button=new qx.ui.form.Button("+").set({opacity : 0.5});
-		this.__overlayCanvas.add (button, {right : 3, top : 3});
+		this.__threeCanvas.add (button, {right : 3, top : 3});
 		button.addListener("execute", function () {
 			if (elementsList.getVisibility()=="visible") {
 				elementsList.setVisibility("excluded");
@@ -165,10 +163,7 @@ qx.Class.define("desk.MeshViewer",
 
 		__firstMTime : null,
 
-		// the html element containing the 3D rendering
-		__embededHTML : null,
-
-		__overlayCanvas : null,
+		__threeCanvas : null,
 
 		// qooxdoo window
 		__window : null,
@@ -191,12 +186,6 @@ qx.Class.define("desk.MeshViewer",
 
 		// array storing all meshes visibility
 		__meshesVisibility : null,
-
-		//THREE.js objects
-		__scene : null,
-		__camera : null,
-		__renderer : null,
-		__controls : null,
 
 		// array containing the queue of meshes to load 
 		__meshesToLoad : null,
@@ -318,8 +307,9 @@ qx.Class.define("desk.MeshViewer",
 
 		__propagateLinks : function () {
 			this.applyToOtherLinks(function (me) {
-				this.__controls.copy(me.__controls);
-				this.__controls.update();
+				var controls = this.__threeCanvas.getControls();
+				controls.copy(me.__threeCanvas.getControls());
+				controls.update();
 				this.render();
 			});
 		},
@@ -385,24 +375,25 @@ qx.Class.define("desk.MeshViewer",
 			var center=min.clone().addSelf(max).multiplyScalar(0.5);
 			var bbdiaglength=Math.sqrt(max.clone().subSelf(min).lengthSq());
 
-			var camera=this.__camera;
+			var camera=this.__threeCanvas.getCamera();
+			var controls=this.__threeCanvas.getControls();
 
 			if (this.__boudingBoxDiagonalLength==0) {
 				this.__boudingBoxDiagonalLength=bbdiaglength;
 				camera.position.copy(center);
 				camera.position.setZ(camera.position.z-bbdiaglength);
-				this.__controls.target.copy(center);
+				controls.target.copy(center);
 			}
 			else {
 				var ratio=bbdiaglength/this.__boudingBoxDiagonalLength;
 				this.__boudingBoxDiagonalLength=bbdiaglength;
 				var backPedal=camera.position.clone();
-				backPedal.subSelf(this.__controls.target);
+				backPedal.subSelf(controls.target);
 				backPedal.multiplyScalar(ratio);
-				backPedal.addSelf(this.__controls.target);
+				backPedal.addSelf(controls.target);
 				camera.position.copy(backPedal);
 			}
-			this.__controls.update();
+			controls.update();
 			this.render();
 		},
 
@@ -523,7 +514,7 @@ qx.Class.define("desk.MeshViewer",
 			material.transparent=false;
 			var mesh=new THREE.Mesh(geometry,material);
 			material.side=THREE.DoubleSide;
-			this.__scene.add(mesh);
+			this.__threeCanvas.getScene().add(mesh);
 
 			mesh.__volumeSlice=volumeSlice;
 
@@ -569,12 +560,8 @@ qx.Class.define("desk.MeshViewer",
 		},
 
 		__createRenderWindow : function(){
-			var overlayCanvas=new qx.ui.container.Composite(new qx.ui.layout.Canvas());
-			this.__overlayCanvas=overlayCanvas;
-			var threeCanvas = new qx.ui.embed.Canvas();
-			overlayCanvas.add(threeCanvas, {width : "100%", height : "100%"});
-
-			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+			var overlayCanvas = new desk.ThreeContainer();
+			this.__threeCanvas=overlayCanvas;
 
 			this.__window.setDroppable(true);
 			this.__window.addListener("drop", function(e) {
@@ -599,52 +586,10 @@ qx.Class.define("desk.MeshViewer",
 				this.fireEvent("close");
 			},this);
 
-			var scene = new THREE.Scene();
-			var camera = new THREE.PerspectiveCamera( 60,1, 0.01, 1e10 );
-			var controls = new THREE.TrackballControls2( camera,threeCanvas.getContentElement().getCanvas() );
-
-			this.__controls=controls;
-			controls.zoomSpeed = 6;
-			this.__scene=scene;
-			this.__camera=camera;
-
-			scene.add( camera );
-
-			// lights
-			var dirLight = new THREE.DirectionalLight( 0xcccccc );
-			dirLight.position.set( 200, 200, 1000 ).normalize();
-			camera.add( dirLight );
-			camera.add( dirLight.target );
-			var ambientLight = new THREE.AmbientLight(0x555555);
-			scene.add( ambientLight );
-
-			// renderer
-			var renderer = new THREE.WebGLRenderer(
-				{ canvas : threeCanvas.getContentElement().getCanvas(),
-				antialias: true } 
-			);
-			this.__renderer=renderer;
-			renderer.setClearColorHex( 0xffffff, 1 );
-			resizeHTML.apply(this);
-
-			threeCanvas.addListener("resize",resizeHTML, this);
-			function resizeHTML(){
-				var elementSize = threeCanvas.getInnerSize();
-				this.__threeCanvasSize = elementSize;
-				if (elementSize == null) {
-					return;
-				}
-				renderer.setSize(  elementSize.width , elementSize.height );
-				camera.aspect=elementSize.width / elementSize.height;
-				camera.updateProjectionMatrix();
-				controls.setSize( elementSize.width , elementSize.height );
-				this.render();
-			}
-
 			var draggingInProgress=false;
-			threeCanvas.addListener("mousedown", function (event)	{
-				threeCanvas.capture();
-				var origin=threeCanvas.getContentLocation();
+			overlayCanvas.addListener("mousedown", function (event)	{
+				overlayCanvas.capture();
+				var origin=overlayCanvas.getContentLocation();
 				draggingInProgress=true;
 				var button=0;
 				if (event.isRightPressed()) {
@@ -657,28 +602,28 @@ qx.Class.define("desk.MeshViewer",
 					button=3;
 				}
 
-				controls.mouseDown(button,
+				this.__threeCanvas.getControls().mouseDown(button,
 								event.getDocumentLeft()-origin.left,
 								event.getDocumentTop()-origin.top);
-			});
+			}, this);
 
-			threeCanvas.addListener("mousemove", function (event)	{
+			overlayCanvas.addListener("mousemove", function (event)	{
 				if (draggingInProgress) {
-					var origin=threeCanvas.getContentLocation();
-					controls.mouseMove(event.getDocumentLeft()-origin.left
+					var origin=overlayCanvas.getContentLocation();
+					this.__threeCanvas.getControls().mouseMove(event.getDocumentLeft()-origin.left
 							, event.getDocumentTop()-origin.top);
 					this.render();
 					this.__propagateLinks();
 				}
 			}, this);
 
-			threeCanvas.addListener("mouseup", function (event)	{
-				threeCanvas.releaseCapture();
+			overlayCanvas.addListener("mouseup", function (event)	{
+				overlayCanvas.releaseCapture();
 				draggingInProgress=false;
-				controls.mouseUp();
-			});
+				this.__threeCanvas.getControls().mouseUp();
+			}, this);
 
-			threeCanvas.addListener("mousewheel", function (event)	{
+			overlayCanvas.addListener("mousewheel", function (event)	{
 				var tree=this.__meshesTree;
 				var root=this.__slicesRoot;
 				if (root!==null) {
@@ -692,7 +637,7 @@ qx.Class.define("desk.MeshViewer",
 							}
 						}
 
-						var origin=threeCanvas.getContentLocation();
+						var origin=overlayCanvas.getContentLocation();
 						var x=event.getDocumentLeft()-origin.left;
 						var y=event.getDocumentTop()-origin.top;
 
@@ -702,7 +647,8 @@ qx.Class.define("desk.MeshViewer",
 
 						var projector = new THREE.Projector();
 						var vector = new THREE.Vector3( x2, y2, 0.5 );
-						projector.unprojectVector( vector, camera );
+						var camera = this.__threeCanvas.getCamera();
+						projector.unprojectVector(vector, camera);
 
 						var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
 
@@ -726,31 +672,9 @@ qx.Class.define("desk.MeshViewer",
 			}, this);
 		},
 
-		__renderFunction : null,
-		__renderingTriggered : false,
-
-		render : function ( force ) {
-	//		console.log("render mesh");
-			var _this=this;
-
-			if (this.__renderFunction==null) {
-				this.__renderFunction=
-					function () {
-						_this.__renderer.render( _this.__scene, _this.__camera );
-						_this.__renderingTriggered = false;
-				};
-			}
-			if (force==true) {
-				this.__renderFunction();
-				return;
-			}			
-
-			if (!this.__renderingTriggered) {
-				this.__renderingTriggered=true;
-				requestAnimationFrame(this.__renderFunction);
-			}
+		render : function (force) {
+			this.__threeCanvas.render(force);
 		},
-
 
 		loadVTKURL : function (url, callback, color) {
 
@@ -770,7 +694,7 @@ qx.Class.define("desk.MeshViewer",
 						material.side=THREE.DoubleSide;
 						mesh.renderDepth=color[4];
 
-						_this.__scene.add( mesh );
+						_this.__threeCanvas.getScene().add( mesh );
 
 						if(typeof callback == 'function') {
 							callback(mesh);
@@ -802,7 +726,7 @@ qx.Class.define("desk.MeshViewer",
 			if (this.__numberOfLoaders>0){
 				this.__meshesToLoad.shift();
 				this.__numberOfLoaders--;
-				var loader = new THREE.CTMLoader( this.__renderer.context );
+				var loader = new THREE.CTMLoader( this.__threeCanvas.getRenderer().context );
 				loader.load (parameters.url,
 					function(geom){
 								geom.dynamic = true;
@@ -824,7 +748,7 @@ qx.Class.define("desk.MeshViewer",
 							var mesh = new THREE.Mesh(geom, material );
 							material.side=THREE.DoubleSide;
 							mesh.renderDepth=color[4];
-							_this.__scene.add( mesh );
+							_this.__threeCanvas.getScene().add( mesh );
 
 							if(typeof parameters.callback == 'function') {
 								parameters.callback(mesh);
@@ -837,35 +761,8 @@ qx.Class.define("desk.MeshViewer",
 			}
 		},
 
-		snapshot : function (factor) {
-			if (factor==null) {
-				factor=1;
-			}
-
-			var width=this.__window.getWidth();
-			var height=this.__window.getHeight();
-
-			if (factor==1) {
-				this.render(true);
-				var strData = this.__renderer.domElement.toDataURL("image/png");
-				var saveData=strData.replace("image/png", "image/octet-stream");
-				document.location.href = saveData;
-			}
-			else {
-				this.__embededHTML.addListenerOnce("resize", function() {
-					var strData = this.__renderer.domElement.toDataURL("image/png");
-					var saveData=strData.replace("image/png", "image/octet-stream");
-					document.location.href = saveData;
-					this.__window.set({width: width, height : height});
-				}, this);
-				this.__window.set({width: width*factor, height : height*factor});
-			}
-		},
-
 		__getSnapshotButton : function () {
-
 			var factor=1;
-
 			var menu = new qx.ui.menu.Menu();
 			var x1button = new qx.ui.menu.Button("x1");
 			x1button.addListener("execute", function (){factor=1;},this);
@@ -882,7 +779,8 @@ qx.Class.define("desk.MeshViewer",
 
 			var button=new qx.ui.form.Button(null, "desk/camera-photo.png");
 			button.addListener("execute", function(e) {
-				this.snapshot(factor);}, this);
+				this.__threeCanvas.snapshot(factor);
+			}, this);
 	
 			button.setContextMenu(menu);
 			return button;
@@ -1069,19 +967,20 @@ qx.Class.define("desk.MeshViewer",
 		},
 
 		removeMeshes : function (nodes) {
+			var renderer = this.__threeCanvas.getRenderer();
 			var dataModel=this.__meshesTree.getDataModel();
 			for (var i=0;i<nodes.length;i++) {
 				var nodeId=nodes[i].nodeId;
 				dataModel.prune(nodeId, true);
 				var mesh=this.__meshes[nodeId];
-				this.__scene.remove(mesh);
+				this.__threeCanvas.getScene().remove(mesh);
 				this.__meshes[nodeId]=0;
 				this.__meshesVisibility[nodeId]=0;
 				var map=mesh.material.map;
 				if (map!=null) {
-					this.__renderer.deallocateTexture( map );
+					renderer.deallocateTexture( map );
 				}
-				this.__renderer.deallocateObject( mesh );
+				renderer.deallocateObject( mesh );
 			}
 			dataModel.setData();
 		},
