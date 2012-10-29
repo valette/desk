@@ -64,7 +64,6 @@ qx.Mixin.define("desk.LinkMixin",
 			}
 			addUnique(this);
 			addUnique(source);
-			source.__propagateLinks();
 		},
 
 		unlink : function () {
@@ -73,7 +72,7 @@ qx.Mixin.define("desk.LinkMixin",
 				return;
 			}
 			for (var i=0;i<links.length;i++){
-				if (links[i]==this) {
+				if (links[i] == this) {
 					links.splice(i,1);
 					break;
 				}
