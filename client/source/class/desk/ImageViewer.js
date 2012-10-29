@@ -13,9 +13,8 @@ qx.Class.define("desk.ImageViewer",
 		this.setUseMoveFrame(true);
 		this.setCaption(file);
 
-		var url=desk.FileSystem.getFileURL(file);
-		this.__image=new qx.ui.basic.Image(url+"?nocache="+Math.random());
-	//	this.__image.setScale(true);
+		var url = desk.FileSystem.getFileURL(file);
+		this.__image = new qx.ui.basic.Image(url + '?nocache=' + Math.random());
 		this.add(this.__image,{flex : 1});
 
 		this.open();

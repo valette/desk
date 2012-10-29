@@ -1,3 +1,5 @@
+
+
 qx.Class.define("desk.Action", 
 {
 	extend : qx.ui.container.Composite,
@@ -5,14 +7,14 @@ qx.Class.define("desk.Action",
 	construct : function (name, standalone)
 	{
 		this.base(arguments);
-		var actions=desk.Actions.getInstance();
-		this.__actions=actions;
-		this.__action=actions.getAction(name);
-		this.__actionName=name;
-		if (standalone==false) {
-			this.__standalone=false;
+		var actions = desk.Actions.getInstance();
+		this.__actions = actions;
+		this.__action = actions.getAction(name);
+		this.__actionName = name;
+		if (standalone == false) {
+			this.__standalone = false;
 		}
-		this.__connections=[];
+		this.__connections = [];
 
 		return (this);
 	},
@@ -27,7 +29,7 @@ qx.Class.define("desk.Action",
 		{
 			desk.FileSystem.readFile(file, function (request) {
 				var parameters=JSON.parse(request.getResponseText());
-				var action=new desk.Action (parameters["action"]);
+				var action=new desk.Action (parameters.action);
 				action.setActionParameters(parameters);
 				action.buildUI();
 			});
@@ -97,8 +99,8 @@ qx.Class.define("desk.Action",
 		},
 
 		__updateUIParameters : function () {
-			var manager=this.__validationManager;
-			if (manager!=null) {
+			var manager = this.__validationManager;
+			if (manager !== null) {
 				var parameters=this.__loadedParameters;
 				var items=manager.getItems();
 				var hideProvidedParameters=false;
@@ -212,6 +214,7 @@ qx.Class.define("desk.Action",
 			var manager = this.__validationManager;
 			var send = this.__updateButton;
 			var connections=this.__connections;
+			var i;
 
 			// check the validation status
 			if (manager.getValid()) {
@@ -222,7 +225,7 @@ qx.Class.define("desk.Action",
 				var parameterMap={"action" : this.__actionName};
 				var items=manager.getItems();
 				// add all parameters
-				for (var i=0;i<items.length;i++) {
+				for (i = 0; i < items.length; i++) {
 					var currentItem=items[i];
 					var value=currentItem.getValue();
 					if (value!=null) {
@@ -231,21 +234,21 @@ qx.Class.define("desk.Action",
 				}
 
 				// add output directory if provided
-				if (this.__outputDirectory!=null) {
-					parameterMap["output_directory"]=this.__outputDirectory;
+				if (this.__outputDirectory != null) {
+					parameterMap.output_directory = this.__outputDirectory;
 				}
 
 				// add the value of the "force update" checkbox
-				parameterMap["force_update"]=this.__forceUpdateCheckBox.getValue();
+				parameterMap.force_update = this.__forceUpdateCheckBox.getValue();
 				this.__executionStatus.setValue("Processing...");
 
 				// update parent Actions
-				var parentActions=[];
-				for (var i=0;i<connections.length;i++) {
-					var parentAction=connections[i].action;
-					var found=false;
-					for (var j=0;j<parentActions.length;j++) {
-						if (parentActions[j]==parentAction) {
+				var parentActions = [];
+				for (i = 0; i < connections.length; i++) {
+					var parentAction = connections[i].action;
+					var found = false;
+					for (var j = 0; j < parentActions.length; j++) {
+						if (parentActions[j] == parentAction) {
 							found=true;
 							break;
 						}
@@ -254,24 +257,24 @@ qx.Class.define("desk.Action",
 						parentActions.push(parentAction);
 					}
 				}
-				var numberOfFinishedParentActions=parentActions.length;
+				var numberOfFinishedParentActions = parentActions.length;
 				
 				function afterParentActionProcessed (event){
 					numberOfFinishedParentActions++;
 					if (event) {
-						var finishedAction=event.getTarget();
+						var finishedAction = event.getTarget();
 						//locate action in connections array
-						for (var i=0;i<connections.length;i++) {
-							var currentConnection=connections[i];
-							if (currentConnection.action==finishedAction) {
-								var currentParameter=currentConnection.parameter;
-								var currentFile=currentConnection.file;
-								parameterMap[currentParameter]=
-									currentConnection.action.getOutputDirectory()+"/"+currentFile;
+						for (var i = 0; i < connections.length; i++) {
+							var currentConnection = connections[i];
+							if (currentConnection.action == finishedAction) {
+								var currentParameter = currentConnection.parameter;
+								var currentFile = currentConnection.file;
+								parameterMap[currentParameter] =
+									currentConnection.action.getOutputDirectory() + '/' + currentFile;
 							}
 						}
 					}
-					if (numberOfFinishedParentActions>=parentActions.length) {
+					if (numberOfFinishedParentActions >= parentActions.length) {
 						send.setLabel("Processing...");
 						function getAnswer (e)
 						{
@@ -280,31 +283,31 @@ qx.Class.define("desk.Action",
 							send.setLabel("Update");
 
 							var req = e.getTarget();
-							var response=req.getResponseText();
-							var splitResponse=response.split("\n");
-							if (this.getOutputDirectory()==null) {
+							var response = req.getResponseText();
+							var splitResponse = response.split("\n");
+							if (this.getOutputDirectory() == null) {
 								this.setOutputDirectory(splitResponse[0]);
 							}
 
-							this.__executionStatus.setValue(splitResponse[splitResponse.length-2]);
+							this.__executionStatus.setValue(splitResponse[splitResponse.length - 2]);
 							if ( this.__action.attributes.voidAction != "true" ) {
 								this.__showLogButton.setVisibility("visible");
 							}
 							this.fireEvent("actionUpdated");
 						}
 
-						var out=this.getOutputDirectory();
+						var out = this.getOutputDirectory();
 						if (out) {
-							parameterMap["output_directory"]=out;
+							parameterMap.output_directory = out;
 						}
 			
-						var that=this;
+						var that = this;
 						function launchAction()
 						{
 							desk.Actions.getInstance().launchAction (parameterMap, getAnswer, that);
 						}
 
-						if (this.getOutputSubdirectory()==null) {
+						if (this.getOutputSubdirectory() == null) {
 							launchAction();
 						}
 						else {
@@ -316,9 +319,9 @@ qx.Class.define("desk.Action",
 					}
 				}
 
-				if (parentActions.length>0) {
-					for (var i=0;i!=parentActions.length;i++) {
-						var currentParentAction=parentActions[i];
+				if (parentActions.length > 0) {
+					for (var i = 0; i != parentActions.length; i++) {
+						var currentParentAction = parentActions[i];
 						currentParentAction.addListenerOnce("actionUpdated", afterParentActionProcessed, this);
 						currentParentAction.executeAction();
 					}
@@ -334,32 +337,32 @@ qx.Class.define("desk.Action",
 		},
 
 		buildUI : function () {
-			var action=this.__action;
+			var action = this.__action;
 			this.setLayout(new qx.ui.layout.VBox());
 
-			var that=this;
+			var that = this;
 
 			if (this.__standalone) {
-				this.__window=new qx.ui.window.Window();
-				this.__window.setLayout(new qx.ui.layout.HBox());
-				this.__window.setWidth(300);
-				this.__window.setShowClose(true);
-				this.__window.setShowMinimize(false);
-				this.__window.setUseMoveFrame(true);
-				this.__window.setCaption(action.name);
+				this.__window = new qx.ui.window.Window();
+				this.__window.set({ layout : new qx.ui.layout.HBox(),
+					width : 300,
+					showClose :true,
+					showMinimize : false,
+					useMoveFrame : true,
+					caption : action.name});
 				this.__window.add(this.getTabView(), {flex : 1});
 			}
 
-			var showLogButton=new qx.ui.form.Button("Show console log");
-			this.__showLogButton=showLogButton;
-			showLogButton.addListener("execute",function (e) {
-				new desk.textEditor(this.getOutputDirectory()+"/action.log");
-				}, this)
+			var showLogButton = new qx.ui.form.Button("Show console log");
+			this.__showLogButton = showLogButton;
+			showLogButton.addListener("execute",function () {
+				new desk.textEditor(this.getOutputDirectory() + "/action.log");
+			}, this);
 			showLogButton.setVisibility("excluded");
 
-			var outputDirectory=null;
+			var outputDirectory = null;
 			if (this.__providedParameters) {
-				outputDirectory=this.__providedParameters["output_directory"];
+				outputDirectory = this.__providedParameters.output_directory;
 				if (outputDirectory) {
 					if (this.__standalone) {
 						this.__addOutputTab();
@@ -370,52 +373,52 @@ qx.Class.define("desk.Action",
 
 			// create the form manager
 			var manager = new qx.ui.form.validation.Manager();
-			this.__validationManager=manager;
+			this.__validationManager = manager;
 			if (this.__standalone) {
 				this.__window.open();
 			}
 
 			var intValidator = function(value, item) {
-				var parameterName=this.name;
-				if ((value==null) || (value=="")) {
-					if (this.required=="true") {
-						item.setInvalidMessage("\""+parameterName+"\" is empty");
+				var parameterName = this.name;
+				if ((value == null) || (value == '')) {
+					if (this.required == "true") {
+						item.setInvalidMessage('"' + parameterName + '" is empty');
 						return (false);
 					}
 				}
-				else if ( (parseInt(value)!=parseFloat(value))||
+				else if ( (parseInt(value) != parseFloat(value))||
 						 isNaN(value)) {
-					item.setInvalidMessage("\""+parameterName+"\" should be an integer");
+					item.setInvalidMessage('"' + parameterName + '" should be an integer');
 					return (false);
 				}
 				return (true);
 			};
 
 			var floatValidator = function(value, item) {
-				var parameterName=this.name;
-				if ((value==null) || (value=="")) {
+				var parameterName = this.name;
+				if ((value == null) || (value == '')) {
 					if (this.required =="true") {
-						item.setInvalidMessage("\""+parameterName+"\" is empty");
+						item.setInvalidMessage('"' + parameterName + '" is empty');
 						return (false);
 					}
 				}
 				else if (isNaN(value)){
-					item.setInvalidMessage("\""+parameterName+"\" should be a number");
+					item.setInvalidMessage('"' + parameterName + '" should be a number');
 					return (false);
 				}
 				return (true);
 			};
 
 			var stringValidator = function(value, item) {
-				var parameterName=this.name;
-				if ((value==null) || (value=="")) {
-					if (this.required =="true") {
-						item.setInvalidMessage("\""+parameterName+"\" is empty");
+				var parameterName = this.name;
+				if ((value == null) || (value == '')) {
+					if (this.required == "true") {
+						item.setInvalidMessage('"' + parameterName + '" is empty');
 						return (false);
 					}
 				}
-				else if (value.split(" ").length!=1){
-					item.setInvalidMessage("\""+parameterName+"\" should contain no space characters");
+				else if (value.split(" ").length != 1){
+					item.setInvalidMessage('"' + parameterName + '" should contain no space characters');
 					return (false);
 				}
 				return (true);
@@ -423,37 +426,37 @@ qx.Class.define("desk.Action",
 
 			var dummyValidator = function(value, item) {return (true)};
 
-			var fileAlreadyPickedFromBrowser=false;
+			var fileAlreadyPickedFromBrowser = false;
 
-			var parameters=action.parameters;
+			var parameters = action.parameters;
 			if (this.__standalone) {
 				this.__window.setHeight(100+50*parameters.length);
 			}
 
-			var connections=this.__connections;
-			for (var i=0;i<(parameters.length);i++) {
-				var parameter=parameters[i];
+			var connections = this.__connections;
+			for (var i = 0; i < (parameters.length); i++) {
+				var parameter = parameters[i];
 				if (parameter.text != undefined) {
 					continue;
 				}
 
-				var parameterName=parameter.name;
-				var found=false;
-				for (var j=0;j<connections.length;j++) {
-					if (connections[j].parameter==parameterName) {
+				var parameterName = parameter.name;
+				var found = false;
+				for (var j = 0; j < connections.length; j++) {
+					if (connections[j].parameter == parameterName) {
 						found=true;
 						break;
 					}
 				}
 
 				if (!found) {
-					var label=new qx.ui.basic.Label(parameterName);
+					var label = new qx.ui.basic.Label(parameterName);
 					this.add(label);
-					var parameterForm=new qx.ui.form.TextField();
+					var parameterForm = new qx.ui.form.TextField();
 					parameterForm.setUserData("label", label);
 					parameterForm.setPlaceholder(parameterName);
 					this.add(parameterForm);
-					var parameterType=parameter.type;
+					var parameterType = parameter.type;
 
 					switch (parameterType)
 					{
@@ -469,20 +472,20 @@ qx.Class.define("desk.Action",
 					case "file":
 						if ((!fileAlreadyPickedFromBrowser) && (this.__fileBrowser!=null)) {
 							fileAlreadyPickedFromBrowser=true;
-							var file=this.__fileBrowser.getSelectedFiles()[0];
+							var file = this.__fileBrowser.getSelectedFiles()[0];
 							parameterForm.setValue(file);
-							var parentAction=this.__fileBrowser.getUserData("action");
+							var parentAction = this.__fileBrowser.getUserData("action");
 							if (parentAction != null) {
 								that.connect(parameterForm.getPlaceholder(), parentAction, file);
 							}
 						}
 						parameterForm.setDroppable(true);
 						parameterForm.addListener("drop", function(e) {
-								var originFileBrowser=e.getData("fileBrowser");
-								var file=originFileBrowser.getSelectedFiles()[0];
+								var originFileBrowser = e.getData("fileBrowser");
+								var file = originFileBrowser.getSelectedFiles()[0];
 								this.setValue(file);
-								var parentAction=originFileBrowser.getUserData("action");
-								if (parentAction!=null) {
+								var parentAction = originFileBrowser.getUserData("action");
+								if (parentAction != null) {
 									that.connect(this.getPlaceholder(), parentAction, file);
 								}
 							}, parameterForm);
@@ -506,13 +509,13 @@ qx.Class.define("desk.Action",
 					}
 
 					//use default value if provided
-					var defaultValue=parameter.defaultValue;
+					var defaultValue = parameter.defaultValue;
 					if (defaultValue)  {
 						parameterForm.setValue(defaultValue);
 					}
 
 					parameterForm.addListener("input", function(e) 
-						{this.setInvalidMessage("");},parameterForm);
+						{this.setInvalidMessage('');},parameterForm);
 				}
 			}
 
@@ -523,10 +526,11 @@ qx.Class.define("desk.Action",
 			this.add(executeBox);
 
 			var send = new qx.ui.form.Button("Process");
-			this.__updateButton=send;
+			this.__updateButton = send;
 			executeBox.add(send);
 			send.addListener("execute", function() {
-				manager.validate();}, this);
+				manager.validate();
+			}, this);
 
 			var forceUpdateCheckBox = new qx.ui.form.CheckBox("force");
 			this.__forceUpdateCheckBox = forceUpdateCheckBox;

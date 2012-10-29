@@ -7,11 +7,11 @@ var fs          = require('fs'),
 	winston     = require('winston');
 
 
-var myConsole={
+var console = {
 	log : function (text) {
 		winston.log ('info', text);
 	}
-}
+};
 
 // directory where user can add their own .json action definition files
 var actionsDirectories = [];
@@ -58,18 +58,18 @@ function includeActionsFile (file, callback) {
 				includeActionsJSON(file, afterImport);
 				break;
 			default:
-		//		myConsole.log("*: "+file+": format not handled");
+		//		console.log("*: "+file+": format not handled");
 				callback(null);
 			}
 
 			function afterImport (data) {
 				actions=actions.concat(data)
-				myConsole.log(data.length+'/'+actions.length+' actions from '+file);
+				console.log(data.length+'/'+actions.length+' actions from '+file);
 				callback(null);
 			}
 		}
 		else {
-			myConsole.log("Warning : no file "+file+" found");
+			console.log("Warning : no file "+file+" found");
 			callback(null);
 		}
 	});
@@ -95,30 +95,30 @@ exports.includeActions=function (file, callback) {
 	}
 }
 
-includeActionsJSON= function (file, callback) {
+includeActionsJSON = function (file, callback) {
 	fs.readFile(file, function (err, data) {
-		var actionsObject=JSON.parse(data);
-		var localActions=actionsObject.actions || [];
-
-		var path=fs.realpathSync(libpath.dirname(file));
+		var actionsObject = JSON.parse(data);
+		var localActions = actionsObject.actions || [];
+		var path = fs.realpathSync(libpath.dirname(file));
 		var libraryName = libpath.basename(file, '.json');
-		for (var i=0; i<localActions.length;i++) {
+		for (var i = 0; i < localActions.length; i++) {
 			localActions[i].lib = libraryName;
-			var attributes=localActions[i].attributes;
-			if ( typeof (attributes.js) === "string" ) {
-				myConsole.log("loaded javascript from "+attributes.js);
-				attributes.js=require(path+"/"+attributes.js);
+			var attributes = localActions[i].attributes;
+			if ( typeof (attributes.js) === 'string' ) {
+				console.log('loaded javascript from ' + attributes.js);
+				attributes.executable = path + '/' + attributes.js + '.js';
+				attributes.module = require(path + '/' + attributes.js);
 			}
-			if ( typeof (attributes.executable) === "string" ) {
-				attributes.executable=path+"/"+attributes.executable;
+			else if ( typeof (attributes.executable) === 'string' ) {
+				attributes.executable = path + '/' + attributes.executable;
 			}
-			if ( typeof (attributes.command) === "string" ) {
-				attributes.executable=attributes.command;
+			else if ( typeof (attributes.command) === 'string' ) {
+				attributes.executable = attributes.command;
 			}
 		}
 		var includes=actionsObject.include || [];
-		exports.includeActions( includes, function () {
-			if ( typeof(callback) === "function" ) {
+		exports.includeActions(includes, function () {
+			if ( typeof(callback) === 'function' ) {
 				callback(localActions);
 			}
 		});
@@ -126,7 +126,7 @@ includeActionsJSON= function (file, callback) {
 }
 
 function exportActions( file, callback ) {
-//	myConsole.log("saving actions.json to "+file);
+//	console.log("saving actions.json to "+file);
 	fs.writeFile(file, prettyPrint.json(JSON.stringify({ actions : actions , permissions : 1})),
 		function (err) {
 			if (err) throw err;
@@ -203,7 +203,7 @@ exports.performAction = function (POST, callback) {
 			return;
 		}
 
-		commandLine+=action.attributes.executable+" ";
+		commandLine += action.attributes.executable + ' ';
 
 		function parseParameter (parameter, callback) {
 			if (parameter.text!==undefined) {
@@ -384,11 +384,11 @@ exports.performAction = function (POST, callback) {
 	// log the action and  detect whether the action is already in cache 
 	function (callback) 
 	{
-		actionParameters.output_directory=outputDirectory;
-		myConsole.log (header+"in : "+outputDirectory);
-		myConsole.log (header+commandLine);
+		actionParameters.output_directory = outputDirectory;
+		console.log (header + 'in : ' + outputDirectory);
+		console.log (header + commandLine);
 
-		if ((action.attributes.voidAction==="true")||(POST.force_update==="true")){
+		if ((action.attributes.voidAction === "true")||(POST.force_update === "true")){
 			callback();
 		}
 		else {
@@ -401,7 +401,7 @@ exports.performAction = function (POST, callback) {
 				else {
 					fs.readFile(actionFile, function (err, data) {
 						if (data==JSON.stringify(actionParameters)) {
-					  		myConsole.log(header+"cached");
+					  		console.log(header+"cached");
 					  		cachedAction=true;
 							callback();
 						}
@@ -417,15 +417,15 @@ exports.performAction = function (POST, callback) {
 	// execute the action (or not when it is cached)
 	function (callback) {
 		if (cachedAction) {
-			fs.readFile(filesRoot+outputDirectory+"/action.log", function (err, string) {
-				callback (outputDirectory+"\n"+string+"\nCACHED\n")
+			fs.readFile(filesRoot + outputDirectory + '/action.log', function (err, string) {
+				callback (outputDirectory + '\n' + string + '\nCACHED\n')
 			});
 			return;
 		}
 
 		var startTime=new Date().getTime();
 
-		var js=action.attributes.js;
+		var js = action.attributes.module;
 		if ( typeof (js) === "object" ) {
 			var actionParameters2 = JSON.parse(JSON.stringify(actionParameters));
 			actionParameters2.filesRoot=filesRoot;
@@ -463,7 +463,7 @@ exports.performAction = function (POST, callback) {
 }
 
 exports.getDirectoryContent = function (path, callback) {
-	myConsole.log('listDir : ' + path);
+	console.log('listDir : ' + path);
 	async.waterfall([
 		function (callback) {
 			exports.validatePath(path, callback);
