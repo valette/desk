@@ -599,7 +599,6 @@ qx.Class.define("desk.MeshViewer",
 				this.fireEvent("close");
 			},this);
 
-			var elementSize=threeCanvas.getInnerSize();
 			var scene = new THREE.Scene();
 			var camera = new THREE.PerspectiveCamera( 60,1, 0.01, 1e10 );
 			var controls = new THREE.TrackballControls2( camera,threeCanvas.getContentElement().getCanvas() );
