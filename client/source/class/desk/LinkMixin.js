@@ -1,88 +1,95 @@
-
+/**
+ * Mixin for handling links between several objects
+ */
 qx.Mixin.define("desk.LinkMixin",
 {
 	members:
 	{
 		__links : null,
 
+		/**
+		* links to an other object
+		*
+		* @param source {Object} the object to link to
+		*/
 		link : function (source) {
-			if (source == this) {
-				return;
-			}
-
-			// first merge 2 links
-			var links = this.__links;
-			var links2 = source.__links;
-			var found;
-			var source2;
-
-			if (links === null){
-				if (links2 === null) {
-					this.__links = source.__links = [];
-				}
-				else {
-					this.__links = links2;
-				}
-			}
-			else {
-				if (links2 == null) {
-					source.__links = links;
-				}
-				else {
-					//need to merge links
-					links = this.__links;
-					links2 = source.__links;
-					for (var i = 0; i < links2.length; i++) {
-						source2 = links2[i];
-						found = false;
-						for (var j = 0; j < links.length; j++) {
-							if (links[i] == source2) {
-								found = true;
-							}
-						}
-						if (!found) {
-							links.push(source2);
-						}
-					}
-					source.__links = links;
-				}
-			}
-
-			links = this.__links;
-			function addUnique(object) {
+			function addUnique(object, links) {
 				var found = false;
 				for (var i = 0; i < links.length; i++){
-					source2 = links[i];
-					if (source2 === this) {
+					if (links[i] === object) {
 						found = true;
-						break;
+						return;
 					}
 				}
 				if (!found) {
 					links.push(object);
 				}
 			}
-			addUnique(this);
-			addUnique(source);
-		},
 
-		unlink : function () {
-			var links=this.__links;
-			if (links==null) {
+			if (source === this) {
 				return;
 			}
-			for (var i=0;i<links.length;i++){
+
+			if (this.__links === null){
+				if (source.__links === null) {
+					this.__links = [];
+					source.__links = this.__links;
+				}
+				else {
+					this.__links = source.__links;
+				}
+			}
+			else {
+				if (source.__links === null) {
+					source.__links = this.__links;
+				}
+				else {
+					for (var i = 0; i < source.__links.length; i++) {
+						addUnique(source.__links[i], this.__links);
+					}
+					for (var i = 0; i < source.__links.length; i++) {
+						source.__links[i].__links = this.__links
+					}
+				}
+			}
+
+			addUnique(this, this.__links);
+			addUnique(source, this.__links);
+		},
+
+
+		/**
+		* unlink the object
+		*/
+			unlink : function () {
+			var links=this.__links;
+			if (links == null) {
+				return;
+			}
+			for (var i = 0; i < links.length; i++){
 				if (links[i] == this) {
 					links.splice(i,1);
 					break;
 				}
 			}
-			this.__links=null;
+			this.__links = null;
 		},
 
+		/**
+		* apply the provided function to each linked object as context
+		* @param applyFunction {Function} the function to apply
+		* <pre class="javascript">
+		* example : 
+		* obj1.link(obj2);
+		* obj1.applyToLinks(function() {
+		*	this.doSomething // this will be applied to obj1 and obj2
+		* });
+		* </pre>
+		*/
 		applyToLinks : function (applyFunction) {
-			var links=this.__links;
-			if (links==null) {
+			var links = this.__links;
+			if (links == null) {
+				applyFunction.apply(this);
 				return;
 			}
 			for (var i = 0; i < links.length; i++) {
@@ -90,6 +97,18 @@ qx.Mixin.define("desk.LinkMixin",
 			}
 		},
 
+		/**
+		* apply the provided function to each linked objects as context
+		* except for the called object
+		* @param applyFunction {Function} the function to apply
+		* <pre class="javascript">
+		* example : 
+		* obj1.link(obj2);
+		* obj1.applyToLinks(function() {
+		*	this.doSomething // this will be applied to only obj2
+		* });
+		* </pre>
+		*/	
 		applyToOtherLinks : function (applyFunction) {
 			var links = this.__links;
 			if (links == null) {

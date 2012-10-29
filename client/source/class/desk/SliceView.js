@@ -10,6 +10,7 @@
 qx.Class.define("desk.SliceView", 
 {
 	extend : qx.ui.container.Composite,
+	include : desk.LinkMixin,
 
 	construct : function(master, orientation)
 	{
@@ -350,117 +351,13 @@ qx.Class.define("desk.SliceView",
 			return gridContainer;
 		},
 
-		__links : null,
-
-		linkToViewer : function (viewer) {
-			if (viewer==this) {
-				return;
-			}
-
-			// first merge 2 links
-			var links=this.__links;
-			var links2=viewer.__links;
-			var found;
-			var viewer2;
-			var i;
-
-			if (links==null){
-				if (links2==null) {
-					this.__links=[];
-					viewer.__links=this.__links;
-				}
-				else {
-					this.__links=links2;
-				}
-			}
-			else {
-				if (links2==null) {
-					viewer.__links=links;
-				}
-				else {
-					//need to merge links
-					links=this.__links;
-					links2=viewer.__links;
-					for (i=0;i<links2.length;i++) {
-						viewer2=links2[i];
-						found=false;
-						for (var j=0;j<links.length;j++) {
-							if (links[i]==viewer2) {
-								found=true;
-							}
-						}
-						if (!found) {
-							links.push(viewer2);
-						}
-					}
-					viewer.__links=links;
-				}
-			}
-
-			links=this.__links;
-			found=false;
-			for (i=0;i<links.length;i++){
-				viewer2=links[i];
-				if (viewer2==this) {
-					found=true;
-					break;
-				}
-			}
-			if (!found) {
-				links.push(this);
-			}
-
-			found=false;
-			for (i=0;i<links.length;i++){
-				viewer2=links[i];
-				if (viewer2==viewer) {
-					found=true;
-					break;
-				}
-			}
-			if (!found) {
-				links.push(viewer);
-			}
-			viewer.__propagateCameraToLinks();
-		},
-
-		applyToLinks : function (theFunction) {
-			var links=this.__links;
-			if (links==null) {
-				theFunction.apply(this);
-			}
-			else {
-				for (var i=0;i<links.length;i++) {
-					theFunction.apply(links[i]);
-				}
-			}
-		},
-
 		__propagateCameraToLinks : function () {
-			var _this=this;
-			this.applyToLinks( function () {
-				if (this!=_this) {
-					this.__controls.copy(_this.__controls);
-					this.setSlice(_this.getSlice());
-					this.render();
-				}
+			this.applyToOtherLinks( function (me) {
+				this.__controls.copy(me.__controls);
+				this.setSlice(me.getSlice());
+				this.render();
 			});
 		},
-
-		unLink : function () {
-			var links=this.__links;
-			if (links==null) {
-				return;
-			}
-			for (var i=0;i<links.length;i++){
-				if (links[i]==this) {
-					links.splice(i,1);
-					break;
-				}
-			}
-			this.__links=null;
-		},
-
 
 		reorderMeshes : function () {
 			var slices=this.__slices;
@@ -686,34 +583,29 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__addVolume : function (file, parameters, callback) {
-			var opacity=1;
-
-			if (parameters!=null) {
-				if (parameters.opacity!=null) {
-					opacity=parameters.opacity;
+			var opacity = 1;
+			if (parameters != null) {
+				if (parameters.opacity != null) {
+					opacity = parameters.opacity;
 				}
 			}
 
-			var volumeSlice=new desk.VolumeSlice(file, this.getOrientation(), parameters);
+			var volumeSlice = new desk.VolumeSlice(file, this.getOrientation(), parameters);
 			this.__slices.push(volumeSlice);
-			var _this=this;
+			var _this = this;
 
 			if (volumeSlice.isReady()) {
 				initSlice();
 			}
-			else
-			{
+			else {
 				volumeSlice.addListenerOnce("changeReady",initSlice);
 			}
 
 			function initSlice () {
-				var geometry=new THREE.Geometry();
-
-				var coordinates=volumeSlice.get2DCornersCoordinates();
-				for (var i=0;i<4;i++) {
-					geometry.vertices.push(
-						new THREE.Vector3(
-								coordinates[2*i],coordinates[2*i+1],0));
+				var geometry = new THREE.Geometry();
+				var coordinates = volumeSlice.get2DCornersCoordinates();
+				for (var i = 0; i < 4; i++) {
+					geometry.vertices.push(	new THREE.Vector3(coordinates[2*i], coordinates[2*i + 1], 0));
 				}
 
 				geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
@@ -724,15 +616,15 @@ qx.Class.define("desk.SliceView",
 					new THREE.UV( 0, 1 )
 					] );
 
-				var listener=_this.addListener("changeSlice", function (e) {
+				var listener = _this.addListener("changeSlice", function (e) {
 					volumeSlice.setSlice(e.getData());
 				});
 
 				volumeSlice.setUserData("updateListener", listener);
 
-				if (_this.__slices.length==1) {
-					_this.__slider.setMaximum(volumeSlice.getNumberOfSlices()-1);
-					if (volumeSlice.getNumberOfSlices()==1) {
+				if (_this.__slices.length == 1) {
+					_this.__slider.setMaximum(volumeSlice.getNumberOfSlices() - 1);
+					if (volumeSlice.getNumberOfSlices() == 1) {
 						_this.__slider.setVisibility("hidden");
 					}
 
@@ -743,22 +635,20 @@ qx.Class.define("desk.SliceView",
 					_this.__camera.position.setZ(_this.__camera.position.z+
 									volumeSlice.getBoundingBoxDiagonalLength()*0.6);
 
-					_this.__projector= new THREE.Projector();
-					_this.__intersection=new THREE.Vector3();
-					_this.__2DCornersCoordinates=coordinates;
-					_this.__volume2DSpacing=volumeSlice.get2DSpacing();
-					_this.__volume2DDimensions=volumeSlice.get2DDimensions();
-					_this.__volumeOrigin=volumeSlice.getOrigin();
-					_this.__volumeSpacing=volumeSlice.getSpacing();
+					_this.__projector = new THREE.Projector();
+					_this.__intersection = new THREE.Vector3();
+					_this.__2DCornersCoordinates = coordinates;
+					_this.__volume2DSpacing = volumeSlice.get2DSpacing();
+					_this.__volume2DDimensions = volumeSlice.get2DDimensions();
+					_this.__volumeOrigin = volumeSlice.getOrigin();
+					_this.__volumeSpacing = volumeSlice.getSpacing();
 					_this.__setupInteractionEvents();
 				}
 
-				var material=volumeSlice.getMaterial();
-				var mesh=new THREE.Mesh(geometry,material);
-				material.side=THREE.DoubleSide;
-
-				volumeSlice.setUserData("mesh",mesh);
-
+				var material = volumeSlice.getMaterial();
+				var mesh = new THREE.Mesh(geometry, material);
+				material.side = THREE.DoubleSide;
+				volumeSlice.setUserData("mesh", mesh);
 				geometry.computeCentroids();
 				geometry.computeFaceNormals();
 				geometry.computeVertexNormals();
@@ -771,7 +661,7 @@ qx.Class.define("desk.SliceView",
 				volumeSlice.addListener("changeSlice", function (e) {
 					_this.setSlice(e.getData());});
 
-				if (_this.__slices.length==1) {
+				if (_this.__slices.length == 1) {
 					_this.__setDrawingMesh(volumeSlice);
 					_this.__createBrushMesh(volumeSlice);
 					_this.__createCrossMeshes(volumeSlice);
@@ -786,10 +676,10 @@ qx.Class.define("desk.SliceView",
 							break;
 					}
 
-					var dimensions=volumeSlice.getDimensions();
-					for (var coordinate=0;coordinate<3;coordinate++) {
-						if (dimensions[coordinate]==1) {
-							dimensions[coordinate]=0;
+					var dimensions = volumeSlice.getDimensions();
+					for (var coordinate = 0; coordinate< 3;coordinate ++) {
+						if (dimensions[coordinate] == 1) {
+							dimensions[coordinate] = 0;
 						}
 					}
 					_this.setCrossPosition(Math.round(dimensions[0]/2),
@@ -800,8 +690,7 @@ qx.Class.define("desk.SliceView",
 					volumeSlice.setSlice(_this.getSlice());
 				}
 
-				if (typeof callback=="function")
-				{
+				if (typeof callback=="function") {
 					callback(volumeSlice);
 				}
 			}

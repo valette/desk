@@ -837,7 +837,7 @@ qx.Class.define("desk.VolumeViewer",
 					var orientation = viewer.getOrientation();
 					for (var j = 0; j < this.__nbUsedOrientations; j++) {
 						if (viewers2[j].getOrientation() === orientation) {
-							viewer.linkToViewer(viewers2[j]);
+							viewer.link(viewers2[j]);
 						}
 					}
 				}
@@ -853,7 +853,7 @@ qx.Class.define("desk.VolumeViewer",
 			var unLinkButton = new qx.ui.menu.Button("unlink");
 			unLinkButton.addListener("execute", function() {
 				this.applyToViewers (function () {
-					this.unLink();
+					this.unlink();
 				});
 			},this);
 			menu.add(unLinkButton);
