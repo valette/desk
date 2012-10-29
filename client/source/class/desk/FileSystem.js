@@ -250,11 +250,8 @@ qx.Class.define("desk.FileSystem",
 					if (child.isDirectory) {
 						//first, test if the directory begins like the file
 						if (childName.substring(0, shortFileName.length + 1) == (shortFileName + ".")) {
-							console.log("childname" + childName);
 							var remaining = childName.substring(shortFileName.length + 1);
-							console.log("remaining: "+ remaining);
 							var childSession = remaining.substring(0, sessionType.length + 1);
-							console.log("childsession: "+ childSession);
 							if (childSession == (sessionType + ".")) {
 								var sessionId=parseInt(remaining.substring(childSession.length));
 								sessions.push(sessionId);
