@@ -153,22 +153,33 @@ qx.Class.define("desk.MeshViewer",
 
 	properties : {
 		// the "ready" property is true when the UI is ready.
-		ready : { init : false, check: "Boolean", event : "changeReady"},
+	//	ready : { init : false, check: "Boolean", event : "changeReady"},
 		convertVTK : { init : true, check: "Boolean"}
 	},
 
 	events : {
 		"meshesLoaded" : "qx.event.type.Data",
-		"close" : "qx.event.type.Event"
-	//	"changeReady" : "qx.event.type.Event"
+		"close" : "qx.event.type.Event",
+		"changeReady" : "qx.event.type.Event"
 	},
 
 	members : {
-		/*__ready : false,
+		__ready : false,
 
 		isReady : function () {
 			return (this.__ready);
-		},*/
+		},
+
+		__setReady : function (bool) {
+			var triggerEvent = false;
+			if ((bool) && (!this.__ready)) {
+				triggerEvent = true;
+			}
+			this.__ready = bool;
+			if (triggerEvent) {
+				this.fireEvent('changeReady');
+			}
+		},
 
 		__firstFile : null,
 
@@ -750,7 +761,7 @@ qx.Class.define("desk.MeshViewer",
 					}
 				}, this);
 
-				this.setReady(true);
+				this.__setReady(true);
 			}, this);
 		},
 
