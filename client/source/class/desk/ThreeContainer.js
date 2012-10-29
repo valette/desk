@@ -116,24 +116,25 @@ qx.Class.define("desk.ThreeContainer",
 				factor = 1;
 			}
 
-			var width = this.__window.getWidth();
-			var height = this.__window.getHeight();
-			var renderer = this.__threeCanvas.getRenderer();
-			if (factor === 1) {
+			var width = this.getWidth();
+			var height = this.getHeight();
+			var renderer = this.__renderer;
+		//	if (factor === 1) {
 				this.render(true);
 				var strData = renderer.domElement.toDataURL("image/png");
 				var saveData = strData.replace("image/png", "image/octet-stream");
 				document.location.href = saveData;
-			}
-			else {
-				this.__threeCanvas.addListenerOnce("resize", function() {
+		//	}
+	/*		else {
+				this.addListenerOnce("resize", function() {
+				console.log('test');
 					var strData = renderer.domElement.toDataURL("image/png");
 					var saveData = strData.replace("image/png", "image/octet-stream");
 					document.location.href = saveData;
-					this.__window.set({width: width, height : height});
+					this.set({width: width, height : height});
 				}, this);
-				this.__window.set({width: width*factor, height : height*factor});
-			}
+				this.set({width: width*factor, height : height*factor});
+			}*/
 		},
 
 		__threeCanvas : null,

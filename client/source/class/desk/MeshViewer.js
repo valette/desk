@@ -34,15 +34,20 @@ qx.Class.define("desk.MeshViewer",
 			contentPadding : 2,
 			caption : file});
 		window.setResizable(true,true,true,true);
+		window.addListener("close", function(e) {
+			this.removeAllMeshes();
+			this.unlink();
+			this.fireEvent("close");
+		},this);
 		this.__window=window;
 
 		var pane = new qx.ui.splitpane.Pane("horizontal");
 		window.add(pane, {flex : 1});
 		this.__mainPane = pane;
 
-		this.__createRenderWindow();
+		this.__threeCanvas = new desk.ThreeContainer();
 		pane.add(this.__threeCanvas, 5);
-		window.open();
+		this.__setupInteractions();
 
 		var elementsList = new qx.ui.container.Composite;
 		elementsList.setLayout(new qx.ui.layout.VBox());
@@ -134,11 +139,11 @@ qx.Class.define("desk.MeshViewer",
 		var menu=this.__getContextMenu();
 		this.__meshesTree.setContextMenu(menu);
 
-		this.__fileSystem=desk.FileSystem.getInstance();
-
 		this.__firstFile=file;
 		this.__firstMTime=mtime;
 		this.openFile(file,mtime);
+		this.__addDropSupport();
+		window.open();
 		return (this);
 	},
 
@@ -169,8 +174,6 @@ qx.Class.define("desk.MeshViewer",
 		__window : null,
 		
 		__mainPane : null,
-
-		__fileSystem : null,
 
 		// a treeVirtual element storing all meshes
 		__meshesTree : null,
@@ -339,7 +342,6 @@ qx.Class.define("desk.MeshViewer",
 		},
 
 		viewAll : function ( ) {
-			
 			var max=new THREE.Vector3(-1e10,-1e10,-1e10);
 			var min=new THREE.Vector3(1e10,1e10,1e10);
 			var meshes=this.__meshes;
@@ -559,10 +561,7 @@ qx.Class.define("desk.MeshViewer",
 				});
 		},
 
-		__createRenderWindow : function(){
-			var overlayCanvas = new desk.ThreeContainer();
-			this.__threeCanvas=overlayCanvas;
-
+		__addDropSupport : function () {
 			this.__window.setDroppable(true);
 			this.__window.addListener("drop", function(e) {
 				if (e.supportsType("fileBrowser")) {
@@ -576,72 +575,70 @@ qx.Class.define("desk.MeshViewer",
 				}
 
 				// activate the window
-				var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
+				var windowManager = qx.core.Init.getApplication().getRoot().getWindowManager();
 				windowManager.bringToFront(this.__window);
 			}, this);
+		},
 
-			this.__window.addListener("close", function(e) {
-				this.removeAllMeshes();
-				this.unlink();
-				this.fireEvent("close");
-			},this);
+		__setupInteractions : function() {
+			var threeCanvas = this.__threeCanvas;
 
 			var draggingInProgress=false;
-			overlayCanvas.addListener("mousedown", function (event)	{
-				overlayCanvas.capture();
-				var origin=overlayCanvas.getContentLocation();
-				draggingInProgress=true;
-				var button=0;
+			threeCanvas.addListener("mousedown", function (event)	{
+				threeCanvas.capture();
+				var origin = threeCanvas.getContentLocation();
+				draggingInProgress = true;
+				var button = 0;
 				if (event.isRightPressed()) {
-					button=1;
+					button = 1;
 				}
-				else if ((event.isMiddlePressed())||(event.isShiftPressed())) {
-					button=2;
+				else if ( event.isMiddlePressed() || event.isShiftPressed()) {
+					button = 2;
 				}
 				else if (event.isCtrlPressed()) {
-					button=3;
+					button = 3;
 				}
 
 				this.__threeCanvas.getControls().mouseDown(button,
-								event.getDocumentLeft()-origin.left,
-								event.getDocumentTop()-origin.top);
+								event.getDocumentLeft() - origin.left,
+								event.getDocumentTop() - origin.top);
 			}, this);
 
-			overlayCanvas.addListener("mousemove", function (event)	{
+			threeCanvas.addListener("mousemove", function (event)	{
 				if (draggingInProgress) {
-					var origin=overlayCanvas.getContentLocation();
-					this.__threeCanvas.getControls().mouseMove(event.getDocumentLeft()-origin.left
-							, event.getDocumentTop()-origin.top);
+					var origin = threeCanvas.getContentLocation();
+					this.__threeCanvas.getControls().mouseMove(event.getDocumentLeft() - origin.left,
+						event.getDocumentTop() - origin.top);
 					this.render();
 					this.__propagateLinks();
 				}
 			}, this);
 
-			overlayCanvas.addListener("mouseup", function (event)	{
-				overlayCanvas.releaseCapture();
-				draggingInProgress=false;
+			threeCanvas.addListener("mouseup", function (event)	{
+				threeCanvas.releaseCapture();
+				draggingInProgress = false;
 				this.__threeCanvas.getControls().mouseUp();
 			}, this);
 
-			overlayCanvas.addListener("mousewheel", function (event)	{
-				var tree=this.__meshesTree;
-				var root=this.__slicesRoot;
-				if (root!==null) {
-					var rootNode=tree.nodeGet(root);
-					var children=rootNode.children;
-					if (children.length!=0) {
-						var meshes=[];
-						for (var i=0;i<children.length;i++) {
+			threeCanvas.addListener("mousewheel", function (event)	{
+				var tree = this.__meshesTree;
+				var root = this.__slicesRoot;
+				if (root !== null) {
+					var rootNode = tree.nodeGet(root);
+					var children = rootNode.children;
+					if (children.length != 0) {
+						var meshes = [];
+						for (var i = 0; i < children.length; i++) {
 							if (this.__meshesVisibility[children[i]]) {
 								meshes.push(this.__meshes[children[i]]);
 							}
 						}
 
-						var origin=overlayCanvas.getContentLocation();
-						var x=event.getDocumentLeft()-origin.left;
-						var y=event.getDocumentTop()-origin.top;
+						var origin = threeCanvas.getContentLocation();
+						var x=event.getDocumentLeft() - origin.left;
+						var y=event.getDocumentTop() - origin.top;
 
-						var elementSize=this.__threeCanvasSize;
+						var elementSize = this.__threeCanvasSize;
 						var x2 = ( x / elementSize.width ) * 2 - 1;
 						var y2 = - ( y / elementSize.height ) * 2 + 1;
 
@@ -650,20 +647,21 @@ qx.Class.define("desk.MeshViewer",
 						var camera = this.__threeCanvas.getCamera();
 						projector.unprojectVector(vector, camera);
 
-						var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
+						var ray = new THREE.Ray(camera.position,
+							vector.subSelf(camera.position).normalize());
 
-						var intersects = ray.intersectObjects( meshes );
+						var intersects = ray.intersectObjects(meshes);
 
-						if ( intersects.length > 0 ) {
-							var volumeSlice=intersects[0].object.__volumeSlice;
-							var maximum=volumeSlice.getNumberOfSlices()-1;
-							var delta=Math.round(event.getWheelDelta()/2);
-							var newValue=volumeSlice.getSlice()+delta;
-							if (newValue>maximum) {
-								newValue=maximum;
+						if (intersects.length > 0) {
+							var volumeSlice = intersects[0].object.__volumeSlice;
+							var maximum = volumeSlice.getNumberOfSlices() - 1;
+							var delta = Math.round(event.getWheelDelta()/2);
+							var newValue = volumeSlice.getSlice() + delta;
+							if (newValue > maximum) {
+								newValue = maximum;
 							}
-							if (newValue<0) {
-								newValue=0;
+							if (newValue < 0) {
+								newValue = 0;
 							}
 							volumeSlice.setSlice(newValue);
 						}
