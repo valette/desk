@@ -53,7 +53,6 @@ qx.Class.define("desk.SliceView",
 	},
 
 	destruct : function(){
-		console.log();
 		this.unlink();
 		//clean the scene
 	},

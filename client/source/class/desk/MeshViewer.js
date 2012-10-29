@@ -10,6 +10,7 @@
 qx.Class.define("desk.MeshViewer", 
 {
 	extend : qx.core.Object,
+	include : desk.LinkMixin,
 
 	construct : function(file, mtime, parameters)
 	{
@@ -159,9 +160,15 @@ qx.Class.define("desk.MeshViewer",
 	events : {
 		"meshesLoaded" : "qx.event.type.Data",
 		"close" : "qx.event.type.Event"
+	//	"changeReady" : "qx.event.type.Event"
 	},
 
 	members : {
+		/*__ready : false,
+
+		isReady : function () {
+			return (this.__ready);
+		},*/
 
 		__firstFile : null,
 
@@ -317,92 +324,13 @@ qx.Class.define("desk.MeshViewer",
 			this.removeAllMeshes();
 			this.openFile(this.__firstFile, Math.random());
 		},
-		__links : null,
-
-		link : function (viewer) {
-			if (viewer==this) {
-				return;
-			}
-
-			// first merge 2 links
-			var links=this.__links;
-			var links2=viewer.__links;
-			var found;
-			var viewer2;
-
-			if (links==null){
-				if (links2==null) {
-					this.__links=[];
-					viewer.__links=this.__links;
-				}
-				else {
-					this.__links=links2;
-				}
-			}
-			else {
-				if (links2==null) {
-					viewer.__links=links;
-				}
-				else {
-					//need to merge links
-					links=this.__links;
-					links2=viewer.__links;
-					for (var i=0;i<links2.length;i++) {
-						viewer2=links2[i];
-						found=false;
-						for (var j=0;j<links.length;j++) {
-							if (links[i]==viewer2) {
-								found=true;
-							}
-						}
-						if (!found) {
-							links.push(viewer2);
-						}
-					}
-					viewer.__links=links;
-				}
-			}
-
-			links=this.__links;
-			found=false;
-			for (var i=0;i<links.length;i++){
-				viewer2=links[i];
-				if (viewer2==this) {
-					found=true;
-					break;
-				}
-			}
-			if (!found) {
-				links.push(this);
-			}
-
-			found=false;
-			for (var i=0;i<links.length;i++){
-				viewer2=links[i];
-				if (viewer2==viewer) {
-					found=true;
-					break;
-				}
-			}
-			if (!found) {
-				links.push(viewer);
-			}
-			viewer.__propagateLinks();
-		},
 
 		__propagateLinks : function () {
-			var links=this.__links;
-			if (links==null) {
-				return;
-			}
-			for (var i=0;i<links.length;i++) {
-				var viewer=links[i];
-				if (viewer!=this) {
-					viewer.__controls.copy(this.__controls);
-					viewer.__controls.update();
-					viewer.render();
-				}
-			}
+			this.applyToOtherLinks(function (me) {
+				this.__controls.copy(me.__controls);
+				this.__controls.update();
+				this.render();
+			});
 		},
 
 		removeAllMeshes : function () {
@@ -427,20 +355,6 @@ qx.Class.define("desk.MeshViewer",
 			}
 
 			this.removeMeshes(meshesToRemove);
-		},
-
-		unlink : function () {
-			var links=this.__links;
-			if (links==null) {
-				return;
-			}
-			for (var i=0;i<links.length;i++){
-				if (links[i]==this) {
-					links.splice(i,1);
-					break;
-				}
-			}
-			this.__links=null;
 		},
 
 		viewAll : function ( ) {
