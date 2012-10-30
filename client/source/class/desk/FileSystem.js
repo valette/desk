@@ -145,7 +145,9 @@ qx.Class.define("desk.FileSystem",
 				desk.FileSystem.readFile(file, function (request) {
 					var code = new Function(request.getResponseText());
 					code();
-					callback.call(context);
+					if (typeof callback == 'function') {
+						callback.call(context);
+					}
 				});
 			});
 		},
