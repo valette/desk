@@ -111,6 +111,71 @@ qx.Class.define("desk.ThreeContainer",
 			return this.__renderer;
 		},
 
+		// stores the scene bounding box diagonal length, usefull for updating
+		__boudingBoxDiagonalLength : 0,
+
+		viewAll : function ( ) {
+			var max = new THREE.Vector3(-1e10,-1e10,-1e10);
+			var min = new THREE.Vector3(1e10,1e10,1e10);
+
+			this.__scene.traverse(function(child){
+				if(child instanceof THREE.Mesh){
+					for (var i in child) {
+						if(i == "geometry"){
+							var geo = child.geometry;
+							geo.computeBoundingBox();
+							var bbox = geo.boundingBox;
+							var bbmin = bbox.min;
+							if (min.x > bbmin.x) {
+								min.setX(bbmin.x);
+							}
+							if (min.y > bbmin.y) {
+								min.setY(bbmin.y);
+							}
+							if (min.z > bbmin.z) {
+								min.setZ(bbmin.z);
+							}
+
+							var bbmax = bbox.max;
+							if (max.x < bbmax.x) {
+								max.setX(bbmax.x);
+							}
+							if (max.y < bbmax.y) {
+								max.setY(bbmax.y);
+							}
+							if (max.z < bbmax.z) {
+								max.setZ(bbmax.z);
+							}
+						}
+					}
+				}
+			});
+
+			var center = min.clone().addSelf(max).multiplyScalar(0.5);
+			var bbdiaglength = Math.sqrt(max.clone().subSelf(min).lengthSq());
+
+			var camera = this.__camera;
+			var controls = this.__controls;
+
+			if (this.__boudingBoxDiagonalLength == 0) {
+				this.__boudingBoxDiagonalLength = bbdiaglength;
+				camera.position.copy(center);
+				camera.position.setZ(camera.position.z - bbdiaglength);
+				controls.target.copy(center);
+			}
+			else {
+				var ratio = bbdiaglength / this.__boudingBoxDiagonalLength;
+				this.__boudingBoxDiagonalLength = bbdiaglength;
+				var backPedal = camera.position.clone();
+				backPedal.subSelf(controls.target);
+				backPedal.multiplyScalar(ratio);
+				backPedal.addSelf(controls.target);
+				camera.position.copy(backPedal);
+			}
+			controls.update();
+			this.render();
+		},
+
 		snapshot : function (factor) {
 			if (!factor) {
 				factor = 1;
