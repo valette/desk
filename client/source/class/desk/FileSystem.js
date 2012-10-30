@@ -174,6 +174,40 @@ qx.Class.define("desk.FileSystem",
 			desk.FileSystem.get('ls', {path : path}, callback, context);
 		},
 
+		/**
+		* includes the scripts provided in the input array
+		* @param scripts {Array} the scripts to load
+		* @param callback {Function} callback when done
+		* @param context {Object} optional context for the callback
+		*/
+		includeScripts : function (scripts, callback, context) {
+			var fs = desk.FileSystem.getInstance();
+			if (!fs.__includedScripts) {
+				fs.__includedScripts = {};
+			}
+			var index=-1;
+			function myScriptLoader() {
+				if (index >= 0) {
+					fs.__includedScripts[scripts[index]] = 1;
+				}
+				index+=1;
+				if (index != scripts.length) {
+					if (fs.__includedScripts[scripts[index]] === 1) {
+						myScriptLoader();
+					}
+					else {
+						new qx.io.ScriptLoader().load(scripts[index], myScriptLoader);
+					}
+				}
+				else {
+					if (typeof callback === 'function') {
+						callback.apply(context);
+					}
+				}
+			}
+			myScriptLoader();
+		},
+
 		get : function (action, params, callback, context) {
 			desk.FileSystem.__xhr('GET', action, params, function (request) {
 				callback.call(context, JSON.parse(request.getResponseText()));
@@ -198,6 +232,8 @@ qx.Class.define("desk.FileSystem",
 		__filesURL : null,
 		__actionsURL : null,
 		__user : null,
+
+		__includedScripts : null,
 
 		/**
 		* Returns the base URL string
