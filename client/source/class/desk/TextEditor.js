@@ -44,11 +44,11 @@ qx.Class.define("desk.TextEditor",
 		buttonsContainer.add (spinner);
 		this.add(buttonsContainer);
 
-		this.__textArea = new qx.ui.form.TextArea();
-		this.__textArea.setFont(qx.bom.Font.fromString("15 serif"));
-		this.add(this.__textArea,{flex : 1});
+		var textArea = new qx.ui.form.TextArea();
+		this.__textArea = textArea
+		textArea.setFont(qx.bom.Font.fromString("15 serif"));
+		this.add(textArea,{flex : 1});
 		this.open();
-
 		this.openFile(file);
 		return (this);
 	},
