@@ -615,34 +615,31 @@ qx.Class.define("desk.MeshViewer",
 		},
 
 		loadVTKURL : function (url, callback, color) {
-
 			var loader=new THREE.VTKLoader();
 			var _this=this;
-
 			loader.load (url, function(geom){
-							geom.dynamic = true;
-						geom.computeBoundingBox();
+				geom.dynamic = true;
+				geom.computeBoundingBox();
 
-						var threecolor=new THREE.Color().setRGB(color[0],color[1],color[2]);
-						var material =  new THREE.MeshLambertMaterial( {
-							 color:threecolor.getHex(),
-							 opacity: color[3]} );
-						if (color[3]<0.999) material.transparent=true;
-						var mesh = new THREE.Mesh(geom, material );
-						material.side=THREE.DoubleSide;
-						mesh.renderDepth=color[4];
-
-						_this.__threeCanvas.getScene().add( mesh );
-
-						if(typeof callback == 'function') {
-							callback(mesh);
-							}
-						_this.viewAll();
-					});
+				var threecolor = new THREE.Color().setRGB(color[0],color[1],color[2]);
+				var material =  new THREE.MeshLambertMaterial({
+					color:threecolor.getHex(),
+					opacity: color[3]});
+				if (color[3]<0.999) {
+					material.transparent=true;
+				}
+				var mesh = new THREE.Mesh(geom, material );
+				material.side = THREE.DoubleSide;
+				mesh.renderDepth = color[4];
+				_this.__threeCanvas.getScene().add( mesh );
+				if(typeof callback == 'function') {
+					callback(mesh);
+				}
+				_this.viewAll();
+			});
 		},
 
 		loadCTMURL : function (url, callback, color) {
-
 			if (this.__meshesToLoad==null) {
 				this.__meshesToLoad=[];
 			}
