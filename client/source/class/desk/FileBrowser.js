@@ -91,14 +91,10 @@ qx.Class.define("desk.FileBrowser",
 		this.__createDoubleClickActions();
 
 		// events handling
-		if (this.__actions.isReady()) {
-			this.__createDefaultStaticActions();
-		}
-		else {
-			this.__actions.addListenerOnce("changeReady", function (e) {
-				this.__createDefaultStaticActions();
-			}, this);
-		}
+		var _this = this;
+		desk.Actions.init(function () {
+			_this.__createDefaultStaticActions();
+		});
 
 		virtualTree.addListener("cellDblclick", function (e) {
 			var node=this.__virtualTree.getDataModel().getNodeFromRow(e.getRow());
