@@ -198,8 +198,6 @@ qx.Class.define("desk.MeshViewer",
 
 		// stores the scene bounding box diagonal length, usefull for updating
 		__boudingBoxDiagonalLength : 0,
-
-		__threeCanvasSize : null,
 		
 		getMainPane : function()
 		{
@@ -638,7 +636,7 @@ qx.Class.define("desk.MeshViewer",
 						var x=event.getDocumentLeft() - origin.left;
 						var y=event.getDocumentTop() - origin.top;
 
-						var elementSize = this.__threeCanvasSize;
+						var elementSize = this.__threeCanvas.getInnerSize();
 						var x2 = ( x / elementSize.width ) * 2 - 1;
 						var y2 = - ( y / elementSize.height ) * 2 + 1;
 

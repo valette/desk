@@ -78,6 +78,11 @@ qx.Class.define("desk.SliceView",
 
 	members : {
 		__threeContainer : null,
+
+		getThreeContainer : function () {
+			return this.__threeContainer;
+		},
+
 		__slices : null,
 
 		__slider : null,
@@ -88,7 +93,7 @@ qx.Class.define("desk.SliceView",
 		__paintWidth : 5,
 		__paintColor : null,
 
-		getCamera : function () {
+		__getCamera : function () {
 			return this.__threeContainer.getCamera();
 		},
 
@@ -105,7 +110,7 @@ qx.Class.define("desk.SliceView",
 
 		__updateBrush : null,
 
-		getScene : function() {
+		__getScene : function() {
 			return this.__threeContainer.getScene();
 		},
 
@@ -174,7 +179,7 @@ qx.Class.define("desk.SliceView",
 				for (var j=0;j<mySlices.length;j++) {
 					if (mySlices[j]==slice) {
 						var mesh=slice.getUserData("mesh");
-						this.getScene().remove(mesh);
+						this.__getScene().remove(mesh);
 						mySlices.splice(j,1);
 						this.removeListenerById(slice.getUserData("updateListener"));
 						this.render();
@@ -193,7 +198,7 @@ qx.Class.define("desk.SliceView",
 				var item2orient = this.__orientsButtonGroup.getSelection()[0].getUserData("buttonID");
 				if(item2orient==1)
 				{
-					var camera = this.getCamera();
+					var camera = this.__getCamera();
 					var controls = this.__threeContainer.getControls(); 
 					var direction = controls.target.clone();
 					direction.subSelf(camera.position);
@@ -220,7 +225,7 @@ qx.Class.define("desk.SliceView",
 				var item2orient = this.__orientsButtonGroup.getSelection()[0].getUserData("buttonID");
 				if(item2orient==1)
 				{
-					var camera=this.getCamera();
+					var camera=this.__getCamera();
 					var controls = this.__threeContainer.getControls(); 
 					var direction = controls.target.clone();
 					direction.subSelf(camera.position);
@@ -246,7 +251,7 @@ qx.Class.define("desk.SliceView",
 			this.applyToLinks(function () {
 				var item2orient = this.__orientsButtonGroup.getSelection()[0].getUserData("buttonID");
 				if(item2orient == 1) {
-					var camera = this.getCamera();
+					var camera = this.__getCamera();
 					camera.position.setZ( - camera.position.z);
 					this.__threeContainer.getControls().update();
 				}
@@ -265,7 +270,7 @@ qx.Class.define("desk.SliceView",
 				var item2orient = this.__orientsButtonGroup.getSelection()[0].getUserData("buttonID");
 				if(item2orient == 1)
 				{
-					var camera = this.getCamera();
+					var camera = this.__getCamera();
 					camera.position.setZ( - camera.position.z);
 					camera.up.negate();
 					this.__threeContainer.getControls().update();
@@ -355,13 +360,13 @@ qx.Class.define("desk.SliceView",
 			hGeometry.vertices.push( new THREE.Vector3(coordinates[0],0,0) );
 			hGeometry.vertices.push( new THREE.Vector3(coordinates[2],0,0) );
 			var hline = new THREE.Line(hGeometry, material);
-			this.getScene().add(hline);
+			this.__getScene().add(hline);
 
 			var vGeometry=new THREE.Geometry();
 			vGeometry.vertices.push( new THREE.Vector3(0,coordinates[1],0) );
 			vGeometry.vertices.push( new THREE.Vector3(0,coordinates[5],0) );
 			var vline = new THREE.Line(vGeometry, material);
-			this.getScene().add(vline);
+			this.__getScene().add(vline);
 
 			this.__crossMeshes=[];
 			this.__crossMeshes.push(hline);
@@ -422,7 +427,7 @@ qx.Class.define("desk.SliceView",
 
 	//	maybe there's a bug to submit to three.js : the following line breaks renderDepth..
 	//		mesh.visible=false;
-			this.getScene().add(mesh);
+			this.__getScene().add(mesh);
 			this.__brushMesh=mesh;
 
 			var _this=this;
@@ -513,7 +518,7 @@ qx.Class.define("desk.SliceView",
 			material.side = THREE.DoubleSide;
 
 			var mesh = new THREE.Mesh(geometry,material);
-			this.getScene().add(mesh);
+			this.__getScene().add(mesh);
 			this.__drawingMesh = mesh;
 
 			geometry.computeCentroids();
@@ -592,11 +597,11 @@ qx.Class.define("desk.SliceView",
 						_this.__slider.setVisibility("hidden");
 					}
 
-					_this.getCamera().position.set(0.5*(coordinates[0]+coordinates[2]),
+					_this.__getCamera().position.set(0.5*(coordinates[0]+coordinates[2]),
 												0.5*(coordinates[3]+coordinates[5]),
 												0);
-					_this.__threeContainer.getControls().target.copy(_this.getCamera().position);
-					_this.getCamera().position.setZ(_this.getCamera().position.z+
+					_this.__threeContainer.getControls().target.copy(_this.__getCamera().position);
+					_this.__getCamera().position.setZ(_this.__getCamera().position.z+
 									volumeSlice.getBoundingBoxDiagonalLength()*0.6);
 
 					_this.__projector = new THREE.Projector();
@@ -619,7 +624,7 @@ qx.Class.define("desk.SliceView",
 				geometry.computeBoundingSphere();
 
 				volumeSlice.addListenerOnce('changeImage',function () {
-					_this.getScene().add(mesh);
+					_this.__getScene().add(mesh);
 					}, _this);
 				volumeSlice.addListener('changeImage',_this.render, _this);
 				volumeSlice.addListener("changeSlice", function (e) {
@@ -850,12 +855,12 @@ qx.Class.define("desk.SliceView",
 					controls.mouseMove(event.getDocumentLeft()-origin.left,
 						event.getDocumentTop()-origin.top);
 
-					var z=this.getCamera().position.z;
+					var z=this.__getCamera().position.z;
 					this.render();
 					var myViewer=this;
 					this.__master.applyToViewers (function () {
 						if (this!=myViewer) {
-							this.getCamera().position.z*=Math.abs(z/this.getCamera().position.z);
+							this.__getCamera().position.z*=Math.abs(z/this.__getCamera().position.z);
 							this.__propagateCameraToLinks();
 							this.render();
 							}
@@ -997,7 +1002,7 @@ qx.Class.define("desk.SliceView",
 			var coordinates=this.__2DCornersCoordinates;
 			var dimensions=this.__volume2DDimensions;
 
-			var camera=this.getCamera();
+			var camera=this.__getCamera();
 			projector.unprojectVector( intersection, camera );
 
 			var cameraPosition=camera.position;
