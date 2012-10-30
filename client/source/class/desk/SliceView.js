@@ -552,25 +552,11 @@ qx.Class.define("desk.SliceView",
 		},
 
 		addVolume : function (file, parameters, callback) {
-			var opacity = 1;
-			if (parameters != null) {
-				if (parameters.opacity != null) {
-					opacity = parameters.opacity;
-				}
-			}
-
-			var volumeSlice = new desk.VolumeSlice(file, this.getOrientation(), parameters);
+			var volumeSlice = new desk.VolumeSlice(file, this.getOrientation(), parameters, sliceLoaded);
 			this.__slices.push(volumeSlice);
 			var _this = this;
 
-			if (volumeSlice.isReady()) {
-				initSlice();
-			}
-			else {
-				volumeSlice.addListenerOnce("changeReady",initSlice);
-			}
-
-			function initSlice () {
+			function sliceLoaded () {
 				var geometry = new THREE.Geometry();
 				var coordinates = volumeSlice.get2DCornersCoordinates();
 				for (var i = 0; i < 4; i++) {
@@ -624,18 +610,19 @@ qx.Class.define("desk.SliceView",
 				geometry.computeBoundingSphere();
 
 				volumeSlice.addListenerOnce('changeImage',function () {
-					_this.__getScene().add(mesh);
-					}, _this);
+					this.__getScene().add(mesh);
+				}, _this);
 				volumeSlice.addListener('changeImage',_this.render, _this);
 				volumeSlice.addListener("changeSlice", function (e) {
-					_this.setSlice(e.getData());});
+					this.setSlice(e.getData());
+				}, _this);
 
 				if (_this.__slices.length == 1) {
 					_this.__setDrawingMesh(volumeSlice);
 					_this.__createBrushMesh(volumeSlice);
 					_this.__createCrossMeshes(volumeSlice);
 
-					switch (this.getOrientation())
+					switch (_this.getOrientation())
 					{
 						case 0 :
 						case 1 :

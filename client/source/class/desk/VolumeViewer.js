@@ -8,9 +8,9 @@ qx.Class.define("desk.VolumeViewer",
 	extend : qx.core.Object,
 	include : desk.ActionLinkMixin,
 
-	construct : function(globalFile, parameters, appliCallback)
+	construct : function(file, parameters, callback)
 	{	
-
+		parameters = parameters || {};
 		this.__windowsInGridCoord = {
 			viewers : [{c:0,r:0}, {c:1,r:0}, {c:0,r:1}],
 			volList : {c:1,r:1}
@@ -26,37 +26,19 @@ qx.Class.define("desk.VolumeViewer",
             qx.log.appender.Console;
         }
         
-        //~ if(standAlone==false)
-        if(typeof appliCallback=="function") {
+        if(parameters.standAlone === false) {
 			this.__standAlone = false;
 		}
-        
-		if ( ! Detector.webgl ) {
-			Detector.addGetWebGLMessage();
-		}
-		
-		if(parameters != null)
-		{
-			if( parameters.nbOrientations != null ) {
-				this.__nbUsedOrientations = parameters.nbOrientations;
-			}
-			if( parameters.inGridCoord != null ) {
-				this.__windowsInGridCoord = parameters.inGridCoord;
-			}
-		}
-		
-		this.__file = globalFile;
 
-		this.__fileSystem = desk.FileSystem.getInstance();
-
-		this.__viewers = [];
-		var i;
-		for( i=0; i < this.__nbUsedOrientations; i++ ) {
-			this.__viewers[i] = new desk.SliceView(this, i);
+		if( parameters.nbOrientations != null ) {
+			this.__nbUsedOrientations = parameters.nbOrientations;
+		}
+		if( parameters.inGridCoord != null ) {
+			this.__windowsInGridCoord = parameters.inGridCoord;
 		}
 
 		var gridLayout=new qx.ui.layout.Grid(3,3);
-		for ( i=0 ; i<2 ; i++ ) {
+		for ( var i=0 ; i<2 ; i++ ) {
 			gridLayout.setRowFlex( i , 1 );
 			gridLayout.setColumnFlex( i, 1 );
 		}
@@ -70,19 +52,19 @@ qx.Class.define("desk.VolumeViewer",
 		this.__fullscreenContainer=fullscreenContainer;
 		fullscreenContainer.setVisibility("excluded");
 
-		this.__window=new qx.ui.window.Window();
-		this.__window.setLayout(new qx.ui.layout.VBox());
-		this.__window.setShowClose(true);
-		this.__window.setShowMinimize(false);
-		this.__window.setUseResizeFrame(true);
-		this.__window.setUseMoveFrame(true);
+		var myWindow = new qx.ui.window.Window();
+		this.__window = myWindow;
+		myWindow.set ({layout : new qx.ui.layout.VBox(),
+			showClose : true,
+			showMinimize : false,
+			useResizeFrame : true,
+			useMoveFrame : true});
 
-/////////////////////////////////////////////////////////////////////////////
 		if ( this.__standAlone ) {
-			this.__window.add( this.__getToolBar() );
+			myWindow.add( this.__getToolBar() );
 		}
-		this.__window.add(gridContainer, {flex : 1});
-		this.__window.add(fullscreenContainer, {flex : 1});
+		myWindow.add(gridContainer, {flex : 1});
+		myWindow.add(fullscreenContainer, {flex : 1});
 
 		var width=window.innerWidth;
 		var height=window.innerHeight;
@@ -92,31 +74,24 @@ qx.Class.define("desk.VolumeViewer",
 		}
 		minSize=Math.round(minSize*0.85);
 		
-		this.__window.set({width : minSize, height : minSize});
-		this.__window.setCaption(globalFile);
-		this.__window.open();
+		myWindow.set({width : minSize, height : minSize});
+		myWindow.open();
 
 		this.__createVolumesList();
-
-
 		this.__createOrientationWindow();
 		this.__addViewers();
-		this.addVolume(globalFile);
-
 		this.__addDropFileSupport();
-		
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		if(typeof appliCallback == "function") {
-			appliCallback(this);
+
+		if (file) {
+			this.__file = file;
+			this.addVolume(file, parameters, callback);
+			myWindow.setCaption(file);
 		}
-				
-//////////////////////////////////////////
 		return (this);
 	},
 
 
 	events : {
-		"viewReady" : "qx.event.type.Data",
 		"removeVolume" : "qx.event.type.Data"
 	},
 
@@ -141,10 +116,9 @@ qx.Class.define("desk.VolumeViewer",
 		__nbUsedOrientations : 3,
 
 		__file : null,
-		__fileSystem : null,
 
 		getFile : function() {
-			return this.__file;
+			return this.__files;
 		},
 		
 		getFileBrowser : function() {
@@ -210,8 +184,10 @@ qx.Class.define("desk.VolumeViewer",
 		},
 
 		__addViewers : function () {
+			this.__viewers = [];
 			for(var i=0; i<this.__nbUsedOrientations; i++) {
-				var sliceView=this.__viewers[i];
+				var sliceView = new desk.SliceView(this, i);
+				this.__viewers.push(sliceView);
 				var viewGridCoor = this.__windowsInGridCoord.viewers[i];
 				this.__addViewerToGrid(sliceView, viewGridCoor.r, viewGridCoor.c);
 				sliceView.setOrientPlane(this.__viewsNames[i]);
@@ -424,7 +400,7 @@ qx.Class.define("desk.VolumeViewer",
 			}, this);
 		},
 
-		addVolume : function (file, parameters) {
+		addVolume : function (file, parameters, callback) {
 			var _this=this;
 			var volumeSlices=[];
 
@@ -501,9 +477,10 @@ qx.Class.define("desk.VolumeViewer",
 						numberOfRemainingMeshes--;
 						if ( numberOfRemainingMeshes == 0 ) {
 							_this.__reorderMeshes();
+							if (typeof callback === 'function') {
+								callback(volumeSlices);
+							}
 						}
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-						_this.fireDataEvent("viewReady", volumeSlices);
 					});
 				} ) (i));
 			}
