@@ -4,8 +4,8 @@ var fs          = require('fs'),
 	crypto      = require('crypto'),
 	exec        = require('child_process').exec,
 	prettyPrint = require('pretty-data').pd,
-	winston     = require('winston');
-
+	winston     = require('winston'),
+	cronJob     = require('cron').CronJob;
 
 var console = {
 	log : function (text) {
@@ -26,10 +26,56 @@ var filesRoot;
 var directories = [];
 
 // last allowed directory : the /public path
-var publicPath='/public'
+var publicPath = '/public'
 
 // variable to enumerate actions for logging
-var actionsCounter=0;
+var actionsCounter = 0;
+
+//30 days of maximum life time for cache folders
+var millisecondsInADay = 24 * 60 * 60 * 1000;
+var maximumCacheAge = 30 * millisecondsInADay;
+
+function cleanCache() {
+	console.log('Starting cache cleaning (delete folders older than ' +
+		+ Math.floor(maximumCacheAge / millisecondsInADay) + ' days)'); 
+
+	var cacheDir = filesRoot + 'cache/';
+	if (!fs.existsSync(cacheDir)) {
+		winston.log ('error' , 'wrong cache directory :' + cacheDir);
+		return;
+	}
+
+	fs.readdir(cacheDir, function (err, files) {
+		async.forEachSeries(files,
+			function (file, callback) {
+				fs.stat( cacheDir + file, function (err, stats) {
+					if (err) {
+						callback (err);
+					}
+					var time=stats.mtime.getTime();
+					var currentTime = new Date().getTime();
+					var age = currentTime - time;
+					if (age > maximumCacheAge) {
+						days = Math.floor(age / millisecondsInADay);
+						console.log('deleting cache ' + file + ' (' + days + ' days old)'); 
+						exec('rm -rf ' + file, {cwd : cacheDir}, callback);
+					}
+				});
+			},
+			function (err) {
+				if (err) {
+					console.log(err);
+				}
+			}
+		);
+	});
+}
+
+var job = new cronJob({
+	cronTime: '* * ' + Math.floor(24 * Math.random()) + ' * * *',
+	onTick: cleanCache,
+	start: true
+});
 
 exports.validatePath = function (path, callback) {
 	fs.realpath(filesRoot + path, function (err, realPath) {
@@ -170,6 +216,8 @@ exports.setRoot = function (root) {
 	directories.push(getSubdir('actions'));
 	directories.push(getSubdir('code'));
 	directories.push('/public/');
+
+	cleanCache();
 };
 
 exports.performAction = function (POST, callback) {
