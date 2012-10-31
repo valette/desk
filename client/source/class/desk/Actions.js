@@ -50,9 +50,9 @@ qx.Class.define("desk.Actions",
 		desk.FileSystem.includeScripts(scripts, function () {
 			this.__scriptsLoaded = true;
 			if (this.__actionsLoaded) {
-				this.__setReady(true);
+				this.__setReady();
 			}
-		});
+		}, this);
 		return this;
 	},
 
@@ -275,7 +275,7 @@ qx.Class.define("desk.Actions",
 				}
 				this.__actionsLoaded = true;
 				if ( this.__scriptsLoaded ) {
-					this.__setReady(true);
+					this.__setReady();
 				}
 			}, this);
 		}
