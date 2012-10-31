@@ -60,6 +60,9 @@ function cleanCache() {
 						console.log('deleting cache ' + file + ' (' + days + ' days old)'); 
 						exec('rm -rf ' + file, {cwd : cacheDir}, callback);
 					}
+					else {
+						callback();
+					}
 				});
 			},
 			function (err) {
