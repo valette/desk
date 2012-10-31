@@ -51,9 +51,6 @@ qx.Class.define("desk.FileBrowser",
 		var filterBox = new qx.ui.container.Composite;
 		filterBox.setLayout(new qx.ui.layout.HBox(10));
 
-		if(this.__standAlone) {
-			this.add(filterBox);
-		}
 		var filterText = new qx.ui.basic.Label("Filter files :");
 		filterBox.add(filterText);
 		var filterField = new qx.ui.form.TextField();
@@ -83,6 +80,9 @@ qx.Class.define("desk.FileBrowser",
 		dataModel.setFilter(filter);
 
 		this.add(virtualTree,{flex: 1});
+		if(this.__standAlone) {
+			this.add(filterBox);
+		}
 
 		// add root directory
 		this.__rootId = dataModel.addBranch(null, this.__baseDir, true);
