@@ -109,7 +109,8 @@ qx.Class.define("desk.Actions",
 		__ongoingActions : null,
 
 		__actionsList : null,
-		__actionsArray : null,
+		__actionsObject : null,
+
 		__currentFileBrowser : null,
 
 		__permissionsLevel : 0,
@@ -122,16 +123,7 @@ qx.Class.define("desk.Actions",
 		},
 
 		getAction : function (name) {
-			var actions=this.__actionsArray;
-			for (var i=0;i!=actions.length;i++)
-			{
-				var action=actions[i];
-				if (action.name==name) {
-					return (JSON.parse(JSON.stringify(action)));
-				}
-			}
-			console.log("action "+name+" not found");
-			return null;
+			return (JSON.parse(JSON.stringify(this.__actionsObject[name])));
 		},
 
 		getActionsMenu : function (fileBrowser) {
@@ -248,14 +240,15 @@ qx.Class.define("desk.Actions",
 				this.__permissionsLevel = parseInt(settings.permissions);
 
 				var actions = this.__actions.actions;
-				this.__actionsArray = actions;
+				this.__actionsObject = actions;
 				var that = this;
 				var menus = [];
 
-				for (var n = 0; n < actions.length; n++)
+				var actionsNames = Object.keys(actions);
+				for (var n = 0; n < actionsNames.length; n++)
 				{
-					var action = actions[n];
-					var actionName = action.name
+					var action = actions[actionsNames[n]];
+					var actionName = actionsNames[n];
 					var button = new qx.ui.menu.Button(actionName);
 					var lib = action.lib;
 					var menu = menus[lib];

@@ -104,16 +104,10 @@ function includeActionsFile (file, callback) {
 		if (exists) {
 			switch (libpath.extname(file).toLowerCase()) {
 			case ".json":
-				includeActionsJSON(file, afterImport);
+				console.log('importing actions from : ' + file);
+				includeActionsJSON(file, callback);
 				break;
 			default:
-		//		console.log("*: "+file+": format not handled");
-				callback(null);
-			}
-
-			function afterImport (data) {
-				actions = actions.concat(data)
-				console.log(data.length+'/'+actions.length+' actions from '+file);
 				callback(null);
 			}
 		}
@@ -139,8 +133,7 @@ exports.includeActions=function (file, callback) {
 	}
 
 	function afterImport() {
-		//~ exportActions( filesRoot+"/actions.json", callback );
-		exportActions( filesRoot+"actions.json", callback );
+		exportActions(filesRoot + "actions.json", callback);
 	}
 }
 
@@ -150,9 +143,13 @@ includeActionsJSON = function (file, callback) {
 		var localActions = actionsObject.actions || [];
 		var path = fs.realpathSync(libpath.dirname(file));
 		var libraryName = libpath.basename(file, '.json');
-		for (var i = 0; i < localActions.length; i++) {
-			localActions[i].lib = libraryName;
-			var attributes = localActions[i].attributes;
+		var actionsArray = Object.keys(localActions);
+		console.log(actionsArray.length + " actions in " + file);
+
+		for (var i = 0; i < actionsArray.length; i++) {
+			var action = localActions[actionsArray[i]];
+			action.lib = libraryName;
+			var attributes = action.attributes;
 			if ( typeof (attributes.js) === 'string' ) {
 				console.log('loaded javascript from ' + attributes.js);
 				attributes.executable = path + '/' + attributes.js + '.js';
@@ -166,18 +163,18 @@ includeActionsJSON = function (file, callback) {
 			else if ( typeof (attributes.command) === 'string' ) {
 				attributes.executable = attributes.command;
 			}
+			actions[actionsArray[i]] = action;
 		}
 		var includes = actionsObject.include || [];
 		exports.includeActions(includes, function () {
 			if ( typeof(callback) === 'function' ) {
-				callback(localActions);
+				callback();
 			}
 		});
 	});
 }
 
 function exportActions( file, callback ) {
-//	console.log("saving actions.json to "+file);
 	fs.writeFile(file, prettyPrint.json(JSON.stringify({ actions : actions , permissions : 1})),
 		function (err) {
 			if (err) throw err;
@@ -193,7 +190,7 @@ exports.addDirectory = function (directory) {
 
 exports.update = function (callback) {
 	// clear actions
-	actions = [];
+	actions = {};
 	async.forEach(actionsDirectories, function (directory, callback) {
 		fs.readdir(directory, function (err, files) {
 			for (var i = 0; i < files.length; i++) {
@@ -201,16 +198,16 @@ exports.update = function (callback) {
 			}
 			exports.includeActions(files, callback);
 		});
-	}, callback);
+	}, function (err) {
+		console.log(Object.keys(actions).length + ' actions included');
+		if (typeof callback === 'function') {
+			callback();
+		}
+	});
 }
 
 exports.getAction = function (actionName) {
-	for (var i = 0; i != actions.length; i++) {
-		var action = actions[i];
-		if (action.name === actionName) {
-			return JSON.parse(JSON.stringify(action));
-		}
-	}
+	return JSON.parse(JSON.stringify(actions[actionName]));
 }
 
 exports.setRoot = function (root) {
@@ -253,14 +250,8 @@ exports.performAction = function (POST, callback) {
 		var actionName = POST.action;
 		actionParameters.action = actionName;
 
-		for (i = 0; i < actions.length; i++) {
-			action = actions[i];
-			if (action.name == actionName) {
-				break;
-			}
-		}
-
-		if (i >= actions.length) {
+		action = actions[actionName];
+		if (!action) {
 			callback("action "+actionName+" not found");
 			return;
 		}
@@ -497,7 +488,7 @@ exports.performAction = function (POST, callback) {
 		}
 
 		var commandOptions = { cwd:filesRoot , maxBuffer: 1024*1024};
-		if ((action.attributes.voidAction !== "true") || (action.name == "add_subdirectory")) {
+		if ((action.attributes.voidAction !== "true") || (actionParameters.action == "add_subdirectory")) {
 			commandOptions.cwd += outputDirectory;
 		}
 

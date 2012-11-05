@@ -7,10 +7,8 @@ qx.Class.define("desk.Action",
 	construct : function (name, standalone)
 	{
 		this.base(arguments);
-		var actions = desk.Actions.getInstance();
-		this.__actions = actions;
-		this.__action = actions.getAction(name);
-		this.__actionName = name;
+		this.__action = desk.Actions.getInstance().getAction(name);
+		this.__name = name;
 		if (standalone == false) {
 			this.__standalone = false;
 		}
@@ -46,8 +44,6 @@ qx.Class.define("desk.Action",
 	members : {
 		__tabView : null,
 
-		__actions : null,
-
 		__connections : null,
 
 		__outputDirectory : null,
@@ -56,7 +52,7 @@ qx.Class.define("desk.Action",
 
 		__action : null,
 
-		__actionName : null,
+		__name : null,
 
 		__providedParameters : null,
 
@@ -222,7 +218,7 @@ qx.Class.define("desk.Action",
 				send.setEnabled(false);
 				send.setLabel("Updating Parents...");
 
-				var parameterMap={"action" : this.__actionName};
+				var parameterMap={"action" : this.__name};
 				var items=manager.getItems();
 				// add all parameters
 				for (i = 0; i < items.length; i++) {
@@ -349,7 +345,7 @@ qx.Class.define("desk.Action",
 					showClose :true,
 					showMinimize : false,
 					useMoveFrame : true,
-					caption : action.name});
+					caption : that.__name});
 				this.__window.add(this.getTabView(), {flex : 1});
 			}
 
