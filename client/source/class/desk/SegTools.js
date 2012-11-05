@@ -103,11 +103,11 @@ qx.Class.define("desk.SegTools",
 		'<color red="255" green="0" blue="0" name="object1" label="1"/>',
 		'<color red="0" green="255" blue="0" name="object2" label="2"/>',
 		'<color red="0" green="0" blue="255" name="object3" label="3"/>',
-	/*	'<adjacencies>',
+		'<adjacencies>',
 		'<adjacency label1="1" label2="2"/>',
 		'<adjacency label1="2" label2="3"/>',
 		'<adjacency label1="3" label2="1"/>',
-		'</adjacencies>',*/
+		'</adjacencies>',
 		'</colors>'].join('\n'),
 
 		__master : null,
