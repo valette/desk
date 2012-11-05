@@ -112,7 +112,7 @@ function includeActionsFile (file, callback) {
 			}
 
 			function afterImport (data) {
-				actions=actions.concat(data)
+				actions = actions.concat(data)
 				console.log(data.length+'/'+actions.length+' actions from '+file);
 				callback(null);
 			}
@@ -157,15 +157,17 @@ includeActionsJSON = function (file, callback) {
 				console.log('loaded javascript from ' + attributes.js);
 				attributes.executable = path + '/' + attributes.js + '.js';
 				attributes.module = require(path + '/' + attributes.js);
+				attributes.path = path;
 			}
 			else if ( typeof (attributes.executable) === 'string' ) {
 				attributes.executable = path + '/' + attributes.executable;
+				attributes.path = path;
 			}
 			else if ( typeof (attributes.command) === 'string' ) {
 				attributes.executable = attributes.command;
 			}
 		}
-		var includes=actionsObject.include || [];
+		var includes = actionsObject.include || [];
 		exports.includeActions(includes, function () {
 			if ( typeof(callback) === 'function' ) {
 				callback(localActions);
@@ -202,6 +204,15 @@ exports.update = function (callback) {
 	}, callback);
 }
 
+exports.getAction = function (actionName) {
+	for (var i = 0; i != actions.length; i++) {
+		var action = actions[i];
+		if (action.name === actionName) {
+			return JSON.parse(JSON.stringify(action));
+		}
+	}
+}
+
 exports.setRoot = function (root) {
 	filesRoot = fs.realpathSync(root) + '/';
 
@@ -225,31 +236,31 @@ exports.setRoot = function (root) {
 
 exports.performAction = function (POST, callback) {
 	var action;
-	var commandLine='';//"ulimit -v 12000000; nice ";
-	var inputMTime=-1;
-	var actionParameters={};
+	var commandLine = '';
+	var inputMTime = -1;
+	var actionParameters = {};
 	var outputDirectory;
-	var cachedAction=false;
+	var cachedAction = false;
 
 	actionsCounter++;
-	var header="["+actionsCounter+"] ";
+	var header = "[" + actionsCounter + "] ";
 
 	async.series([
 
 	// first, parse parameters into actionParameters;
 	function (callback) {
 		var i;
-		var actionName=POST.action;
-		actionParameters.action=actionName;
+		var actionName = POST.action;
+		actionParameters.action = actionName;
 
-		for (i=0;i<actions.length;i++) {
-			action=actions[i];
-			if (action.name==actionName) {
+		for (i = 0; i < actions.length; i++) {
+			action = actions[i];
+			if (action.name == actionName) {
 				break;
 			}
 		}
 
-		if (i>=actions.length) {
+		if (i >= actions.length) {
 			callback("action "+actionName+" not found");
 			return;
 		}
@@ -257,20 +268,20 @@ exports.performAction = function (POST, callback) {
 		commandLine += action.attributes.executable + ' ';
 
 		function parseParameter (parameter, callback) {
-			if (parameter.text!==undefined) {
+			if (parameter.text !== undefined) {
 				// parameter is actually a text anchor
-				commandLine+=parameter.text;
+				commandLine += parameter.text;
 				callback (null);
 				return;
 			}
 			else {
-				var parameterValue=POST[parameter.name];
+				var parameterValue = POST[parameter.name];
 
-				actionParameters[parameter.name]=parameterValue;
+				actionParameters[parameter.name] = parameterValue;
 
-				if (parameterValue===undefined){
-					if (parameter.required==="true") {
-						callback ("parameter "+parameter.name+" is required!");
+				if (parameterValue === undefined){
+					if (parameter.required === "true") {
+						callback ("parameter " + parameter.name + " is required!");
 						return;
 					} else {
 						callback(null);
@@ -278,87 +289,87 @@ exports.performAction = function (POST, callback) {
 					}
 				}
 				else {
-					if (parameter.prefix!==undefined) {
-							commandLine+=parameter.prefix;
+					if (parameter.prefix !== undefined) {
+							commandLine += parameter.prefix;
 					}
 
 					switch (parameter.type)
 					{
 					case 'file':
-						fs.realpath(filesRoot+parameterValue, function (err, path) {
+						fs.realpath(filesRoot + parameterValue, function (err, path) {
 							if (err) {
 								callback (err);
 								return;
 							}
-							commandLine+=path+" ";
-							fs.stat(filesRoot+parameterValue, function (err, stats) {
-								var time=stats.mtime.getTime();
-								if (time>inputMTime) {
-									inputMTime=time;
+							commandLine += path + " ";
+							fs.stat(filesRoot + parameterValue, function (err, stats) {
+								var time = stats.mtime.getTime();
+								if (time > inputMTime) {
+									inputMTime = time;
 								}
 								callback (null);
 							});
 						});
 						break;
 					case 'directory':
-						fs.realpath(filesRoot+parameterValue, function (err, path) {
+						fs.realpath(filesRoot + parameterValue, function (err, path) {
 							if (err) {
 								callback (err);
 								return;
 							}
-							commandLine+=path+" ";
-							fs.stat(filesRoot+parameterValue, function (err, stats) {
-								var time=stats.mtime.getTime();
-								if (time>inputMTime) {
-									inputMTime=time;
+							commandLine += path + " ";
+							fs.stat(filesRoot + parameterValue, function (err, stats) {
+								var time = stats.mtime.getTime();
+								if (time > inputMTime) {
+									inputMTime = time;
 								}
 								if (!stats.isDirectory()) {
-									callback ("error : "+parameterValue+" is not a directory");
+									callback ("error : " + parameterValue + " is not a directory");
 								}
 								callback (null);
 							});
 						});
 						break;
 					case 'string':
-						if (parameterValue.indexOf(" ")===-1) {
-							commandLine+=parameterValue+" ";
+						if (parameterValue.indexOf(" ") === -1) {
+							commandLine += parameterValue + " ";
 							callback (null);
 						}
 						else {
-							callback ("parameter "+parameter.name+" must not contain spaces");
+							callback ("parameter " + parameter.name + " must not contain spaces");
 						}
 						break;
 					case 'int':
 						if (isNaN(parseInt(parameterValue))) {
-							callback ("parameter "+parameter.name+" must be an integer value");
+							callback ("parameter " + parameter.name + " must be an integer value");
 						}
 						else {
-							commandLine+=parameterValue+" ";
+							commandLine += parameterValue + " ";
 							callback (null);
 						}
 						break;
 					case 'float':
 						if (isNaN(parseFloat(parameterValue))) {
-							callback ("parameter "+parameter.name+" must be a floating point value");
+							callback ("parameter " + parameter.name + " must be a floating point value");
 						}
 						else {
-							commandLine+=parameterValue+" ";
+							commandLine += parameterValue + " ";
 							callback (null);
 						}
 						break;
 					case 'text':
 					case 'base64data':
-						commandLine+=parameterValue+" ";
+						commandLine += parameterValue + " ";
 						callback (null);
 						break;
 					default:
-						callback ("parameter type not handled : "+parameter.type);
+						callback ("parameter type not handled : " + parameter.type);
 					}
 				}
 			}
 		}
 
-		var parameters=action.parameters;
+		var parameters = action.parameters;
 
 		async.forEachSeries(parameters, parseParameter, function(err){
 			callback (err);
@@ -368,10 +379,10 @@ exports.performAction = function (POST, callback) {
 	// then handle output directory in outputDirectory
 	function (callback) {
 
-		outputDirectory=POST.output_directory;
-		actionParameters.output_directory=outputDirectory;
+		outputDirectory = POST.output_directory;
+		actionParameters.output_directory = outputDirectory;
 
-		if (action.attributes.voidAction==="true") {
+		if (action.attributes.voidAction === "true") {
 			callback(null);
 			return;
 		}
@@ -379,14 +390,14 @@ exports.performAction = function (POST, callback) {
 		switch (outputDirectory) 
 		{
 		case undefined :
-			var counterFile=filesRoot+"/actions/counter.json";
-			fs.readFile( counterFile , function (err, data) {
-				var index=1;
+			var counterFile = filesRoot + "/actions/counter.json";
+			fs.readFile(counterFile, function (err, data) {
+				var index = 1;
 				if (!err) {
 					index=JSON.parse(data).value + 1;
 				}
-				outputDirectory="actions/"+index+"/";
-				fs.mkdir(filesRoot+"/actions/"+index, function (err) {
+				outputDirectory = "actions/" + index + "/";
+				fs.mkdir(filesRoot + "/actions/" + index, function (err) {
 					if ( err ) {
 						callback( err.message );
 					}
@@ -408,11 +419,11 @@ exports.performAction = function (POST, callback) {
 		case "cache/" :
 			var shasum = crypto.createHash('sha1');
 			shasum.update(commandLine);
-			outputDirectory="cache/"+shasum.digest('hex')+"/";
-			fs.stat(filesRoot+outputDirectory, function (err, stats) {
+			outputDirectory = "cache/" + shasum.digest('hex') + "/";
+			fs.stat(filesRoot + outputDirectory, function (err, stats) {
 				if (err) {
 					// directory does not exist, create it
-					fs.mkdir(filesRoot+outputDirectory,0777 , function (err) {
+					fs.mkdir(filesRoot + outputDirectory,0777 , function (err) {
 						if (err) {
 							callback(err.message);
 						}
@@ -444,16 +455,16 @@ exports.performAction = function (POST, callback) {
 		}
 		else {
 			// check if action was already performed
-			var actionFile=filesRoot+outputDirectory+"/action.json";
+			var actionFile = filesRoot + outputDirectory + "/action.json";
 			fs.stat(actionFile, function (err, stats) {
-				if ((err)||(stats.mtime.getTime()<inputMTime)) {
+				if ((err)||(stats.mtime.getTime() < inputMTime)) {
 					callback();
 				}
 				else {
 					fs.readFile(actionFile, function (err, data) {
-						if (data==JSON.stringify(actionParameters)) {
-					  		console.log(header+"cached");
-					  		cachedAction=true;
+						if (data == JSON.stringify(actionParameters)) {
+					  		console.log(header + "cached");
+					  		cachedAction = true;
 							callback();
 						}
 						else {
@@ -479,32 +490,33 @@ exports.performAction = function (POST, callback) {
 		var js = action.attributes.module;
 		if ( typeof (js) === "object" ) {
 			var actionParameters2 = JSON.parse(JSON.stringify(actionParameters));
-			actionParameters2.filesRoot=filesRoot;
+			actionParameters2.filesRoot = filesRoot;
+			actionParameters2.HackActionsHandler = exports;
 			js.execute(actionParameters2, afterExecution);
 			return;
 		}
 
-		var commandOptions={ cwd:filesRoot , maxBuffer: 1024*1024};
-		if ((action.attributes.voidAction !=="true") || (action.name=="add_subdirectory")) {
-			commandOptions.cwd+=outputDirectory;
+		var commandOptions = { cwd:filesRoot , maxBuffer: 1024*1024};
+		if ((action.attributes.voidAction !== "true") || (action.name == "add_subdirectory")) {
+			commandOptions.cwd += outputDirectory;
 		}
 
-		exec(commandLine+" | tee action.log", commandOptions, afterExecution);
+		exec(commandLine + " | tee action.log", commandOptions, afterExecution);
 
 		function afterExecution(err, stdout, stderr) {
 			if (err) {
 				callback (err.message);
 			}
 			else {
-				if (action.attributes.voidAction ==="true") {
-					callback ("void\n"+stdout+"\nOK ("+(new Date().getTime()-startTime)/1000+"s)\n");
+				if (action.attributes.voidAction === "true") {
+					callback ("void\n" + stdout + "\nOK (" + (new Date().getTime() - startTime) / 1000 + "s)\n");
 					return;
 				}
 
-				var string=JSON.stringify(actionParameters);
-				fs.writeFile(filesRoot+outputDirectory+"/action.json", string, function (err) {
+				var string = JSON.stringify(actionParameters);
+				fs.writeFile(filesRoot + outputDirectory + "/action.json", string, function (err) {
 					if (err) throw err;
-					callback (outputDirectory+"\n"+stdout+"\nOK ("+(new Date().getTime()-startTime)/1000+"s)\n");
+					callback (outputDirectory + "\n" + stdout + "\nOK (" + (new Date().getTime() - startTime) / 1000 + "s)\n");
 				});
 			}
 		}
