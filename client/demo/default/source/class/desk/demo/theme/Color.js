@@ -10,9 +10,17 @@
 
 qx.Theme.define("desk.demo.theme.Color",
 {
-  extend : qx.theme.modern.Color,
+  extend : qx.theme.indigo.Color,
 
   colors :
   {
+    /*
+    ----------------------------------------------------------------------
+      SAMPLE COLORS
+    ----------------------------------------------------------------------
+    */
+
+    // color as hex value
+    "background-application" : "#FFFFFF"
   }
 });

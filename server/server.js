@@ -1,20 +1,22 @@
 var fs      = require('fs'),
+	os      = require('os'),
+	libPath = require('path'),
     express = require('express'),
-    http    = require ('http'),
-    https   = require ('https'),
-   	exec = require('child_process').exec,
-   	os=require('os');
+    http    = require('http'),
+    https   = require('https'),
+    exec    = require('child_process').exec,
+	actions = require('./actions/actions');
 
 var	user=process.env.USER;
 console.log("UID : "+process.getuid());
 
 // user parameters
-var serverPath = fs.realpathSync('../client/')+'/',
-	homeURL = '/' + user + '/';
+var serverPath = fs.realpathSync(__dirname + '/../client/')+'/',
+	homeURL = '/' + user + '/',
 	deskPath = '/home/' + user + '/desk/',
 	actionsBaseURL = homeURL + 'rpc/',
 	port = process.getuid(),
-	uploadDir = deskPath + 'upload/';
+	uploadDir = deskPath + 'upload/',
 	extensionsDir = deskPath + 'extensions/';
 
 // make desk directory if not existent
@@ -47,10 +49,10 @@ console.log('Welcome to Desk');
 console.log('Running as user : '+user);
 console.log(separator);
 
-//configure middleware : static file serving, errors
+//configure express server
 var app = express();
 
-// set upload limit
+// set upload limit to 20 GB
 app.use(express.limit('20000mb'));
 
 // look for correctly formated password.json file.
@@ -94,13 +96,6 @@ app.use(homeURL, express.static(serverPath));
 // display directories
 app.use(homeURL, express.directory(serverPath));
 
-// handle directory listing
-app.post(actionsBaseURL + 'ls', function(req, res){
-	actions.listDir(req.body.dir, function (message) {
-		res.send(message);
-	});
-});
-
 // handle uploads
 app.post(actionsBaseURL + 'upload', function(req, res) {
 	var file = req.files.file;
@@ -112,7 +107,7 @@ app.post(actionsBaseURL + 'upload', function(req, res) {
 		if (err) throw err;
 		// delete the temporary file
 		fs.unlink(file.path.toString(), function() {
-		    if (err) throw err;
+			if (err)  {throw err;}
 		});
 	});
 	res.send('files uploaded!');
@@ -133,18 +128,52 @@ app.post(actionsBaseURL + 'reset', function(req, res){
 	});
 });
 
-// handle cache clear
-app.get(actionsBaseURL + 'clearcache', function(req, res){
-	exec("rm -rf *",{cwd: deskPath + 'cache', maxBuffer: 1024*1024}, function (err) {
-		res.send('cache cleared!');
-	});
-});
-
-// handle actions clear
-app.get(actionsBaseURL + 'clearactions', function(req, res){
-	exec("rm -rf *",{cwd: deskPath + 'actions', maxBuffer: 1024*1024}, function (err) {
-		res.send('actions cleared!');
-	});
+app.get(actionsBaseURL+':action', function (req, res) {
+	var action = req.params.action;
+	switch (action) {
+	case 'clearcache' :
+		var dir = action.substring(5);
+		exec("rm -rf *",{cwd: deskPath + dir}, function () {
+			res.send(dir + ' cleared');
+		});
+		break;
+	case 'exists' :
+		var path = req.query.path;
+		fs.exists(deskPath + path, function (exists) {
+			console.log('exists : ' + path	+ ' : ' + exists);
+			res.send(JSON.stringify({exists : exists}));
+		});
+		break;
+	case 'ls' :
+		var path = req.query.path;
+		actions.validatePath(path, function (error) {
+			if (error) {
+				res.send(error);
+				return;
+			}
+			actions.getDirectoryContent(path, function (message) {
+				res.send(message);
+			});
+		});
+		break;
+	case 'download' :
+		var file = req.query.file;
+		actions.validatePath(file, function (error) {
+			if (error) {
+				res.send(error);
+				return;
+			}
+//			res.setHeader('Content-Type', 'application/octet-stream');
+			res.setHeader('Content-Disposition','attachment; filename=' +
+				libPath.basename(file));
+			var fileStream = fs.createReadStream(deskPath + file);
+			fileStream.pipe(res);
+		});
+		break;
+	default : 
+		res.send('action not found');
+		break;
+   }
 });
 
 // handle errors
@@ -153,8 +182,6 @@ app.use(express.errorHandler({
 	showStack: true
 }));
 
-// use router
-app.use(app.router);
 console.log(separator);
 
 var server;
@@ -167,21 +194,19 @@ if (0) {//fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	};
 	server = https.createServer(options, app);
 	console.log("Using secure https mode");
-	baseURL="https://";
+	baseURL = "https://";
 }
 else {
-	server=http.createServer(app);
+	server = http.createServer(app);
 	console.log("No certificate provided, using non secure mode");
 	console.log("You can generate a certificate with these 3 commands:");
 	console.log("(1) openssl genrsa -out privatekey.pem 1024");
 	console.log("(2) openssl req -new -key privatekey.pem -out certrequest.csr");
 	console.log("(3) openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem");
-	baseURL="http://";
+	baseURL = "http://";
 }
 console.log(separator);
 
-// setup actions
-var actions = require('./actions/actions');
 actions.addDirectory(__dirname + '/actions/');
 // make extensions directory if not present
 if (!fs.existsSync(extensionsDir)) {
@@ -189,10 +214,11 @@ if (!fs.existsSync(extensionsDir)) {
 }
 actions.addDirectory(extensionsDir);
 actions.setRoot(deskPath);
+
 actions.update(function () {
 	server.listen(port);
 	console.log(separator);
 	console.log(new Date().toLocaleString());
-	console.log ("server running on port "+port+", serving path "+serverPath);
-	console.log(baseURL+"localhost:"+port+'/'+user+'/');
+	console.log ("server running on port " + port + ", serving path "+serverPath);
+	console.log(baseURL+"localhost:" + port + '/' + user + '/');
 });

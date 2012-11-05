@@ -8,7 +8,7 @@ qx.Class.define("desk.VolumeSlice",
 {
   extend : qx.core.Object,
 
-	construct : function(file, orientation, parameters)
+	construct : function(file, orientation, parameters, callback)
 	{
 		this.base(arguments);
 
@@ -33,7 +33,7 @@ qx.Class.define("desk.VolumeSlice",
 		}
 
 		this.__file=file;
-		this.update();
+		this.update(callback);
 
 		this.__initChangeSliceTrigger();
 
@@ -237,13 +237,13 @@ qx.Class.define("desk.VolumeSlice",
 			return [this.__scalarMin, this.__scalarMax];
 		},
 
-		update : function () {
+		update : function (callback) {
 			var _this=this;
 			function getAnswer(e)
 				{
 					var req = e.getTarget();
 					var slicesDirectory=req.getResponseText().split("\n")[0];
-					_this.openXMLURL(desk.FileSystem.getFileURL(slicesDirectory)+"/volume.xml");
+					_this.openXMLURL(desk.FileSystem.getFileURL(slicesDirectory)+"/volume.xml", callback);
 				}
 
 			var parameterMap={
@@ -633,8 +633,7 @@ qx.Class.define("desk.VolumeSlice",
 			}
 		},
 
-		openXMLURL : function (xmlURL) {
-
+		openXMLURL : function (xmlURL, callback) {
 			var xmlhttp=new XMLHttpRequest();
 			xmlhttp.open("GET",xmlURL+"?nocache=" + Math.random(),true);
 			var _this=this;
@@ -647,6 +646,9 @@ qx.Class.define("desk.VolumeSlice",
 					{
 						var response = xmlhttp.responseXML;
 						_this.__parseXMLresponse(response,xmlURL);
+						if (typeof callback === 'function') {
+							callback();
+						}
 					}
 					else
 						alert("open volume slice : Failure...");

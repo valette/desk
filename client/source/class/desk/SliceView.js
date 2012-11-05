@@ -10,6 +10,7 @@
 qx.Class.define("desk.SliceView", 
 {
 	extend : qx.ui.container.Composite,
+	include : desk.LinkMixin,
 
 	construct : function(master, orientation)
 	{
@@ -47,13 +48,10 @@ qx.Class.define("desk.SliceView",
 		}, this);
 		
 		this.__initUndo();
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//~ this.add(this.getReorientationContainer());  // commented for oneFitAppli
 		return (this);		
 	},
 
 	destruct : function(){
-		console.log();
 		this.unlink();
 		//clean the scene
 	},
@@ -63,7 +61,6 @@ qx.Class.define("desk.SliceView",
 		paintOpacity : { init : 1, check: "Number", event : "changePaintOpacity"},
 		orientation : { init : -1, check: "Number", event : "changeOrientation"},
 		orientPlane : { init : "", check: "String", event : "changeOrientPlane"},
-		ready : { init : false, check: "Boolean", event : "changeReady"},
 		paintMode : { init : false, check: "Boolean", event : "changePaintMode"},
 		eraseMode : { init : false, check: "Boolean", event : "changeEraseMode"}
 	},
@@ -80,25 +77,25 @@ qx.Class.define("desk.SliceView",
 	},
 
 	members : {
+		__threeContainer : null,
+
+		getThreeContainer : function () {
+			return this.__threeContainer;
+		},
 
 		__slices : null,
 
 		__slider : null,
 
 		__rightContainer : null,
-
-		__viewPort : null,
-		__overlayCanvas : null,
 		__directionOverlays : null,
 
 		__paintWidth : 5,
 		__paintColor : null,
 
-		//THREE.js objects
-		__scene : null,
-		__camera : null,
-		__renderer : null,
-		__controls : null,
+		__getCamera : function () {
+			return this.__threeContainer.getCamera();
+		},
 
 		__master : null,
 
@@ -113,8 +110,8 @@ qx.Class.define("desk.SliceView",
 
 		__updateBrush : null,
 
-		getScene : function() {
-			return this.__scene;
+		__getScene : function() {
+			return this.__threeContainer.getScene();
 		},
 
 		projectOnSlice : function (x, y, z) {
@@ -171,35 +168,8 @@ qx.Class.define("desk.SliceView",
 			this.__updateBrush();
 		},
 
-		__renderFunction : null,
-		__renderingTriggered : false,
-
-		render : function ( ) {
-			var _this=this;
-//			console.log("render slice");
-			if (this.__renderFunction==null) {
-				this.__renderFunction=
-					function () {
-						_this.__controls.update();
-						_this.__renderer.render( _this.__scene, _this.__camera );
-						_this.__renderingTriggered = false;
-				};
-			}
-			if (!this.__renderingTriggered) {
-				this.__renderingTriggered=true;
-				requestAnimationFrame(this.__renderFunction);
-			}
-		},
-
-		addVolume : function (file, parameters, callback)
-		{
-			if (this.isReady()) {
-				this.__addVolume(file, parameters, callback);
-			}
-			else {
-				this.addListenerOnce("changeReady", function () {
-					this.__addVolume(file, parameters, callback);},this);
-			}
+		render : function () {
+			this.__threeContainer.render();
 		},
 
 		removeVolumes : function (slices) {
@@ -209,7 +179,7 @@ qx.Class.define("desk.SliceView",
 				for (var j=0;j<mySlices.length;j++) {
 					if (mySlices[j]==slice) {
 						var mesh=slice.getUserData("mesh");
-						this.__scene.remove(mesh);
+						this.__getScene().remove(mesh);
 						mySlices.splice(j,1);
 						this.removeListenerById(slice.getUserData("updateListener"));
 						this.render();
@@ -228,12 +198,14 @@ qx.Class.define("desk.SliceView",
 				var item2orient = this.__orientsButtonGroup.getSelection()[0].getUserData("buttonID");
 				if(item2orient==1)
 				{
-					var camera=this.__camera;
-					var direction=this.__controls.target.clone();
+					var camera = this.__getCamera();
+					var controls = this.__threeContainer.getControls(); 
+					var direction = controls.target.clone();
 					direction.subSelf(camera.position);
-					var up=camera.up;
+					var up = camera.up;
 					direction.crossSelf(up).normalize();
 					up.copy(direction);
+					controls.update()
 				}
 				if(item2orient==2)
 				{
@@ -253,12 +225,14 @@ qx.Class.define("desk.SliceView",
 				var item2orient = this.__orientsButtonGroup.getSelection()[0].getUserData("buttonID");
 				if(item2orient==1)
 				{
-					var camera=this.__camera;
-					var direction=this.__controls.target.clone();
+					var camera=this.__getCamera();
+					var controls = this.__threeContainer.getControls(); 
+					var direction = controls.target.clone();
 					direction.subSelf(camera.position);
 					var up=camera.up;
 					direction.crossSelf(up).normalize().negate();
 					up.copy(direction);
+					controls.update();
 				}
 				if(item2orient==2)
 				{
@@ -276,15 +250,14 @@ qx.Class.define("desk.SliceView",
 		flipX : function () {
 			this.applyToLinks(function () {
 				var item2orient = this.__orientsButtonGroup.getSelection()[0].getUserData("buttonID");
-				if(item2orient==1)
-				{
-					var camera=this.__camera;
-					camera.position.setZ(-camera.position.z);
+				if(item2orient == 1) {
+					var camera = this.__getCamera();
+					camera.position.setZ( - camera.position.z);
+					this.__threeContainer.getControls().update();
 				}
-				if(item2orient==2)
-				{
-					var overlays=this.__directionOverlays;
-					var tempValue=overlays[1].getValue();
+				if(item2orient == 2) {
+					var overlays = this.__directionOverlays;
+					var tempValue = overlays[1].getValue();
 					overlays[1].setValue(overlays[3].getValue());
 					overlays[3].setValue(tempValue);
 				}
@@ -295,16 +268,16 @@ qx.Class.define("desk.SliceView",
 		flipY : function () {
 			this.applyToLinks(function () {
 				var item2orient = this.__orientsButtonGroup.getSelection()[0].getUserData("buttonID");
-				if(item2orient==1)
+				if(item2orient == 1)
 				{
-					var camera=this.__camera;
-					camera.position.setZ(-camera.position.z);
+					var camera = this.__getCamera();
+					camera.position.setZ( - camera.position.z);
 					camera.up.negate();
+					this.__threeContainer.getControls().update();
 				}
-				if(item2orient==2)
-				{
-					var overlays=this.__directionOverlays;
-					var tempValue=overlays[0].getValue();
+				if(item2orient == 2) {
+					var overlays = this.__directionOverlays;
+					var tempValue = overlays[0].getValue();
 					overlays[0].setValue(overlays[2].getValue());
 					overlays[2].setValue(tempValue);
 				}
@@ -312,8 +285,7 @@ qx.Class.define("desk.SliceView",
 			});
 		},
 
-		getOverLays : function()
-		{
+		getOverLays : function() {
 			return this.__directionOverlays;
 		},
 		
@@ -351,117 +323,13 @@ qx.Class.define("desk.SliceView",
 			return gridContainer;
 		},
 
-		__links : null,
-
-		linkToViewer : function (viewer) {
-			if (viewer==this) {
-				return;
-			}
-
-			// first merge 2 links
-			var links=this.__links;
-			var links2=viewer.__links;
-			var found;
-			var viewer2;
-			var i;
-
-			if (links==null){
-				if (links2==null) {
-					this.__links=[];
-					viewer.__links=this.__links;
-				}
-				else {
-					this.__links=links2;
-				}
-			}
-			else {
-				if (links2==null) {
-					viewer.__links=links;
-				}
-				else {
-					//need to merge links
-					links=this.__links;
-					links2=viewer.__links;
-					for (i=0;i<links2.length;i++) {
-						viewer2=links2[i];
-						found=false;
-						for (var j=0;j<links.length;j++) {
-							if (links[i]==viewer2) {
-								found=true;
-							}
-						}
-						if (!found) {
-							links.push(viewer2);
-						}
-					}
-					viewer.__links=links;
-				}
-			}
-
-			links=this.__links;
-			found=false;
-			for (i=0;i<links.length;i++){
-				viewer2=links[i];
-				if (viewer2==this) {
-					found=true;
-					break;
-				}
-			}
-			if (!found) {
-				links.push(this);
-			}
-
-			found=false;
-			for (i=0;i<links.length;i++){
-				viewer2=links[i];
-				if (viewer2==viewer) {
-					found=true;
-					break;
-				}
-			}
-			if (!found) {
-				links.push(viewer);
-			}
-			viewer.__propagateCameraToLinks();
-		},
-
-		applyToLinks : function (theFunction) {
-			var links=this.__links;
-			if (links==null) {
-				theFunction.apply(this);
-			}
-			else {
-				for (var i=0;i<links.length;i++) {
-					theFunction.apply(links[i]);
-				}
-			}
-		},
-
 		__propagateCameraToLinks : function () {
-			var _this=this;
-			this.applyToLinks( function () {
-				if (this!=_this) {
-					this.__controls.copy(_this.__controls);
-					this.setSlice(_this.getSlice());
-					this.render();
-				}
+			this.applyToOtherLinks( function (me) {
+				this.__threeContainer.getControls().copy(me.__threeContainer.getControls());
+				this.setSlice(me.getSlice());
+				this.render();
 			});
 		},
-
-		unLink : function () {
-			var links=this.__links;
-			if (links==null) {
-				return;
-			}
-			for (var i=0;i<links.length;i++){
-				if (links[i]==this) {
-					links.splice(i,1);
-					break;
-				}
-			}
-			this.__links=null;
-		},
-
 
 		reorderMeshes : function () {
 			var slices=this.__slices;
@@ -492,13 +360,13 @@ qx.Class.define("desk.SliceView",
 			hGeometry.vertices.push( new THREE.Vector3(coordinates[0],0,0) );
 			hGeometry.vertices.push( new THREE.Vector3(coordinates[2],0,0) );
 			var hline = new THREE.Line(hGeometry, material);
-			this.__scene.add(hline);
+			this.__getScene().add(hline);
 
 			var vGeometry=new THREE.Geometry();
 			vGeometry.vertices.push( new THREE.Vector3(0,coordinates[1],0) );
 			vGeometry.vertices.push( new THREE.Vector3(0,coordinates[5],0) );
 			var vline = new THREE.Line(vGeometry, material);
-			this.__scene.add(vline);
+			this.__getScene().add(vline);
 
 			this.__crossMeshes=[];
 			this.__crossMeshes.push(hline);
@@ -554,12 +422,12 @@ qx.Class.define("desk.SliceView",
 			
 			var material=new THREE.MeshBasicMaterial( {map:texture, transparent: true});
 
-			var mesh=new THREE.Mesh(geometry,material);
 			material.side=THREE.DoubleSide;
+			var mesh=new THREE.Mesh(geometry,material);
 
 	//	maybe there's a bug to submit to three.js : the following line breaks renderDepth..
 	//		mesh.visible=false;
-			this.__scene.add(mesh);
+			this.__getScene().add(mesh);
 			this.__brushMesh=mesh;
 
 			var _this=this;
@@ -611,12 +479,11 @@ qx.Class.define("desk.SliceView",
 
 		__setDrawingMesh : function (volumeSlice)
 		{
-			var geometry=new THREE.Geometry();
-
-			var coordinates=volumeSlice.get2DCornersCoordinates();
-			for (var i=0;i<4;i++) {
+			var geometry = new THREE.Geometry();
+			var coordinates = volumeSlice.get2DCornersCoordinates();
+			for (var i = 0; i < 4; i++) {
 				geometry.vertices.push(
-					new THREE.Vector3( coordinates[2*i],coordinates[2*i+1], 0 ) );
+					new THREE.Vector3(coordinates[2 * i],coordinates[2*i + 1], 0 ) );
 			}
 
 			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
@@ -627,8 +494,8 @@ qx.Class.define("desk.SliceView",
 				new THREE.UV( 0, 1 )
 				] );
 
-			var width=this.__volume2DDimensions[0];
-			var height=this.__volume2DDimensions[1];
+			var width = this.__volume2DDimensions[0];
+			var height = this.__volume2DDimensions[1];
 
 			this.__drawingCanvas.set({
 				canvasWidth: width,
@@ -638,35 +505,33 @@ qx.Class.define("desk.SliceView",
 			});
 			this.__drawingCanvas.getContext2d().clearRect(0,0,width,height);
 
-			var length=width*height*4;
+			var length = width * height * 4;
 			var dataColor = new Uint8Array( length);
 
 			var texture = new THREE.DataTexture( dataColor, width, height, THREE.RGBAFormat );
-			texture.generateMipmaps=false;
+			texture.generateMipmaps = false;
 			texture.needsUpdate = true;
-			texture.magFilter=THREE.NearestFilter;
-			texture.minFilter=THREE.NearestFilter;
+			texture.magFilter = THREE.NearestFilter;
+			texture.minFilter = THREE.NearestFilter;
 
-			
-			var material=new THREE.MeshBasicMaterial( {map:texture, transparent: true});
+			var material = new THREE.MeshBasicMaterial( {map:texture, transparent: true});
+			material.side = THREE.DoubleSide;
 
-			var mesh=new THREE.Mesh(geometry,material);
-			material.side=THREE.DoubleSide;
-
-			this.__scene.add(mesh);
-			this.__drawingMesh=mesh;
+			var mesh = new THREE.Mesh(geometry,material);
+			this.__getScene().add(mesh);
+			this.__drawingMesh = mesh;
 
 			geometry.computeCentroids();
 			geometry.computeFaceNormals();
 			geometry.computeVertexNormals();
 			geometry.computeBoundingSphere();
 
-			var _this=this;
+			var _this = this;
 			function updateTexture()
 			{
-				var data=_this.__drawingCanvas.getContext2d().getImageData(
+				var data = _this.__drawingCanvas.getContext2d().getImageData(
 					0, 0,width, height).data;
-				for (var i=length;i--;) {
+				for (var i = length; i--;) {
 					dataColor[i]=data[i];
 				}
 				texture.needsUpdate = true;
@@ -678,43 +543,24 @@ qx.Class.define("desk.SliceView",
 			this.addListener('changeDrawing',function() {
 					updateTexture();
 					_this.render();
-				});
+			});
 
 			this.addListener("changePaintOpacity", function (event) {
-					mesh.material.opacity=event.getData();
+					mesh.material.opacity = event.getData();
 					_this.render();
-				});
+			});
 		},
 
-		__addVolume : function (file, parameters, callback) {
-			var opacity=1;
-
-			if (parameters!=null) {
-				if (parameters.opacity!=null) {
-					opacity=parameters.opacity;
-				}
-			}
-
-			var volumeSlice=new desk.VolumeSlice(file, this.getOrientation(), parameters);
+		addVolume : function (file, parameters, callback) {
+			var volumeSlice = new desk.VolumeSlice(file, this.getOrientation(), parameters, sliceLoaded);
 			this.__slices.push(volumeSlice);
-			var _this=this;
+			var _this = this;
 
-			if (volumeSlice.isReady()) {
-				initSlice();
-			}
-			else
-			{
-				volumeSlice.addListenerOnce("changeReady",initSlice);
-			}
-
-			function initSlice () {
-				var geometry=new THREE.Geometry();
-
-				var coordinates=volumeSlice.get2DCornersCoordinates();
-				for (var i=0;i<4;i++) {
-					geometry.vertices.push(
-						new THREE.Vector3(
-								coordinates[2*i],coordinates[2*i+1],0));
+			function sliceLoaded () {
+				var geometry = new THREE.Geometry();
+				var coordinates = volumeSlice.get2DCornersCoordinates();
+				for (var i = 0; i < 4; i++) {
+					geometry.vertices.push(	new THREE.Vector3(coordinates[2*i], coordinates[2*i + 1], 0));
 				}
 
 				geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
@@ -725,59 +571,58 @@ qx.Class.define("desk.SliceView",
 					new THREE.UV( 0, 1 )
 					] );
 
-				var listener=_this.addListener("changeSlice", function (e) {
+				var listener = _this.addListener("changeSlice", function (e) {
 					volumeSlice.setSlice(e.getData());
 				});
 
 				volumeSlice.setUserData("updateListener", listener);
 
-				if (_this.__slices.length==1) {
-					_this.__slider.setMaximum(volumeSlice.getNumberOfSlices()-1);
-					if (volumeSlice.getNumberOfSlices()==1) {
+				if (_this.__slices.length == 1) {
+					_this.__slider.setMaximum(volumeSlice.getNumberOfSlices() - 1);
+					if (volumeSlice.getNumberOfSlices() == 1) {
 						_this.__slider.setVisibility("hidden");
 					}
 
-					_this.__camera.position.set(0.5*(coordinates[0]+coordinates[2]),
+					_this.__getCamera().position.set(0.5*(coordinates[0]+coordinates[2]),
 												0.5*(coordinates[3]+coordinates[5]),
 												0);
-					_this.__controls.target.copy(_this.__camera.position);
-					_this.__camera.position.setZ(_this.__camera.position.z+
+					_this.__threeContainer.getControls().target.copy(_this.__getCamera().position);
+					_this.__getCamera().position.setZ(_this.__getCamera().position.z+
 									volumeSlice.getBoundingBoxDiagonalLength()*0.6);
 
-					_this.__projector= new THREE.Projector();
-					_this.__intersection=new THREE.Vector3();
-					_this.__2DCornersCoordinates=coordinates;
-					_this.__volume2DSpacing=volumeSlice.get2DSpacing();
-					_this.__volume2DDimensions=volumeSlice.get2DDimensions();
-					_this.__volumeOrigin=volumeSlice.getOrigin();
-					_this.__volumeSpacing=volumeSlice.getSpacing();
+					_this.__projector = new THREE.Projector();
+					_this.__intersection = new THREE.Vector3();
+					_this.__2DCornersCoordinates = coordinates;
+					_this.__volume2DSpacing = volumeSlice.get2DSpacing();
+					_this.__volume2DDimensions = volumeSlice.get2DDimensions();
+					_this.__volumeOrigin = volumeSlice.getOrigin();
+					_this.__volumeSpacing = volumeSlice.getSpacing();
 					_this.__setupInteractionEvents();
 				}
 
-				var material=volumeSlice.getMaterial();
-				var mesh=new THREE.Mesh(geometry,material);
-				material.side=THREE.DoubleSide;
-
-				volumeSlice.setUserData("mesh",mesh);
-
+				var material = volumeSlice.getMaterial();
+				material.side = THREE.DoubleSide;
+				var mesh = new THREE.Mesh(geometry, material);
+				volumeSlice.setUserData("mesh", mesh);
 				geometry.computeCentroids();
 				geometry.computeFaceNormals();
 				geometry.computeVertexNormals();
 				geometry.computeBoundingSphere();
 
 				volumeSlice.addListenerOnce('changeImage',function () {
-					_this.__scene.add(mesh);
-					}, _this);
+					this.__getScene().add(mesh);
+				}, _this);
 				volumeSlice.addListener('changeImage',_this.render, _this);
 				volumeSlice.addListener("changeSlice", function (e) {
-					_this.setSlice(e.getData());});
+					this.setSlice(e.getData());
+				}, _this);
 
-				if (_this.__slices.length==1) {
+				if (_this.__slices.length == 1) {
 					_this.__setDrawingMesh(volumeSlice);
 					_this.__createBrushMesh(volumeSlice);
 					_this.__createCrossMeshes(volumeSlice);
 
-					switch (this.getOrientation())
+					switch (_this.getOrientation())
 					{
 						case 0 :
 						case 1 :
@@ -787,10 +632,10 @@ qx.Class.define("desk.SliceView",
 							break;
 					}
 
-					var dimensions=volumeSlice.getDimensions();
-					for (var coordinate=0;coordinate<3;coordinate++) {
-						if (dimensions[coordinate]==1) {
-							dimensions[coordinate]=0;
+					var dimensions = volumeSlice.getDimensions();
+					for (var coordinate = 0; coordinate< 3;coordinate ++) {
+						if (dimensions[coordinate] == 1) {
+							dimensions[coordinate] = 0;
 						}
 					}
 					_this.setCrossPosition(Math.round(dimensions[0]/2),
@@ -801,21 +646,10 @@ qx.Class.define("desk.SliceView",
 					volumeSlice.setSlice(_this.getSlice());
 				}
 
-				if (typeof callback=="function")
-				{
+				if (typeof callback=="function") {
 					callback(volumeSlice);
 				}
 			}
-		},
-
-		__resizeHTML : function () {
-			var elementSize=this.__overlayCanvas.getInnerSize();
-			this.__viewPortSize=elementSize;
-			this.__renderer.setSize(  elementSize.width , elementSize.height );
-			this.__camera.aspect=elementSize.width / elementSize.height;
-			this.__camera.updateProjectionMatrix();
-			this.__controls.setSize( elementSize.width , elementSize.height );
-			this.render();
 		},
 
 		__setCrossPositionFromEvent : function (event) {
@@ -900,11 +734,8 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__setupInteractionEvents : function () {
-
-			var htmlContainer=this.__viewPort;
-			var controls=this.__controls;
-			this.__overlayCanvas.addListener("resize",this.__resizeHTML, this);
-
+			var controls=this.__threeContainer.getControls();
+			var htmlContainer = this.__threeContainer;
 			//-1 : nothing
 			// 0 : left click
 			// 1 : zoom
@@ -1011,12 +842,12 @@ qx.Class.define("desk.SliceView",
 					controls.mouseMove(event.getDocumentLeft()-origin.left,
 						event.getDocumentTop()-origin.top);
 
-					var z=this.__camera.position.z;
+					var z=this.__getCamera().position.z;
 					this.render();
 					var myViewer=this;
 					this.__master.applyToViewers (function () {
 						if (this!=myViewer) {
-							this.__camera.position.z*=Math.abs(z/this.__camera.position.z);
+							this.__getCamera().position.z*=Math.abs(z/this.__getCamera().position.z);
 							this.__propagateCameraToLinks();
 							this.render();
 							}
@@ -1099,41 +930,6 @@ qx.Class.define("desk.SliceView",
 					}, this);
 		},
 
-		__getRenderWindow : function() {
-			var htmlContainer = new qx.ui.embed.Html();
-			this.__viewPort=htmlContainer;
-			htmlContainer.setHtml("<div id=\"three.js"+this.toHashCode()+"\"></div>");
-
-			htmlContainer.addListenerOnce("appear",function(e){
-				// scene and camera
-				var elementSize=htmlContainer.getInnerSize();
-				this.__scene = new THREE.Scene();
-				var camera = new THREE.PerspectiveCamera( 60, elementSize.width / elementSize.height, 1, 1e5 );
-				var container = document.getElementById( "three.js"+this.toHashCode());
-				var controls = new THREE.TrackballControls2( camera,container );
-
-				camera.position.set(0,0,100);
-				controls.target.set(0,0,0);
-				//controls.panSpeed=1.18;
-				this.__controls=controls;
-				this.__camera=camera;
-				this.__scene.add( camera );
-
-				// renderer
-
-				var renderer = new THREE.WebGLRenderer( { antialias: false } );
-
-				this.__renderer=renderer;
-				renderer.setClearColorHex( 0xffffff, 1 );
-				renderer.setClearColorHex( 0x000000, 1 );
-				this.__resizeHTML();
-
-				container.appendChild( renderer.domElement );
-				this.setReady(true);
-			}, this);
-			return (htmlContainer);
-		},
-
 		__intersection : null,
 		__2DCornersCoordinates : null,
 		__volume2DDimensions : null,
@@ -1141,7 +937,6 @@ qx.Class.define("desk.SliceView",
 		__volumeOrigin : null,
 		__volumeSpacing : null,
 		__projector : null,
-		__viewPortSize : null,
 		
 		get3DPosition : function (event) {
 			var coordinates = this.getPositionOnSlice(event);
@@ -1180,12 +975,12 @@ qx.Class.define("desk.SliceView",
 		},
 		
 		getPositionOnSlice : function (event) {
-			var viewPort=this.__viewPort;
+			var viewPort=this.__threeContainer;
 			var origin=viewPort.getContentLocation();
 			var x=event.getDocumentLeft()-origin.left;
 			var y=event.getDocumentTop()-origin.top;
 
-			var elementSize=this.__viewPortSize;
+			var elementSize=this.__threeContainer.getInnerSize();
 			var x2 = ( x / elementSize.width ) * 2 - 1;
 			var y2 = - ( y / elementSize.height ) * 2 + 1;
 
@@ -1194,7 +989,7 @@ qx.Class.define("desk.SliceView",
 			var coordinates=this.__2DCornersCoordinates;
 			var dimensions=this.__volume2DDimensions;
 
-			var camera=this.__camera;
+			var camera=this.__getCamera();
 			projector.unprojectVector( intersection, camera );
 
 			var cameraPosition=camera.position;
@@ -1210,12 +1005,10 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__createUI : function (file) {
-			var overlayCanvas=new qx.ui.container.Composite(new qx.ui.layout.Canvas());
-			this.__overlayCanvas=overlayCanvas;
-			var viewPort=this.__getRenderWindow();
-
-			overlayCanvas.add(viewPort, {width : "100%", height : "100%"});
-			this.add(overlayCanvas, {flex : 1});
+			var container = new desk.ThreeContainer();
+			this.__threeContainer = container;
+			container.getRenderer().setClearColorHex( 0x000000, 1 );
+			this.add(container, {flex : 1});
 
 			var directionOverlays=[];
 			this.__directionOverlays=directionOverlays;
@@ -1227,26 +1020,26 @@ qx.Class.define("desk.SliceView",
 					        font : font,
 					        opacity : 0.5
 					        });
-			overlayCanvas.add(northLabel, {left:"50%", top:"1%"});
+			container.add(northLabel, {left:"50%", top:"1%"});
 
 			var southLabel=new qx.ui.basic.Label("I");
 			southLabel.set({textColor : "yellow",
 					        font : font,
 					        opacity : 0.5
 					        });
-			overlayCanvas.add(southLabel, {left:"50%", bottom:"1%"});
+			container.add(southLabel, {left:"50%", bottom:"1%"});
 			var eastLabel=new qx.ui.basic.Label("L");
 			eastLabel.set({textColor : "yellow",
 					        font : font,
 					        opacity : 0.5
 					        });
-			overlayCanvas.add(eastLabel, {left:"1%", top:"45%"});
+			container.add(eastLabel, {left:"1%", top:"45%"});
 			var westLabel=new qx.ui.basic.Label("R");
 			westLabel.set({textColor : "yellow",
 					        font : font,
 					        opacity : 0.5
 					        });
-			overlayCanvas.add(westLabel, {right:32, top:"45%"});
+			container.add(westLabel, {right:32, top:"45%"});
 			directionOverlays.push(northLabel);
 			directionOverlays.push(eastLabel);
 			directionOverlays.push(southLabel);
@@ -1280,7 +1073,7 @@ qx.Class.define("desk.SliceView",
 			var label = new qx.ui.basic.Label("0");
 			label.set({textAlign: "center", width : 40, font : font, textColor : "yellow"});
 			rightContainer.add(label);
-			overlayCanvas.add(label, {top :0, left :0});
+			container.add(label, {top :0, left :0});
 			var slider=new qx.ui.form.Slider();
 			this.__slider=slider;
 
@@ -1330,7 +1123,7 @@ qx.Class.define("desk.SliceView",
 
 			rightContainer.add(slider, {flex : 1});
 			rightContainer.setVisibility("hidden");
-			overlayCanvas.add(rightContainer, {right : 0, top : 0, height : "100%"});
+			container.add(rightContainer, {right : 0, top : 0, height : "100%"});
 		},
 
 		__undoData : null,

@@ -27,40 +27,35 @@ qx.Class.define("desk.Actions",
 		this.base( arguments );
 		this.__actionsQueue = [];
 
+		// determine base URLs for RPC
 		var URLparser = document.createElement( 'a' );
 		URLparser.href = document.href;
-
 		var pathname = URLparser.pathname;
 		this.user = URLparser.pathname.split( "/" )[1];
-		this.__fileSystem = desk.FileSystem.getInstance();
-		var baseURL = this.__fileSystem.getBaseURL()
+		var baseURL = desk.FileSystem.getInstance().getBaseURL();
 		this.__baseActionsURL = baseURL + 'rpc/';
+
 		this.__populateActionMenu();
-		
 		this.__ongoingActions = this.__createOngoingActions();
 
 		// load external three.js files
 		var threeURL = baseURL + 'ext/three.js/';
-
 		HackCTMWorkerURL = threeURL + "ctm/CTMWorkerMin.js";
-
-		var files=["three.min.js", "Detector.js", "VTKLoader.js", "TrackballControls2.js", "ctm/CTMLoader.js", "MeshAnalyser.js"];
-		var index=-1;
-
-		function myScriptLoader() {
-			index+=1;
-			if (index!=files.length) {
-				var loader=new qx.io.ScriptLoader().load(
-					threeURL+files[index], myScriptLoader, this );
+		
+		var scripts = [];
+		scripts.push(threeURL + 'three.min.js');
+		scripts.push(threeURL + 'Detector.js');
+		scripts.push(threeURL + 'VTKLoader.js');
+		scripts.push(threeURL + 'TrackballControls2.js');
+		scripts.push(threeURL + 'ctm/CTMLoader.js');
+		scripts.push(threeURL + 'MeshAnalyser.js');
+		desk.FileSystem.includeScripts(scripts, function () {
+			this.__scriptsLoaded = true;
+			if (this.__actionsLoaded) {
+				this.__setReady();
 			}
-			else {
-				this.__scriptsLoaded = true;
-				if ( this.__actionsLoaded ) {
-					this.__setReady(true);
-				}
-			}
-		}
-		myScriptLoader.apply( this );
+		}, this);
+		
 		return this;
 	},
 
@@ -111,8 +106,6 @@ qx.Class.define("desk.Actions",
 		__scriptsLoaded : false,
 
 		__actionsLoaded : false,
-
-		__fileSystem : null,
 
 		__actionMenu : null,
 		__actions : null,
@@ -246,8 +239,6 @@ qx.Class.define("desk.Actions",
 
 			req.addListener("success", onSuccess, this);
 			req.addListener("error", onError, this);
-
-
 			req.send();
 		},
 
@@ -287,7 +278,7 @@ qx.Class.define("desk.Actions",
 				}
 				this.__actionsLoaded = true;
 				if ( this.__scriptsLoaded ) {
-					this.__setReady(true);
+					this.__setReady();
 				}
 			}, this);
 		}

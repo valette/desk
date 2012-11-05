@@ -7,14 +7,14 @@
 #ignore(Uint8Array)
 @lint ignoreGlobal(THREE)
 */
-qx.Class.define("desk.MeshView", 
+qx.Class.define("desk.MeshViewer", 
 {
 	extend : qx.core.Object,
+	include : desk.LinkMixin,
 
 	construct : function(file, mtime, parameters)
 	{
 	//	this.base();
-
 		if ( parameters != undefined )
 		{
 			if (parameters.convertVTK!==undefined) {
@@ -23,27 +23,30 @@ qx.Class.define("desk.MeshView",
 		}
 
 		var window=new qx.ui.window.Window();
-		window.setLayout(new qx.ui.layout.VBox());
-		window.setShowClose(true);
-		window.setWidth(600);
-		window.setHeight(400);
-		window.setShowMinimize(false);
+		window.set({layout : new qx.ui.layout.VBox(),
+			showClose : true,
+			width : 600,
+			height : 400,
+			showMinimize : false,
+			useResizeFrame : true,
+			useMoveFrame : true,
+			contentPadding : 2,
+			caption : file});
 		window.setResizable(true,true,true,true);
-		window.setUseResizeFrame(true);
-		window.setUseMoveFrame(true);
-		window.setContentPadding(2);
-		window.setCaption(file);
-		
+		window.addListener("close", function(e) {
+			this.removeAllMeshes();
+			this.unlink();
+			this.fireEvent("close");
+		},this);
 		this.__window=window;
 
 		var pane = new qx.ui.splitpane.Pane("horizontal");
-		window.add(pane,{flex : 1});
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		window.add(pane, {flex : 1});
 		this.__mainPane = pane;
 
-		this.__createRenderWindow();
-		pane.add(this.__overlayCanvas, 5);
-		window.open();
+		this.__threeCanvas = new desk.ThreeContainer();
+		pane.add(this.__threeCanvas, 5);
+		this.__setupInteractions();
 
 		var elementsList = new qx.ui.container.Composite;
 		elementsList.setLayout(new qx.ui.layout.VBox());
@@ -51,7 +54,7 @@ qx.Class.define("desk.MeshView",
 		elementsList.setVisibility("excluded");
 
 		var button=new qx.ui.form.Button("+").set({opacity : 0.5});
-		this.__overlayCanvas.add (button, {right : 3, top : 3});
+		this.__threeCanvas.add (button, {right : 3, top : 3});
 		button.addListener("execute", function () {
 			if (elementsList.getVisibility()=="visible") {
 				elementsList.setVisibility("excluded");
@@ -135,11 +138,12 @@ qx.Class.define("desk.MeshView",
 		var menu=this.__getContextMenu();
 		this.__meshesTree.setContextMenu(menu);
 
-		this.__fileSystem=desk.FileSystem.getInstance();
-
 		this.__firstFile=file;
 		this.__firstMTime=mtime;
 		this.openFile(file,mtime);
+		
+		this.__addDropSupport();
+		window.open();
 		
 		return (this);
 	},
@@ -152,8 +156,6 @@ qx.Class.define("desk.MeshView",
 	},
 
 	properties : {
-		// the "ready" property is true when the UI is ready.
-		ready : { init : false, check: "Boolean", event : "changeReady"},
 		convertVTK : { init : true, check: "Boolean"}
 	},
 
@@ -163,22 +165,16 @@ qx.Class.define("desk.MeshView",
 	},
 
 	members : {
-
 		__firstFile : null,
 
 		__firstMTime : null,
 
-		// the html element containing the 3D rendering
-		__embededHTML : null,
-
-		__overlayCanvas : null,
+		__threeCanvas : null,
 
 		// qooxdoo window
 		__window : null,
 		
 		__mainPane : null,
-
-		__fileSystem : null,
 
 		// a treeVirtual element storing all meshes
 		__meshesTree : null,
@@ -195,22 +191,11 @@ qx.Class.define("desk.MeshView",
 		// array storing all meshes visibility
 		__meshesVisibility : null,
 
-		//THREE.js objects
-		__scene : null,
-		__camera : null,
-		__renderer : null,
-		__controls : null,
-
 		// array containing the queue of meshes to load 
 		__meshesToLoad : null,
 
 		// number defining the maximum number of loaders
 		__numberOfLoaders : 16,
-
-		// stores the scene bounding box diagonal length, usefull for updating
-		__boudingBoxDiagonalLength : 0,
-
-		__htmlContainerSize : null,
 		
 		getMainPane : function()
 		{
@@ -224,6 +209,10 @@ qx.Class.define("desk.MeshView",
 		
 		getMeshes : function() {
 			return this.__meshes;
+		},
+		
+		viewAll : function () {
+			this.__threeCanvas.viewAll();
 		},
 		
 		__readFile : function (file, mtime, color, update, opt_updateDataModel) {
@@ -325,92 +314,14 @@ qx.Class.define("desk.MeshView",
 			this.removeAllMeshes();
 			this.openFile(this.__firstFile, Math.random());
 		},
-		__links : null,
-
-		link : function (viewer) {
-			if (viewer==this) {
-				return;
-			}
-
-			// first merge 2 links
-			var links=this.__links;
-			var links2=viewer.__links;
-			var found;
-			var viewer2;
-
-			if (links==null){
-				if (links2==null) {
-					this.__links=[];
-					viewer.__links=this.__links;
-				}
-				else {
-					this.__links=links2;
-				}
-			}
-			else {
-				if (links2==null) {
-					viewer.__links=links;
-				}
-				else {
-					//need to merge links
-					links=this.__links;
-					links2=viewer.__links;
-					for (var i=0;i<links2.length;i++) {
-						viewer2=links2[i];
-						found=false;
-						for (var j=0;j<links.length;j++) {
-							if (links[i]==viewer2) {
-								found=true;
-							}
-						}
-						if (!found) {
-							links.push(viewer2);
-						}
-					}
-					viewer.__links=links;
-				}
-			}
-
-			links=this.__links;
-			found=false;
-			for (var i=0;i<links.length;i++){
-				viewer2=links[i];
-				if (viewer2==this) {
-					found=true;
-					break;
-				}
-			}
-			if (!found) {
-				links.push(this);
-			}
-
-			found=false;
-			for (var i=0;i<links.length;i++){
-				viewer2=links[i];
-				if (viewer2==viewer) {
-					found=true;
-					break;
-				}
-			}
-			if (!found) {
-				links.push(viewer);
-			}
-			viewer.__propagateLinks();
-		},
 
 		__propagateLinks : function () {
-			var links=this.__links;
-			if (links==null) {
-				return;
-			}
-			for (var i=0;i<links.length;i++) {
-				var viewer=links[i];
-				if (viewer!=this) {
-					viewer.__controls.copy(this.__controls);
-					viewer.__controls.update();
-					viewer.render();
-				}
-			}
+			this.applyToOtherLinks(function (me) {
+				var controls = this.__threeCanvas.getControls();
+				controls.copy(me.__threeCanvas.getControls());
+				controls.update();
+				this.render();
+			});
 		},
 
 		removeAllMeshes : function () {
@@ -437,175 +348,95 @@ qx.Class.define("desk.MeshView",
 			this.removeMeshes(meshesToRemove);
 		},
 
-		unlink : function () {
-			var links=this.__links;
-			if (links==null) {
-				return;
-			}
-			for (var i=0;i<links.length;i++){
-				if (links[i]==this) {
-					links.splice(i,1);
-					break;
-				}
-			}
-			this.__links=null;
-		},
-
-		viewAll : function ( ) {
-			
-			var max=new THREE.Vector3(-1e10,-1e10,-1e10);
-			var min=new THREE.Vector3(1e10,1e10,1e10);
-			var meshes=this.__meshes;
-
-			for (var i=0;i<meshes.length;i++) {
-				if ((typeof meshes[i]) =="object") {
-					var bbox=meshes[i].geometry.boundingBox;
-
-					var bbmin=bbox.min;
-					if (min.x>bbmin.x) {
-						min.setX(bbmin.x);
-					}
-					if (min.y>bbmin.y) {
-						min.setY(bbmin.y);
-					}
-					if (min.z>bbmin.z) {
-						min.setZ(bbmin.z);
-					}
-
-					var bbmax=bbox.max;
-					if (max.x<bbmax.x) {
-						max.setX(bbmax.x);
-					}
-					if (max.y<bbmax.y) {
-						max.setY(bbmax.y);
-					}
-					if (max.z<bbmax.z) {
-						max.setZ(bbmax.z);
-					}
-				}
-			}
-
-			var center=min.clone().addSelf(max).multiplyScalar(0.5);
-			var bbdiaglength=Math.sqrt(max.clone().subSelf(min).lengthSq());
-
-			var camera=this.__camera;
-
-			if (this.__boudingBoxDiagonalLength==0) {
-				this.__boudingBoxDiagonalLength=bbdiaglength;
-				camera.position.copy(center);
-				camera.position.setZ(camera.position.z-bbdiaglength);
-				this.__controls.target.copy(center);
-			}
-			else {
-				var ratio=bbdiaglength/this.__boudingBoxDiagonalLength;
-				this.__boudingBoxDiagonalLength=bbdiaglength;
-				var backPedal=camera.position.clone();
-				backPedal.subSelf(this.__controls.target);
-				backPedal.multiplyScalar(ratio);
-				backPedal.addSelf(this.__controls.target);
-				camera.position.copy(backPedal);
-			}
-			this.__controls.update();
-			this.render();
-		},
-
 		openFile : function (file, mtime) {
-			var _this=this;
-			if (this.isReady()) {
-				load();
-			}
-			else {
-				this.addListenerOnce("changeReady", load);
-			}
-			
-			function load ()
+			var _this = this;
+			//open the file
+			var extension=file.substring(file.length-4, file.length);
+			switch (extension)
 			{
-				//open the file
-				var extension=file.substring(file.length-4, file.length);
-				switch (extension)
-				{
-					case ".ply":
-					case ".obj":
-					case ".stl":
-					case ".vtk":
-					case ".ctm":
-					case ".off":
-						_this.__readFile (file, mtime, [1.0,1.0,1.0,1.0, 0], true);
-						break;
+				case ".ply":
+				case ".obj":
+				case ".stl":
+				case ".vtk":
+				case ".ctm":
+				case ".off":
+					_this.__readFile (file, mtime, [1.0,1.0,1.0,1.0, 0], true);
+					break;
 
-					case ".xml":
-						var xmlhttp=new XMLHttpRequest();
-						xmlhttp.open("GET", desk.FileSystem.getFileURL(file) + "?nocache=" + Math.random(),false);
-						xmlhttp.send();
-						var rootDocument=xmlhttp.responseXML;
+				case ".xml":
+					var xmlhttp=new XMLHttpRequest();
+					xmlhttp.open("GET", desk.FileSystem.getFileURL(file) + "?nocache=" + Math.random(),false);
+					xmlhttp.send();
+					var rootDocument=xmlhttp.responseXML;
 
-						var meshes=rootDocument.getElementsByTagName("mesh");
-						var rootElement=rootDocument.childNodes[0];
-						if (rootElement.hasAttribute("timestamp")) {
-							mtime=parseFloat(rootElement.getAttribute("timestamp"));
-						}
+					var meshes=rootDocument.getElementsByTagName("mesh");
+					var rootElement=rootDocument.childNodes[0];
+					if (rootElement.hasAttribute("timestamp")) {
+						mtime=parseFloat(rootElement.getAttribute("timestamp"));
+					}
 
-						var slashIndex=file.lastIndexOf("/");
+					var slashIndex=file.lastIndexOf("/");
 
-						var path="";
-						if (slashIndex>0)
-							path=file.substring(0,slashIndex);
+					var path="";
+					if (slashIndex>0)
+						path=file.substring(0,slashIndex);
 
-						var numberOfMeshes=meshes.length;
+					var numberOfMeshes=meshes.length;
 
-						var numberOfRemainingMeshes=numberOfMeshes;
-
-						for (var n=0;n<numberOfMeshes;n++) {
-							var color=[1.0,1.0,1.0,1.0, 0];
-							var mesh=meshes[n];
-							if (mesh.hasAttribute("color")) {
-								var colorstring=mesh.getAttribute("color");
-								var colors=colorstring.split(" ");
-								switch (colors.length)
-								{
-									case 3:
-										colors[3]="1";
-									case 4:
-										colors[4]="0";
-									default:
-								}
-								for (var j=0;j<4;j++) {
-									color[j]=parseFloat(colors[j]);
-								}
-								color[4]=parseInt(colors[4]);
-							}
-
-							var update=function()
+					var numberOfRemainingMeshes=numberOfMeshes;
+					
+					for (var n=0;n<numberOfMeshes;n++) {
+						var color=[1.0,1.0,1.0,1.0, 0];
+						var mesh=meshes[n];
+						if (mesh.hasAttribute("color")) {
+							var colorstring=mesh.getAttribute("color");
+							var colors=colorstring.split(" ");
+							switch (colors.length)
 							{
-								numberOfRemainingMeshes--;
-								switch (numberOfRemainingMeshes)
-								{
-									case Math.floor(numberOfMeshes/4):
-									case Math.floor(numberOfMeshes/2):
-									case Math.floor(numberOfMeshes*3/4):
-									case 0:
-										_this.viewAll();
-										_this.__meshesTree.getDataModel().setData();
-										_this.fireEvent("meshesLoaded");
-										break;
-									default:
-								}
+								case 3:
+									colors[3]="1";
+								case 4:
+									colors[4]="0";
+								default:
 							}
-
-							var xmlName;
-							if (mesh.hasAttribute("Mesh")) {
-								xmlName=mesh.getAttribute("Mesh");
+							for (var j=0;j<4;j++) {
+								color[j]=parseFloat(colors[j]);
 							}
-							else {
-								xmlName=mesh.getAttribute("mesh");
-							}
-							_this.__readFile(path+"/"+xmlName, mtime, color, update, false);
+							color[4]=parseInt(colors[4]);
 						}
-						break;
-					default : 
-						alert ("error : meshviewer cannot read extension "+extension);
-				}
 
+						var updatesTimes = 4; // ...only after 4 updates when  numberOfRemainingMeshes = 0 all the meshes are loaded
+						var update=function()
+						{
+							numberOfRemainingMeshes--;
+							switch (numberOfRemainingMeshes)
+							{
+								case Math.floor(numberOfMeshes/4):
+								case Math.floor(numberOfMeshes/2):
+								case Math.floor(numberOfMeshes*3/4):
+								case 0:
+									_this.viewAll();
+									_this.__meshesTree.getDataModel().setData();
+									--updatesTimes;
+									if(updatesTimes==0)
+										_this.fireDataEvent("meshesLoaded", _this.__meshes);
+									break;
+								default:
+							}
+						}
+
+						var xmlName;
+						if (mesh.hasAttribute("Mesh")) {
+							xmlName=mesh.getAttribute("Mesh");
+						}
+						else {
+							xmlName=mesh.getAttribute("mesh");
+						}
+						_this.__readFile(path+"/"+xmlName, mtime, color, update, false);
+					}
+					break;
+				default : 
+					alert ("error : meshviewer cannot read extension "+extension);
 			}
 		},
 
@@ -634,7 +465,7 @@ qx.Class.define("desk.MeshView",
 			material.transparent=false;
 			var mesh=new THREE.Mesh(geometry,material);
 			material.side=THREE.DoubleSide;
-			this.__scene.add(mesh);
+			this.__threeCanvas.getScene().add(mesh);
 
 			mesh.__volumeSlice=volumeSlice;
 
@@ -679,17 +510,7 @@ qx.Class.define("desk.MeshView",
 				});
 		},
 
-		__createRenderWindow : function(){
-			var htmlContainer = new qx.ui.embed.Html();
-
-			var overlayCanvas=new qx.ui.container.Composite(new qx.ui.layout.Canvas());
-			this.__overlayCanvas=overlayCanvas;
-			overlayCanvas.add(htmlContainer, {width : "100%", height : "100%"});
-			var randomId=Math.random();
-			htmlContainer.setHtml("<div id=\"three.js"+randomId+"\"></div>");
-
-			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
-
+		__addDropSupport : function () {
 			this.__window.setDroppable(true);
 			this.__window.addListener("drop", function(e) {
 				if (e.supportsType("fileBrowser")) {
@@ -703,203 +524,131 @@ qx.Class.define("desk.MeshView",
 				}
 
 				// activate the window
-				var windowManager=qx.core.Init.getApplication().getRoot().getWindowManager();
+				var windowManager = qx.core.Init.getApplication().getRoot().getWindowManager();
 				windowManager.bringToFront(this.__window);
 			}, this);
+		},
 
-			this.__window.addListener("close", function(e) {
-				this.removeAllMeshes();
-				this.unlink();
-				this.fireEvent("close");
-			},this);
+		__setupInteractions : function() {
+			var threeCanvas = this.__threeCanvas;
 
-			htmlContainer.addListenerOnce("appear",function(e){
-
-				// scene and camera
-				var elementSize=htmlContainer.getInnerSize();
-				var scene = new THREE.Scene();
-				var camera = new THREE.PerspectiveCamera( 60, elementSize.width / elementSize.height, 0.01, 1e10 );
-				var container = document.getElementById( "three.js"+randomId);
-				var controls = new THREE.TrackballControls2( camera,container );
-
-				this.__controls=controls;
-				controls.zoomSpeed = 6;
-				this.__scene=scene;
-				this.__camera=camera;
-
-				scene.add( camera );
-
-				// lights
-				var dirLight = new THREE.DirectionalLight( 0xcccccc );
-				dirLight.position.set( 200, 200, 1000 ).normalize();
-				camera.add( dirLight );
-				camera.add( dirLight.target );
-		        var ambientLight = new THREE.AmbientLight(0x555555);
-				scene.add( ambientLight );
-
-				// renderer
-				var renderer = new THREE.WebGLRenderer( { antialias: true } );
-				this.__renderer=renderer;
-				renderer.setClearColorHex( 0xffffff, 1 );
-				resizeHTML.apply(this);
-
-				container.appendChild( renderer.domElement );
-
-				htmlContainer.addListener("resize",resizeHTML, this);
-				function resizeHTML(){
-					var elementSize=htmlContainer.getInnerSize();
-					this.__htmlContainerSize=elementSize;
-
-					renderer.setSize(  elementSize.width , elementSize.height );
-					camera.aspect=elementSize.width / elementSize.height;
-					camera.updateProjectionMatrix();
-					controls.setSize( elementSize.width , elementSize.height );
-					this.render();
+			var draggingInProgress=false;
+			threeCanvas.addListener("mousedown", function (event)	{
+				threeCanvas.capture();
+				var origin = threeCanvas.getContentLocation();
+				draggingInProgress = true;
+				var button = 0;
+				if (event.isRightPressed()) {
+					button = 1;
+				}
+				else if ( event.isMiddlePressed() || event.isShiftPressed()) {
+					button = 2;
+				}
+				else if (event.isCtrlPressed()) {
+					button = 3;
 				}
 
-				var draggingInProgress=false;
-				htmlContainer.addListener("mousedown", function (event)	{
-					htmlContainer.capture();
-					var origin=htmlContainer.getContentLocation();
-					draggingInProgress=true;
-					var button=0;
-					if (event.isRightPressed()) {
-						button=1;
-					}
-					else if ((event.isMiddlePressed())||(event.isShiftPressed())) {
-						button=2;
-					}
-					else if (event.isCtrlPressed()) {
-						button=3;
-					}
+				this.__threeCanvas.getControls().mouseDown(button,
+								event.getDocumentLeft() - origin.left,
+								event.getDocumentTop() - origin.top);
+			}, this);
 
-					controls.mouseDown(button,
-									event.getDocumentLeft()-origin.left,
-									event.getDocumentTop()-origin.top);
-				});
+			threeCanvas.addListener("mousemove", function (event)	{
+				if (draggingInProgress) {
+					var origin = threeCanvas.getContentLocation();
+					this.__threeCanvas.getControls().mouseMove(event.getDocumentLeft() - origin.left,
+						event.getDocumentTop() - origin.top);
+					this.render();
+					this.__propagateLinks();
+				}
+			}, this);
 
-				htmlContainer.addListener("mousemove", function (event)	{
-					if (draggingInProgress) {
-						var origin=htmlContainer.getContentLocation();
-						controls.mouseMove(event.getDocumentLeft()-origin.left
-								, event.getDocumentTop()-origin.top);
-						this.render();
-						this.__propagateLinks();
-					}
-				}, this);
+			threeCanvas.addListener("mouseup", function (event)	{
+				threeCanvas.releaseCapture();
+				draggingInProgress = false;
+				this.__threeCanvas.getControls().mouseUp();
+			}, this);
 
-				htmlContainer.addListener("mouseup", function (event)	{
-					htmlContainer.releaseCapture();
-					draggingInProgress=false;
-					controls.mouseUp();
-				});
-
-				htmlContainer.addListener("mousewheel", function (event)	{
-					var tree=this.__meshesTree;
-					var root=this.__slicesRoot;
-					if (root!==null) {
-						var rootNode=tree.nodeGet(root);
-						var children=rootNode.children;
-						if (children.length!=0) {
-							var meshes=[];
-							for (var i=0;i<children.length;i++) {
-								if (this.__meshesVisibility[children[i]]) {
-									meshes.push(this.__meshes[children[i]]);
-								}
-							}
-
-							var origin=htmlContainer.getContentLocation();
-							var x=event.getDocumentLeft()-origin.left;
-							var y=event.getDocumentTop()-origin.top;
-
-							var elementSize=this.__htmlContainerSize;
-							var x2 = ( x / elementSize.width ) * 2 - 1;
-							var y2 = - ( y / elementSize.height ) * 2 + 1;
-
-							var projector = new THREE.Projector();
-							var vector = new THREE.Vector3( x2, y2, 0.5 );
-							projector.unprojectVector( vector, camera );
-
-							var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
-
-							var intersects = ray.intersectObjects( meshes );
-
-							if ( intersects.length > 0 ) {
-								var volumeSlice=intersects[0].object.__volumeSlice;
-								var maximum=volumeSlice.getNumberOfSlices()-1;
-								var delta=Math.round(event.getWheelDelta()/2);
-								var newValue=volumeSlice.getSlice()+delta;
-								if (newValue>maximum) {
-									newValue=maximum;
-								}
-								if (newValue<0) {
-									newValue=0;
-								}
-								volumeSlice.setSlice(newValue);
+			threeCanvas.addListener("mousewheel", function (event)	{
+				var tree = this.__meshesTree;
+				var root = this.__slicesRoot;
+				if (root !== null) {
+					var rootNode = tree.nodeGet(root);
+					var children = rootNode.children;
+					if (children.length != 0) {
+						var meshes = [];
+						for (var i = 0; i < children.length; i++) {
+							if (this.__meshesVisibility[children[i]]) {
+								meshes.push(this.__meshes[children[i]]);
 							}
 						}
-					}
-				}, this);
 
-				this.setReady(true);
+						var origin = threeCanvas.getContentLocation();
+						var x=event.getDocumentLeft() - origin.left;
+						var y=event.getDocumentTop() - origin.top;
+
+						var elementSize = this.__threeCanvas.getInnerSize();
+						var x2 = ( x / elementSize.width ) * 2 - 1;
+						var y2 = - ( y / elementSize.height ) * 2 + 1;
+
+						var projector = new THREE.Projector();
+						var vector = new THREE.Vector3( x2, y2, 0.5 );
+						var camera = this.__threeCanvas.getCamera();
+						projector.unprojectVector(vector, camera);
+
+						var ray = new THREE.Ray(camera.position,
+							vector.subSelf(camera.position).normalize());
+
+						var intersects = ray.intersectObjects(meshes);
+
+						if (intersects.length > 0) {
+							var volumeSlice = intersects[0].object.__volumeSlice;
+							var maximum = volumeSlice.getNumberOfSlices() - 1;
+							var delta = Math.round(event.getWheelDelta()/2);
+							var newValue = volumeSlice.getSlice() + delta;
+							if (newValue > maximum) {
+								newValue = maximum;
+							}
+							if (newValue < 0) {
+								newValue = 0;
+							}
+							volumeSlice.setSlice(newValue);
+						}
+					}
+				}
 			}, this);
 		},
 
-		__renderFunction : null,
-		__renderingTriggered : false,
-
-		render : function ( force ) {
-	//		console.log("render mesh");
-			var _this=this;
-
-			if (this.__renderFunction==null) {
-				this.__renderFunction=
-					function () {
-						_this.__renderer.render( _this.__scene, _this.__camera );
-						_this.__renderingTriggered = false;
-				};
-			}
-			if (force==true) {
-				this.__renderFunction();
-				return;
-			}			
-
-			if (!this.__renderingTriggered) {
-				this.__renderingTriggered=true;
-				requestAnimationFrame(this.__renderFunction);
-			}
+		render : function (force) {
+			this.__threeCanvas.render(force);
 		},
 
-
 		loadVTKURL : function (url, callback, color) {
-
 			var loader=new THREE.VTKLoader();
 			var _this=this;
-
 			loader.load (url, function(geom){
-							geom.dynamic = true;
-						geom.computeBoundingBox();
+				geom.dynamic = true;
+				geom.computeBoundingBox();
 
-						var threecolor=new THREE.Color().setRGB(color[0],color[1],color[2]);
-						var material =  new THREE.MeshLambertMaterial( {
-							 color:threecolor.getHex(),
-							 opacity: color[3]} );
-						if (color[3]<0.999) material.transparent=true;
-						var mesh = new THREE.Mesh(geom, material );
-						material.side=THREE.DoubleSide;
-						mesh.renderDepth=color[4];
-
-						_this.__scene.add( mesh );
-
-						if(typeof callback == 'function') {
-							callback(mesh);
-							}
-						_this.viewAll();
-					});
+				var threecolor = new THREE.Color().setRGB(color[0],color[1],color[2]);
+				var material =  new THREE.MeshLambertMaterial({
+					color:threecolor.getHex(),
+					opacity: color[3]});
+				if (color[3]<0.999) {
+					material.transparent=true;
+				}
+				var mesh = new THREE.Mesh(geom, material );
+				material.side = THREE.DoubleSide;
+				mesh.renderDepth = color[4];
+				_this.__threeCanvas.getScene().add( mesh );
+				if(typeof callback == 'function') {
+					callback(mesh);
+				}
+				_this.viewAll();
+			});
 		},
 
 		loadCTMURL : function (url, callback, color) {
-
 			if (this.__meshesToLoad==null) {
 				this.__meshesToLoad=[];
 			}
@@ -921,7 +670,7 @@ qx.Class.define("desk.MeshView",
 			if (this.__numberOfLoaders>0){
 				this.__meshesToLoad.shift();
 				this.__numberOfLoaders--;
-				var loader = new THREE.CTMLoader( this.__renderer.context );
+				var loader = new THREE.CTMLoader( this.__threeCanvas.getRenderer().context );
 				loader.load (parameters.url,
 					function(geom){
 								geom.dynamic = true;
@@ -943,7 +692,7 @@ qx.Class.define("desk.MeshView",
 							var mesh = new THREE.Mesh(geom, material );
 							material.side=THREE.DoubleSide;
 							mesh.renderDepth=color[4];
-							_this.__scene.add( mesh );
+							_this.__threeCanvas.getScene().add( mesh );
 
 							if(typeof parameters.callback == 'function') {
 								parameters.callback(mesh);
@@ -956,35 +705,8 @@ qx.Class.define("desk.MeshView",
 			}
 		},
 
-		snapshot : function (factor) {
-			if (factor==null) {
-				factor=1;
-			}
-
-			var width=this.__window.getWidth();
-			var height=this.__window.getHeight();
-
-			if (factor==1) {
-				this.render(true);
-				var strData = this.__renderer.domElement.toDataURL("image/png");
-				var saveData=strData.replace("image/png", "image/octet-stream");
-				document.location.href = saveData;
-			}
-			else {
-				this.__embededHTML.addListenerOnce("resize", function() {
-					var strData = this.__renderer.domElement.toDataURL("image/png");
-					var saveData=strData.replace("image/png", "image/octet-stream");
-					document.location.href = saveData;
-					this.__window.set({width: width, height : height});
-				}, this);
-				this.__window.set({width: width*factor, height : height*factor});
-			}
-		},
-
 		__getSnapshotButton : function () {
-
 			var factor=1;
-
 			var menu = new qx.ui.menu.Menu();
 			var x1button = new qx.ui.menu.Button("x1");
 			x1button.addListener("execute", function (){factor=1;},this);
@@ -1001,7 +723,8 @@ qx.Class.define("desk.MeshView",
 
 			var button=new qx.ui.form.Button(null, "desk/camera-photo.png");
 			button.addListener("execute", function(e) {
-				this.snapshot(factor);}, this);
+				this.__threeCanvas.snapshot(factor);
+			}, this);
 	
 			button.setContextMenu(menu);
 			return button;
@@ -1188,19 +911,20 @@ qx.Class.define("desk.MeshView",
 		},
 
 		removeMeshes : function (nodes) {
+			var renderer = this.__threeCanvas.getRenderer();
 			var dataModel=this.__meshesTree.getDataModel();
 			for (var i=0;i<nodes.length;i++) {
 				var nodeId=nodes[i].nodeId;
 				dataModel.prune(nodeId, true);
 				var mesh=this.__meshes[nodeId];
-				this.__scene.remove(mesh);
+				this.__threeCanvas.getScene().remove(mesh);
 				this.__meshes[nodeId]=0;
 				this.__meshesVisibility[nodeId]=0;
 				var map=mesh.material.map;
 				if (map!=null) {
-					this.__renderer.deallocateTexture( map );
+					renderer.deallocateTexture( map );
 				}
-				this.__renderer.deallocateObject( mesh );
+				renderer.deallocateObject( mesh );
 			}
 			dataModel.setData();
 		},
