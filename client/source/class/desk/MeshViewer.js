@@ -49,7 +49,7 @@ qx.Class.define("desk.MeshViewer",
 		this.__setupInteractions();
 
 		var elementsList = new qx.ui.container.Composite;
-		elementsList.setLayout(new qx.ui.layout.VBox());
+		elementsList.setLayout(new qx.ui.layout.VBox(3));
 		pane.add(elementsList, 1);
 		elementsList.setVisibility("excluded");
 
@@ -84,54 +84,8 @@ qx.Class.define("desk.MeshViewer",
 			columnVisibilityButtonVisible : false,
 			statusBarVisible : false});
 
-
-		var dataModel=this.__meshesTree.getDataModel();
-		var filterBox = new qx.ui.container.Composite;
-		filterBox.setLayout(new qx.ui.layout.HBox(10));
-		var filterText=new qx.ui.basic.Label("search");
-		filterBox.add(filterText);
-
-		var filterField = new qx.ui.form.TextField();
-		filterField.setValue("");
-		filterField.addListener("input", function() {
-			dataModel.setData();
-			this.render();
-			}, this);
-		filterBox.add(filterField);
-		elementsList.add(filterBox);//, {flex:1});
-
-		var filter = qx.lang.Function.bind(function(node)
-			{
-				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-					var label = node.label;
-					var mesh= this.__meshes[node.nodeId];
-					if (label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1) {
-						if (mesh) {
-							mesh.visible=this.__meshesVisibility[node.nodeId];
-						}
-						return true;
-					}
-					else {
-						if (mesh) {
-							mesh.visible=false;
-						}
-						return false;
-					}						
-				}
-				return true;
-			}, this);
-
-		var resetButton=new qx.ui.form.Button("Reset filter");
-		resetButton.setAllowGrowY(false);
-		resetButton.addListener("execute",function(e){
-			filterField.setValue("");
-			dataModel.setData();
-			this.render();
-			}, this);
-		filterBox.add(resetButton);
-		dataModel.setFilter(filter);
-
 		elementsList.add(this.__meshesTree,{flex : 1});
+		elementsList.add(this.__getFilterContainer());
 		this.__meshes=[];
 		this.__meshesVisibility = [];
 
@@ -203,6 +157,54 @@ qx.Class.define("desk.MeshViewer",
 
 		viewAll : function () {
 			this.__threeCanvas.viewAll();
+		},
+
+		__getFilterContainer : function () {
+			var dataModel = this.__meshesTree.getDataModel();
+			var container = new qx.ui.container.Composite;
+			container.setLayout(new qx.ui.layout.HBox(10));
+			var filterText = new qx.ui.basic.Label("search");
+			container.add(filterText);
+
+			var filterField = new qx.ui.form.TextField();
+			filterField.setValue("");
+			filterField.addListener("input", function() {
+				dataModel.setData();
+				this.render();
+			}, this);
+			container.add(filterField);
+
+			var filter = qx.lang.Function.bind(function(node) {
+				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+					var label = node.label;
+					var mesh = this.__meshes[node.nodeId];
+					if (label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1) {
+						if (mesh) {
+							mesh.visible = this.__meshesVisibility[node.nodeId];
+						}
+						return true;
+					}
+					else {
+						if (mesh) {
+							mesh.visible = false;
+						}
+						return false;
+					}
+				}
+				return true;
+			}, this);
+
+			var resetButton = new qx.ui.form.Button("Reset filter");
+			resetButton.setAllowGrowY(false);
+			resetButton.addListener("execute",function(e){
+				filterField.setValue("");
+				dataModel.setData();
+				this.render();
+			}, this);
+
+			container.add(resetButton);
+			dataModel.setFilter(filter);
+			return container;
 		},
 
 		__readFile : function (file, mtime, color, update, opt_updateDataModel) {
