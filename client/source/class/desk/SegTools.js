@@ -10,8 +10,6 @@ qx.Class.define("desk.SegTools",
 	{	
 		this.base(arguments);
 
-		this.__fileSystem=desk.FileSystem.getInstance();
-
         // Enable logging in debug variant
         if(qx.core.Environment.get("qx.debug"))
         {
@@ -105,17 +103,15 @@ qx.Class.define("desk.SegTools",
 		'<color red="255" green="0" blue="0" name="object1" label="1"/>',
 		'<color red="0" green="255" blue="0" name="object2" label="2"/>',
 		'<color red="0" green="0" blue="255" name="object3" label="3"/>',
-		'<adjacencies>',
+	/*	'<adjacencies>',
 		'<adjacency label1="1" label2="2"/>',
 		'<adjacency label1="2" label2="3"/>',
 		'<adjacency label1="3" label2="1"/>',
-		'</adjacencies>',
+		'</adjacencies>',*/
 		'</colors>'].join('\n'),
 
 		__master : null,
 		__file : null,
-		__fileSystem : null,
-
 		__topRightContainer : null,
 		__bottomRightContainer : null,
 		__mainBottomRightContainer : null,
@@ -188,7 +184,7 @@ qx.Class.define("desk.SegTools",
 			
 			var volFile = tools.__file;
 			
-			var fileSystem = this.__fileSystem;
+			var fileSystem = desk.FileSystem.getInstance();
 			
 			
 			var spacing=5;
@@ -905,12 +901,17 @@ qx.Class.define("desk.SegTools",
 			alert ("error : adjacency to remove not found...");
 		},
 
+		__selectedLabel : null,
+
+		__labelUnfocusedBorder : new qx.ui.decoration.Single(2, "solid", "black"),
+		__labelFocusedBorder : new qx.ui.decoration.Single(3, "solid", "red"),
+
 		__addColorItem : function(label, labelName, red, green, blue,
 					meshRed, meshGreen, meshBlue, opacity, depth)
         {
 		////Function creates one label box
-			var unfocusedBorder = new qx.ui.decoration.Single(2, "solid", "black");
-            var focusedBorder = new qx.ui.decoration.Single(3, "solid", "red");
+			var unfocusedBorder = this.__labelUnfocusedBorder;
+            var focusedBorder = this.__labelFocusedBorder;
 			var boxWidth = 80;
 
             var labelLayout = new qx.ui.layout.VBox();
@@ -922,7 +923,6 @@ qx.Class.define("desk.SegTools",
                 width: boxWidth,
                 height: 53,
                 decorator: unfocusedBorder,
-                backgroundColor: "background-light",
                 focusable : true
             });
 			var colorBox = new qx.ui.container.Composite().set({
@@ -931,38 +931,38 @@ qx.Class.define("desk.SegTools",
                 alignX : "center"});
 
 			var listenerId=this.__eraserButton.addListener("changeValue", function (e) {
-				if (e.getData())
-				{
-					labelBox.set({decorator: unfocusedBorder, backgroundColor: "background-light"});
+				if (e.getData()){
+					labelBox.set({decorator: unfocusedBorder});
 				}
 			}, this);
 
 			labelBox.addListener("click", function(e)
 			{
-				this.__targetColorItem=labelAttributes;
-				if (this.__editionWindow!=null) {
+				var paint = true;
+				if (this.__selectedLabel === labelBox) {
+					paint = false;
+					this.__selectedLabel = null;
+				}
+				else {
+					this.__selectedLabel = labelBox;
+					this.__eraserButton.setValue(false);
+					paint = true;
+				}
+				this.__targetColorItem = labelAttributes;
+				if (this.__editionWindow != null) {
 						this.__updateEditionWindow();
 				}
 
 				var children = this.__colorsContainer.getChildren();
-				var paint;
-				if (!(labelBox.getBackgroundColor()=="white"))
+				for(var k = 0;  k < children.length; k++)
 				{
-					labelBox.set({decorator: focusedBorder, backgroundColor: "white"});
-					for(var k=0; k<children.length; k++)
-					{
-						if(children[k]!=labelBox)
-						{
-							children[k].set({decorator: unfocusedBorder, backgroundColor: "background-light"});
-						}
+					var label = children[k];
+					if(label === this.__selectedLabel) {
+						label.setDecorator(focusedBorder);
 					}
-					paint=true;
-					this.__eraserButton.setValue(false);
-				}
-				else
-				{
-					labelBox.set({decorator: unfocusedBorder, backgroundColor: "background-light"});
-					paint=false
+					else {
+						label.setDecorator(unfocusedBorder);
+					}
 				}
 
 				this.__master.applyToViewers( function () {
@@ -1126,51 +1126,51 @@ qx.Class.define("desk.SegTools",
 		{	
 			var tools = this;
 			var volFile = this.__file;
-			var fileSystem = this.__fileSystem;
+			var fileSystem = desk.FileSystem.getInstance();
 			
-			var sessionsListLayout=new qx.ui.layout.HBox();
+			var sessionsListLayout = new qx.ui.layout.HBox();
 			sessionsListLayout.setSpacing(4);
-			var sessionsListContainer=new qx.ui.container.Composite(sessionsListLayout);
-			var sessionsListLabel=new qx.ui.basic.Label("Sessions : ");
+			var sessionsListContainer = new qx.ui.container.Composite(sessionsListLayout);
+			var sessionsListLabel = new qx.ui.basic.Label("Sessions : ");
 			//~ sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5}); // commented for oneFitAppli
 			sessionsListContainer.add(sessionsListLabel);
-			var button=new qx.ui.form.Button("new session");
+			var button = new qx.ui.form.Button("new session");
 			sessionsListContainer.add(button);
 
-			var sessionType="gcSegmentation";
+			var sessionType = "gcSegmentation";
 			var sessionsList = new qx.ui.form.SelectBox();
 			sessionsListContainer.add(sessionsList);
 			//~ sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});  // commented for oneFitAppli
 
-			var updateInProgress=false;
+			var updateInProgress = false;
 
 			function updateList(sessionIdToSelect) {
-				updateInProgress=true;
-				var buildSessionsItems =function (sessions)
+				updateInProgress = true;
+				function buildSessionsItems (sessions)
 				{
-					var sessionItemToSelect=null;
+					var sessionItemToSelect = null;
 					sessionsList.removeAll();
-					for (var i=0; i<sessions.length; i++)
+					for (var i = 0; i < sessions.length; i++)
 					{
-						var sessionId=sessions[i];
-						var sessionItem = new qx.ui.form.ListItem(""+sessionId);
+						var sessionId = sessions[i];
+						var sessionItem = new qx.ui.form.ListItem("" + sessionId);
 						sessionsList.add(sessionItem);
-						if (sessionId==sessionIdToSelect)
-							sessionItemToSelect=sessionItem;
+						if (sessionId == sessionIdToSelect)
+							sessionItemToSelect = sessionItem;
 					}
 
-					if (sessionIdToSelect==null)
+					if (sessionIdToSelect == null)
 					{
 						var dummyItem = new qx.ui.form.ListItem("select a session");
 						sessionsList.add(dummyItem);
 						dummyItem.setUserData("dummy",true);
 					}
-					if (sessionItemToSelect!=null)
+					if (sessionItemToSelect != null)
 					{
 						sessionsList.setSelection([sessionItemToSelect]);
 						tools.__tabView.setVisibility("visible");
 						tools.setSessionDirectory(fileSystem.getSessionDirectory(
-							volFile,sessionType,sessionIdToSelect));
+							volFile,sessionType, sessionIdToSelect));
 						tools.__clearSeeds();
 						tools.__loadColors();
 					}
@@ -1199,7 +1199,7 @@ qx.Class.define("desk.SegTools",
 			});
 
 			button.addListener("execute", function (e){
-				this.__fileSystem.createNewSession(volFile,sessionType, updateList);
+				fileSystem.createNewSession(volFile,sessionType, updateList);
 				}, this);
 
 			updateList();
