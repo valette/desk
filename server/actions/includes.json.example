@@ -1,7 +1,0 @@
-{
-	"include" : [
-	"/opt/vtkSurface/bin/vtkSurface.json",
-	"/opt/gc/gc.json",
-	"/opt/OpenCTM/OpenCTM.json"
-    ]
-}

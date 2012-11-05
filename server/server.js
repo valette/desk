@@ -84,7 +84,8 @@ app.use(express.methodOverride());
 
 // handle body parsing
 app.use(express.bodyParser({uploadDir: uploadDir }));
-app.use(homeURL ,express.static(serverPath + 'demo/default/release/'));
+//~ app.use(homeURL ,express.static(serverPath + 'demo/default/release/'));
+app.use(homeURL ,express.static(serverPath + 'client/oneFit/source/'));
 
 // serve data files
 app.use(homeURL + 'files',express.static(deskPath));
