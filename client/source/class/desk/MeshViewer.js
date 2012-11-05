@@ -204,7 +204,7 @@ qx.Class.define("desk.MeshViewer",
 		},
 		
 		getScene : function() {
-			return this.__scene;
+			return this.__threeCanvas.getScene();
 		},
 		
 		getMeshes : function() {

@@ -118,7 +118,7 @@ qx.Class.define("desk.VolumeViewer",
 		__file : null,
 
 		getFile : function() {
-			return this.__files;
+			return this.__file;
 		},
 		
 		getFileBrowser : function() {
@@ -478,7 +478,7 @@ qx.Class.define("desk.VolumeViewer",
 						if ( numberOfRemainingMeshes == 0 ) {
 							_this.__reorderMeshes();
 							if (typeof callback === 'function') {
-								callback(volumeSlices);
+								callback(_this, volumeSlices);
 							}
 						}
 					});

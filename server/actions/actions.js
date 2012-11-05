@@ -5,6 +5,7 @@ var fs          = require('fs'),
 	exec        = require('child_process').exec,
 	prettyPrint = require('pretty-data').pd,
 	winston     = require('winston'),
+	//~ winston     = require('winston');
 	cronJob     = require('cron').CronJob;
 
 var console = {
