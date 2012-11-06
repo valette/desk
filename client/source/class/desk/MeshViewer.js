@@ -30,8 +30,7 @@ qx.Class.define("desk.MeshViewer",
 			showMinimize : false,
 			useResizeFrame : true,
 			useMoveFrame : true,
-			contentPadding : 2,
-			caption : file});
+			contentPadding : 2});
 		window.setResizable(true,true,true,true);
 		window.addListener("close", function(e) {
 			this.removeAllMeshes();
@@ -94,9 +93,13 @@ qx.Class.define("desk.MeshViewer",
 
 		this.__firstFile=file;
 		this.__firstMTime=mtime;
-		this.openFile(file,mtime);
+		if (file) {
+			this.openFile(file,mtime);
+			window.setCaption(file);
+		}
 		this.__addDropSupport();
 		window.open();
+		window.center();
 		return (this);
 	},
 
@@ -153,6 +156,14 @@ qx.Class.define("desk.MeshViewer",
 		{
 			this.__window.exclude();
 			return this.__mainPane;
+		},
+
+		addMesh : function (mesh) {
+			this.__threeCanvas.getScene().add(mesh);
+		},
+
+		getWindow : function () {
+			return this.__window;
 		},
 
 		viewAll : function () {

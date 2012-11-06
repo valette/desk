@@ -49,6 +49,7 @@ qx.Class.define("desk.TextEditor",
 		textArea.setFont(qx.bom.Font.fromString("15 serif"));
 		this.add(textArea,{flex : 1});
 		this.open();
+		this.center();
 		this.openFile(file);
 		return (this);
 	},
