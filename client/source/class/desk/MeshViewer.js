@@ -997,7 +997,7 @@ qx.Class.define("desk.MeshViewer",
 						var meshId=meshes[i].nodeId;
 						var mesh=this.__meshes[meshId];
 						
-						var meshTools = new desk.MeshTools( {meshView:this, specMesh:mesh} );
+						var meshTools = new desk.MeshTools( {meshViewer:this, specMesh:mesh} );
 						
 					}
 				}

@@ -110,6 +110,9 @@ qx.Class.define("desk.SliceView",
 
 		__updateBrush : null,
 
+		getScene : function() {
+			return this.__getScene();
+		},
 		__getScene : function() {
 			return this.__threeContainer.getScene();
 		},

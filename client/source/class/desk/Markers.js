@@ -36,8 +36,8 @@ qx.Class.define("desk.Markers",
 			
 		}
 		
-		if(inParams.meshView!=null)
-			this.__meshView = inParams.meshView;
+		if(inParams.meshViewer!=null)
+			this.__meshViewer = inParams.meshViewer;
 		
 		
 		return this;
@@ -60,12 +60,12 @@ qx.Class.define("desk.Markers",
 	members :
 	{
 		__sliceView : null,
-		__meshView : null,
+		__meshViewer : null,
 		
 		__mrkrsList : null,
 		__visibleMarkers : null,
 		
-		__mrks2DZ : 0.001,
+		__mrks2DZ : 0.01,
 		
 		getMrksZ : function() {
 			var z;
@@ -81,8 +81,8 @@ qx.Class.define("desk.Markers",
 			return this.__markMesh;
 		},
 		
-		getMeshView : function() {
-			return this.__meshView;
+		getMeshViewer : function() {
+			return this.__meshViewer;
 		},
 		
 		getSliceView : function() {
@@ -140,7 +140,7 @@ qx.Class.define("desk.Markers",
 						this.setNewPosMarker( {id:mrkrId, coords:absVolCoords} );
 						// Transmit marker id and on-volume absolute int coordinates of the new marker to the other views
 						this.fireDataEvent("posMrkrAdded", {id:mrkrId, coords:absVolCoords});
-						if(this.getMeshView()!=null)
+						if(this.getMeshViewer()!=null)
 							this.setNewMeshMarker({id:mrkrId, coords:absVolCoords});
 					}
 					else
@@ -295,13 +295,13 @@ qx.Class.define("desk.Markers",
 		
 		setNewMeshMarker : function(mrkrParams)
 		{
-			var meshView = this.getMeshView();
+			var meshViewer = this.getMeshViewer();
 			
 			var mrkrId = mrkrParams.id;
 			
 			var space3DSceneCoords = mrkrParams.coords;
 			
-			var scene = meshView.getScene();
+			var scene = meshViewer.getScene();
 			
 			var pGeometry = new THREE.SphereGeometry(3, 18, 18);
 			var pMaterial = new THREE.MeshLambertMaterial({color:0x41FF41, opacity:1.0, transparent:false});
@@ -313,7 +313,7 @@ qx.Class.define("desk.Markers",
 			
 			scene.add(sphere);
 			
-			meshView.render(true);
+			meshViewer.render(true);
 			
 			return sphere;
 			
