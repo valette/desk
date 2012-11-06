@@ -49,13 +49,43 @@ qx.Class.define("desk.ThreeContainer",
 //		resizeHTML.apply(this);
 
 		threeCanvas.addListener("resize",this.__resizeThreeCanvas, this);
+		this.__setupFullscreen();
 		return this;
+	},
+
+	properties : {
+		fullscreen : { init : false, check: "Boolean", event : "changeFullscreen"}
 	},
 
 	members :
 	{
 		__renderFunction : null,
 		__renderingTriggered : false,
+
+		__setupFullscreen : function () {
+			var parent, width, height;
+			this.addListener('changeFullscreen', function (e) {
+				if (!e.getData()) {
+					this.set({height : height,
+							width : width});
+					parent.add(this);
+				}
+				else {
+					height = this.getHeight();
+					width = this.getWidth();
+					parent = this.getLayoutParent();
+					this.set ({width : window.innerWidth,
+							height : window.innerHeight,
+							zIndex : 10000000});
+					qx.core.Init.getApplication().getRoot().add(this);
+				}
+			});
+			this.addListener('keypress', function (event) {
+				if (event.getKeyIdentifier() === 'F') {
+					this.toggleFullscreen();
+				}
+			}, this);
+		},
 
 		render : function ( force ) {
 			var _this=this;
