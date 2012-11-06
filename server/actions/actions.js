@@ -498,9 +498,11 @@ exports.performAction = function (POST, callback) {
 			return;
 		}
 
+		var writeJSON = false;
 		var commandOptions = { cwd:filesRoot , maxBuffer: 1024*1024};
 		if ((action.attributes.voidAction !== "true") || (actionParameters.action == "add_subdirectory")) {
 			commandOptions.cwd += outputDirectory;
+			writeJSON = true;
 		}
 
 		exec(commandLine + " | tee action.log", commandOptions, afterExecution);
@@ -515,10 +517,15 @@ exports.performAction = function (POST, callback) {
 			}
 			else {
 				response.status = 'OK (' + (new Date().getTime() - startTime) / 1000 + 's)';
-				fs.writeFile(filesRoot + outputDirectory + "/action.json", JSON.stringify(actionParameters), function (err) {
-					if (err) {throw err;}
+				if (writeJSON) {
+					fs.writeFile(filesRoot + outputDirectory + "/action.json", JSON.stringify(actionParameters), function (err) {
+						if (err) {throw err;}
+						answer();
+					});
+				}
+				else {
 					answer();
-				});
+				}
 			}
 		}
 	}],
