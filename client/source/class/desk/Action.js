@@ -272,20 +272,16 @@ qx.Class.define("desk.Action",
 					}
 					if (numberOfFinishedParentActions >= parentActions.length) {
 						send.setLabel("Processing...");
-						function getAnswer (e)
-						{
+						function getAnswer (response) {
 							// configure the send button
 							send.setEnabled(true);
 							send.setLabel("Update");
 
-							var req = e.getTarget();
-							var response = req.getResponseText();
-							var splitResponse = response.split("\n");
 							if (this.getOutputDirectory() == null) {
-								this.setOutputDirectory(splitResponse[0]);
+								this.setOutputDirectory(response.outputDirectory);
 							}
 
-							this.__executionStatus.setValue(splitResponse[splitResponse.length - 2]);
+							this.__executionStatus.setValue(response.status);
 							if ( this.__action.attributes.voidAction != "true" ) {
 								this.__showLogButton.setVisibility("visible");
 							}
@@ -298,8 +294,7 @@ qx.Class.define("desk.Action",
 						}
 			
 						var that = this;
-						function launchAction()
-						{
+						function launchAction() {
 							desk.Actions.getInstance().launchAction (parameterMap, getAnswer, that);
 						}
 

@@ -338,7 +338,7 @@ qx.Class.define("desk.FileSystem",
 					"subdirectory_name" : subdir,
 					"output_directory" : file.substring(0,lastSlash)},
 					function () {
-					callback(newSessionId);
+						callback(newSessionId);
 				});
 			});
 		}

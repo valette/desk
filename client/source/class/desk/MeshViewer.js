@@ -283,13 +283,10 @@ qx.Class.define("desk.MeshViewer",
 					"input_mesh" : file,
 					"output_directory" : "cache\/"};
 
-				function getAnswer(e)
-				{
-					var req = e.getTarget();
-					var splitResponse=req.getResponseText().split("\n");
-					var outputDir=splitResponse[0];
-					var mtime=splitResponse[splitResponse.length-3];
-					loadMeshIntoScene(outputDir+"\/"+"mesh.ctm",mtime);
+				function getAnswer(response) {
+					var outputDir = response.outputDirectory;
+					var mtime = response.MTime;
+					loadMeshIntoScene(outputDir + '/mesh.ctm', mtime);
 				}
 
 				desk.Actions.getInstance().launchAction(parameterMap, getAnswer);

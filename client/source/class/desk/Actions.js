@@ -149,14 +149,14 @@ qx.Class.define("desk.Actions",
 			this.__launchAction(action.action, action.callback, action.context);
 		},
 
-		launchAction : function (actionParameters, successCallback, context) {
+		launchAction : function (actionParameters, callback, context) {
 			this.__actionsQueue.push ({action : actionParameters,
-									callback : successCallback,
+									callback : callback,
 									context : context});
 			this.__tryToLaunchActions();
 		},
 
-		__launchAction : function (actionParameters, successCallback, context) {
+		__launchAction : function (actionParameters, callback, context) {
 			actionParameters = JSON.parse(JSON.stringify(actionParameters));
 			if (this.isForceUpdate()) {
 				actionParameters.force_update = true;
@@ -181,35 +181,22 @@ qx.Class.define("desk.Actions",
 			function onSuccess (e){
 				this.__maximumNumberOfParallelActions++;
 				this.__tryToLaunchActions();
-				var req = e.getTarget();
-				var response=req.getResponseText();
-				var splitResponse=response.split("\n");
-				if (splitResponse.length<2) {
-					alert ("error for action "+actionParameters.action+": \n"+splitResponse[0]);
+				var response = JSON.parse(e.getTarget().getResponseText());
+				if (response.error) {
+					alert ("error for action " + actionParameters.action + ": \n" + response.error);
 				}
 				else {
-					var executionStatus=splitResponse[splitResponse.length-2].split(" ")[0];
-					if ((executionStatus!="OK")&&(executionStatus!="CACHED")) {
-						alert ("error for action "+actionParameters.action+": \n"+splitResponse[0]);
+					actionFinished=true;
+					if (actionNotification!=null) {
+						this.__ongoingActions.remove(actionNotification);
 					}
-					else {
-						actionFinished=true;
-						if (actionNotification!=null) {
-							this.__ongoingActions.remove(actionNotification);
-						}
-						if (successCallback!=null) {
-							if (context!=null) {
-								successCallback.call(context,e);
-							}
-							else {
-								successCallback(e);
-							}
-						}
+					if ( typeof callback === 'function') {
+							callback.call(context, response);
 					}
 				}
 			}
 
-			var numberOfRetries=3;
+			var numberOfRetries = 3;
 
 			function onError (e){
 				console.log("error : "+numberOfRetries+" chances left...");

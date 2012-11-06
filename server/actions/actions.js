@@ -469,9 +469,20 @@ exports.performAction = function (POST, callback) {
 
 	// execute the action (or not when it is cached)
 	function (callback) {
+		var response = { MTime : inputMTime};
+		if (action.attributes.voidAction !== "true") {
+			response.outputDirectory = outputDirectory
+		}
+
+		function answer() {
+			callback(JSON.stringify(response));
+		}
+
 		if (cachedAction) {
 			fs.readFile(filesRoot + outputDirectory + '/action.log', function (err, string) {
-				callback (outputDirectory + '\n' + string + '\nCACHED\n')
+				response.status = 'CACHED';
+				response.log = string;
+				answer();
 			});
 			return;
 		}
@@ -495,19 +506,18 @@ exports.performAction = function (POST, callback) {
 		exec(commandLine + " | tee action.log", commandOptions, afterExecution);
 
 		function afterExecution(err, stdout, stderr) {
+			response.stdout = stdout;
+			response.stderr = stderr;
 			if (err) {
-				callback (err.message);
+				response.error = err.message;
+				response.status = "ERROR";
+				answer();
 			}
 			else {
-				if (action.attributes.voidAction === "true") {
-					callback ("void\n" + stdout + "\nOK (" + (new Date().getTime() - startTime) / 1000 + "s)\n");
-					return;
-				}
-
-				var string = JSON.stringify(actionParameters);
-				fs.writeFile(filesRoot + outputDirectory + "/action.json", string, function (err) {
-					if (err) throw err;
-					callback (outputDirectory + "\n" + stdout + "\nOK (" + (new Date().getTime() - startTime) / 1000 + "s)\n");
+				response.status = 'OK (' + (new Date().getTime() - startTime) / 1000 + 's)';
+				fs.writeFile(filesRoot + outputDirectory + "/action.json", JSON.stringify(actionParameters), function (err) {
+					if (err) {throw err;}
+					answer();
 				});
 			}
 		}
