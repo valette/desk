@@ -10,7 +10,7 @@
 
 qx.Theme.define("desk.demo.theme.Font",
 {
-  extend : qx.theme.modern.Font,
+  extend : qx.theme.indigo.Font,
 
   fonts :
   {
