@@ -7,10 +7,16 @@
 @lint ignoreGlobal(THREE)
 */
 
+/**
+* A container which includes a THREE.js scene, camera, controls and renderer
+*/
 qx.Class.define("desk.ThreeContainer", 
 {
 	extend : qx.ui.container.Composite,
 
+	/**
+	* Constructor
+	*/
 	construct : function()
 	{
 		this.base(arguments);
@@ -54,6 +60,9 @@ qx.Class.define("desk.ThreeContainer",
 	},
 
 	properties : {
+		/**
+		* in fullscreen mode, the container covers the entire browser window
+		*/
 		fullscreen : { init : false, check: "Boolean", event : "changeFullscreen"}
 	},
 
@@ -87,6 +96,11 @@ qx.Class.define("desk.ThreeContainer",
 			}, this);
 		},
 
+		/**
+		* Renders the scene
+		* @param force {Boolean} forces display (i.e. does not use
+		* requestAnimationFrame())
+		*/
 		render : function ( force ) {
 			var _this=this;
 
@@ -121,22 +135,42 @@ qx.Class.define("desk.ThreeContainer",
 			this.render();
 		},
 
+		/**
+		* Returns the canvas containing the output
+		* @return {qx.ui.embed.Canvas} canvas containing the scene
+		*/
 		getCanvas : function() {
 			return this.__threeCanvas;
 		},
 
+		/**
+		* Returns the scene
+		* @return {THREE.Scene} scene
+		*/
 		getScene : function() {
 			return this.__scene;
 		},
 
+		/**
+		* Returns the camera
+		* @return {THREE.Camera} the camera
+		*/
 		getCamera : function() {
 			return this.__camera;
 		},
 
+		/**
+		* Returns the controls
+		* @return {THREE.TrackballControls2} the controls
+		*/
 		getControls : function() {
 			return this.__controls;
 		},
 
+		/**
+		* Returns the renderer
+		* @return {THREE.WebGLRenderer} the controls
+		*/
 		getRenderer : function () {
 			return this.__renderer;
 		},
@@ -144,6 +178,9 @@ qx.Class.define("desk.ThreeContainer",
 		// stores the scene bounding box diagonal length, usefull for updating
 		__boudingBoxDiagonalLength : 0,
 
+		/**
+		* Sets the camera to view all objects in the scene
+		*/
 		viewAll : function ( ) {
 			var max = new THREE.Vector3(-1e10,-1e10,-1e10);
 			var min = new THREE.Vector3(1e10,1e10,1e10);
@@ -206,6 +243,9 @@ qx.Class.define("desk.ThreeContainer",
 			this.render();
 		},
 
+		/**
+		* Triggers a snapshot of the scene which will be downloaded by the browser
+		*/
 		snapshot : function (factor) {
 			if (!factor) {
 				factor = 1;

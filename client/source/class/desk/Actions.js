@@ -2,6 +2,10 @@
 #ignore(HackCTMWorkerURL)
 */
 
+/**
+ * Singleton class which stores all available actions, handles launching
+ * and display actions in progress
+ */
 qx.Class.define("desk.Actions", 
 {
 	extend : qx.core.Object,
@@ -10,6 +14,10 @@ qx.Class.define("desk.Actions",
 
 	statics :
 	{
+		/**
+		* Calls callback when the actions list is constructed
+		* @param callback {Function} : callback to be called when ready
+		*/
 		init : function (callback)
 		{
 			var actions = desk.Actions.getInstance();
@@ -22,6 +30,9 @@ qx.Class.define("desk.Actions",
 		}
 	},
 
+	/**
+	* Constructor, never to be used. Use desk.Actions.getInstance() instead
+	*/
 	construct : function()
 	{
 		this.base( arguments );
@@ -57,10 +68,16 @@ qx.Class.define("desk.Actions",
 	},
 
 	properties : {
+		/**
+		* Defines whether RPC cache is avoided (default : false);
+		*/	
 		forceUpdate : { init : false, check: "Boolean", event : "changeForceUpdate"}
 	},
 
 	events : {
+		/**
+		* Fired when the actions list is ready
+		*/	
 		"changeReady" : "qx.event.type.Event"
 	},
 
@@ -91,6 +108,10 @@ qx.Class.define("desk.Actions",
 			return list;
 		},
 
+		/**
+		* To test if the actions list is ready
+		* @return {Boolean}
+		*/	
 		isReady : function () {
 			return this.__ready;
 		},
@@ -118,23 +139,44 @@ qx.Class.define("desk.Actions",
 		__actionsQueue : null,
 		__maximumNumberOfParallelActions : 20,
 
+		/**
+		* Returns the permission level
+		* @return {Int} the permissions level
+		*/	
 		getPermissionsLevel : function () {
 			return this.__permissionsLevel;
 		},
 
+		/**
+		* Returns the JSON object defining a specific action
+		* @param name {String} the action name
+		* @return {Object} action parameters as a JSON object
+		*/	
 		getAction : function (name) {
 			return (JSON.parse(JSON.stringify(this.__actionsObject[name])));
 		},
 
+		/**
+		* Returns the menu containing all actions. Advanced usage only...
+		* @param fileBrowser {desk.FileBrowser} 
+		* @return {qx.ui.menu.Menu} actions menu
+		*/
 		getActionsMenu : function (fileBrowser) {
 			this.__currentFileBrowser=fileBrowser;
 			return this.__actionMenu;
 		},
 		
+		/**
+		* Returns the container which lists all ongoing actions
+		* @return {qx.ui.form.List} actions menu
+		*/
 		getOnGoingContainer : function() {
 			return this.__ongoingActions;
 		},
 
+		/**
+		* builds the actions UI
+		*/
 		buildUI : function () {
 			qx.core.Init.getApplication().getRoot().add(this.__ongoingActions, {top : 0, right : 0});
 		},
@@ -149,6 +191,12 @@ qx.Class.define("desk.Actions",
 			this.__launchAction(action.action, action.callback, action.context);
 		},
 
+		/**
+		* launches an action
+		* @param actionParameters {Object} object containing action aprameters
+		* @param callback {Function} callback for when the action has been performed
+		* @param context {Object} optional context for the callback
+		*/
 		launchAction : function (actionParameters, callback, context) {
 			this.__actionsQueue.push ({action : actionParameters,
 									callback : callback,
