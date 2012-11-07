@@ -1,9 +1,16 @@
-
-
+/**
+ * A container to launch RPC actions and edit parameters
+ */
 qx.Class.define("desk.Action", 
 {
 	extend : qx.ui.container.Composite,
 
+	/**
+	* Creates a new container
+	* @param name {String} name of the action to create
+	* @param standalone {Bool} defines whether the container should be
+	* embedded in a window or not (default : true)
+	*/
 	construct : function (name, standalone)
 	{
 		this.base(arguments);
@@ -18,11 +25,18 @@ qx.Class.define("desk.Action",
 	},
 
 	properties : {
-		outputSubdirectory : { init : null}
+		/**
+		* Contains the output sub-directory.
+		*/
+		outputSubdirectory : {init : null}
 	},
 
 	statics :
 	{
+		/**
+		* Creates a new container, with parameters contained in a JSON file
+		* @param file {String} .JSON file to get settings from
+		*/
 		CREATEFROMFILE : function (file)
 		{
 			desk.FileSystem.readFile(file, function (request) {
@@ -35,9 +49,14 @@ qx.Class.define("desk.Action",
 	},
 
 	events : {
-		// the "changeOutputDirectory" event is fired whenever __outputDirectory is changed
+		/**
+		* Fired whenever the output directory is changed
+		*/
 		"changeOutputDirectory" : "qx.event.type.Event",
 
+		/**
+		* Fired whenever the action has been completed
+		*/
 		"actionUpdated" : "qx.event.type.Event"
 	},
 
@@ -68,6 +87,12 @@ qx.Class.define("desk.Action",
 
 		__embededFileBrowser : null,
 
+		/**
+		* Connects a parameter to an output file from an other action
+		* @param parameterName {String} name of the parameter to set
+		* @param parentAction {desk.Action} action to link to
+		* @param fileName {string} name of the output file from parentAction
+		*/
 		connect : function (parameterName, parentAction, fileName) {
 			if (parentAction==this)
 			{
@@ -81,6 +106,10 @@ qx.Class.define("desk.Action",
 					file : fileName});
 		},
 
+		/**
+		* Defines the output directory for the action
+		* @param directory {String} target subdirectory
+		*/
 		setOutputDirectory : function (directory) {
 			this.__outputDirectory=directory;
 			desk.FileSystem.readFile(this.getOutputDirectory() + 'action.json', 
@@ -127,6 +156,10 @@ qx.Class.define("desk.Action",
 			}
 		},
 
+		/**
+		* Returns the action output directory
+		* @return {String} output subdirectory
+		*/
 		getOutputDirectory : function () {
 			var directory = this.__outputDirectory;
 			if (directory == null) {
@@ -144,6 +177,10 @@ qx.Class.define("desk.Action",
 			return directory;
 		},
 
+		/**
+		* Definet input parameters for the action
+		* @param parameters {Object} parameters as JSON object
+		*/
 		setActionParameters : function (parameters)
 		{
 			this.__providedParameters=parameters;
@@ -159,11 +196,18 @@ qx.Class.define("desk.Action",
 			this.__fileBrowser=fileBrowser;
 		},
 
+		/**
+		* Triggers the action execution
+		*/
 		executeAction : function()
 		{
 			this.__validationManager.validate();
 		},
 
+		/**
+		* Returns the tabview containing different UI pages
+		* @return {qx.ui.tabview.TabView} the tabViex container
+		*/
 		getTabView : function () {
 			if ( this.__tabView != null ) {
 				return this.__tabView;
@@ -327,6 +371,9 @@ qx.Class.define("desk.Action",
 			}
 		},
 
+		/**
+		* Builds the UI
+		*/
 		buildUI : function () {
 			var action = this.__action;
 			this.setLayout(new qx.ui.layout.VBox());
