@@ -1,7 +1,15 @@
+/**
+ * A simple text editor that can also execute javascript code
+ */
 qx.Class.define("desk.TextEditor", 
 {
   extend : qx.ui.window.Window,
 
+	/**
+	* Creates a new text editor window
+	*
+	* @param file {String} the file to edit
+	*/
 	construct : function(file)
 	{
 		this.base(arguments);
@@ -26,9 +34,18 @@ qx.Class.define("desk.TextEditor",
 				function () {saveButton.setEnabled(true);});
 		}, this);
 
+		var scriptContainer = null;
+
 		this.__executeButton = new qx.ui.form.Button("execute");
 		this.__executeButton.addListener("execute", function(e) {
-			eval('(function () {' + this.__textArea.getValue() + '\n})()');
+			var mainBody = document.getElementsByTagName('body')[0];
+			if (scriptContainer) {
+				mainBody.removeChild(scriptContainer);
+			}
+			scriptContainer = document.createElement('script');
+			scriptContainer.setAttribute('type', 'text/javascript');
+			mainBody.appendChild(scriptContainer);
+			scriptContainer.text = this.__textArea.getValue();
 		}, this);
 
 		var spinner = new qx.ui.form.Spinner(5, 15, 50);
@@ -50,7 +67,9 @@ qx.Class.define("desk.TextEditor",
 		this.add(textArea,{flex : 1});
 		this.open();
 		this.center();
-		this.openFile(file);
+		if (file) {
+			this.openFile(file);
+		}
 		return (this);
 	},
 
@@ -60,6 +79,11 @@ qx.Class.define("desk.TextEditor",
 		__reloadButton : null,
 		__executeButton : null,
 
+		/**
+		* Opens a file
+		*
+		* @param file {String} the file to edit
+		*/
 		openFile : function (file)
 		{
 			if (file.substring(file.length - 3) === '.js') {
