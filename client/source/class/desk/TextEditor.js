@@ -14,7 +14,7 @@ qx.Class.define("desk.TextEditor",
 	{
 		this.base(arguments);
 		this.setLayout(new qx.ui.layout.VBox());
-		this.setHeight(500);
+		this.setHeight(400);
 		this.setWidth(500);
 		this.setShowClose(true);
 		this.setShowMinimize(false);
@@ -45,7 +45,15 @@ qx.Class.define("desk.TextEditor",
 			scriptContainer = document.createElement('script');
 			scriptContainer.setAttribute('type', 'text/javascript');
 			mainBody.appendChild(scriptContainer);
-			scriptContainer.text = this.__textArea.getValue();
+			scriptContainer.text = 'CodeToExecute = function (console){' +
+				this.__textArea.getValue() + '}';
+			try{
+				CodeToExecute({log : function (m) {console.log(m);logArea.setValue(logArea.getValue()+m+'\n');}});
+			}
+			catch (error) {
+				logArea.setValue('ERROR : '+error.message+'\n'+error.stack);
+				throw(error);
+			}
 		}, this);
 
 		var spinner = new qx.ui.form.Spinner(5, 15, 50);
@@ -64,12 +72,21 @@ qx.Class.define("desk.TextEditor",
 		var textArea = new qx.ui.form.TextArea();
 		this.__textArea = textArea
 		textArea.setFont(qx.bom.Font.fromString("15 serif"));
-		this.add(textArea,{flex : 1});
 		this.open();
 		this.center();
 		if (file) {
 			this.openFile(file);
 		}
+		var logArea = new qx.ui.form.TextArea();
+		logArea.setValue('');
+		textArea.set({height : 250});
+		this.__logArea = logArea
+		textArea.setFont(qx.bom.Font.fromString("15 serif"));
+
+		var pane = new qx.ui.splitpane.Pane("vertical");
+		pane.add(textArea, 0);
+		pane.add(logArea, 1);
+		this.add(pane, {flex : 1});
 		return (this);
 	},
 
@@ -78,6 +95,7 @@ qx.Class.define("desk.TextEditor",
 		__file : null,
 		__reloadButton : null,
 		__executeButton : null,
+		__logArea : null,
 
 		/**
 		* Opens a file
