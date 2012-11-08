@@ -45,14 +45,23 @@ qx.Class.define("desk.TextEditor",
 			scriptContainer = document.createElement('script');
 			scriptContainer.setAttribute('type', 'text/javascript');
 			mainBody.appendChild(scriptContainer);
-			scriptContainer.text = 'CodeToExecute = function (console){' +
-				this.__textArea.getValue() + '}';
-			try{
-				CodeToExecute({log : function (m) {console.log(m);logArea.setValue(logArea.getValue()+m+'\n');}});
-			}
-			catch (error) {
-				logArea.setValue('ERROR : '+error.message+'\n'+error.stack);
-				throw(error);
+			codeInTextEditor = null;
+			scriptContainer.text = 'codeInTextEditor = function (console){' +
+				textArea.getValue() + '}';
+			if (codeInTextEditor){
+				try{
+					codeInTextEditor({log : function (m) {
+							console.log(m);
+							logArea.setValue(logArea.getValue()+m+'\n');
+						}
+					});
+				}
+				catch (error) {
+					logArea.setValue('ERROR : '+error.message+'\n'+error.stack);
+					throw(error);
+				}
+			} else {
+				alert ('Syntax error! Check your code');
 			}
 		}, this);
 
