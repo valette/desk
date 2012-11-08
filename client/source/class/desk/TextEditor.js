@@ -38,30 +38,36 @@ qx.Class.define("desk.TextEditor",
 
 		this.__executeButton = new qx.ui.form.Button("execute");
 		this.__executeButton.addListener("execute", function(e) {
-			var mainBody = document.getElementsByTagName('body')[0];
+			desk.TextEditor.codeInTextEditor = null;
+			var bodyContainer = document.getElementsByTagName('body')[0];
 			if (scriptContainer) {
-				mainBody.removeChild(scriptContainer);
+				bodyContainer.removeChild(scriptContainer);
 			}
 			scriptContainer = document.createElement('script');
-			scriptContainer.setAttribute('type', 'text/javascript');
-			mainBody.appendChild(scriptContainer);
-			codeInTextEditor = null;
-			scriptContainer.text = 'codeInTextEditor = function (console){' +
-				textArea.getValue() + '}';
-			if (codeInTextEditor){
+			scriptContainer.setAttribute('type','text/javascript');
+			scriptContainer.text = 'desk.TextEditor.codeInTextEditor = function(console){' +
+						textArea.getCode() + '};';
+			bodyContainer.appendChild(scriptContainer);
+
+			logArea.setValue('');
+			logArea.setVisibility('excluded');
+
+			if (desk.TextEditor.codeInTextEditor){
 				try{
-					codeInTextEditor({log : function (m) {
+					desk.TextEditor.codeInTextEditor({log : function (m) {
 							console.log(m);
+							logArea.setVisibility('visible');
 							logArea.setValue(logArea.getValue()+m+'\n');
 						}
 					});
 				}
 				catch (error) {
+					logArea.setVisibility('visible');
 					logArea.setValue('ERROR : '+error.message+'\n'+error.stack);
 					throw(error);
 				}
 			} else {
-				alert ('Syntax error! Check your code');
+				alert('Error while parsing your code, please check syntax');
 			}
 		}, this);
 
@@ -75,28 +81,36 @@ qx.Class.define("desk.TextEditor",
 		buttonsContainer.add(this.__executeButton, {flex : 1});
 		buttonsContainer.add(this.__reloadButton, {flex : 1});
 		buttonsContainer.add(saveButton, {flex : 1});
-		buttonsContainer.add (spinner);
+//		buttonsContainer.add (spinner);
 		this.add(buttonsContainer);
 
-		var textArea = new qx.ui.form.TextArea();
-		this.__textArea = textArea
-		textArea.setFont(qx.bom.Font.fromString("15 serif"));
+		var that = this;
+		var textArea = new desk.AceContainer(function () {
+			textArea.init();
+			if (file) {
+				that.openFile(file);
+			}
+		});
+		textArea.set({height : 250});
+//		textArea.setFont(qx.bom.Font.fromString("15 serif"));
+		this.__textArea = textArea;
+
 		this.open();
 		this.center();
-		if (file) {
-			this.openFile(file);
-		}
+
 		var logArea = new qx.ui.form.TextArea();
-		logArea.setValue('');
-		textArea.set({height : 250});
+		logArea.set({value : '', visibility : 'excluded'});
 		this.__logArea = logArea
-		textArea.setFont(qx.bom.Font.fromString("15 serif"));
 
 		var pane = new qx.ui.splitpane.Pane("vertical");
 		pane.add(textArea, 0);
 		pane.add(logArea, 1);
 		this.add(pane, {flex : 1});
 		return (this);
+	},
+
+	statics : {
+		codeInTextEditor : null
 	},
 
 	members : {
@@ -118,12 +132,13 @@ qx.Class.define("desk.TextEditor",
 			}
 			else {
 				this.__executeButton.setVisibility('excluded');
+				this.__textArea.useHighlight(false);
 			}
 
 			this.__file = file;
 			this.__reloadButton.setEnabled(false);
 			desk.FileSystem.readFile(file, function (request){
-				this.__textArea.setValue(request.getResponseText());
+				this.__textArea.setCode(request.getResponseText());
 				this.setCaption(file);
 				this.__reloadButton.setEnabled(true);
 			}, this);
