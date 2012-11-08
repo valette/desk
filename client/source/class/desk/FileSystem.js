@@ -193,7 +193,8 @@ qx.Class.define("desk.FileSystem",
 				index+=1;
 				if (index != scripts.length) {
 					if (fs.__includedScripts[scripts[index]] === 1) {
-						myScriptLoader();
+						// the script is already loaded. Use a timeout to stay async
+						setTimeout(myScriptLoader,20);
 					}
 					else {
 						new qx.io.ScriptLoader().load(scripts[index], myScriptLoader);
