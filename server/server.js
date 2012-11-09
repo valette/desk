@@ -84,7 +84,12 @@ app.use(express.methodOverride());
 
 // handle body parsing
 app.use(express.bodyParser({uploadDir: uploadDir }));
-app.use(homeURL ,express.static(serverPath + 'demo/default/release/'));
+if (fs.existsSync(serverPath + 'default')) {
+	console.log('serving custom default folder');
+	app.use(homeURL ,express.static(serverPath + 'default'));
+} else {
+	app.use(homeURL ,express.static(serverPath + 'demo/default/release/'));
+}
 
 // serve data files
 app.use(homeURL + 'files',express.static(deskPath));
