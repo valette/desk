@@ -134,18 +134,21 @@ qx.Class.define("desk.TextEditor",
 		},
 
 		__log : function (message, color) {
-			message = message.replace('\n', '<br/>');
 			var logArea = this.__logArea;
 			logArea.setVisibility('visible');
-			var htmlMessage;
-			if (color) {
-				htmlMessage = '<span style="color:' + color + '">' +
-					message + '</span>';
 
-			} else {
-				htmlMessage = message;
+			message = message.replace(' ', '&nbsp');
+			var htmlMessage = '';
+			var lines = message.split('\n');
+			for (var i = 0; i < lines.length; i++) {
+				var line = lines[i] + '<br/>';
+				if (color) {
+					htmlMessage += '<span style="color:' + color + '">' + line + '</span>';
+				} else {
+					htmlMessage += line;
+				}
 			}
-			logArea.setHtml(logArea.getHtml() + htmlMessage + '<br/>');
+			logArea.setHtml(logArea.getHtml() + htmlMessage);
 		},
 
 		/**
