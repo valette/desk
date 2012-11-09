@@ -75,7 +75,7 @@ function cleanCache() {
 }
 
 var job = new cronJob({
-	cronTime: '* * ' + Math.floor(24 * Math.random()) + ' * * *',
+	cronTime: '0 0 ' + Math.floor(24 * Math.random()) + ' * * *',
 	onTick: cleanCache,
 	start: true
 });
@@ -226,7 +226,7 @@ exports.setRoot = function (root) {
 	directories.push(getSubdir('cache'));
 	directories.push(getSubdir('actions'));
 	directories.push(getSubdir('code'));
-	directories.push('/public/');
+	directories.push('/public');
 
 	cleanCache();
 };
