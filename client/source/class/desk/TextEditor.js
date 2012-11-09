@@ -30,45 +30,12 @@ qx.Class.define("desk.TextEditor",
 		var saveButton = new qx.ui.form.Button("Save");
 		saveButton.addListener("execute", function(e) {
 			saveButton.setEnabled(false);
-			desk.FileSystem.writeFile(this.__file, this.__textArea.getValue(),
+			desk.FileSystem.writeFile(this.__file, this.__textArea.getCode(),
 				function () {saveButton.setEnabled(true);});
 		}, this);
 
-		var scriptContainer = null;
-
 		this.__executeButton = new qx.ui.form.Button("execute");
-		this.__executeButton.addListener("execute", function(e) {
-			desk.TextEditor.codeInTextEditor = null;
-			var bodyContainer = document.getElementsByTagName('body')[0];
-			if (scriptContainer) {
-				bodyContainer.removeChild(scriptContainer);
-			}
-			scriptContainer = document.createElement('script');
-			scriptContainer.setAttribute('type','text/javascript');
-			scriptContainer.text = 'desk.TextEditor.codeInTextEditor = function(console){' +
-						textArea.getCode() + '};';
-			bodyContainer.appendChild(scriptContainer);
-
-			logArea.setValue('');
-			logArea.setVisibility('excluded');
-
-			var that = this;
-			if (desk.TextEditor.codeInTextEditor){
-				try{
-					desk.TextEditor.codeInTextEditor({log : function (m) {
-							console.log(m);
-							that.__log(m);
-						}
-					});
-				}
-				catch (error) {
-					this.__log('ERROR : ' + error.message + '\n' + error.stack)
-					throw(error);
-				}
-			} else {
-				alert('Error while parsing your code, please check syntax');
-			}
-		}, this);
+		this.__executeButton.addListener("execute", this.__onExecute, this);
 
 		var spinner = new qx.ui.form.Spinner(5, 15, 50);
 		spinner.addListener('changeValue', function (e) {
@@ -83,25 +50,19 @@ qx.Class.define("desk.TextEditor",
 //		buttonsContainer.add (spinner);
 		this.add(buttonsContainer);
 
-		var that = this;
 		var textArea = new desk.AceContainer(function () {
-			textArea.init();
 			if (file) {
-				that.openFile(file);
+				this.openFile(file);
 			}
-		});
+		}, this);
 
 		this.__textArea = textArea;
 		this.open();
 		this.center();
 
-		var logArea = new qx.ui.form.TextArea();
-		logArea.set({value : '', visibility : 'excluded'});
-		this.__logArea = logArea;
-
 		var pane = new qx.ui.splitpane.Pane("vertical");
 		pane.add(textArea, 3);
-		pane.add(logArea, 1);
+		pane.add(this.__getLogArea(), 1);
 		this.add(pane, {flex : 1});
 		return (this);
 	},
@@ -117,10 +78,74 @@ qx.Class.define("desk.TextEditor",
 		__executeButton : null,
 		__logArea : null,
 
-		__log : function (message) {
+		__scriptContainer : null,
+
+		__onExecute : function() {
+			desk.TextEditor.codeInTextEditor = null;
+			var bodyContainer = document.getElementsByTagName('body')[0];
+			var scriptContainer = this.__scriptContainer;
+			if (scriptContainer) {
+				bodyContainer.removeChild(scriptContainer);
+			}
+			scriptContainer = this.__scriptContainer = document.createElement('script');
+			scriptContainer.setAttribute('type','text/javascript');
+			scriptContainer.text = 'desk.TextEditor.codeInTextEditor = function(console){' +
+						this.__textArea.getCode() + '};';
+			bodyContainer.appendChild(scriptContainer);
+
+			this.__clearLog();
+
+			var that = this;
+			if (desk.TextEditor.codeInTextEditor){
+				try{
+					desk.TextEditor.codeInTextEditor({log : function (m) {
+							console.log(m);
+							that.__log(m);
+						}
+					});
+				}
+				catch (error) {
+					this.__log('ERROR : ' + error.message + '\n' + error.stack, 'red')
+					throw(error);
+				}
+			} else {
+				alert('Error while parsing your code, please check syntax');
+			}
+		},
+
+		__getLogArea : function () {
+			var logArea = new qx.ui.embed.Html('');
+			logArea.set(
+			{
+				visibility : 'excluded',
+				backgroundColor : "white",
+				overflowY : "scroll",
+				overflowX : "auto",
+				font : "monospace",
+				padding: 3
+			});
+			this.__logArea = logArea;
+			return logArea;
+		},
+
+		__clearLog : function () {
+			this.__logArea.setHtml('');
+			this.__logArea.setVisibility('excluded');
+		},
+
+		__log : function (message, color) {
+			message = message.replace('\n', '<br/>');
 			var logArea = this.__logArea;
 			logArea.setVisibility('visible');
-			logArea.setValue(logArea.getValue() + message + '\n');		
+			var htmlMessage;
+			if (color) {
+				htmlMessage = '<span style="color:' + color + '">' +
+					message + '</span>';
+
+			} else {
+				htmlMessage = message;
+			}
+			logArea.setHtml(logArea.getHtml() + htmlMessage + '<br/>');
 		},
 
 		/**

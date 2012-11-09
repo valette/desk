@@ -34,14 +34,23 @@ qx.Class.define("desk.AceContainer",
     /**
      * Constructor.
      * @param callback {Function} callback when editor is ready
+     * @param context {Object} optionnal context for the callback;
      */
-  construct : function(callback)
+  construct : function(callback, context)
   {
     this.base(arguments);
+    var that = this;
     var baseURL = desk.FileSystem.getInstance().getBaseURL() + 'ext/ace/';
     desk.FileSystem.includeScripts([baseURL + 'ace.js',
 									baseURL + 'mode-javascript.js',
-									baseURL + 'theme-eclipse.js'], callback);
+									baseURL + 'theme-eclipse.js'],
+		function () {
+			that.init();
+			if (typeof callback === 'function') {
+				callback.call(context)
+			}
+		}
+	);
 	return this;
   },
 
