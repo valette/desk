@@ -52,18 +52,17 @@ qx.Class.define("desk.TextEditor",
 			logArea.setValue('');
 			logArea.setVisibility('excluded');
 
+			var that = this;
 			if (desk.TextEditor.codeInTextEditor){
 				try{
 					desk.TextEditor.codeInTextEditor({log : function (m) {
 							console.log(m);
-							logArea.setVisibility('visible');
-							logArea.setValue(logArea.getValue()+m+'\n');
+							that.__log(m);
 						}
 					});
 				}
 				catch (error) {
-					logArea.setVisibility('visible');
-					logArea.setValue('ERROR : '+error.message+'\n'+error.stack);
+					this.__log('ERROR : ' + error.message + '\n' + error.stack)
 					throw(error);
 				}
 			} else {
@@ -91,19 +90,17 @@ qx.Class.define("desk.TextEditor",
 				that.openFile(file);
 			}
 		});
-		textArea.set({height : 250});
-//		textArea.setFont(qx.bom.Font.fromString("15 serif"));
-		this.__textArea = textArea;
 
+		this.__textArea = textArea;
 		this.open();
 		this.center();
 
 		var logArea = new qx.ui.form.TextArea();
 		logArea.set({value : '', visibility : 'excluded'});
-		this.__logArea = logArea
+		this.__logArea = logArea;
 
 		var pane = new qx.ui.splitpane.Pane("vertical");
-		pane.add(textArea, 0);
+		pane.add(textArea, 3);
 		pane.add(logArea, 1);
 		this.add(pane, {flex : 1});
 		return (this);
@@ -119,6 +116,12 @@ qx.Class.define("desk.TextEditor",
 		__reloadButton : null,
 		__executeButton : null,
 		__logArea : null,
+
+		__log : function (message) {
+			var logArea = this.__logArea;
+			logArea.setVisibility('visible');
+			logArea.setValue(logArea.getValue() + message + '\n');		
+		},
 
 		/**
 		* Opens a file
