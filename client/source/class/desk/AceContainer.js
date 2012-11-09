@@ -39,18 +39,17 @@ qx.Class.define("desk.AceContainer",
   construct : function(callback, context)
   {
     this.base(arguments);
-    var that = this;
     var baseURL = desk.FileSystem.getInstance().getBaseURL() + 'ext/ace/';
     desk.FileSystem.includeScripts([baseURL + 'ace.js',
 									baseURL + 'mode-javascript.js',
 									baseURL + 'theme-eclipse.js'],
 		function () {
-			that.init();
+			this.init();
 			if (typeof callback === 'function') {
 				callback.call(context)
 			}
-		}
-	);
+		},
+	this);
 	return this;
   },
 
