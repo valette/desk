@@ -143,6 +143,14 @@ qx.Class.define("desk.Actions",
 		* Returns the permission level
 		* @return {Int} the permissions level
 		*/	
+		getSettings : function () {
+			return JSON.parse(JSON.stringify(this.__actions));
+		},
+
+		/**
+		* Returns the permission level
+		* @return {Int} the permissions level
+		*/	
 		getPermissionsLevel : function () {
 			return this.__permissionsLevel;
 		},

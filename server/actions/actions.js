@@ -7,6 +7,7 @@ var fs          = require('fs'),
 	winston     = require('winston'),
 	cronJob     = require('cron').CronJob;
 
+var oldConsole = console;
 var console = {
 	log : function (text) {
 		winston.log ('info', text);
@@ -16,7 +17,7 @@ var console = {
 // directory where user can add their own .json action definition files
 var actionsDirectories = [];
 
-// array storing all the actions
+// object storing all the actions
 var actions;
 
 // base directory where all data files are (data, cache, actions, ..)
@@ -24,9 +25,7 @@ var filesRoot;
 
 // allowed sub-directories in filesRoot. They are automatically created if not existent
 var directories = [];
-
-// last allowed directory : the /public path
-var publicPath = '/public'
+var dataDirs = {};
 
 // variable to enumerate actions for logging
 var actionsCounter = 0;
@@ -171,11 +170,19 @@ includeActionsJSON = function (file, callback) {
 				callback();
 			}
 		});
-	});
+		var dirs = actionsObject.dataDirs || {};
+		var keys = Object.keys(dirs);
+		for (i = 0; i != keys.length ; i++) {
+			var key = keys[i];
+			dataDirs[key] = dirs[key];
+		}
+ 	});
 }
 
-function exportActions( file, callback ) {
-	fs.writeFile(file, prettyPrint.json(JSON.stringify({ actions : actions , permissions : 1})),
+function exportActions(file, callback) {
+	fs.writeFile(file, prettyPrint.json(JSON.stringify({actions : actions ,
+														permissions : 1,
+														dataDirs : dataDirs})),
 		function (err) {
 			if (err) throw err;
 			if (typeof callback === "function") {
@@ -191,6 +198,8 @@ exports.addDirectory = function (directory) {
 exports.update = function (callback) {
 	// clear actions
 	actions = {};
+	dataDirs = {};
+
 	async.forEach(actionsDirectories, function (directory, callback) {
 		fs.readdir(directory, function (err, files) {
 			for (var i = 0; i < files.length; i++) {
@@ -200,6 +209,27 @@ exports.update = function (callback) {
 		});
 	}, function (err) {
 		console.log(Object.keys(actions).length + ' actions included');
+
+		// create all data directories and symlinks if they do not exist
+		var keys = Object.keys(dataDirs)
+		for (var i = 0; i!=keys.length; i++) {
+			var key = keys[i];
+			var dir = filesRoot + key;
+			if (!fs.existsSync(dir)) {
+				console.log('Warning : directory ' + dir + ' does not exist. Creating it');
+				var source = dataDirs[key];
+				if (source === key) {
+					fs.mkdirSync(dir);
+					console.log('directory ' + dir + ' created');
+				} else {
+					fs.symlinkSync(source, dir, 'dir');
+					console.log('directory ' + dir + ' created as a symlink to ' + source);
+				}
+			}
+			directories.push(fs.realpathSync(dir))
+		}
+		cleanCache();
+
 		if (typeof callback === 'function') {
 			callback();
 		}
@@ -212,23 +242,6 @@ exports.getAction = function (actionName) {
 
 exports.setRoot = function (root) {
 	filesRoot = fs.realpathSync(root) + '/';
-
-	function getSubdir(subdir) {
-		var dir = filesRoot + subdir;
-		if (!fs.existsSync(dir)) {
-			console.log('Warning : directory ' + dir + ' does not exist. Creating it');
-			fs.mkdirSync(dir);
-		}
-		return (fs.realpathSync(dir));
-	}
-
-	directories.push(getSubdir('data'));
-	directories.push(getSubdir('cache'));
-	directories.push(getSubdir('actions'));
-	directories.push(getSubdir('code'));
-	directories.push('/public');
-
-	cleanCache();
 };
 
 exports.performAction = function (POST, callback) {

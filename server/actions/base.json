@@ -1,4 +1,11 @@
 {
+	"dataDirs" : {
+		"data" : "data",
+		"cache" : "cache",
+		"actions" : "actions",
+		"code" : "code",
+		"public" : "/public"
+	},
 	"permissions" : "1",
 	"actions" :
 	{
