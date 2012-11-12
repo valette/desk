@@ -104,14 +104,14 @@ qx.Class.define("desk.ThreeContainer",
 		render : function ( force ) {
 			var _this=this;
 
-			if (this.__renderFunction==null) {
+			if (!this.__renderFunction) {
 				this.__renderFunction=
 					function () {
 						_this.__renderer.render( _this.__scene, _this.__camera );
 						_this.__renderingTriggered = false;
 				};
 			}
-			if (force==true) {
+			if (force) {
 				this.__renderFunction();
 				return;
 			}			
@@ -125,7 +125,7 @@ qx.Class.define("desk.ThreeContainer",
 		__resizeThreeCanvas : function () {		
 			var elementSize = this.__threeCanvas.getInnerSize();
 			this.__threeCanvasSize = elementSize;
-			if (elementSize == null) {
+			if (!elementSize) {
 				return;
 			}
 			this.__renderer.setSize(  elementSize.width , elementSize.height );
@@ -224,7 +224,7 @@ qx.Class.define("desk.ThreeContainer",
 			var camera = this.__camera;
 			var controls = this.__controls;
 
-			if (this.__boudingBoxDiagonalLength == 0) {
+			if (this.__boudingBoxDiagonalLength === 0) {
 				this.__boudingBoxDiagonalLength = bbdiaglength;
 				camera.position.copy(center);
 				camera.position.setZ(camera.position.z - bbdiaglength);
