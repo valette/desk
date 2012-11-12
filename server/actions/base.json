@@ -5,11 +5,16 @@
 		{
 		    "parameters":[
 		        {
-		            "text":"-r backup.zip"
+		            "name":"output_zip",
+		            "type":"string",
+		            "required":"true"
 		        },
 		        {
-		            "name":"input_file",
-		            "type":"file",
+		            "text":"-rj "
+		        },
+		        {
+		            "name":"input_file_list",
+		            "type":"string",
 		            "required":"true"
 		        }
 		    ],
@@ -18,6 +23,19 @@
 		    {
 		        "name":"compress_to_zip",
 		        "command":"zip"
+		    }
+		},
+		{
+		    "parameters":[
+		        {
+		            "text":" "
+		        }
+		    ],
+		    "name":"pwd",
+		    "attributes":
+		    {
+		        "name":"pwd",
+		        "command":"pwd"
 		    }
 		},
 		{
@@ -196,6 +214,29 @@
 		        "name":"write_binary",
 		        "js":"lib/write_binary",
 		        "voidAction" : "true"
+		    }
+		},
+		{
+		    "parameters":[
+		        {
+		            "name":"input_file",
+		            "type":"file",
+		            "required":"true"
+		        },
+		        {
+					"name":"destination",
+					"type":"string",
+					"prefix":"-d ",
+					"required":"true"
+				}
+
+		    ],
+		    "name":"unzip_file",
+		    "attributes":
+		    {
+		        "name":"unzip_file",
+		        "command":"unzip",
+		        "voidAction":"true"
 		    }
 		}
 	]

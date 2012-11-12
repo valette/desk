@@ -207,8 +207,17 @@ qx.Class.define("desk.MeshViewer",
 			return this.__threeCanvas.getScene();
 		},
 		
-		getMeshes : function() {
-			return this.__meshes;
+		getMeshes : function()
+		{
+			var meshesArray = this.__meshes;
+			var meshesArrayLength = meshesArray.length;
+			var meshes = {};
+			for(var i=0; i<meshesArrayLength; i++)
+			{
+				if(typeof meshesArray[i]=="object")
+					meshes[i] = meshesArray[i];
+			}
+			return meshes;
 		},
 		
 		viewAll : function () {

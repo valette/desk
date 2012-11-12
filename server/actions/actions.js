@@ -4,9 +4,9 @@ var fs          = require('fs'),
 	crypto      = require('crypto'),
 	exec        = require('child_process').exec,
 	prettyPrint = require('pretty-data').pd,
-	winston     = require('winston'),
-	//~ winston     = require('winston');
-	cronJob     = require('cron').CronJob;
+	//~ winston     = require('winston'),
+	winston     = require('winston');
+	//~ cronJob     = require('cron').CronJob;
 
 var console = {
 	log : function (text) {
@@ -75,11 +75,11 @@ function cleanCache() {
 	});
 }
 
-var job = new cronJob({
-	cronTime: '* * ' + Math.floor(24 * Math.random()) + ' * * *',
-	onTick: cleanCache,
-	start: true
-});
+//~ var job = new cronJob({
+	//~ cronTime: '* * ' + Math.floor(24 * Math.random()) + ' * * *',
+	//~ onTick: cleanCache,
+	//~ start: true
+//~ });
 
 exports.validatePath = function (path, callback) {
 	fs.realpath(filesRoot + path, function (err, realPath) {

@@ -3,7 +3,8 @@ qx.Class.define("desk.Uploader",
 	extend : qx.core.Object,
 
 	events : {
-		"upload" : "qx.event.type.Event"
+		//~ "upload" : "qx.event.type.Event"
+		"upload" : "qx.event.type.Data"
 	},
 
 	construct : function( uploadDir )
@@ -54,7 +55,8 @@ qx.Class.define("desk.Uploader",
   					item.setLabel( file.getFilename() + " (Uploading...)" );
   				else if (state == "uploaded") {
   					item.setLabel( file.getFilename() + " (Complete)" );
-  					this.fireEvent("upload");
+  					//~ this.fireEvent("upload");
+  					this.fireDataEvent("upload", file.getFilename());
   				}
   				else if ( state == "cancelled" )
   					item.setLabel( file.getFilename() + " (Cancelled)" );
@@ -98,5 +100,15 @@ qx.Class.define("desk.Uploader",
   		win.add(lst, {flex : 1});
   		win.add(btnCancel);
   		win.open();
+  		this.__window = win;
+	},
+	
+	members :
+	{		
+		__window : null,
+		
+		getWindow : function() {
+			return this.__window;
+		}
 	}
 });
