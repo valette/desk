@@ -23,11 +23,13 @@ qx.Class.define("desk.TextEditor",
 		this.setUseMoveFrame(true);
 
 		this.__reloadButton = new qx.ui.form.Button("Reload");
+		this.__reloadButton.setKeepFocus(true);
 		this.__reloadButton.addListener("execute", function(e) {
 			this.openFile(this.__file);
 		}, this);
 
 		var saveButton = new qx.ui.form.Button("Save");
+		saveButton.setKeepFocus(true);
 		saveButton.addListener("execute", function(e) {
 			saveButton.setEnabled(false);
 			desk.FileSystem.writeFile(this.__file, this.__textArea.getCode(),
@@ -35,6 +37,7 @@ qx.Class.define("desk.TextEditor",
 		}, this);
 
 		this.__executeButton = new qx.ui.form.Button("execute");
+		this.__executeButton.setKeepFocus(true);
 		this.__executeButton.addListener("execute", this.__onExecute, this);
 
 		var spinner = new qx.ui.form.Spinner(5, 15, 50);
@@ -149,6 +152,7 @@ qx.Class.define("desk.TextEditor",
 				}
 			}
 			logArea.setHtml(logArea.getHtml() + htmlMessage);
+			logArea.getContentElement().scrollToY(1000000); 
 		},
 
 		/**
