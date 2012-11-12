@@ -48,7 +48,7 @@ qx.Class.define("desk.FileBrowser",
 		this.__actions=desk.Actions.getInstance();
 
 		// create the filter bar
-		var filterBox = new qx.ui.container.Composite;
+		var filterBox = new qx.ui.container.Composite();
 		filterBox.setLayout(new qx.ui.layout.HBox(10));
 
 		var filterText = new qx.ui.basic.Label("Filter files :");
@@ -264,7 +264,7 @@ qx.Class.define("desk.FileBrowser",
 				case ".xml":
 					desk.FileSystem.readFile(file, function (request) {
 						var xmlDoc = request.getResponse();
-						if (xmlDoc.getElementsByTagName("mesh").length != 0) {
+						if (xmlDoc.getElementsByTagName("mesh").length !== 0) {
 							new desk.MeshViewer(file);
 						}
 						else {
@@ -288,7 +288,7 @@ qx.Class.define("desk.FileBrowser",
 		__createDefaultStaticActions : function ()
 		{
 			this.__virtualTree.setContextMenuFromDataCellsOnly(true);
-			var menu = new qx.ui.menu.Menu;
+			var menu = new qx.ui.menu.Menu();
 
 			// the default "open" button
 			var openButton = new qx.ui.menu.Button("Open");
@@ -366,8 +366,8 @@ qx.Class.define("desk.FileBrowser",
 			});
 
 			myBrowser.addAction("info",function (node) {
-				alert ("file name : "+myBrowser.__getNodeFile(node)
-					+"\n file URL : "+myBrowser.__getNodeURL(node));
+				alert ("file name : "+myBrowser.__getNodeFile(node) +
+					"\n file URL : "+myBrowser.__getNodeURL(node));
 			});
 
 			myBrowser.addAction("update",function (node) {
@@ -433,11 +433,11 @@ qx.Class.define("desk.FileBrowser",
 				if (node.type !== qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 					alert ('error : select a file, not a directory');
 				}
-				var file = myBrowser.__getNodeFile(node.nodeId);
+				file = myBrowser.__getNodeFile(node.nodeId);
 				var baseName = desk.FileSystem.getFileName(file);
 				var nameLength = baseName.length;
 				baseName = baseName.substring(0, baseName.length - 3) + 'txt';
-				var baseName = prompt('enter new file name : ', baseName);
+				baseName = prompt('enter new file name : ', baseName);
 				if ( baseName !== null) {
 					desk.FileSystem.writeFile( desk.FileSystem.getFileDirectory(file) + baseName,
 						'edit me',
@@ -586,7 +586,7 @@ qx.Class.define("desk.FileBrowser",
 
 		__openNode : function (node) {
 			if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-				if (this.__fileHandler != null)
+				if (this.__fileHandler)
 						this.__fileHandler(this.__getNodeFile(node));
 			}
 			else
@@ -601,12 +601,12 @@ qx.Class.define("desk.FileBrowser",
 
 			function readFileList(files)
 			{
-				var filesArray = new Array();
-				var directoriesArray = new Array();
-				var modificationTimes = new Array();
-				var sizes = new Array();
+				var filesArray = [];
+				var directoriesArray = [];
+				var modificationTimes = [];
+				var sizes = [];
 				var node = this.__getFileNode(directory);
-				if (node == null) {
+				if (node === null) {
 					return;
 				}
 				nodeId = node.nodeId;
@@ -628,10 +628,10 @@ qx.Class.define("desk.FileBrowser",
 				directoriesArray.sort();
 				filesArray.sort();
 
-				for (var i = 0; i < directoriesArray.length; i++)
+				for (i = 0; i < directoriesArray.length; i++)
 					dataModel.addBranch(nodeId , directoriesArray[i]);
 
-				for (var i = 0; i < filesArray.length; i++) {
+				for (i = 0; i < filesArray.length; i++) {
 					var newNode;
 					switch (filesArray[i].substring(filesArray[i].length-4, filesArray[i].length))
 					{
