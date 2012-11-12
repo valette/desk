@@ -47,8 +47,8 @@ qx.Mixin.define("desk.LinkMixin",
 					for (var i = 0; i < source.__links.length; i++) {
 						addUnique(source.__links[i], this.__links);
 					}
-					for (var i = 0; i < source.__links.length; i++) {
-						source.__links[i].__links = this.__links
+					for (i = 0; i < source.__links.length; i++) {
+						source.__links[i].__links = this.__links;
 					}
 				}
 			}
@@ -63,7 +63,7 @@ qx.Mixin.define("desk.LinkMixin",
 		*/
 			unlink : function () {
 			var links=this.__links;
-			if (links == null) {
+			if (links === null) {
 				return;
 			}
 			for (var i = 0; i < links.length; i++){
@@ -88,7 +88,7 @@ qx.Mixin.define("desk.LinkMixin",
 		*/
 		applyToLinks : function (applyFunction) {
 			var links = this.__links;
-			if (links == null) {
+			if (links === null) {
 				applyFunction.apply(this);
 				return;
 			}
@@ -111,7 +111,7 @@ qx.Mixin.define("desk.LinkMixin",
 		*/	
 		applyToOtherLinks : function (applyFunction) {
 			var links = this.__links;
-			if (links == null) {
+			if (links === null) {
 				return;
 			}
 			for (var i = 0; i < links.length; i++) {
