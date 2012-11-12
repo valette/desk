@@ -43,7 +43,8 @@ qx.Class.define("desk.FileSystem",
 				"?nocache=" + Math.random());
 			req.setAsync(true);
 			req.addListener('load', function (e) {
-				callback.call(context, e.getTarget())});
+				callback.call(context, e.getTarget());
+      });
 			req.send();
 		},
 
@@ -219,11 +220,12 @@ qx.Class.define("desk.FileSystem",
 			var fs = desk.FileSystem.getInstance();
 			var req = new qx.io.request.Xhr();
 			req.setUrl(fs.__actionsURL + action);
-			req.setRequestData(requestData)
+			req.setRequestData(requestData);
 			req.setMethod(method);
 			req.setAsync(true);
 			req.addListener('load', function (e) {
-				callback.call(context, e.getTarget())});
+				callback.call(context, e.getTarget());	
+			});
 			req.send();
 		}
 	},
@@ -274,7 +276,7 @@ qx.Class.define("desk.FileSystem",
 		*/ 
 		getFileSessions : function (file, sessionType, callback)
 		{
-			if (sessionType == null) {
+			if (sessionType === null) {
 				alert('error : no session type asked');
 				return;
 			}
@@ -292,7 +294,7 @@ qx.Class.define("desk.FileSystem",
 							var remaining = childName.substring(shortFileName.length + 1);
 							var childSession = remaining.substring(0, sessionType.length + 1);
 							if (childSession == (sessionType + ".")) {
-								var sessionId=parseInt(remaining.substring(childSession.length));
+								var sessionId = parseInt(remaining.substring(childSession.length), 10);
 								sessions.push(sessionId);
 							}
 						}
