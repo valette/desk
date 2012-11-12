@@ -45,7 +45,7 @@ qx.Class.define("desk.TextEditor",
 			this.__textArea.setFont(qx.bom.Font.fromString(e.getData() + ' serif'));
 		}, this);
 
-		var buttonsContainer = new qx.ui.container.Composite;
+		var buttonsContainer = new qx.ui.container.Composite();
 		buttonsContainer.setLayout(new qx.ui.layout.HBox());
 		buttonsContainer.add(this.__executeButton, {flex : 1});
 		buttonsContainer.add(this.__reloadButton, {flex : 1});
@@ -108,7 +108,7 @@ qx.Class.define("desk.TextEditor",
 					});
 				}
 				catch (error) {
-					this.__log('ERROR : ' + error.message + '\n' + error.stack, 'red')
+					this.__log('ERROR : ' + error.message + '\n' + error.stack, 'red');
 					throw(error);
 				}
 			} else {
