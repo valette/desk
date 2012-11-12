@@ -209,7 +209,7 @@ qx.Class.define("desk.Action",
 		* @return {qx.ui.tabview.TabView} the tabViex container
 		*/
 		getTabView : function () {
-			if ( this.__tabView != null ) {
+			if (this.__tabView) {
 				return this.__tabView;
 			}
 			var tabView = this.__tabView = new qx.ui.tabview.TabView ();
@@ -222,8 +222,8 @@ qx.Class.define("desk.Action",
 		},
 
 		__addOutputTab : function () {
-			if ( ( this.__action.attributes.voidAction == "true") ||
-					( this.__embededFileBrowser != null )) {
+			if ((this.__action.attributes.voidAction == "true") ||
+					this.__embededFileBrowser) {
 				return;
 			}
 			var page = new qx.ui.tabview.Page("Output");
@@ -270,7 +270,7 @@ qx.Class.define("desk.Action",
 				for (i = 0; i < items.length; i++) {
 					var currentItem=items[i];
 					var value=currentItem.getValue();
-					if (value!=null) {
+					if (value != null) {
 						parameterMap[currentItem.getPlaceholder()]=value;
 					}
 				}
@@ -357,7 +357,7 @@ qx.Class.define("desk.Action",
 				}
 
 				if (parentActions.length > 0) {
-					for (var i = 0; i != parentActions.length; i++) {
+					for (i = 0; i != parentActions.length; i++) {
 						var currentParentAction = parentActions[i];
 						currentParentAction.addListenerOnce("actionUpdated", afterParentActionProcessed, this);
 						currentParentAction.executeAction();
@@ -426,8 +426,7 @@ qx.Class.define("desk.Action",
 						return (false);
 					}
 				}
-				else if ( (parseInt(value) != parseFloat(value))||
-						 isNaN(value)) {
+				else if ((parseInt(value, 10) != parseFloat(value)) || isNaN(value)) {
 					item.setInvalidMessage('"' + parameterName + '" should be an integer');
 					return (false);
 				}
@@ -464,7 +463,7 @@ qx.Class.define("desk.Action",
 				return (true);
 			};
 
-			var dummyValidator = function(value, item) {return (true)};
+			var dummyValidator = function(value, item) {return (true);};
 
 			var fileAlreadyPickedFromBrowser = false;
 
@@ -510,7 +509,7 @@ qx.Class.define("desk.Action",
 						manager.add(parameterForm, floatValidator, parameter);
 						break;
 					case "file":
-						if ((!fileAlreadyPickedFromBrowser) && (this.__fileBrowser!=null)) {
+						if ( !fileAlreadyPickedFromBrowser && (this.__fileBrowser!=null)) {
 							fileAlreadyPickedFromBrowser=true;
 							var file = this.__fileBrowser.getSelectedFiles()[0];
 							parameterForm.setValue(file);
@@ -554,14 +553,15 @@ qx.Class.define("desk.Action",
 						parameterForm.setValue(defaultValue);
 					}
 
-					parameterForm.addListener("input", function(e) 
-						{this.setInvalidMessage('');},parameterForm);
+					parameterForm.addListener("input", function(e) {
+            this.setInvalidMessage('');
+          },parameterForm);
 				}
 			}
 
 			this.__updateUIParameters();
 
-			var executeBox = new qx.ui.container.Composite;
+			var executeBox = new qx.ui.container.Composite();
 			executeBox.setLayout(new qx.ui.layout.HBox(10));
 			this.add(executeBox);
 
