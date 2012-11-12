@@ -47,7 +47,7 @@ qx.Class.define("desk.MeshViewer",
 		pane.add(this.__threeCanvas, 5);
 		this.__setupInteractions();
 
-		var elementsList = new qx.ui.container.Composite;
+		var elementsList = new qx.ui.container.Composite();
 		elementsList.setLayout(new qx.ui.layout.VBox(3));
 		pane.add(elementsList, 1);
 		elementsList.setVisibility("excluded");
@@ -172,7 +172,7 @@ qx.Class.define("desk.MeshViewer",
 
 		__getFilterContainer : function () {
 			var dataModel = this.__meshesTree.getDataModel();
-			var container = new qx.ui.container.Composite;
+			var container = new qx.ui.container.Composite();
 			container.setLayout(new qx.ui.layout.HBox(10));
 			var filterText = new qx.ui.basic.Label("search");
 			container.add(filterText);
@@ -336,13 +336,13 @@ qx.Class.define("desk.MeshViewer",
 
 			this.removeMeshes(meshesToRemove);
 
-			if (this.__slicesRoot==null) {
+			if (this.__slicesRoot === null) {
 				return;
 			}
 
 			meshes=meshesTree.nodeGet(this.__slicesRoot).children;
 			meshesToRemove=[];
-			for (var i=0;i<meshes.length;i++) {
+			for (i = 0; i < meshes.length; i++) {
 				meshesToRemove.push(meshesTree.nodeGet(meshes[i]));
 			}
 
@@ -403,7 +403,7 @@ qx.Class.define("desk.MeshViewer",
 							for (var j=0;j<4;j++) {
 								color[j]=parseFloat(colors[j]);
 							}
-							color[4]=parseInt(colors[4]);
+							color[4]=parseInt(colors[4], 10);
 						}
 
 						var updatesTimes = 4; // ...only after 4 updates when  numberOfRemainingMeshes = 0 all the meshes are loaded
@@ -419,12 +419,12 @@ qx.Class.define("desk.MeshViewer",
 									_this.viewAll();
 									_this.__meshesTree.getDataModel().setData();
 									--updatesTimes;
-									if(updatesTimes==0)
+									if(updatesTimes === 0)
 										_this.fireDataEvent("meshesLoaded", _this.__meshes);
 									break;
 								default:
 							}
-						}
+						};
 
 						var xmlName;
 						if (mesh.hasAttribute("Mesh")) {
@@ -576,7 +576,7 @@ qx.Class.define("desk.MeshViewer",
 				if (root !== null) {
 					var rootNode = tree.nodeGet(root);
 					var children = rootNode.children;
-					if (children.length != 0) {
+					if (children.length !== 0) {
 						var meshes = [];
 						for (var i = 0; i < children.length; i++) {
 							if (this.__meshesVisibility[children[i]]) {
@@ -665,7 +665,7 @@ qx.Class.define("desk.MeshViewer",
 
 			var parameters=this.__meshesToLoad[0];
 			var _this=this;
-			var useWorker = true
+			var useWorker = true;
 			var useBuffers = true;
 
 			if (this.__numberOfLoaders>0){
@@ -679,9 +679,10 @@ qx.Class.define("desk.MeshViewer",
 							var color=parameters.color;
 							var threecolor=new THREE.Color().setRGB(color[0],color[1],color[2]);
 
-							var material =  new THREE.MeshPhongMaterial( {
-								 color:threecolor.getHex(),
-								 opacity: color[3]} );
+							var material =  new THREE.MeshPhongMaterial({
+                color:threecolor.getHex(),
+                opacity: color[3]
+              });
 							var factor=0.3;
 							material.ambient = new THREE.Color().setRGB(
 								factor*threecolor.r,factor*threecolor.g,factor*threecolor.b);
@@ -770,7 +771,7 @@ qx.Class.define("desk.MeshViewer",
 				}
 			},this);
 
-			var menu = new qx.ui.menu.Menu;
+			var menu = new qx.ui.menu.Menu();
 			var unlinkButton = new qx.ui.menu.Button("unlink");
 			unlinkButton.addListener("execute", this.unlink, this);
 			menu.add(unlinkButton);
@@ -783,17 +784,17 @@ qx.Class.define("desk.MeshViewer",
 			var _this=this;
 			var meshesTree=this.__meshesTree;
 			
-			var mainContainer = new qx.ui.container.Composite;
+			var mainContainer = new qx.ui.container.Composite();
 			mainContainer.setLayout(new qx.ui.layout.VBox());
 
-			var topBox = new qx.ui.container.Composite;
+			var topBox = new qx.ui.container.Composite();
 			topBox.setLayout(new qx.ui.layout.HBox());
-			var bottomBox = new qx.ui.container.Composite;
+			var bottomBox = new qx.ui.container.Composite();
 			bottomBox.setLayout(new qx.ui.layout.HBox());
 			mainContainer.add(topBox);
 			mainContainer.add(bottomBox);
 
-			var colorSelector=new qx.ui.control.ColorSelector()
+			var colorSelector=new qx.ui.control.ColorSelector();
 			bottomBox.add(colorSelector);//, {flex:1});
 
 /*			var wireframeCheckBox=new qx.ui.form.CheckBox("wireframe");
@@ -841,7 +842,7 @@ qx.Class.define("desk.MeshViewer",
 					renderDepthSpinner.setValue(firstSelectedMesh.renderDepth);
 					enableUpdate=true;
 				}
-			}
+			};
 			
 			updateWidgets();
 
@@ -852,7 +853,7 @@ qx.Class.define("desk.MeshViewer",
 					var meshes=meshesTree.getSelectedNodes();
 					for (var i=0;i<meshes.length;i++) {
 						var mesh=_this.__meshes[meshes[i].nodeId];
-						if (mesh!=null) {
+						if (mesh != null) {
 							var opacity=opacitySlider.getValue()/ratio;
 							mesh.material.opacity=opacity;
 							if (opacity<1) {
@@ -872,7 +873,7 @@ qx.Class.define("desk.MeshViewer",
 					var meshes=meshesTree.getSelectedNodes();
 					for (var i=0;i<meshes.length;i++) {
 						var mesh=_this.__meshes[meshes[i].nodeId];
-						if (mesh!=null) {
+						if (mesh != null) {
 							mesh.material.color.setRGB (colorSelector.getRed()/ratio,
 										colorSelector.getGreen()/ratio,
 										colorSelector.getBlue()/ratio);
@@ -901,7 +902,7 @@ qx.Class.define("desk.MeshViewer",
 					var meshes=meshesTree.getSelectedNodes();
 					for (var i=0;i<meshes.length;i++) {
 						var mesh=_this.__meshes[meshes[i].nodeId];
-						if (mesh!=null) {
+						if (mesh != null) {
 							mesh.renderDepth=renderDepthSpinner.getValue();
 						}
 					}
@@ -922,7 +923,7 @@ qx.Class.define("desk.MeshViewer",
 				this.__meshes[nodeId]=0;
 				this.__meshesVisibility[nodeId]=0;
 				var map=mesh.material.map;
-				if (map!=null) {
+				if (map != null) {
 					renderer.deallocateTexture( map );
 				}
 				renderer.deallocateObject( mesh );
@@ -934,7 +935,7 @@ qx.Class.define("desk.MeshViewer",
 
 		__getContextMenu : function() {
 			//context menu to edit meshes appearance
-			var menu = new qx.ui.menu.Menu;
+			var menu = new qx.ui.menu.Menu();
 			var propertiesButton = new qx.ui.menu.Button("properties");
 			propertiesButton.addListener("execute", function (){
 				var meshId=this.__meshesTree.getSelectedNodes()[0].nodeId;
