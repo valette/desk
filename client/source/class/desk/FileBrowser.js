@@ -287,6 +287,25 @@ qx.Class.define("desk.FileBrowser",
 
 		__createDefaultStaticActions : function ()
 		{
+			this.__virtualTree.setContextMenuFromDataCellsOnly(true);
+			var menu = new qx.ui.menu.Menu;
+
+			// the default "open" button
+			var openButton = new qx.ui.menu.Button("Open");
+			openButton.addListener("execute", function (){
+				this.__openNode (this.__getSelectedNodes()[0]);}, this);
+			menu.add(openButton);
+			menu.addSeparator();
+
+			var actionsButton = new qx.ui.menu.Button("Actions");
+			menu.add(actionsButton);
+			menu.addSeparator();
+
+			this.__virtualTree.setContextMenu(menu);
+			this.__virtualTree.addListener("contextmenu", function (e) {
+				actionsButton.setMenu(this.__actions.getActionsMenu(this));
+				}, this);
+
 			if (this.__actions.getPermissionsLevel()<1)
 				return;
 
@@ -430,17 +449,24 @@ qx.Class.define("desk.FileBrowser",
 		addAction : function (actionName, callback)
 		{
 			var location=this.__actionNames.indexOf(actionName);
-			if (location==-1)
-			{
+			if (location==-1) {
 				this.__actionNames.push(actionName);
-			}
-			else
-			{
-				console.log ("Warning : action \""+actionName+"\" already exists, is overwritten!");
+			} else {
+				console.log ('Warning : action "' + actionName + '" already exists, is overwritten!');
 			}
 
-			this.__actionCallbacks[actionName]=callback;
-			this.__updateContextMenu();
+			this.__actionCallbacks[actionName] = callback;
+
+			var button = new qx.ui.menu.Button(actionName);
+			button.setUserData("fileBrowser",this);
+			button.setUserData("actionName",actionName);
+			button.addListener("execute", function () {
+				var buttonFileBrowser = this.getUserData("fileBrowser");
+				var buttonActionName = this.getUserData("actionName");
+				var node = buttonFileBrowser.__getSelectedNodes()[0];
+				buttonFileBrowser.__actionCallbacks[buttonActionName](node);
+			}, button);
+			this.__virtualTree.getContextMenu().add(button);
 		},
 
 		setFileHandler : function (callback) {
@@ -565,42 +591,6 @@ qx.Class.define("desk.FileBrowser",
 			}
 			else
 				this.__virtualTree.nodeToggleOpened(node);
-		},
-
-		__updateContextMenu : function() {
-			this.__virtualTree.setContextMenuFromDataCellsOnly(true);
-			var menu = new qx.ui.menu.Menu;
-
-			// the default "open" button
-			var openButton = new qx.ui.menu.Button("Open");
-			openButton.addListener("execute", function (){
-				this.__openNode (this.__getSelectedNodes()[0]);}, this);
-			menu.add(openButton);
-			menu.addSeparator();
-
-			var actionsButton = new qx.ui.menu.Button("Actions");
-			menu.add(actionsButton);
-			menu.addSeparator();
-			// other actions buttons
-			for (var i = 0; i < this.__actionNames.length; i++) {
-				var actionName = this.__actionNames[i];
-				var button = new qx.ui.menu.Button(actionName);
-				button.setUserData("fileBrowser",this);
-				button.setUserData("actionName",actionName);
-
-				button.addListener("execute", function () {
-					var buttonFileBrowser=this.getUserData("fileBrowser");
-					var buttonActionName=this.getUserData("actionName");
-					var node=buttonFileBrowser.__getSelectedNodes()[0];
-					buttonFileBrowser.__actionCallbacks[buttonActionName](node);
-					}, button);
-				menu.add(button);
-			}
-
-			this.__virtualTree.setContextMenu(menu);
-			this.__virtualTree.addListener("contextmenu", function (e) {
-				actionsButton.setMenu(this.__actions.getActionsMenu(this));
-				}, this);
 		},
 
 		__expandDirectoryListing : function(nodeId) {
