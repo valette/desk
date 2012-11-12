@@ -355,7 +355,7 @@ qx.Class.define("desk.VolumeSlice",
 
 			material.fragmentShader+="\n"+material.baseShader.baseShaderBegin;
 			var extraShaders=material.baseShader.extraShaders;
-			for (var i=0;i!=extraShaders.length;i++) {
+			for (i=0;i!=extraShaders.length;i++) {
 				material.fragmentShader+="\n"+extraShaders[i];
 			}
 			material.fragmentShader+="\n"+material.baseShader.baseShaderEnd;
@@ -451,7 +451,7 @@ qx.Class.define("desk.VolumeSlice",
 			};
 
 			var luts=this.getLookupTables();
-			if (luts[0]!=null) {
+			if (luts[0]) {
 				this.__setLookupTablesToMaterial ( luts , material );
 			}
 
@@ -492,11 +492,11 @@ qx.Class.define("desk.VolumeSlice",
 			// ZY X
 			case 1 :
 				var x=this.__origin[0]+(this.getSlice()+this.__extent[0])*this.__spacing[0];
-				var ymin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
-				var ymax=this.__origin[2]+(this.__extent[5]+1)*this.__spacing[2];
+				ymin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
+				ymax=this.__origin[2]+(this.__extent[5]+1)*this.__spacing[2];
 				var zmin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
 				var zmax=this.__origin[1]+(this.__extent[3]+1)*this.__spacing[1];
-				var coordinates=[];
+				coordinates=[];
 				coordinates[0]=x;
 				coordinates[1]=zmax;
 				coordinates[2]=ymin;
@@ -513,11 +513,11 @@ qx.Class.define("desk.VolumeSlice",
 			// XZ Y
 			case 2 :
 				var y=this.__origin[1]+(this.getSlice()+this.__extent[2])*this.__spacing[1];
-				var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
-				var xmax=this.__origin[0]+(this.__extent[1]+1)*this.__spacing[0];
-				var zmin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
-				var zmax=this.__origin[2]+(this.__extent[5]+1)*this.__spacing[2];
-				var coordinates=[];
+				xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
+				xmax=this.__origin[0]+(this.__extent[1]+1)*this.__spacing[0];
+				zmin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
+				zmax=this.__origin[2]+(this.__extent[5]+1)*this.__spacing[2];
+				coordinates=[];
 				coordinates[0]=xmin;
 				coordinates[1]=y;
 				coordinates[2]=zmax;
@@ -636,10 +636,10 @@ qx.Class.define("desk.VolumeSlice",
 			var _this=this;
 
 			xmlhttp.onreadystatechange = function() {
-				 if(this.readyState == 4 && this.status == 200)
-				 {
-					// so far so good
-					if(xmlhttp.responseXML!=null)
+        if(this.readyState == 4 && this.status == 200)
+        {
+          // so far so good
+         if(xmlhttp.responseXML != null)
 					{
 						var response = xmlhttp.responseXML;
 						_this.__parseXMLresponse(response,xmlURL);
@@ -663,23 +663,23 @@ qx.Class.define("desk.VolumeSlice",
 
 			this.__availableImageFormat=this.getImageFormat();
 			var volume=xmlDoc.getElementsByTagName("volume")[0];
-			if (volume==null)
+			if (!volume)
 				return;
 
 			// parse extent, dimensions, origin, spacing
 			var XMLextent=volume.getElementsByTagName("extent")[0];
-			this.__extent=new Array(parseInt(XMLextent.getAttribute("x1")),
-							parseInt(XMLextent.getAttribute("x2")),
-							parseInt(XMLextent.getAttribute("y1")),
-							parseInt(XMLextent.getAttribute("y2")),
-							parseInt(XMLextent.getAttribute("z1")),
-							parseInt(XMLextent.getAttribute("z2")));
+			this.__extent=new Array(parseInt(XMLextent.getAttribute("x1"), 10),
+							parseInt(XMLextent.getAttribute("x2"), 10),
+							parseInt(XMLextent.getAttribute("y1"), 10),
+							parseInt(XMLextent.getAttribute("y2"), 10),
+							parseInt(XMLextent.getAttribute("z1"), 10),
+							parseInt(XMLextent.getAttribute("z2"), 10));
 
 			var XMLdimensions=volume.getElementsByTagName("dimensions")[0];
 
-			this.__dimensions=new Array(parseInt(XMLdimensions.getAttribute("x")),
-							parseInt(XMLdimensions.getAttribute("y")),
-							parseInt(XMLdimensions.getAttribute("z")));
+			this.__dimensions=new Array(parseInt(XMLdimensions.getAttribute("x"), 10),
+							parseInt(XMLdimensions.getAttribute("y"), 10),
+							parseInt(XMLdimensions.getAttribute("z"), 10));
 
 			var XMLspacing=volume.getElementsByTagName("spacing")[0];
 			this.__spacing=new Array(parseFloat(XMLspacing.getAttribute("x")),
@@ -697,10 +697,10 @@ qx.Class.define("desk.VolumeSlice",
 			this.__scalarSize=parseInt(XMLscalars.getAttribute("size"),10);
 			this.__scalarMin=parseFloat(XMLscalars.getAttribute("min"),10);
 			this.__scalarMax=parseFloat(XMLscalars.getAttribute("max"),10);
-			this.__scalarTypeString=XMLscalars.childNodes[0].nodeValue;;
+			this.__scalarTypeString=XMLscalars.childNodes[0].nodeValue;
 
 			var slices=volume.getElementsByTagName("slicesprefix")[0];
-			this.__offset=parseInt(slices.getAttribute("offset"));
+			this.__offset=parseInt(slices.getAttribute("offset"), 10);
 			this.__timestamp=slices.getAttribute("timestamp");
 			if (this.__timestamp==null)
 				this.__timestamp=Math.random();
@@ -737,7 +737,7 @@ qx.Class.define("desk.VolumeSlice",
 
 			var _this=this;
 			this.__image.onload=function(){
-				clearTimeout(this.__timeOut)
+				clearTimeout(this.__timeOut);
 				_this.__updateInProgress=false;
 				var materials=_this.__materials;
 				for (var i=0;i<materials.length;i++){
@@ -781,7 +781,7 @@ qx.Class.define("desk.VolumeSlice",
 
 		__reallyUpdateImage : function() {
 			var fileSuffix;
-			if (this.__availableImageFormat==0) {
+			if (this.__availableImageFormat === 0) {
 				fileSuffix=".png";
 			}
 			else {
@@ -806,8 +806,8 @@ qx.Class.define("desk.VolumeSlice",
 				}
 			this.__updateInProgress=true;
 			this.__updateTriggered=false;
-			this.__image.src=this.__path+this.__prefix+orientationString+(this.__offset+this.getSlice())
-				+fileSuffix+"?nocache="+this.__timestamp;
+			this.__image.src = this.__path + this.__prefix + orientationString +
+        (this.__offset+this.getSlice()) + fileSuffix + "?nocache=" + this.__timestamp;
 		}
 	}
 });
