@@ -36,7 +36,7 @@ var maximumCacheAge = 30 * millisecondsInADay;
 
 function cleanCache() {
 	console.log('Starting cache cleaning (delete folders older than ' +
-		+ Math.floor(maximumCacheAge / millisecondsInADay) + ' days)'); 
+		Math.floor(maximumCacheAge / millisecondsInADay) + ' days)'); 
 
 	var cacheDir = filesRoot + 'cache/';
 	if (!fs.existsSync(cacheDir)) {
@@ -96,17 +96,15 @@ exports.validatePath = function (path, callback) {
 			callback("path " + realPath + " not allowed");
 		}
 	});
-}
+};
 
 function includeActionsFile (file, callback) {
 	fs.exists(file, function (exists) {
 		if (exists) {
-			switch (libpath.extname(file).toLowerCase()) {
-			case ".json":
+			if (libpath.extname(file).toLowerCase() === '.json') {
 				console.log('importing actions from : ' + file);
 				includeActionsJSON(file, callback);
-				break;
-			default:
+			} else {
 				callback(null);
 			}
 		}
@@ -134,7 +132,7 @@ exports.includeActions=function (file, callback) {
 	function afterImport() {
 		exportActions(filesRoot + "actions.json", callback);
 	}
-}
+};
 
 includeActionsJSON = function (file, callback) {
 	fs.readFile(file, function (err, data) {
@@ -175,9 +173,9 @@ includeActionsJSON = function (file, callback) {
 		for (i = 0; i != keys.length ; i++) {
 			var key = keys[i];
 			dataDirs[key] = dirs[key];
-		}
- 	});
-}
+		}	
+	});
+};
 
 function exportActions(file, callback) {
 	fs.writeFile(file, prettyPrint.json(JSON.stringify({actions : actions ,
@@ -193,7 +191,7 @@ function exportActions(file, callback) {
 
 exports.addDirectory = function (directory) {
 	actionsDirectories.push(directory);
-}
+};
 
 exports.update = function (callback) {
 	// clear actions
@@ -211,7 +209,7 @@ exports.update = function (callback) {
 		console.log(Object.keys(actions).length + ' actions included');
 
 		// create all data directories and symlinks if they do not exist
-		var keys = Object.keys(dataDirs)
+		var keys = Object.keys(dataDirs);
 		for (var i = 0; i!=keys.length; i++) {
 			var key = keys[i];
 			var dir = filesRoot + key;
@@ -226,7 +224,7 @@ exports.update = function (callback) {
 					console.log('directory ' + dir + ' created as a symlink to ' + source);
 				}
 			}
-			directories.push(fs.realpathSync(dir))
+			directories.push(fs.realpathSync(dir));
 		}
 		cleanCache();
 
@@ -234,11 +232,11 @@ exports.update = function (callback) {
 			callback();
 		}
 	});
-}
+};
 
 exports.getAction = function (actionName) {
 	return JSON.parse(JSON.stringify(actions[actionName]));
-}
+};
 
 exports.setRoot = function (root) {
 	filesRoot = fs.realpathSync(root) + '/';
@@ -344,7 +342,7 @@ exports.performAction = function (POST, callback) {
 						}
 						break;
 					case 'int':
-						if (isNaN(parseInt(parameterValue))) {
+						if (isNaN(parseInt(parameterValue, 10))) {
 							callback ("parameter " + parameter.name + " must be an integer value");
 						}
 						else {
@@ -427,7 +425,7 @@ exports.performAction = function (POST, callback) {
 			fs.stat(filesRoot + outputDirectory, function (err, stats) {
 				if (err) {
 					// directory does not exist, create it
-					fs.mkdir(filesRoot + outputDirectory,0777 , function (err) {
+					fs.mkdir(filesRoot + outputDirectory, 0777 , function (err) {
 						if (err) {
 							callback(err.message);
 						}
@@ -440,7 +438,7 @@ exports.performAction = function (POST, callback) {
 				else {
 					callback (null);
 				}
-			})
+			});
 			break;
 		default :
 			exports.validatePath ( outputDirectory, callback );
@@ -454,7 +452,9 @@ exports.performAction = function (POST, callback) {
 		console.log (header + 'in : ' + outputDirectory);
 		console.log (header + commandLine);
 
-		if ((action.attributes.voidAction === "true")||(POST.force_update === "true")){
+		if ((action.attributes.voidAction === "true")||
+        (POST.force_update === "true") ||
+        (action.attributes.noCache === "true")){
 			callback();
 		}
 		else {
@@ -467,15 +467,15 @@ exports.performAction = function (POST, callback) {
 				else {
 					fs.readFile(actionFile, function (err, data) {
 						if (data == JSON.stringify(actionParameters)) {
-					  		console.log(header + "cached");
-					  		cachedAction = true;
-							callback();
+              console.log(header + "cached");
+              cachedAction = true;
+              callback();
 						}
 						else {
 							callback();
 						}
 					});
-			  	}
+        }
 			});
 		}
 	},
@@ -484,7 +484,7 @@ exports.performAction = function (POST, callback) {
 	function (callback) {
 		var response = { MTime : inputMTime};
 		if (action.attributes.voidAction !== "true") {
-			response.outputDirectory = outputDirectory
+			response.outputDirectory = outputDirectory;
 		}
 
 		function answer() {
@@ -502,6 +502,18 @@ exports.performAction = function (POST, callback) {
 
 		var startTime=new Date().getTime();
 
+    var writeJSON = false;
+		var commandOptions = { cwd: filesRoot , maxBuffer: 1024*1024};
+		if (action.attributes.voidAction !== "true") {
+			commandOptions.cwd += outputDirectory;
+			writeJSON = true;
+		}
+
+    if (action.attributes.noCache === "true") {
+			writeJSON = false;
+		}
+console.log("cwd : " + commandOptions.cwd);
+
 		var js = action.attributes.module;
 		if ( typeof (js) === "object" ) {
 			var actionParameters2 = JSON.parse(JSON.stringify(actionParameters));
@@ -509,13 +521,6 @@ exports.performAction = function (POST, callback) {
 			actionParameters2.HackActionsHandler = exports;
 			js.execute(actionParameters2, afterExecution);
 			return;
-		}
-
-		var writeJSON = false;
-		var commandOptions = { cwd:filesRoot , maxBuffer: 1024*1024};
-		if ((action.attributes.voidAction !== "true") || (actionParameters.action == "add_subdirectory")) {
-			commandOptions.cwd += outputDirectory;
-			writeJSON = true;
 		}
 
 		exec(commandLine + " | tee action.log", commandOptions, afterExecution);
@@ -544,7 +549,7 @@ exports.performAction = function (POST, callback) {
 	}],
 	
 	callback);
-}
+};
 
 exports.getDirectoryContent = function (path, callback) {
 	console.log('listDir : ' + path);
@@ -587,4 +592,4 @@ exports.getDirectoryContent = function (path, callback) {
 			callback(message);
 		}
 	);
-}
+};
