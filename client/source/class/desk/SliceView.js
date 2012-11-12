@@ -36,13 +36,13 @@ qx.Class.define("desk.SliceView",
 		});
 
 		this.addListener("changePaintMode", function (e) {
-			if (e.getData()==true) {
+			if (e.getData() === true) {
 				this.setEraseMode(false);
 			}
 		}, this);
 
 		this.addListener("changeEraseMode", function (e) {
-			if (e.getData()==true) {
+			if (e.getData() === true) {
 				this.setPaintMode(false);
 			}
 		}, this);
@@ -205,7 +205,7 @@ qx.Class.define("desk.SliceView",
 					var up = camera.up;
 					direction.crossSelf(up).normalize();
 					up.copy(direction);
-					controls.update()
+					controls.update();
 				}
 				if(item2orient==2)
 				{
@@ -290,7 +290,7 @@ qx.Class.define("desk.SliceView",
 		},
 		
 		getReorientationContainer : function (inOrientsButtonGroup) {
-			if (this.__reorientationContainer!=null) {
+			if (this.__reorientationContainer) {
 				return this.__reorientationContainer;
 			}
 			this.__orientsButtonGroup = inOrientsButtonGroup;
@@ -1017,28 +1017,28 @@ qx.Class.define("desk.SliceView",
 			font.setBold(true);
 			var northLabel=new qx.ui.basic.Label("S");
 			northLabel.set({textColor : "yellow",
-					        font : font,
-					        opacity : 0.5
-					        });
+        font : font,
+        opacity : 0.5
+      });
 			container.add(northLabel, {left:"50%", top:"1%"});
 
 			var southLabel=new qx.ui.basic.Label("I");
 			southLabel.set({textColor : "yellow",
-					        font : font,
-					        opacity : 0.5
-					        });
+        font : font,
+        opacity : 0.5
+      });
 			container.add(southLabel, {left:"50%", bottom:"1%"});
 			var eastLabel=new qx.ui.basic.Label("L");
 			eastLabel.set({textColor : "yellow",
-					        font : font,
-					        opacity : 0.5
-					        });
+        font : font,
+        opacity : 0.5
+      });
 			container.add(eastLabel, {left:"1%", top:"45%"});
 			var westLabel=new qx.ui.basic.Label("R");
 			westLabel.set({textColor : "yellow",
-					        font : font,
-					        opacity : 0.5
-					        });
+        font : font,
+        opacity : 0.5
+      });
 			container.add(westLabel, {right:32, top:"45%"});
 			directionOverlays.push(northLabel);
 			directionOverlays.push(eastLabel);
