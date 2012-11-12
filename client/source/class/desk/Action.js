@@ -228,7 +228,7 @@ qx.Class.define("desk.Action",
 			}
 			var page = new qx.ui.tabview.Page("Output");
 			this.__tabView.add( page );
-			page.addListener('appear', function () {
+			page.addListenerOnce('appear', function () {
 				page.setLayout(new qx.ui.layout.HBox());
 				var outputDirectory = this.getOutputDirectory();
 				this.__embededFileBrowser = new desk.FileBrowser( outputDirectory , false );
