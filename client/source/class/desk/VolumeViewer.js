@@ -76,6 +76,7 @@ qx.Class.define("desk.VolumeViewer",
 		
 		myWindow.set({width : minSize, height : minSize});
 		myWindow.open();
+		myWindow.center();
 
 		this.__createVolumesList();
 		this.__createOrientationWindow();

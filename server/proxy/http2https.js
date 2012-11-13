@@ -10,7 +10,7 @@ var http = express.createServer();
 // set up a route to redirect http to https
 http.get('*',function(req,res){ 
 //res.send("hello world*****\n");
-    res.redirect('https://desk'+req.url)
+    res.redirect('https://desk.creatis.insa-lyon.fr'+req.url)
 })
 
 // have it listen on 8080

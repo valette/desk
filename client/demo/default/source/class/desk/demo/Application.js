@@ -85,25 +85,27 @@ qx.Class.define("desk.demo.Application",
 					desk.FileSystem.executeScript(startupScript);
 				}
 				else {
-					desk.Actions.getInstance().buildUI();
-					var menu = new qx.ui.menu.Menu();
-					var button = new qx.ui.form.MenuButton("Places", null, menu);
+					var actions = desk.Actions.getInstance()
+					actions.buildUI();
+					desk.Actions.init(function () {
+						var menu = new qx.ui.menu.Menu();
+						var button = new qx.ui.form.MenuButton("Places", null, menu);
+						qx.core.Init.getApplication().getRoot().add(button, {top : 0, left : 0});
 
-					function openFileBrowser (e) {
-						var files = new desk.FileBrowser(e.getTarget().getLabel());
-					}
+						function openFileBrowser (e) {
+							var files = new desk.FileBrowser(e.getTarget().getLabel());
+						}
 
-					var button1 = new qx.ui.menu.Button('data');
-					var button2 = new qx.ui.menu.Button('actions');
-					var button3 = new qx.ui.menu.Button('code');
-					button1.addListener("execute", openFileBrowser);
-					button2.addListener("execute", openFileBrowser);
-					button3.addListener("execute", openFileBrowser);
-					menu.add(button1);
-					menu.add(button2);
-					menu.add(button3);
-					qx.core.Init.getApplication().getRoot().add(button, {top : 0, left : 0});
-					var myDesk = new desk.FileBrowser(getParameter("rootDir"));
+						var dataDirs = actions.getSettings().dataDirs;
+						var dirs = Object.keys(dataDirs);
+						for (var i = 0; i != dirs.length; i++) {
+							var dir = dirs[i];
+							var button = new qx.ui.menu.Button(dir);
+							button.addListener("execute", openFileBrowser);
+							menu.add(button);
+						}
+						var myDesk = new desk.FileBrowser(getParameter("rootDir"));
+					});
 				}
 			}
 		}

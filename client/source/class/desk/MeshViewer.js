@@ -30,8 +30,7 @@ qx.Class.define("desk.MeshViewer",
 			showMinimize : false,
 			useResizeFrame : true,
 			useMoveFrame : true,
-			contentPadding : 2,
-			caption : file});
+			contentPadding : 2});
 		window.setResizable(true,true,true,true);
 		window.addListener("close", function(e) {
 			this.removeAllMeshes();
@@ -49,7 +48,7 @@ qx.Class.define("desk.MeshViewer",
 		this.__setupInteractions();
 
 		var elementsList = new qx.ui.container.Composite;
-		elementsList.setLayout(new qx.ui.layout.VBox());
+		elementsList.setLayout(new qx.ui.layout.VBox(3));
 		pane.add(elementsList, 1);
 		elementsList.setVisibility("excluded");
 
@@ -84,54 +83,8 @@ qx.Class.define("desk.MeshViewer",
 			columnVisibilityButtonVisible : false,
 			statusBarVisible : false});
 
-
-		var dataModel=this.__meshesTree.getDataModel();
-		var filterBox = new qx.ui.container.Composite;
-		filterBox.setLayout(new qx.ui.layout.HBox(10));
-		var filterText=new qx.ui.basic.Label("search");
-		filterBox.add(filterText);
-
-		var filterField = new qx.ui.form.TextField();
-		filterField.setValue("");
-		filterField.addListener("input", function() {
-			dataModel.setData();
-			this.render();
-			}, this);
-		filterBox.add(filterField);
-		elementsList.add(filterBox);//, {flex:1});
-
-		var filter = qx.lang.Function.bind(function(node)
-			{
-				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-					var label = node.label;
-					var mesh= this.__meshes[node.nodeId];
-					if (label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1) {
-						if (mesh) {
-							mesh.visible=this.__meshesVisibility[node.nodeId];
-						}
-						return true;
-					}
-					else {
-						if (mesh) {
-							mesh.visible=false;
-						}
-						return false;
-					}						
-				}
-				return true;
-			}, this);
-
-		var resetButton=new qx.ui.form.Button("Reset filter");
-		resetButton.setAllowGrowY(false);
-		resetButton.addListener("execute",function(e){
-			filterField.setValue("");
-			dataModel.setData();
-			this.render();
-			}, this);
-		filterBox.add(resetButton);
-		dataModel.setFilter(filter);
-
 		elementsList.add(this.__meshesTree,{flex : 1});
+		elementsList.add(this.__getFilterContainer());
 		this.__meshes=[];
 		this.__meshesVisibility = [];
 
@@ -140,11 +93,15 @@ qx.Class.define("desk.MeshViewer",
 
 		this.__firstFile=file;
 		this.__firstMTime=mtime;
-		this.openFile(file,mtime);
-		
+
+		if (file) {
+			this.openFile(file,mtime);
+			window.setCaption(file);
+		}
 		this.__addDropSupport();
 		window.open();
-		
+		window.center();
+
 		return (this);
 	},
 
@@ -223,7 +180,67 @@ qx.Class.define("desk.MeshViewer",
 		viewAll : function () {
 			this.__threeCanvas.viewAll();
 		},
-		
+
+		addMesh : function (mesh) {
+			this.__threeCanvas.getScene().add(mesh);
+		},
+
+		getWindow : function () {
+			return this.__window;
+		},
+
+		viewAll : function () {
+			this.__threeCanvas.viewAll();
+		},
+
+		__getFilterContainer : function () {
+			var dataModel = this.__meshesTree.getDataModel();
+			var container = new qx.ui.container.Composite;
+			container.setLayout(new qx.ui.layout.HBox(10));
+			var filterText = new qx.ui.basic.Label("search");
+			container.add(filterText);
+
+			var filterField = new qx.ui.form.TextField();
+			filterField.setValue("");
+			filterField.addListener("input", function() {
+				dataModel.setData();
+				this.render();
+			}, this);
+			container.add(filterField);
+
+			var filter = qx.lang.Function.bind(function(node) {
+				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+					var label = node.label;
+					var mesh = this.__meshes[node.nodeId];
+					if (label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1) {
+						if (mesh) {
+							mesh.visible = this.__meshesVisibility[node.nodeId];
+						}
+						return true;
+					}
+					else {
+						if (mesh) {
+							mesh.visible = false;
+						}
+						return false;
+					}
+				}
+				return true;
+			}, this);
+
+			var resetButton = new qx.ui.form.Button("Reset filter");
+			resetButton.setAllowGrowY(false);
+			resetButton.addListener("execute",function(e){
+				filterField.setValue("");
+				dataModel.setData();
+				this.render();
+			}, this);
+
+			container.add(resetButton);
+			dataModel.setFilter(filter);
+			return container;
+		},
+
 		__readFile : function (file, mtime, color, update, opt_updateDataModel) {
 			var label;
 			var lastSlashIndex=file.lastIndexOf("\/");
@@ -299,13 +316,10 @@ qx.Class.define("desk.MeshViewer",
 					"input_mesh" : file,
 					"output_directory" : "cache\/"};
 
-				function getAnswer(e)
-				{
-					var req = e.getTarget();
-					var splitResponse=req.getResponseText().split("\n");
-					var outputDir=splitResponse[0];
-					var mtime=splitResponse[splitResponse.length-3];
-					loadMeshIntoScene(outputDir+"\/"+"mesh.ctm",mtime);
+				function getAnswer(response) {
+					var outputDir = response.outputDirectory;
+					var mtime = response.MTime;
+					loadMeshIntoScene(outputDir + '/mesh.ctm', mtime);
 				}
 
 				desk.Actions.getInstance().launchAction(parameterMap, getAnswer);

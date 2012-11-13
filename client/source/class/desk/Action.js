@@ -1,16 +1,21 @@
-
-
+/**
+ * A container to launch RPC actions and edit parameters
+ */
 qx.Class.define("desk.Action", 
 {
 	extend : qx.ui.container.Composite,
 
+	/**
+	* Creates a new container
+	* @param name {String} name of the action to create
+	* @param standalone {Boolean} defines whether the container should be
+	* embedded in a window or not (default : true)
+	*/
 	construct : function (name, standalone)
 	{
 		this.base(arguments);
-		var actions = desk.Actions.getInstance();
-		this.__actions = actions;
-		this.__action = actions.getAction(name);
-		this.__actionName = name;
+		this.__action = desk.Actions.getInstance().getAction(name);
+		this.__name = name;
 		if (standalone == false) {
 			this.__standalone = false;
 		}
@@ -20,11 +25,18 @@ qx.Class.define("desk.Action",
 	},
 
 	properties : {
-		outputSubdirectory : { init : null}
+		/**
+		* Contains the output sub-directory.
+		*/
+		outputSubdirectory : {init : null}
 	},
 
 	statics :
 	{
+		/**
+		* Creates a new container, with parameters contained in a JSON file
+		* @param file {String} .JSON file to get settings from
+		*/
 		CREATEFROMFILE : function (file)
 		{
 			desk.FileSystem.readFile(file, function (request) {
@@ -37,16 +49,19 @@ qx.Class.define("desk.Action",
 	},
 
 	events : {
-		// the "changeOutputDirectory" event is fired whenever __outputDirectory is changed
+		/**
+		* Fired whenever the output directory is changed
+		*/
 		"changeOutputDirectory" : "qx.event.type.Event",
 
+		/**
+		* Fired whenever the action has been completed
+		*/
 		"actionUpdated" : "qx.event.type.Event"
 	},
 
 	members : {
 		__tabView : null,
-
-		__actions : null,
 
 		__connections : null,
 
@@ -56,7 +71,7 @@ qx.Class.define("desk.Action",
 
 		__action : null,
 
-		__actionName : null,
+		__name : null,
 
 		__providedParameters : null,
 
@@ -72,6 +87,12 @@ qx.Class.define("desk.Action",
 
 		__embededFileBrowser : null,
 
+		/**
+		* Connects a parameter to an output file from an other action
+		* @param parameterName {String} name of the parameter to set
+		* @param parentAction {desk.Action} action to link to
+		* @param fileName {string} name of the output file from parentAction
+		*/
 		connect : function (parameterName, parentAction, fileName) {
 			if (parentAction==this)
 			{
@@ -85,6 +106,10 @@ qx.Class.define("desk.Action",
 					file : fileName});
 		},
 
+		/**
+		* Defines the output directory for the action
+		* @param directory {String} target subdirectory
+		*/
 		setOutputDirectory : function (directory) {
 			this.__outputDirectory=directory;
 			desk.FileSystem.readFile(this.getOutputDirectory() + 'action.json', 
@@ -131,6 +156,10 @@ qx.Class.define("desk.Action",
 			}
 		},
 
+		/**
+		* Returns the action output directory
+		* @return {String} output subdirectory
+		*/
 		getOutputDirectory : function () {
 			var directory = this.__outputDirectory;
 			if (directory == null) {
@@ -148,6 +177,10 @@ qx.Class.define("desk.Action",
 			return directory;
 		},
 
+		/**
+		* Definet input parameters for the action
+		* @param parameters {Object} parameters as JSON object
+		*/
 		setActionParameters : function (parameters)
 		{
 			this.__providedParameters=parameters;
@@ -163,11 +196,18 @@ qx.Class.define("desk.Action",
 			this.__fileBrowser=fileBrowser;
 		},
 
+		/**
+		* Triggers the action execution
+		*/
 		executeAction : function()
 		{
 			this.__validationManager.validate();
 		},
 
+		/**
+		* Returns the tabview containing different UI pages
+		* @return {qx.ui.tabview.TabView} the tabViex container
+		*/
 		getTabView : function () {
 			if ( this.__tabView != null ) {
 				return this.__tabView;
@@ -186,20 +226,22 @@ qx.Class.define("desk.Action",
 					( this.__embededFileBrowser != null )) {
 				return;
 			}
-			var outputDirectory = this.getOutputDirectory();
-			this.__embededFileBrowser = new desk.FileBrowser( outputDirectory , false );
-			this.__embededFileBrowser.setUserData( "action" , this );
 			var page = new qx.ui.tabview.Page("Output");
-			page.setLayout(new qx.ui.layout.HBox());
-			page.add( this.__embededFileBrowser , { flex : 1 } );
 			this.__tabView.add( page );
+			page.addListener('appear', function () {
+				page.setLayout(new qx.ui.layout.HBox());
+				var outputDirectory = this.getOutputDirectory();
+				this.__embededFileBrowser = new desk.FileBrowser( outputDirectory , false );
+				this.__embededFileBrowser.setUserData( "action" , this );
+				page.add( this.__embededFileBrowser , { flex : 1 } );
 
-			this.addListener( "actionUpdated" , function () {
-				this.__embededFileBrowser.updateRoot();
-			} , this );
-			this.addListener("changeOutputDirectory", function () {
-				this.__embededFileBrowser.updateRoot();
-			} , this );
+				this.addListener( "actionUpdated" , function () {
+					this.__embededFileBrowser.updateRoot();
+				} , this );
+				this.addListener("changeOutputDirectory", function () {
+					this.__embededFileBrowser.updateRoot();
+				} , this );
+			}, this);
 		},
 
 		__updateButton : null,
@@ -222,7 +264,7 @@ qx.Class.define("desk.Action",
 				send.setEnabled(false);
 				send.setLabel("Updating Parents...");
 
-				var parameterMap={"action" : this.__actionName};
+				var parameterMap={"action" : this.__name};
 				var items=manager.getItems();
 				// add all parameters
 				for (i = 0; i < items.length; i++) {
@@ -276,20 +318,16 @@ qx.Class.define("desk.Action",
 					}
 					if (numberOfFinishedParentActions >= parentActions.length) {
 						send.setLabel("Processing...");
-						function getAnswer (e)
-						{
+						function getAnswer (response) {
 							// configure the send button
 							send.setEnabled(true);
 							send.setLabel("Update");
 
-							var req = e.getTarget();
-							var response = req.getResponseText();
-							var splitResponse = response.split("\n");
 							if (this.getOutputDirectory() == null) {
-								this.setOutputDirectory(splitResponse[0]);
+								this.setOutputDirectory(response.outputDirectory);
 							}
 
-							this.__executionStatus.setValue(splitResponse[splitResponse.length - 2]);
+							this.__executionStatus.setValue(response.status);
 							if ( this.__action.attributes.voidAction != "true" ) {
 								this.__showLogButton.setVisibility("visible");
 							}
@@ -302,8 +340,7 @@ qx.Class.define("desk.Action",
 						}
 			
 						var that = this;
-						function launchAction()
-						{
+						function launchAction() {
 							desk.Actions.getInstance().launchAction (parameterMap, getAnswer, that);
 						}
 
@@ -336,6 +373,9 @@ qx.Class.define("desk.Action",
 			}
 		},
 
+		/**
+		* Builds the UI
+		*/
 		buildUI : function () {
 			var action = this.__action;
 			this.setLayout(new qx.ui.layout.VBox());
@@ -349,14 +389,14 @@ qx.Class.define("desk.Action",
 					showClose :true,
 					showMinimize : false,
 					useMoveFrame : true,
-					caption : action.name});
+					caption : that.__name});
 				this.__window.add(this.getTabView(), {flex : 1});
 			}
 
 			var showLogButton = new qx.ui.form.Button("Show console log");
 			this.__showLogButton = showLogButton;
 			showLogButton.addListener("execute",function () {
-				new desk.textEditor(this.getOutputDirectory() + "/action.log");
+				new desk.TextEditor(this.getOutputDirectory() + "/action.log");
 			}, this);
 			showLogButton.setVisibility("excluded");
 

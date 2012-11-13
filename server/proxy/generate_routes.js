@@ -10,8 +10,10 @@ var router = {};
 function fillRouter(user, callback) {
 	exec('id -u ' + user, function (err, stdout) {
 		var UID = parseInt(stdout, 10);
-		router['desk.creatis.insa-lyon.fr/'+user] =
+		router['desk.creatis.insa-lyon.fr/' + user] =
              	   'desk.creatis.insa-lyon.fr:' + UID + '/' + user;
+//		router['desk.creatis.insa-lyon.fr/' + user + '-dev'] = 
+//		   'desk.creatis.insa-lyon.fr:' + (UID + 10000) + '/' + user;
 		callback();
 	});
 }

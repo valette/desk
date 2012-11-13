@@ -4,10 +4,10 @@ var fs          = require('fs'),
 	crypto      = require('crypto'),
 	exec        = require('child_process').exec,
 	prettyPrint = require('pretty-data').pd,
-	//~ winston     = require('winston'),
-	winston     = require('winston');
-	//~ cronJob     = require('cron').CronJob;
+	winston     = require('winston'),
+	cronJob     = require('cron').CronJob;
 
+var oldConsole = console;
 var console = {
 	log : function (text) {
 		winston.log ('info', text);
@@ -17,7 +17,7 @@ var console = {
 // directory where user can add their own .json action definition files
 var actionsDirectories = [];
 
-// array storing all the actions
+// object storing all the actions
 var actions;
 
 // base directory where all data files are (data, cache, actions, ..)
@@ -25,9 +25,7 @@ var filesRoot;
 
 // allowed sub-directories in filesRoot. They are automatically created if not existent
 var directories = [];
-
-// last allowed directory : the /public path
-var publicPath = '/public'
+var dataDirs = {};
 
 // variable to enumerate actions for logging
 var actionsCounter = 0;
@@ -75,11 +73,11 @@ function cleanCache() {
 	});
 }
 
-//~ var job = new cronJob({
-	//~ cronTime: '* * ' + Math.floor(24 * Math.random()) + ' * * *',
-	//~ onTick: cleanCache,
-	//~ start: true
-//~ });
+var job = new cronJob({
+	cronTime: '0 0 ' + Math.floor(24 * Math.random()) + ' * * *',
+	onTick: cleanCache,
+	start: true
+});
 
 exports.validatePath = function (path, callback) {
 	fs.realpath(filesRoot + path, function (err, realPath) {
@@ -105,16 +103,10 @@ function includeActionsFile (file, callback) {
 		if (exists) {
 			switch (libpath.extname(file).toLowerCase()) {
 			case ".json":
-				includeActionsJSON(file, afterImport);
+				console.log('importing actions from : ' + file);
+				includeActionsJSON(file, callback);
 				break;
 			default:
-		//		console.log("*: "+file+": format not handled");
-				callback(null);
-			}
-
-			function afterImport (data) {
-				actions = actions.concat(data)
-				console.log(data.length+'/'+actions.length+' actions from '+file);
 				callback(null);
 			}
 		}
@@ -140,8 +132,7 @@ exports.includeActions=function (file, callback) {
 	}
 
 	function afterImport() {
-		//~ exportActions( filesRoot+"/actions.json", callback );
-		exportActions( filesRoot+"actions.json", callback );
+		exportActions(filesRoot + "actions.json", callback);
 	}
 }
 
@@ -151,9 +142,13 @@ includeActionsJSON = function (file, callback) {
 		var localActions = actionsObject.actions || [];
 		var path = fs.realpathSync(libpath.dirname(file));
 		var libraryName = libpath.basename(file, '.json');
-		for (var i = 0; i < localActions.length; i++) {
-			localActions[i].lib = libraryName;
-			var attributes = localActions[i].attributes;
+		var actionsArray = Object.keys(localActions);
+		console.log(actionsArray.length + " actions in " + file);
+
+		for (var i = 0; i < actionsArray.length; i++) {
+			var action = localActions[actionsArray[i]];
+			action.lib = libraryName;
+			var attributes = action.attributes;
 			if ( typeof (attributes.js) === 'string' ) {
 				console.log('loaded javascript from ' + attributes.js);
 				attributes.executable = path + '/' + attributes.js + '.js';
@@ -167,19 +162,27 @@ includeActionsJSON = function (file, callback) {
 			else if ( typeof (attributes.command) === 'string' ) {
 				attributes.executable = attributes.command;
 			}
+			actions[actionsArray[i]] = action;
 		}
 		var includes = actionsObject.include || [];
 		exports.includeActions(includes, function () {
 			if ( typeof(callback) === 'function' ) {
-				callback(localActions);
+				callback();
 			}
 		});
-	});
+		var dirs = actionsObject.dataDirs || {};
+		var keys = Object.keys(dirs);
+		for (i = 0; i != keys.length ; i++) {
+			var key = keys[i];
+			dataDirs[key] = dirs[key];
+		}
+ 	});
 }
 
-function exportActions( file, callback ) {
-//	console.log("saving actions.json to "+file);
-	fs.writeFile(file, prettyPrint.json(JSON.stringify({ actions : actions , permissions : 1})),
+function exportActions(file, callback) {
+	fs.writeFile(file, prettyPrint.json(JSON.stringify({actions : actions ,
+														permissions : 1,
+														dataDirs : dataDirs})),
 		function (err) {
 			if (err) throw err;
 			if (typeof callback === "function") {
@@ -194,7 +197,9 @@ exports.addDirectory = function (directory) {
 
 exports.update = function (callback) {
 	// clear actions
-	actions = [];
+	actions = {};
+	dataDirs = {};
+
 	async.forEach(actionsDirectories, function (directory, callback) {
 		fs.readdir(directory, function (err, files) {
 			for (var i = 0; i < files.length; i++) {
@@ -202,37 +207,41 @@ exports.update = function (callback) {
 			}
 			exports.includeActions(files, callback);
 		});
-	}, callback);
+	}, function (err) {
+		console.log(Object.keys(actions).length + ' actions included');
+
+		// create all data directories and symlinks if they do not exist
+		var keys = Object.keys(dataDirs)
+		for (var i = 0; i!=keys.length; i++) {
+			var key = keys[i];
+			var dir = filesRoot + key;
+			if (!fs.existsSync(dir)) {
+				console.log('Warning : directory ' + dir + ' does not exist. Creating it');
+				var source = dataDirs[key];
+				if (source === key) {
+					fs.mkdirSync(dir);
+					console.log('directory ' + dir + ' created');
+				} else {
+					fs.symlinkSync(source, dir, 'dir');
+					console.log('directory ' + dir + ' created as a symlink to ' + source);
+				}
+			}
+			directories.push(fs.realpathSync(dir))
+		}
+		cleanCache();
+
+		if (typeof callback === 'function') {
+			callback();
+		}
+	});
 }
 
 exports.getAction = function (actionName) {
-	for (var i = 0; i != actions.length; i++) {
-		var action = actions[i];
-		if (action.name === actionName) {
-			return JSON.parse(JSON.stringify(action));
-		}
-	}
+	return JSON.parse(JSON.stringify(actions[actionName]));
 }
 
 exports.setRoot = function (root) {
 	filesRoot = fs.realpathSync(root) + '/';
-
-	function getSubdir(subdir) {
-		var dir = filesRoot + subdir;
-		if (!fs.existsSync(dir)) {
-			console.log('Warning : directory ' + dir + ' does not exist. Creating it');
-			fs.mkdirSync(dir);
-		}
-		return (fs.realpathSync(dir));
-	}
-
-	directories.push(getSubdir('data'));
-	directories.push(getSubdir('cache'));
-	directories.push(getSubdir('actions'));
-	directories.push(getSubdir('code'));
-	directories.push('/public/');
-
-	cleanCache();
 };
 
 exports.performAction = function (POST, callback) {
@@ -254,14 +263,8 @@ exports.performAction = function (POST, callback) {
 		var actionName = POST.action;
 		actionParameters.action = actionName;
 
-		for (i = 0; i < actions.length; i++) {
-			action = actions[i];
-			if (action.name == actionName) {
-				break;
-			}
-		}
-
-		if (i >= actions.length) {
+		action = actions[actionName];
+		if (!action) {
 			callback("action "+actionName+" not found");
 			return;
 		}
@@ -479,9 +482,20 @@ exports.performAction = function (POST, callback) {
 
 	// execute the action (or not when it is cached)
 	function (callback) {
+		var response = { MTime : inputMTime};
+		if (action.attributes.voidAction !== "true") {
+			response.outputDirectory = outputDirectory
+		}
+
+		function answer() {
+			callback(JSON.stringify(response));
+		}
+
 		if (cachedAction) {
 			fs.readFile(filesRoot + outputDirectory + '/action.log', function (err, string) {
-				callback (outputDirectory + '\n' + string + '\nCACHED\n')
+				response.status = 'CACHED';
+				response.log = string;
+				answer();
 			});
 			return;
 		}
@@ -497,28 +511,34 @@ exports.performAction = function (POST, callback) {
 			return;
 		}
 
+		var writeJSON = false;
 		var commandOptions = { cwd:filesRoot , maxBuffer: 1024*1024};
-		if ((action.attributes.voidAction !== "true") || (action.name == "add_subdirectory")) {
+		if ((action.attributes.voidAction !== "true") || (actionParameters.action == "add_subdirectory")) {
 			commandOptions.cwd += outputDirectory;
+			writeJSON = true;
 		}
 
 		exec(commandLine + " | tee action.log", commandOptions, afterExecution);
 
 		function afterExecution(err, stdout, stderr) {
+			response.stdout = stdout;
+			response.stderr = stderr;
 			if (err) {
-				callback (err.message);
+				response.error = err.message;
+				response.status = "ERROR";
+				answer();
 			}
 			else {
-				if (action.attributes.voidAction === "true") {
-					callback ("void\n" + stdout + "\nOK (" + (new Date().getTime() - startTime) / 1000 + "s)\n");
-					return;
+				response.status = 'OK (' + (new Date().getTime() - startTime) / 1000 + 's)';
+				if (writeJSON) {
+					fs.writeFile(filesRoot + outputDirectory + "/action.json", JSON.stringify(actionParameters), function (err) {
+						if (err) {throw err;}
+						answer();
+					});
 				}
-
-				var string = JSON.stringify(actionParameters);
-				fs.writeFile(filesRoot + outputDirectory + "/action.json", string, function (err) {
-					if (err) throw err;
-					callback (outputDirectory + "\n" + stdout + "\nOK (" + (new Date().getTime() - startTime) / 1000 + "s)\n");
-				});
+				else {
+					answer();
+				}
 			}
 		}
 	}],

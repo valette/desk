@@ -1,8 +1,15 @@
 {
+	"dataDirs" : {
+		"data" : "data",
+		"cache" : "cache",
+		"actions" : "actions",
+		"code" : "code",
+		"public" : "/public"
+	},
 	"permissions" : "1",
 	"actions" :
-	[
-		{
+	{
+		"compress_to_zip" :{
 		    "parameters":[
 		        {
 		            "name":"output_zip",
@@ -18,42 +25,23 @@
 		            "required":"true"
 		        }
 		    ],
-		    "name":"compress_to_zip",
 		    "attributes":
 		    {
-		        "name":"compress_to_zip",
 		        "command":"zip"
 		    }
 		},
-		{
+		"pwd" : {
 		    "parameters":[
 		        {
 		            "text":" "
 		        }
 		    ],
-		    "name":"pwd",
 		    "attributes":
 		    {
-		        "name":"pwd",
 		        "command":"pwd"
 		    }
 		},
-		{
-		    "parameters":[
-		        {
-		            "name":"source_directory",
-		            "type":"file",
-		            "required":"true"
-		        }
-		    ],
-		    "name":"dicom2meta",
-		    "attributes":
-		    {
-		        "name":"dicom2meta",
-		        "executable":"/home/jacinto/git/dicom2meta/dicom2meta-build/Dicom2Meta"
-		    }
-		},
-		{
+		"set_permissions" : {
 		    "parameters":[
 		        {
 		            "name":"directory",
@@ -64,15 +52,13 @@
 		            "text":"-R"
 		        }
 		    ],
-		    "name":"set_permissions",
 		    "attributes":
 		    {
-		        "name":"set_permissions",
 		        "executable":"chmod g+rw",
 		        "voidAction":"true"
 		    }
 		},
-		{
+		"sleep" :{
 		    "parameters":[
 		        {
 		            "name":"time_in_seconds",
@@ -81,15 +67,13 @@
 		            "required":"true"
 		        }
 		    ],
-		    "name":"sleep",
 		    "attributes":
 		    {
-		        "name":"sleep",
 		        "command":"sleep",
 		        "voidAction":"true"
 		    }
 		},
-		{
+		"delete_file" : {
 		    "parameters":[
 		        {
 		            "name":"file_name",
@@ -97,15 +81,13 @@
 		            "required":"true"
 		        }
 		    ],
-		    "name":"delete_file",
 		    "attributes":
 		    {
-		        "name":"delete_file",
 		        "command":"rm",
 		        "voidAction": "true"
 		    }
 		},
-		{
+		"add_subdirectory" :{
 		    "parameters":[
 		        {
 		            "name":"subdirectory_name",
@@ -113,15 +95,13 @@
 		            "required":"true"
 		        }
 		    ],
-		    "name":"add_subdirectory",
 		    "attributes":
 		    {
-		        "name":"add_subdirectory",
 		        "command":"mkdir",
 		        "voidAction" : "true"
 		    }
 		},
-		{
+		"delete_directory" :{
 		    "parameters":[
 		        {
 		            "name":"directory",
@@ -129,15 +109,13 @@
 		            "required":"true"
 		        }
 		    ],
-		    "name":"delete_directory",
 		    "attributes":
 		    {
-		        "name":"delete_directory",
 		        "command":"rm -rf",
 		        "voidAction":"true"
 		    }
 		},
-		{
+		"move" : {
 		    "parameters":[
 				{
 					"name":"source",
@@ -150,15 +128,13 @@
 					"required":"true"
 				}
 		    ],
-		    "name":"move",
 		    "attributes":
 		    {
-		        "name":"move",
 		        "command":"mv",
 		        "voidAction":"true"
 		    }
 		},
-		{
+		"copy" :{
 		    "parameters":[
 				{
 					"name":"source",
@@ -171,15 +147,13 @@
 					"required":"true"
 				}
 		    ],
-		    "name":"copy",
 		    "attributes":
 		    {
-		        "name":"copy",
 		        "command":"cp",
 		        "voidAction":"true"
 		    }
 		},
-		{
+		"create_directory" :{
 		    "parameters":[
 		        {
 		            "name":"directory",
@@ -187,15 +161,13 @@
 		            "required":"true"
 		        }
 		    ],
-		    "name":"create_directory",
 		    "attributes":
 		    {
-		        "name":"create_directory",
 		        "command":"mkdir",
 		        "voidAction":"true"
 		    }
 		},
-		{
+		"write_binary" :{
 		    "parameters":[
 		        {
 		            "name":"file_name",
@@ -208,15 +180,13 @@
 		            "required":"true"
 		        }
 		    ],
-		    "name":"write_binary",
 		    "attributes":
 		    {
-		        "name":"write_binary",
 		        "js":"lib/write_binary",
 		        "voidAction" : "true"
 		    }
 		},
-		{
+		"unzip_file" : {
 		    "parameters":[
 		        {
 		            "name":"input_file",
@@ -231,13 +201,11 @@
 				}
 
 		    ],
-		    "name":"unzip_file",
 		    "attributes":
 		    {
-		        "name":"unzip_file",
 		        "command":"unzip",
 		        "voidAction":"true"
 		    }
 		}
-	]
+	}
 }

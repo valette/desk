@@ -239,12 +239,9 @@ qx.Class.define("desk.VolumeSlice",
 
 		update : function (callback) {
 			var _this=this;
-			function getAnswer(e)
-				{
-					var req = e.getTarget();
-					var slicesDirectory=req.getResponseText().split("\n")[0];
-					_this.openXMLURL(desk.FileSystem.getFileURL(slicesDirectory)+"/volume.xml", callback);
-				}
+			function getAnswer(response) {
+				_this.openXMLURL(desk.FileSystem.getFileURL(response.outputDirectory) + "volume.xml", callback);
+			}
 
 			var parameterMap={
 				action : "slice_volume",
