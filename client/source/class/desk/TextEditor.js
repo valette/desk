@@ -117,7 +117,7 @@ qx.Class.define("desk.TextEditor",
 		},
 
 		__getLogArea : function () {
-			var logArea = new qx.ui.embed.Html('');
+			var logArea = new desk.LogContainer();
 			logArea.set(
 			{
 				visibility : 'excluded',
@@ -132,27 +132,14 @@ qx.Class.define("desk.TextEditor",
 		},
 
 		__clearLog : function () {
-			this.__logArea.setHtml('');
+			this.__logArea.clear();
 			this.__logArea.setVisibility('excluded');
 		},
 
 		__log : function (message, color) {
 			var logArea = this.__logArea;
 			logArea.setVisibility('visible');
-
-			message = message.toString().replace(' ', '&nbsp');
-			var htmlMessage = '';
-			var lines = message.split('\n');
-			for (var i = 0; i < lines.length; i++) {
-				var line = lines[i] + '<br/>';
-				if (color) {
-					htmlMessage += '<span style="color:' + color + '">' + line + '</span>';
-				} else {
-					htmlMessage += line;
-				}
-			}
-			logArea.setHtml(logArea.getHtml() + htmlMessage);
-			logArea.getContentElement().scrollToY(1000000); 
+      logArea.log(message, color);
 		},
 
 		/**

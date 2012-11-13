@@ -16,7 +16,7 @@ qx.Class.define("desk.Action",
 		this.base(arguments);
 		this.__action = desk.Actions.getInstance().getAction(name);
 		this.__name = name;
-		if (standalone == false) {
+		if (standalone === false) {
 			this.__standalone = false;
 		}
 		this.__connections = [];
@@ -112,13 +112,15 @@ qx.Class.define("desk.Action",
 		*/
 		setOutputDirectory : function (directory) {
 			this.__outputDirectory=directory;
-			desk.FileSystem.readFile(this.getOutputDirectory() + 'action.json', 
+			desk.FileSystem.readFile(this.getOutputDirectory() + 'action.json',
 				function(request) {
-					this.__loadedParameters=JSON.parse(request.getResponseText());
-					this.__updateUIParameters();
-					if (this.__tabView) {
-						this.__addOutputTab();
-					}
+          if (request.getStatus() === 200 ) {
+          this.__loadedParameters=JSON.parse(request.getResponseText());
+          this.__updateUIParameters();
+          if (this.__tabView) {
+            this.__addOutputTab();
+          }
+          }
 					this.fireEvent("changeOutputDirectory");
 				}, this);
 		},
@@ -500,11 +502,21 @@ qx.Class.define("desk.Action",
 				if (!found) {
 					var label = new qx.ui.basic.Label(parameterName);
 					this.add(label);
-					var parameterForm = new qx.ui.form.TextField();
+					var parameterForm; 
+          var parameterType = parameter.type;
+          switch (parameterType)
+					{
+					case "file":
+          case "directory":
+            parameterForm = new desk.FileField();
+            break;
+          default :
+            parameterForm = new qx.ui.form.TextField();
+            break;
+					}
 					parameterForm.setUserData("label", label);
 					parameterForm.setPlaceholder(parameterName);
 					this.add(parameterForm);
-					var parameterType = parameter.type;
 
 					switch (parameterType)
 					{
@@ -527,26 +539,9 @@ qx.Class.define("desk.Action",
 								that.connect(parameterForm.getPlaceholder(), parentAction, file);
 							}
 						}
-						parameterForm.setDroppable(true);
-						parameterForm.addListener("drop", function(e) {
-								var originFileBrowser = e.getData("fileBrowser");
-								var file = originFileBrowser.getSelectedFiles()[0];
-								this.setValue(file);
-								var parentAction = originFileBrowser.getUserData("action");
-								if (parentAction != null) {
-									that.connect(this.getPlaceholder(), parentAction, file);
-								}
-							}, parameterForm);
-
 						manager.add(parameterForm, stringValidator, parameter);
 						break;
 					case "directory":
-						parameterForm.setDroppable(true);
-						parameterForm.addListener("drop", function(e) {
-							if (e.supportsType("fileBrowser")) {
-								this.setValue(e.getData("fileBrowser").getSelectedFiles()[0]);
-							}
-						}, parameterForm);
 						manager.add(parameterForm, stringValidator, parameter);
 						break;
 					case "xmlcontent":
