@@ -209,6 +209,12 @@ qx.Class.define("desk.AceContainer",
       this.__textarea.setValue(code);
     },
 
+    setFontSize : function (size) {
+      if (this.__ace) {
+        this.__ace.setFontSize(size + 'px');
+      } 
+      this.__textarea.setFont(qx.bom.Font.fromString(size + ' serif'));
+    },
 
     /**
      * Switches between the ajax code editor editor and a plain textarea.

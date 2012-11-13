@@ -41,16 +41,17 @@ qx.Class.define("desk.TextEditor",
 		this.__executeButton.addListener("execute", this.__onExecute, this);
 
 		var spinner = new qx.ui.form.Spinner(5, 15, 50);
+    this.__spinner = spinner;
 		spinner.addListener('changeValue', function (e) {
-			this.__textArea.setFont(qx.bom.Font.fromString(e.getData() + ' serif'));
-		}, this);
+      this.__textArea.setFontSize(e.getData());
+    }, this);
 
 		var buttonsContainer = new qx.ui.container.Composite();
 		buttonsContainer.setLayout(new qx.ui.layout.HBox());
 		buttonsContainer.add(this.__executeButton, {flex : 1});
 		buttonsContainer.add(this.__reloadButton, {flex : 1});
 		buttonsContainer.add(saveButton, {flex : 1});
-//		buttonsContainer.add (spinner);
+    buttonsContainer.add (spinner);
 		this.add(buttonsContainer);
 
 		var textArea = new desk.AceContainer(function () {
@@ -92,7 +93,7 @@ qx.Class.define("desk.TextEditor",
 			}
 			scriptContainer = this.__scriptContainer = document.createElement('script');
 			scriptContainer.setAttribute('type','text/javascript');
-			scriptContainer.text = 'desk.TextEditor.codeInTextEditor = function(console){' +
+			scriptContainer.text = 'desk.TextEditor.codeInTextEditor = function(){' +
 						this.__textArea.getCode() + '};';
 			bodyContainer.appendChild(scriptContainer);
 
@@ -101,11 +102,7 @@ qx.Class.define("desk.TextEditor",
 			var that = this;
 			if (desk.TextEditor.codeInTextEditor){
 				try{
-					desk.TextEditor.codeInTextEditor({log : function (m) {
-							console.log(m);
-							that.__log(m);
-						}
-					});
+					desk.TextEditor.codeInTextEditor();
 				}
 				catch (error) {
 					this.__log('ERROR : ' + error.message + '\n' + error.stack, 'red');
@@ -138,6 +135,8 @@ qx.Class.define("desk.TextEditor",
       logArea.log(message, color);
 		},
 
+    __logListenerId : null,
+
 		/**
 		* Opens a file
 		*
@@ -147,6 +146,16 @@ qx.Class.define("desk.TextEditor",
 		{
 			if (file.substring(file.length - 3) === '.js') {
 				this.__executeButton.setVisibility('visible');
+        if (!this.__logListenerId) {
+          this.__logListenerId = desk.FileSystem.getInstance().addListener('log',
+            function (e){
+              this.__log(e.getData());
+          },this);
+
+          this.addListener('close', function () {
+            this.removeListenerById(this.__logListenerId);
+          }, this);
+        }
 			}
 			else {
 				this.__executeButton.setVisibility('excluded');
@@ -155,6 +164,7 @@ qx.Class.define("desk.TextEditor",
 
 			this.__file = file;
 			this.__reloadButton.setEnabled(false);
+      this.__spinner.setValue(18);
 			desk.FileSystem.readFile(file, function (request){
 				this.__textArea.setCode(request.getResponseText());
 				this.setCaption(file);

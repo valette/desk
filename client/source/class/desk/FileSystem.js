@@ -18,10 +18,22 @@ qx.Class.define("desk.FileSystem",
 		this.__baseURL = '/' + this.__user + '/';
 		this.__actionsURL = this.__baseURL + 'rpc/';
 		this.__filesURL = this.__baseURL + 'files/';
+
+    //override console.log...
+    var oldConsoleLog = console.log;
+    var that = this;
+    console.log = function (message) {
+      that.fireDataEvent('log', message);
+      oldConsoleLog.call(console, message);
+    };
 		return this;
 	},
 
-	statics : {
+  events : {
+		"log" : "qx.event.type.Data"
+	},
+
+statics : {
 		/**
 		* Loads a file into memory
 		*
