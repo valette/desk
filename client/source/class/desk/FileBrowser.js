@@ -19,7 +19,7 @@ qx.Class.define("desk.FileBrowser",
 		this.base(arguments);
 		this.__fileBrowsers.push(this);
 
-		this.setLayout(new qx.ui.layout.VBox());
+		this.setLayout(new qx.ui.layout.VBox(8));
 
 		if ( standAlone === false ) {
 			this.__standAlone = false;
