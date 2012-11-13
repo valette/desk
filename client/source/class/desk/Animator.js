@@ -11,7 +11,7 @@ qx.Class.define("desk.Animator",
 		this.base(arguments);
 
 		this.__render = renderFunction;
-		this.__createUI()
+		this.__createUI();
 		return (this);
 	},
 
@@ -139,7 +139,7 @@ qx.Class.define("desk.Animator",
 			this.add(this.__getControlsContainer());
 
 			// Create drag indicator
-			var indicator = new qx.ui.core.Widget;
+			var indicator = new qx.ui.core.Widget();
 			indicator.setDecorator(new qx.ui.decoration.Single().set({
 				top : [ 1, "solid", "#33508D" ]
 			}));
@@ -178,7 +178,7 @@ qx.Class.define("desk.Animator",
 
 				indicator.setWidth(orig.getBounds().width);
 				indicator.setDomPosition(origCoords.left-origCoords2.left,
-							 origCoords.top-origCoords2.top);
+          origCoords.top-origCoords2.top);
 			});
 
 			list.addListener("dragover", function(e) {

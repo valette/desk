@@ -151,7 +151,7 @@ app.get(actionsBaseURL+':action', function (req, res) {
 		});
 		break;
 	case 'ls' :
-		var path = libPath.normalize(req.query.path) + '/';
+		path = libPath.normalize(req.query.path) + '/';
 		actions.validatePath(path, function (error) {
 			if (error) {
 				res.send(error);
