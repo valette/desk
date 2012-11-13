@@ -98,7 +98,8 @@
 		    "attributes":
 		    {
 		        "command":"mkdir",
-		        "voidAction" : "true"
+		        "voidAction" : "true",
+		        "noCache" : "true"
 		    }
 		},
 		"delete_directory" :{
@@ -206,6 +207,20 @@
 		        "command":"unzip",
 		        "voidAction":"true"
 		    }
+		},
+		"qooxdoo_generator" : {
+			"parameters" : [
+			  {
+				"name" : "job",
+				"type" : "string",
+				"required" : "true"
+			  }
+			],
+			"attributes": {
+				"command": "./generate.py",
+				"noCache" : "true",
+				"hidden" : "true"
+			}
 		}
 	}
 }

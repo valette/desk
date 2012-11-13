@@ -140,7 +140,7 @@ qx.Class.define("desk.TextEditor",
 			var logArea = this.__logArea;
 			logArea.setVisibility('visible');
 
-			message = message.replace(' ', '&nbsp');
+			message = message.toString().replace(' ', '&nbsp');
 			var htmlMessage = '';
 			var lines = message.split('\n');
 			for (var i = 0; i < lines.length; i++) {

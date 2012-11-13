@@ -135,11 +135,23 @@ exports.includeActions=function (file, callback) {
 };
 
 includeActionsJSON = function (file, callback) {
-	fs.readFile(file, function (err, data) {
-		var actionsObject = JSON.parse(data);
+  var actionsObject;
+	var libraryName = libpath.basename(file, '.json');
+
+  fs.readFile(file, function (err, data) {
+    try {
+      actionsObject = JSON.parse(data); 
+    }
+    catch (error) {
+      console.log('error importing ' + file);
+      actions['import_error_' + libraryName] = {lib : libraryName};
+      if ( typeof(callback) === 'function' ) {
+        callback();
+      }
+      return;
+    }
 		var localActions = actionsObject.actions || [];
 		var path = fs.realpathSync(libpath.dirname(file));
-		var libraryName = libpath.basename(file, '.json');
 		var actionsArray = Object.keys(localActions);
 		console.log(actionsArray.length + " actions in " + file);
 
@@ -162,18 +174,20 @@ includeActionsJSON = function (file, callback) {
 			}
 			actions[actionsArray[i]] = action;
 		}
-		var includes = actionsObject.include || [];
-		exports.includeActions(includes, function () {
-			if ( typeof(callback) === 'function' ) {
-				callback();
-			}
-		});
-		var dirs = actionsObject.dataDirs || {};
+
+    var dirs = actionsObject.dataDirs || {};
 		var keys = Object.keys(dirs);
 		for (i = 0; i != keys.length ; i++) {
 			var key = keys[i];
 			dataDirs[key] = dirs[key];
 		}	
+
+    var includes = actionsObject.include || [];
+		exports.includeActions(includes, function () {
+			if ( typeof(callback) === 'function' ) {
+				callback();
+			}
+		});
 	});
 };
 
@@ -252,6 +266,8 @@ exports.performAction = function (POST, callback) {
 
 	actionsCounter++;
 	var header = "[" + actionsCounter + "] ";
+
+	var response = {};
 
 	async.series([
 
@@ -374,6 +390,7 @@ exports.performAction = function (POST, callback) {
 		var parameters = action.parameters;
 
 		async.forEachSeries(parameters, parseParameter, function(err){
+			response.MTime = inputMTime;
 			callback (err);
 		});
 	},
@@ -455,64 +472,59 @@ exports.performAction = function (POST, callback) {
 		if ((action.attributes.voidAction === "true")||
         (POST.force_update === "true") ||
         (action.attributes.noCache === "true")){
-			callback();
+			callback(null);
 		}
 		else {
 			// check if action was already performed
 			var actionFile = filesRoot + outputDirectory + "/action.json";
 			fs.stat(actionFile, function (err, stats) {
 				if ((err)||(stats.mtime.getTime() < inputMTime)) {
-					callback();
+					callback(null);
 				}
 				else {
 					fs.readFile(actionFile, function (err, data) {
 						if (data == JSON.stringify(actionParameters)) {
               console.log(header + "cached");
               cachedAction = true;
-              callback();
+              callback(null);
 						}
 						else {
-							callback();
+							callback(null);
 						}
 					});
-        }
+				}
 			});
 		}
 	},
 
 	// execute the action (or not when it is cached)
 	function (callback) {
-		var response = { MTime : inputMTime};
 		if (action.attributes.voidAction !== "true") {
 			response.outputDirectory = outputDirectory;
-		}
-
-		function answer() {
-			callback(JSON.stringify(response));
 		}
 
 		if (cachedAction) {
 			fs.readFile(filesRoot + outputDirectory + '/action.log', function (err, string) {
 				response.status = 'CACHED';
 				response.log = string;
-				answer();
+				callback(null);
 			});
 			return;
 		}
 
 		var startTime=new Date().getTime();
 
-    var writeJSON = false;
+		var writeJSON = false;
 		var commandOptions = { cwd: filesRoot , maxBuffer: 1024*1024};
-		if (action.attributes.voidAction !== "true") {
+		if ((action.attributes.voidAction !== "true" ||
+				action.attributes.noCache === "true")) {
 			commandOptions.cwd += outputDirectory;
 			writeJSON = true;
 		}
 
-    if (action.attributes.noCache === "true") {
+		if (action.attributes.noCache === "true") {
 			writeJSON = false;
 		}
-console.log("cwd : " + commandOptions.cwd);
 
 		var js = action.attributes.module;
 		if ( typeof (js) === "object" ) {
@@ -531,24 +543,33 @@ console.log("cwd : " + commandOptions.cwd);
 			if (err) {
 				response.error = err.message;
 				response.status = "ERROR";
-				answer();
+				callback(null);
 			}
-			else {
+			else if (stderr){
+				response.error = stderr;
+				response.status = "ERROR";
+				callback(null);      
+			} else {
 				response.status = 'OK (' + (new Date().getTime() - startTime) / 1000 + 's)';
 				if (writeJSON) {
 					fs.writeFile(filesRoot + outputDirectory + "/action.json", JSON.stringify(actionParameters), function (err) {
 						if (err) {throw err;}
-						answer();
+						callback(null);
 					});
 				}
 				else {
-					answer();
+					callback(null);
 				}
 			}
 		}
 	}],
-	
-	callback);
+	function (err) {
+		if (err) {
+			response.status = "ERROR";
+			response.error = err;
+		}
+		callback(JSON.stringify(response));
+	});
 };
 
 exports.getDirectoryContent = function (path, callback) {

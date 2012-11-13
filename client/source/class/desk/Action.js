@@ -217,15 +217,17 @@ qx.Class.define("desk.Action",
 			page.setLayout(new qx.ui.layout.HBox());
 			page.add(this, {flex : 1});
 			tabView.add(page);
-			this.addListener("actionUpdated", this.__addOutputTab, this);
+			this.addListenerOnce("actionUpdated", this.__addOutputTab, this);
 			return tabView;
 		},
 
+		__outputTabTriggered : false,
 		__addOutputTab : function () {
 			if ((this.__action.attributes.voidAction == "true") ||
-					this.__embededFileBrowser) {
+					this.__embededFileBrowser || this.__outputTabTriggered) {
 				return;
 			}
+			this.__outputTabTriggered = true;
 			var page = new qx.ui.tabview.Page("Output");
 			this.__tabView.add( page );
 			page.addListenerOnce('appear', function () {
@@ -348,10 +350,17 @@ qx.Class.define("desk.Action",
 							launchAction();
 						}
 						else {
-							desk.Actions.getInstance().launchAction({
-								"action" : "add_subdirectory",
-								"subdirectory_name" : this.getOutputSubdirectory(),
-								"output_directory" : this.__outputDirectory}, launchAction, that);
+							desk.FileSystem.exists(that.__outputDirectory + '/' +
+								that.getOutputSubdirectory(), function (exists) {
+									if (!exists) {
+										desk.Actions.getInstance().launchAction({
+											"action" : "add_subdirectory",
+											"subdirectory_name" : that.getOutputSubdirectory(),
+											"output_directory" : that.__outputDirectory}, launchAction, that);								
+									} else {
+										launchAction();
+									}
+							});
 						}
 					}
 				}
@@ -544,7 +553,7 @@ qx.Class.define("desk.Action",
 						manager.add(parameterForm, dummyValidator, parameter);
 						break;
 					default :
-							alert("no validator implemented for type : "+parameterType);
+						alert("no validator implemented for type : "+parameterType);
 					}
 
 					//use default value if provided
@@ -554,8 +563,8 @@ qx.Class.define("desk.Action",
 					}
 
 					parameterForm.addListener("input", function(e) {
-            this.setInvalidMessage('');
-          },parameterForm);
+						this.setInvalidMessage('');
+					},parameterForm);
 				}
 			}
 
