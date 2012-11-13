@@ -46,7 +46,7 @@ qx.Class.define("desk.AceContainer",
 		function () {
 			this.init();
 			if (typeof callback === 'function') {
-				callback.call(context)
+				callback.call(context);
 			}
 		},
 	this);
@@ -74,8 +74,8 @@ qx.Class.define("desk.AceContainer",
     * Returns the underlying ACE object
     */
     getAce: function() {
-		return this.__ace;
-	},
+      return this.__ace;
+    },
 
     /**
      * The constructor was spit up to make the included mixin available during
@@ -163,7 +163,7 @@ qx.Class.define("desk.AceContainer",
         // configure the editor
         var session = editor.getSession();
         session.setUseSoftTabs(true);
-        session.setTabSize(2);
+        session.setTabSize(4);
 
         // copy the inital value
         session.setValue(this.__textarea.getValue() || "");

@@ -28,30 +28,39 @@ qx.Class.define("desk.TextEditor",
 			this.openFile(this.__file);
 		}, this);
 
-		var saveButton = new qx.ui.form.Button("Save");
+		var saveButton = this.__saveButton = new qx.ui.form.Button("Save");
 		saveButton.setKeepFocus(true);
-		saveButton.addListener("execute", function(e) {
-			saveButton.setEnabled(false);
-			desk.FileSystem.writeFile(this.__file, this.__textArea.getCode(),
-				function () {saveButton.setEnabled(true);});
-		}, this);
+		saveButton.addListener("execute", this.save, this);
+
+        this.addListener('keydown', function (e) {
+            if (e.isCtrlPressed()) {
+              if (e.getKeyIdentifier() === 'S') {
+                e.preventDefault();
+                this.save();
+              }
+              if (e.getKeyIdentifier() === 'G') {
+                e.preventDefault();
+                this.__textArea.getAce().findNext();
+              }
+            }
+        }, this);
 
 		this.__executeButton = new qx.ui.form.Button("execute");
 		this.__executeButton.setKeepFocus(true);
 		this.__executeButton.addListener("execute", this.__onExecute, this);
 
 		var spinner = new qx.ui.form.Spinner(5, 15, 50);
-    this.__spinner = spinner;
+        this.__spinner = spinner;
 		spinner.addListener('changeValue', function (e) {
-      this.__textArea.setFontSize(e.getData());
-    }, this);
+            this.__textArea.setFontSize(e.getData());
+        }, this);
 
 		var buttonsContainer = new qx.ui.container.Composite();
 		buttonsContainer.setLayout(new qx.ui.layout.HBox());
 		buttonsContainer.add(this.__executeButton, {flex : 1});
 		buttonsContainer.add(this.__reloadButton, {flex : 1});
 		buttonsContainer.add(saveButton, {flex : 1});
-    buttonsContainer.add (spinner);
+        buttonsContainer.add (spinner);
 		this.add(buttonsContainer);
 
 		var textArea = new desk.AceContainer(function () {
@@ -80,6 +89,7 @@ qx.Class.define("desk.TextEditor",
 		__file : null,
 		__reloadButton : null,
 		__executeButton : null,
+        __saveButton : null,
 		__logArea : null,
 
 		__scriptContainer : null,
@@ -113,6 +123,14 @@ qx.Class.define("desk.TextEditor",
 			}
 		},
 
+        save : function () {
+            this.__saveButton.setEnabled(false);
+            desk.FileSystem.writeFile(this.__file, this.__textArea.getCode(), function () {
+                this.__saveButton.setEnabled(true);
+                this.__log('file saved', 'blue');
+            }, this);
+        },
+
 		__getLogArea : function () {
 			var logArea = new desk.LogContainer();
 			logArea.set(
@@ -132,7 +150,7 @@ qx.Class.define("desk.TextEditor",
 		__log : function (message, color) {
 			var logArea = this.__logArea;
 			logArea.setVisibility('visible');
-      logArea.log(message, color);
+            logArea.log(message, color);
 		},
 
     __logListenerId : null,
@@ -146,16 +164,16 @@ qx.Class.define("desk.TextEditor",
 		{
 			if (file.substring(file.length - 3) === '.js') {
 				this.__executeButton.setVisibility('visible');
-        if (!this.__logListenerId) {
-          this.__logListenerId = desk.FileSystem.getInstance().addListener('log',
-            function (e){
-              this.__log(e.getData());
-          },this);
-
-          this.addListener('close', function () {
-            this.removeListenerById(this.__logListenerId);
-          }, this);
-        }
+                if (!this.__logListenerId) {
+                  this.__logListenerId = desk.FileSystem.getInstance().addListener('log',
+                    function (e){
+                      this.__log(e.getData());
+                  },this);
+            
+                  this.addListener('close', function () {
+                    this.removeListenerById(this.__logListenerId);
+                  }, this);
+                }
 			}
 			else {
 				this.__executeButton.setVisibility('excluded');
@@ -164,11 +182,11 @@ qx.Class.define("desk.TextEditor",
 
 			this.__file = file;
 			this.__reloadButton.setEnabled(false);
-      this.__spinner.setValue(18);
 			desk.FileSystem.readFile(file, function (request){
 				this.__textArea.setCode(request.getResponseText());
 				this.setCaption(file);
 				this.__reloadButton.setEnabled(true);
+//                this.__spinner.setValue(18);
 			}, this);
 		}
 	}

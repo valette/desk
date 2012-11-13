@@ -40,7 +40,11 @@ qx.Class.define("desk.LogContainer",
 					htmlMessage += line;
 				}
 			}
-			this.setHtml(this.getHtml() + htmlMessage);
+      if (this.getHtml() === null){
+        this.setHtml(htmlMessage);
+      } else {
+        this.setHtml(this.getHtml() + htmlMessage);        
+      }
 			this.getContentElement().scrollToY(1000000); 
     }
 	}
