@@ -121,11 +121,7 @@ qx.Class.define("desk.TextEditor",
 			logArea.set(
 			{
 				visibility : 'excluded',
-				backgroundColor : "white",
-				overflowY : "scroll",
-				overflowX : "auto",
-				font : "monospace",
-				padding: 3
+				backgroundColor : "white"
 			});
 			this.__logArea = logArea;
 			return logArea;

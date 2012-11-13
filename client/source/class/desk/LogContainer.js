@@ -7,7 +7,7 @@ qx.Class.define("desk.LogContainer",
 
   construct : function (message) {
     this.base(arguments);
-    this.set({overflowY : 'scroll',
+    this.set({overflowY : 'auto',
           overflowX : 'auto',
           font : "monospace",
           padding: 3
