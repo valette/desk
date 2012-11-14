@@ -104,7 +104,7 @@ qx.Class.define("desk.TextEditor",
 			scriptContainer = this.__scriptContainer = document.createElement('script');
 			scriptContainer.setAttribute('type','text/javascript');
 			scriptContainer.text = 'desk.TextEditor.codeInTextEditor = function(){' +
-						this.__textArea.getCode() + '};';
+						this.__textArea.getCode() + '\n};';
 			bodyContainer.appendChild(scriptContainer);
 
 			this.__clearLog();
