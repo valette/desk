@@ -29,6 +29,9 @@ qx.Class.define("desk.LogContainer",
     * @param coloe {String} optional message color
     */
     log : function (message, color) {
+            if (message === undefined) {
+                return;
+            }
 			message = message.toString().replace(' ', '&nbsp');
 			var htmlMessage = '';
 			var lines = message.split('\n');
