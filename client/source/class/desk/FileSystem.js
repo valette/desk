@@ -105,6 +105,27 @@ statics : {
 			}
 		},
 
+        /**
+		* returns the file extension
+		*
+		* @param file {String} the file
+		* @return {string} file extension
+		* <pre class="javascript">
+		* example : 
+		* desk.FileSystem.getFileDirectory ('data/test/foo.txt');
+		* returns 'txt'
+		* </pre>
+		*/
+        getFileExtension : function (file) {
+			var dotIndex = file.lastIndexOf('.');
+			if (dotIndex >= 0) {
+				return file.substring(dotIndex + 1);
+			}
+			else {
+				return '';
+			}
+		},
+
 		/**
 		* extracts the name from input file (without full path)
 		*
