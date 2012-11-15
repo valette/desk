@@ -538,7 +538,11 @@ exports.performAction = function (POST, callback) {
 		exec(commandLine + " | tee action.log", commandOptions, afterExecution);
 
 		function afterExecution(err, stdout, stderr) {
-			response.stdout = stdout;
+			if (POST.stdout == "true") {
+				response.stdout = stdout;
+			} else {
+				response.stdout = 'stdout not included. Launch action with parameter stdout="true"';
+			}
 			response.stderr = stderr;
 			if (err) {
 				response.error = err.message;
