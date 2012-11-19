@@ -94,7 +94,7 @@ qx.Class.define("desk.MeshViewer",
 		this.__firstMTime = parameters.mtime;
 
 		if (file) {
-			this.openFile(file, parameters, callback, context);
+			this.addFile(file, parameters, callback, context);
 			window.setCaption(file);
 		}
 		this.__addDropSupport();
@@ -387,7 +387,7 @@ qx.Class.define("desk.MeshViewer",
             }, this);
         },
 
-		openFile : function (file, parameters, callback, context) {
+		addFile : function (file, parameters, callback, context) {
             function afterLoading() {
                 if (typeof callback === 'function') {
                     callback.apply(context);
@@ -632,8 +632,8 @@ qx.Class.define("desk.MeshViewer",
 			material.side = THREE.DoubleSide;
 			mesh.renderDepth = color[4];
             this.addMesh( mesh, parameters );
-
 			this.viewAll();
+            return mesh;
         },
 
 		__loadQueue : function () {
