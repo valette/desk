@@ -35,6 +35,7 @@ qx.Class.define("desk.MeshViewer",
         window.open();
 		window.center();
         if (file) {
+            window.setCaption(file);
             this.addFile(file, parameters, callback, context);
         }
 
