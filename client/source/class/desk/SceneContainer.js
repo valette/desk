@@ -216,6 +216,7 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		__readFile : function (file, parameters, callback) {
+            parameters = parameters || {};
 			var label = desk.FileSystem.getFileName(file);
 			var self = this;
             var leaf = this.__addLeaf({label : label});
