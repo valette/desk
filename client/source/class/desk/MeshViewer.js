@@ -12,17 +12,16 @@ qx.Class.define("desk.MeshViewer",
 	extend : qx.core.Object,
 	include : desk.LinkMixin,
 
-	construct : function(file, mtime, parameters)
+	construct : function(file, parameters, callback, context)
 	{
 	//	this.base();
-		if ( parameters != undefined )
-		{
-			if (parameters.convertVTK!==undefined) {
-				this.setConvertVTK(parameters.convertVTK);
-			}
+        parameters = parameters || {};
+
+		if (parameters.convertVTK !== undefined) {
+			this.setConvertVTK(parameters.convertVTK);
 		}
 
-		var window=new qx.ui.window.Window();
+		var window = new qx.ui.window.Window();
 		window.set({layout : new qx.ui.layout.VBox(),
 			showClose : true,
 			width : 600,
@@ -31,29 +30,29 @@ qx.Class.define("desk.MeshViewer",
 			useResizeFrame : true,
 			useMoveFrame : true,
 			contentPadding : 2});
-		window.setResizable(true,true,true,true);
+		window.setResizable(true, true, true, true);
 		window.addListener("close", function(e) {
 			this.removeAllMeshes();
 			this.unlink();
 			this.fireEvent("close");
 		},this);
-		this.__window=window;
+		this.__window = window;
 
 		var pane = new qx.ui.splitpane.Pane("horizontal");
 		window.add(pane, {flex : 1});
 		this.__mainPane = pane;
-
-		this.__threeCanvas = new desk.ThreeContainer();
-		pane.add(this.__threeCanvas, 5);
-		this.__setupInteractions();
 
 		var elementsList = new qx.ui.container.Composite();
 		elementsList.setLayout(new qx.ui.layout.VBox(3));
 		pane.add(elementsList, 1);
 		elementsList.setVisibility("excluded");
 
+        this.__threeContainer = new desk.ThreeContainer();
+		pane.add(this.__threeContainer, 5);
+		this.__setupInteractions();
+
 		var button=new qx.ui.form.Button("+").set({opacity : 0.5});
-		this.__threeCanvas.add (button, {right : 3, top : 3});
+		this.__threeContainer.add (button, {left : 3, top : 3});
 		button.addListener("execute", function () {
 			if (elementsList.getVisibility()=="visible") {
 				elementsList.setVisibility("excluded");
@@ -74,7 +73,7 @@ qx.Class.define("desk.MeshViewer",
 		topRightContainer.add(this.__getResetViewButton(), {flex : 1});
 		topRightContainer.add(this.__getSnapshotButton());
 
-		this.__meshesTree=new qx.ui.treevirtual.TreeVirtual(["meshes","wireframe"],
+		this.__meshesTree = new qx.ui.treevirtual.TreeVirtual(["meshes","wireframe"],
 			{initiallyHiddenColumns : [1]});
 		this.__meshesTree.setSelectionMode(qx.ui.treevirtual.TreeVirtual.SelectionMode.MULTIPLE_INTERVAL);
 		this.__meshesTree.set({
@@ -82,20 +81,20 @@ qx.Class.define("desk.MeshViewer",
 			rowHeight: 22,
 			columnVisibilityButtonVisible : false,
 			statusBarVisible : false});
+        this.__sceneRoot = this.__meshesTree.getDataModel().addBranch(null,"scene", true);
+
 
 		elementsList.add(this.__meshesTree,{flex : 1});
 		elementsList.add(this.__getFilterContainer());
-		this.__meshes=[];
-		this.__meshesVisibility = [];
 
-		var menu=this.__getContextMenu();
+		var menu = this.__getContextMenu();
 		this.__meshesTree.setContextMenu(menu);
 
-		this.__firstFile=file;
-		this.__firstMTime=mtime;
+		this.__firstFile = file;
+		this.__firstMTime = parameters.mtime;
 
 		if (file) {
-			this.openFile(file,mtime);
+			this.openFile(file, parameters, callback, context);
 			window.setCaption(file);
 		}
 		this.__addDropSupport();
@@ -126,7 +125,7 @@ qx.Class.define("desk.MeshViewer",
 
 		__firstMTime : null,
 
-		__threeCanvas : null,
+		__threeContainer : null,
 
 		// qooxdoo window
 		__window : null,
@@ -136,17 +135,8 @@ qx.Class.define("desk.MeshViewer",
 		// a treeVirtual element storing all meshes
 		__meshesTree : null,
 
-		// the nodeId for meshes
-		__meshesRoot : null,
-
-		// the nodeId for slices
-		__slicesRoot : null,
-
-		// array keeping all three.js meshes
-		__meshes : null,
-
-		// array storing all meshes visibility
-		__meshesVisibility : null,
+        // the tree root
+        __sceneRoot : null,
 
 		// array containing the queue of meshes to load 
 		__meshesToLoad : null,
@@ -154,43 +144,65 @@ qx.Class.define("desk.MeshViewer",
 		// number defining the maximum number of loaders
 		__numberOfLoaders : 16,
 		
-		getMainPane : function()
-		{
+		getMainPane : function() {
 			this.__window.exclude();
 			return this.__mainPane;
 		},
 		
 		getScene : function() {
-			return this.__threeCanvas.getScene();
+			return this.__threeContainer.getScene();
 		},
 		
-		getMeshes : function()
-		{
-			var meshesArray = this.__meshes;
-			var meshesArrayLength = meshesArray.length;
-			var meshes = {};
-			for(var i=0; i<meshesArrayLength; i++)
-			{
-				if(typeof meshesArray[i]=="object")
-					meshes[i] = meshesArray[i];
-			}
+		getMeshes : function() {
+			var meshes = [];
+            this.__threeContainer.getScene().traverse(function(child){
+				if(child instanceof THREE.Mesh){
+                    meshes.push(child);
+				}
+            });
 			return meshes;
 		},
-		
-		viewAll : function () {
-			this.__threeCanvas.viewAll();
-		},
 
-		addMesh : function (mesh) {
-			this.__threeCanvas.getScene().add(mesh);
-		},
+        __addLeaf : function (parameters) {
+            parameters = parameters || {};
+            var dataModel = this.__meshesTree.getDataModel();
+            parameters.label = parameters.label || "mesh";
+            var leaf = dataModel.addLeaf(this.__sceneRoot, parameters.label, null);
+            dataModel.setData();
+            return leaf;
+        },
+
+        __getMeshFromNode : function (node) {
+            var leaf = this.__meshesTree.nodeGet(node);
+            if (leaf) {
+                if (leaf.__parameters)
+                return leaf.__parameters.mesh;
+                else
+                return null;
+            } else {
+                return null;
+            }
+        },
+
+		addMesh : function (mesh, parameters) {
+            parameters = parameters || {};
+			this.__threeContainer.getScene().add(mesh);
+            var leaf = parameters.leaf;
+            if (leaf === undefined) {
+                leaf = this.__addLeaf(parameters);
+            }
+            parameters.mesh = mesh;
+            parameters.leaf = leaf;
+            this.__meshesTree.nodeGet(leaf).__parameters = parameters;
+            mesh.properties.__parameters = parameters;
+        },
 
 		getWindow : function () {
 			return this.__window;
 		},
 
 		viewAll : function () {
-			this.__threeCanvas.viewAll();
+			this.__threeContainer.viewAll();
 		},
 
 		__getFilterContainer : function () {
@@ -211,10 +223,10 @@ qx.Class.define("desk.MeshViewer",
 			var filter = qx.lang.Function.bind(function(node) {
 				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 					var label = node.label;
-					var mesh = this.__meshes[node.nodeId];
+					var mesh = this.__getMeshFromNode(node);
 					if (label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1) {
 						if (mesh) {
-							mesh.visible = this.__meshesVisibility[node.nodeId];
+							mesh.visible = true;
 						}
 						return true;
 					}
@@ -241,91 +253,57 @@ qx.Class.define("desk.MeshViewer",
 			return container;
 		},
 
-		__readFile : function (file, mtime, color, update, opt_updateDataModel) {
-			var label;
-			var lastSlashIndex=file.lastIndexOf("\/");
-			if (lastSlashIndex<0) {
-				label=file;
-			}
-			else {
-				label=file.substring(lastSlashIndex+1, file.length);
-			}
+		__readFile : function (file, parameters, callback) {
+			var label = desk.FileSystem.getFileName(file);
+			var self = this;
+            var leaf = this.__addLeaf({label : label});
+            parameters.leaf = leaf;
+			var extension = desk.FileSystem.getFileExtension(file);
 
-			var _this=this;
-			var dataModel=this.__meshesTree.getDataModel();
-
-			if (this.__meshesRoot===null) {
-				this.__meshesRoot=dataModel.addBranch(null,"meshes", true);
+			function myCallback (mesh) {
+				self.viewAll();
+                if (typeof callback === 'function') {
+                    callback();
+                }
 			}
 
-			var leaf=dataModel.addLeaf(this.__meshesRoot,label, null);
-			if (opt_updateDataModel!=false) {
-				dataModel.setData();
-			}
-
-			var extension=file.substring(file.length-4, file.length);
-
-			function loadMeshIntoScene(file)
-			{
-			
-				function callback (mesh)
-				{
-					_this.__meshes[ leaf ] = mesh ;	
-					_this.__meshesVisibility[leaf] = true ;
-					if ( update == true ) {
-						_this.viewAll();
-					}
-					else {
-						if ( (update != null ) && ( update != false ) )	{
-							update();
-						}
-					}
+			function loadMeshIntoScene(file) {
+				if ( parameters.mtime === undefined ) {
+					parameters.mtime=Math.random();
 				}
+                parameters.url = desk.FileSystem.getFileURL(file) + "?nocache=" + parameters.mtime;
 
-				if ( mtime == undefined ) {
-					mtime=Math.random();
-				}
-
-				switch (extension)
-				{
-				case ".vtk":
-					if (_this.isConvertVTK()===false) {
-						_this.loadVTKURL(desk.FileSystem.getFileURL(file)+"?nocache="+mtime, callback, color);
-						break;
-					}
-				default : 
-					_this.loadCTMURL(desk.FileSystem.getFileURL(file)+"?nocache="+mtime, callback, color);
+                if ((extension === "vtk") && (!self.isConvertVTK())) {
+					self.loadVTKURL(parameters, myCallback);
+				} else {
+                    self.loadCTMURL(parameters, myCallback);
 				}
 			}
 
+            if ((extension =='vtk') && !this.isConvertVTK()) {
+                loadMeshIntoScene(file);
+                return;
+            }
 
 			switch (extension)
 			{
-			case ".vtk":
-				if (this.isConvertVTK()===false) {
-					loadMeshIntoScene(file,mtime);
-					break;
-				}
-			case ".ply":
-			case ".obj":
-			case ".stl":
-			case ".off":
-
-				var parameterMap={
-					"action" : "mesh2ctm",
+            case "vtk":
+			case "ply":
+			case "obj":
+			case "stl":
+			case "off":
+				desk.Actions.getInstance().launchAction({
+                    "action" : "mesh2ctm",
 					"input_mesh" : file,
-					"output_directory" : "cache\/"};
-
-				function getAnswer(response) {
-					var outputDir = response.outputDirectory;
-					var mtime = response.MTime;
-					loadMeshIntoScene(outputDir + '/mesh.ctm', mtime);
-				}
-
-				desk.Actions.getInstance().launchAction(parameterMap, getAnswer);
+					"output_directory" : 'cache/'},
+                    function (response) {
+                    var outputDir = response.outputDirectory;
+					mtime = response.MTime;
+					loadMeshIntoScene(outputDir + '/mesh.ctm');
+				});
 				break;
 
-			case ".ctm":
+			case "ctm":
 				loadMeshIntoScene(file);
 				break;
 			default : 
@@ -340,123 +318,95 @@ qx.Class.define("desk.MeshViewer",
 
 		__propagateLinks : function () {
 			this.applyToOtherLinks(function (me) {
-				var controls = this.__threeCanvas.getControls();
-				controls.copy(me.__threeCanvas.getControls());
+				var controls = this.__threeContainer.getControls();
+				controls.copy(me.__threeContainer.getControls());
 				controls.update();
 				this.render();
 			});
 		},
 
 		removeAllMeshes : function () {
-			var meshesTree=this.__meshesTree;
-			var meshesToRemove=[];
-
-			var meshes=meshesTree.nodeGet(this.__meshesRoot).children;
-			for (var i=0;i<meshes.length;i++) {
-				meshesToRemove.push(meshesTree.nodeGet(meshes[i]));
-			}
-
-			this.removeMeshes(meshesToRemove);
-
-			if (this.__slicesRoot === null) {
-				return;
-			}
-
-			meshes=meshesTree.nodeGet(this.__slicesRoot).children;
-			meshesToRemove=[];
-			for (i = 0; i < meshes.length; i++) {
-				meshesToRemove.push(meshesTree.nodeGet(meshes[i]));
-			}
-
-			this.removeMeshes(meshesToRemove);
+			this.removeMeshes(this.getMeshes());
 		},
 
-		openFile : function (file, mtime) {
-			var _this = this;
-			//open the file
-			var extension=file.substring(file.length-4, file.length);
+        __openXMLFile : function (file, parameters, callback) {
+            desk.FileSystem.readFile(file, function (request){
+                var rootDocument = request.getResponse();
+                var meshes = rootDocument.getElementsByTagName("mesh");
+                var rootElement = rootDocument.childNodes[0];
+                if (rootElement.hasAttribute("timestamp")) {
+                    mtime = parseFloat(rootElement.getAttribute("timestamp"));
+                }
+
+                var path = desk.FileSystem.getFileDirectory(file);
+                var numberOfMeshes = meshes.length;
+                var numberOfRemainingMeshes = numberOfMeshes;
+
+                function afterMeshLoading(){
+                    numberOfRemainingMeshes--;
+                    if ((numberOfRemainingMeshes === 0) &&
+                        (typeof callback === 'function')) {
+                            callback();
+                    }
+                }
+
+                for (var n = 0; n < numberOfMeshes; n++) {
+                    var meshParameters = {};
+                    var mesh = meshes[n];
+                    if (mesh.hasAttribute("color")) {
+                        var colorstring = mesh.getAttribute("color");
+                        var colors = colorstring.split(" ");
+                        var color = [];
+                        while (colors.length<3) {
+                            colors.push('1');
+                        }
+                        if (colors.length < 4) {
+                            colors.push('1');
+                        }
+                        
+                        if ( colors.length < 5) {
+                            colors.push('0');
+                        }
+                        
+                        for (var j = 0; j < 4; j++) {
+                            color[j] = parseFloat(colors[j]);
+                        }
+                        color[4] = parseInt(colors[4], 10);
+                        meshParameters.color = color;
+                    }
+
+                    var xmlName;
+                    if (mesh.hasAttribute("Mesh")) {
+                        xmlName = mesh.getAttribute("Mesh");
+                    }
+                    else {
+                        xmlName = mesh.getAttribute("mesh");
+                    }
+                    this.__readFile(path + "/" + xmlName, meshParameters, afterMeshLoading);
+                }
+            }, this);
+        },
+
+		openFile : function (file, parameters, callback, context) {
+            function afterLoading() {
+                if (typeof callback === 'function') {
+                    callback.apply(context);
+                }
+            }
+
+            var extension = desk.FileSystem.getFileExtension(file);
 			switch (extension)
 			{
-				case ".ply":
-				case ".obj":
-				case ".stl":
-				case ".vtk":
-				case ".ctm":
-				case ".off":
-					_this.__readFile (file, mtime, [1.0,1.0,1.0,1.0, 0], true);
+				case "ply":
+				case "obj":
+				case "stl":
+				case "vtk":
+				case "ctm":
+				case "off":
+					this.__readFile (file, parameters, afterLoading);
 					break;
-
-				case ".xml":
-					var xmlhttp=new XMLHttpRequest();
-					xmlhttp.open("GET", desk.FileSystem.getFileURL(file) + "?nocache=" + Math.random(),false);
-					xmlhttp.send();
-					var rootDocument=xmlhttp.responseXML;
-
-					var meshes=rootDocument.getElementsByTagName("mesh");
-					var rootElement=rootDocument.childNodes[0];
-					if (rootElement.hasAttribute("timestamp")) {
-						mtime=parseFloat(rootElement.getAttribute("timestamp"));
-					}
-
-					var slashIndex=file.lastIndexOf("/");
-
-					var path="";
-					if (slashIndex>0)
-						path=file.substring(0,slashIndex);
-
-					var numberOfMeshes=meshes.length;
-
-					var numberOfRemainingMeshes=numberOfMeshes;
-					
-					for (var n=0;n<numberOfMeshes;n++) {
-						var color=[1.0,1.0,1.0,1.0, 0];
-						var mesh=meshes[n];
-						if (mesh.hasAttribute("color")) {
-							var colorstring=mesh.getAttribute("color");
-							var colors=colorstring.split(" ");
-							switch (colors.length)
-							{
-								case 3:
-									colors[3]="1";
-								case 4:
-									colors[4]="0";
-								default:
-							}
-							for (var j=0;j<4;j++) {
-								color[j]=parseFloat(colors[j]);
-							}
-							color[4]=parseInt(colors[4], 10);
-						}
-
-						var updatesTimes = 4; // ...only after 4 updates when  numberOfRemainingMeshes = 0 all the meshes are loaded
-						var update=function()
-						{
-							numberOfRemainingMeshes--;
-							switch (numberOfRemainingMeshes)
-							{
-								case Math.floor(numberOfMeshes/4):
-								case Math.floor(numberOfMeshes/2):
-								case Math.floor(numberOfMeshes*3/4):
-								case 0:
-									_this.viewAll();
-									_this.__meshesTree.getDataModel().setData();
-									--updatesTimes;
-									if(updatesTimes === 0)
-										_this.fireDataEvent("meshesLoaded", _this.__meshes);
-									break;
-								default:
-							}
-						};
-
-						var xmlName;
-						if (mesh.hasAttribute("Mesh")) {
-							xmlName=mesh.getAttribute("Mesh");
-						}
-						else {
-							xmlName=mesh.getAttribute("mesh");
-						}
-						_this.__readFile(path+"/"+xmlName, mtime, color, update, false);
-					}
+				case "xml":
+                    this.__openXMLFile(file, parameters, afterLoading);
 					break;
 				default : 
 					alert ("error : meshviewer cannot read extension "+extension);
@@ -464,16 +414,16 @@ qx.Class.define("desk.MeshViewer",
 		},
 
 		attachVolumeSlices : function (volumeSlices) {
-			for (var i=0;i<volumeSlices.length;i++) {
+			for (var i = 0; i < volumeSlices.length; i++) {
 				this.attachVolumeSlice(volumeSlices[i]);
 			}
 		},
 
 		attachVolumeSlice : function (volumeSlice)
 		{
-			var geometry=new THREE.Geometry();
-			geometry.dynamic=true;
-			for (var i=0;i<4;i++) {
+			var geometry = new THREE.Geometry();
+			geometry.dynamic = true;
+			for (var i = 0; i < 4; i++) {
 				geometry.vertices.push( new THREE.Vector3( 0, 0, 0 ) );
 			}
 			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
@@ -484,53 +434,35 @@ qx.Class.define("desk.MeshViewer",
 				new THREE.UV( 0, 1 )
 				] );
 
-			var material=volumeSlice.getMaterial();
-			material.transparent=false;
-			var mesh=new THREE.Mesh(geometry,material);
-			material.side=THREE.DoubleSide;
-			this.__threeCanvas.getScene().add(mesh);
+			var material = volumeSlice.getMaterial();
+			material.transparent = false;
+			var mesh = new THREE.Mesh(geometry,material);
+			material.side = THREE.DoubleSide;
+            this.addMesh(mesh, {label : ''+volumeSlice.getOrientation(),
+                volumeSlice : volumeSlice
+            });
 
-			mesh.__volumeSlice=volumeSlice;
-
-			var dataModel=this.__meshesTree.getDataModel();
-
-			if (this.__slicesRoot===null) {
-				this.__slicesRoot=dataModel.addBranch(null,"slices", true);
-			}
-
-			var leaf=dataModel.addLeaf(this.__slicesRoot,volumeSlice.getFileName(), null);
-			dataModel.setData();
-			this.__meshes[ leaf ] = mesh ;	
-			this.__meshesVisibility[leaf] = true ;
-
-			var _this=this;
-
-			function updateTexture()
-			{
-				var coords=volumeSlice.getCornersCoordinates();
-				for (var i=0;i<4;i++) {
-					geometry.vertices[i].set(coords[3*i],coords[3*i+1],coords[3*i+2]);
+			function updateTexture() {
+				var coords = volumeSlice.getCornersCoordinates();
+				for (var i = 0; i < 4; i++) {
+					geometry.vertices[i].set(coords[3*i], coords[3*i+1], coords[3*i+2]);
 				}
 				geometry.computeCentroids();
 				geometry.computeFaceNormals();
 				geometry.computeVertexNormals();
 				geometry.computeBoundingSphere();
 				geometry.computeBoundingBox();
-				geometry.verticesNeedUpdate=true;
-
-				_this.render();
+				geometry.verticesNeedUpdate = true;
+				this.render();
 			}
 
-			updateTexture();
+			updateTexture.apply(this);
 
-			var listenerId=volumeSlice.addListener('changeImage',function(e)
-				{
-					updateTexture();
-				}, this);
+			var listenerId = volumeSlice.addListener('changeImage', updateTexture, this);
 
 			this.__window.addListener("close", function() {
 				volumeSlice.removeListenerById(listenerId);
-				});
+			});
 		},
 
 		__addDropSupport : function () {
@@ -553,7 +485,7 @@ qx.Class.define("desk.MeshViewer",
 		},
 
 		__setupInteractions : function() {
-			var threeCanvas = this.__threeCanvas;
+			var threeCanvas = this.__threeContainer;
 
 			var draggingInProgress=false;
 			threeCanvas.addListener("mousedown", function (event)	{
@@ -571,7 +503,7 @@ qx.Class.define("desk.MeshViewer",
 					button = 3;
 				}
 
-				this.__threeCanvas.getControls().mouseDown(button,
+				this.__threeContainer.getControls().mouseDown(button,
 								event.getDocumentLeft() - origin.left,
 								event.getDocumentTop() - origin.top);
 			}, this);
@@ -579,7 +511,7 @@ qx.Class.define("desk.MeshViewer",
 			threeCanvas.addListener("mousemove", function (event)	{
 				if (draggingInProgress) {
 					var origin = threeCanvas.getContentLocation();
-					this.__threeCanvas.getControls().mouseMove(event.getDocumentLeft() - origin.left,
+					this.__threeContainer.getControls().mouseMove(event.getDocumentLeft() - origin.left,
 						event.getDocumentTop() - origin.top);
 					this.render();
 					this.__propagateLinks();
@@ -589,145 +521,152 @@ qx.Class.define("desk.MeshViewer",
 			threeCanvas.addListener("mouseup", function (event)	{
 				threeCanvas.releaseCapture();
 				draggingInProgress = false;
-				this.__threeCanvas.getControls().mouseUp();
+				this.__threeContainer.getControls().mouseUp();
 			}, this);
 
 			threeCanvas.addListener("mousewheel", function (event)	{
 				var tree = this.__meshesTree;
-				var root = this.__slicesRoot;
-				if (root !== null) {
-					var rootNode = tree.nodeGet(root);
-					var children = rootNode.children;
-					if (children.length !== 0) {
-						var meshes = [];
-						for (var i = 0; i < children.length; i++) {
-							if (this.__meshesVisibility[children[i]]) {
-								meshes.push(this.__meshes[children[i]]);
-							}
-						}
+                var children = [];
+                this.__threeContainer.getScene().traverse(function (object){
+                    if (!object.properties.__parameters) {
+                        return;
+                    }
 
-						var origin = threeCanvas.getContentLocation();
-						var x=event.getDocumentLeft() - origin.left;
-						var y=event.getDocumentTop() - origin.top;
-
-						var elementSize = this.__threeCanvas.getInnerSize();
-						var x2 = ( x / elementSize.width ) * 2 - 1;
-						var y2 = - ( y / elementSize.height ) * 2 + 1;
-
-						var projector = new THREE.Projector();
-						var vector = new THREE.Vector3( x2, y2, 0.5 );
-						var camera = this.__threeCanvas.getCamera();
-						projector.unprojectVector(vector, camera);
-
-						var ray = new THREE.Ray(camera.position,
-							vector.subSelf(camera.position).normalize());
-
-						var intersects = ray.intersectObjects(meshes);
-
-						if (intersects.length > 0) {
-							var volumeSlice = intersects[0].object.__volumeSlice;
-							var maximum = volumeSlice.getNumberOfSlices() - 1;
-							var delta = Math.round(event.getWheelDelta()/2);
-							var newValue = volumeSlice.getSlice() + delta;
-							if (newValue > maximum) {
-								newValue = maximum;
-							}
-							if (newValue < 0) {
-								newValue = 0;
-							}
-							volumeSlice.setSlice(newValue);
+                    if (object.properties.__parameters.volumeSlice) {
+                        children.push(object);
+                    }
+                });
+				if (children.length !== 0) {
+					var meshes = [];
+					for (var i = 0; i < children.length; i++) {
+                        var mesh = children[i];
+						if (mesh.visible) {
+							meshes.push(mesh);
 						}
 					}
+
+					var origin = threeCanvas.getContentLocation();
+					var x=event.getDocumentLeft() - origin.left;
+					var y=event.getDocumentTop() - origin.top;
+
+					var elementSize = this.__threeContainer.getInnerSize();
+					var x2 = ( x / elementSize.width ) * 2 - 1;
+					var y2 = - ( y / elementSize.height ) * 2 + 1;
+
+					var projector = new THREE.Projector();
+					var vector = new THREE.Vector3( x2, y2, 0.5 );
+					var camera = this.__threeContainer.getCamera();
+					projector.unprojectVector(vector, camera);
+
+					var ray = new THREE.Ray(camera.position,
+						vector.subSelf(camera.position).normalize());
+
+					var intersects = ray.intersectObjects(meshes);
+
+					if (intersects.length > 0) {
+						var volumeSlice = intersects[0].object.properties.__parameters.volumeSlice;
+						var maximum = volumeSlice.getNumberOfSlices() - 1;
+						var delta = Math.round(event.getWheelDelta()/2);
+						var newValue = volumeSlice.getSlice() + delta;
+						if (newValue > maximum) {
+							newValue = maximum;
+						}
+						if (newValue < 0) {
+							newValue = 0;
+						}
+						volumeSlice.setSlice(newValue);
+					}
 				}
+
 			}, this);
 		},
 
 		render : function (force) {
-			this.__threeCanvas.render(force);
+			this.__threeContainer.render(force);
 		},
 
-		loadVTKURL : function (url, callback, color) {
-			var loader=new THREE.VTKLoader();
-			var _this=this;
-			loader.load (url, function(geom){
-				geom.dynamic = true;
-				geom.computeBoundingBox();
+        __vtkLoader : null,
 
-				var threecolor = new THREE.Color().setRGB(color[0],color[1],color[2]);
-				var material =  new THREE.MeshLambertMaterial({
-					color:threecolor.getHex(),
-					opacity: color[3]});
-				if (color[3]<0.999) {
-					material.transparent=true;
-				}
-				var mesh = new THREE.Mesh(geom, material );
-				material.side = THREE.DoubleSide;
-				mesh.renderDepth = color[4];
-				_this.__threeCanvas.getScene().add( mesh );
-				if(typeof callback == 'function') {
-					callback(mesh);
-				}
-				_this.viewAll();
+		loadVTKURL : function (parameters, callback) {
+			var loader = this.__vtkLoader;
+            if (!loader) {
+                loader = this.__vtkLoader = new THREE.VTKLoader();
+            }
+			var self = this;
+			loader.load (parameters.url, function(geometry){
+               self.addGeometry(geometry, parameters);
 			});
 		},
 
-		loadCTMURL : function (url, callback, color) {
-			if (this.__meshesToLoad==null) {
+		loadCTMURL : function (parameters, callback) {
+			if (this.__meshesToLoad === null) {
 				this.__meshesToLoad=[];
 			}
 
-			var mesh={url : url, color : color, callback : callback};
-			this.__meshesToLoad[this.__meshesToLoad.length]=mesh;
+            parameters = parameters || {};
+
+			this.__meshesToLoad.push({parameters : parameters, callback : callback});
 			this.__loadQueue();
 		},
 
-		__loadQueue : function ( ) {
-			if (this.__meshesToLoad.length==0)
-				return;
+        addGeometry : function (geometry, parameters) {
+            parameters = parameters || {label : 'geometry'};
+			geometry.dynamic = true;
+			geometry.computeBoundingBox();
+			var color = parameters.color || [1,1,1,1];
+			var threecolor = new THREE.Color().setRGB(color[0],color[1],color[2]);
 
-			var parameters=this.__meshesToLoad[0];
+			var material =  new THREE.MeshPhongMaterial({
+                color : threecolor.getHex(),
+                opacity : color[3]
+            });
+			var factor = 0.3;
+			material.ambient = new THREE.Color().setRGB(
+				factor*threecolor.r,factor*threecolor.g,factor*threecolor.b);
+			material.shininess = 5;
+			material.specular = new THREE.Color( 0x303030 );
+			if (color[3] < 0.999) {
+				material.transparent = true;
+			}
+			var mesh = new THREE.Mesh(geometry, material );
+			material.side = THREE.DoubleSide;
+			mesh.renderDepth = color[4];
+            this.addMesh( mesh, parameters );
+
+			this.viewAll();
+        },
+
+		__loadQueue : function () {
+			if (this.__meshesToLoad.length === 0)
+				return;
+            var currentMesh = this.__meshesToLoad[0];
+			var parameters = currentMesh.parameters;
+            var callback = currentMesh.callback;
 			var _this=this;
 			var useWorker = true;
 			var useBuffers = true;
 
-			if (this.__numberOfLoaders>0){
+			if (this.__numberOfLoaders > 0){
 				this.__meshesToLoad.shift();
 				this.__numberOfLoaders--;
-				var loader = new THREE.CTMLoader( this.__threeCanvas.getRenderer().context );
-				loader.load (parameters.url,
-					function(geom){
-								geom.dynamic = true;
-							geom.computeBoundingBox();
-							var color=parameters.color;
-							var threecolor=new THREE.Color().setRGB(color[0],color[1],color[2]);
-
-							var material =  new THREE.MeshPhongMaterial({
-                color:threecolor.getHex(),
-                opacity: color[3]
-              });
-							var factor=0.3;
-							material.ambient = new THREE.Color().setRGB(
-								factor*threecolor.r,factor*threecolor.g,factor*threecolor.b);
-							material.shininess=5;
-							material.specular= new THREE.Color( 0x303030 );
-							if (color[3]<0.999) {
-								material.transparent=true;
-							}
-							var mesh = new THREE.Mesh(geom, material );
-							material.side=THREE.DoubleSide;
-							mesh.renderDepth=color[4];
-							_this.__threeCanvas.getScene().add( mesh );
-
-							if(typeof parameters.callback == 'function') {
-								parameters.callback(mesh);
-							}
-							_this.viewAll();
-							_this.__numberOfLoaders++;
-							_this.__loadQueue();
-						}, useWorker, useBuffers);
+				var loader = this.__ctmLoader;
+                if (!loader) {
+                    loader = this.__ctmLoader = new THREE.CTMLoader( this.__threeContainer.getRenderer().context );
+                }
+                var self = this;
+				loader.load (parameters.url, function (geometry) {
+                    self.addGeometry(geometry, parameters);
+                    self.__numberOfLoaders++;
+                    self.__loadQueue();
+                    if (typeof callback === 'function') {
+                        callback();
+                    }
+                }, useWorker, useBuffers);
 				this.__loadQueue();
 			}
 		},
+
+        __ctmLoader : null,
 
 		__getSnapshotButton : function () {
 			var factor=1;
@@ -747,7 +686,7 @@ qx.Class.define("desk.MeshViewer",
 
 			var button=new qx.ui.form.Button(null, "desk/camera-photo.png");
 			button.addListener("execute", function(e) {
-				this.__threeCanvas.snapshot(factor);
+				this.__threeContainer.snapshot(factor);
 			}, this);
 	
 			button.setContextMenu(menu);
@@ -773,13 +712,8 @@ qx.Class.define("desk.MeshViewer",
 
 			dragLabel.addListener("droprequest", function(e) {
 					var type = e.getCurrentType();
-					switch (type)
-					{
-					case "meshView":
+					if (type === "meshView") {
 						e.addData(type, this);
-						break;
-					default :
-						alert ("type "+type+"not supported for drag and drop");
 					}
 				}, this);
 
@@ -847,12 +781,12 @@ qx.Class.define("desk.MeshViewer",
 			opacitySlider.setOrientation("vertical");
 			bottomBox.add(opacitySlider);
 
-			var enableUpdate=true;
-			var updateWidgets=function (event) {
-				enableUpdate=false;
-				var selectedNode=meshesTree.getSelectedNodes()[0];
-				if (selectedNode.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-					var firstSelectedMesh=_this.__meshes[selectedNode.nodeId];
+			var enableUpdate = true;
+			var updateWidgets = function (event) {
+				enableUpdate = false;
+				var selectedNode = meshesTree.getSelectedNodes()[0];
+				if (selectedNode.type === qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+					var firstSelectedMesh = this.__getMeshFromNode(selectedNode);
 					var color=firstSelectedMesh.material.color;
 					colorSelector.setRed(Math.round(ratio*color.r));
 					colorSelector.setGreen(Math.round(ratio*color.g));
@@ -866,44 +800,36 @@ qx.Class.define("desk.MeshViewer",
 				}
 			};
 			
-			updateWidgets();
+			updateWidgets.apply(this);
 
-			meshesTree.addListener("changeSelection",updateWidgets);
+			meshesTree.addListener("changeSelection",updateWidgets, this);
 
 			opacitySlider.addListener("changeValue", function(event){
 				if (enableUpdate) {
-					var meshes=meshesTree.getSelectedNodes();
-					for (var i=0;i<meshes.length;i++) {
-						var mesh=_this.__meshes[meshes[i].nodeId];
-						if (mesh != null) {
-							var opacity=opacitySlider.getValue()/ratio;
-							mesh.material.opacity=opacity;
-							if (opacity<1) {
-								mesh.material.transparent=true;
-							}
-							else {
-								mesh.material.transparent=false;
-							}
+					var opacity=opacitySlider.getValue()/ratio;
+                    this.applyToSelectedMeshes(function (mesh){
+						mesh.material.opacity=opacity;
+						if (opacity<1) {
+							mesh.material.transparent=true;
 						}
-					}
-					_this.render();
+						else {
+							mesh.material.transparent=false;
+						}
+                    });
+					this.render();
 				}
-			});
+			}, this);
 
 			colorSelector.addListener("changeValue", function(event){
 				if (enableUpdate) {
-					var meshes=meshesTree.getSelectedNodes();
-					for (var i=0;i<meshes.length;i++) {
-						var mesh=_this.__meshes[meshes[i].nodeId];
-						if (mesh != null) {
-							mesh.material.color.setRGB (colorSelector.getRed()/ratio,
-										colorSelector.getGreen()/ratio,
-										colorSelector.getBlue()/ratio);
-						}
-					}
-					_this.render();
+                    this.applyToSelectedMeshes(function (mesh){
+						mesh.material.color.setRGB (colorSelector.getRed()/ratio,
+									colorSelector.getGreen()/ratio,
+									colorSelector.getBlue()/ratio);
+					});
+					this.render();
 				}
-			});
+			}, this);
 
 /*			wireframeCheckBox.addListener('changeValue',function(event){
 				if (enableUpdate)
@@ -921,37 +847,52 @@ qx.Class.define("desk.MeshViewer",
 
 			renderDepthSpinner.addListener("changeValue", function(event){
 				if (enableUpdate) {
-					var meshes=meshesTree.getSelectedNodes();
-					for (var i=0;i<meshes.length;i++) {
-						var mesh=_this.__meshes[meshes[i].nodeId];
-						if (mesh != null) {
-							mesh.renderDepth=renderDepthSpinner.getValue();
-						}
-					}
-					_this.render();
+                    this.applyToSelectedMeshes(function (mesh){
+                        mesh.renderDepth=renderDepthSpinner.getValue();
+                    });
+					this.render();
 				}
-			});
+			}, this);
 			return (mainContainer);
 		},
 
-		removeMeshes : function (nodes) {
-			var renderer = this.__threeCanvas.getRenderer();
-			var dataModel=this.__meshesTree.getDataModel();
-			for (var i=0;i<nodes.length;i++) {
-				var nodeId=nodes[i].nodeId;
-				dataModel.prune(nodeId, true);
-				var mesh=this.__meshes[nodeId];
-				this.__threeCanvas.getScene().remove(mesh);
-				this.__meshes[nodeId]=0;
-				this.__meshesVisibility[nodeId]=0;
-				var map=mesh.material.map;
-				if (map != null) {
-					renderer.deallocateTexture( map );
-				}
-				renderer.deallocateObject( mesh );
+        getSelectedMeshes : function () {
+            var nodes = this.__meshesTree.getSelectedNodes();
+            var meshes = [];
+			for (var i = 0; i < nodes.length; i++) {
+                var mesh = this.__getMeshFromNode(nodes[i]);
+                if (mesh) {
+                    meshes.push(mesh);
+                }
 			}
-			dataModel.setData();
+            return meshes;
+        },
+
+        applyToSelectedMeshes : function (iterator) {
+			var meshes = this.getSelectedMeshes();
+			for (var i = 0; i < meshes.length; i++) {
+                iterator(meshes[i]);
+			}
+        },
+
+		removeMeshes : function (meshes) {
+			for (var i=0;i<meshes.length;i++) {
+				this.removeMesh(meshes[i]);
+			}
 		},
+
+        removeMesh : function (mesh) {
+            var renderer = this.__threeContainer.getRenderer();
+            var dataModel = this.__meshesTree.getDataModel();
+			dataModel.prune(mesh.properties.__parameters.leaf, true);
+			this.__threeContainer.getScene().remove(mesh);
+			var map = mesh.material.map;
+			if (map !== null) {
+				renderer.deallocateTexture( map );
+			}
+			renderer.deallocateObject( mesh );
+            dataModel.setData();            
+        },
 
 		__animator : null,
 
@@ -960,11 +901,11 @@ qx.Class.define("desk.MeshViewer",
 			var menu = new qx.ui.menu.Menu();
 			var propertiesButton = new qx.ui.menu.Button("properties");
 			propertiesButton.addListener("execute", function (){
-				var meshId=this.__meshesTree.getSelectedNodes()[0].nodeId;
-				var mesh=this.__meshes[meshId];
+				var node = this.__meshesTree.getSelectedNodes()[0];
+				var mesh = this.__getMeshFromNode(node);
 				alert ("Mesh with "+mesh.geometry.vertexPositionBuffer.numItems/3+" vertices and "+
 						mesh.geometry.vertexIndexBuffer.numItems/3+" polygons");
-			},this);
+			}, this);
 			menu.add(propertiesButton);
 
 			var appearanceButton = new qx.ui.menu.Button("appearance");
@@ -978,37 +919,26 @@ qx.Class.define("desk.MeshViewer",
 
 			var showButton = new qx.ui.menu.Button("show");
 			showButton.addListener("execute", function (){
-				var meshes=this.__meshesTree.getSelectedNodes();
-				for (var i=0;i<meshes.length;i++) {
-					if (meshes[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-						var meshId=meshes[i].nodeId;
-						var mesh=this.__meshes[meshId];
-						mesh.visible=true;
-						this.__meshesVisibility[meshId]=true;
-					}
-				}
+                this.applyToSelectedMeshes(function (mesh) {
+                        mesh.visible = true;
+                });
 				this.render();
 			},this);
 			menu.add(showButton);
 
 			var hideButton = new qx.ui.menu.Button("hide");
 			hideButton.addListener("execute", function (){
-				var meshes=this.__meshesTree.getSelectedNodes();
-				for (var i=0;i<meshes.length;i++) {
-					if (meshes[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-						var meshId=meshes[i].nodeId;
-						var mesh=this.__meshes[meshId];
-						mesh.visible=false;
-						this.__meshesVisibility[meshId]=false;
-					}
-				}
+                this.applyToSelectedMeshes(function (mesh) {
+                        mesh.visible = false;
+                });
+
 				this.render();
 			},this);
 			menu.add(hideButton);
 
 			var removeButton = new qx.ui.menu.Button("remove");
 			removeButton.addListener("execute", function (){
-				this.removeMeshes(this.__meshesTree.getSelectedNodes());
+				this.removeMeshes(this.getSelectedMeshes());
 				this.render();		
 			},this);
 			menu.add(removeButton);
@@ -1043,10 +973,8 @@ qx.Class.define("desk.MeshViewer",
 					this.__animator.addObject(this.__meshes[nodes[i].nodeId], nodes[i].label);
 				}
 			},this);
-			menu.add(animateButton);
-			
+			menu.add(animateButton);			
 			return menu;
 		}
 	}
 });
-
