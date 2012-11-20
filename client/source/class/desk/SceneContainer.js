@@ -764,7 +764,7 @@ qx.Class.define("desk.SceneContainer",
 			//		wireframeCheckBox.setValue(firstSelectedMesh.material.wireframe);
 					opacitySlider.setValue(Math.round(firstSelectedMesh.material.opacity*ratio));
                     if (firstSelectedMesh.renderDepth) {
-    					renderDepthSpinner.setValue(firstSelectedMesh.renderDepth);
+                        renderDepthSpinner.setValue(firstSelectedMesh.renderDepth);
                     }
 					enableUpdate=true;
 				}

@@ -162,8 +162,8 @@ qx.Class.define("desk.AceContainer",
 
         // configure the editor
         var session = editor.getSession();
-        session.setUseSoftTabs(false);
-        session.setTabSize(4);
+		//session.setUseSoftTabs(false);
+		//session.setTabSize(4);
 
         // copy the inital value
         session.setValue(this.__textarea.getValue() || "");
