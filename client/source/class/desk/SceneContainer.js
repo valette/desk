@@ -260,9 +260,9 @@ qx.Class.define("desk.SceneContainer",
 					"input_mesh" : file,
 					"output_directory" : 'cache/'},
                     function (response) {
-                    var outputDir = response.outputDirectory;
-					mtime = response.MTime;
-					loadMeshIntoScene(outputDir + '/mesh.ctm');
+                       var outputDir = response.outputDirectory;
+                        parameters.mtime = response.MTime;
+                        loadMeshIntoScene(outputDir + '/mesh.ctm');
 				});
 				break;
 
@@ -276,7 +276,7 @@ qx.Class.define("desk.SceneContainer",
 
 		update : function () {
 			this.removeAllMeshes();
-			this.openFile(this.__firstFile, Math.random());
+			this.addFile(this.__firstFile);
 		},
 
 		__propagateLinks : function () {
@@ -298,7 +298,9 @@ qx.Class.define("desk.SceneContainer",
                 var meshes = rootDocument.getElementsByTagName("mesh");
                 var rootElement = rootDocument.childNodes[0];
                 if (rootElement.hasAttribute("timestamp")) {
-                    mtime = parseFloat(rootElement.getAttribute("timestamp"));
+                    parameters.mtime = parseFloat(rootElement.getAttribute("timestamp"));
+                } else {
+                    parameters.mtime = Math.random();
                 }
 
                 var path = desk.FileSystem.getFileDirectory(file);
@@ -430,7 +432,7 @@ qx.Class.define("desk.SceneContainer",
 				if (e.supportsType("fileBrowser")) {
 					var files = e.getData("fileBrowser").getSelectedFiles();
 					for (var i = 0; i < files.length; i++) {
-						this.openFile(files[i]);
+						this.addFile(files[i]);
 					}
 				}
 				if (e.supportsType("volumeSlices")) {

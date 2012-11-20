@@ -12,21 +12,16 @@ qx.Class.define("desk.VolViewSimple",
 		this.setResizable(true,true,true,true);
 		this.setUseResizeFrame(true);
 		this.setUseMoveFrame(true);
-
-		var volView=this;
-
 		this.setCaption(file);
 
-		function getAnswer(response) {
-			volView.openFile(desk.FileSystem.getFileURL(response.outputDirectory + '/volume.xml'));
-		}
-
-		var parameterMap={
+		desk.Actions.getInstance().launchAction({
 			action : "slice_volume",
 			input_volume : file,
 			slice_orientation : 0,				
-			output_directory : "cache\/"};
-		desk.Actions.getInstance().launchAction(parameterMap, getAnswer, this);
+			output_directory : "cache\/"},
+			function (response) {
+				this.openFile(desk.FileSystem.getFileURL(response.outputDirectory + '/volume.xml'));
+		}, this);
 
 		var label = new qx.ui.basic.Label("Computing slices, wait...").set({
 			font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
