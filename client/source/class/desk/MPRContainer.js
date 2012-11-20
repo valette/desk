@@ -65,7 +65,6 @@ qx.Class.define("desk.MPRContainer",
 		this.__addDropFileSupport();
 
 		if (file) {
-			this.__file = file;
 			this.addVolume(file, parameters, callback);
 		}
 		return (this);
@@ -363,6 +362,7 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		addVolume : function (file, parameters, callback) {
+			this.__file = file;
 			var _this=this;
 			var volumeSlices=[];
 
