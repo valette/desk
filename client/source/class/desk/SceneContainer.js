@@ -293,6 +293,7 @@ qx.Class.define("desk.SceneContainer",
 		},
 
         __openXMLFile : function (file, parameters, callback) {
+            parameters = parameters | {};
             desk.FileSystem.readFile(file, function (request){
                 var rootDocument = request.getResponse();
                 var meshes = rootDocument.getElementsByTagName("mesh");
@@ -438,10 +439,6 @@ qx.Class.define("desk.SceneContainer",
 				if (e.supportsType("volumeSlices")) {
 					this.attachVolumeSlices(e.getData("volumeSlices"));
 				}
-
-				// activate the window
-				var windowManager = qx.core.Init.getApplication().getRoot().getWindowManager();
-				windowManager.bringToFront(this);
 			}, this);
 		},
 
@@ -574,7 +571,17 @@ qx.Class.define("desk.SceneContainer",
             parameters = parameters || {label : 'geometry'};
 			geometry.dynamic = true;
 			geometry.computeBoundingBox();
-			var color = parameters.color || [1,1,1,1];
+
+			var color = parameters.color || [];
+            for (var i = color.length; i < 3; i++) {
+                color.push(1);
+            }
+            if (color.length < 4) {
+                color.push(1);
+            }
+            if (color.length < 5) {
+                color.push(0);
+            }
 			var threecolor = new THREE.Color().setRGB(color[0],color[1],color[2]);
 
 			var material =  new THREE.MeshPhongMaterial({
@@ -589,8 +596,8 @@ qx.Class.define("desk.SceneContainer",
 			if (color[3] < 0.999) {
 				material.transparent = true;
 			}
+            material.side = THREE.DoubleSide;
 			var mesh = new THREE.Mesh(geometry, material );
-			material.side = THREE.DoubleSide;
 			mesh.renderDepth = color[4];
             this.addMesh( mesh, parameters );
 			this.viewAll();
@@ -756,7 +763,9 @@ qx.Class.define("desk.SceneContainer",
 							Math.round(ratio*color.g),Math.round(ratio*color.b));
 			//		wireframeCheckBox.setValue(firstSelectedMesh.material.wireframe);
 					opacitySlider.setValue(Math.round(firstSelectedMesh.material.opacity*ratio));
-					renderDepthSpinner.setValue(firstSelectedMesh.renderDepth);
+                    if (firstSelectedMesh.renderDepth) {
+    					renderDepthSpinner.setValue(firstSelectedMesh.renderDepth);
+                    }
 					enableUpdate=true;
 				}
 			};
