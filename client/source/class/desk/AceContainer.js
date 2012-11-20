@@ -162,7 +162,7 @@ qx.Class.define("desk.AceContainer",
 
         // configure the editor
         var session = editor.getSession();
-        session.setUseSoftTabs(true);
+        session.setUseSoftTabs(false);
         session.setTabSize(4);
 
         // copy the inital value
