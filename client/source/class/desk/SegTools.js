@@ -68,13 +68,11 @@ qx.Class.define("desk.SegTools",
 		this.__labels=[];
 		
 		this.open();
+        this.center();
 		
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		if(typeof this.__appliCallback == "function")
+		if(typeof this.__appliCallback == "function") {
 			this.__appliCallback(this.__master, this);
-			
-//		this.__createLabelsList();
-	//// Return the tools window aka : this
+		}
 		return (this);
 		
 	},

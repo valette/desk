@@ -426,6 +426,7 @@ qx.Class.define("desk.Action",
 			var manager = new qx.ui.form.validation.Manager();
 			this.__validationManager = manager;
 			if (this.__standalone) {
+                this.__window.center();
 				this.__window.open();
 			}
 

@@ -212,6 +212,7 @@ qx.Class.define("desk.Animator",
 				}
 			}
 			window.open();
+            window.center();
 		}
 	}
 });
