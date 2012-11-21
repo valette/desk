@@ -70,13 +70,9 @@ qx.Class.define("desk.TextEditor",
 		}, this);
 
 		this.__textArea = textArea;
+        this.add(textArea, {flex : 1});
 		this.open();
 		this.center();
-
-		var pane = new qx.ui.splitpane.Pane("vertical");
-		pane.add(textArea, 3);
-		pane.add(this.__getLogArea(), 1);
-		this.add(pane, {flex : 1});
 		return (this);
 	},
 
@@ -90,8 +86,6 @@ qx.Class.define("desk.TextEditor",
 		__reloadButton : null,
 		__executeButton : null,
         __saveButton : null,
-		__logArea : null,
-
 		__scriptContainer : null,
 
 		__onExecute : function() {
@@ -107,17 +101,9 @@ qx.Class.define("desk.TextEditor",
 						this.__textArea.getCode() + '\n};';
 			bodyContainer.appendChild(scriptContainer);
 
-			this.__clearLog();
-
 			var that = this;
 			if (desk.TextEditor.codeInTextEditor){
-				try{
 					desk.TextEditor.codeInTextEditor();
-				}
-				catch (error) {
-					this.__log('ERROR : ' + error.message + '\n' + error.stack, 'red');
-					throw(error);
-				}
 			} else {
 				alert('Error while parsing your code, please check syntax');
 			}
@@ -127,33 +113,9 @@ qx.Class.define("desk.TextEditor",
             this.__saveButton.setEnabled(false);
             desk.FileSystem.writeFile(this.__file, this.__textArea.getCode(), function () {
                 this.__saveButton.setEnabled(true);
-                this.__log('file saved', 'blue');
+                console.log('file saved');
             }, this);
         },
-
-		__getLogArea : function () {
-			var logArea = new desk.LogContainer();
-			logArea.set(
-			{
-				visibility : 'excluded',
-				backgroundColor : "white"
-			});
-			this.__logArea = logArea;
-			return logArea;
-		},
-
-		__clearLog : function () {
-			this.__logArea.clear();
-			this.__logArea.setVisibility('excluded');
-		},
-
-		__log : function (message, color) {
-			var logArea = this.__logArea;
-			logArea.setVisibility('visible');
-            logArea.log(message, color);
-		},
-
-    __logListenerId : null,
 
 		/**
 		* Opens a file
@@ -164,20 +126,9 @@ qx.Class.define("desk.TextEditor",
 		{
 			if (file.substring(file.length - 3) === '.js') {
 				this.__executeButton.setVisibility('visible');
-                if (!this.__logListenerId) {
-                  this.__logListenerId = desk.FileSystem.getInstance().addListener('log',
-                    function (e){
-                      this.__log(e.getData());
-                  },this);
-            
-                  this.addListener('close', function () {
-                    this.removeListenerById(this.__logListenerId);
-                  }, this);
-                }
 			}
 			else {
 				this.__executeButton.setVisibility('excluded');
-				this.__textArea.useHighlight(false);
 			}
 
 			this.__file = file;
@@ -186,7 +137,6 @@ qx.Class.define("desk.TextEditor",
 				this.__textArea.setCode(request.getResponseText());
 				this.setCaption(file);
 				this.__reloadButton.setEnabled(true);
-//                this.__spinner.setValue(18);
 			}, this);
 		}
 	}
