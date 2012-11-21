@@ -76,7 +76,7 @@
 		"delete_file" : {
 		    "parameters":[
 		        {
-		            "name":"file_name",
+		            "name":"file",
 		            "type":"file",
 		            "required":"true"
 		        }
