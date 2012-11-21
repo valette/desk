@@ -14,6 +14,8 @@ qx.Class.define("desk.SceneContainer",
 	construct : function(file, parameters, callback, context)
 	{
         this.base(arguments);
+        this.__files = [];
+
         this.setOrientation("horizontal");
         parameters = parameters || {};
 
@@ -58,25 +60,19 @@ qx.Class.define("desk.SceneContainer",
 			width  : 180,
 			rowHeight: 22,
 			columnVisibilityButtonVisible : false,
-			statusBarVisible : false});
-        this.__sceneRoot = this.__meshesTree.getDataModel().addBranch(null,"scene", true);
+            statusBarVisible : false		
+		});
 
-
-		elementsList.add(this.__meshesTree,{flex : 1});
+        elementsList.add(this.__meshesTree,{flex : 1});
 		elementsList.add(this.__getFilterContainer());
 
-		var menu = this.__getContextMenu();
-		this.__meshesTree.setContextMenu(menu);
-
-		this.__firstFile = file;
-		this.__firstMTime = parameters.mtime;
+		this.__meshesTree.setContextMenu(this.__getContextMenu());
 
 		if (file) {
 			this.addFile(file, parameters, callback, context);
 			window.setCaption(file);
 		}
 		this.__addDropSupport();
-
 		return this;
 	},
 
@@ -97,17 +93,12 @@ qx.Class.define("desk.SceneContainer",
 	},
 
 	members : {
-		__firstFile : null,
-
-		__firstMTime : null,
+        __files : null,
 
 		__threeContainer : null,
 		
 		// a treeVirtual element storing all meshes
 		__meshesTree : null,
-
-        // the tree root
-        __sceneRoot : null,
 
 		// array containing the queue of meshes to load 
 		__meshesToLoad : null,
@@ -130,10 +121,16 @@ qx.Class.define("desk.SceneContainer",
 		},
 
         __addLeaf : function (parameters) {
+            var leaf;
             parameters = parameters || {};
             var dataModel = this.__meshesTree.getDataModel();
             parameters.label = parameters.label || "mesh";
-            var leaf = dataModel.addLeaf(this.__sceneRoot, parameters.label, null);
+            var parent = parameters.parent;
+            if (parent) {
+                leaf = dataModel.addLeaf(parent, parameters.label, null);
+            } else {
+                leaf = dataModel.addLeaf(null, parameters.label, null);            
+            }
             dataModel.setData();
             return leaf;
         },
@@ -219,7 +216,11 @@ qx.Class.define("desk.SceneContainer",
             parameters = parameters || {};
 			var label = desk.FileSystem.getFileName(file);
 			var self = this;
-            var leaf = this.__addLeaf({label : label});
+            var leafParameters = {label : label};
+            if (parameters.parent) {
+                leafParameters.parent = parameters.parent;
+            }
+            var leaf = this.__addLeaf(leafParameters);
             parameters.leaf = leaf;
 			var extension = desk.FileSystem.getFileExtension(file);
 
@@ -275,8 +276,13 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		update : function () {
+            var files = this.__files;
+            this.__files = [];
 			this.removeAllMeshes();
-			this.addFile(this.__firstFile);
+            this.__meshesTree.getDataModel().clearData();
+            for (var i = 0; i < files.length ; i++) {
+                this.addFile(files[i]);
+            }
 		},
 
 		__propagateLinks : function () {
@@ -304,6 +310,10 @@ qx.Class.define("desk.SceneContainer",
                     parameters.mtime = Math.random();
                 }
 
+                var dataModel = this.__meshesTree.getDataModel();
+                var leaf = dataModel.addBranch(null, desk.FileSystem.getFileName(file), null);
+                dataModel.setData();
+
                 var path = desk.FileSystem.getFileDirectory(file);
                 var numberOfMeshes = meshes.length;
                 var numberOfRemainingMeshes = numberOfMeshes;
@@ -317,7 +327,7 @@ qx.Class.define("desk.SceneContainer",
                 }
 
                 for (var n = 0; n < numberOfMeshes; n++) {
-                    var meshParameters = {};
+                    var meshParameters = { parent : leaf};
                     var mesh = meshes[n];
                     if (mesh.hasAttribute("color")) {
                         var colorstring = mesh.getAttribute("color");
@@ -354,12 +364,14 @@ qx.Class.define("desk.SceneContainer",
         },
 
 		addFile : function (file, parameters, callback, context) {
+            parameters = parameters || {};
+            this.__files.push(file);
             function afterLoading() {
                 if (typeof callback === 'function') {
                     callback.apply(context);
                 }
             }
-
+            parameters.file = file;
             var extension = desk.FileSystem.getFileExtension(file);
 			switch (extension)
 			{
@@ -940,7 +952,8 @@ qx.Class.define("desk.SceneContainer",
 				}
 
 				for (var i = 0; i !=nodes.length; i++) {
-					this.__animator.addObject(this.__meshes[nodes[i].nodeId], nodes[i].label);
+                    var node = nodes[i];
+					this.__animator.addObject(this.__getMeshFromNode(node), node.label);
 				}
 			},this);
 			menu.add(animateButton);			
