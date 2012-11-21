@@ -60,6 +60,7 @@ qx.Class.define("desk.Actions",
 		scripts.push(threeURL + 'TrackballControls2.js');
 		scripts.push(threeURL + 'ctm/CTMLoader.js');
 		scripts.push(threeURL + 'MeshAnalyser.js');
+        scripts.push(baseURL + 'ext/async.min.js');
 		desk.FileSystem.includeScripts(scripts, function () {
 			this.__scriptsLoaded = true;
 			if (this.__actionsLoaded) {
