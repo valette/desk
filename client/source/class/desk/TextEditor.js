@@ -126,9 +126,11 @@ qx.Class.define("desk.TextEditor",
 		{
 			if (file.substring(file.length - 3) === '.js') {
 				this.__executeButton.setVisibility('visible');
+                this.__textArea.useHighlight(true);
 			}
 			else {
 				this.__executeButton.setVisibility('excluded');
+                this.__textArea.useHighlight(false);
 			}
 
 			this.__file = file;
