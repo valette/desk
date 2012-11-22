@@ -286,15 +286,33 @@ exports.performAction = function (POST, callback) {
 		commandLine += action.attributes.executable + ' ';
 
 		function parseParameter (parameter, callback) {
+            function validateValue (parameterValue, parameter) {
+                var compare;
+                if (parameter.min) {
+                    compare = parseFloat(parameter.min);
+                    if (parameterValue < compare) {
+                        return ('error : parameter ' + parameter.name +
+                            ' minimum value is ' + compare);
+                    }
+                }
+                if (parameter.max) {
+                    compare = parseFloat(parameter.max);
+                    if (parameterValue > compare) {
+                        return ('error : parameter ' + parameter.name +
+                            ' maximal value is ' + compare);
+                    }
+                }
+                return (null);
+            }
+
 			if (parameter.text !== undefined) {
 				// parameter is actually a text anchor
 				commandLine += parameter.text;
 				callback (null);
 				return;
-			}
-			else {
+			} else {
 				var parameterValue = POST[parameter.name];
-
+                var numericValue;
 				actionParameters[parameter.name] = parameterValue;
 
 				if (parameterValue === undefined){
@@ -305,10 +323,9 @@ exports.performAction = function (POST, callback) {
 						callback(null);
 						return;
 					}
-				}
-				else {
+				} else {
 					if (parameter.prefix !== undefined) {
-							commandLine += parameter.prefix;
+						commandLine += parameter.prefix;
 					}
 
 					switch (parameter.type)
@@ -351,28 +368,30 @@ exports.performAction = function (POST, callback) {
 					case 'string':
 						if (parameterValue.indexOf(" ") === -1) {
 							commandLine += parameterValue + " ";
-							callback (null);
+							callback ();
 						}
 						else {
 							callback ("parameter " + parameter.name + " must not contain spaces");
 						}
 						break;
 					case 'int':
-						if (isNaN(parseInt(parameterValue, 10))) {
+                        numericValue = parseInt(parameterValue, 10);
+						if (isNaN(numericValue)) {
 							callback ("parameter " + parameter.name + " must be an integer value");
 						}
 						else {
 							commandLine += parameterValue + " ";
-							callback (null);
+							callback (validateValue(numericValue, parameter));
 						}
 						break;
 					case 'float':
-						if (isNaN(parseFloat(parameterValue))) {
+                        numericValue = parseFloat(parameterValue, 10);
+						if (isNaN(numericValue)) {
 							callback ("parameter " + parameter.name + " must be a floating point value");
 						}
 						else {
 							commandLine += parameterValue + " ";
-							callback (null);
+                            callback (validateValue(numericValue, parameter));
 						}
 						break;
 					case 'text':
