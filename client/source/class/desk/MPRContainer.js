@@ -52,9 +52,6 @@ qx.Class.define("desk.MPRContainer",
         if (parameters.standalone === false) {
             this.__standalone = false;
         }
-		if ( this.__standalone ) {
-			this.add( this.__getToolBar() );
-		}
 
         this.add(gridContainer, {flex : 1});
 		this.add(fullscreenContainer, {flex : 1});
@@ -158,14 +155,20 @@ qx.Class.define("desk.MPRContainer",
         __volumesScroll : null,
 		__createVolumesList : function () {
             var scroll = this.__volumesScroll  = new qx.ui.container.Scroll();
-			this.__volumes = new qx.ui.container.Composite();
-			this.__volumes.setLayout(new qx.ui.layout.VBox(1));
+            var container = new qx.ui.container.Composite();
+			container.setLayout(new qx.ui.layout.VBox(5));
+            if (this.__standalone) {
+                container.add( this.__getToolBar() );
+            }
+			var volumes = this.__volumes = new qx.ui.container.Composite();
+			volumes.setLayout(new qx.ui.layout.VBox(1));
 			var volumesGridCoor = this.__windowsInGridCoord.volList;
             this.addListener('resize', function () {
                 scroll.setWidth(Math.round(this.getWidth() / 2));
                 scroll.setHeight(Math.round(this.getHeight() / 2));
             }, this);
-            scroll.add(this.__volumes);
+            container.add(volumes);
+            scroll.add(container);
 			this.__gridContainer.add(scroll, {row: volumesGridCoor.r, column: volumesGridCoor.c});
 		},
 
