@@ -281,7 +281,7 @@ qx.Class.define("desk.SegTools",
 			var clusteringPage = new qx.ui.tabview.Page("clustering");
             clusteringPage.setLayout(new qx.ui.layout.VBox());
 			tabView.add(clusteringPage);
-			var clusteringAction=new desk.Action("cvtseg2", false);
+			var clusteringAction=new desk.Action("cvtseg2", {standalone : false});
 			clusteringAction.setActionParameters(
 				{"input_volume" : volFile});
 
@@ -293,7 +293,7 @@ qx.Class.define("desk.SegTools",
 			var segmentationPage = new qx.ui.tabview.Page("segmentation");
             segmentationPage.setLayout(new qx.ui.layout.VBox());
 			tabView.add(segmentationPage);
-			var segmentationAction=new desk.Action("cvtgcmultiseg", false);
+			var segmentationAction=new desk.Action("cvtgcmultiseg", {standalone : false});
 			clusteringAction.setActionParameters({
 				"input_volume" : volFile});
 
@@ -306,7 +306,7 @@ qx.Class.define("desk.SegTools",
 			var medianFilteringPage = new qx.ui.tabview.Page("cleaning");
             medianFilteringPage.setLayout(new qx.ui.layout.VBox());
 			tabView.add(medianFilteringPage);
-			var medianFilteringAction=new desk.Action("volume_median_filtering", false);
+			var medianFilteringAction=new desk.Action("volume_median_filtering", {standalone : false});
 			medianFilteringAction.setOutputSubdirectory("filtering");
 			medianFilteringAction.connect("input_volume", 
 										segmentationAction, "seg-cvtgcmultiseg.mhd");
@@ -316,7 +316,7 @@ qx.Class.define("desk.SegTools",
 			var meshingPage = new qx.ui.tabview.Page("meshing");
             meshingPage.setLayout(new qx.ui.layout.VBox());
 			tabView.add(meshingPage);
-			var meshingAction=new desk.Action("extract_meshes", false);
+			var meshingAction=new desk.Action("extract_meshes", {standalone : false});
 			meshingAction.setOutputSubdirectory("meshes");
 			meshingAction.buildUI();
 			meshingPage.add(meshingAction.getTabView());
