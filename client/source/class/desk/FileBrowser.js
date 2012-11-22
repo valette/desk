@@ -259,6 +259,9 @@ qx.Class.define("desk.FileBrowser",
                 var dataModel = this.__virtualTree.getDataModel();
                 dataModel.clearData();
                 this.__rootId = dataModel.addBranch(null, this.__baseDir, true);
+                if (this.__window) {
+                    this.__window.setCaption(newRoot);
+                }
             }
 			this.__expandDirectoryListing(this.__rootId);
 		},
