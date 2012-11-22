@@ -13,7 +13,8 @@ qx.Class.define("desk.FileBrowser",
 			if(baseDir.substr(-1) == '/') {
 				baseDir = baseDir.substr(0, baseDir.length - 1);
 			}
-			this.__baseDir=baseDir;
+		} else {
+            baseDir = 'data';
 		}
 
 		this.base(arguments);
@@ -23,6 +24,8 @@ qx.Class.define("desk.FileBrowser",
 
 		if ( standAlone === false ) {
 			this.__standAlone = false;
+		} else {
+            standAlone = true;   
 		}
 
 		qx.Class.include(qx.ui.treevirtual.TreeVirtual,
@@ -79,14 +82,17 @@ qx.Class.define("desk.FileBrowser",
 		filterBox.add(resetButton);
 		dataModel.setFilter(filter);
 
+        if (standAlone) {
+            this.add(this.__getShortcutsContainer());
+        }
+
 		this.add(virtualTree,{flex: 1});
 		if(this.__standAlone) {
 			this.add(filterBox);
 		}
 
 		// add root directory
-		this.__rootId = dataModel.addBranch(null, this.__baseDir, true);
-		this.updateRoot();
+		this.updateRoot(baseDir);
 
 		this.__createDoubleClickActions();
 
@@ -206,7 +212,7 @@ qx.Class.define("desk.FileBrowser",
 		// the window containing the widget when in standalone mode
 		__window : null,
 		__fileHandler : null,
-		__baseDir : "data",
+		__baseDir : null,
 		__virtualTree : null,
 		__rootId : null,
 		__filterField : null,
@@ -215,6 +221,24 @@ qx.Class.define("desk.FileBrowser",
 		__actionCallbacks : null,
 		__actions : null,
 		__actionsMenuButton : null,
+
+        __changeRootDir : function (event) {
+            this.updateRoot(event.getTarget().getLabel());
+        },
+
+        __getShortcutsContainer : function() {
+            var container = new qx.ui.container.Composite();
+            container.setLayout(new qx.ui.layout.HBox(5));
+            var dataDirs = desk.Actions.getInstance().getSettings().dataDirs;
+            var dirs = Object.keys(dataDirs);
+            for (var i = 0; i != dirs.length; i++) {
+                var dir = dirs[i];
+                var button = new qx.ui.form.Button(dir);
+                button.addListener("execute", this.__changeRootDir, this);
+                container.add(button, {flex : 1});
+            }
+            return container;
+		},
 
 		getWindow : function() {
 			return this.__window;
@@ -229,7 +253,13 @@ qx.Class.define("desk.FileBrowser",
 			return file+"."+sessionType+"."+sessionId;
 		},
 
-		updateRoot : function () {
+		updateRoot : function (newRoot) {
+            if (newRoot) {
+                this.__baseDir = newRoot;
+                var dataModel = this.__virtualTree.getDataModel();
+                dataModel.clearData();
+                this.__rootId = dataModel.addBranch(null, this.__baseDir, true);
+            }
 			this.__expandDirectoryListing(this.__rootId);
 		},
 
