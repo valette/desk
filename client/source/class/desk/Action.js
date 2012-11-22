@@ -535,10 +535,6 @@ qx.Class.define("desk.Action",
 			var connections = this.__connections;
 			for (var i = 0; i < (parameters.length); i++) {
 				var parameter = parameters[i];
-				if (parameter.text != undefined) {
-					continue;
-				}
-
 				var parameterName = parameter.name;
 				var found = false;
 				for (var j = 0; j < connections.length; j++) {
@@ -549,7 +545,24 @@ qx.Class.define("desk.Action",
 				}
 
 				if (!found) {
-					var label = new qx.ui.basic.Label(parameterName);
+                    var parameterTooltip = '';
+                    if (parameter.text) {
+                        continue;
+                    }
+                    if (parameter.info) {
+                        parameterTooltip += parameter.info + '<br>';
+                    }
+                    if (parameter.min) {
+                        parameterTooltip += 'min : ' + parameter.min + '<br>';
+                    }
+                    if (parameter.max) {
+                        parameterTooltip += 'max : ' + parameter.max + '<br>';
+                    }
+                    if (parameter.defaultValue) {
+                        parameterTooltip += 'default : ' + parameter.defaultValue + '<br>';
+                    }
+
+                    var label = new qx.ui.basic.Label(parameterName);
 					parametersContainer.add(label);
 					var parameterForm; 
                     var parameterType = parameter.type;
@@ -565,6 +578,10 @@ qx.Class.define("desk.Action",
 					}
                     this.__forms[parameterName] = parameterForm;
 					parameterForm.setUserData("label", label);
+                    if (parameterTooltip.length) {
+                        parameterForm.setToolTipText(parameterTooltip);
+                        label.setToolTipText(parameterTooltip);
+                    }
 					parameterForm.setPlaceholder(parameterName);
 					parametersContainer.add(parameterForm);
 
