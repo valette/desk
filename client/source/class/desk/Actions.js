@@ -290,11 +290,11 @@ qx.Class.define("desk.Actions",
 				var that = this;
 				var menus = [];
 
-        function launch(e){
-            var action = new desk.Action(this.getLabel());
-						action.setOriginFileBrowser(that.__currentFileBrowser);
-						action.buildUI();
-					}
+               function launch(e){
+                    var action = new desk.Action(this.getLabel());
+					action.setOriginFileBrowser(that.__currentFileBrowser);
+					action.buildUI();
+				}
 
 				var actionsNames = Object.keys(actions);
 				for (var n = 0; n < actionsNames.length; n++)
