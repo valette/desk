@@ -15,7 +15,7 @@ qx.Class.define("desk.Action",
 		this.base(arguments);
 		this.__action = desk.Actions.getInstance().getAction(name);
 		this.__name = name;
-		if (!parameters.standalone) {
+		if (parameters.standalone === false) {
 			this.__standalone = false;
 		}
 
