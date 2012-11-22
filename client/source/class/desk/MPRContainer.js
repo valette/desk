@@ -35,7 +35,7 @@ qx.Class.define("desk.MPRContainer",
 		}
 
 		var gridLayout=new qx.ui.layout.Grid(2,2);
-		for ( var i=0 ; i < 2 ; i++ ) {
+		for ( var i = 0 ; i < 2 ; i++ ) {
 			gridLayout.setRowFlex(i , 1);
 			gridLayout.setColumnFlex(i, 1);
 		}
@@ -49,10 +49,10 @@ qx.Class.define("desk.MPRContainer",
 		this.__fullscreenContainer=fullscreenContainer;
 		fullscreenContainer.setVisibility("excluded");
 
-        if (parameters.standAlone === false) {
-            this.__standAlone = false;
+        if (parameters.standalone === false) {
+            this.__standalone = false;
         }
-		if ( this.__standAlone ) {
+		if ( this.__standalone ) {
 			this.add( this.__getToolBar() );
 		}
 
@@ -82,7 +82,7 @@ qx.Class.define("desk.MPRContainer",
 
 	members :
 	{
-		__standAlone : true,
+		__standalone : true,
 		
 		__fullscreenContainer : null,
 		__gridContainer : null,
@@ -155,11 +155,18 @@ qx.Class.define("desk.MPRContainer",
 			});
 		},
 
+        __volumesScroll : null,
 		__createVolumesList : function () {
+            var scroll = this.__volumesScroll  = new qx.ui.container.Scroll();
 			this.__volumes = new qx.ui.container.Composite();
-			this.__volumes.setLayout(new qx.ui.layout.VBox());
+			this.__volumes.setLayout(new qx.ui.layout.VBox(1));
 			var volumesGridCoor = this.__windowsInGridCoord.volList;
-			this.__gridContainer.add(this.__volumes, {row: volumesGridCoor.r, column: volumesGridCoor.c});
+            this.addListener('resize', function () {
+                scroll.setWidth(Math.round(this.getWidth() / 2));
+                scroll.setHeight(Math.round(this.getHeight() / 2));
+            }, this);
+            scroll.add(this.__volumes);
+			this.__gridContainer.add(scroll, {row: volumesGridCoor.r, column: volumesGridCoor.c});
 		},
 
 		__addViewers : function () {
@@ -375,14 +382,13 @@ qx.Class.define("desk.MPRContainer",
 
 			var opacity=1;
 			var imageFormat=1;
-			
-			if ( parameters != null ) {
-				if ( parameters.opacity != null ) {
-					opacity = parameters.opacity;
-				}
-				if ( parameters.imageFormat != null ) {
-					imageFormat = parameters.imageFormat;
-				}
+
+            parameters = parameters || {};
+            if ( parameters.opacity != null ) {
+				opacity = parameters.opacity;
+			}
+			if ( parameters.imageFormat != null ) {
+				imageFormat = parameters.imageFormat;
 			}
 
 			var volumeListItem = new qx.ui.container.Composite();
@@ -431,10 +437,10 @@ qx.Class.define("desk.MPRContainer",
 			var labelcontainer=new qx.ui.container.Composite();
 			labelcontainer.setLayout( new qx.ui.layout.HBox() );
 			labelcontainer.setContextMenu( this.__getVolumeContextMenu( volumeListItem ) );
-			volumeListItem.add(labelcontainer, { flex : 1 } );
+			volumeListItem.add(labelcontainer);//, { flex : 1 } );
 
- 			var label=new qx.ui.basic.Label(baseName);
- 			label.setTextAlign("left");
+            var label = new qx.ui.basic.Label(baseName);
+            label.setTextAlign("left");
 			labelcontainer.add(label, {flex : 1});
 
 			var numberOfRemainingMeshes=this.__nbUsedOrientations;
@@ -444,7 +450,7 @@ qx.Class.define("desk.MPRContainer",
 					return (function (volumeSlice) {
 						volumeSlices[myI]=volumeSlice;
 						numberOfRemainingMeshes--;
-						if ( numberOfRemainingMeshes == 0 ) {
+						if ( numberOfRemainingMeshes === 0 ) {
 							_this.__reorderMeshes();
 							if (typeof callback === 'function') {
 								callback(_this, volumeSlices);
@@ -562,7 +568,7 @@ qx.Class.define("desk.MPRContainer",
 
 		__getVolumeContextMenu : function (volumeListItem) {
 				//context menu to edit meshes appearance
-			var menu = new qx.ui.menu.Menu;
+			var menu = new qx.ui.menu.Menu();
 			var propertiesButton = new qx.ui.menu.Button("properties");
 			propertiesButton.addListener("execute", function (){
 
@@ -602,8 +608,8 @@ qx.Class.define("desk.MPRContainer",
 				},this);
 			menu.add(colormapButton);
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-			if(this.__standAlone) {
+
+			if(this.__standalone) {
 				if (desk.Actions.getInstance().getPermissionsLevel()>0) {
 					var paintButton=new qx.ui.menu.Button("segment");
 					paintButton.addListener("execute", function () {
@@ -814,20 +820,14 @@ qx.Class.define("desk.MPRContainer",
 			label.setContextMenu(menu);
 
 			label.addListener("droprequest", function(e) {
-					var type = e.getCurrentType();
-					switch (type)
-					{
-					case "volView":
-						e.addData(type, this);
-						break;
-					default :
-						alert ("type "+type+"not supported for volume drag and drop");
-						break;
-					}
-				}, this);
+				var type = e.getCurrentType();
+				if (type === 'volView') {
+					e.addData(type, this);
+				}
+			}, this);
 
             // enable linking between viewers by drag and drop
-	//		this.setDroppable(true);
+			this.setDroppable(true);
 			this.addListener('drop', function(e) {
 				if (e.supportsType('volView')) {
 					this.link(e.getData('volView'));
