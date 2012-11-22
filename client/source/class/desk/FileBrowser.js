@@ -231,6 +231,7 @@ qx.Class.define("desk.FileBrowser",
             container.setLayout(new qx.ui.layout.HBox(5));
             var dataDirs = desk.Actions.getInstance().getSettings().dataDirs;
             var dirs = Object.keys(dataDirs);
+            dirs.sort();
             for (var i = 0; i != dirs.length; i++) {
                 var dir = dirs[i];
                 var button = new qx.ui.form.Button(dir);
