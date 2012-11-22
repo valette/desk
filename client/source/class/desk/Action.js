@@ -4,22 +4,26 @@
 qx.Class.define("desk.Action", 
 {
 	extend : qx.ui.container.Composite,
-
 	/**
 	* Creates a new container
 	* @param name {String} name of the action to create
 	* @param standalone {Boolean} defines whether the container should be
 	* embedded in a window or not (default : true)
 	*/
-	construct : function (name, standalone)
-	{
+	construct : function (name, parameters) {
+        parameters = parameters || {};
 		this.base(arguments);
 		this.__action = desk.Actions.getInstance().getAction(name);
 		this.__name = name;
-		if (standalone === false) {
+		if (!parameters.standalone) {
 			this.__standalone = false;
 		}
-		this.__connections = [];
+
+        if (parameters.useScroll) {
+			this.__useScroll = true;
+		}
+
+        this.__connections = [];
 
 		return (this);
 	},
@@ -37,11 +41,10 @@ qx.Class.define("desk.Action",
 		* Creates a new container, with parameters contained in a JSON file
 		* @param file {String} .JSON file to get settings from
 		*/
-		CREATEFROMFILE : function (file)
-		{
+		CREATEFROMFILE : function (file) {
 			desk.FileSystem.readFile(file, function (request) {
-				var parameters=JSON.parse(request.getResponseText());
-				var action=new desk.Action (parameters.action);
+				var parameters = JSON.parse(request.getResponseText());
+				var action = new desk.Action (parameters.action);
 				action.setActionParameters(parameters);
 				action.buildUI();
 			});
@@ -61,7 +64,9 @@ qx.Class.define("desk.Action",
 	},
 
 	members : {
-		__tabView : null,
+        __controlsContainer : null,
+
+        __tabView : null,
 
 		__connections : null,
 
@@ -87,6 +92,12 @@ qx.Class.define("desk.Action",
 
 		__embededFileBrowser : null,
 
+        __useScroll : false,
+
+        getControlsContainer : function () {
+            return this.__controlsContainer;
+        },
+
 		/**
 		* Connects a parameter to an output file from an other action
 		* @param parameterName {String} name of the parameter to set
@@ -94,8 +105,7 @@ qx.Class.define("desk.Action",
 		* @param fileName {string} name of the output file from parentAction
 		*/
 		connect : function (parameterName, parentAction, fileName) {
-			if (parentAction==this)
-			{
+			if (parentAction==this) {
 				console.log("error : trying to connect to myself...");
 				return;
 			}
@@ -103,7 +113,8 @@ qx.Class.define("desk.Action",
 			this.__connections.push({
 					action : parentAction,
 					parameter : parameterName,
-					file : fileName});
+					file : fileName			
+			});
 		},
 
 		/**
@@ -111,48 +122,47 @@ qx.Class.define("desk.Action",
 		* @param directory {String} target subdirectory
 		*/
 		setOutputDirectory : function (directory) {
-			this.__outputDirectory=directory;
+			this.__outputDirectory = directory;
 			desk.FileSystem.readFile(this.getOutputDirectory() + 'action.json',
 				function(request) {
-          if (request.getStatus() === 200 ) {
-          this.__loadedParameters=JSON.parse(request.getResponseText());
-          this.__updateUIParameters();
-          if (this.__tabView) {
-            this.__addOutputTab();
-          }
-          }
-					this.fireEvent("changeOutputDirectory");
-				}, this);
-		},
+                if (request.getStatus() === 200 ) {
+                    this.__loadedParameters=JSON.parse(request.getResponseText());
+                    this.__updateUIParameters();
+                    if (this.__tabView) {
+                        this.__addOutputTab();
+                    }
+                }
+                this.fireEvent("changeOutputDirectory");
+            }, this);
+        },
 
 		__updateUIParameters : function () {
 			var manager = this.__validationManager;
 			if (manager !== null) {
-				var parameters=this.__loadedParameters;
-				var items=manager.getItems();
-				var hideProvidedParameters=false;
+				var parameters = this.__loadedParameters;
+				var items = manager.getItems();
+				var hideProvidedParameters = false;
 				function changeParameters() {
-					for (var i=0;i!=items.length;i++) {
-						var item=items[i];
-						var parameterName=item.getPlaceholder();
-						var parameterValue=parameters[parameterName];
-						if (parameterValue!=null) {
+					for (var i = 0; i != items.length; i++) {
+						var item = items[i];
+						var parameterName = item.getPlaceholder();
+						var parameterValue = parameters[parameterName];
+						if (parameterValue != null) {
 							item.setValue(parameterValue);
-							if (hideProvidedParameters)
-							{
+							if (hideProvidedParameters) {
 								item.setVisibility("excluded");
 								item.getUserData("label").setVisibility("excluded");
 							}
 						}
 					}
 				}
-				if (parameters!=null) {
+				if (parameters != null) {
 					changeParameters();
 				}
 
-				hideProvidedParameters=!this.__standalone;
-				parameters=this.__providedParameters;
-				if (parameters!=null) {
+				hideProvidedParameters = !this.__standalone;
+				parameters = this.__providedParameters;
+				if (parameters != null) {
 					changeParameters();
 				}
 			}
@@ -180,29 +190,42 @@ qx.Class.define("desk.Action",
 		},
 
 		/**
-		* Definet input parameters for the action
+		* Defines input parameters for the action, which will
+        * be hidden in the UI
 		* @param parameters {Object} parameters as JSON object
 		*/
-		setActionParameters : function (parameters)
-		{
-			this.__providedParameters=parameters;
-			var outputDirectory=parameters.output_directory;
-			if (typeof outputDirectory == "string")	{
-				this.__outputDirectory=outputDirectory;
+		setActionParameters : function (parameters) {
+			this.__providedParameters = parameters;
+			var outputDirectory = parameters.output_directory;
+			if (typeof outputDirectory === "string")	{
+				this.__outputDirectory = outputDirectory;
 			}
 			this.__updateUIParameters();
 		},
 
-		setOriginFileBrowser : function (fileBrowser)
-		{
+        /**
+		* Defines UI input parameters for the action
+		* @param parameters {Object} parameters as JSON object
+		*/
+        setUIParameters : function (parameters) {
+            var keys = Object.keys(parameters);
+            for (var i = 0; i < keys.length; i++) {
+                var key = keys[i];
+                var form = this.getForm(key);
+                if (form) {
+                    form.setValue(parameters[key].toString());
+                }
+            }
+        },
+
+		setOriginFileBrowser : function (fileBrowser) {
 			this.__fileBrowser=fileBrowser;
 		},
 
 		/**
 		* Triggers the action execution
 		*/
-		executeAction : function()
-		{
+		executeAction : function() {
 			this.__validationManager.validate();
 		},
 
@@ -224,6 +247,7 @@ qx.Class.define("desk.Action",
 		},
 
 		__outputTabTriggered : false,
+
 		__addOutputTab : function () {
 			if ((this.__action.attributes.voidAction == "true") ||
 					this.__embededFileBrowser || this.__outputTabTriggered) {
@@ -274,8 +298,10 @@ qx.Class.define("desk.Action",
 				for (i = 0; i < items.length; i++) {
 					var currentItem=items[i];
 					var value=currentItem.getValue();
-					if (value != null) {
-						parameterMap[currentItem.getPlaceholder()]=value;
+					if (typeof value === 'string') {
+                        if (value.length>0) {
+                            parameterMap[currentItem.getPlaceholder()]=value;
+                        }
 					}
 				}
 
@@ -384,14 +410,81 @@ qx.Class.define("desk.Action",
 			}
 		},
 
+        __forms : null,
+
+        getForm : function (parameterName) {
+            if (this.__forms) {
+                return this.__forms[parameterName];
+            }
+        },
+
+
+        __intValidator : function(value, item) {
+			var parameterName = this.name;
+			if ((value == null) || (value == '')) {
+				if (this.required == "true") {
+					item.setInvalidMessage('"' + parameterName + '" is empty');
+					return (false);
+				}
+			}
+			else if ((parseInt(value, 10) != parseFloat(value)) || isNaN(value)) {
+				item.setInvalidMessage('"' + parameterName + '" should be an integer');
+				return (false);
+			}
+			return (true);
+		},
+
+		__stringValidator : function(value, item) {
+			var parameterName = this.name;
+			if ((value == null) || (value == '')) {
+				if (this.required == "true") {
+					item.setInvalidMessage('"' + parameterName + '" is empty');
+					return (false);
+				}
+			}
+			else if (value.split(" ").length != 1){
+				item.setInvalidMessage('"' + parameterName + '" should contain no space characters');
+				return (false);
+			}
+			return (true);
+		},
+
+		__floatValidator : function(value, item) {
+			var parameterName = this.name;
+			if ((value == null) || (value == '')) {
+				if (this.required =="true") {
+					item.setInvalidMessage('"' + parameterName + '" is empty');
+					return (false);
+				}
+			}
+			else if (isNaN(value)){
+				item.setInvalidMessage('"' + parameterName + '" should be a number');
+				return (false);
+			}
+			return (true);
+		},
+
+		__dummyValidator : function(value, item) {
+            return (true);
+        },
+
+
 		/**
 		* Builds the UI
 		*/
 		buildUI : function () {
 			var action = this.__action;
-			this.setLayout(new qx.ui.layout.VBox());
+			this.setLayout(new qx.ui.layout.VBox(5));
 
-			var that = this;
+            var parametersContainer; 
+            if (this.__useScroll) {
+                var scroll = new qx.ui.container.Scroll();
+                parametersContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
+                scroll.add(parametersContainer, {flex : 1});
+                this.add(scroll, {flex : 1});
+            } else {
+                parametersContainer = this;
+            }
 
 			if (this.__standalone) {
 				this.__window = new qx.ui.window.Window();
@@ -400,7 +493,7 @@ qx.Class.define("desk.Action",
 					showClose :true,
 					showMinimize : false,
 					useMoveFrame : true,
-					caption : that.__name});
+					caption : this.__name});
 				this.__window.add(this.getTabView(), {flex : 1});
 			}
 
@@ -430,59 +523,14 @@ qx.Class.define("desk.Action",
 				this.__window.open();
 			}
 
-			var intValidator = function(value, item) {
-				var parameterName = this.name;
-				if ((value == null) || (value == '')) {
-					if (this.required == "true") {
-						item.setInvalidMessage('"' + parameterName + '" is empty');
-						return (false);
-					}
-				}
-				else if ((parseInt(value, 10) != parseFloat(value)) || isNaN(value)) {
-					item.setInvalidMessage('"' + parameterName + '" should be an integer');
-					return (false);
-				}
-				return (true);
-			};
-
-			var floatValidator = function(value, item) {
-				var parameterName = this.name;
-				if ((value == null) || (value == '')) {
-					if (this.required =="true") {
-						item.setInvalidMessage('"' + parameterName + '" is empty');
-						return (false);
-					}
-				}
-				else if (isNaN(value)){
-					item.setInvalidMessage('"' + parameterName + '" should be a number');
-					return (false);
-				}
-				return (true);
-			};
-
-			var stringValidator = function(value, item) {
-				var parameterName = this.name;
-				if ((value == null) || (value == '')) {
-					if (this.required == "true") {
-						item.setInvalidMessage('"' + parameterName + '" is empty');
-						return (false);
-					}
-				}
-				else if (value.split(" ").length != 1){
-					item.setInvalidMessage('"' + parameterName + '" should contain no space characters');
-					return (false);
-				}
-				return (true);
-			};
-
-			var dummyValidator = function(value, item) {return (true);};
-
 			var fileAlreadyPickedFromBrowser = false;
 
 			var parameters = action.parameters;
 			if (this.__standalone) {
 				this.__window.setHeight(100+50*parameters.length);
 			}
+
+            this.__forms = {};
 
 			var connections = this.__connections;
 			for (var i = 0; i < (parameters.length); i++) {
@@ -502,33 +550,34 @@ qx.Class.define("desk.Action",
 
 				if (!found) {
 					var label = new qx.ui.basic.Label(parameterName);
-					this.add(label);
+					parametersContainer.add(label);
 					var parameterForm; 
-          var parameterType = parameter.type;
-          switch (parameterType)
-					{
+                    var parameterType = parameter.type;
+                    switch (parameterType)
+                    {
 					case "file":
-          case "directory":
-            parameterForm = new desk.FileField();
-            break;
-          default :
-            parameterForm = new qx.ui.form.TextField();
-            break;
+                    case "directory":
+                        parameterForm = new desk.FileField();
+                        break;
+                    default :
+                        parameterForm = new qx.ui.form.TextField();
+                    break;
 					}
+                    this.__forms[parameterName] = parameterForm;
 					parameterForm.setUserData("label", label);
 					parameterForm.setPlaceholder(parameterName);
-					this.add(parameterForm);
+					parametersContainer.add(parameterForm);
 
 					switch (parameterType)
 					{
 					case "int":
-						manager.add(parameterForm, intValidator, parameter);
+						manager.add(parameterForm, this.__intValidator, parameter);
 						break;
 					case "string":
-						manager.add(parameterForm, stringValidator, parameter);
+						manager.add(parameterForm, this.__stringValidator, parameter);
 						break;
 					case "float":
-						manager.add(parameterForm, floatValidator, parameter);
+						manager.add(parameterForm, this.__floatValidator, parameter);
 						break;
 					case "file":
 						if ( !fileAlreadyPickedFromBrowser && (this.__fileBrowser!=null)) {
@@ -537,16 +586,16 @@ qx.Class.define("desk.Action",
 							parameterForm.setValue(file);
 							var parentAction = this.__fileBrowser.getUserData("action");
 							if (parentAction != null) {
-								that.connect(parameterForm.getPlaceholder(), parentAction, file);
+								this.connect(parameterForm.getPlaceholder(), parentAction, file);
 							}
 						}
-						manager.add(parameterForm, stringValidator, parameter);
+						manager.add(parameterForm, this.__stringValidator, parameter);
 						break;
 					case "directory":
-						manager.add(parameterForm, stringValidator, parameter);
+						manager.add(parameterForm, this.__stringValidator, parameter);
 						break;
 					case "xmlcontent":
-						manager.add(parameterForm, dummyValidator, parameter);
+						manager.add(parameterForm, this.__dummyValidator, parameter);
 						break;
 					default :
 						alert("no validator implemented for type : "+parameterType);
@@ -560,13 +609,13 @@ qx.Class.define("desk.Action",
 
 					parameterForm.addListener("input", function(e) {
 						this.setInvalidMessage('');
-					},parameterForm);
+					}, parameterForm);
 				}
 			}
 
 			this.__updateUIParameters();
 
-			var executeBox = new qx.ui.container.Composite();
+			var executeBox = this.__controlsContainer = new qx.ui.container.Composite();
 			executeBox.setLayout(new qx.ui.layout.HBox(10));
 			this.add(executeBox);
 
