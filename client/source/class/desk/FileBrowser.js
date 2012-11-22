@@ -415,9 +415,10 @@ qx.Class.define("desk.FileBrowser",
 				baseName = baseName.substring(0, baseName.length - 3) + 'txt';
 				baseName = prompt('enter new file name : ', baseName);
 				if ( baseName !== null) {
+                    var self = this;
 					desk.FileSystem.writeFile( desk.FileSystem.getFileDirectory(file) + baseName,
 						'edit me',
-                        function () {this.__expandDirectoryListing(node.parentNodeId);
+                        function () {self.__expandDirectoryListing(node.parentNodeId);
                     });
 				}
 			}, this);
