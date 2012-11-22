@@ -361,6 +361,13 @@ qx.Class.define("desk.MPRContainer",
 			}, this);
 		},
 
+        /**
+		* adds a file into the viewer
+		* @param file {String} : file to load
+        * @param parameters {Object} : parameters (to document..)
+        * @param callback {Function} : callback when loaded
+        * @return {qx.ui.container.Composite} : volume item
+		*/
 		addVolume : function (file, parameters, callback) {
 			this.__file = file;
 			var _this=this;
