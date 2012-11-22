@@ -634,7 +634,7 @@ qx.Class.define("desk.Action",
 
 			executeBox.add( forceUpdateCheckBox );
 			executeBox.add( this.__executionStatus );
-			this.add(showLogButton, {flex : 1});
+			this.add(showLogButton);
 
 			// add a listener to the form manager for the validation complete
 			manager.addListener("complete", this.__afterValidation, this);
