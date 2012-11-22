@@ -140,11 +140,15 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		__reorderMeshes : function () {
-			var volumes=this.__volumes.getChildren();
-			for (var i=0;i<volumes.length;i++) {
-				var slices=volumes[i].getUserData("slices");
-				for (var j=0;j<slices.length;j++){
-					slices[j].setUserData("rank", i);
+			var volumes = this.__volumes.getChildren();
+			for (var i = 0; i < volumes.length; i++) {
+				var slices = volumes[i].getUserData("slices");
+				for (var j = 0; j < slices.length; j++){
+                    var slice = slices[j];
+                    // slice is sometimes null here, need to debug that
+					if (slice) {
+                        slice.setUserData("rank", i);
+					}
 				}
 			}
 			this.applyToViewers( function () {
@@ -454,6 +458,7 @@ qx.Class.define("desk.MPRContainer",
 						volumeSlices[myI]=volumeSlice;
 						numberOfRemainingMeshes--;
 						if ( numberOfRemainingMeshes === 0 ) {
+                            volumeListItem.setUserData('slices', volumeSlices);
 							_this.__reorderMeshes();
 							if (typeof callback === 'function') {
 								callback(_this, volumeSlices);

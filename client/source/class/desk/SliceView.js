@@ -335,11 +335,16 @@ qx.Class.define("desk.SliceView",
 		},
 
 		reorderMeshes : function () {
-			var slices=this.__slices;
-			var length=slices.length;
-			for (var i=0;i<length;i++) {
-				var rank=slices[i].getUserData("rank");			
-				this.__slices[i].getUserData("mesh").renderDepth=3+length-rank;
+			var slices = this.__slices;
+            var length = slices.length;
+			for (var i = 0; i < length; i++) {
+                var slice = slices[i];
+				var rank = slice.getUserData("rank");
+                var mesh = slice.getUserData("mesh");
+                if (mesh) {
+                    // the mesh may not exist if no slice has been loaded yet
+                    mesh.renderDepth = 3 + length - rank;
+                }
 			}
 
 			this.__drawingMesh.renderDepth=2;
@@ -819,19 +824,17 @@ qx.Class.define("desk.SliceView",
 				this.fireDataEvent("viewMouseDown",event);
 			}, this);
 
-			this.addListener("mouseout", function (event) {
-				if (qx.ui.core.Widget.contains(this, event.getRelatedTarget()))
-				{
-					return;
-				}
-				this.__rightContainer.setVisibility("hidden");
-				if (this.isPaintMode()||this.isEraseMode()) {
-					this.__brushMesh.visible=false;
-					this.render();
-				}
+			htmlContainer.addListener("mouseout", function (event) {
+                if (qx.ui.core.Widget.contains(this, event.getRelatedTarget())) {
+                    return;
+                }
+                this.__rightContainer.setVisibility("hidden");
+                if (this.isPaintMode() || this.isEraseMode()) {
+                    this.__brushMesh.visible = false;
+                    this.render();
+                }
 				this.fireDataEvent("viewMouseOut",event);
 			}, this);
-
 
 			htmlContainer.addListener("mousemove", function (event)	{
 				this.__rightContainer.setVisibility("visible");
