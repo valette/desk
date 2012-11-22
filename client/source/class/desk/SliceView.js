@@ -369,11 +369,18 @@ qx.Class.define("desk.SliceView",
 			vGeometry.vertices.push( new THREE.Vector3(0,coordinates[1],0) );
 			vGeometry.vertices.push( new THREE.Vector3(0,coordinates[5],0) );
 			var vline = new THREE.Line(vGeometry, material);
-			this.__getScene().add(vline);
+            var scene = this.__getScene();
+			scene.add(vline);
 
-			this.__crossMeshes=[];
-			this.__crossMeshes.push(hline);
-			this.__crossMeshes.push(vline);
+            var crossMeshes = this.__crossMeshes;
+            if (crossMeshes) {
+                for (var i = 0; i < crossMeshes.length; i++) {
+                    scene.remove(crossMeshes[i]);
+                }
+            }
+			this.__crossMeshes = crossMeshes = [];
+			crossMeshes.push(hline);
+			crossMeshes.push(vline);
 		},
 
 		__createBrushMesh : function (volumeSlice)
@@ -554,6 +561,8 @@ qx.Class.define("desk.SliceView",
 			});
 		},
 
+        __initialOrientationChangePerformed : false,
+
 		addVolume : function (file, parameters, callback) {
 			var volumeSlice = new desk.VolumeSlice(file, this.getOrientation(), parameters, sliceLoaded);
 			this.__slices.push(volumeSlice);
@@ -629,7 +638,10 @@ qx.Class.define("desk.SliceView",
 					{
 						case 0 :
 						case 1 :
-							_this.flipY();
+                            if (_this.__initialOrientationChangePerformed) {
+                                _this.flipY();
+                                _this.__initialOrientationChangePerformed = true;
+                            }
 							break;
 						default:
 							break;
