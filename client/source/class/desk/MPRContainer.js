@@ -686,8 +686,18 @@ qx.Class.define("desk.MPRContainer",
 			
 		},
 
+        removeAllVolumes : function () {
+            var volumes = this.__volumes.getChildren();
+            while (volumes.length) {
+                this.removeVolume(volumes[0]);
+            }
+        },
+
 		removeVolume : function (volumeListItem) {
 			var slices=volumeListItem.getUserData("slices");
+            if (!slices) {
+                return;
+            }
 			this.applyToViewers (function () {
 				this.removeVolumes(slices);
 			});

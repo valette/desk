@@ -123,6 +123,9 @@ qx.Class.define("desk.Action",
 		*/
 		setOutputDirectory : function (directory) {
 			this.__outputDirectory = directory;
+            if (!this.getOutputSubdirectory()) {
+                return;
+            }
 			desk.FileSystem.readFile(this.getOutputDirectory() + 'action.json',
 				function(request) {
                 if (request.getStatus() === 200 ) {

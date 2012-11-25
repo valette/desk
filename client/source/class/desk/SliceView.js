@@ -347,10 +347,16 @@ qx.Class.define("desk.SliceView",
                 }
 			}
 
-			this.__drawingMesh.renderDepth=2;
-			this.__crossMeshes[0].renderDepth=1;
-			this.__crossMeshes[1].renderDepth=1;
-			this.__brushMesh.renderDepth=0;
+			if (this.__drawingMesh) {
+                this.__drawingMesh.renderDepth=2;
+			}
+            if (this.__crossMeshes) {
+                this.__crossMeshes[0].renderDepth=1;
+                this.__crossMeshes[1].renderDepth=1;
+            }
+            if (this.__brushMesh) {
+                this.__brushMesh.renderDepth=0;
+            }
 		},
 
 		__createCrossMeshes : function (volumeSlice)
@@ -566,12 +572,16 @@ qx.Class.define("desk.SliceView",
 			});
 		},
 
-        __initialOrientationChangePerformed : false,
+        __initDone : false,
 
 		addVolume : function (file, parameters, callback) {
 			var volumeSlice = new desk.VolumeSlice(file, this.getOrientation(), parameters, sliceLoaded);
 			this.__slices.push(volumeSlice);
 			var _this = this;
+            var firstSlice = false;
+            if (_this.__slices.length === 1) {
+                firstSlice = true;
+            }
 
 			function sliceLoaded () {
 				var geometry = new THREE.Geometry();
@@ -594,7 +604,7 @@ qx.Class.define("desk.SliceView",
 
 				volumeSlice.setUserData("updateListener", listener);
 
-				if (_this.__slices.length == 1) {
+				if (firstSlice == 1) {
 					_this.__slider.setMaximum(volumeSlice.getNumberOfSlices() - 1);
 					if (volumeSlice.getNumberOfSlices() == 1) {
 						_this.__slider.setVisibility("hidden");
@@ -634,7 +644,7 @@ qx.Class.define("desk.SliceView",
 					this.setSlice(e.getData());
 				}, _this);
 
-				if (_this.__slices.length == 1) {
+				if (firstSlice) {
 					_this.__setDrawingMesh(volumeSlice);
 					_this.__createBrushMesh(volumeSlice);
 					_this.__createCrossMeshes(volumeSlice);
@@ -643,9 +653,9 @@ qx.Class.define("desk.SliceView",
 					{
 						case 0 :
 						case 1 :
-                            if (_this.__initialOrientationChangePerformed) {
+                            if (!_this.__initDone) {
                                 _this.flipY();
-                                _this.__initialOrientationChangePerformed = true;
+                                _this._initDone = true;
                             }
 							break;
 						default:
@@ -754,6 +764,9 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__setupInteractionEvents : function () {
+            if (this.__initDone) {
+                return;
+            }
 			var controls=this.__threeContainer.getControls();
 			var htmlContainer = this.__threeContainer;
 			//-1 : nothing
