@@ -521,10 +521,6 @@ qx.Class.define("desk.Action",
 			// create the form manager
 			var manager = new qx.ui.form.validation.Manager();
 			this.__validationManager = manager;
-			if (this.__standalone) {
-                this.__window.center();
-				this.__window.open();
-			}
 
 			var fileAlreadyPickedFromBrowser = false;
 
@@ -658,6 +654,11 @@ qx.Class.define("desk.Action",
 
 			// add a listener to the form manager for the validation complete
 			manager.addListener("complete", this.__afterValidation, this);
-		}
+
+            if (this.__standalone) {
+				this.__window.open();
+                this.__window.center();
+			}
+        }
 	}
 });
