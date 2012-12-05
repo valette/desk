@@ -100,6 +100,7 @@ qx.Class.define("desk.Uploader",
   		win.add(lst, {flex : 1});
   		win.add(btnCancel);
   		win.open();
+        win.center();
   		this.__window = win;
 	},
 	

@@ -60,6 +60,7 @@ qx.Class.define("desk.Actions",
 		scripts.push(threeURL + 'TrackballControls2.js');
 		scripts.push(threeURL + 'ctm/CTMLoader.js');
 		scripts.push(threeURL + 'MeshAnalyser.js');
+        scripts.push(baseURL + 'ext/async.min.js');
 		desk.FileSystem.includeScripts(scripts, function () {
 			this.__scriptsLoaded = true;
 			if (this.__actionsLoaded) {
@@ -91,7 +92,7 @@ qx.Class.define("desk.Actions",
 		__createOngoingActions : function () {
 			var list = new qx.ui.form.List();
 			list.setWidth(200);
-			var menu = new qx.ui.menu.Menu;
+			var menu = new qx.ui.menu.Menu();
 			var forceButton = new qx.ui.menu.CheckBox("Force Update");
 			forceButton.bind('value', this, 'forceUpdate');
 			this.bind('forceUpdate', forceButton, 'value');
@@ -193,7 +194,7 @@ qx.Class.define("desk.Actions",
 		},
 
 		__tryToLaunchActions : function () {
-			if ((this.__actionsQueue.length==0)||(this.__maximumNumberOfParallelActions==0)) {
+			if ((this.__actionsQueue.length === 0)||(this.__maximumNumberOfParallelActions === 0)) {
 				return;
 			}
 			this.__maximumNumberOfParallelActions--;
@@ -225,7 +226,7 @@ qx.Class.define("desk.Actions",
 			var actionNotification=null;
 			setTimeout(function(){
 				if (!actionFinished) {
-					actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
+					actionNotification = new qx.ui.basic.Label(actionParameters.action);
 					that.__ongoingActions.add(actionNotification);
 				}
 			}, 1230);
@@ -240,18 +241,17 @@ qx.Class.define("desk.Actions",
 			function onSuccess (e){
 				this.__maximumNumberOfParallelActions++;
 				this.__tryToLaunchActions();
+				actionFinished = true;
 				var response = JSON.parse(e.getTarget().getResponseText());
 				if (response.error) {
 					alert ("error for action " + actionParameters.action + ": \n" + response.error);
 				}
-				else {
-					actionFinished=true;
-					if (actionNotification!=null) {
-						this.__ongoingActions.remove(actionNotification);
-					}
-					if ( typeof callback === 'function') {
-							callback.call(context, response);
-					}
+				actionFinished=true;
+				if (actionNotification !== null) {
+					this.__ongoingActions.remove(actionNotification);
+				}
+				if ( typeof callback === 'function') {
+						callback.call(context, response);
 				}
 			}
 
@@ -279,16 +279,22 @@ qx.Class.define("desk.Actions",
 
 		__populateActionMenu : function()
 		{
-			this.__actionMenu = new qx.ui.menu.Menu;
+			this.__actionMenu = new qx.ui.menu.Menu();
 			desk.FileSystem.readFile('actions.json', function (request) {
 				var settings = JSON.parse(request.getResponseText());
 				this.__actions = settings;
-				this.__permissionsLevel = parseInt(settings.permissions);
+				this.__permissionsLevel = parseInt(settings.permissions, 10);
 
 				var actions = this.__actions.actions;
 				this.__actionsObject = actions;
 				var that = this;
 				var menus = [];
+
+               function launch(e){
+                    var action = new desk.Action(this.getLabel());
+					action.setOriginFileBrowser(that.__currentFileBrowser);
+					action.buildUI();
+				}
 
 				var actionsNames = Object.keys(actions);
 				for (var n = 0; n < actionsNames.length; n++)
@@ -305,11 +311,7 @@ qx.Class.define("desk.Actions",
 						this.__actionMenu.add(menubutton);
 					}
 					
-					button.addListener("execute", function (e){
-						var action = new desk.Action(this.getLabel());
-						action.setOriginFileBrowser(that.__currentFileBrowser);
-						action.buildUI();
-					},button);
+					button.addListener("execute", launch, button);
 					menu.add(button);
 				}
 				this.__actionsLoaded = true;

@@ -335,17 +335,28 @@ qx.Class.define("desk.SliceView",
 		},
 
 		reorderMeshes : function () {
-			var slices=this.__slices;
-			var length=slices.length;
-			for (var i=0;i<length;i++) {
-				var rank=slices[i].getUserData("rank");			
-				this.__slices[i].getUserData("mesh").renderDepth=3+length-rank;
+			var slices = this.__slices;
+            var length = slices.length;
+			for (var i = 0; i < length; i++) {
+                var slice = slices[i];
+				var rank = slice.getUserData("rank");
+                var mesh = slice.getUserData("mesh");
+                if (mesh) {
+                    // the mesh may not exist if no slice has been loaded yet
+                    mesh.renderDepth = 3 + length - rank;
+                }
 			}
 
-			this.__drawingMesh.renderDepth=2;
-			this.__crossMeshes[0].renderDepth=1;
-			this.__crossMeshes[1].renderDepth=1;
-			this.__brushMesh.renderDepth=0;
+			if (this.__drawingMesh) {
+                this.__drawingMesh.renderDepth=2;
+			}
+            if (this.__crossMeshes) {
+                this.__crossMeshes[0].renderDepth=1;
+                this.__crossMeshes[1].renderDepth=1;
+            }
+            if (this.__brushMesh) {
+                this.__brushMesh.renderDepth=0;
+            }
 		},
 
 		__createCrossMeshes : function (volumeSlice)
@@ -369,11 +380,18 @@ qx.Class.define("desk.SliceView",
 			vGeometry.vertices.push( new THREE.Vector3(0,coordinates[1],0) );
 			vGeometry.vertices.push( new THREE.Vector3(0,coordinates[5],0) );
 			var vline = new THREE.Line(vGeometry, material);
-			this.__getScene().add(vline);
+            var scene = this.__getScene();
+			scene.add(vline);
 
-			this.__crossMeshes=[];
-			this.__crossMeshes.push(hline);
-			this.__crossMeshes.push(vline);
+            var crossMeshes = this.__crossMeshes;
+            if (crossMeshes) {
+                for (var i = 0; i < crossMeshes.length; i++) {
+                    scene.remove(crossMeshes[i]);
+                }
+            }
+			this.__crossMeshes = crossMeshes = [];
+			crossMeshes.push(hline);
+			crossMeshes.push(vline);
 		},
 
 		__createBrushMesh : function (volumeSlice)
@@ -554,10 +572,16 @@ qx.Class.define("desk.SliceView",
 			});
 		},
 
+        __initDone : false,
+
 		addVolume : function (file, parameters, callback) {
 			var volumeSlice = new desk.VolumeSlice(file, this.getOrientation(), parameters, sliceLoaded);
 			this.__slices.push(volumeSlice);
 			var _this = this;
+            var firstSlice = false;
+            if (_this.__slices.length === 1) {
+                firstSlice = true;
+            }
 
 			function sliceLoaded () {
 				var geometry = new THREE.Geometry();
@@ -580,7 +604,7 @@ qx.Class.define("desk.SliceView",
 
 				volumeSlice.setUserData("updateListener", listener);
 
-				if (_this.__slices.length == 1) {
+				if (firstSlice == 1) {
 					_this.__slider.setMaximum(volumeSlice.getNumberOfSlices() - 1);
 					if (volumeSlice.getNumberOfSlices() == 1) {
 						_this.__slider.setVisibility("hidden");
@@ -620,22 +644,25 @@ qx.Class.define("desk.SliceView",
 					this.setSlice(e.getData());
 				}, _this);
 
-				if (_this.__slices.length == 1) {
+				if (firstSlice) {
 					_this.__setDrawingMesh(volumeSlice);
 					_this.__createBrushMesh(volumeSlice);
 					_this.__createCrossMeshes(volumeSlice);
-
-					switch (_this.getOrientation())
-					{
-						case 0 :
-							_this.flipY();
-							break;
-						case 1 :
-							_this.flipX();
-							_this.flipY();
-							break;
-						default:
-							break;
+					
+					if (!_this.__initDone) {
+						switch (_this.getOrientation())
+						{
+							case 0 :
+								_this.flipY();
+								break;
+							case 1 :
+								_this.flipX();
+								_this.flipY();
+								break;
+							default:
+								break;
+						}
+						_this.__initDone = true;
 					}
 
 					var dimensions = volumeSlice.getDimensions();
@@ -740,6 +767,9 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__setupInteractionEvents : function () {
+            if (this.__initDone) {
+                return;
+            }
 			var controls=this.__threeContainer.getControls();
 			var htmlContainer = this.__threeContainer;
 			//-1 : nothing
@@ -810,19 +840,17 @@ qx.Class.define("desk.SliceView",
 				this.fireDataEvent("viewMouseDown",event);
 			}, this);
 
-			this.addListener("mouseout", function (event) {
-				if (qx.ui.core.Widget.contains(this, event.getRelatedTarget()))
-				{
-					return;
-				}
-				this.__rightContainer.setVisibility("hidden");
-				if (this.isPaintMode()||this.isEraseMode()) {
-					this.__brushMesh.visible=false;
-					this.render();
-				}
+			htmlContainer.addListener("mouseout", function (event) {
+                if (qx.ui.core.Widget.contains(this, event.getRelatedTarget())) {
+                    return;
+                }
+                this.__rightContainer.setVisibility("hidden");
+                if (this.isPaintMode() || this.isEraseMode()) {
+                    this.__brushMesh.visible = false;
+                    this.render();
+                }
 				this.fireDataEvent("viewMouseOut",event);
 			}, this);
-
 
 			htmlContainer.addListener("mousemove", function (event)	{
 				this.__rightContainer.setVisibility("visible");

@@ -98,12 +98,16 @@ qx.Class.define("desk.demo.Application",
 
 						var dataDirs = actions.getSettings().dataDirs;
 						var dirs = Object.keys(dataDirs);
+                        dirs.sort();
 						for (var i = 0; i != dirs.length; i++) {
 							var dir = dirs[i];
 							var button = new qx.ui.menu.Button(dir);
 							button.addListener("execute", openFileBrowser);
 							menu.add(button);
 						}
+						var button2 = new qx.ui.menu.Button('console output');
+						button2.addListener("execute", function () {new desk.Console();});
+						menu.add(button2);
 						var myDesk = new desk.FileBrowser(getParameter("rootDir"));
 					});
 				}
