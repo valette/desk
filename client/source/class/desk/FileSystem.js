@@ -338,8 +338,9 @@ qx.Class.define("desk.FileSystem",
 
 				desk.Actions.getInstance().launchAction({
 					"action" : "add_subdirectory",
-					"subdirectory_name" : subdir,
-					"output_directory" : file.substring(0,lastSlash)},
+					"subdirectory_name" : file.substring(0,lastSlash) + "/" + subdir},
+					//~ "subdirectory_name" : subdir,
+					//~ "output_directory" : file.substring(0,lastSlash)},
 					function () {
 						callback(newSessionId);
 				});

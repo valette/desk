@@ -177,10 +177,6 @@ qx.Class.define("desk.MeshViewer",
 			return meshes;
 		},
 		
-		viewAll : function () {
-			this.__threeCanvas.viewAll();
-		},
-
 		addMesh : function (mesh) {
 			this.__threeCanvas.getScene().add(mesh);
 		},

@@ -350,8 +350,9 @@ qx.Class.define("desk.Action",
 						else {
 							desk.Actions.getInstance().launchAction({
 								"action" : "add_subdirectory",
-								"subdirectory_name" : this.getOutputSubdirectory(),
-								"output_directory" : this.__outputDirectory}, launchAction, that);
+								"subdirectory_name" : this.__outputDirectory + "/" + this.getOutputSubdirectory()}, launchAction, that);
+								//~ "subdirectory_name" : this.getOutputSubdirectory(),
+								//~ "output_directory" : this.__outputDirectory}, launchAction, that);
 						}
 					}
 				}

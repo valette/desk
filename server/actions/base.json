@@ -98,7 +98,7 @@
 		    "attributes":
 		    {
 		        "command":"mkdir",
-		        "voidAction" : "true"
+		        "voidAction": "true"
 		    }
 		},
 		"delete_directory" :{

@@ -228,7 +228,7 @@ qx.Class.define("desk.Actions",
 					actionNotification=new qx.ui.basic.Label(actionParameters["action"]);
 					that.__ongoingActions.add(actionNotification);
 				}
-			}, 3000);
+			}, 1230);
 			
 			var req = new qx.io.request.Xhr();
 

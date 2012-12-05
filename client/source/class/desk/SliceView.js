@@ -628,7 +628,10 @@ qx.Class.define("desk.SliceView",
 					switch (_this.getOrientation())
 					{
 						case 0 :
+							_this.flipY();
+							break;
 						case 1 :
+							_this.flipX();
 							_this.flipY();
 							break;
 						default:
