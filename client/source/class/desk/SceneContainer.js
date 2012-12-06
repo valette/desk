@@ -416,7 +416,7 @@ qx.Class.define("desk.SceneContainer",
 			material.transparent = false;
 			var mesh = new THREE.Mesh(geometry,material);
 			material.side = THREE.DoubleSide;
-            this.addMesh(mesh, {label : ''+volumeSlice.getOrientation(),
+            this.addMesh(mesh, {label : 'View ' + (volumeSlice.getOrientation()+1),
                 volumeSlice : volumeSlice
             });
 
@@ -956,7 +956,44 @@ qx.Class.define("desk.SceneContainer",
 					this.__animator.addObject(this.__getMeshFromNode(node), node.label);
 				}
 			},this);
-			menu.add(animateButton);			
+			menu.add(animateButton);
+			
+		//// Remove all menu buttons but the "show" and "hide" buttons for the volumeSlices
+			menu.addListener("appear", function()
+			{
+				var selNode = this.__meshesTree.getSelectedNodes()[0];
+				var leaf = this.__meshesTree.nodeGet(selNode);
+				if (leaf) {
+					if (leaf.__parameters) {
+						if(leaf.__parameters.volumeSlice)
+						{
+							menu.remove(propertiesButton);
+							menu.remove(appearanceButton);
+							menu.remove(removeButton);
+							menu.remove(analysisButton);
+							menu.remove(animateButton);
+						}
+						else
+							return null;
+					}
+					else
+						return null;
+				} else {
+					return null;
+				}
+			}, this);
+		//// Restore all the menu buttons
+			menu.addListener("disappear", function()
+			{
+				menu.add(propertiesButton);
+				menu.add(appearanceButton);
+				menu.add(showButton);
+				menu.add(hideButton);
+				menu.add(removeButton);
+				menu.add(analysisButton);
+				menu.add(animateButton);
+			});
+			
 			return menu;
 		}
 	}

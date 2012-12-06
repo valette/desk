@@ -1057,45 +1057,52 @@ qx.Class.define("desk.SegTools",
 				this.setUserData("previousSlice", this.getSlice());
 			});
 
-			desk.FileSystem.readFile( this.getSessionDirectory() + '/seeds.xml', function(request) {
-				var response = request.getResponse();
-				var _this = this;
-				for (var k = 0; k < 2; k++) {
-					var slices;
-					if (k == 0) {
-						slices = response.getElementsByTagName("seed");
-					}
-					else {
-						slices = response.getElementsByTagName("correction");
-					}
+			var _this = this;
+			desk.FileSystem.exists(this.getSessionDirectory()+'/seeds.xml', function (exists) {
+				if (exists) {
+					desk.FileSystem.readFile( _this.getSessionDirectory() + '/seeds.xml', function(request) {
+						var response = request.getResponse();
+						//~ var _this = this;
+						for (var k = 0; k < 2; k++) {
+							var slices;
+							if (k == 0) {
+								slices = response.getElementsByTagName("seed");
+							}
+							else {
+								slices = response.getElementsByTagName("correction");
+							}
 
-					for(var j = 0; j < slices.length; j++) {
-						var sliceId = parseInt(slices[j].getAttribute("slice"),10);
-						var sliceOrientation;
-						if (slices[j].hasAttribute("orientation")){
-							sliceOrientation = parseInt(slices[j].getAttribute("orientation"),10);
+							for(var j = 0; j < slices.length; j++) {
+								var sliceId = parseInt(slices[j].getAttribute("slice"),10);
+								var sliceOrientation;
+								if (slices[j].hasAttribute("orientation")){
+									sliceOrientation = parseInt(slices[j].getAttribute("orientation"),10);
+								}
+								else {
+									sliceOrientation = 0;
+								}
+								master.applyToViewers ( function () {
+									if(sliceOrientation == this.getOrientation())
+										_this.__addNewSeedItemToList(this, sliceId, k);
+								});
+							}
+							master.applyToViewers( function () {
+									_this.__reloadSeedImage( this );
+							});
+						}
+						var colors = response.getElementsByTagName("color");
+						var adjacencies = response.getElementsByTagName("adjacency");
+						if (colors.length > 0) {
+							_this.__setColorsFromElements(colors, adjacencies);
 						}
 						else {
-							sliceOrientation = 0;
+							_this.__loadColors();
 						}
-						master.applyToViewers ( function () {
-							if(sliceOrientation == this.getOrientation())
-								_this.__addNewSeedItemToList(this, sliceId, k);
-						});
-					}
-					master.applyToViewers( function () {
-							_this.__reloadSeedImage( this );
-					});
+					}, _this);
 				}
-				var colors = response.getElementsByTagName("color");
-				var adjacencies = response.getElementsByTagName("adjacency");
-				if (colors.length > 0) {
-					this.__setColorsFromElements(colors, adjacencies);
-				}
-				else {
-					this.__loadColors();
-				}
-			}, this);
+				else
+					_this.__loadColors();
+			});
 		},
 
 		__getSessionsWidget : function()

@@ -69,6 +69,7 @@ qx.Class.define("desk.MPRContainer",
 
 
 	events : {
+		"switchFullScreen" : "qx.event.type.Data",
 		"removeVolume" : "qx.event.type.Data"
 	},
 
@@ -355,23 +356,30 @@ qx.Class.define("desk.MPRContainer",
 			this.__orientationContainer.add(sliceView.getReorientationContainer(this.__orientationButtonGroup), {row: r, column: c});
 			sliceView.setUserData( "positionInGrid", { row :r , column :c } );
 
-			var fullscreenButton = new qx.ui.form.Button("+").set( { opacity: 0.5 } );
+			sliceView.addListener("mouseover", function(){ sliceView.setUserData("thisViewON", true); });
+			sliceView.addListener("mouseout", function(){ sliceView.setUserData("thisViewON", false); });
+			var fullscreenCommand = new qx.ui.core.Command("Ctrl+P");
+			var fullscreenButton = new qx.ui.form.Button("+", null, fullscreenCommand).set( { opacity: 0.5 } );
 			sliceView.getRightContainer().add(fullscreenButton);
 			fullscreenButton.addListener("execute", function () {
-				if (!fullscreen) {
-					fullscreenButton.setLabel("-");
-					this.__gridContainer.setVisibility("excluded");
-					this.__fullscreenContainer.add(sliceView, {flex : 1});
-					this.__fullscreenContainer.setVisibility("visible");
-					fullscreen=true;
-				} else {
-					fullscreenButton.setLabel("+");
-					this.__fullscreenContainer.setVisibility("excluded");
-					fullscreen=false;
-					this.__fullscreenContainer.remove(sliceView);
-					this.__gridContainer.add(sliceView, sliceView.getUserData("positionInGrid"));
-					this.__gridContainer.setVisibility("visible");
-				}
+					if (!fullscreen) {
+						if(sliceView.getUserData("thisViewON")) {
+							fullscreenButton.setLabel("-");
+							this.__gridContainer.setVisibility("excluded");
+							this.__fullscreenContainer.add(sliceView, {flex : 1});
+							this.__fullscreenContainer.setVisibility("visible");
+							fullscreen=true;
+							this.fireDataEvent("switchFullScreen", true);
+						}
+					} else {
+						fullscreenButton.setLabel("+");
+						this.__fullscreenContainer.setVisibility("excluded");
+						fullscreen=false;
+						this.__fullscreenContainer.remove(sliceView);
+						this.__gridContainer.add(sliceView, sliceView.getUserData("positionInGrid"));
+						this.__gridContainer.setVisibility("visible");
+						this.fireDataEvent("switchFullScreen", false);
+					}
 			}, this);
 		},
 
