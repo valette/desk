@@ -4,7 +4,8 @@ qx.Class.define("desk.VolumeViewer",
 
     construct : function(file, parameters, callback)
 	{
-        this.base(arguments);
+        //~ this.base(arguments);
+        this.base(arguments, file, parameters, callback);
 		parameters = parameters || {};
 
         // Enable logging in debug variant
@@ -38,9 +39,10 @@ qx.Class.define("desk.VolumeViewer",
 		myWindow.center();
 
 		if (file) {
-			this.addVolume(file, parameters, callback);
+			//~ this.addVolume(file, parameters, callback);
 			myWindow.setCaption(file);
 		}
+
 		return (this);
 	}
 });

@@ -47,6 +47,13 @@ qx.Class.define("desk.MeshViewer",
         
         getWindow : function () {
             return this.__window;
-        }
+        },
+        
+		getMainPane : function()
+		{
+			this.__window.exclude();
+			return this;
+		}
+		
 	}
 });

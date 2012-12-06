@@ -387,8 +387,7 @@ qx.Class.define("desk.Action",
 										desk.Actions.getInstance().launchAction({
 											"action" : "add_subdirectory",
 											"subdirectory_name" : that.getOutputSubdirectory(),
-											//~ "subdirectory_name" : this.__outputDirectory + "/" + this.getOutputSubdirectory(),
-											"output_directory" : that.__outputDirectory}, launchAction, that);								
+											"output_directory" : that.__outputDirectory}, launchAction, that);
 									} else {
 										launchAction();
 									}

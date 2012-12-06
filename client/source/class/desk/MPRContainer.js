@@ -49,7 +49,7 @@ qx.Class.define("desk.MPRContainer",
 		this.__fullscreenContainer=fullscreenContainer;
 		fullscreenContainer.setVisibility("excluded");
 
-        if (parameters.standalone === false) {
+        if (parameters.standAlone == false) {
             this.__standalone = false;
         }
 
@@ -161,9 +161,7 @@ qx.Class.define("desk.MPRContainer",
             var scroll = this.__volumesScroll  = new qx.ui.container.Scroll();
             var container = new qx.ui.container.Composite();
 			container.setLayout(new qx.ui.layout.VBox(5));
-            if (this.__standalone) {
-                container.add( this.__getToolBar() );
-            }
+            container.add( this.__getToolBar() );
 			var volumes = this.__volumes = new qx.ui.container.Composite();
 			volumes.setLayout(new qx.ui.layout.VBox(1));
 			var volumesGridCoor = this.__windowsInGridCoord.volList;
@@ -173,7 +171,9 @@ qx.Class.define("desk.MPRContainer",
             }, this);
             container.add(volumes);
             scroll.add(container);
-			this.__gridContainer.add(scroll, {row: volumesGridCoor.r, column: volumesGridCoor.c});
+            if (this.__standalone) {
+				this.__gridContainer.add(scroll, {row: volumesGridCoor.r, column: volumesGridCoor.c});
+            }
 		},
 
 		__addViewers : function () {

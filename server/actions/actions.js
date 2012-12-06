@@ -534,7 +534,7 @@ exports.performAction = function (POST, callback) {
 		var startTime=new Date().getTime();
 
 		var writeJSON = false;
-		var commandOptions = { cwd: filesRoot , maxBuffer: 1024*1024};
+		var commandOptions = { cwd: filesRoot , maxBuffer: 1080*1920};
 		if ((action.attributes.voidAction !== "true" ||
 				action.attributes.noCache === "true")) {
 			commandOptions.cwd += outputDirectory;
