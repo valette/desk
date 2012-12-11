@@ -1126,7 +1126,7 @@ qx.Class.define("desk.SegTools",
 			//~ sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});  // commented for oneFitAppli
 
 			var updateInProgress = false;
-
+			var loadedSessions = [];
 			function updateList(sessionIdToSelect) {
 				updateInProgress = true;
 				function buildSessionsItems (sessions)
@@ -1160,6 +1160,14 @@ qx.Class.define("desk.SegTools",
 					else
 						sessionsList.setSelection([dummyItem]);					
 					updateInProgress=false;
+					var sLength = sessions.length;
+					for(var i=0; i<sLength; i++)
+						loadedSessions[i] = sessions[i];
+					if(sLength==0)
+						cpSessCheckBox.setEnabled(false);
+					else
+						cpSessCheckBox.setEnabled(true);
+					checkCPsession();
 				};
 
 				fileSystem.getFileSessions(volFile, sessionType, buildSessionsItems);
@@ -1186,7 +1194,53 @@ qx.Class.define("desk.SegTools",
 				}, this);
 
 			updateList();
-			return sessionsListContainer;
+			
+			
+			var sessionOptionsContainer = new qx.ui.container.Composite( new qx.ui.layout.HBox(4) );
+			var cpSessCheckBox = new qx.ui.form.CheckBox("Copy from session : ");
+			cpSessCheckBox.addListener( "changeValue", function (event) { forCpSessList.setEnabled(event.getData()); });
+			function checkCPsession()
+			{
+				if(cpSessCheckBox.getValue()&&(typeof srcSession == "string"))
+				{
+					var cpFromSessParamMap = {
+												"action" : "copy",
+												"source" : srcSession + "/*" ,
+												"destination" : tools.getSessionDirectory()
+											};
+					desk.Actions.getInstance().launchAction( cpFromSessParamMap, tools.loadSession, tools);
+				}
+				updateCPList();
+			}
+			cpSessCheckBox.setEnabled(false);
+			sessionOptionsContainer.add(cpSessCheckBox);
+			var forCpSessList = new qx.ui.form.SelectBox();
+			var srcSession;
+			forCpSessList.addListener("changeSelection", function()
+			{
+				var listItem = forCpSessList.getSelection()[0];
+				if(listItem!=null)
+					srcSession = fileSystem.getSessionDirectory(volFile, sessionType, listItem.getLabel());
+			});
+			function updateCPList()
+			{
+				forCpSessList.removeAll();
+				for (var i=0; i<loadedSessions.length; i++)
+				{
+					var sessionId = loadedSessions[i];
+					var sessionItem = new qx.ui.form.ListItem(""+sessionId);
+					forCpSessList.add(sessionItem);
+				}
+			}
+			forCpSessList.setEnabled(false);
+			forCpSessList.setMaxWidth(sessionsList.getWidth());
+			sessionOptionsContainer.add(forCpSessList);
+			
+			var sessionToolsContainer = new qx.ui.container.Composite( new qx.ui.layout.VBox() );
+			sessionToolsContainer.add(sessionsListContainer);
+			sessionToolsContainer.add(sessionOptionsContainer);
+			
+			return sessionToolsContainer;
 		},
 
 		__saveCurrentSeeds : function(callback) {

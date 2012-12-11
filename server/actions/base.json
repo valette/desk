@@ -27,7 +27,8 @@
 		    ],
 		    "attributes":
 		    {
-		        "command":"zip"
+		        "command":"zip",
+		        "voidAction":"true"
 		    }
 		},
 		"pwd" : {
@@ -139,7 +140,7 @@
 		    "parameters":[
 				{
 					"name":"source",
-					"type":"file",
+					"type":"string",
 					"required":"true"
 				},
 				{
