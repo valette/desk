@@ -58,6 +58,7 @@ qx.Class.define("desk.SliceView",
 
 	properties : {
 		slice : { init : 0, check: "Number", event : "changeSlice"},
+		viewOn : { init : false, check: "Boolean", event : "changeViewOn"},
 		paintOpacity : { init : 1, check: "Number", event : "changePaintOpacity"},
 		orientation : { init : -1, check: "Number", event : "changeOrientation"},
 		orientPlane : { init : "", check: "String", event : "changeOrientPlane"},
@@ -1161,18 +1162,50 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__undoData : null,
+		__redoData : null,
+		__doingIndex : null,
 
 		__initUndo : function () {
 			this.__undoData=[];
-			this.addListener("keypress", function (event) {
-				if (event.getKeyIdentifier()=="Backspace") {
+			this.__redoData=[];
+			this.__doingIndex = 0;
+			var undoCommand = new qx.ui.core.Command("Ctrl+Z");
+			undoCommand.addListener("execute", function (event) {
+				if(this.getViewOn()==true) {
 					var undoData=this.__undoData;
-					if (undoData.length>0) {
+					if ((0<undoData.length)&&(-1<this.__doingIndex)) {
+						var doingIndex = this.__doingIndex;
+						if(doingIndex==undoData.length-1)
+							this.__saveDrawingToUndoStack();
 						var canvas=this.__drawingCanvas;
 						var context=canvas.getContext2d();
+						var image = canvas.getContext2d().getImageData(0,0,canvas.getWidth(), canvas.getHeight());
 						context.clearRect(0,0,canvas.getCanvasWidth(),canvas.getCanvasHeight());
-						context.putImageData(undoData.pop(), 0, 0);
+						var currData = undoData[doingIndex];
+						context.putImageData(currData, 0, 0);
+						this.__doingIndex = doingIndex-1;
 						this.fireEvent("changeDrawing");
+					}
+				}
+			}, this);
+			var redoCommand = new qx.ui.core.Command("Ctrl+Y");
+			redoCommand.addListener("execute", function (event) {
+				if(this.getViewOn()==true) {
+					var undoData=this.__undoData;
+					if(0<undoData.length) {
+						this.__doingIndex++;
+						if (this.__doingIndex+1<undoData.length) {
+							var canvas=this.__drawingCanvas;
+							var context=canvas.getContext2d();
+							context.clearRect(0,0,canvas.getCanvasWidth(),canvas.getCanvasHeight());
+							var currData = undoData[this.__doingIndex+1];
+							context.putImageData(currData, 0, 0);
+							if(this.__doingIndex==undoData.length-1)
+								undoData.pop();
+							this.fireEvent("changeDrawing");
+						}
+						else
+							this.__doingIndex--;
 					}
 				}
 			}, this);
@@ -1189,6 +1222,10 @@ qx.Class.define("desk.SliceView",
 				undoData.shift();
 			}
 			undoData.push(image);
+			var redos2Discard = undoData.length-2 - this.__doingIndex; // -1 because it is about idexes, -1 to have the length before the saving
+			for(var i=0; i<redos2Discard; i++) // discard unused redo data
+				undoData.pop();
+			this.__doingIndex = undoData.length-1;
 		}
 	}
 });

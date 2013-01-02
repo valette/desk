@@ -931,7 +931,7 @@ qx.Class.define("desk.SceneContainer",
 				for (var i=0;i<meshes.length;i++) {
 					if (meshes[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 						var meshId=meshes[i].nodeId;
-						var mesh=this.__meshes[meshId];
+						var mesh=this.getMeshes()[meshId];
 						
 						var meshTools = new desk.MeshTools( {meshViewer:this, specMesh:mesh} );
 						

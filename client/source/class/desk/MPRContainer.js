@@ -356,14 +356,18 @@ qx.Class.define("desk.MPRContainer",
 			this.__orientationContainer.add(sliceView.getReorientationContainer(this.__orientationButtonGroup), {row: r, column: c});
 			sliceView.setUserData( "positionInGrid", { row :r , column :c } );
 
-			sliceView.addListener("mouseover", function(){ sliceView.setUserData("thisViewON", true); });
-			sliceView.addListener("mouseout", function(){ sliceView.setUserData("thisViewON", false); });
+			// sliceView.addListener("mouseover", function(){ sliceView.setUserData("thisViewON", true); });
+			// sliceView.addListener("mouseout", function(){ sliceView.setUserData("thisViewON", false); });
+			// sliceView.setUserData("thisViewON", false);
+			sliceView.addListener("mouseover", function(){ sliceView.setViewOn(true); });
+			sliceView.addListener("mouseout", function(){ sliceView.setViewOn(false); });
 			var fullscreenCommand = new qx.ui.core.Command("Ctrl+P");
 			var fullscreenButton = new qx.ui.form.Button("+", null, fullscreenCommand).set( { opacity: 0.5 } );
 			sliceView.getRightContainer().add(fullscreenButton);
 			fullscreenButton.addListener("execute", function () {
 					if (!fullscreen) {
-						if(sliceView.getUserData("thisViewON")) {
+						// if(sliceView.getUserData("thisViewON")==true) {
+						if(sliceView.getViewOn()==true) {
 							fullscreenButton.setLabel("-");
 							this.__gridContainer.setVisibility("excluded");
 							this.__fullscreenContainer.add(sliceView, {flex : 1});

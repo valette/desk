@@ -1115,7 +1115,6 @@ qx.Class.define("desk.SegTools",
 			sessionsListLayout.setSpacing(4);
 			var sessionsListContainer = new qx.ui.container.Composite(sessionsListLayout);
 			var sessionsListLabel = new qx.ui.basic.Label("Sessions : ");
-			//~ sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5}); // commented for oneFitAppli
 			sessionsListContainer.add(sessionsListLabel);
 			var button = new qx.ui.form.Button("new session");
 			sessionsListContainer.add(button);
@@ -1123,10 +1122,10 @@ qx.Class.define("desk.SegTools",
 			var sessionType = "gcSegmentation";
 			var sessionsList = new qx.ui.form.SelectBox();
 			sessionsListContainer.add(sessionsList);
-			//~ sessionsListContainer.add(new qx.ui.core.Spacer(), {flex: 5});  // commented for oneFitAppli
 
 			var updateInProgress = false;
 			var loadedSessions = [];
+			var dummyItem;
 			function updateList(sessionIdToSelect) {
 				updateInProgress = true;
 				function buildSessionsItems (sessions)
@@ -1144,7 +1143,7 @@ qx.Class.define("desk.SegTools",
 
 					if (sessionIdToSelect == null)
 					{
-						var dummyItem = new qx.ui.form.ListItem("select a session");
+						dummyItem = new qx.ui.form.ListItem("select a session");
 						sessionsList.add(dummyItem);
 						dummyItem.setUserData("dummy",true);
 					}
@@ -1158,15 +1157,26 @@ qx.Class.define("desk.SegTools",
 						tools.__loadColors();
 					}
 					else
-						sessionsList.setSelection([dummyItem]);					
+					{
+						if(sessionsList.indexOf(dummyItem)!=-1)
+							sessionsList.setSelection([dummyItem]);
+					}
 					updateInProgress=false;
 					var sLength = sessions.length;
 					for(var i=0; i<sLength; i++)
 						loadedSessions[i] = sessions[i];
-					if(sLength==0)
+					if(sLength<1)
+					{
+						sessionsList.setEnabled(false);
 						cpSessCheckBox.setEnabled(false);
+						rmSessCheckBox.setEnabled(false);
+					}
 					else
+					{
+						sessionsList.setEnabled(true);
 						cpSessCheckBox.setEnabled(true);
+						rmSessCheckBox.setEnabled(true);
+					}
 					checkCPsession();
 				};
 
@@ -1183,7 +1193,10 @@ qx.Class.define("desk.SegTools",
 						tools.__tabView.setVisibility("visible");
 						tools.setSessionDirectory(fileSystem.getSessionDirectory(
 							volFile,sessionType,listItem.getLabel()));
-						tools.loadSession();
+						if(rmSessCheckBox.getValue())
+							checkRmsession();
+						else
+							tools.loadSession();
 					}
 					sessionsList.close();
 				}
@@ -1196,24 +1209,38 @@ qx.Class.define("desk.SegTools",
 			updateList();
 			
 			
-			var sessionOptionsContainer = new qx.ui.container.Composite( new qx.ui.layout.HBox(4) );
+			var sessionCopyContainer = new qx.ui.container.Composite( new qx.ui.layout.HBox(4) );
 			var cpSessCheckBox = new qx.ui.form.CheckBox("Copy from session : ");
-			cpSessCheckBox.addListener( "changeValue", function (event) { forCpSessList.setEnabled(event.getData()); });
+			cpSessCheckBox.addListener( "changeValue", function (event)
+			{
+				var cpSChBoxValue = event.getData();
+				if(cpSChBoxValue==true)
+				{
+					rmSessCheckBox.setValue(false);
+					rmSessCheckBox.setUserData("oldEnabled", rmSessCheckBox.getEnabled());
+					rmSessCheckBox.setEnabled(false);
+				}
+				else
+					rmSessCheckBox.setEnabled(rmSessCheckBox.getUserData("oldEnabled"));
+				forCpSessList.setEnabled(cpSChBoxValue);
+				sessionsList.setEnabled(!cpSChBoxValue);
+			});
 			function checkCPsession()
 			{
 				if(cpSessCheckBox.getValue()&&(typeof srcSession == "string"))
 				{
 					var cpFromSessParamMap = {
 												"action" : "copy",
-												"source" : srcSession + "/*" ,
+												"source" : srcSession + "/*",
 												"destination" : tools.getSessionDirectory()
 											};
 					desk.Actions.getInstance().launchAction( cpFromSessParamMap, tools.loadSession, tools);
+					cpSessCheckBox.setValue(false);
 				}
 				updateCPList();
 			}
 			cpSessCheckBox.setEnabled(false);
-			sessionOptionsContainer.add(cpSessCheckBox);
+			sessionCopyContainer.add(cpSessCheckBox);
 			var forCpSessList = new qx.ui.form.SelectBox();
 			var srcSession;
 			forCpSessList.addListener("changeSelection", function()
@@ -1234,7 +1261,52 @@ qx.Class.define("desk.SegTools",
 			}
 			forCpSessList.setEnabled(false);
 			forCpSessList.setMaxWidth(sessionsList.getWidth());
-			sessionOptionsContainer.add(forCpSessList);
+			sessionCopyContainer.add(forCpSessList);
+			var rmSessCheckBox = new qx.ui.form.CheckBox("Remove session");
+			rmSessCheckBox.addListener( "changeValue", function (event)
+			{
+				var rmSChBoxValue = event.getData();
+				if(rmSChBoxValue==true)
+				{
+					cpSessCheckBox.setValue(false);
+					cpSessCheckBox.setUserData("oldEnabled", cpSessCheckBox.getEnabled());
+					cpSessCheckBox.setEnabled(false);
+					rmSessCheckBox.setUserData("currSel", sessionsList.getSelection()[0]);
+				}
+				else
+					cpSessCheckBox.setEnabled(cpSessCheckBox.getUserData("oldEnabled"));
+				button.setEnabled(!rmSChBoxValue);
+			});
+			function checkRmsession()
+			{
+				if(rmSessCheckBox.getValue()&&(typeof tools.getSessionDirectory() == "string"))
+				{
+					var sessionDirectory = tools.getSessionDirectory();
+					var beforeExtension = sessionDirectory.lastIndexOf(".");
+					var sessionId = sessionDirectory.substring(beforeExtension+1);
+					var confirmed = confirm('<!> Remove session "' + sessionId + '" ?');
+					if(confirmed)
+					{
+						var rmSessParamMap = {
+													"action" : "delete_directory",
+													"directory" : sessionDirectory
+												};
+						desk.Actions.getInstance().launchAction( rmSessParamMap, function()
+						{
+							var toSelect = rmSessCheckBox.getUserData("currSel");
+							if(sessionsList.indexOf(toSelect)!=-1)
+								updateList(toSelect.getLabel());
+							else
+								updateList();
+						}, tools);
+						rmSessCheckBox.setValue(false);
+					}
+				}
+			}
+			rmSessCheckBox.setEnabled(false);
+			var sessionOptionsContainer = new qx.ui.container.Composite( new qx.ui.layout.VBox(2) );
+			sessionOptionsContainer.add(sessionCopyContainer);
+			sessionOptionsContainer.add(rmSessCheckBox);
 			
 			var sessionToolsContainer = new qx.ui.container.Composite( new qx.ui.layout.VBox() );
 			sessionToolsContainer.add(sessionsListContainer);
@@ -1360,9 +1432,12 @@ qx.Class.define("desk.SegTools",
 
 			var xmlContent = '\n';
 			var colors="";
-			for(var i=0; i<this.__labels.length; i++)
+			var lColors = this.__labels;
+			var lColorsNb = lColors.length;
+			
+			for(var i=0; i<lColorsNb; i++)
 			{
-				var labelColor=this.__labels[i];
+				var labelColor = lColors[i];
 				var meshColor=labelColor.meshRed/255+" "+
 								labelColor.meshGreen/255+" "+
 								labelColor.meshBlue/255+" "+
@@ -1379,11 +1454,10 @@ qx.Class.define("desk.SegTools",
 
 			var adjacencies="\n";
 			var adjArray=[];
-			var labelColors=this.__labels;
-			for(var i=0; i<labelColors.length; i++)
+			for(var i=0; i<lColorsNb; i++)
 			{
-				var label1=labelColors[i].label;
-				var adj=labelColors[i].adjacencies;
+				var label1=lColors[i].label;
+				var adj=lColors[i].adjacencies;
 				for (var j=0;j<adj.length;j++) {
 					var label2=adj[j].label;
 					var found=false;
