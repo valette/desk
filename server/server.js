@@ -89,6 +89,7 @@ if (fs.existsSync(serverPath + 'default')) {
 	console.log('serving custom default folder');
 	app.use(homeURL ,express.static(serverPath + 'default'));
 } else {
+	console.log('serving default folder demo/default/release/');
 	app.use(homeURL ,express.static(serverPath + 'demo/default/release/'));
 }
 

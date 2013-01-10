@@ -233,12 +233,19 @@ exports.update = function (callback) {
 				if (source === key) {
 					fs.mkdirSync(dir);
 					console.log('directory ' + dir + ' created');
+					directories.push(fs.realpathSync(dir));
 				} else {
-					fs.symlinkSync(source, dir, 'dir');
-					console.log('directory ' + dir + ' created as a symlink to ' + source);
+					if (fs.existsSync(source)) {
+						fs.symlinkSync(source, dir, 'dir');
+						console.log('directory ' + dir + ' created as a symlink to ' + source);
+						directories.push(fs.realpathSync(dir));
+					} else {
+						console.log('ERROR : Cannot create directory ' + dir + ' as source directory ' + source + ' does not exist');
+					}
 				}
+			} else {
+				directories.push(fs.realpathSync(dir));
 			}
-			directories.push(fs.realpathSync(dir));
 		}
 		cleanCache();
 
