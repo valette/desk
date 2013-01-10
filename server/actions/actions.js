@@ -263,7 +263,19 @@ exports.setRoot = function (root) {
 	filesRoot = fs.realpathSync(root) + '/';
 };
 
+ongoingActions = {};
+
 exports.performAction = function (POST, callback) {
+	if (POST.manage) {
+		switch (POST.manage)
+		{
+			case "list" :
+				return JSON.stringify(ongoingActions);
+			default:
+				return null;
+		}
+	}
+
 	var action;
 	var commandLine = '';
 	var inputMTime = -1;
@@ -506,15 +518,13 @@ exports.performAction = function (POST, callback) {
 			fs.stat(actionFile, function (err, stats) {
 				if ((err)||(stats.mtime.getTime() < inputMTime)) {
 					callback(null);
-				}
-				else {
+				} else {
 					fs.readFile(actionFile, function (err, data) {
 						if (data == JSON.stringify(actionParameters)) {
-              console.log(header + "cached");
-              cachedAction = true;
-              callback(null);
-						}
-						else {
+							console.log(header + "cached");
+							cachedAction = true;
+							callback(null);
+						} else {
 							callback(null);
 						}
 					});
@@ -561,7 +571,13 @@ exports.performAction = function (POST, callback) {
 			return;
 		}
 
-		exec(commandLine + " | tee action.log", commandOptions, afterExecution);
+		// compute unique ID for this action for further management
+		var shasum = crypto.createHash('sha1');
+		shasum.update('in' + outputDirectory + commandLine);
+		var handler = {};
+		handler.POST = JSON.parse(JSON.stringify(POST));
+		handler.childProcess = exec(commandLine + " | tee action.log", commandOptions, afterExecution);
+		ongoingActions[shasum.digest('hex')] = handler;
 
 		function afterExecution(err, stdout, stderr) {
 			if (POST.stdout == "true") {
