@@ -122,17 +122,9 @@ qx.Class.define("desk.Actions",
 			}, this);
 			menu.add(killButton);
 
-			var getOngoingActionsButton = new qx.ui.menu.Button('get list');
-			getOngoingActionsButton.addListener('execute', function () {
-				this.getOngoingActions(function (actions) {
-					console.log(actions);
-				});
-			}, this);
-			menu.add(getOngoingActionsButton);
-
 			list.setContextMenu(menu);
 
-			// get list of already running acions
+			// dislpay list of already running acions
 			this.getOngoingActions(function (actions) {
 				var keys = Object.keys(actions);
 				for (var i = 0; i != keys.length; i++) {
