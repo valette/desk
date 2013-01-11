@@ -269,10 +269,41 @@ exports.performAction = function (POST, callback) {
 	if (POST.manage) {
 		switch (POST.manage)
 		{
+			case "kill" :
+				var handle = ongoingActions[POST.handle];
+				if (!handle) {
+					callback (JSON.stringify({status : 'not found'}));				
+				}
+				var processToKill = handle.childProcess;
+				if (processToKill) {
+					var pid = processToKill.pid;
+			//		processToKill.kill('SIGTERM');
+					processToKill.killedByMe = true;
+					exec('kill ' + (pid+1) + ' -9', function () {
+						console.log('killed process ' + (pid+1));
+						callback (JSON.stringify({status : 'killed'}));
+					});
+				} else {
+					callback (JSON.stringify({status : 'not existent'}));
+				}
+				return;
 			case "list" :
-				return JSON.stringify(ongoingActions);
 			default:
-				return null;
+				var cache = [];
+				callback(JSON.stringify(ongoingActions,
+					function(key, value) {
+						if (typeof value === 'object' && value !== null) {
+							if (cache.indexOf(value) !== -1) {
+								// Circular reference found, discard key
+								return;
+							}
+						// Store value in our collection
+						cache.push(value);
+						}
+					return value;
+					}));
+				cache = null; 
+				return;
 		}
 	}
 
@@ -282,6 +313,7 @@ exports.performAction = function (POST, callback) {
 	var actionParameters = {};
 	var outputDirectory;
 	var cachedAction = false;
+	var actionHandle = POST.handle || Math.random().toString();
 
 	actionsCounter++;
 	var header = "[" + actionsCounter + "] ";
@@ -571,15 +603,14 @@ exports.performAction = function (POST, callback) {
 			return;
 		}
 
-		// compute unique ID for this action for further management
-		var shasum = crypto.createHash('sha1');
-		shasum.update('in' + outputDirectory + commandLine);
-		var handler = {};
-		handler.POST = JSON.parse(JSON.stringify(POST));
-		handler.childProcess = exec(commandLine + " | tee action.log", commandOptions, afterExecution);
-		ongoingActions[shasum.digest('hex')] = handler;
+		var handle = {};
+		handle.POST = JSON.parse(JSON.stringify(POST));
+		handle.childProcess = exec(commandLine + " | tee action.log", commandOptions, afterExecution);
+		ongoingActions[actionHandle] = handle;
+		response.handle = actionHandle;
 
 		function afterExecution(err, stdout, stderr) {
+			delete ongoingActions[actionHandle];
 			if (POST.stdout == "true") {
 				response.stdout = stdout;
 			} else {
@@ -592,6 +623,11 @@ exports.performAction = function (POST, callback) {
 				callback(null);
 			}
 			else if (stderr){
+				if (handle.childProcess.killedByMe) {
+					response.status = "KILLED";
+					callback(null);
+					return;
+				}
 				response.error = stderr;
 				response.status = "ERROR";
 				callback(null);      
