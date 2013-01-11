@@ -413,10 +413,10 @@ qx.Class.define("desk.SliceView",
 
 			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
 			geometry.faceVertexUvs[ 0 ].push( [
-				new THREE.UV( 0, 0),
-				new THREE.UV( 1, 0 ),
-				new THREE.UV( 1, 1 ),
-				new THREE.UV( 0, 1 )
+				new THREE.Vector2( 0, 0),
+				new THREE.Vector2( 1, 0 ),
+				new THREE.Vector2( 1, 1 ),
+				new THREE.Vector2( 0, 1 )
 				] );
 
 			var width=100;
@@ -510,10 +510,10 @@ qx.Class.define("desk.SliceView",
 
 			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
 			geometry.faceVertexUvs[ 0 ].push( [
-				new THREE.UV( 0, 0),
-				new THREE.UV( 1, 0 ),
-				new THREE.UV( 1, 1 ),
-				new THREE.UV( 0, 1 )
+				new THREE.Vector2( 0, 0),
+				new THREE.Vector2( 1, 0 ),
+				new THREE.Vector2( 1, 1 ),
+				new THREE.Vector2( 0, 1 )
 				] );
 
 			var width = this.__volume2DDimensions[0];
@@ -593,10 +593,10 @@ qx.Class.define("desk.SliceView",
 
 				geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
 				geometry.faceVertexUvs[ 0 ].push( [
-					new THREE.UV( 0, 0),
-					new THREE.UV( 1, 0 ),
-					new THREE.UV( 1, 1 ),
-					new THREE.UV( 0, 1 )
+					new THREE.Vector2( 0, 0),
+					new THREE.Vector2( 1, 0 ),
+					new THREE.Vector2( 1, 1 ),
+					new THREE.Vector2( 0, 1 )
 					] );
 
 				var listener = _this.addListener("changeSlice", function (e) {

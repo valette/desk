@@ -406,10 +406,10 @@ qx.Class.define("desk.SceneContainer",
 			}
 			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
 			geometry.faceVertexUvs[ 0 ].push( [
-				new THREE.UV( 0, 0),
-				new THREE.UV( 1, 0 ),
-				new THREE.UV( 1, 1 ),
-				new THREE.UV( 0, 1 )
+				new THREE.Vector2( 0, 0),
+				new THREE.Vector2( 1, 0 ),
+				new THREE.Vector2( 1, 1 ),
+				new THREE.Vector2( 0, 1 )
 				] );
 
 			var material = volumeSlice.getMaterial();
@@ -870,9 +870,9 @@ qx.Class.define("desk.SceneContainer",
 			this.__threeContainer.getScene().remove(mesh);
 			var map = mesh.material.map;
 			if (map !== null) {
-				renderer.deallocateTexture( map );
+				map.dispose();
 			}
-			renderer.deallocateObject( mesh );
+			mesh.dispose;
             dataModel.setData();            
         },
 
