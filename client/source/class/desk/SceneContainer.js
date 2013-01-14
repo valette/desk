@@ -104,7 +104,7 @@ qx.Class.define("desk.SceneContainer",
 		__meshesToLoad : null,
 
 		// number defining the maximum number of loaders
-		__numberOfLoaders : 16,
+		__numberOfLoaders : 10,
 		
 		getScene : function() {
 			return this.__threeContainer.getScene();
