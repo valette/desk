@@ -355,7 +355,6 @@ qx.Class.define("desk.Actions",
 				var actions = this.__actions.actions;
 				this.__actionsObject = actions;
 				var that = this;
-				var menus = [];
 
                function launch(e){
                     var action = new desk.Action(this.getLabel());
@@ -363,24 +362,41 @@ qx.Class.define("desk.Actions",
 					action.buildUI();
 				}
 
+				var libs = {};
 				var actionsNames = Object.keys(actions);
 				for (var n = 0; n < actionsNames.length; n++)
 				{
-					var action = actions[actionsNames[n]];
 					var actionName = actionsNames[n];
-					var button = new qx.ui.menu.Button(actionName);
+					var action = actions[actionName];
 					var lib = action.lib;
-					var menu = menus[lib];
-					if (!menu) {
-						menu = new qx.ui.menu.Menu();
-						var menubutton = new qx.ui.menu.Button(lib, null, null, menu);
-						menus[lib] = menu;
-						this.__actionMenu.add(menubutton);
+					var libArray = libs[lib];
+					if (!libArray) {
+						libArray = libs[lib] = [];
 					}
-					
-					button.addListener("execute", launch, button);
-					menu.add(button);
+					libArray.push(actionName);
 				}
+
+				var libNames = Object.keys(libs);
+				function myStringComparator (a, b) {
+					return a.toLowerCase().localeCompare(b.toLowerCase());
+				}
+
+				libNames.sort(myStringComparator);
+
+				for (n = 0; n != libNames.length; n++) {
+					var menu = new qx.ui.menu.Menu();
+					lib = libNames[n];
+					var menubutton = new qx.ui.menu.Button(lib, null, null, menu);
+					var libActions = libs[lib];
+					libActions.sort(myStringComparator);
+					for (var i = 0; i != libActions.length; i++) {
+						var button = new qx.ui.menu.Button(libActions[i]);
+						button.addListener("execute", launch, button);
+						menu.add(button);
+					}
+					this.__actionMenu.add(menubutton);
+				}
+
 				this.__actionsLoaded = true;
 				if ( this.__scriptsLoaded ) {
 					this.__setReady();
