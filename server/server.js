@@ -49,6 +49,16 @@ console.log('Welcome to Desk');
 console.log('Running as user : '+user);
 console.log(separator);
 
+// small hack to relaunch the server when needed
+var serverRestartFile = __dirname + '/touchMeToRestart';
+if (fs.existsSync(serverRestartFile)) {
+	console.log('hint : modify the file "touchMeToRestart" to restart server');
+	fs.watchFile(serverRestartFile, function () {
+		// just crash the server, the forever module will restart it
+		restart;
+	});
+}
+
 //configure express server
 var app = express();
 
