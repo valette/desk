@@ -885,8 +885,8 @@ qx.Class.define("desk.SceneContainer",
 			propertiesButton.addListener("execute", function (){
 				var node = this.__meshesTree.getSelectedNodes()[0];
 				var mesh = this.__getMeshFromNode(node);
-				alert ("Mesh with "+mesh.geometry.vertexPositionBuffer.numItems/3+" vertices and "+
-						mesh.geometry.vertexIndexBuffer.numItems/3+" polygons");
+				alert ("Mesh with "+mesh.geometry.attributes.position.numItems/3+" vertices and "+
+						mesh.geometry.attributes.index.numItems/3+" polygons");
 			}, this);
 			menu.add(propertiesButton);
 
