@@ -276,13 +276,10 @@ exports.performAction = function (POST, callback) {
 				}
 				var processToKill = handle.childProcess;
 				if (processToKill) {
-					var pid = processToKill.pid;
-			//		processToKill.kill('SIGTERM');
-					processToKill.killedByMe = true;
-					exec('kill ' + (pid+1) + ' -9', function () {
-						console.log('killed process ' + (pid+1));
-						callback (JSON.stringify({status : 'killed'}));
-					});
+					processToKill.kill();
+					console.log('killed process ' + processToKill.pid);
+					callback (JSON.stringify({status : 'killed'}));
+					return;
 				} else {
 					callback (JSON.stringify({status : 'not existent'}));
 				}
@@ -489,14 +486,12 @@ exports.performAction = function (POST, callback) {
 				fs.mkdir(filesRoot + "/actions/" + index, function (err) {
 					if ( err ) {
 						callback( err.message );
-					}
-					else {
+					} else {
 						fs.writeFile(counterFile, JSON.stringify({value : index}), 
 							function(err) {
 								if (err) {
 									callback( err );
-								}
-								else {
+								} else {
 									callback( null );
 								}
 							}
@@ -515,14 +510,12 @@ exports.performAction = function (POST, callback) {
 					fs.mkdir(filesRoot + outputDirectory, 0777 , function (err) {
 						if (err) {
 							callback(err.message);
-						}
-						else {
+						} else {
 							callback (null);
 						}
 					});
 					return;
-				}
-				else {
+				} else {
 					callback (null);
 				}
 			});
@@ -605,12 +598,36 @@ exports.performAction = function (POST, callback) {
 
 		var handle = {};
 		handle.POST = JSON.parse(JSON.stringify(POST));
-		handle.childProcess = exec(commandLine + " | tee action.log", commandOptions, afterExecution);
+		handle.childProcess = exec(commandLine, commandOptions, afterExecution);
+
 		ongoingActions[actionHandle] = handle;
 		response.handle = actionHandle;
 
 		function afterExecution(err, stdout, stderr) {
 			delete ongoingActions[actionHandle];
+			if (writeJSON) {
+				logFile = libpath.join(filesRoot, outputDirectory, 'action');
+				fs.writeFile(logFile + '.log', stdout);
+				if (stderr.length>0) {
+					fs.writeFile(logFile + '.err', stderr);
+				} else {
+					fs.exists(logFile + '.err', function (exists) {
+						if (exists) {
+							fs.unlink(logFile + '.err');
+						}
+					});
+				}
+			}
+			// see if the process was killed
+			if (handle) {
+				if (handle.childProcess.killed) {
+					response.status = "KILLED";
+					callback(null);
+					return;
+				}
+			}
+
+			// otherwise check for errors
 			if (POST.stdout == "true") {
 				response.stdout = stdout;
 			} else {
@@ -623,11 +640,6 @@ exports.performAction = function (POST, callback) {
 				callback(null);
 			}
 			else if (stderr){
-				if (handle.childProcess.killedByMe) {
-					response.status = "KILLED";
-					callback(null);
-					return;
-				}
 				response.error = stderr;
 				response.status = "ERROR";
 				callback(null);      
