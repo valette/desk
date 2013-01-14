@@ -405,7 +405,7 @@ qx.Class.define("desk.FileBrowser",
                         if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
                             self.__actions.launchAction({
                                 action : 'delete_file',
-                                file : file},
+                                file_name : file},
                                 function () {
                                     callback(null);
                             });
