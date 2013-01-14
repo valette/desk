@@ -528,7 +528,7 @@ qx.Class.define("desk.SceneContainer",
 					var camera = this.__threeContainer.getCamera();
 					projector.unprojectVector(vector, camera);
 
-					var ray = new THREE.Ray(camera.position,
+					var ray = new THREE.Raycaster(camera.position,
 						vector.subSelf(camera.position).normalize());
 
 					var intersects = ray.intersectObjects(meshes);
