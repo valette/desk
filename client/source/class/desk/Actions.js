@@ -390,7 +390,14 @@ qx.Class.define("desk.Actions",
 					var libActions = libs[lib];
 					libActions.sort(myStringComparator);
 					for (var i = 0; i != libActions.length; i++) {
-						var button = new qx.ui.menu.Button(libActions[i]);
+						var actionName = libActions[i];
+						var button = new qx.ui.menu.Button(actionName);
+						var description = actions[actionName].description;
+						// add tooltip when action description exists
+						if (description) {
+							button.setBlockToolTip(false);
+							button.setToolTipText(description);
+						}
 						button.addListener("execute", launch, button);
 						menu.add(button);
 					}
