@@ -29,15 +29,15 @@ qx.Class.define("desk.SegTools",
 		this.__appliCallback = appliCallback;
 		
 	//// Set window
-		this.setLayout(new qx.ui.layout.VBox());
 		this.set({
-								showMinimize: false,
-								showMaximize: false,
-								allowMaximize: false,
-								showClose: true,
-								movable : true,
-								caption :"segmentation tool"
-							});
+			layout : new qx.ui.layout.VBox(),
+			showMinimize: false,
+			showMaximize: false,
+			allowMaximize: false,
+			showClose: true,
+			movable : true,
+			caption :"segmentation tool"
+		});
 		this.setResizable(false, false, false, false);
 	//// Fill window with the tools widgets
 
