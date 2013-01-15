@@ -144,7 +144,8 @@ includeActionsJSON = function (file, callback) {
     }
     catch (error) {
       console.log('error importing ' + file);
-      actions['import_error_' + libraryName] = {lib : libraryName};
+      console.log(error);
+      actions['import_error_' + libraryName + ' : ' + error] = {lib : libraryName};
       if ( typeof(callback) === 'function' ) {
         callback();
       }
