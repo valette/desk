@@ -295,15 +295,15 @@ qx.Class.define("desk.Action",
 				send.setEnabled(false);
 				send.setLabel("Updating Parents...");
 
-				var parameterMap={"action" : this.__name};
-				var items=manager.getItems();
+				var parameterMap = {"action" : this.__name};
+				var items = manager.getItems();
 				// add all parameters
 				for (i = 0; i < items.length; i++) {
-					var currentItem=items[i];
-					var value=currentItem.getValue();
+					var currentItem = items[i];
+					var value = currentItem.getValue();
 					if (typeof value === 'string') {
-                        if (value.length>0) {
-                            parameterMap[currentItem.getPlaceholder()]=value;
+                        if (value.length > 0) {
+                            parameterMap[currentItem.getPlaceholder()] = value;
                         }
 					}
 				}
@@ -342,10 +342,9 @@ qx.Class.define("desk.Action",
 						for (var i = 0; i < connections.length; i++) {
 							var currentConnection = connections[i];
 							if (currentConnection.action == finishedAction) {
-								var currentParameter = currentConnection.parameter;
-								var currentFile = currentConnection.file;
-								parameterMap[currentParameter] =
-									currentConnection.action.getOutputDirectory() + '/' + currentFile;
+								parameterMap[currentConnection.parameter] =
+									currentConnection.action.getOutputDirectory() +
+										desk.FileSystem.getFileName(currentConnection.file);
 							}
 						}
 					}
