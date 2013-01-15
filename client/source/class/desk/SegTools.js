@@ -1675,12 +1675,12 @@ qx.Class.define("desk.SegTools",
 
 			for(var i=0; i<seeds.length; i++)
 			{
-				var currentId=seeds[i].getUserData("slice");
-				if(currentId>sliceId) {
+				var currentId = seeds[i].getUserData("slice");
+				if(currentId > sliceId) {
 					tempPos++;
 				}
-				if (currentId==sliceId) {
-					seedsList.getUserData(desk.SegTools.cacheTagsArrayString)[sliceId]=Math.random();
+				if (currentId == sliceId) {
+					seedsList.getUserData(desk.SegTools.cacheTagsArrayString)[sliceId] = Math.random();
 					return;
 				}
 			}
@@ -1692,53 +1692,54 @@ qx.Class.define("desk.SegTools",
 			});
 
 			seedsList.addAt(sliceItem, tempPos);
-			seedsList.getUserData(desk.SegTools.seedsArrayString)[sliceId]=sliceItem;
-			seedsList.getUserData(desk.SegTools.cacheTagsArrayString)[sliceId]=Math.random();
+			seedsList.getUserData(desk.SegTools.seedsArrayString)[sliceId] = sliceItem;
+			seedsList.getUserData(desk.SegTools.cacheTagsArrayString)[sliceId] = Math.random();
 		},
 
 		__getSeedFileName : function(sliceView, sliceId, seedType) {			
 			var filePrefix;
-			if (seedType==0) {
+			if (seedType == 0) {
 				filePrefix = "seed";
-			}
-			else {
+			} else {
 				filePrefix = "correction";
 			}
 
-			var offset=sliceView.getVolumeSliceToPaint().getSlicesIdOffset();
-
+			var sliceLetters;
 			switch(sliceView.getOrientation())
 			{
 				// ZY X
 				case 1 :
-					return filePrefix +"ZY"+(offset + sliceId) +".png";
+					sliceLetters = "ZY";
 					break;
 				// XZ Y
 				case 2 :
-					return filePrefix +"XZ"+(offset + sliceId) +".png";
+					sliceLetters = "XZ";
 					break;
 				// XY Z
 				default :
-					return filePrefix +"XY"+(offset + sliceId) +".png";
+					sliceLetters = "XY";
 			}
+			return filePrefix + sliceLetters + 
+				(sliceView.getVolumeSliceToPaint().getSlicesIdOffset() +
+				sliceId) + ".png";
 		},
 
 		__createReorderingWindow : function () {
 			var list;
 			var currentListItem;
-			var myWindow=new qx.ui.window.Window();
+			var myWindow = new qx.ui.window.Window();
 
-			myWindow.setLayout(new qx.ui.layout.VBox());
 			myWindow.set({
-									width : 400,
-									showMinimize: false,
-									showMaximize: false,
-									allowMaximize: false,
-									showClose: true,
-									resizable: false,
-									movable : true,
-									caption : "reorder labels"
-								});
+				layout : new qx.ui.layout.VBox(),
+				width : 400,
+				showMinimize: false,
+				showMaximize: false,
+				allowMaximize: false,
+				showClose: true,
+				resizable: false,
+				movable : true,
+				caption : "reorder labels"
+			});
 
 			var list = new qx.ui.form.List;
 			list.setDraggable(true);
@@ -1746,9 +1747,9 @@ qx.Class.define("desk.SegTools",
 			list.setSelectionMode("multi");
 			myWindow.add(list);
 
-			for (var i=0; i<this.__labels.length; i++) {
-				var label=this.__labels[i];
-				var item=new qx.ui.form.ListItem(label.label+"-"+label.labelName);
+			for (var i = 0; i < this.__labels.length; i++) {
+				var label = this.__labels[i];
+				var item = new qx.ui.form.ListItem(label.label+"-"+label.labelName);
 				item.setUserData("label", label);
 				list.add(item);
 			}
@@ -1765,21 +1766,18 @@ qx.Class.define("desk.SegTools",
 			indicator.setDroppable(true);
 			myWindow.add(indicator);
 
-
 			// Just add a move action
 			list.addListener("dragstart", function(e) {
 				e.addAction("move");
 			});
 
-			list.addListener("dragend", function(e)
-			{
+			list.addListener("dragend", function(e) {
 				// Move indicator away
 				indicator.setDomPosition(-1000, -1000);
 			});
 
 
-			list.addListener("drag", function(e)
-			{
+			list.addListener("drag", function(e) {
 				var orig = e.getOriginalTarget();
 
 				// store the current listitem - if the user drops on the indicator
@@ -1800,8 +1798,7 @@ qx.Class.define("desk.SegTools",
 							 origCoords.top-origCoords2.top);
 			});
 
-			list.addListener("dragover", function(e)
-			{
+			list.addListener("dragover", function(e) {
 				// Stop when the dragging comes from outside
 				if (e.getRelatedTarget()) {
 					e.preventDefault();
@@ -1814,11 +1811,9 @@ qx.Class.define("desk.SegTools",
 
 			indicator.addListener("drop", function(e) {
 				reorderList(currentListItem);
-				});
+			});
 
-			function reorderList (listItem)
-			{
-
+			function reorderList (listItem) {
 				// Only continue if the target is a list item.
 				if (listItem.classname != "qx.ui.form.ListItem") {
 					return ;
@@ -1826,8 +1821,7 @@ qx.Class.define("desk.SegTools",
 
 				var sel = list.getSortedSelection();
 
-				for (var i=0, l=sel.length; i<l; i++)
-				{
+				for (var i =0, l = sel.length; i < l; i++) {
 					list.addBefore(sel[i], listItem);
 
 				// recover selection as it get lost during child move
@@ -1836,10 +1830,9 @@ qx.Class.define("desk.SegTools",
 			}
 			myWindow.open();
 			myWindow.addListener("close", function () {
-				this.__labels=[];
-				var labels=list.getChildren();
-				for (var i=0;i<labels.length;i++)
-				{
+				this.__labels = [];
+				var labels = list.getChildren();
+				for (var i = 0; i < labels.length; i++) {
 					this.__labels.push(labels[i].getUserData("label"));
 				}
 				list.destroy();
@@ -1848,7 +1841,5 @@ qx.Class.define("desk.SegTools",
 				this.__rebuildLabelsList();
 			}, this);
 		}
-
-	} //// END of   members :
-
-}); //// END of   qx.Class.define("desk.SegTools",
+	}
+});
