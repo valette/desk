@@ -636,7 +636,7 @@ qx.Class.define("desk.Action",
 
 			var send = new qx.ui.form.Button("Process");
 			this.__updateButton = send;
-			executeBox.add(send);
+			executeBox.add(send, {flex : 1});
 			send.addListener("execute", function() {
 				manager.validate();
 			}, this);
@@ -647,8 +647,8 @@ qx.Class.define("desk.Action",
 			this.__executionStatus = new qx.ui.form.TextField().set({
 				readOnly: true});
 
-			executeBox.add( forceUpdateCheckBox );
-			executeBox.add( this.__executionStatus );
+			executeBox.add(forceUpdateCheckBox, {flex : 1});
+			executeBox.add(this.__executionStatus, {flex : 1});
 			this.add(showLogButton);
 
 			// add a listener to the form manager for the validation complete
