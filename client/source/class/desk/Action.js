@@ -7,8 +7,10 @@ qx.Class.define("desk.Action",
 	/**
 	* Creates a new container
 	* @param name {String} name of the action to create
-	* @param standalone {Boolean} defines whether the container should be
-	* embedded in a window or not (default : true)
+	* @param parameters {Object} settings object. Available settings:
+    * standalone (boolean): defines whether the container should be
+	* embedded in a window or not (default : true). useScroll (boolean) :
+    * defines whether parameters are embeded in a scroll
 	*/
 	construct : function (name, parameters) {
         parameters = parameters || {};
