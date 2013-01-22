@@ -95,6 +95,30 @@ qx.Class.define("desk.MPRContainer",
 
 		__file : null,
 
+        /**
+        * visualizes the output of an action whenever it is updated
+        * @param action {desk.Action} : action to watch
+        * @param file {String} : output file to visualize (without path)
+        * @param parameters {Object} : parameters object containing settings
+        * such as imageFormat (0 our 1), label (text)
+        * @param parameters {Object} : callback when loaded
+        */
+        watchAction : function (action, file, parameters) {
+            var volume;
+            action.addListener('actionUpdated', function () {
+                if (volume) {
+                    this.removeVolume(volume);
+                }
+                volume = this.addVolume(action.getOutputDirectory() + file, parameters);
+            }, this);
+
+            this.addListener('removeVolume', function (e) {
+                if (e.getData() === volume) {
+                    volume = null;
+                }
+            });
+        },
+
 		getFile : function() {
 			return this.__file;
 		},
@@ -390,7 +414,8 @@ qx.Class.define("desk.MPRContainer",
         /**
 		* adds a file into the viewer
 		* @param file {String} : file to load
-        * @param parameters {Object} : parameters (to document..)
+        * @param parameters {Object} : parameters object containing settings
+        * such as imageFormat (0 our 1), label (text)
         * @param callback {Function} : callback when loaded
         * @return {qx.ui.container.Composite} : volume item
 		*/
@@ -459,6 +484,9 @@ qx.Class.define("desk.MPRContainer",
 			volumeListItem.add(labelcontainer);//, { flex : 1 } );
 
             var label = new qx.ui.basic.Label(baseName);
+            if (parameters.label) {
+                label.setValue(parameters.label);
+            }
             label.setTextAlign("left");
 			labelcontainer.add(label, {flex : 1});
 
@@ -684,14 +712,14 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		updateAll : function () {
-			var volumes=this.__volumes.getChildren();
-			for (var i=0;i!=volumes.length;i++) {
+			var volumes = this.__volumes.getChildren();
+			for (var i = 0; i != volumes.length; i++) {
 				this.updateVolume(volumes[i]);
 			}
 		},
 
 		updateVolume : function (volumeListItem) {
-			var slices=volumeListItem.getUserData("slices");
+			var slices = volumeListItem.getUserData("slices");
 			for (var i=0;i<slices.length;i++) {
 				slices[i].update();
 			}
@@ -706,7 +734,7 @@ qx.Class.define("desk.MPRContainer",
         },
 
 		removeVolume : function (volumeListItem) {
-			var slices=volumeListItem.getUserData("slices");
+			var slices = volumeListItem.getUserData("slices");
             if (!slices) {
                 return;
             }
@@ -720,7 +748,7 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		__getToolBar : function () {
-			var container=new qx.ui.container.Composite();
+			var container = new qx.ui.container.Composite();
 			container.setLayout(new qx.ui.layout.HBox());
 			container.add(this.getUpdateButton(this.updateAll, this));
 			container.add(this.__getLinkButton());
@@ -730,27 +758,27 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		__getOrientationButton : function () {
-			var button=new qx.ui.form.Button("Layout/Orientation");
-			button.addListener ( "execute", function () {
+			var button = new qx.ui.form.Button("Layout/Orientation");
+			button.addListener ("execute", function () {
 				this.__orientationWindow.open();
-			}, this );
+			}, this);
 			return (button);
 		},
 
 		__getChangeLayoutContainer : function ()
 		{
-			var _this=this;
+			var _this = this;
 			var i;
-			var gridContainer=new qx.ui.container.Composite();
-			var gridLayout=new qx.ui.layout.Grid();
-			for ( i=0;i<this.__nbUsedOrientations;i++) {
-				gridLayout.setRowFlex(i,30);
-				gridLayout.setColumnFlex(i,1);
+			var gridContainer = new qx.ui.container.Composite();
+			var gridLayout = new qx.ui.layout.Grid();
+			for ( i = 0; i < this.__nbUsedOrientations; i++) {
+				gridLayout.setRowFlex(i, 30);
+				gridLayout.setColumnFlex(i, 1);
 			}
 			gridContainer.setLayout(gridLayout);
 			
 			var viewGridCoor = this.__windowsInGridCoord;
-			for( i=0; i < this.__nbUsedOrientations; i++ )
+			for( i = 0; i < this.__nbUsedOrientations; i++ )
 			{
 				var labelsContainer = new qx.ui.container.Composite();
 				labelsContainer.set({draggable : true,
@@ -760,29 +788,26 @@ qx.Class.define("desk.MPRContainer",
 				lblsContLayout.setAlignX("center");
 				lblsContLayout.setAlignY("middle");
 				labelsContainer.setLayout(lblsContLayout);
-				labelsContainer.addListener("dragstart", function(event)
-				{
+				labelsContainer.addListener("dragstart", function(event) {
 					event.addAction("alias");
 					event.addType("thisLabelContainer");
 				});
-				labelsContainer.addListener("droprequest", function(event)
-				{
-						var type = event.getCurrentType();
-						switch (type)
-						{
-						case "thisLabelContainer":
-							event.addData(type, this);
-							break;
-						default :
-							alert ("type "+type+"not supported for thisLabelContainer drag and drop");
-							break;
-						}
+
+                labelsContainer.addListener("droprequest", function(event) {
+					var type = event.getCurrentType();
+					switch (type)
+					{
+					case "thisLabelContainer":
+						event.addData(type, this);
+						break;
+					default :
+						alert ("type "+type+"not supported for thisLabelContainer drag and drop");
+						break;
+					}
 				}, labelsContainer);
 				labelsContainer.setDroppable(true);
-				labelsContainer.addListener("drop", function(event)
-				{
-					if (event.supportsType("thisLabelContainer"))
-					{
+				labelsContainer.addListener("drop", function(event) {
+					if (event.supportsType("thisLabelContainer")) {
 						var droppedLabel = event.getData("thisLabelContainer").getChildren()[0];
 						var droppedViewerID = droppedLabel.getValue();
 						var selfLabel = this.getChildren()[0];
@@ -791,7 +816,7 @@ qx.Class.define("desk.MPRContainer",
 						selfLabel.setValue(droppedViewerID);
 						var tempGridContChildren = gridContainer.getChildren();
 						var layout = "";
-						for( var i=0; i < _this.__nbUsedOrientations; i++ ) {
+						for( var i = 0; i < _this.__nbUsedOrientations; i++ ) {
 							layout += tempGridContChildren[i].getChildren()[0].getValue();
 						}
 						_this.setViewsLayout( layout );
