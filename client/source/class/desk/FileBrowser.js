@@ -269,42 +269,41 @@ qx.Class.define("desk.FileBrowser",
 
 		__createDoubleClickActions : function () {
 			this.setFileHandler(function (file) {
-				var extension=file.substring(file.lastIndexOf("."), file.length);
+				var extension = desk.FileSystem.getFileExtension(file);
 				switch (extension)
 				{
-				case '.log':
-				case '.txt':
-				case '.js':
+				case 'log':
+				case 'txt':
+				case 'js':
 					new desk.TextEditor (file);
 					break;
-				case ".vtk":
-				case ".ply":
-				case ".obj":
-				case ".stl":
-				case ".ctm":
-				case ".off":
+				case "vtk":
+				case "ply":
+				case "obj":
+				case "stl":
+				case "ctm":
+				case "off":
 					new desk.MeshViewer(file);
 					break;
-				case ".png":
-				case ".jpg":
-				case ".bmp":
+				case "png":
+				case "jpg":
+				case "bmp":
 					new desk.ImageViewer(file);
 					break;
-				case ".xml":
+				case "xml":
 					desk.FileSystem.readFile(file, function (request) {
 						var xmlDoc = request.getResponse();
 						if (xmlDoc.getElementsByTagName("mesh").length !== 0) {
 							new desk.MeshViewer(file);
-						}
-						else {
+						} else {
 							alert ('xml file of unknown type!');
 						}
 					});
 					break;
-				case ".mhd":
-					var viewer = new desk.VolumeViewer(file);
+				case "mhd":
+					new desk.VolumeViewer(file);
 					break;
-				case ".json":
+				case "json":
 					desk.Action.CREATEFROMFILE(file);
 					break;
 				default:
