@@ -951,18 +951,21 @@ qx.Class.define("desk.SliceView",
 			}, this);
 
 			htmlContainer.addListener("mousewheel", function (event) {
-							var slider=this.__slider;
-							var delta=Math.round(event.getWheelDelta()/2);
-							var newValue=slider.getValue()+delta;
-							if (newValue>slider.getMaximum()) {
-								newValue=slider.getMaximum();
-							}
-							if (newValue<slider.getMinimum()) {
-								newValue=slider.getMinimum();
-							}
-							slider.setValue(newValue);
-							this.fireDataEvent("viewMouseWheel",event);
-					}, this);
+				var slider = this.__slider;
+                var delta = 1;
+                if (event.getWheelDelta() < 0) {
+                    delta = -1;
+                }
+				var newValue = slider.getValue() + delta;
+				if (newValue > slider.getMaximum()) {
+					newValue = slider.getMaximum();
+				}
+				if (newValue < slider.getMinimum()) {
+					newValue = slider.getMinimum();
+				}
+				slider.setValue(newValue);
+				this.fireDataEvent("viewMouseWheel",event);
+			}, this);
 		},
 
 		__intersection : null,
@@ -1050,31 +1053,26 @@ qx.Class.define("desk.SliceView",
 
 			var font= new qx.bom.Font(16, ["Arial"]);
 			font.setBold(true);
+            var settings = {textColor : "yellow",
+                font : font,
+                opacity : 0.5
+            };
 			var northLabel=new qx.ui.basic.Label("S");
-			northLabel.set({textColor : "yellow",
-        font : font,
-        opacity : 0.5
-      });
+			northLabel.set(settings);
 			container.add(northLabel, {left:"50%", top:"1%"});
 
 			var southLabel=new qx.ui.basic.Label("I");
-			southLabel.set({textColor : "yellow",
-        font : font,
-        opacity : 0.5
-      });
+			southLabel.set(settings);
 			container.add(southLabel, {left:"50%", bottom:"1%"});
-			var eastLabel=new qx.ui.basic.Label("L");
-			eastLabel.set({textColor : "yellow",
-        font : font,
-        opacity : 0.5
-      });
+
+            var eastLabel=new qx.ui.basic.Label("L");
+			eastLabel.set(settings);
 			container.add(eastLabel, {left:"1%", top:"45%"});
-			var westLabel=new qx.ui.basic.Label("R");
-			westLabel.set({textColor : "yellow",
-        font : font,
-        opacity : 0.5
-      });
+
+            var westLabel=new qx.ui.basic.Label("R");
+			westLabel.set(settings);
 			container.add(westLabel, {right:32, top:"45%"});
+
 			directionOverlays.push(northLabel);
 			directionOverlays.push(eastLabel);
 			directionOverlays.push(southLabel);
