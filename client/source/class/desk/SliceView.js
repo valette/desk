@@ -20,14 +20,14 @@ qx.Class.define("desk.SliceView",
 
 		this.__slices=[];
 
-		if (typeof orientation=="number") {
+		if (typeof orientation == "number") {
 			this.setOrientation(orientation);
 		}
 		else {
 			this.setOrientation(0);
 		}
 
-		this.__master=master;		
+		this.__master = master;		
 
 		this.__createUI();
 
@@ -57,13 +57,24 @@ qx.Class.define("desk.SliceView",
 	},
 
 	properties : {
+		/** current display slice */
 		slice : { init : 0, check: "Number", event : "changeSlice"},
+
 		viewOn : { init : false, check: "Boolean", event : "changeViewOn"},
+
+		/** paint opacity (betwen 0 and 1) */
 		paintOpacity : { init : 1, check: "Number", event : "changePaintOpacity"},
 		orientation : { init : -1, check: "Number", event : "changeOrientation"},
 		orientPlane : { init : "", check: "String", event : "changeOrientPlane"},
+
+		/** is the interaction mode set to paint mode*/
 		paintMode : { init : false, check: "Boolean", event : "changePaintMode"},
-		eraseMode : { init : false, check: "Boolean", event : "changeEraseMode"}
+
+		/** is the interaction mode set to erase mode*/
+		eraseMode : { init : false, check: "Boolean", event : "changeEraseMode"},
+
+		/** Should the flip and rotate operations operate on camera or orientation markers*/
+		orientationChangesOperateOnCamera : { init : true, check: "Boolean"}
 	},
 
 	events : {
@@ -195,13 +206,10 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__reorientationContainer : null,
-		__orientsButtonGroup : null,
 
 		rotateLeft : function () {
 			this.applyToLinks(function () {
-				var item2orient = this.__orientsButtonGroup.getSelection()[0].getUserData("buttonID");
-				if(item2orient==1)
-				{
+				if(this.isOrientationChangesOperateOnCamera()) {
 					var camera = this.__getCamera();
 					var controls = this.__threeContainer.getControls(); 
 					var direction = controls.target.clone();
@@ -210,13 +218,11 @@ qx.Class.define("desk.SliceView",
 					direction.crossSelf(up).normalize();
 					up.copy(direction);
 					controls.update();
-				}
-				if(item2orient==2)
-				{
-					var overlays=this.__directionOverlays;
-					var tempValue=overlays[3].getValue();
-					for (var i=3;i>0;i--) {
-						overlays[i].setValue(overlays[i-1].getValue());
+				} else {
+					var overlays = this.__directionOverlays;
+					var tempValue = overlays[3].getValue();
+					for (var i = 3; i > 0; i--) {
+						overlays[i].setValue(overlays[i - 1].getValue());
 					}
 					overlays[0].setValue(tempValue);
 				}
@@ -226,24 +232,20 @@ qx.Class.define("desk.SliceView",
 
 		rotateRight : function () {
 			this.applyToLinks(function () {
-				var item2orient = this.__orientsButtonGroup.getSelection()[0].getUserData("buttonID");
-				if(item2orient==1)
-				{
-					var camera=this.__getCamera();
+				if(this.isOrientationChangesOperateOnCamera()) {
+					var camera = this.__getCamera();
 					var controls = this.__threeContainer.getControls(); 
 					var direction = controls.target.clone();
 					direction.subSelf(camera.position);
-					var up=camera.up;
+					var up = camera.up;
 					direction.crossSelf(up).normalize().negate();
 					up.copy(direction);
 					controls.update();
-				}
-				if(item2orient==2)
-				{
-					var overlays=this.__directionOverlays;
-					var tempValue=overlays[0].getValue();
-					for (var i=0;i<3;i++) {
-						overlays[i].setValue(overlays[i+1].getValue());
+				} else {
+					var overlays = this.__directionOverlays;
+					var tempValue = overlays[0].getValue();
+					for (var i = 0; i < 3; i++) {
+						overlays[i].setValue(overlays[i + 1].getValue());
 					}
 					overlays[3].setValue(tempValue);
 				}
@@ -253,13 +255,11 @@ qx.Class.define("desk.SliceView",
 
 		flipX : function () {
 			this.applyToLinks(function () {
-				var item2orient = this.__orientsButtonGroup.getSelection()[0].getUserData("buttonID");
-				if(item2orient == 1) {
-					var camera = this.__getCamera();
-					camera.position.setZ( - camera.position.z);
+				if(this.isOrientationChangesOperateOnCamera()) {
+					var position = this.__getCamera().position;
+					position.setZ( - position.z);
 					this.__threeContainer.getControls().update();
-				}
-				if(item2orient == 2) {
+				} else {
 					var overlays = this.__directionOverlays;
 					var tempValue = overlays[1].getValue();
 					overlays[1].setValue(overlays[3].getValue());
@@ -271,15 +271,12 @@ qx.Class.define("desk.SliceView",
 
 		flipY : function () {
 			this.applyToLinks(function () {
-				var item2orient = this.__orientsButtonGroup.getSelection()[0].getUserData("buttonID");
-				if(item2orient == 1)
-				{
+				if(this.isOrientationChangesOperateOnCamera()) {
 					var camera = this.__getCamera();
 					camera.position.setZ( - camera.position.z);
 					camera.up.negate();
 					this.__threeContainer.getControls().update();
-				}
-				if(item2orient == 2) {
+				} else {
 					var overlays = this.__directionOverlays;
 					var tempValue = overlays[0].getValue();
 					overlays[0].setValue(overlays[2].getValue());
@@ -293,11 +290,10 @@ qx.Class.define("desk.SliceView",
 			return this.__directionOverlays;
 		},
 		
-		getReorientationContainer : function (inOrientsButtonGroup) {
+		getReorientationContainer : function () {
 			if (this.__reorientationContainer) {
 				return this.__reorientationContainer;
 			}
-			this.__orientsButtonGroup = inOrientsButtonGroup;
 			
 			var gridContainer=new qx.ui.container.Composite();
 			var gridLayout=new qx.ui.layout.Grid(3,3);
@@ -514,7 +510,7 @@ qx.Class.define("desk.SliceView",
 				new THREE.Vector2( 1, 0 ),
 				new THREE.Vector2( 1, 1 ),
 				new THREE.Vector2( 0, 1 )
-				] );
+				]);
 
 			var width = this.__volume2DDimensions[0];
 			var height = this.__volume2DDimensions[1];
@@ -548,179 +544,180 @@ qx.Class.define("desk.SliceView",
 			geometry.computeVertexNormals();
 			geometry.computeBoundingSphere();
 
-			var _this = this;
 			function updateTexture()
 			{
-				var data = _this.__drawingCanvas.getContext2d().getImageData(
+				var data = this.__drawingCanvas.getContext2d().getImageData(
 					0, 0,width, height).data;
 				for (var i = length; i--;) {
 					dataColor[i]=data[i];
 				}
 				texture.needsUpdate = true;
-				_this.render();
+				this.render();
 			}
 
-			updateTexture();
+			updateTexture.apply(this);
 
 			this.addListener('changeDrawing',function() {
-					updateTexture();
-					_this.render();
-			});
+					updateTexture.apply(this);
+					this.render();
+			}, this);
 
 			this.addListener("changePaintOpacity", function (event) {
 					mesh.material.opacity = event.getData();
-					_this.render();
-			});
+					this.render();
+			}, this);
 		},
 
-        __initDone : false,
+		__addSlice : function (volumeSlice, parameters, callback) {
+			var geometry = new THREE.Geometry();
+			var coordinates = volumeSlice.get2DCornersCoordinates();
+			for (var i = 0; i < 4; i++) {
+				geometry.vertices.push(	new THREE.Vector3(coordinates[2*i], coordinates[2*i + 1], 0));
+			}
 
-		addVolume : function (file, parameters, callback) {
-			var volumeSlice = new desk.VolumeSlice(file, this.getOrientation(), parameters, sliceLoaded);
-			this.__slices.push(volumeSlice);
-			var _this = this;
-            var firstSlice = false;
-            if (_this.__slices.length === 1) {
-                firstSlice = true;
-            }
+			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
+			geometry.faceVertexUvs[ 0 ].push( [
+				new THREE.Vector2( 0, 0),
+				new THREE.Vector2( 1, 0 ),
+				new THREE.Vector2( 1, 1 ),
+				new THREE.Vector2( 0, 1 )
+				] );
 
-			function sliceLoaded () {
-				var geometry = new THREE.Geometry();
-				var coordinates = volumeSlice.get2DCornersCoordinates();
-				for (var i = 0; i < 4; i++) {
-					geometry.vertices.push(	new THREE.Vector3(coordinates[2*i], coordinates[2*i + 1], 0));
-				}
+			var listener = this.addListener("changeSlice", function (e) {
+				volumeSlice.setSlice(e.getData());
+			});
 
-				geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
-				geometry.faceVertexUvs[ 0 ].push( [
-					new THREE.Vector2( 0, 0),
-					new THREE.Vector2( 1, 0 ),
-					new THREE.Vector2( 1, 1 ),
-					new THREE.Vector2( 0, 1 )
-					] );
+			volumeSlice.setUserData("updateListener", listener);
 
-				var listener = _this.addListener("changeSlice", function (e) {
-					volumeSlice.setSlice(e.getData());
-				});
+			var material = volumeSlice.getMaterial();
+			material.side = THREE.DoubleSide;
+			var mesh = new THREE.Mesh(geometry, material);
+			volumeSlice.setUserData("mesh", mesh);
+			geometry.computeCentroids();
+			geometry.computeFaceNormals();
+			geometry.computeVertexNormals();
+			geometry.computeBoundingSphere();
 
-				volumeSlice.setUserData("updateListener", listener);
+			volumeSlice.addListenerOnce('changeImage',function () {
+				this.__getScene().add(mesh);
+			}, this);
+			volumeSlice.addListener('changeImage', this.render, this);
+			volumeSlice.addListener("changeSlice", function (e) {
+				this.setSlice(e.getData());
+			}, this);
 
-				if (firstSlice == 1) {
-					_this.__slider.setMaximum(volumeSlice.getNumberOfSlices() - 1);
-					if (volumeSlice.getNumberOfSlices() == 1) {
-						_this.__slider.setVisibility("hidden");
-					}
+			if (typeof callback=="function") {
+				callback(volumeSlice);
+			}		
+		},
 
-					_this.__getCamera().position.set(0.5*(coordinates[0]+coordinates[2]),
-												0.5*(coordinates[3]+coordinates[5]),
-												0);
-					_this.__threeContainer.getControls().target.copy(_this.__getCamera().position);
-					_this.__getCamera().position.setZ(_this.__getCamera().position.z+
-									volumeSlice.getBoundingBoxDiagonalLength()*0.6);
+		__initFromVolume : function (volumeSlice) {
+			this.__slider.setMaximum(volumeSlice.getNumberOfSlices() - 1);
+			if (volumeSlice.getNumberOfSlices() === 1) {
+				this.__slider.setVisibility("hidden");
+			}
 
-					_this.__projector = new THREE.Projector();
-					_this.__intersection = new THREE.Vector3();
-					_this.__2DCornersCoordinates = coordinates;
-					_this.__volume2DSpacing = volumeSlice.get2DSpacing();
-					_this.__volume2DDimensions = volumeSlice.get2DDimensions();
-					_this.__volumeOrigin = volumeSlice.getOrigin();
-					_this.__volumeSpacing = volumeSlice.getSpacing();
-					_this.__setupInteractionEvents();
-				}
+			var camera = this.__getCamera();
+			var position = camera.position;
+			camera.up.set(0, 1, 0);
+			var coordinates = volumeSlice.get2DCornersCoordinates();
 
-				var material = volumeSlice.getMaterial();
-				material.side = THREE.DoubleSide;
-				var mesh = new THREE.Mesh(geometry, material);
-				volumeSlice.setUserData("mesh", mesh);
-				geometry.computeCentroids();
-				geometry.computeFaceNormals();
-				geometry.computeVertexNormals();
-				geometry.computeBoundingSphere();
+			position.set(0.5 * (coordinates[0] + coordinates[2]),
+				0.5 * (coordinates[3] + coordinates[5]),
+				0);
+			this.__threeContainer.getControls().target.copy(position);
+			position.setZ(volumeSlice.getBoundingBoxDiagonalLength() * 0.6);
 
-				volumeSlice.addListenerOnce('changeImage',function () {
-					this.__getScene().add(mesh);
-				}, _this);
-				volumeSlice.addListener('changeImage',_this.render, _this);
-				volumeSlice.addListener("changeSlice", function (e) {
-					this.setSlice(e.getData());
-				}, _this);
+			this.__projector = new THREE.Projector();
+			this.__intersection = new THREE.Vector3();
+			this.__2DCornersCoordinates = coordinates;
+			this.__volume2DSpacing = volumeSlice.get2DSpacing();
+			this.__volume2DDimensions = volumeSlice.get2DDimensions();
+			this.__volumeOrigin = volumeSlice.getOrigin();
+			this.__volumeSpacing = volumeSlice.getSpacing();
+			this.__setupInteractionEvents();
 
-				if (firstSlice) {
-					_this.__setDrawingMesh(volumeSlice);
-					_this.__createBrushMesh(volumeSlice);
-					_this.__createCrossMeshes(volumeSlice);
-					
-					if (!_this.__initDone) {
-						switch (_this.getOrientation())
-						{
-							case 0 :
-								_this.flipY();
-								break;
-							case 1 :
-								_this.flipX();
-								_this.flipY();
-								break;
-							default:
-								break;
-						}
-						_this.__initDone = true;
-					}
+			this.__setDrawingMesh(volumeSlice);
+			this.__createBrushMesh(volumeSlice);
+			this.__createCrossMeshes(volumeSlice);
+			
+			switch (this.getOrientation())
+			{
+				case 0 :
+					this.flipY();
+					break;
+				case 1 :
+					this.flipX();
+					this.flipY();
+					break;
+				default:
+					break;
+			}
+			this.__initDone = true;
 
-					var dimensions = volumeSlice.getDimensions();
-					for (var coordinate = 0; coordinate< 3;coordinate ++) {
-						if (dimensions[coordinate] == 1) {
-							dimensions[coordinate] = 0;
-						}
-					}
-					_this.setCrossPosition(Math.round(dimensions[0]/2),
-											Math.round(dimensions[1]/2),
-											Math.round(dimensions[2]/2));
-				}
-				else {
-					volumeSlice.setSlice(_this.getSlice());
-				}
-
-				if (typeof callback=="function") {
-					callback(volumeSlice);
+			var dimensions = volumeSlice.getDimensions();
+			for (var coordinate = 0; coordinate< 3;coordinate ++) {
+				if (dimensions[coordinate] == 1) {
+					dimensions[coordinate] = 0;
 				}
 			}
+			this.setCrossPosition(Math.round(dimensions[0]/2),
+									Math.round(dimensions[1]/2),
+									Math.round(dimensions[2]/2));		
+		},
+
+		addVolume : function (file, parameters, callback) {
+			var that = this;
+			var firstSlice = false;
+			if (this.__slices.length === 0) {
+				firstSlice = true;
+			}
+			var volumeSlice = new desk.VolumeSlice(file,
+				this.getOrientation(), parameters, function () {
+					if (firstSlice) {
+						that.__initFromVolume(volumeSlice);
+					}
+					volumeSlice.setSlice(that.getSlice());
+					that.__addSlice(volumeSlice, parameters, callback);
+				}
+			);
+			this.__slices.push(volumeSlice);
 		},
 
 		__setCrossPositionFromEvent : function (event) {
-			var position=this.getPositionOnSlice(event);
-			var v=[position.i, position.j];
-			var dimensions=this.__volume2DDimensions;
-			var i,j,k;
+			var position = this.getPositionOnSlice(event);
+			var v = [position.i, position.j];
+			var dimensions = this.__volume2DDimensions;
+			var i, j, k;
 
-			for (i=0;i<2;i++) {
-				if (v[i]<0) {
-					v[i]=0;
-				}
-				else if (v[i]>dimensions[i]-1) {
-					v[i]=dimensions[i]-1;
+			for (i = 0; i < 2; i++) {
+				if (v[i] < 0) {
+					v[i] = 0;
+				} else if (v[i] > (dimensions[i] - 1)) {
+					v[i] = dimensions[i] - 1;
 				}
 			}
 			switch (this.getOrientation())
 			{
 			case 0 :
-				i=v[0];
-				j=v[1];
-				k=this.getSlice();
+				i = v[0];
+				j = v[1];
+				k = this.getSlice();
 				break;
 			case 1 :
-				i=this.getSlice();
-				j=v[1];
-				k=v[0];
+				i = this.getSlice();
+				j = v[1];
+				k = v[0];
 				break;
 			case 2 :
 			default :
-				i=v[0];
-				j=this.getSlice();
-				k=v[1];
+				i = v[0];
+				j = this.getSlice();
+				k = v[1];
 				break;
 			}
 			this.__master.applyToViewers(function () {
-				this.setCrossPosition(i,j,k);
+				this.setCrossPosition(i, j, k);
 			});
 		},
 
@@ -767,12 +764,17 @@ qx.Class.define("desk.SliceView",
 			});
 		},
 
+        __interactionEventsSetup : false,
+
 		__setupInteractionEvents : function () {
-            if (this.__initDone) {
+            if (this.__interactionEventsSetup) {
                 return;
             }
-			var controls=this.__threeContainer.getControls();
+            this.__interactionEventsSetup = true;
+
+			var controls = this.__threeContainer.getControls();
 			var htmlContainer = this.__threeContainer;
+			// interactionMode : 
 			//-1 : nothing
 			// 0 : left click
 			// 1 : zoom

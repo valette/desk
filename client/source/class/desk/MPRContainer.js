@@ -238,7 +238,7 @@ qx.Class.define("desk.MPRContainer",
 				var r = viewGridCoor.r;
 				var c = viewGridCoor.c;
 				gridContainer.add (viewer, {row: r, column: c});
-				orientationContainer.add(viewer.getReorientationContainer(this.__orientationButtonGroup), {row: r, column: c});
+				orientationContainer.add(viewer.getReorientationContainer(), {row: r, column: c});
 			}
 		},
 
@@ -350,9 +350,18 @@ qx.Class.define("desk.MPRContainer",
 			var orientsButtonGroupHBox = new qx.ui.form.RadioButtonGroup();
 			orientsButtonGroupHBox.setLayout(new qx.ui.layout.HBox(10));
 			var slicesOrButton = new qx.ui.form.RadioButton("Volume Slices");
-			slicesOrButton.setUserData("buttonID", 1);
+			slicesOrButton.setUserData('flipCamera', true);
 			var anamOrButton = new qx.ui.form.RadioButton("Anatomical Directions");
-			anamOrButton.setUserData("buttonID", 2);
+			anamOrButton.setUserData('flipCamera', false);
+			function changeFlipStrategy (e) {
+				console.log('ok');
+				var flipCamera = e.getTarget().getUserData('flipCamera');
+				this.applyToViewers(function () {
+					this.setOrientationChangesOperateOnCamera(flipCamera);
+				});
+			}
+			slicesOrButton.addListener('execute' , changeFlipStrategy, this);
+			anamOrButton.addListener('execute' , changeFlipStrategy, this);
 			orientsButtonGroupHBox.add(slicesOrButton);
 			orientsButtonGroupHBox.add(anamOrButton);
 			this.__orientationButtonGroup = orientsButtonGroupHBox;
