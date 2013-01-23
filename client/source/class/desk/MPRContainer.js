@@ -101,7 +101,6 @@ qx.Class.define("desk.MPRContainer",
         * @param file {String} : output file to visualize (without path)
         * @param parameters {Object} : parameters object containing settings
         * such as imageFormat (0 our 1), label (text)
-        * @param parameters {Object} : callback when loaded
         */
         watchAction : function (action, file, parameters) {
             var volume;
