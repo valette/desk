@@ -225,11 +225,11 @@ qx.Class.define("desk.SegTools",
 
 			paintPage.add(tools.__colorsContainer);
 
-			var bRCL=new qx.ui.layout.HBox();
+			var bRCL = new qx.ui.layout.HBox();
 			bRCL.setSpacing(spacing);
 			tools.__mainBottomRightContainer = new qx.ui.container.Composite(bRCL);
 			
-			var tabView = new qx.ui.tabview.TabView();
+			var tabView = new desk.TabView();
 			tools.__tabView = tabView;
             tabView.add(paintPage);
 			tabView.setVisibility("excluded");
@@ -257,48 +257,34 @@ qx.Class.define("desk.SegTools",
 
 			paintPage.add(this.__bottomRightContainer);
 
-			var clusteringPage = new qx.ui.tabview.Page("clustering");
-            clusteringPage.setLayout(new qx.ui.layout.VBox());
-			tabView.add(clusteringPage);
 			var clusteringAction = new desk.Action("cvtseg2", {standalone : false});
-			clusteringAction.setActionParameters(
-				{"input_volume" : volFile});
-
+			clusteringAction.setActionParameters({"input_volume" : volFile});
 			clusteringAction.setOutputSubdirectory("clustering");
-			
 			clusteringAction.buildUI();
-			clusteringPage.add(clusteringAction.getTabView());
+			tabView.addElement('clustering', clusteringAction.getTabView());
 
-			var segmentationPage = new qx.ui.tabview.Page("segmentation");
-            segmentationPage.setLayout(new qx.ui.layout.VBox());
-			tabView.add(segmentationPage);
-			var segmentationAction = new desk.Action("cvtgcmultiseg", {standalone : false});
+			var segmentationAction = new desk.Action("cvtgcmultiseg",
+				{standalone : false});
 			clusteringAction.setActionParameters({
 				"input_volume" : volFile});
-
 			segmentationAction.setOutputSubdirectory("segmentation");
-			segmentationAction.connect("clustering", clusteringAction, "clustering-index.mhd");
-			
+			segmentationAction.connect("clustering", clusteringAction,
+				"clustering-index.mhd");
 			segmentationAction.buildUI();
-			segmentationPage.add(segmentationAction.getTabView());
+			tabView.addElement('segmentation', segmentationAction.getTabView());
 
-			var medianFilteringPage = new qx.ui.tabview.Page("cleaning");
-            medianFilteringPage.setLayout(new qx.ui.layout.VBox());
-			tabView.add(medianFilteringPage);
-			var medianFilteringAction=new desk.Action("volume_median_filtering", {standalone : false});
+			var medianFilteringAction = new desk.Action(
+				"volume_median_filtering", {standalone : false});
 			medianFilteringAction.setOutputSubdirectory("filtering");
 			medianFilteringAction.connect("input_volume", 
-										segmentationAction, "seg-cvtgcmultiseg.mhd");
+				segmentationAction, "seg-cvtgcmultiseg.mhd");
 			medianFilteringAction.buildUI();
-			medianFilteringPage.add(medianFilteringAction.getTabView());
+			tabView.addElement('cleaning', medianFilteringAction.getTabView());
 
-			var meshingPage = new qx.ui.tabview.Page("meshing");
-            meshingPage.setLayout(new qx.ui.layout.VBox());
-			tabView.add(meshingPage);
-			var meshingAction=new desk.Action("extract_meshes", {standalone : false});
+			var meshingAction = new desk.Action("extract_meshes", {standalone : false});
 			meshingAction.setOutputSubdirectory("meshes");
 			meshingAction.buildUI();
-			meshingPage.add(meshingAction.getTabView());
+			tabView.addElement('meshing', meshingAction.getTabView());
 
 			tools.addListener("changeSessionDirectory", function (e)
 			{
