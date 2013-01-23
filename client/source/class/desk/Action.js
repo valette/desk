@@ -9,8 +9,7 @@ qx.Class.define("desk.Action",
 	* @param name {String} name of the action to create
 	* @param parameters {Object} settings object. Available settings:
     * standalone (boolean): defines whether the container should be
-	* embedded in a window or not (default : true). useScroll (boolean) :
-    * defines whether parameters are embeded in a scroll
+	* embedded in a window or not (default : true).
 	*/
 	construct : function (name, parameters) {
         parameters = parameters || {};
@@ -19,10 +18,6 @@ qx.Class.define("desk.Action",
 		this.__name = name;
 		if (parameters.standalone === false) {
 			this.__standalone = false;
-		}
-
-        if (parameters.useScroll) {
-			this.__useScroll = true;
 		}
 
         this.__connections = [];
@@ -94,8 +89,6 @@ qx.Class.define("desk.Action",
 
 		__embededFileBrowser : null,
 
-        __useScroll : false,
-
         getControlsContainer : function () {
             return this.__controlsContainer;
         },
@@ -107,7 +100,7 @@ qx.Class.define("desk.Action",
 		* @param fileName {string} name of the output file from parentAction
 		*/
 		connect : function (parameterName, parentAction, fileName) {
-			if (parentAction==this) {
+			if (parentAction == this) {
 				console.log("error : trying to connect to myself...");
 				return;
 			}
@@ -122,23 +115,29 @@ qx.Class.define("desk.Action",
 		/**
 		* Defines the output directory for the action
 		* @param directory {String} target subdirectory
+ 		* @param avoidJSON {bool} determines whether reading saved json 
+ 		* file will be avoided
 		*/
-		setOutputDirectory : function (directory) {
+		setOutputDirectory : function (directory, avoidJSON) {
 			this.__outputDirectory = directory;
             if (!this.getOutputSubdirectory()) {
                 return;
             }
-			desk.FileSystem.readFile(this.getOutputDirectory() + 'action.json',
-				function(request) {
-                if (request.getStatus() === 200 ) {
-                    this.__loadedParameters=JSON.parse(request.getResponseText());
-                    this.__updateUIParameters();
-                    if (this.__tabView) {
-                        this.__addOutputTab();
-                    }
-                }
-                this.fireEvent("changeOutputDirectory");
-            }, this);
+            if (avoidJSON !== true) {
+				desk.FileSystem.readFile(this.getOutputDirectory() + 'action.json',
+					function(request) {
+					if (request.getStatus() === 200 ) {
+						this.__loadedParameters = JSON.parse(request.getResponseText());
+						this.__updateUIParameters();
+						if (this.__tabView) {
+							this.__addOutputTab();
+						}
+					}
+					this.fireEvent("changeOutputDirectory");
+				}, this);
+			} else {
+				this.fireEvent("changeOutputDirectory");
+			}
         },
 
 		__updateUIParameters : function () {
@@ -213,6 +212,7 @@ qx.Class.define("desk.Action",
 		* @param parameters {Object} parameters as JSON object
 		*/
         setUIParameters : function (parameters) {
+			parameters = JSON.parse(JSON.stringify(parameters));
             var keys = Object.keys(parameters);
             for (var i = 0; i < keys.length; i++) {
                 var key = keys[i];
@@ -224,7 +224,7 @@ qx.Class.define("desk.Action",
         },
 
 		setOriginFileBrowser : function (fileBrowser) {
-			this.__fileBrowser=fileBrowser;
+			this.__fileBrowser = fileBrowser;
 		},
 
 		/**
@@ -480,8 +480,9 @@ qx.Class.define("desk.Action",
 			var action = this.__action;
 			this.setLayout(new qx.ui.layout.VBox(5));
 
+
             var parametersContainer; 
-            if (this.__useScroll) {
+            if (1) {
                 var scroll = new qx.ui.container.Scroll();
                 parametersContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
                 scroll.add(parametersContainer, {flex : 1});
@@ -489,7 +490,12 @@ qx.Class.define("desk.Action",
             } else {
                 parametersContainer = this;
             }
-
+/*
+			var scroll = new qx.ui.container.Scroll();
+			var parametersContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
+			scroll.add(parametersContainer, {flex : 1});
+			this.add(scroll, {flex : 1});
+*/
 			if (this.__standalone) {
 				this.__window = new qx.ui.window.Window();
 				this.__window.set({ layout : new qx.ui.layout.HBox(),
@@ -602,7 +608,7 @@ qx.Class.define("desk.Action",
 							var file = this.__fileBrowser.getSelectedFiles()[0];
 							parameterForm.setValue(file);
 							var parentAction = this.__fileBrowser.getUserData("action");
-							if (parentAction != null) {
+							if (parentAction) {
 								this.connect(parameterForm.getPlaceholder(), parentAction, file);
 							}
 						}
