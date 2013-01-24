@@ -18,13 +18,13 @@ THREE.CTMLoader.prototype = Object.create( THREE.Loader.prototype );
 
 // Load multiple CTM parts defined in JSON
 
-THREE.CTMLoader.prototype.loadParts = function( url, callback, useWorker, useBuffers, basePath ) {
+THREE.CTMLoader.prototype.loadParts = function( url, callback, parameters ) {
 
 	var scope = this;
 
 	var xhr = new XMLHttpRequest();
 
-	basePath = basePath ? basePath : this.extractUrlBase( url );
+	var basePath = parameters.basePath ? parameters.basePath : this.extractUrlBase( url );
 
 	xhr.onreadystatechange = function() {
 
@@ -62,7 +62,8 @@ THREE.CTMLoader.prototype.loadParts = function( url, callback, useWorker, useBuf
 				// load joined CTM file
 
 				var partUrl = basePath + jsonObject.data;
-				scope.load( partUrl, callbackFinal, useWorker, useBuffers, jsonObject.offsets );
+				var parametersPart = { useWorker: parameters.useWorker, useBuffers: parameters.useBuffers, offsets: jsonObject.offsets };
+				scope.load( partUrl, callbackFinal, parametersPart );
 
 			}
 
@@ -82,11 +83,12 @@ THREE.CTMLoader.prototype.loadParts = function( url, callback, useWorker, useBuf
 //		- url (required)
 //		- callback (required)
 
-THREE.CTMLoader.prototype.load = function( url, callback, useWorker, useBuffers, offsets ) {
+THREE.CTMLoader.prototype.load = function( url, callback, parameters ) {
 
 	var scope = this;
 
-	offsets = offsets !== undefined ? offsets : [ 0 ];
+	var offsets = parameters.offsets !== undefined ? parameters.offsets : [ 0 ];
+	var useBuffers = parameters.useBuffers !== undefined ? parameters.useBuffers : true;
 
 	var xhr = new XMLHttpRequest(),
 		callbackProgress = null;
@@ -103,7 +105,7 @@ THREE.CTMLoader.prototype.load = function( url, callback, useWorker, useBuffers,
 
 				//var s = Date.now();
 
-				if ( useWorker ) {
+				if ( parameters.useWorker ) {
 
 					var worker = new Worker( HackCTMWorkerURL );
 
@@ -135,7 +137,6 @@ THREE.CTMLoader.prototype.load = function( url, callback, useWorker, useBuffers,
 					worker.postMessage( { "data": binaryData, "offsets": offsets } );
 
 				} else {
-
 
 					for ( var i = 0; i < offsets.length; i ++ ) {
 
@@ -591,19 +592,19 @@ THREE.CTMLoader.prototype.createModelClassic = function ( file, callback ) {
 
 	};
 
-	function f3n ( scope, normals, a, b, c, mi, na, nb, nc ) {
+	function f3n ( scope, normals, a, b, c, mi, nai, nbi, nci ) {
 
-		var nax = normals[ na * 3     ],
-			nay = normals[ na * 3 + 1 ],
-			naz = normals[ na * 3 + 2 ],
+		var nax = normals[ nai * 3     ],
+			nay = normals[ nai * 3 + 1 ],
+			naz = normals[ nai * 3 + 2 ],
 
-			nbx = normals[ nb * 3     ],
-			nby = normals[ nb * 3 + 1 ],
-			nbz = normals[ nb * 3 + 2 ],
+			nbx = normals[ nbi * 3     ],
+			nby = normals[ nbi * 3 + 1 ],
+			nbz = normals[ nbi * 3 + 2 ],
 
-			ncx = normals[ nc * 3     ],
-			ncy = normals[ nc * 3 + 1 ],
-			ncz = normals[ nc * 3 + 2 ];
+			ncx = normals[ nci * 3     ],
+			ncy = normals[ nci * 3 + 1 ],
+			ncz = normals[ nci * 3 + 2 ];
 
 		var na = new THREE.Vector3( nax, nay, naz ),
 			nb = new THREE.Vector3( nbx, nby, nbz ),
@@ -620,9 +621,9 @@ THREE.CTMLoader.prototype.createModelClassic = function ( file, callback ) {
 	function uv3 ( where, u1, v1, u2, v2, u3, v3 ) {
 
 		var uv = [];
-		uv.push( new THREE.UV( u1, v1 ) );
-		uv.push( new THREE.UV( u2, v2 ) );
-		uv.push( new THREE.UV( u3, v3 ) );
+		uv.push( new THREE.Vector2( u1, v1 ) );
+		uv.push( new THREE.Vector2( u2, v2 ) );
+		uv.push( new THREE.Vector2( u3, v3 ) );
 		where.push( uv );
 
 	};

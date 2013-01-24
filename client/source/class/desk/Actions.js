@@ -59,6 +59,8 @@ qx.Class.define("desk.Actions",
 		scripts.push(threeURL + 'VTKLoader.js');
 		scripts.push(threeURL + 'TrackballControls2.js');
 		scripts.push(threeURL + 'ctm/CTMLoader.js');
+		scripts.push(threeURL + 'ctm/ctm.js');
+		scripts.push(threeURL + 'ctm/lzma.js');
 		scripts.push(threeURL + 'MeshAnalyser.js');
         scripts.push(baseURL + 'ext/async.min.js');
 		desk.FileSystem.includeScripts(scripts, function () {

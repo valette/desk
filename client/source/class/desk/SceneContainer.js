@@ -641,7 +641,7 @@ qx.Class.define("desk.SceneContainer",
                     if (typeof callback === 'function') {
                         callback();
                     }
-                }, useWorker, useBuffers);
+                }, { useWorker : useWorker, useBuffers : useBuffers});
 				this.__loadQueue();
 			}
 		},
