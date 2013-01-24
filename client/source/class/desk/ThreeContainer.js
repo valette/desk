@@ -218,8 +218,8 @@ qx.Class.define("desk.ThreeContainer",
 				}
 			});
 
-			var center = min.clone().addSelf(max).multiplyScalar(0.5);
-			var bbdiaglength = Math.sqrt(max.clone().subSelf(min).lengthSq());
+			var center = min.clone().add(max).multiplyScalar(0.5);
+			var bbdiaglength = Math.sqrt(max.clone().sub(min).lengthSq());
 
 			var camera = this.__camera;
 			var controls = this.__controls;
@@ -234,9 +234,9 @@ qx.Class.define("desk.ThreeContainer",
 				var ratio = bbdiaglength / this.__boudingBoxDiagonalLength;
 				this.__boudingBoxDiagonalLength = bbdiaglength;
 				var backPedal = camera.position.clone();
-				backPedal.subSelf(controls.target);
+				backPedal.sub(controls.target);
 				backPedal.multiplyScalar(ratio);
-				backPedal.addSelf(controls.target);
+				backPedal.add(controls.target);
 				camera.position.copy(backPedal);
 			}
 			controls.update();

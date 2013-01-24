@@ -213,9 +213,9 @@ qx.Class.define("desk.SliceView",
 					var camera = this.__getCamera();
 					var controls = this.__threeContainer.getControls(); 
 					var direction = controls.target.clone();
-					direction.subSelf(camera.position);
+					direction.sub(camera.position);
 					var up = camera.up;
-					direction.crossSelf(up).normalize();
+					direction.cross(up).normalize();
 					up.copy(direction);
 					controls.update();
 				} else {
@@ -236,9 +236,9 @@ qx.Class.define("desk.SliceView",
 					var camera = this.__getCamera();
 					var controls = this.__threeContainer.getControls(); 
 					var direction = controls.target.clone();
-					direction.subSelf(camera.position);
+					direction.sub(camera.position);
 					var up = camera.up;
-					direction.crossSelf(up).normalize().negate();
+					direction.cross(up).normalize().negate();
 					up.copy(direction);
 					controls.update();
 				} else {
@@ -1033,9 +1033,9 @@ qx.Class.define("desk.SliceView",
 			projector.unprojectVector( intersection, camera );
 
 			var cameraPosition=camera.position;
-			intersection.subSelf( cameraPosition );
+			intersection.sub( cameraPosition );
 			intersection.multiplyScalar(-cameraPosition.z/intersection.z);
-			intersection.addSelf( cameraPosition );
+			intersection.add( cameraPosition );
 			var xinter=intersection.x;
 			var yinter=intersection.y;
 

@@ -110,11 +110,11 @@ THREE.TrackballControls2 = function ( object ) {
 		if ( _this._dy != 0 ) {
 			angle = _this.rotateSpeed * _this._dy/_this.radius;
 
-			axis.cross( _eye, _this.object.up ).normalize();
+			axis.crossVectors( _eye, _this.object.up ).normalize();
 			quaternion.setFromAxisAngle( axis, angle );
 
-			quaternion.multiplyVector3( _eye );
-			quaternion.multiplyVector3( _this.object.up );
+			_eye.applyQuaternion(quaternion);
+			_this.object.up.applyQuaternion(quaternion);
 			_this._dy=0;
 		}
 
@@ -123,8 +123,8 @@ THREE.TrackballControls2 = function ( object ) {
 			axis.copy( _this.object.up ).normalize();
 			quaternion.setFromAxisAngle( axis , angle );
 
-			quaternion.multiplyVector3( _eye );
-			quaternion.multiplyVector3( _this.object.up );
+			_eye.applyQuaternion(quaternion);
+			_this.object.up.applyQuaternion(quaternion);
 			_this._dx=0;
 		}
 
@@ -132,8 +132,8 @@ THREE.TrackballControls2 = function ( object ) {
 			axis.copy( _eye ).normalize();
 			quaternion.setFromAxisAngle( axis , _this._alpha );
 
-	//		quaternion.multiplyVector3( _eye );
-			quaternion.multiplyVector3( _this.object.up );
+			//_eye.applyQuaternion(quaternion);
+			_this.object.up.applyQuaternion(quaternion);
 			_this._alpha=0;
 		}
 
@@ -163,17 +163,17 @@ THREE.TrackballControls2 = function ( object ) {
 
 	this.panCamera = function() {
 
-		var mouseChange = _panEnd.clone().subSelf( _panStart );
+		var mouseChange = _panEnd.clone().sub( _panStart );
 
 		if ( mouseChange.lengthSq() ) {
 
 			mouseChange.multiplyScalar( _eye.length() * _this.panSpeed );
 
-			var pan = _eye.clone().crossSelf( _this.object.up ).setLength( mouseChange.x );
-			pan.addSelf( _this.object.up.clone().setLength( mouseChange.y ) );
+			var pan = _eye.clone().cross( _this.object.up ).setLength( mouseChange.x );
+			pan.add( _this.object.up.clone().setLength( mouseChange.y ) );
 
-			_this.object.position.addSelf( pan );
-			_this.target.addSelf( pan );
+			_this.object.position.add( pan );
+			_this.target.add( pan );
 
 //			if ( _this.staticMoving ) {
 
@@ -181,7 +181,7 @@ THREE.TrackballControls2 = function ( object ) {
 
 	/*		} else {
 
-				_panStart.addSelf( mouseChange.sub( _panEnd, _panStart ).multiplyScalar( _this.dynamicDampingFactor ) );
+				_panStart.add( mouseChange.sub( _panEnd, _panStart ).multiplyScalar( _this.dynamicDampingFactor ) );
 
 			}*/
 
@@ -201,7 +201,7 @@ THREE.TrackballControls2 = function ( object ) {
 
 			if ( _eye.lengthSq() < _this.minDistance * _this.minDistance ) {
 
-				_this.object.position.add( _this.target, _eye.setLength( _this.minDistance ) );
+				_this.object.position.addVectors( _this.target, _eye.setLength( _this.minDistance ) );
 
 			}
 
@@ -214,7 +214,7 @@ THREE.TrackballControls2 = function ( object ) {
 	};
 	this._update = function() {
 
-		_eye.copy( _this.object.position ).subSelf( this.target );
+		_eye.copy( _this.object.position ).sub( this.target );
 
 		if ( !_this.noRotate ) {
 
@@ -234,7 +234,7 @@ THREE.TrackballControls2 = function ( object ) {
 
 		}
 
-		_this.object.position.add( _this.target, _eye );
+		_this.object.position.addVectors( _this.target, _eye );
 
 		_this.checkDistances();
 
