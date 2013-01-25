@@ -16,20 +16,17 @@ qx.Class.define("desk.VolumeSlice",
 		this.__materials=[];
 		this.__image=new Image();
 
-		if (parameters!=null) {
-			if (parameters.imageFormat!=null) {
-				this.setImageFormat(parameters.imageFormat);
-			}
+		parameters = parameters || {};
 
-			if (parameters.colors!=null) {
-				var luts=parameters.colors;
-				this.__lookupTableRed=luts[0];
-				this.__lookupTableGreen=luts[1];
-				this.__lookupTableBlue=luts[2];
-			}
-			if (parameters.opacity!=null) {
-				this.__opacity=parameters.opacity;
-			}
+		if (parameters.imageFormat != null) {
+			this.setImageFormat(parameters.imageFormat);
+		}
+
+		if (parameters.colors) {
+			this.__lookupTables = parameters.colors;
+		}
+		if (parameters.opacity != null) {
+			this.__opacity = parameters.opacity;
 		}
 
 		this.__file=file;
@@ -121,7 +118,7 @@ qx.Class.define("desk.VolumeSlice",
 				"float clampedValue=clamp(pixelValue/ lookupTableLength, 0.0, 1.0);",
 				"vec2 colorIndex=vec2(clampedValue,0.0);",
 				"vec4 colorFromLookupTable = texture2D( lookupTable,colorIndex  );",
-				"colorFromLookupTable[3]=opacity;",
+				"colorFromLookupTable[3] *= opacity;",
 				"gl_FragColor=mix (correctedColor, colorFromLookupTable, useLookupTable);",
 			"}"
 		].join("\n"),
@@ -177,9 +174,7 @@ qx.Class.define("desk.VolumeSlice",
 		__renderer : null,
 		__controls : null,
 
-		__lookupTableRed : null,
-		__lookupTableGreen : null,
-		__lookupTableBlue : null,
+		__lookupTables : null,
 
 		__materials : null,
 
@@ -262,22 +257,22 @@ qx.Class.define("desk.VolumeSlice",
 
 		setBrightnessAndContrast : function (brightness, contrast)
 		{
-			this.__brightness=brightness;
-			this.__contrast=contrast;
-			var materials=this.__materials;
-			for (var i=0;i<materials.length;i++) {
-				var material=materials[i];
-				material.uniforms.brightness.value=brightness;
-				material.uniforms.contrast.value=contrast;
+			this.__brightness = brightness;
+			this.__contrast = contrast;
+			var materials = this.__materials;
+			for (var i = 0; i < materials.length; i++) {
+				var material = materials[i];
+				material.uniforms.brightness.value = brightness;
+				material.uniforms.contrast.value = contrast;
 			}
 			this.fireEvent("changeImage");
 		},
 
 		setOpacity : function (opacity)
 		{
-			var materials=this.__materials;
-			for (var i=0;i<materials.length;i++) {
-				materials[i].uniforms.opacity.value=opacity;
+			var materials = this.__materials;
+			for (var i = 0; i < materials.length; i++) {
+				materials[i].uniforms.opacity.value = opacity;
 			}
 			this.fireEvent("changeImage");
 		},
@@ -287,52 +282,59 @@ qx.Class.define("desk.VolumeSlice",
 		},
 
 		__setLookupTablesToMaterial : function ( luts , material ) {
-			var lookupTable=material.uniforms.lookupTable.value;
-			var numberOfColors=luts[0].length;
-			material.uniforms.lookupTableLength.value=numberOfColors;
-			material.uniforms.useLookupTable.value=1;
-			lookupTable.needsUpdate=true;
-			var image=lookupTable.image;
-			if (image.width!=numberOfColors) {
-				image.data=new Uint8Array(numberOfColors*4);
-				image.width=numberOfColors;
+			var lookupTable = material.uniforms.lookupTable.value;
+			var numberOfColors = luts[0].length;
+			material.uniforms.lookupTableLength.value = numberOfColors;
+			material.uniforms.useLookupTable.value = 1;
+			lookupTable.needsUpdate = true;
+			var image = lookupTable.image;
+			if (image.width != numberOfColors) {
+				image.data = new Uint8Array(numberOfColors*4);
+				image.width = numberOfColors;
 			}
-			var data=image.data;
-			var lutR=luts[0];
-			var lutG=luts[1];
-			var lutB=luts[2];
+			var data = image.data;
+			var lutR = luts[0];
+			var lutG = luts[1];
+			var lutB = luts[2];
+			var lutAlpha = luts[3];
 			var p=0;
-			for (var j=0;j<numberOfColors;j++) {
-				data[p++]=lutR[j];
-				data[p++]=lutG[j];
-				data[p++]=lutB[j];
-				data[p++]=255;
+			if (lutAlpha) {
+				for (var j=0;j<numberOfColors;j++) {
+					data[p++] = lutR[j];
+					data[p++] = lutG[j];
+					data[p++] = lutB[j];
+					data[p++] = lutAlpha[j];
+				}
+			} else {
+				for (var j = 0; j < numberOfColors; j++) {
+					data[p++] = lutR[j];
+					data[p++] = lutG[j];
+					data[p++] = lutB[j];
+					data[p++] = 255;
+				}
 			}
 		},
 
 		setLookupTables : function ( luts ) {
-			this.__lookupTableRed=luts[0];
-			this.__lookupTableGreen=luts[1];
-			this.__lookupTableBlue=luts[2];
+			this.__lookupTables = luts;
 
-			var materials=this.__materials;
-			for (var i=0;i<materials.length;i++) {
+			var materials = this.__materials;
+			for (var i = 0; i < materials.length; i++) {
 				this.__setLookupTablesToMaterial ( luts , materials[i] );
 			}
 			this.fireEvent("changeImage");
 		},
 
 		getLookupTables : function () {
-			return [this.__lookupTableRed, this.__lookupTableGreen, this.__lookupTableBlue];
+			return this.__lookupTables;
 		},
 
 		removeLookupTables : function () {
-			this.__lookupTableRed=null;
-			this.__lookupTableGreen=null;
-			this.__lookupTableBlue=null;
-			var materials=this.__materials;
-			for (var i=0;i<materials.length;i++) {
-				materials[i].uniforms.useLookupTable.value=0;
+			this.__lookupTables = null;
+
+			var materials = this.__materials;
+			for (var i = 0; i < materials.length; i++) {
+				materials[i].uniforms.useLookupTable.value = 0;
 			}
 			this.fireEvent("changeImage");
 		},
@@ -343,10 +345,10 @@ qx.Class.define("desk.VolumeSlice",
 					if (source.hasOwnProperty(attr)) dest[attr] = source[attr];
 				}
 			}
-			material.uniforms={};
+			material.uniforms = {};
 			addMembers(material.baseShader.baseUniforms, material.uniforms);
-			var extraUniforms=material.baseShader.extraUniforms;
-			material.fragmentShader="";
+			var extraUniforms = material.baseShader.extraUniforms;
+			material.fragmentShader = "";
 			for (var i=0;i!=extraUniforms.length;i++) {
 				var name=extraUniforms[i].name;
 				material.fragmentShader+="\n uniform float "+name+";";
@@ -362,6 +364,8 @@ qx.Class.define("desk.VolumeSlice",
 			material.needsUpdate=true;
 		},
 
+		__dummyLut : new Uint8Array(8),// [255, 0, 0, 255, 0, 0, 255, 255],
+
 		getMaterial :function () {
 			var texture=new THREE.Texture(this.__image);
 			texture.needsUpdate = true;
@@ -369,17 +373,7 @@ qx.Class.define("desk.VolumeSlice",
 			texture.magFilter=THREE.NearestFilter;
 			texture.minFilter=THREE.NearestFilter;
 
-			var data=new Uint8Array( 2*4);
-			data[0]=255;
-			data[1]=0;
-			data[2]=0;
-			data[3]=255;
-			data[4]=0;
-			data[5]=0;
-			data[6]=255;
-			data[7]=255;
-
-			var lookupTable = new THREE.DataTexture( data , 2, 1, THREE.RGBAFormat );
+			var lookupTable = new THREE.DataTexture( this.__dummyLut , 2, 1, THREE.RGBAFormat );
 			lookupTable.generateMipmaps=false;
 			lookupTable.magFilter=THREE.NearestFilter;
 			lookupTable.minFilter=THREE.NearestFilter;
@@ -450,8 +444,8 @@ qx.Class.define("desk.VolumeSlice",
 				extraShaders : []
 			};
 
-			var luts=this.getLookupTables();
-			if (luts[0]) {
+			var luts = this.getLookupTables();
+			if (luts) {
 				this.__setLookupTablesToMaterial ( luts , material );
 			}
 
@@ -631,94 +625,75 @@ qx.Class.define("desk.VolumeSlice",
 		},
 
 		openXMLURL : function (xmlURL, callback) {
-			var xmlhttp=new XMLHttpRequest();
-			xmlhttp.open("GET",xmlURL+"?nocache=" + Math.random(),true);
-			var _this=this;
+			var req = new qx.io.request.Xhr(xmlURL+"?nocache=" + Math.random());
+			req.setAsync(true);
 
-			xmlhttp.onreadystatechange = function() {
-        if(this.readyState == 4 && this.status == 200)
-        {
-          // so far so good
-         if(xmlhttp.responseXML != null)
-					{
-						var response = xmlhttp.responseXML;
-						_this.__parseXMLresponse(response,xmlURL);
-						if (typeof callback === 'function') {
-							callback();
-						}
-					}
-					else
-						alert("open volume slice : Failure...");
+			req.addListener("success", function(e) {
+				this.__parseXMLresponse(e.getTarget().getResponse(), xmlURL);
+				if (typeof callback === 'function') {
+					callback();
 				}
-				else if (xmlhttp.readyState == 4 && xmlhttp.status != 200)
-				{
-					// fetched the wrong page or network error...
-					alert('open volume slice : "Fetched the wrong page" OR "Network error"');
-				}
-			}
-			xmlhttp.send();
+			}, this);
+
+			req.send();
 		},
 
 		__parseXMLresponse : function (xmlDoc, xmlURL) {
-
-			this.__availableImageFormat=this.getImageFormat();
-			var volume=xmlDoc.getElementsByTagName("volume")[0];
+			this.__availableImageFormat = this.getImageFormat();
+			var volume = xmlDoc.getElementsByTagName("volume")[0];
 			if (!volume)
 				return;
 
 			// parse extent, dimensions, origin, spacing
-			var XMLextent=volume.getElementsByTagName("extent")[0];
-			this.__extent=new Array(parseInt(XMLextent.getAttribute("x1"), 10),
+			var XMLextent = volume.getElementsByTagName("extent")[0];
+			this.__extent = new Array(parseInt(XMLextent.getAttribute("x1"), 10),
 							parseInt(XMLextent.getAttribute("x2"), 10),
 							parseInt(XMLextent.getAttribute("y1"), 10),
 							parseInt(XMLextent.getAttribute("y2"), 10),
 							parseInt(XMLextent.getAttribute("z1"), 10),
 							parseInt(XMLextent.getAttribute("z2"), 10));
 
-			var XMLdimensions=volume.getElementsByTagName("dimensions")[0];
+			var XMLdimensions = volume.getElementsByTagName("dimensions")[0];
 
-			this.__dimensions=new Array(parseInt(XMLdimensions.getAttribute("x"), 10),
+			this.__dimensions = new Array(parseInt(XMLdimensions.getAttribute("x"), 10),
 							parseInt(XMLdimensions.getAttribute("y"), 10),
 							parseInt(XMLdimensions.getAttribute("z"), 10));
 
-			var XMLspacing=volume.getElementsByTagName("spacing")[0];
-			this.__spacing=new Array(parseFloat(XMLspacing.getAttribute("x")),
+			var XMLspacing = volume.getElementsByTagName("spacing")[0];
+			this.__spacing = new Array(parseFloat(XMLspacing.getAttribute("x")),
 							parseFloat(XMLspacing.getAttribute("y")),
 							parseFloat(XMLspacing.getAttribute("z")));
 
-			var XMLorigin=volume.getElementsByTagName("origin")[0];
-			this.__origin=new Array(parseFloat(XMLorigin.getAttribute("x")),
+			var XMLorigin = volume.getElementsByTagName("origin")[0];
+			this.__origin = new Array(parseFloat(XMLorigin.getAttribute("x")),
 							parseFloat(XMLorigin.getAttribute("y")),
 							parseFloat(XMLorigin.getAttribute("z")));
 
-			var XMLscalars=volume.getElementsByTagName("scalars")[0];
-			this.__numberOfScalarComponents=parseInt(XMLscalars.getAttribute("numberOfScalarComponents"),10);
-			this.__scalarType=parseInt(XMLscalars.getAttribute("type"),10);
-			this.__scalarSize=parseInt(XMLscalars.getAttribute("size"),10);
-			this.__scalarMin=parseFloat(XMLscalars.getAttribute("min"),10);
-			this.__scalarMax=parseFloat(XMLscalars.getAttribute("max"),10);
-			this.__scalarTypeString=XMLscalars.childNodes[0].nodeValue;
+			var XMLscalars = volume.getElementsByTagName("scalars")[0];
+			this.__numberOfScalarComponents = parseInt(XMLscalars.getAttribute("numberOfScalarComponents"),10);
+			this.__scalarType = parseInt(XMLscalars.getAttribute("type"),10);
+			this.__scalarSize = parseInt(XMLscalars.getAttribute("size"),10);
+			this.__scalarMin = parseFloat(XMLscalars.getAttribute("min"),10);
+			this.__scalarMax = parseFloat(XMLscalars.getAttribute("max"),10);
+			this.__scalarTypeString = XMLscalars.childNodes[0].nodeValue;
 
-			var slices=volume.getElementsByTagName("slicesprefix")[0];
-			this.__offset=parseInt(slices.getAttribute("offset"), 10);
-			this.__timestamp=slices.getAttribute("timestamp");
-			if (this.__timestamp==null)
-				this.__timestamp=Math.random();
-			this.__prefix=slices.childNodes[0].nodeValue;
+			var slices = volume.getElementsByTagName("slicesprefix")[0];
+			this.__offset = parseInt(slices.getAttribute("offset"), 10);
+			this.__timestamp = slices.getAttribute("timestamp");
+			if (this.__timestamp == null)
+				this.__timestamp = Math.random();
+			this.__prefix = slices.childNodes[0].nodeValue;
 
-			var slashIndex=xmlURL.lastIndexOf("/");
-			this.__path="";
-			if (slashIndex>0)
-				this.__path=xmlURL.substring(0,slashIndex)+"\/";
+			this.__path = desk.FileSystem.getFileDirectory(xmlURL);
 
 			// feed shader with constants
-			var materials=this.__materials;
-			for (var i=0;i<materials.length;i++){
-				materials[i].uniforms.imageType.value=this.__availableImageFormat;
+			var materials = this.__materials;
+			for (var i = 0; i < materials.length; i++){
+				materials[i].uniforms.imageType.value = this.__availableImageFormat;
 			}
 
 			if (this.isReady()) {
-				this.__updateTriggered=true;
+				this.__updateTriggered = true;
 				this.__updateImage();
 			}
 			else {
