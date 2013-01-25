@@ -353,7 +353,6 @@ qx.Class.define("desk.MPRContainer",
 			var anamOrButton = new qx.ui.form.RadioButton("Anatomical Directions");
 			anamOrButton.setUserData('flipCamera', false);
 			function changeFlipStrategy (e) {
-				console.log('ok');
 				var flipCamera = e.getTarget().getUserData('flipCamera');
 				this.applyToViewers(function () {
 					this.setOrientationChangesOperateOnCamera(flipCamera);
