@@ -115,15 +115,17 @@ qx.Class.define("desk.Action",
 		/**
 		* Defines the output directory for the action
 		* @param directory {String} target subdirectory
- 		* @param avoidJSON {bool} determines whether reading saved json 
- 		* file will be avoided
+ 		* @param loadJSON {bool} determines whether saved json 
+ 		* parameters file will be loaded from the output directory (default : true)
 		*/
-		setOutputDirectory : function (directory, avoidJSON) {
+		setOutputDirectory : function (directory, loadJSON) {
 			this.__outputDirectory = directory;
             if (!this.getOutputSubdirectory()) {
                 return;
             }
-            if (avoidJSON !== true) {
+            if (loadJSON === false) {
+				this.fireEvent("changeOutputDirectory");
+			} else {
 				desk.FileSystem.readFile(this.getOutputDirectory() + 'action.json',
 					function(request) {
 					if (request.getStatus() === 200 ) {
@@ -135,8 +137,6 @@ qx.Class.define("desk.Action",
 					}
 					this.fireEvent("changeOutputDirectory");
 				}, this);
-			} else {
-				this.fireEvent("changeOutputDirectory");
 			}
         },
 
