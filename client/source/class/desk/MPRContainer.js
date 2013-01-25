@@ -100,7 +100,7 @@ qx.Class.define("desk.MPRContainer",
         * @param action {desk.Action} : action to watch
         * @param file {String} : output file to visualize (without path)
         * @param parameters {Object} : parameters object containing settings
-        * such as imageFormat (0 our 1), label (text)
+        * such as imageFormat (0 or 1), label (text), visible (bool)
         */
         watchAction : function (action, file, parameters) {
             var volume;
@@ -422,7 +422,7 @@ qx.Class.define("desk.MPRContainer",
 		* adds a file into the viewer
 		* @param file {String} : file to load
         * @param parameters {Object} : parameters object containing settings
-        * such as imageFormat (0 our 1), label (text)
+        * such as imageFormat (0 or 1), label (text), visible (bool)
         * @param callback {Function} : callback when loaded
         * @return {qx.ui.container.Composite} : volume item
 		*/
@@ -507,6 +507,9 @@ qx.Class.define("desk.MPRContainer",
 						if ( numberOfRemainingMeshes === 0 ) {
                             volumeListItem.setUserData('slices', volumeSlices);
 							_this.__reorderMeshes();
+							if (parameters.visible !== undefined) {
+								hideShowCheckbox.setValue(parameters.visible);
+							}
 							if (typeof callback === 'function') {
 								callback(_this, volumeSlices);
 							}
