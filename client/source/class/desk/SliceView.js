@@ -857,6 +857,12 @@ qx.Class.define("desk.SliceView",
 
 			htmlContainer.addListener("mousemove", function (event)	{
 				this.__rightContainer.setVisibility("visible");
+				var that = this;
+				this.__master.applyToViewers(function () {
+					if (this != that) {
+						this.__rightContainer.setVisibility("hidden");
+					}
+				});
 
 				var brushMesh=this.__brushMesh;
 				var position;
