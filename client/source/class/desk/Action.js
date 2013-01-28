@@ -1,5 +1,6 @@
 /**
  * A container to launch RPC actions and edit parameters
+ * @lint ignoreDeprecated (alert)
  */
 qx.Class.define("desk.Action", 
 {

@@ -1,7 +1,7 @@
-/*
-#ignore(Detector)
-#ignore(Uint8Array)
-#asset(desk/Contrast_Logo_petit.PNG)
+/**
+* @ignore(Uint8Array)
+* @lint ignoreDeprecated(alert)
+* @asset(desk/Contrast_Logo_petit.PNG)
 */
 qx.Class.define("desk.MPRContainer", 
 {

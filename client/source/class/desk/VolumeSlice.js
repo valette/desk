@@ -1,7 +1,11 @@
-/*
-#ignore(THREE.*)
-#ignore(THREE)
-#ignore(Uint8Array)
+/**
+* @ignore(THREE.Texture)
+* @ignore(THREE.DataTexture)
+* @ignore(THREE.NearestFilter)
+* @ignore(THREE.RGBAFormat)
+* @ignore(THREE.ShaderMaterial)
+* @ignore(Uint8Array)
+* @lint ignoreDeprecated(alert)
 */
 
 qx.Class.define("desk.VolumeSlice", 

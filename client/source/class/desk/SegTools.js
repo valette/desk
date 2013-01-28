@@ -1,5 +1,7 @@
-/*
-#ignore(Uint8Array)
+/**
+* @ignore(Uint8Array)
+* @lint ignoreDeprecated(alert)
+* @lint ignoreDeprecated(confirm)
 */
 
 qx.Class.define("desk.SegTools",

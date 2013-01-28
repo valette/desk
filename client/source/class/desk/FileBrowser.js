@@ -1,6 +1,10 @@
-/*
-#asset(desk/tris.png)
-#asset(desk/img.png)
+/**
+ * A container to launch RPC actions and edit parameters
+ * @ignore (async.forEach)
+ * @lint ignoreDeprecated (alert)
+ * @lint ignoreDeprecated (confirm)
+ * @asset(desk/tris.png)
+ * @asset(desk/img.png)
 */
 
 qx.Class.define("desk.FileBrowser", 

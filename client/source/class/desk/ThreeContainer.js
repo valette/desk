@@ -1,21 +1,20 @@
-/*
-#ignore(THREE.*)
-#ignore(THREE)
-#ignore(requestAnimationFrame)
-#ignore(Detector)
-#ignore(Uint8Array)
-@lint ignoreGlobal(THREE)
-*/
-
 /**
 * A container which includes a THREE.js scene, camera, controls and renderer
+ * @ignore(THREE.Scene)
+ * @ignore(THREE.PerspectiveCamera)
+ * @ignore(THREE.TrackballControls2)
+ * @ignore(THREE.DirectionalLight)
+ * @ignore(THREE.AmbientLight)
+ * @ignore(THREE.WebGLRenderer)
+ * @ignore(Detector.webgl)
+ * @ignore(Detector.addGetWebGLMessage)
 */
 qx.Class.define("desk.ThreeContainer", 
 {
 	extend : qx.ui.container.Composite,
 
 	/**
-	* Constructor
+	 * Constructor
 	*/
 	construct : function()
 	{
@@ -100,6 +99,7 @@ qx.Class.define("desk.ThreeContainer",
 		* Renders the scene
 		* @param force {Boolean} forces display (i.e. does not use
 		* requestAnimationFrame())
+		* @ignore(requestAnimationFrame)
 		*/
 		render : function ( force ) {
 			var _this=this;
@@ -180,6 +180,8 @@ qx.Class.define("desk.ThreeContainer",
 
 		/**
 		* Sets the camera to view all objects in the scene
+		* @ignore(THREE.Vector3)
+		* @ignore(THREE.Mesh)
 		*/
 		viewAll : function ( ) {
 			var max = new THREE.Vector3(-1e10,-1e10,-1e10);

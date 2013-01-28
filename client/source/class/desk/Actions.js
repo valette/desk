@@ -1,10 +1,8 @@
-/*
-#ignore(HackCTMWorkerURL)
-*/
-
 /**
  * Singleton class which stores all available actions, handles launching
  * and display actions in progress
+ * @ignore (HackCTMWorkerURL)
+ * @lint ignoreDeprecated (alert)
  */
 qx.Class.define("desk.Actions", 
 {

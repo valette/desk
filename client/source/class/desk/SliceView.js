@@ -1,10 +1,19 @@
-/*
-#ignore(THREE.*)
-#ignore(THREE)
-#ignore(requestAnimationFrame)
-#ignore(Detector)
-#ignore(Uint8Array)
-@lint ignoreGlobal(THREE)
+/**
+* @ignore(THREE.Mesh)
+* @ignore(THREE.Vector2)
+* @ignore(THREE.Line)
+* @ignore(THREE.DataTexture)
+* @ignore(THREE.RGBAFormat)
+* @ignore(THREE.NearestFilter)
+* @ignore(THREE.MeshBasicMaterial)
+* @ignore(THREE.LineBasicMaterial)
+* @ignore(THREE.Vector3)
+* @ignore(THREE.Face4)
+* @ignore(THREE.DoubleSide)
+* @ignore(THREE.Projector)
+* @ignore(THREE.Geometry)
+* @ignore(Uint8Array)
+* @lint ignoreDeprecated(alert)
 */
 
 qx.Class.define("desk.SliceView", 

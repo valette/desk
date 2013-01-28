@@ -1,10 +1,22 @@
-/*
-#asset(desk/camera-photo.png)
-@lint ignoreUndefined(THREE.*)
-#ignore(requestAnimationFrame)
-#ignore(Detector)
-#ignore(Uint8Array)
-@lint ignoreGlobal(THREE)
+/**
+* @asset(desk/camera-photo.png)
+* @ignore(THREE.Mesh)
+* @ignore(THREE.Vector2)
+* @ignore(THREE.Vector3)
+* @ignore(THREE.Face4)
+* @ignore(THREE.DoubleSide)
+* @ignore(THREE.Projector)
+* @ignore(THREE.Raycaster)
+* @ignore(THREE.VTKLoader)
+* @ignore(THREE.Geometry)
+* @ignore(THREE.MeshPhongMaterial)
+* @ignore(THREE.Color)
+* @ignore(THREE.CTMLoader)
+* @ignore(requestAnimationFrame)
+* @ignore(Detector)
+* @ignore(Uint8Array)
+* @lint ignoreDeprecated(alert)
+* @ignore(desk.MeshTools)
 */
 qx.Class.define("desk.SceneContainer", 
 {

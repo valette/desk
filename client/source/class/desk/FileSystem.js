@@ -1,5 +1,6 @@
 /**
  * Singleton helper class for file system operations : path->URL conversion, session management etc...
+ * @lint ignoreDeprecated(alert)
  */
 qx.Class.define("desk.FileSystem", 
 {

@@ -1,3 +1,7 @@
+/**
+* @lint ignoreDeprecated(alert)
+*/
+
 qx.Class.define("desk.VolViewSimple", 
 {
   extend : qx.ui.window.Window,
