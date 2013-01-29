@@ -17,6 +17,7 @@ qx.Class.define("desk.TabView",
 			page.setLayout(layout);
 			page.add(element, {flex : 1});
 			this.add(page);
+			return page;
 		}
 	}
 });
