@@ -61,8 +61,10 @@
         },
         {
          "manifest" : "../../UploadMgr/trunk/Manifest.json"
+        },
+        {
+          "manifest"   : "contrib://QxJqPlot/trunk/Manifest.json"
         }
-
       ]
     }
   }

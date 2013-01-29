@@ -67,7 +67,11 @@ qx.Class.define("desk.Actions",
 				this.__setReady();
 			}
 		}, this);
-		
+
+		if (0) {
+			new qxjqplot.Plot();
+		}
+
 		return this;
 	},
 
