@@ -270,10 +270,10 @@ qx.Class.define("desk.Action",
 				page.add( this.__embededFileBrowser , { flex : 1 } );
 
 				this.addListener( "actionUpdated" , function () {
-					this.__embededFileBrowser.updateRoot();
+					this.__embededFileBrowser.updateRoot(this.getOutputDirectory());
 				} , this );
 				this.addListener("changeOutputDirectory", function () {
-					this.__embededFileBrowser.updateRoot();
+					this.__embededFileBrowser.updateRoot(this.getOutputDirectory());
 				} , this );
 			}, this);
 		},
