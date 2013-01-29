@@ -2,6 +2,7 @@
 * @ignore(THREE.Texture)
 * @ignore(THREE.DataTexture)
 * @ignore(THREE.NearestFilter)
+* @ignore(THREE.LinearFilter)
 * @ignore(THREE.RGBAFormat)
 * @ignore(THREE.ShaderMaterial)
 * @ignore(Uint8Array)
@@ -31,6 +32,11 @@ qx.Class.define("desk.VolumeSlice",
 		}
 		if (parameters.opacity != null) {
 			this.__opacity = parameters.opacity;
+		}
+		if (parameters.linearFilter) {
+			this.__textureFilter = THREE.LinearFilter;
+		} else {
+			this.__textureFilter = THREE.NearestFilter;
 		}
 
 		this.__file=file;
@@ -148,6 +154,7 @@ qx.Class.define("desk.VolumeSlice",
 	},
 
 	members : {
+		__textureFilter : null,
 		__availableImageFormat : 1,
 
 		__file : null,
@@ -371,16 +378,17 @@ qx.Class.define("desk.VolumeSlice",
 		__dummyLut : new Uint8Array(8),// [255, 0, 0, 255, 0, 0, 255, 255],
 
 		getMaterial :function () {
-			var texture=new THREE.Texture(this.__image);
+			var texture = new THREE.Texture(this.__image);
 			texture.needsUpdate = true;
-			texture.generateMipmaps=false;
-			texture.magFilter=THREE.NearestFilter;
-			texture.minFilter=THREE.NearestFilter;
+			texture.generateMipmaps = false;
+			var filter = this.__textureFilter;
+			texture.magFilter = filter;
+			texture.minFilter = filter;
 
 			var lookupTable = new THREE.DataTexture( this.__dummyLut , 2, 1, THREE.RGBAFormat );
-			lookupTable.generateMipmaps=false;
-			lookupTable.magFilter=THREE.NearestFilter;
-			lookupTable.minFilter=THREE.NearestFilter;
+			lookupTable.generateMipmaps = false;
+			lookupTable.magFilter = filter;
+			lookupTable.minFilter = filter;
 			lookupTable.needsUpdate=true;
 
 			var middleShader;
@@ -406,41 +414,41 @@ qx.Class.define("desk.VolumeSlice",
 			}
 
 			var shader;
-			if (this.__numberOfScalarComponents==1) {
-				shader=[desk.VolumeSlice.FRAGMENTSHADERBEGIN,
+			if (this.__numberOfScalarComponents == 1) {
+				shader = [desk.VolumeSlice.FRAGMENTSHADERBEGIN,
 						middleShader,
 						desk.VolumeSlice.FRAGMENTSHADEREND].join("\n");
 			}
 			else {
-				shader=desk.VolumeSlice.FRAGMENTSHADERENDMULTICHANNEL;
+				shader = desk.VolumeSlice.FRAGMENTSHADERENDMULTICHANNEL;
 			}
 
-			var baseUniforms={
-					texture: { type: "t", slot: 0, value: texture },
-					lookupTable: { type: "t", slot: 1, value: lookupTable },
-					lookupTableLength : { type: "f", value: 2 },
-					useLookupTable : { type: "f", value: 0 },
-					contrast : { type: "f", value: this.__contrast },
-					brightness : { type: "f", value: this.__brightness },
-					opacity : { type: "f", value: this.__opacity},
-					scalarMin : { type: "f", value: this.__scalarMin},
-					scalarMax : { type: "f", value: this.__scalarMax},
-					imageType : { type: "f", value: this.__availableImageFormat}
+			var baseUniforms = {
+					texture : {type : "t", slot: 0, value: texture },
+					lookupTable : {type : "t", slot: 1, value: lookupTable },
+					lookupTableLength : {type: "f", value: 2 },
+					useLookupTable : {type: "f", value: 0 },
+					contrast : {type: "f", value: this.__contrast },
+					brightness : {type: "f", value: this.__brightness },
+					opacity : {type: "f", value: this.__opacity},
+					scalarMin : {type: "f", value: this.__scalarMin},
+					scalarMax : {type: "f", value: this.__scalarMax},
+					imageType : {type: "f", value: this.__availableImageFormat}
 				};
 
-			var baseShaderBegin=[desk.VolumeSlice.FRAGMENTSHADERBEGIN,
+			var baseShaderBegin = [desk.VolumeSlice.FRAGMENTSHADERBEGIN,
 						middleShader].join("\n");
 
-			var baseShaderEnd=desk.VolumeSlice.FRAGMENTSHADEREND;
+			var baseShaderEnd = desk.VolumeSlice.FRAGMENTSHADEREND;
 
-			var material=new THREE.ShaderMaterial({
+			var material = new THREE.ShaderMaterial({
 				uniforms: baseUniforms,
 				vertexShader: desk.VolumeSlice.VERTEXSHADER,
 				fragmentShader: shader,
 				transparent : true
 			});
 
-			material.baseShader={
+			material.baseShader = {
 				baseUniforms : baseUniforms,
 				baseShaderBegin : baseShaderBegin,
 				baseShaderEnd : baseShaderEnd,
