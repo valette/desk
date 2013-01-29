@@ -102,13 +102,13 @@ qx.Class.define("desk.MPRContainer",
         * @param parameters {Object} : parameters object containing settings
         * such as imageFormat (0 or 1), label (text), visible (bool)
         */
-        watchAction : function (action, file, parameters) {
+        watchAction : function (action, file, parameters, callback) {
             var volume;
             action.addListener('actionUpdated', function () {
                 if (volume) {
                     this.removeVolume(volume);
                 }
-                volume = this.addVolume(action.getOutputDirectory() + file, parameters);
+                volume = this.addVolume(action.getOutputDirectory() + file, parameters, callback);
             }, this);
 
             this.addListener('removeVolume', function (e) {
