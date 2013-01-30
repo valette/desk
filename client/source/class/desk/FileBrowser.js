@@ -577,9 +577,10 @@ qx.Class.define("desk.FileBrowser",
 			if (!node) {
 				return null;
 			}
-			if (node.type !== qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-				return this.__getNodeFile(node);
-			}
+		//	if (node.type !== qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+		//	console.log('leaf : '+this.__getNodeFile(node));
+		//		return this.__getNodeFile(node);
+		//	}
 			return this.__getNodeFile(node.parentNodeId);
 		},
 

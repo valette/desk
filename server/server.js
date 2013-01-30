@@ -165,7 +165,7 @@ app.get(actionsBaseURL+':action', function (req, res) {
 		path = libPath.normalize(req.query.path) + '/';
 		actions.validatePath(path, function (error) {
 			if (error) {
-				res.send(error);
+				res.send(JSON.stringify({error : error}));
 				return;
 			}
 			actions.getDirectoryContent(path, function (message) {
