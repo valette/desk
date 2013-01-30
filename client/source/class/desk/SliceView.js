@@ -796,7 +796,7 @@ qx.Class.define("desk.SliceView",
 				htmlContainer.capture();
 				interactionMode=0;
 				var origin, position, width;
-				if (event.isRightPressed()) {
+				if (event.isRightPressed() || event.isCtrlPressed()) {
 					interactionMode=1;
 					origin=htmlContainer.getContentLocation();
 					controls.mouseDown(interactionMode,

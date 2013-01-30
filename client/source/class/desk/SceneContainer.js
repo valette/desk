@@ -475,13 +475,15 @@ qx.Class.define("desk.SceneContainer",
 				var origin = threeCanvas.getContentLocation();
 				draggingInProgress = true;
 				var button = 0;
-				if (event.isRightPressed()) {
+				if (event.isRightPressed() || 
+					(event.isCtrlPressed() && !event.isShiftPressed())) {
 					button = 1;
 				}
-				else if ( event.isMiddlePressed() || event.isShiftPressed()) {
+				else if ( event.isMiddlePressed() ||
+					(event.isShiftPressed() && !event.isCtrlPressed())) {
 					button = 2;
 				}
-				else if (event.isCtrlPressed()) {
+				else if (event.isCtrlPressed() && event.isShiftPressed()) {
 					button = 3;
 				}
 
