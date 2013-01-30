@@ -69,7 +69,7 @@ app.use(express.limit('20000mb'));
 var identity = null;
 if (!fs.existsSync(passwordFile)) {
 	fs.writeFileSync(passwordFile, JSON.stringify({username : user,
-		password : password}));
+		password : 'password'}));
 }
 
 var identity = require(passwordFile);
