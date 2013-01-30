@@ -67,16 +67,15 @@ app.use(express.limit('20000mb'));
 
 // look for correctly formated password.json file.
 var identity = null;
-if (fs.existsSync(passwordFile)) {
-	var identity = require(passwordFile);
-	if ( (typeof identity.username !== "string") ||
-		(typeof identity.password !== "string")) {
-		identity = null;
-	}
+if (!fs.existsSync(passwordFile)) {
+	fs.writeFileSync(passwordFile, JSON.stringify({username : user,
+		password : password}));
 }
-else {
-	var example = {username : "joe", password : "pass"};
-	fs.writeFileSync(passwordFile + '.example', JSON.stringify(example));
+
+var identity = require(passwordFile);
+if ( (typeof identity.username !== "string") ||
+	(typeof identity.password !== "string")) {
+	identity = null;
 }
 
 // use basicAuth depending on password.json
@@ -143,6 +142,23 @@ app.post(actionsBaseURL + 'reset', function(req, res){
     actions.update(function (message) {
 		res.send(message);
 	});
+});
+
+// handle password change
+app.post(actionsBaseURL + 'password', function(req, res){
+	if (!req.body.password) {
+		res.send(JSON.stringify({error : 'no password entered!'}));
+		return;
+	}
+	if (req.body.password.length > 4) {
+		identity.password = req.body.password;
+		fs.writeFileSync(passwordFile, JSON.stringify(identity));
+		res.send(JSON.stringify({status : "password changed"}));
+		// just crash the server, the forever module will restart it
+		restart;
+	} else {
+		res.send(JSON.stringify({error : 'password too short!'}));
+	}
 });
 
 app.get(actionsBaseURL+':action', function (req, res) {

@@ -126,6 +126,26 @@ qx.Class.define("desk.Actions",
 			}, this);
 			menu.add(killButton);
 
+			var passwordButton = new qx.ui.menu.Button('change password');
+			passwordButton.addListener('execute', function () {
+				var password = prompt('Enter new password (more than 4 letters)');
+				var req = new qx.io.request.Xhr(desk.FileSystem.getActionURL('password'));
+				req.setMethod('POST');
+				req.setRequestData({password : password});
+				req.addListener('success', function(e) {
+					var status = JSON.parse(req.getResponseText());
+					if (status.error) {
+						alert ('Error : ' + status.error);
+					} else {
+						alert (status.status);
+					}
+				}, this);
+				// Send request
+				req.send();
+			}, this);
+			menu.add(passwordButton);
+
+
 			list.setContextMenu(menu);
 
 			// dislpay list of already running acions
