@@ -40,13 +40,13 @@ qx.Class.define("desk.MPRContainer",
 			gridLayout.setColumnFlex(i, 1);
 		}
 
-		var gridContainer=new qx.ui.container.Composite();
+		var gridContainer = new qx.ui.container.Composite();
 		gridContainer.setLayout(gridLayout);
-		this.__gridContainer=gridContainer;
+		this.__gridContainer = gridContainer;
 
-		var fullscreenContainer=new qx.ui.container.Composite();
+		var fullscreenContainer = new qx.ui.container.Composite();
 		fullscreenContainer.setLayout(new qx.ui.layout.HBox());
-		this.__fullscreenContainer=fullscreenContainer;
+		this.__fullscreenContainer = fullscreenContainer;
 		fullscreenContainer.setVisibility("excluded");
 
         if (parameters.standAlone == false) {

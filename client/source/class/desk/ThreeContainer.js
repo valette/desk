@@ -24,38 +24,47 @@ qx.Class.define("desk.ThreeContainer",
 		this.add(threeCanvas, {width : "100%", height : "100%"});
 		this.__threeCanvas = threeCanvas;
 
-		if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+		if (!Detector.webgl) Detector.addGetWebGLMessage();
 
 		var scene = new THREE.Scene();
 		var camera = new THREE.PerspectiveCamera(60,1, 0.01, 1e10);
 		var controls = new THREE.TrackballControls2(camera,threeCanvas.getContentElement().getCanvas());
 
-		this.__controls=controls;
+		this.__controls = controls;
 		controls.zoomSpeed = 6;
-		this.__scene=scene;
-		this.__camera=camera;
+		this.__scene = scene;
+		this.__camera = camera;
 		scene.add(camera);
 
 		// lights
 		var dirLight = new THREE.DirectionalLight( 0xcccccc );
-		dirLight.position.set( 200, 200, 1000 ).normalize();
-		camera.add( dirLight );
-		camera.add( dirLight.target );
+		dirLight.position.set(200, 200, 1000).normalize();
+		camera.add(dirLight);
+		camera.add(dirLight.target);
 		var ambientLight = new THREE.AmbientLight(0x555555);
-		scene.add( ambientLight );
+		scene.add(ambientLight);
 
 		// renderer
 		var renderer = new THREE.WebGLRenderer(
-			{ canvas : threeCanvas.getContentElement().getCanvas(),
-			antialias: true } 
+			{canvas : threeCanvas.getContentElement().getCanvas(),
+			antialias: true} 
 		);
-		this.__renderer=renderer;
-		renderer.setClearColorHex( 0xffffff, 1 );
-//		resizeHTML.apply(this);
+		this.__renderer = renderer;
+		renderer.setClearColorHex(0xffffff, 1);
 
-		threeCanvas.addListener("resize",this.__resizeThreeCanvas, this);
+		threeCanvas.addListener("resize", this.__resizeThreeCanvas, this);
 		this.__setupFullscreen();
 		return this;
+	},
+
+	destruct : function(){
+		//clean the scene
+		this.__scene = null;
+		this.__renderer = null;
+		this.__threeCanvas.destroy();
+		this.__threeCanvas = null;
+		this.__camera = null;
+		this.__controls = null;
 	},
 
 	properties : {

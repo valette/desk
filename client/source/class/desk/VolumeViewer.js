@@ -6,7 +6,6 @@ qx.Class.define("desk.VolumeViewer",
 	{
         //~ this.base(arguments);
         this.base(arguments, file, parameters, callback);
-		parameters = parameters || {};
 
         // Enable logging in debug variant
         if(qx.core.Environment.get("qx.debug"))
@@ -17,30 +16,32 @@ qx.Class.define("desk.VolumeViewer",
             qx.log.appender.Console;
         }
 
-		var myWindow = new qx.ui.window.Window();
-		this.__window = myWindow;
-		myWindow.set ({layout : new qx.ui.layout.VBox(),
+		var win = new qx.ui.window.Window();
+		this.__window = win;
+		win.set ({layout : new qx.ui.layout.VBox(),
 			showClose : true,
 			showMinimize : false,
 			useResizeFrame : true,
-			useMoveFrame : true});
+			useMoveFrame : true
+		});
 
-		var width=window.innerWidth;
-		var height=window.innerHeight;
-		var minSize=height;
-		if (minSize>width) {
-			minSize=width;
+		win.addListener('close', function (){this.destroy();}, this);
+
+		var width = window.innerWidth;
+		var height = window.innerHeight;
+		var minSize = height;
+		if (minSize > width) {
+			minSize = width;
 		}
-		minSize=Math.round(minSize*0.85);
+		minSize = Math.round(minSize * 0.85);
 		
-		myWindow.set({width : minSize, height : minSize});
-        myWindow.add(this, {flex : 1});
-		myWindow.open();
-		myWindow.center();
+		win.set({width : minSize, height : minSize});
+        win.add(this, {flex : 1});
+		win.open();
+		win.center();
 
 		if (file) {
-			//~ this.addVolume(file, parameters, callback);
-			myWindow.setCaption(file);
+			win.setCaption(file);
 		}
 
 		return (this);

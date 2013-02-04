@@ -63,6 +63,17 @@ qx.Class.define("desk.SliceView",
 	destruct : function(){
 		this.unlink();
 		//clean the scene
+		this.__threeContainer.destroy();
+		this.__slider.destroy();
+		this.__rightContainer.destroy();
+		this.__drawingCanvas.destroy();
+		this.__intersection = null;
+		this.__2DCornersCoordinates = null;
+		this.__volume2DDimensions = null;
+		this.__volume2DSpacing = null;
+		this.__volumeOrigin = null;
+		this.__volumeSpacing = null;
+		this.__projector = null;
 	},
 
 	properties : {
