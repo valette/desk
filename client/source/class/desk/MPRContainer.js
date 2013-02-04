@@ -428,11 +428,10 @@ qx.Class.define("desk.MPRContainer",
 		*/
 		addVolume : function (file, parameters, callback) {
 			this.__file = file;
-			var _this=this;
-			var volumeSlices=[];
+			var volumeSlices = [];
 
-			var opacity=1;
-			var imageFormat=1;
+			var opacity = 1;
+			var imageFormat = 1;
 
             parameters = parameters || {};
             if ( parameters.opacity != null ) {
@@ -478,7 +477,7 @@ qx.Class.define("desk.MPRContainer",
 				}, this);
 
 
-			var baseName=desk.FileSystem.getFileName(file);
+			var baseName = desk.FileSystem.getFileName(file);
 			var baseLength = baseName.length;
 			if (baseLength > 25) {
 				baseName = baseName.substring(0, 10) + '...' +
@@ -486,9 +485,9 @@ qx.Class.define("desk.MPRContainer",
 			}
 
 			var labelcontainer=new qx.ui.container.Composite();
-			labelcontainer.setLayout( new qx.ui.layout.HBox() );
-			labelcontainer.setContextMenu( this.__getVolumeContextMenu( volumeListItem ) );
-			volumeListItem.add(labelcontainer);//, { flex : 1 } );
+			labelcontainer.setLayout(new qx.ui.layout.HBox());
+			labelcontainer.setContextMenu(this.__getVolumeContextMenu(volumeListItem));
+			volumeListItem.add(labelcontainer);
 
             var label = new qx.ui.basic.Label(baseName);
             if (parameters.label) {
@@ -497,18 +496,25 @@ qx.Class.define("desk.MPRContainer",
             label.setTextAlign("left");
 			labelcontainer.add(label, {flex : 1});
 
-			var numberOfRemainingMeshes=this.__nbUsedOrientations;
-
-			for(var i=0; i<this.__nbUsedOrientations; i++) {
-				this.__viewers[i].addVolume(file, parameters, ( function (myI) { 
+			var numberOfRemainingMeshes = this.__nbUsedOrientations;
+			var _this = this;
+			for(var i = 0; i < this.__nbUsedOrientations; i++) {
+				this.__viewers[i].addVolume(file, parameters, (function (myI) { 
 					return (function (volumeSlice) {
-						volumeSlices[myI]=volumeSlice;
+						volumeSlices[myI] = volumeSlice;
 						numberOfRemainingMeshes--;
-						if ( numberOfRemainingMeshes === 0 ) {
+						if (numberOfRemainingMeshes === 0) {
                             volumeListItem.setUserData('slices', volumeSlices);
-							_this.__reorderMeshes();
 							if (parameters.visible !== undefined) {
 								hideShowCheckbox.setValue(parameters.visible);
+							}
+							scalarBounds = volumeSlice.getScalarBounds();
+//							updateWindowLevel();
+							volumeListItem.setUserData("loadingInProgress", false);
+							_this.__volumes.add(volumeListItem);
+							_this.__reorderMeshes();
+							if (volumeListItem.getUserData("toDelete")) {
+								_this.removeVolume(volumeListItem);
 							}
 							if (typeof callback === 'function') {
 								callback(_this, volumeSlices);
@@ -518,14 +524,13 @@ qx.Class.define("desk.MPRContainer",
 				} ) (i));
 			}
 
-			var settingsContainer=new qx.ui.container.Composite();
+			var settingsContainer = new qx.ui.container.Composite();
 			settingsContainer.setLayout(new qx.ui.layout.HBox());
 			volumeListItem.add(settingsContainer);
 
 			// create hide/show widget
-			var hideShowCheckbox=new qx.ui.form.CheckBox();
-			hideShowCheckbox.set({value : true,
-					toolTipText : "visible/hidden"});
+			var hideShowCheckbox = new qx.ui.form.CheckBox();
+			hideShowCheckbox.set({value : true,toolTipText : "visible/hidden"});
 			hideShowCheckbox.addListener( "changeValue", function (e) {
 				for ( var i = 0; i < volumeSlices.length; i++ ) {
 					volumeSlices[i].getUserData("mesh").visible = e.getData();
@@ -545,7 +550,7 @@ qx.Class.define("desk.MPRContainer",
 			SelectPNG.setUserData("imageFormat", 0);
 			fileFormatBox.add(SelectPNG);
 
-			if (imageFormat!=1) {
+			if (imageFormat != 1) {
 				fileFormatBox.setSelection([SelectPNG]);
 			}
 
@@ -560,10 +565,9 @@ qx.Class.define("desk.MPRContainer",
             var opacitySlider = new qx.ui.form.Slider();
 			opacitySlider.set({value : opacity*100,
 					toolTipText : "change opacity"});
-			opacitySlider.addListener("changeValue", function(event)
-			{
-				var opacity=event.getData()/100;
-				for (var i=0;i<volumeSlices.length;i++) {
+			opacitySlider.addListener("changeValue", function(event) {
+				var opacity = event.getData() / 100;
+				for (var i = 0; i < volumeSlices.length; i++) {
 					volumeSlices[i].setOpacity(opacity);
 				}
 			},this);
@@ -572,56 +576,80 @@ qx.Class.define("desk.MPRContainer",
 			var brightnessButton = new qx.ui.form.Button(null, "desk/Contrast_Logo_petit.PNG");
 			brightnessButton.set({toolTipText : "Click and drag to change brightnes, right-click to reset brightness"});
 
-			var clicked=false;
-			var x,y;
+			var clicked = false;
+			var x, y;
 
 			brightnessButton.addListener("mousedown", function(event)	{
-				if (event.isRightPressed())
-				{
-					for (var i=0;i<volumeSlices.length;i++) {
-						volumeSlices[i].setBrightnessAndContrast(0,1);
+				if (event.isRightPressed()) {
+					for (var i = 0; i < volumeSlices.length; i++) {
+						volumeSlices[i].setBrightnessAndContrast(0, 1);
+//						updateWindowLevel();
 					}
-				}
-				else
-				{
-					x=event.getScreenLeft();
-					y=event.getScreenTop();
+				} else {
+					x = event.getScreenLeft();
+					y = event.getScreenTop();
 					brightnessButton.capture();
-					clicked=true;
+					clicked = true;
 				}
 			}, this);
 
-			brightnessButton.addListener("mousemove", function(event)	{
-				if (clicked)
-				{
-					var newX=event.getScreenLeft();
-					var newY=event.getScreenTop();
-					var deltaX=newX-x;
-					var deltaY=newY-y;
-					var contrast=volumeSlices[0].getContrast();
-					var brightness=volumeSlices[0].getBrightness();
+			brightnessButton.addListener("mousemove", function(event) {
+				if (clicked) {
+					var newX = event.getScreenLeft();
+					var newY = event.getScreenTop();
+					var deltaX = newX - x;
+					var deltaY = newY - y;
+					var contrast = volumeSlices[0].getContrast();
+					var brightness = volumeSlices[0].getBrightness();
 
-					brightness-=deltaY/300;
-					contrast+=deltaX/200;
-					x=newX;
-					y=newY;
-					for (var i=0;i<volumeSlices.length;i++) {
+					brightness -= deltaY / 300;
+					contrast += deltaX / 200;
+					x = newX;
+					y = newY;
+					for (var i = 0; i < volumeSlices.length; i++) {
 						volumeSlices[i].setBrightnessAndContrast(brightness,contrast);
 					}
+//					updateWindowLevel();
 				}
 			}, this);
 
-			brightnessButton.addListener( "mouseup", function(event)	{
+			brightnessButton.addListener("mouseup", function(event) {
 				brightnessButton.releaseCapture();
 				clicked = false;
 			}, this );
+
+			var scalarBounds;
+
+/*			var windowLevelContainer = new qx.ui.container.Composite();
+			windowLevelContainer.setLayout(new qx.ui.layout.VBox());
+			var font= new qx.bom.Font(12, ["Arial"]);
+			var windowLabel = new qx.ui.basic.Label();
+			windowLabel.setFont(font);
+			var levelLabel = new qx.ui.basic.Label();
+			levelLabel.setFont(font);
+			windowLevelContainer.add(windowLabel);
+			windowLevelContainer.add(levelLabel);
+
 			
+			function updateWindowLevel() {
+				var brightness = volumeSlices[0].getBrightness();
+				var contrast = volumeSlices[0].getContrast();
+				var scalarWidth = scalarBounds[1] - scalarBounds[0];
+				// insert correct formula here...
+				var window = Math.abs((scalarWidth / contrast) + scalarBounds[0]);
+				var level = ((1 / (contrast * 2) - brightness) * scalarWidth) + scalarBounds[0];
+				windowLabel.setValue('W : ' + window.toFixed(0));
+				levelLabel.setValue('L : ' + level.toFixed(0));
+			}*/
+
 			settingsContainer.add(brightnessButton);
+//			settingsContainer.add(windowLevelContainer);
 			settingsContainer.add(fileFormatBox);
 			settingsContainer.add(opacitySlider, {flex : 1});
 			settingsContainer.add(hideShowCheckbox);
-			this.__volumes.add(volumeListItem);
-			return (volumeListItem);
+			// add this user data to avoid race conditions
+			volumeListItem.setUserData("loadingInProgress", true);
+			return volumeListItem;
 		},
 
 		__getVolumeContextMenu : function (volumeListItem) {
@@ -629,7 +657,6 @@ qx.Class.define("desk.MPRContainer",
 			var menu = new qx.ui.menu.Menu();
 			var propertiesButton = new qx.ui.menu.Button("properties");
 			propertiesButton.addListener("execute", function (){
-
 				function formatArray(array) {
 					var result="[";
 					for (var i=0;i<array.length;i++) {
@@ -657,7 +684,8 @@ qx.Class.define("desk.MPRContainer",
 				window.add(new qx.ui.basic.Label("scalarType : "+slice.getScalarType()+" ("+slice.getScalarTypeAsString()+")"));
 				window.add(new qx.ui.basic.Label("scalar bounds : "+formatArray(slice.getScalarBounds())));
 				window.open();
-				},this);
+				window.center();
+			},this);
 			menu.add(propertiesButton);
 
 			var colormapButton = new qx.ui.menu.Button("color map");
@@ -752,9 +780,14 @@ qx.Class.define("desk.MPRContainer",
 				this.removeVolumes(slices);
 			});
 
-			this.__volumes.remove(volumeListItem);
-			this.fireDataEvent("removeVolume", volumeListItem);
-			volumeListItem.dispose();
+			// test if volume is not totally loaded
+			if (!volumeListItem.getUserData("loadingInProgress")) {
+				this.__volumes.remove(volumeListItem);
+				this.fireDataEvent("removeVolume", volumeListItem);
+				volumeListItem.dispose();
+			} else {
+				volumeListItem.setUserData("toDelete", true);
+			}
 		},
 
 		__getToolBar : function () {
