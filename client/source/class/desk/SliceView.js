@@ -132,9 +132,6 @@ qx.Class.define("desk.SliceView",
 		__updateBrush : null,
 
 		getScene : function() {
-			return this.__getScene();
-		},
-		__getScene : function() {
 			return this.__threeContainer.getScene();
 		},
 
@@ -196,15 +193,24 @@ qx.Class.define("desk.SliceView",
 			this.__threeContainer.render();
 		},
 
+		/**
+		 * Removes volumes stored in an array from the view.
+		 * @param slices {Array} array of slices to remove
+		*/
 		removeVolumes : function (slices) {
-			var mySlices=this.__slices;
-			for (var i=0;i<slices.length;i++) {
-				var slice=slices[i];
-				for (var j=0;j<mySlices.length;j++) {
-					if (mySlices[j]==slice) {
-						var mesh=slice.getUserData("mesh");
-						this.__getScene().remove(mesh);
-						mySlices.splice(j,1);
+			var mySlices = this.__slices;
+			for (var i = 0; i < slices.length; i++) {
+				var slice = slices[i];
+				for (var j = 0; j < mySlices.length; j++) {
+					if (mySlices[j] == slice) {
+						var mesh = slice.getUserData("mesh");
+						this.getScene().remove(mesh);
+
+						//release GPU memory
+						mesh.material.uniforms.texture.value.dispose();
+						mesh.material.dispose();
+						mesh.geometry.dispose();
+						mySlices.splice(j, 1);
 						this.removeListenerById(slice.getUserData("updateListener"));
 						this.render();
 						slice.dispose();
@@ -380,13 +386,13 @@ qx.Class.define("desk.SliceView",
 			hGeometry.vertices.push( new THREE.Vector3(coordinates[0],0,0) );
 			hGeometry.vertices.push( new THREE.Vector3(coordinates[2],0,0) );
 			var hline = new THREE.Line(hGeometry, material);
-			this.__getScene().add(hline);
+			this.getScene().add(hline);
 
 			var vGeometry=new THREE.Geometry();
 			vGeometry.vertices.push( new THREE.Vector3(0,coordinates[1],0) );
 			vGeometry.vertices.push( new THREE.Vector3(0,coordinates[5],0) );
 			var vline = new THREE.Line(vGeometry, material);
-            var scene = this.__getScene();
+            var scene = this.getScene();
 			scene.add(vline);
 
             var crossMeshes = this.__crossMeshes;
@@ -454,7 +460,7 @@ qx.Class.define("desk.SliceView",
 
 	//	maybe there's a bug to submit to three.js : the following line breaks renderDepth..
 	//		mesh.visible=false;
-			this.__getScene().add(mesh);
+			this.getScene().add(mesh);
 			this.__brushMesh=mesh;
 
 			var _this=this;
@@ -545,7 +551,7 @@ qx.Class.define("desk.SliceView",
 			material.side = THREE.DoubleSide;
 
 			var mesh = new THREE.Mesh(geometry,material);
-			this.__getScene().add(mesh);
+			this.getScene().add(mesh);
 			this.__drawingMesh = mesh;
 
 			geometry.computeCentroids();
@@ -608,7 +614,7 @@ qx.Class.define("desk.SliceView",
 			geometry.computeBoundingSphere();
 
 			volumeSlice.addListenerOnce('changeImage',function () {
-				this.__getScene().add(mesh);
+				this.getScene().add(mesh);
 			}, this);
 			volumeSlice.addListener('changeImage', this.render, this);
 			volumeSlice.addListener("changeSlice", function (e) {
