@@ -105,9 +105,6 @@ qx.Class.define("desk.demo.Application",
 							button.addListener("execute", openFileBrowser);
 							menu.add(button);
 						}
-						var button2 = new qx.ui.menu.Button('console output');
-						button2.addListener("execute", function () {new desk.Console();});
-						menu.add(button2);
 						var myDesk = new desk.FileBrowser(getParameter("rootDir"));
 					});
 				}

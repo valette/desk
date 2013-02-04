@@ -14,27 +14,16 @@ qx.Class.define("desk.FileSystem",
 		var URLparser = document.createElement('a');
 		URLparser.href = document.href;
 
-		var pathname=URLparser.pathname;
-		this.__user=URLparser.pathname.split("/")[1];
+		var pathname = URLparser.pathname;
+		this.__user = URLparser.pathname.split("/")[1];
 		this.__baseURL = '/' + this.__user + '/';
 		this.__actionsURL = this.__baseURL + 'rpc/';
 		this.__filesURL = this.__baseURL + 'files/';
 
-    //override console.log...
-    var oldConsoleLog = console.log;
-    var that = this;
-    console.log = function (message) {
-      that.fireDataEvent('log', message);
-      oldConsoleLog.call(console, message);
-    };
 		return this;
 	},
 
-  events : {
-		"log" : "qx.event.type.Data"
-	},
-
-statics : {
+	statics : {
 		/**
 		* Loads a file into memory
 		*
@@ -57,7 +46,7 @@ statics : {
 			req.setAsync(true);
 			req.addListener('load', function (e) {
 				callback.call(context, e.getTarget());
-      });
+			});
 			req.send();
 		},
 
