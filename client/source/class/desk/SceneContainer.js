@@ -91,8 +91,9 @@ qx.Class.define("desk.SceneContainer",
 	destruct : function(){
 		this.removeAllMeshes();
 		this.unlink();
-
-//		this._disposeObjects("__embededHTML","__meshesTree");
+		this.__threeContainer.destroy();
+		this.__meshesTree.destroy();
+		this.__ctmLoader = null;
 	},
 
 	properties : {
@@ -105,8 +106,10 @@ qx.Class.define("desk.SceneContainer",
 	},
 
 	members : {
+		// array containing all loaded meshes
         __files : null,
 
+		// the scene container
 		__threeContainer : null,
 		
 		// a treeVirtual element storing all meshes
@@ -886,7 +889,8 @@ qx.Class.define("desk.SceneContainer",
 			if (map !== null) {
 				map.dispose();
 			}
-			mesh.dispose;
+			mesh.geometry.dispose();
+			mesh.material.dispose();
             dataModel.setData();            
         },
 
