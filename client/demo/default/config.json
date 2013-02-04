@@ -60,7 +60,7 @@
           "manifest" : "../../Manifest.json"
         },
         {
-         "manifest" : "../../UploadMgr/trunk/Manifest.json"
+          "manifest"   : "contrib://UploadMgr/trunk/Manifest.json"
         },
         {
           "manifest"   : "contrib://QxJqPlot/trunk/Manifest.json"
