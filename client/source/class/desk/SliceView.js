@@ -47,12 +47,14 @@ qx.Class.define("desk.SliceView",
 		this.addListener("changePaintMode", function (e) {
 			if (e.getData() === true) {
 				this.setEraseMode(false);
+				this.__updateBrush();
 			}
 		}, this);
 
 		this.addListener("changeEraseMode", function (e) {
 			if (e.getData() === true) {
 				this.setPaintMode(false);
+				this.__updateBrush();
 			}
 		}, this);
 		
@@ -139,8 +141,6 @@ qx.Class.define("desk.SliceView",
 		__crossMeshes : null,
 		
 		__drawingCanvasModified : false,
-
-		__updateBrush : null,
 
 		getScene : function() {
 			return this.__threeContainer.getScene();
@@ -396,8 +396,10 @@ qx.Class.define("desk.SliceView",
 			crossMeshes.push(vline);
 		},
 
-		__createBrushMesh : function (volumeSlice)
-		{
+		__coordinatesRatio : null,
+		__brushCanvas : null,
+
+		__createBrushMesh : function (volumeSlice) {
 			var geometry = new THREE.Geometry();
 			geometry.dynamic = true;
 			var coordinates = volumeSlice.get2DCornersCoordinates();
@@ -406,6 +408,7 @@ qx.Class.define("desk.SliceView",
 			var ratio = [];
 			ratio[0] = (coordinates[2]-coordinates[0])/dimensions[0];
 			ratio[1] = (coordinates[5]-coordinates[3])/dimensions[1];
+			this.__coordinatesRatio = ratio;
 
 			for (var i = 0; i < 4; i++) {
 				geometry.vertices.push(
@@ -423,82 +426,82 @@ qx.Class.define("desk.SliceView",
 			var width = 100;
 			var height = 100;
 
-			var canvas = new qx.ui.embed.Canvas().set({
-				syncDimension: true,
-				canvasWidth: width,
-				canvasHeight: height,
-				width: width,
-				height: height
-			});
+			var canvas = this.__brushCanvas;
+			if (!canvas) {
+				this.__brushCanvas = canvas = new qx.ui.embed.Canvas().set({
+					syncDimension: true,
+					canvasWidth: width,
+					canvasHeight: height,
+					width: width,
+					height: height
+				});
+			}
 
-			var context = canvas.getContext2d();
-			context.clearRect(0, 0, width, height);
-
-			var length = width * height * 4;
-			var dataColor = new Uint8Array(length);
-
-			var texture = new THREE.DataTexture(dataColor, width, height, THREE.RGBAFormat);
+			var texture = new THREE.DataTexture(new Uint8Array(width * height * 4),
+				width, height, THREE.RGBAFormat);
 			texture.generateMipmaps = false;
 			texture.needsUpdate = true;
 			texture.magFilter = THREE.NearestFilter;
 			texture.minFilter = THREE.NearestFilter;
 			
 			var material = new THREE.MeshBasicMaterial({map:texture, transparent: true});
-
 			material.side = THREE.DoubleSide;
+
 			var mesh = new THREE.Mesh(geometry,material);
-			mesh.renderDepth=0;
+			mesh.renderDepth = 0;
+			this.__brushMesh = mesh;
+			this.__updateBrush();
 
 	//	maybe there's a bug to submit to three.js : the following line breaks renderDepth..
 	//		mesh.visible=false;
 			this.getScene().add(mesh);
-			this.__brushMesh = mesh;
+		},
 
-			var _this = this;
-			function updateBrush()
-			{
-				if (_this.isEraseMode()) {
-					context.fillStyle = "white";
-					context.fillRect (0, 0, width, height);
-					context.fillStyle = "black";
-					context.fillRect (10, 10, width-20, height-20);
-				}
-				else {
-					context.clearRect (0, 0, width, height);
-					context.lineWidth = 0;
-					context.strokeStyle = _this.__paintColor;
-					context.fillStyle = _this.__paintColor;
-					context.beginPath();
-					context.arc(width/2, height/2, width/2, 0, 2*Math.PI, false);
-					context.closePath();
-					context.fill();
-				}
-				var data = context.getImageData(0, 0,width, height).data;
-				for (var i = length;i--;) {
-					dataColor[i] = data[i];
-				}
-				texture.needsUpdate = true;
-				var radius = _this.__paintWidth/2;
+		__updateBrush : function() {
+			var canvas = this.__brushCanvas;
+			var context = canvas.getContext2d();
+			var width = canvas.getCanvasWidth();
+			var height = canvas.getCanvasHeight();
 
-				mesh.geometry.vertices[0].set(-radius*ratio[0], -radius*ratio[1], 0);
-				mesh.geometry.vertices[1].set(radius*ratio[0], -radius*ratio[1], 0);
-				mesh.geometry.vertices[2].set(radius*ratio[0], radius*ratio[1], 0);
-				mesh.geometry.vertices[3].set(-radius*ratio[0], radius*ratio[1], 0);
-
-				geometry.verticesNeedUpdate = true;
-				geometry.computeCentroids();
-				geometry.computeFaceNormals();
-				geometry.computeVertexNormals();
-				geometry.computeBoundingSphere();
+			// recreate brush image
+			if (this.isEraseMode()) {
+				context.fillStyle = "white";
+				context.fillRect (0, 0, width, height);
+				context.fillStyle = "black";
+				context.fillRect (10, 10, width-20, height-20);
+			} else {
+				context.clearRect (0, 0, width, height);
+				context.lineWidth = 0;
+				context.strokeStyle = this.__paintColor;
+				context.fillStyle = this.__paintColor;
+				context.beginPath();
+				context.arc(width / 2, height / 2, width/2,
+					0, 2 * Math.PI, false);
+				context.closePath();
+				context.fill();
 			}
-			this.__updateBrush = updateBrush;
 
-			this.addListener("changePaintMode", function (event) {
-				updateBrush();
-			}, this);
-			this.addListener("changeEraseMode", function (event) {
-				updateBrush();
-			}, this);
+			// upload image to texture
+			var length = width * height * 4;
+			var data = context.getImageData(0, 0, width, height).data;
+			var material = this.__brushMesh.material;
+			var brushData = material.map.image.data;
+			for (var i = length; i--;) {
+				brushData[i] = data[i];
+			}
+			material.map.needsUpdate = true;
+
+			// update vertices coordinates
+			var radius = this.__paintWidth / 2;
+			var ratio = this.__coordinatesRatio;
+			var r0 = radius * ratio[0];
+			var r1 = radius * ratio[1];
+			var geometry = this.__brushMesh.geometry;
+			geometry.vertices[0].set(-r0, -r1, 0);
+			geometry.vertices[1].set(r0, -r1, 0);
+			geometry.vertices[2].set(r0, r1, 0);
+			geometry.vertices[3].set(-r0, r1, 0);
+			geometry.verticesNeedUpdate = true;
 		},
 
 		__setDrawingMesh : function (volumeSlice)
@@ -880,15 +883,12 @@ qx.Class.define("desk.SliceView",
 			}, this);
 
 			htmlContainer.addListener("mouseout", function (event) {
+				this.__brushMesh.visible = false;
+				this.render();
                 if (qx.ui.core.Widget.contains(this, event.getRelatedTarget())) {
-                    return;
+					this.__rightContainer.setVisibility("hidden");
+					this.fireDataEvent("viewMouseOut",event);
                 }
-                this.__rightContainer.setVisibility("hidden");
-                if (this.isPaintMode() || this.isEraseMode()) {
-                    this.__brushMesh.visible = false;
-                    this.render();
-                }
-				this.fireDataEvent("viewMouseOut",event);
 			}, this);
 
 			htmlContainer.addListener("mousemove", function (event)	{
