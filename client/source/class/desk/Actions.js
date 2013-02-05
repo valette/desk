@@ -70,6 +70,7 @@ qx.Class.define("desk.Actions",
 
 		if (0) {
 			new qxjqplot.Plot();
+			new desk.LogContainer();
 		}
 
 		return this;
