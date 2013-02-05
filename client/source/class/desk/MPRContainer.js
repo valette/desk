@@ -34,7 +34,7 @@ qx.Class.define("desk.MPRContainer",
 			this.__nbUsedOrientations = parameters.nbOrientations;
 		}
 
-		var gridLayout=new qx.ui.layout.Grid(2,2);
+		var gridLayout = new qx.ui.layout.Grid(2,2);
 		for ( var i = 0 ; i < 2 ; i++ ) {
 			gridLayout.setRowFlex(i , 1);
 			gridLayout.setColumnFlex(i, 1);
@@ -67,6 +67,17 @@ qx.Class.define("desk.MPRContainer",
 		return (this);
 	},
 
+	destruct : function(){
+		var viewers = this.__viewers;
+		for (var i = 0; i != viewers.length; i++) {
+			viewers[i].destroy();
+		}
+		this.__fullscreenContainer.destroy();
+		this.__gridContainer.destroy();
+		this.__volumes.destroy();
+		this.__windowsInGridCoord = null;
+		this.__viewsNames = null;
+	},
 
 	events : {
 		"switchFullScreen" : "qx.event.type.Data",
@@ -74,7 +85,6 @@ qx.Class.define("desk.MPRContainer",
 	},
 
 	properties : {
-		//~ viewsLayout : { init : "ASC", check: "String", event : "changeViewsLayout", apply : "__applyViewsLayout"}
 		viewsLayout : { init : "123", check: "String", event : "changeViewsLayout", apply : "__applyViewsLayout"}
 	},
 
@@ -84,9 +94,7 @@ qx.Class.define("desk.MPRContainer",
 		
 		__fullscreenContainer : null,
 		__gridContainer : null,
-		__window : null,
 		__volumes : null,
-		__dataTabs : null,
 		__viewers : null,
 		__windowsInGridCoord :null,
 		__viewsNames : null,
@@ -124,10 +132,6 @@ qx.Class.define("desk.MPRContainer",
 		
 		getFileBrowser : function() {
 			return this.__fileBrowser;
-		},
-		
-		getWindow : function(){
-			return this.__window;
 		},
 		
 		getVolListGridContainer : function()
@@ -179,9 +183,7 @@ qx.Class.define("desk.MPRContainer",
 					}
 				}
 			}
-			this.applyToViewers( function () {
-				this.render();
-			});
+			this.__renderAll();
 		},
 
         __volumesScroll : null,
@@ -883,8 +885,8 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		link : function (volumeViewer) {
-			var viewers=this.__viewers;
-			var viewers2=volumeViewer.__viewers;
+			var viewers = this.__viewers;
+			var viewers2 = volumeViewer.__viewers;
 			if(this.__nbUsedOrientations === viewers2.length) {
 				for (var i = 0; i < this.__nbUsedOrientations; i++) {
 					var viewer = viewers[i];
