@@ -171,14 +171,15 @@ qx.Class.define("desk.MPRContainer",
                     var slice = slices[j];
                     // slice is sometimes null here, need to debug that
 					if (slice) {
-                        slice.setUserData("rank", i);
+						this.applyToViewers(function () {
+							this.setSliceRank(slice, i);
+						});
 					} else {
 						alert ('bug');
 					}
 				}
 			}
 			this.applyToViewers( function () {
-				this.reorderMeshes();
 				this.render();
 			});
 		},

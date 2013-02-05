@@ -357,20 +357,6 @@ qx.Class.define("desk.SliceView",
 			});
 		},
 
-		reorderMeshes : function () {
-			var slices = this.__slices;
-            var length = slices.length;
-			for (var i = 0; i < length; i++) {
-                var slice = slices[i];
-				var rank = slice.getUserData("rank");
-                var mesh = slice.getUserData("mesh");
-                if (mesh) {
-                    // the mesh may not exist if no slice has been loaded yet
-                    mesh.renderDepth = 3 + length - rank;
-                }
-			}
-		},
-
 		__createCrossMeshes : function (volumeSlice)
 		{
 			var coordinates=volumeSlice.get2DCornersCoordinates();
@@ -688,6 +674,12 @@ qx.Class.define("desk.SliceView",
 									Math.round(dimensions[2]/2));		
 		},
 
+		/** adds a volume to the view
+		 * @param file {String} : file to add
+		 * @param parameters {Object} : parameters
+		 * @param callback {Function} : callback when done
+		 * @return {desk.VolumeSlice} : displayed volume
+		 */
 		addVolume : function (file, parameters, callback) {
 			var that = this;
 			var firstSlice = false;
@@ -704,6 +696,28 @@ qx.Class.define("desk.SliceView",
 				}
 			);
 			this.__slices.push(volumeSlice);
+			return volumeSlice;
+		},
+
+		/**
+		 changes the display rank of the volume. Higher rank values are
+		 * rendered last
+		 * @param volumeSlice {desk.volumeSlice} : volumeSlice to alter
+		 * @param rank {Int} : rank to apply
+		 **/
+		setSliceRank : function (volumeSlice, rank) {
+			var slices = this.__slices;
+            var length = slices.length;
+			for (var i = 0; i < length; i++) {
+                var slice = slices[i];
+					if (slice === volumeSlice) {
+					var mesh = slice.getUserData("mesh");
+					if (mesh) {
+						// the mesh may not exist if no slice has been loaded yet
+						mesh.renderDepth = 3 + length - rank;
+					}
+				}
+			}
 		},
 
 		__setCrossPositionFromEvent : function (event) {
