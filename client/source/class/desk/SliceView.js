@@ -369,17 +369,6 @@ qx.Class.define("desk.SliceView",
                     mesh.renderDepth = 3 + length - rank;
                 }
 			}
-
-			if (this.__drawingMesh) {
-                this.__drawingMesh.renderDepth=2;
-			}
-            if (this.__crossMeshes) {
-                this.__crossMeshes[0].renderDepth=1;
-                this.__crossMeshes[1].renderDepth=1;
-            }
-            if (this.__brushMesh) {
-                this.__brushMesh.renderDepth=0;
-            }
 		},
 
 		__createCrossMeshes : function (volumeSlice)
@@ -398,18 +387,22 @@ qx.Class.define("desk.SliceView",
 			hGeometry.vertices.push( new THREE.Vector3(coordinates[2],0,0) );
 			var hline = new THREE.Line(hGeometry, material);
 			this.getScene().add(hline);
+			hline.renderDepth = 1;
 
 			var vGeometry=new THREE.Geometry();
 			vGeometry.vertices.push( new THREE.Vector3(0,coordinates[1],0) );
 			vGeometry.vertices.push( new THREE.Vector3(0,coordinates[5],0) );
 			var vline = new THREE.Line(vGeometry, material);
             var scene = this.getScene();
+			vline.renderDepth = 1;
 			scene.add(vline);
 
             var crossMeshes = this.__crossMeshes;
             if (crossMeshes) {
                 for (var i = 0; i < crossMeshes.length; i++) {
-                    scene.remove(crossMeshes[i]);
+					var mesh = crossMeshes[i];
+                    scene.remove(mesh);
+                    mesh.geometry.dispose();
                 }
             }
 			this.__crossMeshes = crossMeshes = [];
@@ -419,30 +412,30 @@ qx.Class.define("desk.SliceView",
 
 		__createBrushMesh : function (volumeSlice)
 		{
-			var geometry=new THREE.Geometry();
-			geometry.dynamic=true;
-			var coordinates=volumeSlice.get2DCornersCoordinates();
-			var dimensions=volumeSlice.get2DDimensions();
+			var geometry = new THREE.Geometry();
+			geometry.dynamic = true;
+			var coordinates = volumeSlice.get2DCornersCoordinates();
+			var dimensions = volumeSlice.get2DDimensions();
 
-			var ratio=[];
-			ratio[0]=(coordinates[2]-coordinates[0])/dimensions[0];
-			ratio[1]=(coordinates[5]-coordinates[3])/dimensions[1];
+			var ratio = [];
+			ratio[0] = (coordinates[2]-coordinates[0])/dimensions[0];
+			ratio[1] = (coordinates[5]-coordinates[3])/dimensions[1];
 
-			for (var i=0;i<4;i++) {
+			for (var i = 0; i < 4; i++) {
 				geometry.vertices.push(
-					new THREE.Vector3( coordinates[2*i],coordinates[2*i+1], 0 ) );
+					new THREE.Vector3(coordinates[2*i], coordinates[2*i+1], 0));
 			}
 
-			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
-			geometry.faceVertexUvs[ 0 ].push( [
-				new THREE.Vector2( 0, 0),
-				new THREE.Vector2( 1, 0 ),
-				new THREE.Vector2( 1, 1 ),
-				new THREE.Vector2( 0, 1 )
-				] );
+			geometry.faces.push(new THREE.Face4(0, 1, 2, 3));
+			geometry.faceVertexUvs[0].push([
+				new THREE.Vector2(0, 0),
+				new THREE.Vector2(1, 0),
+				new THREE.Vector2(1, 1),
+				new THREE.Vector2(0, 1)
+				]);
 
-			var width=100;
-			var height=100;
+			var width = 100;
+			var height = 100;
 
 			var canvas = new qx.ui.embed.Canvas().set({
 				syncDimension: true,
@@ -452,29 +445,30 @@ qx.Class.define("desk.SliceView",
 				height: height
 			});
 
-			var context=canvas.getContext2d();
-			context.clearRect(0,0,width,height);
+			var context = canvas.getContext2d();
+			context.clearRect(0, 0, width, height);
 
-			var length=width*height*4;
-			var dataColor = new Uint8Array( length);
+			var length = width * height * 4;
+			var dataColor = new Uint8Array(length);
 
-			var texture = new THREE.DataTexture( dataColor, width, height, THREE.RGBAFormat );
-			texture.generateMipmaps=false;
+			var texture = new THREE.DataTexture(dataColor, width, height, THREE.RGBAFormat);
+			texture.generateMipmaps = false;
 			texture.needsUpdate = true;
-			texture.magFilter=THREE.NearestFilter;
-			texture.minFilter=THREE.NearestFilter;
+			texture.magFilter = THREE.NearestFilter;
+			texture.minFilter = THREE.NearestFilter;
 			
-			var material=new THREE.MeshBasicMaterial( {map:texture, transparent: true});
+			var material = new THREE.MeshBasicMaterial({map:texture, transparent: true});
 
-			material.side=THREE.DoubleSide;
-			var mesh=new THREE.Mesh(geometry,material);
+			material.side = THREE.DoubleSide;
+			var mesh = new THREE.Mesh(geometry,material);
+			mesh.renderDepth=0;
 
 	//	maybe there's a bug to submit to three.js : the following line breaks renderDepth..
 	//		mesh.visible=false;
 			this.getScene().add(mesh);
-			this.__brushMesh=mesh;
+			this.__brushMesh = mesh;
 
-			var _this=this;
+			var _this = this;
 			function updateBrush()
 			{
 				if (_this.isEraseMode()) {
@@ -493,25 +487,25 @@ qx.Class.define("desk.SliceView",
 					context.closePath();
 					context.fill();
 				}
-				var data=context.getImageData(0, 0,width, height).data;
-				for (var i=length;i--;) {
-					dataColor[i]=data[i];
+				var data = context.getImageData(0, 0,width, height).data;
+				for (var i = length;i--;) {
+					dataColor[i] = data[i];
 				}
 				texture.needsUpdate = true;
-				var radius=_this.__paintWidth/2;
+				var radius = _this.__paintWidth/2;
 
 				mesh.geometry.vertices[0].set(-radius*ratio[0], -radius*ratio[1], 0);
 				mesh.geometry.vertices[1].set(radius*ratio[0], -radius*ratio[1], 0);
 				mesh.geometry.vertices[2].set(radius*ratio[0], radius*ratio[1], 0);
 				mesh.geometry.vertices[3].set(-radius*ratio[0], radius*ratio[1], 0);
 
-				geometry.verticesNeedUpdate=true;
+				geometry.verticesNeedUpdate = true;
 				geometry.computeCentroids();
 				geometry.computeFaceNormals();
 				geometry.computeVertexNormals();
 				geometry.computeBoundingSphere();
 			}
-			this.__updateBrush=updateBrush;
+			this.__updateBrush = updateBrush;
 
 			this.addListener("changePaintMode", function (event) {
 				updateBrush();
@@ -562,6 +556,8 @@ qx.Class.define("desk.SliceView",
 			material.side = THREE.DoubleSide;
 
 			var mesh = new THREE.Mesh(geometry,material);
+			mesh.renderDepth=2;
+
 			this.getScene().add(mesh);
 			this.__drawingMesh = mesh;
 

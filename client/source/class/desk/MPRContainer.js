@@ -172,11 +172,14 @@ qx.Class.define("desk.MPRContainer",
                     // slice is sometimes null here, need to debug that
 					if (slice) {
                         slice.setUserData("rank", i);
+					} else {
+						alert ('bug');
 					}
 				}
 			}
 			this.applyToViewers( function () {
 				this.reorderMeshes();
+				this.render();
 			});
 		},
 
@@ -512,10 +515,10 @@ qx.Class.define("desk.MPRContainer",
 //							updateWindowLevel();
 							volumeListItem.setUserData("loadingInProgress", false);
 							_this.__volumes.add(volumeListItem);
-							_this.__reorderMeshes();
 							if (volumeListItem.getUserData("toDelete")) {
 								_this.removeVolume(volumeListItem);
 							}
+							_this.__reorderMeshes();
 							if (typeof callback === 'function') {
 								callback(_this, volumeSlices);
 							}
