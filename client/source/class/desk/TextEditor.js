@@ -78,7 +78,8 @@ qx.Class.define("desk.TextEditor",
 	},
 
 	statics : {
-		codeInTextEditor : null
+		codeInTextEditor : null,
+		codeVersion : 0
 	},
 
 	members : {
@@ -99,7 +100,9 @@ qx.Class.define("desk.TextEditor",
 			scriptContainer = this.__scriptContainer = document.createElement('script');
 			scriptContainer.setAttribute('type','text/javascript');
 			scriptContainer.text = 'desk.TextEditor.codeInTextEditor = function(){' +
-						this.__textArea.getCode() + '\n};';
+						this.__textArea.getCode() + '\n};' +
+						'\n//@ sourceURL=v' + desk.TextEditor.codeVersion;
+			desk.TextEditor.codeVersion++;
 			bodyContainer.appendChild(scriptContainer);
 
 			var that = this;
