@@ -117,10 +117,6 @@ qx.Class.define("desk.MPRContainer",
 		getVolumeFile : function (volume) {
 			return volume.getUserData('file');
 		},
-
-		getFileBrowser : function() {
-			return this.__fileBrowser;
-		},
 		
 		getVolListGridContainer : function() {
 			var volumesGridCoor = this.__windowsInGridCoord.volList;
@@ -128,7 +124,11 @@ qx.Class.define("desk.MPRContainer",
 			this.__gridContainer.setUserData("freeColumn", volumesGridCoor.c);
 			return this.__gridContainer;
 		},
-		
+
+		/**
+		 * Returns the window where the user can change different
+		 * orientation parameters
+		 */
 		getOrientationWindow : function() {
 			return this.__orientationWindow;
 		},
@@ -150,10 +150,18 @@ qx.Class.define("desk.MPRContainer",
 			}
 		},
 
+		/**
+		 * Returns the container of volume items
+		 * @return {qx.ui.container.Composite} Volumes container
+		 */
 		getVolumesList : function () {
 			return this.__volumes;
 		},
 
+		/**
+		 * Returns the array containing all desk.SliceView
+		 * @return {Array} all views in the Container
+		 */
 		getViewers : function () {
 			return this.__viewers;
 		},
@@ -252,7 +260,7 @@ qx.Class.define("desk.MPRContainer",
 		__createOrientationWindow : function () {
 			var _this = this;
 			
-			var window=new qx.ui.window.Window().set({caption : "Layout and Orientation"});
+			var window = new qx.ui.window.Window().set({caption : "Layout and Orientation"});
 			window.setLayout(new qx.ui.layout.VBox());
 
 			window.add (new qx.ui.basic.Label("Windows layout :"));
@@ -752,6 +760,9 @@ qx.Class.define("desk.MPRContainer",
 			return menu;
 		},
 
+		/**
+		 * Reloads all volumes
+		 */
 		updateAll : function () {
 			var volumes = this.__volumes.getChildren();
 			for (var i = 0; i != volumes.length; i++) {
@@ -759,14 +770,21 @@ qx.Class.define("desk.MPRContainer",
 			}
 		},
 
-		updateVolume : function (volumeListItem) {
-			var slices = volumeListItem.getUserData("slices");
+		/**
+		 * Reloads a specific volume
+		 * @param volume {qx.ui.container.Composite} the volume to reload
+		 */
+		updateVolume : function (volume) {
+			var slices = volume.getUserData("slices");
 			for (var i=0;i<slices.length;i++) {
 				slices[i].update();
 			}
 			
 		},
 
+		/**
+		 * Clears all volumes in the view
+		 */
         removeAllVolumes : function () {
             var volumes = this.__volumes.getChildren();
             while (volumes.length) {
@@ -774,8 +792,12 @@ qx.Class.define("desk.MPRContainer",
             }
         },
 
-		removeVolume : function (volumeListItem) {
-			var slices = volumeListItem.getUserData("slices");
+		/**
+		 * Removes a specific volume from the view
+		 * @param volume {qx.ui.container.Composite} volume to remove
+		 */
+		removeVolume : function (volume) {
+			var slices = volume.getUserData("slices");
             if (!slices) {
                 return;
             }
@@ -784,14 +806,14 @@ qx.Class.define("desk.MPRContainer",
 			});
 
 			// test if volume is not totally loaded
-			if (!volumeListItem.getUserData("loadingInProgress")) {
-				if (qx.ui.core.Widget.contains(this.__volumes, volumeListItem)) {
-					this.__volumes.remove(volumeListItem);
+			if (!volume.getUserData("loadingInProgress")) {
+				if (qx.ui.core.Widget.contains(this.__volumes, volume)) {
+					this.__volumes.remove(volume);
 				}
-				this.fireDataEvent("removeVolume", volumeListItem);
-				volumeListItem.dispose();
+				this.fireDataEvent("removeVolume", volume);
+				volume.dispose();
 			} else {
-				volumeListItem.setUserData("toDelete", true);
+				volume.setUserData("toDelete", true);
 			}
 		},
 
@@ -881,6 +903,10 @@ qx.Class.define("desk.MPRContainer",
 			return (gridContainer);
 		},
 
+		/**
+		 * Links the view parameters (zoom, position, etc..) to an other viewer
+		 * @param volumeViewer{desk.MPRContainer} viewer to link to
+		 */
 		link : function (volumeViewer) {
 			var viewers = volumeViewer.__viewers;
 			var viewers2 = this.__viewers;
