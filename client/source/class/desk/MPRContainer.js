@@ -518,9 +518,10 @@ qx.Class.define("desk.MPRContainer",
 							scalarBounds = volumeSlice.getScalarBounds();
 //							updateWindowLevel();
 							volumeListItem.setUserData("loadingInProgress", false);
-							_this.__volumes.add(volumeListItem);
 							if (volumeListItem.getUserData("toDelete")) {
 								_this.removeVolume(volumeListItem);
+							} else {
+								_this.__volumes.add(volumeListItem);
 							}
 							_this.__reorderMeshes();
 							if (typeof callback === 'function') {
@@ -789,7 +790,9 @@ qx.Class.define("desk.MPRContainer",
 
 			// test if volume is not totally loaded
 			if (!volumeListItem.getUserData("loadingInProgress")) {
-				this.__volumes.remove(volumeListItem);
+				if (qx.ui.core.Widget.contains(this.__volumes, volumeListItem)) {
+					this.__volumes.remove(volumeListItem);
+				}
 				this.fireDataEvent("removeVolume", volumeListItem);
 				volumeListItem.dispose();
 			} else {
