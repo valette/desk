@@ -818,8 +818,7 @@ qx.Class.define("desk.MPRContainer",
 			return (button);
 		},
 
-		__getChangeLayoutContainer : function ()
-		{
+		__getChangeLayoutContainer : function () {
 			var _this = this;
 			var i;
 			var gridContainer = new qx.ui.container.Composite();
@@ -831,8 +830,7 @@ qx.Class.define("desk.MPRContainer",
 			gridContainer.setLayout(gridLayout);
 			
 			var viewGridCoor = this.__windowsInGridCoord;
-			for( i = 0; i < this.__nbUsedOrientations; i++ )
-			{
+			for( i = 0; i < this.__nbUsedOrientations; i++ ) {
 				var labelsContainer = new qx.ui.container.Composite();
 				labelsContainer.set({draggable : true,
 									decorator : "main",
@@ -889,8 +887,8 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		link : function (volumeViewer) {
-			var viewers = this.__viewers;
-			var viewers2 = volumeViewer.__viewers;
+			var viewers = volumeViewer.__viewers;
+			var viewers2 = this.__viewers;
 			if(this.__nbUsedOrientations === viewers2.length) {
 				for (var i = 0; i < this.__nbUsedOrientations; i++) {
 					var viewer = viewers[i];
@@ -900,10 +898,15 @@ qx.Class.define("desk.MPRContainer",
 							viewer.link(viewers2[j]);
 						}
 					}
+					var originControls = viewer.getThreeContainer().getControls()
+					viewer.applyToOtherLinks(function (me) {
+						var controls = this.getThreeContainer().getControls();
+						controls.copy(originControls);
+						controls.update();
+						this.render();
+					});
 				}
-			}
-			else
-			{
+			} else {
 				alert("Cannot link viewers : number of orientations incoherent");
 			}
 		},
