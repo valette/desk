@@ -53,14 +53,15 @@ qx.Class.define("desk.demo.Application",
 
 			function getParameter( parameterName )
 			{
-			  parameterName = parameterName.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
-			  var regexS = "[\\?&]"+parameterName+"=([^&#]*)";
-			  var regex = new RegExp( regexS );
-			  var results = regex.exec( window.location.href );
-			  if( results == null )
-				return null;
-			  else
-				return results[1];
+				parameterName = parameterName.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+				var regexS = "[\\?&]"+parameterName+"=([^&#]*)";
+				var regex = new RegExp( regexS );
+				var results = regex.exec( window.location.href );
+				if( results == null ) {
+					return null;
+				} else {
+					return results[1];
+				}
 			}
 
 			var initScript = 'code/init.js'
@@ -93,7 +94,7 @@ qx.Class.define("desk.demo.Application",
 						qx.core.Init.getApplication().getRoot().add(button, {top : 0, left : 0});
 
 						function openFileBrowser (e) {
-							var files = new desk.FileBrowser(e.getTarget().getLabel());
+							new desk.FileBrowser(e.getTarget().getLabel());
 						}
 
 						var dataDirs = actions.getSettings().dataDirs;
@@ -105,7 +106,7 @@ qx.Class.define("desk.demo.Application",
 							button.addListener("execute", openFileBrowser);
 							menu.add(button);
 						}
-						var myDesk = new desk.FileBrowser(getParameter("rootDir"));
+						new desk.FileBrowser(getParameter("rootDir"));
 					});
 				}
 			}
