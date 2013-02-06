@@ -79,17 +79,13 @@ qx.Class.define("desk.MPRContainer",
 	members :
 	{
 		__standalone : true,
-		
 		__fullscreenContainer : null,
 		__gridContainer : null,
 		__volumes : null,
 		__viewers : null,
 		__windowsInGridCoord :null,
 		__viewsNames : null,
-
 		__nbUsedOrientations : null,
-
-		__file : null,
 
         /**
         * visualizes the output of an action whenever it is updated
@@ -114,16 +110,19 @@ qx.Class.define("desk.MPRContainer",
             });
         },
 
-		getFile : function() {
-			return this.__file;
+		/** Returns the file corresponding to the given volume
+		 * @param volume {qx.ui.container.Composite}  volume
+		 * @return {String} file corresponding to the volume
+		 */
+		getVolumeFile : function (volume) {
+			return volume.getUserData('file');
 		},
-		
+
 		getFileBrowser : function() {
 			return this.__fileBrowser;
 		},
 		
-		getVolListGridContainer : function()
-		{
+		getVolListGridContainer : function() {
 			var volumesGridCoor = this.__windowsInGridCoord.volList;
 			this.__gridContainer.setUserData("freeRow", volumesGridCoor.r);
 			this.__gridContainer.setUserData("freeColumn", volumesGridCoor.c);
@@ -428,10 +427,9 @@ qx.Class.define("desk.MPRContainer",
         * @param parameters {Object} : parameters object containing settings
         * such as imageFormat (0 or 1), label (text), visible (bool)
         * @param callback {Function} : callback when loaded
-        * @return {qx.ui.container.Composite} : volume item
+        * @return {qx.ui.container.Composite}  volume item
 		*/
 		addVolume : function (file, parameters, callback) {
-			this.__file = file;
 			var volumeSlices = [];
 
 			var opacity = 1;
@@ -702,11 +700,11 @@ qx.Class.define("desk.MPRContainer",
 
 			if(this.__standalone) {
 				if (desk.Actions.getInstance().getPermissionsLevel()>0) {
-					var paintButton=new qx.ui.menu.Button("segment");
-					paintButton.addListener("execute", function () {
-						new desk.SegTools(this, this.__file);
+					var segmentButton = new qx.ui.menu.Button("segment");
+					segmentButton.addListener("execute", function () {
+						new desk.SegTools(this, this.getVolumeFile(volumeListItem));
 					},this);
-					menu.add(paintButton);
+					menu.add(segmentButton);
 				}
 			}
 
