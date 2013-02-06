@@ -68,6 +68,7 @@ qx.Class.define("desk.MPRContainer",
 	},
 
 	destruct : function(){
+		this.removeAllVolumes();
 		var viewers = this.__viewers;
 		for (var i = 0; i != viewers.length; i++) {
 			viewers[i].destroy();

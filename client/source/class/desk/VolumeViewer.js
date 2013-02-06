@@ -1,21 +1,13 @@
+/**
+ * A Standalone volume viewer. It it simply a desk.MPRContainer embeded in a window
+*/
 qx.Class.define("desk.VolumeViewer", 
 {
 	extend : desk.MPRContainer,
 
     construct : function(file, parameters, callback)
 	{
-        //~ this.base(arguments);
         this.base(arguments, file, parameters, callback);
-
-        // Enable logging in debug variant
-        if(qx.core.Environment.get("qx.debug"))
-        {
-            // support native logging capabilities, e.g. Firebug for Firefox
-            qx.log.appender.Native;
-            // support additional cross-browser console. Press F7 to toggle visibility
-            qx.log.appender.Console;
-        }
-
 		var win = new qx.ui.window.Window();
 		this.__window = win;
 		win.set ({layout : new qx.ui.layout.VBox(),
@@ -25,7 +17,10 @@ qx.Class.define("desk.VolumeViewer",
 			useMoveFrame : true
 		});
 
-		win.addListener('close', function (){this.destroy();}, this);
+		win.addListener('close', function (){
+			this.destroy();
+			win.destroy();
+		}, this);
 
 		var width = window.innerWidth;
 		var height = window.innerHeight;

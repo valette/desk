@@ -1,10 +1,5 @@
-/*
-#asset(desk/camera-photo.png)
-@lint ignoreUndefined(THREE.*)
-#ignore(requestAnimationFrame)
-#ignore(Detector)
-#ignore(Uint8Array)
-@lint ignoreGlobal(THREE)
+/**
+ * A Standalone mesh viewer. It it simply a desk.SceneContainer embeded in a window
 */
 qx.Class.define("desk.MeshViewer", 
 {
@@ -13,48 +8,29 @@ qx.Class.define("desk.MeshViewer",
 	construct : function(file, parameters, callback, context)
 	{
         this.base(arguments);
-		var window = new qx.ui.window.Window();
-		window.set({layout : new qx.ui.layout.VBox(),
+		var win = new qx.ui.window.Window();
+		win.set({layout : new qx.ui.layout.VBox(),
 			showClose : true,
 			width : 600,
 			height : 400,
 			showMinimize : false,
 			useResizeFrame : true,
 			useMoveFrame : true,
-			contentPadding : 2});
-		window.setResizable(true, true, true, true);
-		window.addListener("close", function(e) {
-			this.removeAllMeshes();
-			this.unlink();
-			this.fireEvent("close");
-		},this);
-		this.__window = window;
+			contentPadding : 2
+		});
+        win.add(this, {flex : 1});
+        win.open();
+		win.center();
 
-        window.add(this, {flex : 1});
+		win.addListener('close', function() {
+			this.dispose();
+			win.destroy();
+		}, this);
 
-        window.open();
-		window.center();
-		window.addListener('close', function() {this.destroy();});
         if (file) {
-            window.setCaption(file);
+            win.setCaption(file);
             this.addFile(file, parameters, callback, context);
         }
-
 		return (this);
-	},
-
-    members : {
-        __window : null,
-        
-        getWindow : function () {
-            return this.__window;
-        },
-        
-		getMainPane : function()
-		{
-			this.__window.exclude();
-			return this;
-		}
-		
 	}
 });

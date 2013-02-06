@@ -89,6 +89,9 @@ qx.Class.define("desk.SceneContainer",
 	},
 
 	destruct : function(){
+		this.fireEvent("close");
+		// this hack helps avoiding assertion errors when calling removeAllMeshes (to debug...)
+		this.__destructorHack = true;
 		this.removeAllMeshes();
 		this.unlink();
 		this.__threeContainer.destroy();
@@ -880,6 +883,8 @@ qx.Class.define("desk.SceneContainer",
 			}
 		},
 
+		__destructorHack : false,
+
         removeMesh : function (mesh) {
             var renderer = this.__threeContainer.getRenderer();
             var dataModel = this.__meshesTree.getDataModel();
@@ -891,7 +896,10 @@ qx.Class.define("desk.SceneContainer",
 			}
 			mesh.geometry.dispose();
 			mesh.material.dispose();
-            dataModel.setData();            
+			if (!this.__destructorHack) {
+				// hack to avoid assertion errors (to debug...)
+				dataModel.setData();
+			}    
         },
 
 		__animator : null,
