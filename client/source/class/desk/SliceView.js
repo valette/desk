@@ -883,12 +883,12 @@ qx.Class.define("desk.SliceView",
 			}, this);
 
 			htmlContainer.addListener("mouseout", function (event) {
-				this.__brushMesh.visible = false;
-				this.render();
-                if (qx.ui.core.Widget.contains(this, event.getRelatedTarget())) {
+                if (!qx.ui.core.Widget.contains(this, event.getRelatedTarget())) {
 					this.__rightContainer.setVisibility("hidden");
+					this.__brushMesh.visible = false;
+					this.render();
 					this.fireDataEvent("viewMouseOut",event);
-                }
+				}
 			}, this);
 
 			htmlContainer.addListener("mousemove", function (event)	{
@@ -897,6 +897,8 @@ qx.Class.define("desk.SliceView",
 				this.__master.applyToViewers(function () {
 					if (this != that) {
 						this.__rightContainer.setVisibility("hidden");
+						this.__brushMesh.visible = false;
+						this.render();
 					}
 				});
 
