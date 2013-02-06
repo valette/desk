@@ -83,11 +83,9 @@ qx.Class.define("desk.ThreeContainer",
 			var parent, width, height;
 			this.addListener('changeFullscreen', function (e) {
 				if (!e.getData()) {
-					this.set({height : height,
-							width : width});
+					this.set({height : height, width : width});
 					parent.add(this);
-				}
-				else {
+				} else {
 					height = this.getHeight();
 					width = this.getWidth();
 					parent = this.getLayoutParent();
@@ -111,13 +109,16 @@ qx.Class.define("desk.ThreeContainer",
 		* @ignore(requestAnimationFrame)
 		*/
 		render : function ( force ) {
-			var _this=this;
-
+			var _this = this;
 			if (!this.__renderFunction) {
-				this.__renderFunction=
-					function () {
-						_this.__renderer.render( _this.__scene, _this.__camera );
-						_this.__renderingTriggered = false;
+				this.__renderFunction =	function () {
+					if (!_this.__renderer) {
+						// there is a race condition :
+						// rendering can be triggered after widget deletion
+						return;
+					}
+					_this.__renderer.render( _this.__scene, _this.__camera );
+					_this.__renderingTriggered = false;
 				};
 			}
 			if (force) {
@@ -126,7 +127,7 @@ qx.Class.define("desk.ThreeContainer",
 			}			
 
 			if (!this.__renderingTriggered) {
-				this.__renderingTriggered=true;
+				this.__renderingTriggered = true;
 				requestAnimationFrame(this.__renderFunction);
 			}
 		},
@@ -137,10 +138,10 @@ qx.Class.define("desk.ThreeContainer",
 			if (!elementSize) {
 				return;
 			}
-			this.__renderer.setSize(  elementSize.width , elementSize.height );
-			this.__camera.aspect=elementSize.width / elementSize.height;
+			this.__renderer.setSize(elementSize.width, elementSize.height);
+			this.__camera.aspect = elementSize.width / elementSize.height;
 			this.__camera.updateProjectionMatrix();
-			this.__controls.setSize( elementSize.width , elementSize.height );
+			this.__controls.setSize(elementSize.width, elementSize.height);
 			this.render();
 		},
 
