@@ -758,8 +758,8 @@ qx.Class.define("desk.SliceView",
 				k = v[1];
 				break;
 			}
-			this.__master.applyToViewers(function () {
-				this.setCrossPosition(i, j, k);
+			this.__master.applyToViewers(function (viewer) {
+				viewer.setCrossPosition(i, j, k);
 			});
 		},
 
@@ -894,13 +894,13 @@ qx.Class.define("desk.SliceView",
 			var controls = this.__threeContainer.getControls();
 			this.__rightContainer.setVisibility("visible");
 			var that = this;
-			this.__master.applyToViewers(function () {
-				if (this != that) {
-					this.__rightContainer.setVisibility("hidden");
+			this.__master.applyToViewers(function (viewer) {
+				if (viewer != that) {
+					viewer.__rightContainer.setVisibility("hidden");
 					// there is a race condition : sometimes the brush mesh is not ready
-					if (this.__brushMesh) {
-						this.__brushMesh.visible = false;
-						this.render();
+					if (viewer.__brushMesh) {
+						viewer.__brushMesh.visible = false;
+						viewer.render();
 					}
 				}
 			});
@@ -929,12 +929,12 @@ qx.Class.define("desk.SliceView",
 				var z = this.__getCamera().position.z;
 				this.render();
 				var myViewer = this;
-				this.__master.applyToViewers (function () {
-					if (this != myViewer) {
-						this.__getCamera().position.z *= 
-							Math.abs(z / this.__getCamera().position.z);
-						this.__propagateCameraToLinks();
-						this.render();
+				this.__master.applyToViewers (function (viewer) {
+					if (viewer != myViewer) {
+						viewer.__getCamera().position.z *= 
+							Math.abs(z / viewer.__getCamera().position.z);
+						viewer.__propagateCameraToLinks();
+						viewer.render();
 						}
 					});
 				this.__propagateCameraToLinks();
@@ -1219,9 +1219,9 @@ qx.Class.define("desk.SliceView",
 				break;
 			}
 			var _this = this;
-			this.__master.applyToViewers (function () {
-				if ((this != _this) && (this.__slices[0].isReady())) {
-					this.setCrossPosition(i, j, k);
+			this.__master.applyToViewers (function (viewer) {
+				if ((viewer != _this) && (viewer.__slices[0].isReady())) {
+					viewer.setCrossPosition(i, j, k);
 				}
 			});
 			this.__propagateCameraToLinks();

@@ -7,25 +7,13 @@ qx.Class.define("desk.Markers",
 	
 	construct : function(inParams)
 	{
-		
-		// Enable logging in debug variant
-		if(qx.core.Environment.get("qx.debug"))
-		{
-			// support native logging capabilities, e.g. Firebug for Firefox
-			qx.log.appender.Native;
-			// support additional cross-browser console. Press F7 to toggle visibility
-			qx.log.appender.Console;
-        }
-        
 		this.__mrkrsList = [];
 		
-		if(inParams.sliceView!=null)
-		{
+		if(inParams.sliceView!=null) {
 			this.__sliceView = inParams.sliceView;
 			
 			this.__createMarkMesh(this.__sliceView);
-			this.addListener("changeMarkMode", function(event)
-			{
+			this.addListener("changeMarkMode", function(event) {
 				this.__markMesh.setVisible(event.getData());
 			});
 			

@@ -11,16 +11,6 @@ qx.Class.define("desk.SegTools",
 	construct : function(master, globalFile)
 	{	
 		this.base(arguments);
-
-        // Enable logging in debug variant
-        if(qx.core.Environment.get("qx.debug"))
-        {
-            // support native logging capabilities, e.g. Firebug for Firefox
-            qx.log.appender.Native;
-            // support additional cross-browser console. Press F7 to toggle visibility
-            qx.log.appender.Console;
-        }
-
 		this.__master = master;
 		this.__file = globalFile;
 		
@@ -34,28 +24,27 @@ qx.Class.define("desk.SegTools",
 			caption :"segmentation tool",
 			resizable : [false, false, false, false]
 		});
-	//	this.setResizable(false, false, false, false);
 
 		this.__buildRightContainer();
 
 		var _this = this;
 		var listenersIds = [];
-		master.applyToViewers( function () {
-			listenersIds[this] = this.addListener("changeSlice", function ( event ) {
+		master.applyToViewers(function (viewer) {
+			listenersIds[viewer] = viewer.addListener("changeSlice", function ( event ) {
 				_this.__saveCurrentSeeds();
-				_this.__reloadSeedImage( this );
-			}, this);
+				_this.__reloadSeedImage( viewer );
+			}, viewer);
 		});
 
 		this.addListener("close", function (e) {
-			master.applyToViewers( function () {
-				this.removeListenerById(listenersIds[this]);
-				this.setPaintMode(false);
-				this.setEraseMode(false);
-				var canvas = this.getDrawingCanvas();
+			master.applyToViewers(function (viewer) {
+				viewer.removeListenerById(listenersIds[viewer]);
+				viewer.setPaintMode(false);
+				viewer.setEraseMode(false);
+				var canvas = viewer.getDrawingCanvas();
 				canvas.getContext2d().clearRect(0,0,
 							canvas.getCanvasWidth(), canvas.getCanvasHeight());
-				this.fireEvent("changeDrawing");
+				viewer.fireEvent("changeDrawing");
 			});
 		});
 		this.__labels = [];
@@ -184,12 +173,11 @@ qx.Class.define("desk.SegTools",
                 value: 1
             });
 			
-            this.__penSize.addListener("changeValue", function(event)
-			{
-					this.__master.applyToViewers(function () {
-						this.setPaintWidth(event.getData());
-					});
-				}, this);
+            this.__penSize.addListener("changeValue", function(event) {
+				this.__master.applyToViewers(function (viewer) {
+					viewer.setPaintWidth(event.getData());
+				});
+			}, this);
             this.__penSize.setValue(5);
 			
 			var penLabel = new qx.ui.basic.Label("Brush : ");
@@ -199,12 +187,11 @@ qx.Class.define("desk.SegTools",
 		////Create eraser on/off button
             tools.__eraserButton = new qx.ui.form.ToggleButton("Eraser");
 			
-			this.__eraserButton.addListener("changeValue", function(e)
-			{
-				this.__master.applyToViewers(function () {
-					this.setEraseMode(e.getData());
-					});
-				}, this);
+			this.__eraserButton.addListener("changeValue", function(e) {
+				this.__master.applyToViewers(function (viewer) {
+					viewer.setEraseMode(e.getData());
+				});
+			}, this);
 
 			tools.__topRightContainer.add(tools.__eraserButton);
 
@@ -250,8 +237,8 @@ qx.Class.define("desk.SegTools",
             var whileDrawingDrwngOpacitySlider = new qx.ui.form.Slider();
 			whileDrawingDrwngOpacitySlider.setValue(100);
 			whileDrawingDrwngOpacitySlider.addListener("changeValue", function(event) {
-				this.__master.applyToViewers(function () {
-					this.setPaintOpacity(event.getData()/100);
+				this.__master.applyToViewers(function (viewer) {
+					viewer.setPaintOpacity(event.getData() / 100);
 				});
 			}, this);
 
@@ -585,8 +572,8 @@ qx.Class.define("desk.SegTools",
 					target.blue=colorSelector.getBlue();
 					target.updateWidget();
 			        colorView.setBackgroundColor(e.getData());
-					this.__master.applyToViewers( function () {
-						this.setPaintColor(colorSelector.getValue());
+					this.__master.applyToViewers(function (viewer) {
+						viewer.setPaintColor(colorSelector.getValue());
 					});
 				}
 			}, this);
@@ -910,9 +897,9 @@ qx.Class.define("desk.SegTools",
 					}
 				}
 
-				this.__master.applyToViewers( function () {
-					this.setPaintColor(colorBox.getBackgroundColor());
-					this.setPaintMode(paint);
+				this.__master.applyToViewers(function (viewer) {
+					viewer.setPaintColor(colorBox.getBackgroundColor());
+					viewer.setPaintMode(paint);
 					});
             }, this);
 
@@ -1022,8 +1009,8 @@ qx.Class.define("desk.SegTools",
 			this.__clearSeeds();
 			var master=this.__master;
 
-			master.applyToViewers ( function () {
-				this.setUserData("previousSlice", this.getSlice());
+			master.applyToViewers (function (viewer) {
+				viewer.setUserData("previousSlice", viewer.getSlice());
 			});
 
 			var _this = this;
@@ -1050,13 +1037,13 @@ qx.Class.define("desk.SegTools",
 								else {
 									sliceOrientation = 0;
 								}
-								master.applyToViewers ( function () {
-									if(sliceOrientation == this.getOrientation())
-										_this.__addNewSeedItemToList(this, sliceId, k);
+								master.applyToViewers (function (viewer) {
+									if(sliceOrientation == viewer.getOrientation())
+										_this.__addNewSeedItemToList(viewer, sliceId, k);
 								});
 							}
-							master.applyToViewers( function () {
-									_this.__reloadSeedImage( this );
+							master.applyToViewers(function (viewer) {
+								_this.__reloadSeedImage( viewer );
 							});
 						}
 						var colors = response.getElementsByTagName("color");
@@ -1301,28 +1288,28 @@ qx.Class.define("desk.SegTools",
 			
         	var wasAnySeedModified=false;
         	var _this=this;
-			this.__master.applyToViewers ( function ( ) {
-				var base64Img=_this.__getNewSeedsImage ( this );
-				if ( base64Img!=false ) {
+			this.__master.applyToViewers (function (viewer) {
+				var base64Img = _this.__getNewSeedsImage (viewer);
+				if (base64Img != false) {
 					// save image
-					var sliceId=this.getUserData( "previousSlice" );
+					var sliceId = viewer.getUserData( "previousSlice" );
 					var seedsType=_this.getSeedsType();
 
-					_this.__addNewSeedItemToList ( this, sliceId, seedsType );
-					wasAnySeedModified=true;
+					_this.__addNewSeedItemToList ( viewer, sliceId, seedsType );
+					wasAnySeedModified = true;
 
-					var parameterMap={
-					action : "write_binary",
-					file_name : _this.__getSeedFileName (this, sliceId, seedsType),
-					base64data : base64Img,
-					output_directory : _this.getSessionDirectory()};
-					desk.Actions.getInstance().launchAction(parameterMap, savecallback);
+					var parameterMap = {
+						action : "write_binary",
+						file_name : _this.__getSeedFileName (viewer, sliceId, seedsType),
+						base64data : base64Img,
+						output_directory : _this.getSessionDirectory()};
+						desk.Actions.getInstance().launchAction(parameterMap, savecallback);
 				}
 				else {
 					savecallback();
 				}
-				this.setUserData("previousSlice", this.getSlice());
-				this.setDrawingCanvasNotModified();
+				viewer.setUserData("previousSlice", viewer.getSlice());
+				viewer.setDrawingCanvasNotModified();
 			});
 			if (wasAnySeedModified) {
 				this.__saveSeedsXML(savecallback);
@@ -1451,19 +1438,19 @@ qx.Class.define("desk.SegTools",
 			}
 
 			var _this=this;
-			this.__master.applyToViewers( function () {
-				var seedsLists=this.getUserData(desk.SegTools.seedsListsString);
-				var orientation=this.getOrientation();
+			this.__master.applyToViewers( function (viewer) {
+				var seedsLists = viewer.getUserData(desk.SegTools.seedsListsString);
+				var orientation = viewer.getOrientation();
 
-				for (var seedsType=0; seedsType<2; seedsType++) {
-					var list=seedsLists[seedsType];
-					var filePrefix=desk.SegTools.filePrefixes[seedsType];
-					var slices=list.getChildren();
-					for (var i=0;i<slices.length;i++)
+				for (var seedsType = 0; seedsType < 2; seedsType++) {
+					var list = seedsLists[seedsType];
+					var filePrefix = desk.SegTools.filePrefixes[seedsType];
+					var slices = list.getChildren();
+					for (var i = 0; i < slices.length; i++)
 					{
-						var sliceId=slices[i].getUserData("slice");
+						var sliceId = slices[i].getUserData("slice");
 						xmlContent += element(filePrefix,
-								_this.__getSeedFileName(this, sliceId, seedsType), 
+								_this.__getSeedFileName(viewer, sliceId, seedsType), 
 								{slice: sliceId + "", orientation: orientation + ""}) + '\n';
 					}
 				}
@@ -1495,11 +1482,11 @@ qx.Class.define("desk.SegTools",
 			function updateSeedsListsVisibility (e) {
 				var newSeedsType=selectBox.getSelection()[0].getUserData("seedsType");
 				_this.setSeedsType(newSeedsType);
-				_this.__master.applyToViewers(function ( ) {
-					var seedsLists=this.getUserData(desk.SegTools.seedsListsString);
+				_this.__master.applyToViewers(function (viewer) {
+					var seedsLists = viewer.getUserData(desk.SegTools.seedsListsString);
 					seedsLists[newSeedsType].setVisibility("visible");
-					seedsLists[1-newSeedsType].setVisibility("excluded");
-					_this.__reloadSeedImage (this);
+					seedsLists[1 - newSeedsType].setVisibility("excluded");
+					_this.__reloadSeedImage(viewer);
 					});
 			}
 
@@ -1572,8 +1559,8 @@ qx.Class.define("desk.SegTools",
 
 		__addSeedsListsToViews : function ( ) {
 			var _this=this;
-			this.__master.applyToViewers ( function () {
-				_this.__addSeedsLists ( this );
+			this.__master.applyToViewers (function (viewer) {
+				_this.__addSeedsLists (viewer);
 			});
 		},
 
@@ -1636,17 +1623,16 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__clearSeeds : function ( ) {
-			this.__master.applyToViewers ( function () {
-				this.setUserData("previousSlice", this.getSlice());
-				var seedsLists=this.getUserData(desk.SegTools.seedsListsString);
-				for (var i=0;i<2;i++) {
-					var numberOfSlices=this.getVolumeSliceToPaint().getNumberOfSlices();
+			this.__master.applyToViewers (function (viewer) {
+				viewer.setUserData("previousSlice", viewer.getSlice());
+				var seedsLists = viewer.getUserData(desk.SegTools.seedsListsString);
+				for (var i = 0; i < 2; i++) {
+					var numberOfSlices = viewer.getVolumeSliceToPaint().getNumberOfSlices();
 					var seedsArray = [];
 					var cacheTagsArray = [];
-					for (var j=0;j!=numberOfSlices;j++)
-					{
-						seedsArray[j]=0;
-						cacheTagsArray[j]=Math.random();
+					for (var j = 0;j != numberOfSlices; j++) {
+						seedsArray[j] = 0;
+						cacheTagsArray[j] = Math.random();
 					}
 					seedsLists[i].removeAll();
 					seedsLists[i].setUserData(desk.SegTools.seedsArrayString, seedsArray);

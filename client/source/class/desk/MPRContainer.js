@@ -20,23 +20,11 @@ qx.Class.define("desk.MPRContainer",
 		};
 
         this.__viewsNames = ["Axial", "Sagittal", "Coronal"];
-
-        // Enable logging in debug variant
-        if(qx.core.Environment.get("qx.debug"))
-        {
-            // support native logging capabilities, e.g. Firebug for Firefox
-            qx.log.appender.Native;
-            // support additional cross-browser console. Press F7 to toggle visibility
-            qx.log.appender.Console;
-        }
-
-		if( parameters.nbOrientations) {
-			this.__nbUsedOrientations = parameters.nbOrientations;
-		}
+		this.__nbUsedOrientations = parameters.nbOrientations || 3;
 
 		var gridLayout = new qx.ui.layout.Grid(2,2);
-		for ( var i = 0 ; i < 2 ; i++ ) {
-			gridLayout.setRowFlex(i , 1);
+		for (var i = 0 ; i < 2 ; i++) {
+			gridLayout.setRowFlex(i, 1);
 			gridLayout.setColumnFlex(i, 1);
 		}
 
@@ -69,10 +57,9 @@ qx.Class.define("desk.MPRContainer",
 
 	destruct : function(){
 		this.removeAllVolumes();
-		var viewers = this.__viewers;
-		for (var i = 0; i != viewers.length; i++) {
-			viewers[i].destroy();
-		}
+		this.applyToViewers(function (viewer) {
+			viewer.destroy();
+		});
 		this.__fullscreenContainer.destroy();
 		this.__gridContainer.destroy();
 		this.__volumes.destroy();
@@ -100,7 +87,7 @@ qx.Class.define("desk.MPRContainer",
 		__windowsInGridCoord :null,
 		__viewsNames : null,
 
-		__nbUsedOrientations : 3,
+		__nbUsedOrientations : null,
 
 		__file : null,
 
@@ -146,11 +133,21 @@ qx.Class.define("desk.MPRContainer",
 		getOrientationWindow : function() {
 			return this.__orientationWindow;
 		},
-		
-		applyToViewers : function (theFunction) {
-			var viewers=this.__viewers;
-			for (var i=0;i<this.__nbUsedOrientations;i++) {
-				theFunction.apply(viewers[i]);
+
+		/**
+		* applies the input function to all viewers
+		* @param iterator {Function} iterator to apply to viewers
+		* <pre class="javascript">
+		* example :
+		* myMPRContainer.applyToViewers(function (viewer) {
+		* 	viewer.render();
+		* });
+		* </pre>
+		* */
+		applyToViewers : function (iterator) {
+			var viewers = this.__viewers;
+			for (var i = 0; i < this.__nbUsedOrientations;i ++) {
+				iterator(viewers[i]);
 			}
 		},
 
@@ -163,8 +160,8 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		__renderAll : function () {
-			this.applyToViewers(function () {
-				this.render();
+			this.applyToViewers(function (viewer) {
+				viewer.render();
 			});
 		},
 
@@ -176,8 +173,8 @@ qx.Class.define("desk.MPRContainer",
                     var slice = slices[j];
                     // slice is sometimes null here, need to debug that
 					if (slice) {
-						this.applyToViewers(function () {
-							this.setSliceRank(slice, i);
+						this.applyToViewers(function (viewer) {
+							viewer.setSliceRank(slice, i);
 						});
 					} else {
 						alert ('bug');
@@ -361,8 +358,8 @@ qx.Class.define("desk.MPRContainer",
 			anamOrButton.setUserData('flipCamera', false);
 			function changeFlipStrategy (e) {
 				var flipCamera = e.getTarget().getUserData('flipCamera');
-				this.applyToViewers(function () {
-					this.setOrientationChangesOperateOnCamera(flipCamera);
+				this.applyToViewers(function (viewer) {
+					viewer.setOrientationChangesOperateOnCamera(flipCamera);
 				});
 			}
 			slicesOrButton.addListener('execute' , changeFlipStrategy, this);
@@ -784,8 +781,8 @@ qx.Class.define("desk.MPRContainer",
             if (!slices) {
                 return;
             }
-			this.applyToViewers (function () {
-				this.removeVolumes(slices);
+			this.applyToViewers (function (viewer) {
+				viewer.removeVolumes(slices);
 			});
 
 			// test if volume is not totally loaded
@@ -915,8 +912,8 @@ qx.Class.define("desk.MPRContainer",
 			var menu = new qx.ui.menu.Menu();
 			var unLinkButton = new qx.ui.menu.Button("unlink");
 			unLinkButton.addListener("execute", function() {
-				this.applyToViewers (function () {
-					this.unlink();
+				this.applyToViewers (function (viewer) {
+					viewer.unlink();
 				});
 			},this);
 			menu.add(unLinkButton);
