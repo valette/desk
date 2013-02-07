@@ -96,7 +96,21 @@ qx.Class.define("desk.MPRContainer",
         */
         watchAction : function (action, file, parameters, callback) {
             var volume;
-            action.addListener('actionUpdated', function () {
+            var currentActionId = -1;
+            action.addListener('actionTriggered', function (e) {
+				var actionId = e.getData();
+				if (currentActionId < actionId) {
+					currentActionId = actionId;
+				}
+            }, this);
+
+            action.addListener('actionUpdated', function (e) {
+				var actionId = e.getData();
+			//	console.log('current : '+currentActionId + ', actionId : '+actionId);
+				if (currentActionId !== actionId) {
+					// ignore this update as the action has been triggered since
+					return;
+				}
                 if (volume) {
                     this.removeVolume(volume);
                 }
@@ -178,13 +192,11 @@ qx.Class.define("desk.MPRContainer",
 				var slices = volumes[i].getUserData("slices");
 				for (var j = 0; j < slices.length; j++){
                     var slice = slices[j];
-                    // slice is sometimes null here, need to debug that
+                    // slice might not be loaded yet
 					if (slice) {
 						this.applyToViewers(function (viewer) {
 							viewer.setSliceRank(slice, i);
 						});
-					} else {
-						alert ('bug');
 					}
 				}
 			}
@@ -313,8 +325,7 @@ qx.Class.define("desk.MPRContainer",
 						var tempLabelPreviousSel = thisSelectBox.getUserData("previousSelect");
 						thisSelectBox.setUserData("previousSelect",selectItemLabel);
 						for( j = 0; j < nbUsedOrientations; j++ ) {
-							if(tempSelectables[j].getLabel()==tempLabelPreviousSel)
-							{
+							if(tempSelectables[j].getLabel() == tempLabelPreviousSel) {
 								doubledBox.setUserData("previousSelect",tempLabelPreviousSel);
 								doubledBox.setSelection([tempSelectables[j]]);
 								break;
@@ -340,7 +351,7 @@ qx.Class.define("desk.MPRContainer",
 			};
 			// Create selectBoxes
 			var selectBox, i;
-			for ( i = 0; i < nbUsedOrientations; i++ ) {
+			for (i = 0; i < nbUsedOrientations; i++) {
 				planesContainer.add ( new qx.ui.basic.Label( (i+1) + " : ") );
 				selectBox = new qx.ui.form.SelectBox();
 				layoutSelectBoxes[i] = selectBox;
@@ -438,6 +449,7 @@ qx.Class.define("desk.MPRContainer",
         * @return {qx.ui.container.Composite}  volume item
 		*/
 		addVolume : function (file, parameters, callback) {
+//			console.log('add : ' + file);
 			var volumeSlices = [];
 
 			var opacity = 1;
@@ -509,12 +521,11 @@ qx.Class.define("desk.MPRContainer",
 			var numberOfRemainingMeshes = this.__nbUsedOrientations;
 			var _this = this;
 			for(var i = 0; i < this.__nbUsedOrientations; i++) {
-				this.__viewers[i].addVolume(file, parameters, (function (myI) { 
+				volumeSlices[i] = this.__viewers[i].addVolume(file, parameters, (function (myI) { 
 					return (function (volumeSlice) {
-						volumeSlices[myI] = volumeSlice;
 						numberOfRemainingMeshes--;
 						if (numberOfRemainingMeshes === 0) {
-                            volumeListItem.setUserData('slices', volumeSlices);
+
 							if (parameters.visible !== undefined) {
 								hideShowCheckbox.setValue(parameters.visible);
 							}
@@ -523,8 +534,6 @@ qx.Class.define("desk.MPRContainer",
 							volumeListItem.setUserData("loadingInProgress", false);
 							if (volumeListItem.getUserData("toDelete")) {
 								_this.removeVolume(volumeListItem);
-							} else {
-								_this.__volumes.add(volumeListItem);
 							}
 							_this.__reorderMeshes();
 							if (typeof callback === 'function') {
@@ -660,6 +669,7 @@ qx.Class.define("desk.MPRContainer",
 			settingsContainer.add(hideShowCheckbox);
 			// add this user data to avoid race conditions
 			volumeListItem.setUserData("loadingInProgress", true);
+			this.__volumes.add(volumeListItem);
 			return volumeListItem;
 		},
 
@@ -776,16 +786,16 @@ qx.Class.define("desk.MPRContainer",
 		 */
 		updateVolume : function (volume) {
 			var slices = volume.getUserData("slices");
-			for (var i=0;i<slices.length;i++) {
+			for (var i = 0; i < slices.length; i++) {
 				slices[i].update();
 			}
-			
 		},
 
 		/**
 		 * Clears all volumes in the view
 		 */
         removeAllVolumes : function () {
+//			console.log('remove all');
             var volumes = this.__volumes.getChildren();
             while (volumes.length) {
                 this.removeVolume(volumes[0]);
@@ -797,23 +807,21 @@ qx.Class.define("desk.MPRContainer",
 		 * @param volume {qx.ui.container.Composite} volume to remove
 		 */
 		removeVolume : function (volume) {
+			if (qx.ui.core.Widget.contains(this.__volumes, volume)) {
+				this.__volumes.remove(volume);
+				this.fireDataEvent("removeVolume", volume);
+			}
+
 			var slices = volume.getUserData("slices");
-            if (!slices) {
-                return;
-            }
 			this.applyToViewers (function (viewer) {
 				viewer.removeVolumes(slices);
 			});
 
 			// test if volume is not totally loaded
-			if (!volume.getUserData("loadingInProgress")) {
-				if (qx.ui.core.Widget.contains(this.__volumes, volume)) {
-					this.__volumes.remove(volume);
-				}
-				this.fireDataEvent("removeVolume", volume);
-				volume.dispose();
-			} else {
+			if (volume.getUserData("loadingInProgress")) {
 				volume.setUserData("toDelete", true);
+			} else {
+				volume.dispose();
 			}
 		},
 
@@ -899,7 +907,6 @@ qx.Class.define("desk.MPRContainer",
 					//~ labelsContainer.add(orientPlaneLabel);
 				gridContainer.add(labelsContainer, {row: viewGridCoor.viewers[i].r, column: viewGridCoor.viewers[i].c});
 			}
-			
 			return (gridContainer);
 		},
 
@@ -942,7 +949,7 @@ qx.Class.define("desk.MPRContainer",
 			},this);
 			menu.add(unLinkButton);
 
-			var label=new qx.ui.basic.Label("Link").set({draggable : true,
+			var label = new qx.ui.basic.Label("Link").set({draggable : true,
 				decorator : "main", toolTipText : "click and drag to an other window to link"});
 			label.addListener("dragstart", function(e) {
 				e.addAction("alias");
@@ -1097,7 +1104,7 @@ qx.Class.define("desk.MPRContainer",
 			this.setDroppable(true);
 			this.addListener("drop", function(e) {
 				if (e.supportsType("fileBrowser")) {
-					var files=e.getData("fileBrowser").getSelectedFiles();
+					var files = e.getData("fileBrowser").getSelectedFiles();
 					for (var i = 0; i < files.length; i++) {
 						this.addVolume(files[i]);
 					}

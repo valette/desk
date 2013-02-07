@@ -27,17 +27,16 @@ qx.Class.define("desk.SliceView",
 		this.setLayout(new qx.ui.layout.HBox());
 		this.setDecorator("main");
 
-		this.__slices=[];
+		this.__slices = [];
+	//	this._slicesToDelete = [];
 
 		if (typeof orientation == "number") {
 			this.setOrientation(orientation);
-		}
-		else {
+		} else {
 			this.setOrientation(0);
 		}
 
-		this.__master = master;		
-
+		this.__master = master;
 		this.__createUI();
 
 		this.__drawingCanvas = new qx.ui.embed.Canvas().set({
@@ -45,14 +44,14 @@ qx.Class.define("desk.SliceView",
 		});
 
 		this.addListener("changePaintMode", function (e) {
-			if (e.getData() === true) {
+			if (e.getData()) {
 				this.setEraseMode(false);
 				this.__updateBrush();
 			}
 		}, this);
 
 		this.addListener("changeEraseMode", function (e) {
-			if (e.getData() === true) {
+			if (e.getData()) {
 				this.setPaintMode(false);
 				this.__updateBrush();
 			}
@@ -72,7 +71,7 @@ qx.Class.define("desk.SliceView",
 		this.__drawingCanvas.destroy();
 		this.__sliceLabel.destroy();
 		var overlays = this.__directionOverlays;
-		for (var i = 0; i !=overlays.length; i++) {
+		for (var i = 0; i != overlays.length; i++) {
 			overlays[i].destroy();
 		}
 		this.__intersection = null;
@@ -124,6 +123,7 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__slices : null,
+	//	__slicesToDelete : null,
 
 		__slider : null,
 
@@ -221,16 +221,21 @@ qx.Class.define("desk.SliceView",
 				for (var j = 0; j < mySlices.length; j++) {
 					if (mySlices[j] == slice) {
 						var mesh = slice.getUserData("mesh");
-						this.getScene().remove(mesh);
+						if (mesh) {
+							this.getScene().remove(mesh);
 
-						//release GPU memory
-						mesh.material.uniforms.texture.value.dispose();
-						mesh.material.dispose();
-						mesh.geometry.dispose();
-						mySlices.splice(j, 1);
-						this.removeListenerById(slice.getUserData("updateListener"));
-						this.render();
-						slice.dispose();
+							//release GPU memory
+							mesh.material.uniforms.texture.value.dispose();
+							mesh.material.dispose();
+							mesh.geometry.dispose();
+							this.removeListenerById(slice.getUserData("updateListener"));
+							this.render();
+							slice.dispose();
+							mySlices.splice(j, 1);
+						} else {
+							// the slice has not been loaded yet, postpone deletetion
+							slice.setUserData('toDelete', true);
+						}
 						break;
 					}
 				}
@@ -688,12 +693,34 @@ qx.Class.define("desk.SliceView",
 		 */
 		addVolume : function (file, parameters, callback) {
 			var that = this;
-			var firstSlice = false;
-			if (this.__slices.length === 0) {
-				firstSlice = true;
+			var firstSlice = true;
+			var slices = this.__slices;
+			var sli = [];
+			for (var i = 0; i != slices.length; i++) {
+				sli.push(slices[i].getFileName());
+				sli.push(slices[i].getUserData('toDelete'));
+				if (slices[i].getUserData('toDelete') !== true) {
+					firstSlice = false;
+				}
 			}
+/*			if (firstSlice) {
+				console.log('first slice');
+			} else {
+				console.log('NOT first slice');
+			}
+			console.log(sli);*/
 			var volumeSlice = new desk.VolumeSlice(file,
 				this.getOrientation(), parameters, function () {
+					if (volumeSlice.getUserData('toDelete')) {
+						// deletion was triggered before slice was completely loaded
+						for (var i = 0; i != slices.length; i++) {
+							if (slices[i] === volumeSlice) {
+								slices.splice(i, 1);
+							}
+						}
+						volumeSlice.dispose();
+						return;
+					}
 					if (firstSlice) {
 						that.__initFromVolume(volumeSlice);
 					}

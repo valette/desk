@@ -58,10 +58,17 @@ qx.Class.define("desk.Action",
 		/**
 		* Fired whenever the action has been completed
 		*/
-		"actionUpdated" : "qx.event.type.Event"
+		"actionUpdated" : "qx.event.type.Data",
+
+		/**
+		* Fired whenever the action has been completed
+		*/
+		"actionTriggered" : "qx.event.type.Data"
 	},
 
 	members : {
+		__actionsCounter : 0,
+
         __controlsContainer : null,
 
         __tabView : null,
@@ -353,6 +360,7 @@ qx.Class.define("desk.Action",
 					}
 					if (numberOfFinishedParentActions >= parentActions.length) {
 						send.setLabel("Processing...");
+						var actionId;
 						function getAnswer (response) {
 							// configure the send button
 							send.setEnabled(true);
@@ -366,7 +374,7 @@ qx.Class.define("desk.Action",
 							if ( this.__action.attributes.voidAction != "true" ) {
 								this.__showLogButton.setVisibility("visible");
 							}
-							this.fireEvent("actionUpdated");
+							this.fireDataEvent("actionUpdated", actionId);
 						}
 
 						var out = this.getOutputDirectory();
@@ -376,7 +384,10 @@ qx.Class.define("desk.Action",
 			
 						var that = this;
 						function launchAction() {
+							actionId = that.__actionsCounter;
+							that.__actionsCounter++;
 							desk.Actions.getInstance().launchAction (parameterMap, getAnswer, that);
+							that.fireDataEvent("actionTriggered", actionId);
 						}
 
 						if (this.getOutputSubdirectory() == null) {
