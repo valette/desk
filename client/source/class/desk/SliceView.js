@@ -1,4 +1,7 @@
 /**
+* A container used to display volume slices. It is mostly used by the
+* desk.MPRContainer and somewhat useless outside this context
+* 
 * @ignore(THREE.Mesh)
 * @ignore(THREE.Vector2)
 * @ignore(THREE.Line)
@@ -28,7 +31,6 @@ qx.Class.define("desk.SliceView",
 		this.setDecorator("main");
 
 		this.__slices = [];
-	//	this._slicesToDelete = [];
 
 		if (typeof orientation == "number") {
 			this.setOrientation(orientation);
@@ -123,7 +125,6 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__slices : null,
-	//	__slicesToDelete : null,
 
 		__slider : null,
 
@@ -192,8 +193,21 @@ qx.Class.define("desk.SliceView",
 			this.__drawingCanvasModified=false;
 		},
 
-		getVolumeSliceToPaint : function () {
-			return (this.__slices[0]);
+		/**
+		 * Returns the first slice present in the view. This slice defines
+		 * the volume bounding box, spacing etc..
+		 * @return {desk.VolumeSlice} first volume slice present in the view.
+		 * Returns 'null' if no slice is present
+		*/
+		getFirstSlice : function () {
+			var slices = this.__slices;
+			for (var i = 0; i != slices.length; i++) {
+				var slice = slices[i];
+				if (!slice.getUserData('toDelete')) {
+					return slice;
+				}
+			}
+			return null;
 		},
 
 		setPaintColor : function (color) {
@@ -211,34 +225,41 @@ qx.Class.define("desk.SliceView",
 		},
 
 		/**
+		 * Removes a volume from the view.
+		 * @param slices {desk.VolumeSlice} slice to remove
+		*/
+		removeVolume : function (slice) {
+			var mySlices = this.__slices;
+			for (var j = 0; j < mySlices.length; j++) {
+				if (mySlices[j] == slice) {
+					var mesh = slice.getUserData("mesh");
+					if (mesh) {
+						this.getScene().remove(mesh);
+
+						//release GPU memory
+						mesh.material.uniforms.texture.value.dispose();
+						mesh.material.dispose();
+						mesh.geometry.dispose();
+						this.removeListenerById(slice.getUserData("updateListener"));
+						this.render();
+						slice.dispose();
+						mySlices.splice(j, 1);
+					} else {
+						// the slice has not been loaded yet, postpone deletetion
+						slice.setUserData('toDelete', true);
+					}
+					break;
+				}
+			}
+		},
+
+		/**
 		 * Removes volumes stored in an array from the view.
 		 * @param slices {Array} array of slices to remove
 		*/
 		removeVolumes : function (slices) {
-			var mySlices = this.__slices;
-			for (var i = 0; i < slices.length; i++) {
-				var slice = slices[i];
-				for (var j = 0; j < mySlices.length; j++) {
-					if (mySlices[j] == slice) {
-						var mesh = slice.getUserData("mesh");
-						if (mesh) {
-							this.getScene().remove(mesh);
-
-							//release GPU memory
-							mesh.material.uniforms.texture.value.dispose();
-							mesh.material.dispose();
-							mesh.geometry.dispose();
-							this.removeListenerById(slice.getUserData("updateListener"));
-							this.render();
-							slice.dispose();
-							mySlices.splice(j, 1);
-						} else {
-							// the slice has not been loaded yet, postpone deletetion
-							slice.setUserData('toDelete', true);
-						}
-						break;
-					}
-				}
+			for (var i = 0; i != slices.length; i++) {
+				this.removeVolume(slices[i]);
 			}
 		},
 
@@ -703,12 +724,7 @@ qx.Class.define("desk.SliceView",
 					firstSlice = false;
 				}
 			}
-/*			if (firstSlice) {
-				console.log('first slice');
-			} else {
-				console.log('NOT first slice');
-			}
-			console.log(sli);*/
+
 			var volumeSlice = new desk.VolumeSlice(file,
 				this.getOrientation(), parameters, function () {
 					if (volumeSlice.getUserData('toDelete')) {
@@ -1203,7 +1219,7 @@ qx.Class.define("desk.SliceView",
 				width :30, opacity : 0.5, backgroundColor : "transparent",
 				orientation : "vertical", zIndex : 1000});
 			slider.addListener("changeValue",function(e){
-				this.setSlice(this.getVolumeSliceToPaint().getNumberOfSlices()-1-e.getData());
+				this.setSlice(this.getFirstSlice().getNumberOfSlices()-1-e.getData());
 			}, this);
 
 			this.addListener("changeSlice", this.__onChangeSlice, this);
@@ -1219,7 +1235,7 @@ qx.Class.define("desk.SliceView",
 			var sliceId = e.getData();
 			this.__sliceLabel.setValue(sliceId + "");
 			// something fishy here : getNumberOfSlices should never be 0 but it is sometimes...
-			var newSliceId = this.getVolumeSliceToPaint().getNumberOfSlices() - 
+			var newSliceId = this.getFirstSlice().getNumberOfSlices() - 
 				1 - sliceId;
 			if (newSliceId < 0) {
 				newSliceId = 0;

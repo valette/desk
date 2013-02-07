@@ -106,7 +106,6 @@ qx.Class.define("desk.MPRContainer",
 
             action.addListener('actionUpdated', function (e) {
 				var actionId = e.getData();
-			//	console.log('current : '+currentActionId + ', actionId : '+actionId);
 				if (currentActionId !== actionId) {
 					// ignore this update as the action has been triggered since
 					return;
@@ -449,7 +448,6 @@ qx.Class.define("desk.MPRContainer",
         * @return {qx.ui.container.Composite}  volume item
 		*/
 		addVolume : function (file, parameters, callback) {
-//			console.log('add : ' + file);
 			var volumeSlices = [];
 
 			var opacity = 1;
@@ -795,7 +793,6 @@ qx.Class.define("desk.MPRContainer",
 		 * Clears all volumes in the view
 		 */
         removeAllVolumes : function () {
-//			console.log('remove all');
             var volumes = this.__volumes.getChildren();
             while (volumes.length) {
                 this.removeVolume(volumes[0]);

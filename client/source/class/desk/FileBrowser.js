@@ -1,5 +1,6 @@
 /**
- * A container to launch RPC actions and edit parameters
+ * A file browser, with customizable launch options
+ * 
  * @ignore (async.forEach)
  * @lint ignoreDeprecated (alert)
  * @lint ignoreDeprecated (confirm)

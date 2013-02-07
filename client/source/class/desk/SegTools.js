@@ -1627,7 +1627,7 @@ qx.Class.define("desk.SegTools",
 				viewer.setUserData("previousSlice", viewer.getSlice());
 				var seedsLists = viewer.getUserData(desk.SegTools.seedsListsString);
 				for (var i = 0; i < 2; i++) {
-					var numberOfSlices = viewer.getVolumeSliceToPaint().getNumberOfSlices();
+					var numberOfSlices = viewer.getFirstSlice().getNumberOfSlices();
 					var seedsArray = [];
 					var cacheTagsArray = [];
 					for (var j = 0;j != numberOfSlices; j++) {
@@ -1694,7 +1694,7 @@ qx.Class.define("desk.SegTools",
 					sliceLetters = "XY";
 			}
 			return filePrefix + sliceLetters + 
-				(sliceView.getVolumeSliceToPaint().getSlicesIdOffset() +
+				(sliceView.getFirstSlice().getSlicesIdOffset() +
 				sliceId) + ".png";
 		},
 
