@@ -105,8 +105,12 @@ qx.Class.define("desk.SceneContainer",
 
 	events : {
 		"meshesLoaded" : "qx.event.type.Event",
-		"close" : "qx.event.type.Event"
-	},
+		"close" : "qx.event.type.Event",
+		/**
+		 * Fired whenever a mesh is removed. Attached data is the removed mesh
+		 */
+		"meshRemoved" : "qx.event.type.Data"
+		},
 
 	members : {
 		// array containing all loaded meshes
@@ -415,28 +419,24 @@ qx.Class.define("desk.SceneContainer",
 			}
 		},
 
-		attachVolumeSlice : function (volumeSlice)
-		{
+		attachVolumeSlice : function (volumeSlice) {
 			var geometry = new THREE.Geometry();
 			geometry.dynamic = true;
 			for (var i = 0; i < 4; i++) {
-				geometry.vertices.push( new THREE.Vector3( 0, 0, 0 ) );
+				geometry.vertices.push(new THREE.Vector3(0, 0, 0));
 			}
-			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
-			geometry.faceVertexUvs[ 0 ].push( [
-				new THREE.Vector2( 0, 0),
-				new THREE.Vector2( 1, 0 ),
-				new THREE.Vector2( 1, 1 ),
-				new THREE.Vector2( 0, 1 )
-				] );
+			geometry.faces.push(new THREE.Face4(0, 1, 2, 3));
+			geometry.faceVertexUvs[0].push([
+				new THREE.Vector2(0, 0),
+				new THREE.Vector2(1, 0),
+				new THREE.Vector2(1, 1),
+				new THREE.Vector2(0, 1)
+			]);
 
 			var material = volumeSlice.getMaterial();
 			material.transparent = false;
 			var mesh = new THREE.Mesh(geometry,material);
 			material.side = THREE.DoubleSide;
-            this.addMesh(mesh, {label : 'View ' + (volumeSlice.getOrientation()+1),
-                volumeSlice : volumeSlice
-            });
 
 			function updateTexture() {
 				var coords = volumeSlice.getCornersCoordinates();
@@ -455,6 +455,10 @@ qx.Class.define("desk.SceneContainer",
 			updateTexture.apply(this);
 
 			var listenerId = volumeSlice.addListener('changeImage', updateTexture, this);
+            this.addMesh(mesh, {label : 'View ' + (volumeSlice.getOrientation()+1),
+				listenerId : listenerId,
+                volumeSlice : volumeSlice
+            });
 		},
 
 		__addDropSupport : function () {
@@ -889,9 +893,17 @@ qx.Class.define("desk.SceneContainer",
             var renderer = this.__threeContainer.getRenderer();
             var dataModel = this.__meshesTree.getDataModel();
 			dataModel.prune(mesh.properties.__parameters.leaf, true);
+
+			// test if mesh is actually a volume slice
+			var parameters = mesh.properties.__parameters;
+			var volumeSlice = parameters.volumeSlice;
+			if (volumeSlice) {
+				volumeSlice.removeListenerById(parameters.listenerId);
+			}
+
 			this.__threeContainer.getScene().remove(mesh);
 			var map = mesh.material.map;
-			if (map !== null) {
+			if (map) {
 				map.dispose();
 			}
 			mesh.geometry.dispose();
@@ -899,7 +911,8 @@ qx.Class.define("desk.SceneContainer",
 			if (!this.__destructorHack) {
 				// hack to avoid assertion errors (to debug...)
 				dataModel.setData();
-			}    
+			}
+			this.fireDataEvent("meshRemoved", mesh);
         },
 
 		__animator : null,
