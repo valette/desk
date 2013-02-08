@@ -645,6 +645,7 @@ qx.Class.define("desk.VolumeSlice",
 				if (typeof callback === 'function') {
 					callback();
 				}
+				req.dispose();
 			}, this);
 
 			req.send();

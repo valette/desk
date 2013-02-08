@@ -100,9 +100,11 @@ qx.Class.define("desk.AceContainer",
       this.setDecorator("main");
 
       // plain text area
+      var font = qx.bom.Font.fromString("15 serif");
+      qx.util.DisposeUtil.disposeTriggeredBy(font, this);
       this.__textarea = new qx.ui.form.TextArea().set({
         wrap      : false,
-        font      : qx.bom.Font.fromString("14px monospace"),
+        font      : font,
         decorator : "separator-vertical",
         backgroundColor: "white",
         padding   : [0,0,0,5]

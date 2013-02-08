@@ -46,6 +46,7 @@ qx.Class.define("desk.FileSystem",
 			req.setAsync(true);
 			req.addListener('load', function (e) {
 				callback.call(context, e.getTarget());
+				req.dispose();
 			});
 			req.send();
 		},
@@ -247,7 +248,8 @@ qx.Class.define("desk.FileSystem",
 			req.setMethod(method);
 			req.setAsync(true);
 			req.addListener('load', function (e) {
-				callback.call(context, e.getTarget());	
+				callback.call(context, e.getTarget());
+				req.dispose();
 			});
 			req.send();
 		}

@@ -67,15 +67,22 @@ qx.Class.define("desk.SliceView",
 		this.removeVolumes(this.__slices);
 		this.unlink();
 		//clean the scene
+		qx.util.DisposeUtil.destroyContainer(this);
+		if (this.__drawingCanvas) {
+			this.__drawingCanvas.dispose();
+		}
+		this.__brushCanvas.dispose();
+
+/*
+
 		this.__threeContainer.destroy();
 		this.__slider.destroy();
 		this.__rightContainer.destroy();
-		this.__drawingCanvas.destroy();
 		this.__sliceLabel.destroy();
 		var overlays = this.__directionOverlays;
 		for (var i = 0; i != overlays.length; i++) {
 			overlays[i].destroy();
-		}
+		}*/
 		this.__intersection = null;
 		this.__2DCornersCoordinates = null;
 		this.__volume2DDimensions = null;
@@ -1161,6 +1168,7 @@ qx.Class.define("desk.SliceView",
                 font : font,
                 opacity : 0.5
             };
+            qx.util.DisposeUtil.disposeTriggeredBy(font, this);
 			var northLabel = new qx.ui.basic.Label("S");
 			northLabel.set(settings);
 			container.add(northLabel, {left:"50%", top:"1%"});
@@ -1329,6 +1337,8 @@ qx.Class.define("desk.SliceView",
 			this.addListener("changeSlice", function (event) {
 				this.__undoData = [];
 			}, this);
+			qx.util.DisposeUtil.disposeTriggeredBy(undoCommand, this);
+			qx.util.DisposeUtil.disposeTriggeredBy(redoCommand, this);
 		},
 
 		__saveDrawingToUndoStack : function () {

@@ -23,7 +23,9 @@ qx.Class.define("desk.ThreeContainer",
 	construct : function()
 	{
 		this.base(arguments);
-		this.setLayout(new qx.ui.layout.Canvas());
+		var canvas = new qx.ui.layout.Canvas()
+		this.setLayout(canvas);
+		qx.util.DisposeUtil.disposeTriggeredBy(canvas, this);
 		var threeCanvas = new qx.ui.embed.Canvas();
 		this.add(threeCanvas, {width : "100%", height : "100%"});
 		this.__threeCanvas = threeCanvas;

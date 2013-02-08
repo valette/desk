@@ -27,10 +27,12 @@ qx.Class.define("desk.VolViewSimple",
 				this.openFile(desk.FileSystem.getFileURL(response.outputDirectory + '/volume.xml'));
 		}, this);
 
+		var font = new qx.bom.Font(28, ["Verdana", "sans-serif"]);
 		var label = new qx.ui.basic.Label("Computing slices, wait...").set({
-			font : new qx.bom.Font(28, ["Verdana", "sans-serif"])
-			});
+			font : font
+		});
 		this.add(label, {flex : 1});
+		qx.util.DisposeUtil.disposeTriggeredBy(font, this);
 
 		// drag and drop support
 		this.setDraggable(true);

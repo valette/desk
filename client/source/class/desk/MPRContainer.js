@@ -57,12 +57,15 @@ qx.Class.define("desk.MPRContainer",
 
 	destruct : function(){
 		this.removeAllVolumes();
-		this.applyToViewers(function (viewer) {
-			viewer.destroy();
+		this.__orientationWindow.dispose();
+		qx.util.DisposeUtil.destroyContainer(this.__orientationContainer);
+		qx.util.DisposeUtil.destroyContainer(this);
+/*		this.applyToViewers(function (viewer) {
+			viewer.dispose();
 		});
-		this.__fullscreenContainer.destroy();
-		this.__gridContainer.destroy();
-		this.__volumes.destroy();
+		this.__fullscreenContainer.dispose();
+		this.__gridContainer.dispose();*/
+		this.__volumes.dispose();
 		this.__windowsInGridCoord = null;
 		this.__viewsNames = null;
 	},
@@ -414,6 +417,7 @@ qx.Class.define("desk.MPRContainer",
 			sliceView.addListener("mouseover", function(){ sliceView.setViewOn(true); });
 			sliceView.addListener("mouseout", function(){ sliceView.setViewOn(false); });
 			var fullscreenCommand = new qx.ui.core.Command("Ctrl+P");
+			qx.util.DisposeUtil.disposeTriggeredBy(fullscreenCommand, sliceView);
 			var fullscreenButton = new qx.ui.form.Button("+", null, fullscreenCommand).set( { opacity: 0.5 } );
 			sliceView.getRightContainer().add(fullscreenButton);
 			fullscreenButton.addListener("execute", function () {
@@ -504,7 +508,7 @@ qx.Class.define("desk.MPRContainer",
 					baseName.substring(baseLength - 10);
 			}
 
-			var labelcontainer=new qx.ui.container.Composite();
+			var labelcontainer = new qx.ui.container.Composite();
 			labelcontainer.setLayout(new qx.ui.layout.HBox());
 			labelcontainer.setContextMenu(this.__getVolumeContextMenu(volumeListItem));
 			volumeListItem.add(labelcontainer);
@@ -765,6 +769,7 @@ qx.Class.define("desk.MPRContainer",
 				this.removeVolume(volumeListItem);
 				},this);
 			menu.add(removeButton);
+			qx.util.DisposeUtil.disposeTriggeredBy(menu, volumeListItem);
 			return menu;
 		},
 
@@ -818,7 +823,7 @@ qx.Class.define("desk.MPRContainer",
 			if (volume.getUserData("loadingInProgress")) {
 				volume.setUserData("toDelete", true);
 			} else {
-				volume.dispose();
+				qx.util.DisposeUtil.destroyContainer(volume);
 			}
 		},
 
@@ -868,8 +873,7 @@ qx.Class.define("desk.MPRContainer",
 
                 labelsContainer.addListener("droprequest", function(event) {
 					var type = event.getCurrentType();
-					switch (type)
-					{
+					switch (type) {
 					case "thisLabelContainer":
 						event.addData(type, this);
 						break;
@@ -896,7 +900,9 @@ qx.Class.define("desk.MPRContainer",
 					}
 				}, labelsContainer);
 				var viewLabel = new qx.ui.basic.Label( ""+(i+1));
-				viewLabel.setFont(qx.bom.Font.fromString("20px sans-serif bold"));
+				var font = qx.bom.Font.fromString("20px sans-serif bold")
+				viewLabel.setFont(font);
+				qx.util.DisposeUtil.disposeTriggeredBy(font, this);
 				labelsContainer.add(viewLabel);
 					// Shows plane name...unused and unfinished...
 					//~ var orientPlaneLabel = new qx.ui.basic.Label(_this.__viewsNames[i]);
@@ -969,6 +975,7 @@ qx.Class.define("desk.MPRContainer",
 					this.link(e.getData('volView'));
 				}
 			}, this);
+			qx.util.DisposeUtil.disposeTriggeredBy(menu, this);
 			return (label);
 		},
 

@@ -94,8 +94,11 @@ qx.Class.define("desk.SceneContainer",
 		this.__destructorHack = true;
 		this.removeAllMeshes();
 		this.unlink();
-		this.__threeContainer.destroy();
-		this.__meshesTree.destroy();
+		var children = this.getChildren();
+		this.__meshesTree.dispose();
+		this.__meshesTree.getDataModel().dispose();
+		qx.util.DisposeUtil.destroyContainer(children[0]);
+		qx.util.DisposeUtil.destroyContainer(children[1]);
 		this.__ctmLoader = null;
 	},
 
@@ -694,6 +697,7 @@ qx.Class.define("desk.SceneContainer",
 			}, this);
 	
 			button.setContextMenu(menu);
+			qx.util.DisposeUtil.disposeTriggeredBy(menu, this);
 			return button;
 		},
 
@@ -736,7 +740,7 @@ qx.Class.define("desk.SceneContainer",
 			unlinkButton.addListener("execute", this.unlink, this);
 			menu.add(unlinkButton);
 			dragLabel.setContextMenu(menu);
-
+			qx.util.DisposeUtil.disposeTriggeredBy(menu, this);
 			return dragLabel;
 		},
 
@@ -935,10 +939,14 @@ qx.Class.define("desk.SceneContainer",
 
 			var appearanceButton = new qx.ui.menu.Button("appearance");
 			appearanceButton.addListener("execute", function (){
-				var propertyWindow=new qx.ui.window.Window();
+				var propertyWindow = new qx.ui.window.Window();
 				propertyWindow.setLayout(new qx.ui.layout.HBox());
 				propertyWindow.add(this.__getPropertyWidget(propertyWindow));
-				propertyWindow.open();			
+				propertyWindow.open();
+				propertyWindow.addListener('close', function () {
+					qx.util.DisposeUtil.destroyContainer(propertyWindow.getChildren()[0]);
+					propertyWindow.destroy();
+				});
 			}, this);
 			menu.add(appearanceButton);
 
@@ -1037,6 +1045,7 @@ qx.Class.define("desk.SceneContainer",
 				menu.add(animateButton);
 			});
 			
+			qx.util.DisposeUtil.disposeTriggeredBy(menu, this);
 			return menu;
 		}
 	}

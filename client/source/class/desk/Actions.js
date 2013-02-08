@@ -108,7 +108,10 @@ qx.Class.define("desk.Actions",
 				var req = new qx.io.request.Xhr();
 				req.setUrl(this.__baseActionsURL + 'reset');
 				req.setMethod('POST');
-				req.addListener('success', this.__populateActionMenu, this);
+				req.addListener('success', function () {
+					this.__populateActionMenu();
+					req.dispose();
+				}, this);
 				req.send();
 			}, this);
 			menu.add(reloadButton);
@@ -140,6 +143,7 @@ qx.Class.define("desk.Actions",
 					} else {
 						alert (status.status);
 					}
+					req.dispose();
 				}, this);
 				// Send request
 				req.send();
@@ -285,6 +289,7 @@ qx.Class.define("desk.Actions",
 			req.setRequestData({manage : 'kill', handle : handle});
 			req.addListener("success", function (e){
 				callback.call(context, JSON.parse(e.getTarget().getResponseText()));
+				req.dispose();
 			}, this);
 			req.send();
 		},
@@ -303,6 +308,7 @@ qx.Class.define("desk.Actions",
 			req.setRequestData({manage : 'list'});
 			req.addListener("success", function (e){
 				callback.call(context, JSON.parse(e.getTarget().getResponseText()));
+				req.dispose();
 			}, this);
 			req.send();
 		},
@@ -345,6 +351,7 @@ qx.Class.define("desk.Actions",
 				if ( typeof callback === 'function') {
 						callback.call(context, response);
 				}
+				req.dispose();
 			}
 
 			var numberOfRetries = 3;
