@@ -8,6 +8,10 @@
  * @ignore(THREE.WebGLRenderer)
  * @ignore(Detector.webgl)
  * @ignore(Detector.addGetWebGLMessage)
+ * @ignore(THREE.Vector3)
+ * @ignore(THREE.Mesh)
+ * @ignore(THREE.Box3)
+ * @ignore(requestAnimationFrame)
 */
 qx.Class.define("desk.ThreeContainer", 
 {
@@ -27,7 +31,7 @@ qx.Class.define("desk.ThreeContainer",
 		if (!Detector.webgl) Detector.addGetWebGLMessage();
 
 		var scene = new THREE.Scene();
-		var camera = new THREE.PerspectiveCamera(60,1, 0.01, 1e10);
+		var camera = new THREE.PerspectiveCamera(60,1, 0.1, 1e10);
 		var controls = new THREE.TrackballControls2(camera,threeCanvas.getContentElement().getCanvas());
 
 		this.__controls = controls;
@@ -106,7 +110,6 @@ qx.Class.define("desk.ThreeContainer",
 		* Renders the scene
 		* @param force {Boolean} forces display (i.e. does not use
 		* requestAnimationFrame())
-		* @ignore(requestAnimationFrame)
 		*/
 		render : function ( force ) {
 			var _this = this;
@@ -190,45 +193,21 @@ qx.Class.define("desk.ThreeContainer",
 
 		/**
 		* Sets the camera to view all objects in the scene
-		* @ignore(THREE.Vector3)
-		* @ignore(THREE.Mesh)
 		*/
 		viewAll : function ( ) {
-			var max = new THREE.Vector3(-1e10,-1e10,-1e10);
-			var min = new THREE.Vector3(1e10,1e10,1e10);
-
+			var bbox = new THREE.Box3();
 			this.__scene.traverse(function(child){
-				if(child instanceof THREE.Mesh){
-					for (var i in child) {
-						if(i == "geometry"){
-							var geo = child.geometry;
-							geo.computeBoundingBox();
-							var bbox = geo.boundingBox;
-							var bbmin = bbox.min;
-							if (min.x > bbmin.x) {
-								min.setX(bbmin.x);
-							}
-							if (min.y > bbmin.y) {
-								min.setY(bbmin.y);
-							}
-							if (min.z > bbmin.z) {
-								min.setZ(bbmin.z);
-							}
-
-							var bbmax = bbox.max;
-							if (max.x < bbmax.x) {
-								max.setX(bbmax.x);
-							}
-							if (max.y < bbmax.y) {
-								max.setY(bbmax.y);
-							}
-							if (max.z < bbmax.z) {
-								max.setZ(bbmax.z);
-							}
-						}
+				if (child.geometry) {
+					var geometry = child.geometry;
+					if (!geometry.boundingBox) {
+						geometry.computeBoundingBox();
 					}
+					bbox.union(geometry.boundingBox);
 				}
 			});
+
+			var min = bbox.min;
+			var max = bbox.max;
 
 			var center = min.clone().add(max).multiplyScalar(0.5);
 			var bbdiaglength = Math.sqrt(max.clone().sub(min).lengthSq());
