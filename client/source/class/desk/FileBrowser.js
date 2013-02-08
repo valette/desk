@@ -206,6 +206,15 @@ qx.Class.define("desk.FileBrowser",
 		return (this);
 	},
 
+	destruct : function(){
+		if (this.__standAlone) {
+			this.__window.destroy();
+		}
+		this.__virtualTree.getDataModel().dispose();
+		this.__virtualTree.dispose();
+		qx.util.DisposeUtil.destroyContainer(this);
+	},
+
 	members : {
 		// array to store all file browsers, usefull for updates
 		__fileBrowsers : [],
@@ -335,6 +344,7 @@ qx.Class.define("desk.FileBrowser",
 			menu.addSeparator();
 
 			this.__virtualTree.setContextMenu(menu);
+			qx.util.DisposeUtil.disposeTriggeredBy(menu, this);
 			this.__virtualTree.addListener("contextmenu", function (e) {
 				actionsButton.setMenu(this.__actions.getActionsMenu(this));
 			}, this);

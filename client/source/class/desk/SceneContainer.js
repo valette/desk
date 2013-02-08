@@ -736,6 +736,7 @@ qx.Class.define("desk.SceneContainer",
 			},this);
 
 			var menu = new qx.ui.menu.Menu();
+
 			var unlinkButton = new qx.ui.menu.Button("unlink");
 			unlinkButton.addListener("execute", this.unlink, this);
 			menu.add(unlinkButton);
@@ -928,6 +929,7 @@ qx.Class.define("desk.SceneContainer",
 		__getContextMenu : function() {
 			//context menu to edit meshes appearance
 			var menu = new qx.ui.menu.Menu();
+
 			var propertiesButton = new qx.ui.menu.Button("properties");
 			propertiesButton.addListener("execute", function (){
 				var node = this.__meshesTree.getSelectedNodes()[0];
