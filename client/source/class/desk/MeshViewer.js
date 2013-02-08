@@ -21,6 +21,7 @@ qx.Class.define("desk.MeshViewer",
         win.add(this, {flex : 1});
         win.open();
 		win.center();
+		this.__window = win;
 
 		win.addListener('close', function() {
 			this.dispose();
@@ -32,5 +33,13 @@ qx.Class.define("desk.MeshViewer",
             this.addFile(file, parameters, callback, context);
         }
 		return (this);
+	},
+
+	members : {
+		__window : null,
+
+		close : function () {
+			this.__window.close();
+		}
 	}
 });

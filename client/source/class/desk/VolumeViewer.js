@@ -34,11 +34,20 @@ qx.Class.define("desk.VolumeViewer",
         win.add(this, {flex : 1});
 		win.open();
 		win.center();
+		this._window = win;
 
 		if (file) {
 			win.setCaption(file);
 		}
 
 		return (this);
+	},
+
+	members : {
+		__window : null,
+
+		close : function () {
+			this.__window.close();
+		}
 	}
 });

@@ -160,8 +160,8 @@ qx.Class.define("desk.SceneContainer",
         __getMeshFromNode : function (node) {
             var leaf = this.__meshesTree.nodeGet(node);
             if (leaf) {
-                if (leaf.__parameters)
-                return leaf.__parameters.mesh;
+                if (leaf.__customProperties)
+                return leaf.__customProperties.mesh;
                 else
                 return null;
             } else {
@@ -178,8 +178,8 @@ qx.Class.define("desk.SceneContainer",
             }
             parameters.mesh = mesh;
             parameters.leaf = leaf;
-            this.__meshesTree.nodeGet(leaf).__parameters = parameters;
-            mesh.properties.__parameters = parameters;
+            this.__meshesTree.nodeGet(leaf).__customProperties = parameters;
+            mesh.__customProperties = parameters;
         },
 
 		viewAll : function () {
@@ -522,11 +522,11 @@ qx.Class.define("desk.SceneContainer",
 				var tree = this.__meshesTree;
                 var children = [];
                 this.__threeContainer.getScene().traverse(function (object){
-                    if (!object.properties.__parameters) {
+                    if (!object.__customProperties) {
                         return;
                     }
 
-                    if (object.properties.__parameters.volumeSlice) {
+                    if (object.__customProperties.volumeSlice) {
                         children.push(object);
                     }
                 });
@@ -558,7 +558,7 @@ qx.Class.define("desk.SceneContainer",
 					var intersects = ray.intersectObjects(meshes);
 
 					if (intersects.length > 0) {
-						var volumeSlice = intersects[0].object.properties.__parameters.volumeSlice;
+						var volumeSlice = intersects[0].object.__customProperties.volumeSlice;
 						var maximum = volumeSlice.getNumberOfSlices() - 1;
 						var delta = Math.round(event.getWheelDelta()/2);
 						var newValue = volumeSlice.getSlice() + delta;
@@ -890,17 +890,21 @@ qx.Class.define("desk.SceneContainer",
 		__destructorHack : false,
 
         removeMesh : function (mesh) {
-            var renderer = this.__threeContainer.getRenderer();
-            var dataModel = this.__meshesTree.getDataModel();
-			dataModel.prune(mesh.properties.__parameters.leaf, true);
+			var renderer = this.__threeContainer.getRenderer();
+			var dataModel = this.__meshesTree.getDataModel();
+			var parameters = mesh.__customProperties;
 
+			var leaf = mesh.__customProperties.leaf;
+			delete leaf.__customProperties;
+			dataModel.prune(leaf, true);
+			parameters.mesh = 0;
 			// test if mesh is actually a volume slice
-			var parameters = mesh.properties.__parameters;
 			var volumeSlice = parameters.volumeSlice;
 			if (volumeSlice) {
 				volumeSlice.removeListenerById(parameters.listenerId);
 			}
 
+			delete mesh.__customProperties;
 			this.__threeContainer.getScene().remove(mesh);
 			var map = mesh.material.map;
 			if (map) {
@@ -1003,8 +1007,8 @@ qx.Class.define("desk.SceneContainer",
 				var selNode = this.__meshesTree.getSelectedNodes()[0];
 				var leaf = this.__meshesTree.nodeGet(selNode);
 				if (leaf) {
-					if (leaf.__parameters) {
-						if(leaf.__parameters.volumeSlice)
+					if (leaf.__customProperties) {
+						if(leaf.__customProperties.volumeSlice)
 						{
 							menu.remove(propertiesButton);
 							menu.remove(appearanceButton);
