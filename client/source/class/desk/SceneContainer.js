@@ -137,11 +137,14 @@ qx.Class.define("desk.SceneContainer",
 		
 		getMeshes : function() {
 			var meshes = [];
-            this.__threeContainer.getScene().traverse(function(child){
-				if(child instanceof THREE.Mesh){
-                    meshes.push(child);
-				}
-            });
+			var scene = this.__threeContainer.getScene();
+			if (scene) {
+				scene.traverse(function(child){
+					if(child instanceof THREE.Mesh){
+						meshes.push(child);
+					}
+				});
+			}
 			return meshes;
 		},
 

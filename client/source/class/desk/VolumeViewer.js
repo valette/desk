@@ -46,6 +46,10 @@ qx.Class.define("desk.VolumeViewer",
 	members : {
 		__window : null,
 
+		getWindow : function () {
+			return (this.__window);
+		},
+
 		close : function () {
 			this.__window.close();
 		}

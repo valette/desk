@@ -38,6 +38,10 @@ qx.Class.define("desk.MeshViewer",
 	members : {
 		__window : null,
 
+		getWindow : function () {
+			return (this.__window);
+		},
+
 		close : function () {
 			this.__window.close();
 		}
