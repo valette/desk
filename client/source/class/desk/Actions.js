@@ -313,16 +313,41 @@ qx.Class.define("desk.Actions",
 			req.send();
 		},
 
+		__onActionSuccess : function (e) {
+			var req = e.getTarget();
+			var parameters = req.getUserData('actionDetails');
+
+			this.__maximumNumberOfParallelActions++;
+			this.__tryToLaunchActions();
+
+			parameters.actionFinished = true;
+			var response = JSON.parse(req.getResponseText());
+			if (response.error) {
+				alert ("error for action " + parameters.actionParameters.action + ": \n" + response.error);
+			}
+
+			if (parameters.actionItem) {
+				this.__ongoingActions.remove(parameters.actionItem);
+			}
+			var callback = parameters.callback;
+			if ( typeof callback === 'function') {
+					callback.call(parameters.context, response);
+			}
+			req.dispose();
+		},
+
 		__launchAction : function (actionParameters, callback, context) {
 			if (this.isForceUpdate()) {
 				actionParameters.force_update = true;
 			}
-			var that=this;
-			var actionFinished=false;
-			var actionItem = null;
+			var that = this;
+			var parameters = {actionFinished :false,
+				callback : callback, context : context,
+				actionParameters : actionParameters};
+
 			setTimeout(function(){
-				if (!actionFinished) {
-					actionItem = new qx.ui.form.ListItem(actionParameters.action);
+				if (!parameters.actionFinished) {
+					var actionItem = parameters.actionItem = new qx.ui.form.ListItem(actionParameters.action);
 					actionItem.setUserData('actionParameters', actionParameters);
 					actionItem.setUserData('launchedByUser', true);
 					that.__ongoingActions.add(actionItem);
@@ -330,29 +355,11 @@ qx.Class.define("desk.Actions",
 			}, 1230);
 			
 			var req = new qx.io.request.Xhr();
-
+			req.setUserData('actionDetails', parameters);
 			req.setUrl(desk.FileSystem.getActionURL('action'));
 			req.setMethod("POST");
 			req.setAsync(true);
 			req.setRequestData(actionParameters);
-
-			function onSuccess (e){
-				this.__maximumNumberOfParallelActions++;
-				this.__tryToLaunchActions();
-				actionFinished = true;
-				var response = JSON.parse(e.getTarget().getResponseText());
-				if (response.error) {
-					alert ("error for action " + actionParameters.action + ": \n" + response.error);
-				}
-				actionFinished=true;
-				if (actionItem !== null) {
-					this.__ongoingActions.remove(actionItem);
-				}
-				if ( typeof callback === 'function') {
-						callback.call(context, response);
-				}
-				req.dispose();
-			}
 
 			var numberOfRetries = 3;
 
@@ -365,13 +372,14 @@ qx.Class.define("desk.Actions",
 					req.setMethod("POST");
 					req.setAsync(true);
 					req.setRequestData(actionParameters);
-					req.addListener("success", onSuccess, this);
+					req.addListener("success", this.__onSuccess, this);
 					req.addListener("error", onError, this);
+					req.setUserData('actionDetails', parameters);
 					req.send();
 				}
 			}
 
-			req.addListener("success", onSuccess, this);
+			req.addListener("success", this.__onActionSuccess, this);
 			req.addListener("error", onError, this);
 			req.send();
 		},
