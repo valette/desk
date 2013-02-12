@@ -5,7 +5,7 @@ var fs      = require('fs'),
     http    = require('http'),
     https   = require('https'),
     exec    = require('child_process').exec,
-	actions = require('./actions/actions');
+	actions = require('cl-rpc');
 
 var	user=process.env.USER;
 console.log("UID : "+process.getuid());
@@ -240,7 +240,10 @@ else {
 }
 console.log(separator);
 
-actions.addDirectory(__dirname + '/actions/');
+var includesJSONFile = __dirname + '/includes.json';
+if (fs.existsSync(includesJSONFile)) {
+	actions.includeActions(includesJSONFile);
+}
 // make extensions directory if not present
 if (!fs.existsSync(extensionsDir)) {
 	fs.mkdirSync(extensionsDir);

@@ -1,7 +1,7 @@
 {
   "name": "desk",
-  "description": "a web server and RPC framework",
-  "main": "./server",
+  "description": "a medical remote desktop, for visualization and processing of medical data",
+  "main": "./desk",
   "author": {
     "name": "Sebastien Valette"
   },
@@ -10,11 +10,8 @@
   },
 
   "dependencies": {
-    "cron" : ">0.0.0",
-    "pretty-data" : ">0.0.0",
-    "async" : ">0.0.0",
     "express" : ">0.0.0",
-    "winston" : ">0.0.0"
+    "cl-rpc" : ">0.0.0"
   },
   "optionalDependencies": {},
   "engines": {
