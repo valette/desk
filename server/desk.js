@@ -240,14 +240,11 @@ else {
 }
 console.log(separator);
 
-var includesJSONFile = __dirname + '/includes.json';
-if (fs.existsSync(includesJSONFile)) {
-	actions.includeActions(includesJSONFile);
-}
 // make extensions directory if not present
 if (!fs.existsSync(extensionsDir)) {
 	fs.mkdirSync(extensionsDir);
 }
+actions.addDirectory(__dirname + '/includes/');
 actions.addDirectory(extensionsDir);
 actions.setRoot(deskPath);
 
