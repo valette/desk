@@ -14,8 +14,8 @@ qx.Class.define("desk.FileSystem",
 		var URLparser = document.createElement('a');
 		URLparser.href = document.href;
 
-		// detect whether we are in a multi-server configuration
-		if (URLparser.port == 80) {
+		// detect whether we are on desk (need to streamline this...)
+		if (URLparser.hostname == 'desk.creatis.insa-lyon.fr') {
 			// there are several servers
 			this.__baseURL = '/' + URLparser.pathname.split("/")[1] + '/';
 		} else {
