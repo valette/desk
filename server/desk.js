@@ -258,4 +258,8 @@ actions.update(function () {
 	console.log(new Date().toLocaleString());
 	console.log ("server running on port " + port + ", serving path "+serverPath);
 	console.log(baseURL+"localhost:" + port + homeURL);
+	if (identity) {
+		console.log('login as : user : "' + identity.username +
+			'", password : "' + identity.password + '"');
+	}
 });
