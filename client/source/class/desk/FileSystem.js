@@ -14,9 +14,14 @@ qx.Class.define("desk.FileSystem",
 		var URLparser = document.createElement('a');
 		URLparser.href = document.href;
 
-		var pathname = URLparser.pathname;
-		this.__user = URLparser.pathname.split("/")[1];
-		this.__baseURL = '/' + this.__user + '/';
+		// detect whether we are in a multi-server configuration
+		if (URLparser.port == 80) {
+			// there are several servers
+			this.__baseURL = '/' + URLparser.pathname.split("/")[1] + '/';
+		} else {
+			// this is a local unique server
+			this.__baseURL = '/';
+		}
 		this.__actionsURL = this.__baseURL + 'rpc/';
 		this.__filesURL = this.__baseURL + 'files/';
 
@@ -259,7 +264,6 @@ qx.Class.define("desk.FileSystem",
 		__baseURL : null,
 		__filesURL : null,
 		__actionsURL : null,
-		__user : null,
 
 		__includedScripts : null,
 

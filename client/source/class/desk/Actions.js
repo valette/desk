@@ -37,10 +37,6 @@ qx.Class.define("desk.Actions",
 		this.__actionsQueue = [];
 
 		// determine base URLs for RPC
-		var URLparser = document.createElement( 'a' );
-		URLparser.href = document.href;
-		var pathname = URLparser.pathname;
-		this.user = URLparser.pathname.split( "/" )[1];
 		var baseURL = desk.FileSystem.getInstance().getBaseURL();
 		this.__baseActionsURL = baseURL + 'rpc/';
 

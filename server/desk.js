@@ -12,12 +12,23 @@ console.log("UID : "+process.getuid());
 
 // user parameters
 var serverPath = fs.realpathSync(__dirname + '/../client/')+'/',
-	homeURL = '/' + user + '/',
-	deskPath = '/home/' + user + '/desk/',
+    homeURL = '/' + user + '/',
+   	port = process.getuid();
+
+
+// use port 8080 if not running on desk.creatis.insa-lyon.fr
+var hostname = os.hostname();
+console.log('hostname : ' + hostname);
+if (hostname != 'desk.creatis.insa-lyon.fr') {
+	port = 8080;
+    homeURL = '/';
+}
+
+var	deskPath = '/home/' + user + '/desk/',
 	actionsBaseURL = homeURL + 'rpc/',
-	port = process.getuid(),
 	uploadDir = deskPath + 'upload/',
 	extensionsDir = deskPath + 'extensions/';
+
 
 // make desk directory if not existent
 if (!fs.existsSync(deskPath)) {
@@ -27,13 +38,6 @@ if (!fs.existsSync(deskPath)) {
 // make upload directory if not existent
 if (!fs.existsSync(uploadDir)) {
 	fs.mkdirSync(uploadDir);
-}
-
-// use port 8080 if not running on desk.creatis.insa-lyon.fr
-var hostname = os.hostname();
-console.log('hostname : ' + hostname);
-if (hostname != 'desk.creatis.insa-lyon.fr') {
-	port = 8080;
 }
 
 // certificate default file names
@@ -253,5 +257,5 @@ actions.update(function () {
 	console.log(separator);
 	console.log(new Date().toLocaleString());
 	console.log ("server running on port " + port + ", serving path "+serverPath);
-	console.log(baseURL+"localhost:" + port + '/' + user + '/');
+	console.log(baseURL+"localhost:" + port + homeURL);
 });
