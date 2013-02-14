@@ -84,9 +84,7 @@ if ( (typeof identity.username !== "string") ||
 
 // use basicAuth depending on password.json
 if (identity) {
-	app.use(express.basicAuth( function (username, password) {
-			return identity.username === username & identity.password === password;}
-	));
+	app.use(express.basicAuth( identity.username, identity.password));
 	console.log("Using basic authentication");
 } else {
 	console.log("No password file " + passwordFile + " provided or incorrect file");
