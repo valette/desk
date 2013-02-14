@@ -93,8 +93,6 @@ if (identity) {
 	console.log("see " + passwordFile + ".example file for an example");
 }
 
-app.use(express.methodOverride());
-
 // handle body parsing
 app.use(express.bodyParser({uploadDir: uploadDir }));
 
