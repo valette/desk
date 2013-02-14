@@ -7,14 +7,13 @@ var fs      = require('fs'),
     exec    = require('child_process').exec,
 	actions = require('cl-rpc');
 
-var	user=process.env.USER;
+var	user = process.env.USER;
 console.log("UID : "+process.getuid());
 
 // user parameters
 var serverPath = fs.realpathSync(__dirname + '/../client/')+'/',
     homeURL = '/' + user + '/',
    	port = process.getuid();
-
 
 // use port 8080 if not running on desk.creatis.insa-lyon.fr
 var hostname = os.hostname();
@@ -28,7 +27,6 @@ var	deskPath = '/home/' + user + '/desk/',
 	actionsBaseURL = homeURL + 'rpc/',
 	uploadDir = deskPath + 'upload/',
 	extensionsDir = deskPath + 'extensions/';
-
 
 // make desk directory if not existent
 if (!fs.existsSync(deskPath)) {
@@ -59,7 +57,7 @@ if (fs.existsSync(serverRestartFile)) {
 	console.log('hint : modify the file "touchMeToRestart" to restart server');
 	fs.watchFile(serverRestartFile, function () {
 		// just crash the server, the forever module will restart it
-		restart;
+		crash();
 	});
 }
 
@@ -84,7 +82,9 @@ if ( (typeof identity.username !== "string") ||
 
 // use basicAuth depending on password.json
 if (identity) {
-	app.use(express.basicAuth( identity.username, identity.password));
+	app.use(express.basicAuth(function (username, password) {
+		return identity.username === username & identity.password === password
+	}));
 	console.log("Using basic authentication");
 } else {
 	console.log("No password file " + passwordFile + " provided or incorrect file");
@@ -154,8 +154,6 @@ app.post(actionsBaseURL + 'password', function(req, res){
 		identity.password = req.body.password;
 		fs.writeFileSync(passwordFile, JSON.stringify(identity));
 		res.send(JSON.stringify({status : "password changed"}));
-		// just crash the server, the forever module will restart it
-		restart;
 	} else {
 		res.send(JSON.stringify({error : 'password too short!'}));
 	}
@@ -166,7 +164,7 @@ app.get(actionsBaseURL+':action', function (req, res) {
 	switch (action) {
 	case 'clearcache' :
 		var dir = action.substring(5);
-		exec("rm -rf *",{cwd: deskPath + dir}, function () {
+		exec("rm -rf *",{cwd : deskPath + dir}, function () {
 			res.send(dir + ' cleared');
 		});
 		break;
@@ -196,7 +194,6 @@ app.get(actionsBaseURL+':action', function (req, res) {
 				res.send(error);
 				return;
 			}
-//			res.setHeader('Content-Type', 'application/octet-stream');
 			res.setHeader('Content-Disposition','attachment; filename=' +
 				libPath.basename(file));
 			var fileStream = fs.createReadStream(deskPath + file);
@@ -252,8 +249,8 @@ actions.update(function () {
 	server.listen(port);
 	console.log(separator);
 	console.log(new Date().toLocaleString());
-	console.log ("server running on port " + port + ", serving path "+serverPath);
-	console.log(baseURL+"localhost:" + port + homeURL);
+	console.log ("server running on port " + port);
+	console.log(baseURL + "localhost:" + port + homeURL);
 	if (identity) {
 		console.log('login as : user : "' + identity.username +
 			'", password : "' + identity.password + '"');
