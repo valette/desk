@@ -8,7 +8,6 @@ The aim of the project is to create a remote desktop for visualization and proce
 ### License ###
 CeCILL-B (BSD-compatible)
 
-
 ### Dependencies ###
 To install desk on your computer, you need:
 	 * node.js
@@ -24,11 +23,12 @@ To install desk on your computer, you need:
 
 ### Usage ###
 
-	cd desk/server
 	node desk.js
 
-then point your browser to localhost:8080
-login as user : your username, pass : password
+then point your browser to [localhost:8080](http://localhost:8080)
+login as:
+- user : your linux username
+- password : "password"
 
 
 ### Change log ###
