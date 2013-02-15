@@ -134,7 +134,11 @@ qx.Class.define("desk.SceneContainer",
 		getScene : function() {
 			return this.__threeContainer.getScene();
 		},
-		
+
+		applyAfterEachRendering : function (callback, context) {
+			this.__threeContainer.addListener('render', callback, context);
+		},
+
 		getMeshes : function() {
 			var meshes = [];
 			var scene = this.__threeContainer.getScene();

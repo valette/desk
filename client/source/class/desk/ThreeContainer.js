@@ -80,6 +80,11 @@ qx.Class.define("desk.ThreeContainer",
 		fullscreen : { init : false, check: "Boolean", event : "changeFullscreen"}
 	},
 
+	events : {
+		// the "changeSlice" event is fired whenever the image changes
+		"render" : "qx.event.type.Event"
+	},
+
 	members :
 	{
 		__renderFunction : null,
@@ -124,6 +129,7 @@ qx.Class.define("desk.ThreeContainer",
 					}
 					_this.__renderer.render( _this.__scene, _this.__camera );
 					_this.__renderingTriggered = false;
+					_this.fireEvent('render');
 				};
 			}
 			if (force) {
