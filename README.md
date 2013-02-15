@@ -10,9 +10,9 @@ CeCILL-B (BSD-compatible)
 
 ### Dependencies ###
 To install desk on your computer, you need:
-	 * node.js
-	 * vtk+ headers
-	 * cmake
+* node.js
+* vtk + headers
+* cmake
 
 ### Installation ###
 
