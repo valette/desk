@@ -386,7 +386,7 @@ qx.Class.define("desk.Actions",
 			desk.FileSystem.readFile('actions.json', function (request) {
 				var settings = JSON.parse(request.getResponseText());
 				this.__actions = settings;
-				this.__permissionsLevel = parseInt(settings.permissions, 10);
+				var permissions = this.__permissionsLevel = parseInt(settings.permissions, 10);
 
 				var actions = this.__actions.actions;
 				this.__actionsObject = actions;
@@ -404,6 +404,15 @@ qx.Class.define("desk.Actions",
 				{
 					var actionName = actionsNames[n];
 					var action = actions[actionName];
+					
+					var permissionLevel = parseInt(action.attributes.permissions, 10);
+					if (permissionLevel !== 0) {
+						permissionLevel = 1;
+					}
+					if (permissions < permissionLevel) {
+						// skip this action as we do not have enough permissions
+						continue;
+					}
 					var lib = action.lib;
 					var libArray = libs[lib];
 					if (!libArray) {
