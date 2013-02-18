@@ -15,15 +15,14 @@ qx.Class.define("desk.Actions",
 		/**
 		* Calls callback when the actions list is constructed
 		* @param callback {Function} : callback to be called when ready
+		* @param context {Object} : optional context for the callback
 		*/
-		init : function (callback)
-		{
+		init : function (callback, context) {
 			var actions = desk.Actions.getInstance();
-			if ( actions.isReady() ) {
-				callback();
-			}
-			else {
-				actions.addListenerOnce( "changeReady", callback );
+			if (actions.isReady()) {
+				callback.apply(context);
+			} else {
+				actions.addListenerOnce("changeReady", callback , context);
 			}
 		}
 	},
@@ -31,9 +30,8 @@ qx.Class.define("desk.Actions",
 	/**
 	* Constructor, never to be used. Use desk.Actions.getInstance() instead
 	*/
-	construct : function()
-	{
-		this.base( arguments );
+	construct : function() {
+		this.base(arguments);
 		this.__actionsQueue = [];
 
 		// determine base URLs for RPC
@@ -41,7 +39,8 @@ qx.Class.define("desk.Actions",
 		this.__baseActionsURL = baseURL + 'rpc/';
 
 		this.__populateActionMenu();
-		this.__ongoingActions = this.__createOngoingActions();
+		this.__ongoingActions = new qx.ui.form.List();
+		this.__ongoingActions.set ({width : 200, selectionMode : 'multi'});
 
 		// load external three.js files
 		var threeURL = baseURL + 'ext/three.js/';
@@ -90,9 +89,8 @@ qx.Class.define("desk.Actions",
 		__baseActionsURL : null,
 		__ready : false,
 
-		__createOngoingActions : function () {
-			var list = new qx.ui.form.List();
-			list.set ({width : 200, selectionMode : 'multi'});
+		__createOngoingActionsMenu : function () {
+			var list = this.__ongoingActions;
 			var menu = new qx.ui.menu.Menu();
 			var forceButton = new qx.ui.menu.CheckBox("Force Update");
 			forceButton.bind('value', this, 'forceUpdate');
@@ -146,9 +144,7 @@ qx.Class.define("desk.Actions",
 			}, this);
 			menu.add(passwordButton);
 
-			if (this.getPermissionsLevel()) {
-				list.setContextMenu(menu);
-			}
+			list.setContextMenu(menu);
 
 			// dislpay list of already running acions
 			this.getOngoingActions(function (actions) {
@@ -160,7 +156,6 @@ qx.Class.define("desk.Actions",
 					this.__ongoingActions.add(actionItem);
 				}
 			}, this);
-			return list;
 		},
 
 		/**
@@ -388,6 +383,9 @@ qx.Class.define("desk.Actions",
 				var settings = JSON.parse(request.getResponseText());
 				this.__actions = settings;
 				var permissions = this.__permissionsLevel = parseInt(settings.permissions, 10);
+				if (permissions) {
+					this.__createOngoingActionsMenu();
+				}
 
 				var actions = this.__actions.actions;
 				this.__actionsObject = actions;
