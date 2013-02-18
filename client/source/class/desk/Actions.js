@@ -146,8 +146,9 @@ qx.Class.define("desk.Actions",
 			}, this);
 			menu.add(passwordButton);
 
-
-			list.setContextMenu(menu);
+			if (this.getPermissionsLevel()) {
+				list.setContextMenu(menu);
+			}
 
 			// dislpay list of already running acions
 			this.getOngoingActions(function (actions) {
