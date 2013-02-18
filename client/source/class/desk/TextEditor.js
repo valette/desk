@@ -74,7 +74,13 @@ qx.Class.define("desk.TextEditor",
         this.add(textArea, {flex : 1});
 		this.open();
 		this.center();
-		return (this);
+        this.addListener('close', function () {
+            this.__textArea.dispose();
+            this.__reloadButton.dispose();
+            this.__executeButton.dispose();
+            this.destroy();
+        }, this);
+        return (this);
 	},
 
 	statics : {

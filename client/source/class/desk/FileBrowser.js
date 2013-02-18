@@ -243,14 +243,32 @@ qx.Class.define("desk.FileBrowser",
         __getShortcutsContainer : function() {
             var container = new qx.ui.container.Composite();
             container.setLayout(new qx.ui.layout.HBox(5));
-            var dataDirs = desk.Actions.getInstance().getSettings().dataDirs;
+            var settings = desk.Actions.getInstance().getSettings();
+            var dataDirs = settings.dataDirs;
+            var permissions = settings.permissions;
             var dirs = Object.keys(dataDirs);
             dirs.sort();
             for (var i = 0; i != dirs.length; i++) {
                 var dir = dirs[i];
+				if (permissions === 0) {
+					switch (dir) {
+						case "cache" :
+						case "actions" : 
+							continue;
+						default:
+					}
+				}
                 var button = new qx.ui.form.Button(dir);
                 button.addListener("execute", this.__changeRootDir, this);
                 container.add(button, {flex : 1});
+                var menu = new qx.ui.menu.Menu();
+                var openButton = new qx.ui.menu.Button('open in new window');
+                openButton.setUserData('dir', dir);
+                openButton.addListener('execute', function (e) {
+					new desk.FileBrowser(e.getTarget().getUserData('dir'));
+				})
+				menu.add(openButton);
+				button.setContextMenu(menu);
             }
             return container;
 		},
