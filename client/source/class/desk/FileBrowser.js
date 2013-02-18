@@ -250,13 +250,11 @@ qx.Class.define("desk.FileBrowser",
             dirs.sort();
             for (var i = 0; i != dirs.length; i++) {
                 var dir = dirs[i];
-				if (permissions === 0) {
-					switch (dir) {
-						case "cache" :
-						case "actions" : 
-							continue;
-						default:
-					}
+                if (dir === "cache") {
+					continue;
+				}
+				if ((permissions === 0) && (dir ==="actions")){
+					continue;
 				}
                 var button = new qx.ui.form.Button(dir);
                 button.addListener("execute", this.__changeRootDir, this);
@@ -265,7 +263,8 @@ qx.Class.define("desk.FileBrowser",
                 var openButton = new qx.ui.menu.Button('open in new window');
                 openButton.setUserData('dir', dir);
                 openButton.addListener('execute', function (e) {
-					new desk.FileBrowser(e.getTarget().getUserData('dir'));
+					var browser = new desk.FileBrowser(e.getTarget().getUserData('dir'));
+					browser.getWindow().center();
 				})
 				menu.add(openButton);
 				button.setContextMenu(menu);
