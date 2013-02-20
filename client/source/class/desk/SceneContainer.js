@@ -1,4 +1,6 @@
 /**
+* A widget containing a THREE.scene to visualize 3D meshes
+* 
 * @asset(desk/camera-photo.png)
 * @ignore(THREE.Mesh)
 * @ignore(THREE.Vector2)
@@ -220,8 +222,7 @@ qx.Class.define("desk.SceneContainer",
 							mesh.visible = true;
 						}
 						return true;
-					}
-					else {
+					} else {
 						if (mesh) {
 							mesh.visible = false;
 						}
@@ -259,7 +260,7 @@ qx.Class.define("desk.SceneContainer",
 			function myCallback (mesh) {
 				self.viewAll();
                 if (typeof callback === 'function') {
-                    callback();
+                    callback(mesh);
                 }
 			}
 
@@ -395,12 +396,19 @@ qx.Class.define("desk.SceneContainer",
             }, this);
         },
 
+		/**
+		 * Loads a file in the scene.
+		 * @param file {String} input file
+		 * @param parameters {Object} optionnal display options
+		 * @param callback {Function} callback when done
+		 * @param context {Object} optional context for the callback
+		 */
 		addFile : function (file, parameters, callback, context) {
             parameters = parameters || {};
             this.__files.push(file);
-            function afterLoading() {
+            function afterLoading(mesh) {
                 if (typeof callback === 'function') {
-                    callback.apply(context);
+                    callback.apply(context, [mesh]);
                 }
             }
             parameters.file = file;
@@ -423,12 +431,20 @@ qx.Class.define("desk.SceneContainer",
 			}
 		},
 
+		/**
+		 * Attaches a set of desk.VolumeSlice to the scene
+		 * @param volumeSlices {Array} Array of deskVolumeSlice;
+		 */
 		attachVolumeSlices : function (volumeSlices) {
 			for (var i = 0; i < volumeSlices.length; i++) {
 				this.attachVolumeSlice(volumeSlices[i]);
 			}
 		},
 
+		/**
+		 * Attaches a set of desk.VolumeSlice to the scene
+		 * @param volumeSlice {desk.VolumeSlice} volume slice to attach;
+		 */
 		attachVolumeSlice : function (volumeSlice) {
 			var geometry = new THREE.Geometry();
 			geometry.dynamic = true;
@@ -585,6 +601,11 @@ qx.Class.define("desk.SceneContainer",
 			}, this);
 		},
 
+		/**
+		 * Renders the scene
+		 * @param force {Boolean} when true, the rendering will be immediate
+		 * (no wait for resquestAnimationFrame)
+		 */
 		render : function (force) {
 			this.__threeContainer.render(force);
 		},
@@ -598,7 +619,10 @@ qx.Class.define("desk.SceneContainer",
             }
 			var self = this;
 			loader.load (parameters.url, function(geometry){
-               self.addGeometry(geometry, parameters);
+               var mesh = self.addGeometry(geometry, parameters);
+               if (typeof(callback) === "function") {
+				   callback(mesh);
+			   }
 			});
 		},
 
@@ -669,11 +693,11 @@ qx.Class.define("desk.SceneContainer",
                 }
                 var self = this;
 				loader.load (parameters.url, function (geometry) {
-                    self.addGeometry(geometry, parameters);
+                    var mesh = self.addGeometry(geometry, parameters);
                     self.__numberOfLoaders++;
                     self.__loadQueue();
                     if (typeof callback === 'function') {
-                        callback();
+                        callback(mesh);
                     }
                 }, { useWorker : useWorker, useBuffers : useBuffers});
 				this.__loadQueue();
@@ -992,9 +1016,7 @@ qx.Class.define("desk.SceneContainer",
 					if (meshes[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 						var meshId=meshes[i].nodeId;
 						var mesh=this.getMeshes()[meshId];
-						
 						var meshTools = new desk.MeshTools( {meshViewer:this, specMesh:mesh} );
-						
 					}
 				}
 			},this);

@@ -1,4 +1,6 @@
-/*
+/**
+ * Simpe class to animate meshes
+ * @ignore (async)
 #asset(qx/icon/${qx.icontheme}/16/actions/media-playback-start.png) 
 #asset(qx/icon/${qx.icontheme}/16/actions/media-playback-stop.png) 
 */
@@ -7,10 +9,20 @@ qx.Class.define("desk.Animator",
 {
 	extend : qx.ui.container.Composite,
 
+	/**
+	*  Constructor
+	* 	@param renderFunction {Function} is the function triggered for rendering.
+	* If no function is provided, a desk.MeshViewer will be created
+	* 
+	*/
 	construct : function (renderFunction) {
 		this.base(arguments);
 
-		this.__render = renderFunction;
+		if (renderFunction) {
+			this.__render = renderFunction;		
+		} else {
+			this.__viewer = new desk.MeshViewer();
+		}
 		this.__createUI();
 		return (this);
 	},
@@ -24,6 +36,7 @@ qx.Class.define("desk.Animator",
 	},
 
 	members : {
+		__viewer : null,
 		__window : null,
 		__list : null,
 
@@ -31,6 +44,27 @@ qx.Class.define("desk.Animator",
 
 		__index : 0,
 
+		/**
+		 * Loads an array of files in the viewer for animation
+		 * @param files {Array} array of files to load
+		 */
+		animateFiles : function (files) {
+			var viewer = this.__viewer;
+			var self = this;
+			async.map(files, function (file, callback) {
+				viewer.addFile(file, {visible : false}, function (mesh) {
+					callback(null, mesh);
+				});
+			}, function (err, results){
+				for (var i = 0; i != results.length; i++) {
+				 self.addObject(results[i], files[i]);
+				}
+			});
+		},
+
+		/**
+		 * Starts the animation
+		 */
 		startAnimation : function () {
 			if (this.__animate) {
 				return;
@@ -77,6 +111,9 @@ qx.Class.define("desk.Animator",
 			animate();
 		},
 
+		/**
+		 * Stops the animation
+		 */
 		stopAnimation : function () {
 			this.__animate = false;
 		},
@@ -107,13 +144,20 @@ qx.Class.define("desk.Animator",
 			return (container);
 		},
 
+		/**
+		 * Adds a three.js object to the animation list
+		 * @param object {THREE.Object3D} the object to add
+		 * @param label {String} object label in the list
+		 */
 		addObject : function (object, label) {
 			var item = new qx.ui.form.ListItem(label);
 			item.setUserData('threeObject', object);
 			this.__list.add(item);
 		},
 
-		__render : null,
+		__render : function () {
+			this.__viewer.render();
+		},
 
 		__createUI : function () {
 			this.setLayout(new qx.ui.layout.VBox());
