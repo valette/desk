@@ -45,6 +45,7 @@ This software benefits from several open-source contributions:
 * [three.js](http://www.threejs.org/)
 * [qooxdoo](http://www.qooxdoo.org/)
 * [OpenCTM](http://openctm.sourceforge.net/)
+* [ACVD](http://github.com/valette/ACVD.git)
 
 ### Change log ###
 
