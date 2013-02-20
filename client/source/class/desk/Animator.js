@@ -47,8 +47,10 @@ qx.Class.define("desk.Animator",
 		/**
 		 * Loads an array of files in the viewer for animation
 		 * @param files {Array} array of files to load
+		 * @param callback {Function} callback when done
+		 * @param context {Object} optional callback context
 		 */
-		animateFiles : function (files) {
+		animateFiles : function (files, callback, context) {
 			var viewer = this.__viewer;
 			var self = this;
 			async.map(files, function (file, callback) {
@@ -58,6 +60,9 @@ qx.Class.define("desk.Animator",
 			}, function (err, results){
 				for (var i = 0; i != results.length; i++) {
 				 self.addObject(results[i], files[i]);
+				}
+				if (typeof (callback) === "function") {
+					callback.apply(context);
 				}
 			});
 		},
@@ -120,6 +125,19 @@ qx.Class.define("desk.Animator",
 
 		__getNumberOfObjects : function () {
 			return this.__list.getChildren().length;
+		},
+
+		/**
+		 * Returns an array containing all animated objects
+		 * @return {Array} array of THREE.Object3D
+		 */
+		getObjects : function () {
+			var objects = [];
+			var list = this.__list.getChildren();
+			for (var i = 0; i !=list.length; i++) {
+				objects.push(list[i].getUserData('threeObject'));
+			}
+			return objects;
 		},
 
 		__getObject : function (index) {
@@ -257,6 +275,9 @@ qx.Class.define("desk.Animator",
 			}
 			window.open();
             window.center();
+			qx.util.DisposeUtil.disposeTriggeredBy(window, this);
+			qx.util.DisposeUtil.disposeTriggeredBy(list, this);
+			qx.util.DisposeUtil.disposeTriggeredBy(indicator, this);
 		}
 	}
 });
