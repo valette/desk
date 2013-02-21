@@ -68,6 +68,15 @@ qx.Class.define("desk.Animator",
 		},
 
 		/**
+		*Returns the desk.MeshViewer currently in use
+		* @return {desk.MeshViewer} the used viewer
+		*/
+		
+		getViewer : function () {
+			return this.__viewer;
+		},
+
+		/**
 		 * Starts the animation
 		 */
 		startAnimation : function () {
