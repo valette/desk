@@ -37,11 +37,11 @@ qx.Class.define("desk.FileSystem",
 		* @param context {Object} optional context for the callback
 		* 
 		* <pre class="javascript">
-		* example : 
-		* desk.FileSystem.readFile ("myFilePath", function (request) {
-		*   var answer = request.getResponseText(); //to get the raw text response
-		*   var xmlAnswer = request.getResponse(); //to get parsed xml
-		* });
+		* example : <br>
+		* desk.FileSystem.readFile ("myFilePath", function (request) {<br>
+		*   var answer = request.getResponseText(); //to get the raw text response<br>
+		*   var xmlAnswer = request.getResponse(); //to get parsed xml<br>
+		* });<br>
 		* </pre>
 		*/
 		readFile : function (file, callback, context) {
@@ -65,10 +65,10 @@ qx.Class.define("desk.FileSystem",
 		* @param context {Object} optional context for the callback
 		* 
 		* <pre class="javascript">
-		* example : 
-		* desk.FileSystem.writeFile ("myFilePath", function () {
-		* // here, the file has been written to disk
-		* });
+		* example : <br>
+		* desk.FileSystem.writeFile ("myFilePath", function () {<br>
+		* // here, the file has been written to disk<br>
+		* });<br>
 		* </pre>
 		*/
 		writeFile : function (file, content, callback, context) {
@@ -107,9 +107,9 @@ qx.Class.define("desk.FileSystem",
 		* @param file {String} the file
 		* @return {string} file extension
 		* <pre class="javascript">
-		* example : 
-		* desk.FileSystem.getFileDirectory ('data/test/foo.txt');
-		* returns 'txt'
+		* example : <br>
+		* desk.FileSystem.getFileDirectory ('data/test/foo.txt');<br>
+		* returns 'txt'<br>
 		* </pre>
 		*/
         getFileExtension : function (file) {

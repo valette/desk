@@ -64,8 +64,10 @@ qx.Class.define("desk.Actions",
 		}, this);
 
 		if (0) {
+			// this code just includes other desk classes by default...
 			new qxjqplot.Plot();
 			new desk.LogContainer();
+			new desk.Random();
 		}
 
 		return this;
