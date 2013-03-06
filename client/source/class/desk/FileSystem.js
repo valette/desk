@@ -215,22 +215,20 @@ qx.Class.define("desk.FileSystem",
 			if (!fs.__includedScripts) {
 				fs.__includedScripts = {};
 			}
-			var index=-1;
+			var index = -1;
 			function myScriptLoader() {
 				if (index >= 0) {
 					fs.__includedScripts[scripts[index]] = 1;
 				}
-				index+=1;
-				if (index != scripts.length) {
+				index += 1;
+				if (index !== scripts.length) {
 					if (fs.__includedScripts[scripts[index]] === 1) {
 						// the script is already loaded. Use a timeout to stay async
 						setTimeout(myScriptLoader,20);
-					}
-					else {
+					} else {
 						new qx.io.ScriptLoader().load(scripts[index], myScriptLoader);
 					}
-				}
-				else {
+				} else {
 					if (typeof callback === 'function') {
 						callback.apply(context);
 					}

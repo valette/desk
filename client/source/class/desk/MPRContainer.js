@@ -443,12 +443,21 @@ qx.Class.define("desk.MPRContainer",
 			}, this);
 		},
 
+		/**
+		 * returns an array containing volumes slices for a loaded volume
+		 * @param volume {qx.ui.container.Composite} : volume
+		 * @return {Array} array of volume slices
+		 */
+		getVolumeSlices : function (volume) {
+			return volume.getUserData("slices");
+		},
+
         /**
 		* adds a file into the viewer
 		* @param file {String} : file to load
         * @param parameters {Object} : parameters object containing settings
         * such as imageFormat (0 or 1), label (text), visible (bool)
-        * @param callback {Function} : callback when loaded
+        * @param callback {Function} : callback when loaded.
         * @return {qx.ui.container.Composite}  volume item
 		*/
 		addVolume : function (file, parameters, callback) {
@@ -539,7 +548,7 @@ qx.Class.define("desk.MPRContainer",
 							}
 							_this.__reorderMeshes();
 							if (typeof callback === 'function') {
-								callback(_this, volumeSlices);
+								callback(volumeListItem);
 							}
 						}
 					});
