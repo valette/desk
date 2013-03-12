@@ -3,6 +3,8 @@
  * @ignore (async)
 #asset(qx/icon/${qx.icontheme}/16/actions/media-playback-start.png) 
 #asset(qx/icon/${qx.icontheme}/16/actions/media-playback-stop.png) 
+#asset(qx/icon/${qx.icontheme}/16/actions/media-seek-backward.png) 
+#asset(qx/icon/${qx.icontheme}/16/actions/media-seek-forward.png) 
 */
 
 qx.Class.define("desk.Animator", 
@@ -11,18 +13,14 @@ qx.Class.define("desk.Animator",
 
 	/**
 	*  Constructor
-	* 	@param renderFunction {Function} is the function triggered for rendering.
-	* If no function is provided, a desk.MeshViewer will be created
+	* 	@param viewer {desk.meshViewer} is the viewer to animate
+	* If no viewer is provided, a desk.MeshViewer will be created
 	* 
 	*/
-	construct : function (renderFunction) {
+	construct : function (viewer) {
 		this.base(arguments);
 
-		if (renderFunction) {
-			this.__render = renderFunction;		
-		} else {
-			this.__viewer = new desk.MeshViewer();
-		}
+		this.__viewer = viewer || new desk.MeshViewer();
 		this.__createUI();
 		return (this);
 	},
@@ -39,10 +37,11 @@ qx.Class.define("desk.Animator",
 		__viewer : null,
 		__window : null,
 		__list : null,
-
+		__snapshotCheckBox : null,
 		__animate : false,
 
 		__index : 0,
+		__indexLabel : null,
 
 		/**
 		 * Loads an array of files in the viewer for animation
@@ -71,7 +70,6 @@ qx.Class.define("desk.Animator",
 		*Returns the desk.MeshViewer currently in use
 		* @return {desk.MeshViewer} the used viewer
 		*/
-		
 		getViewer : function () {
 			return this.__viewer;
 		},
@@ -83,10 +81,9 @@ qx.Class.define("desk.Animator",
 			if (this.__animate) {
 				return;
 			}
-			var mesh;
 			var numberOfObjects = this.__getNumberOfObjects();
 			for (var i = 0; i != numberOfObjects;i++) {
-				mesh = this.__getObject(i);
+				var mesh = this.__getObject(i);
 				if (mesh) {
 					mesh.visible = false;
 				}
@@ -95,34 +92,42 @@ qx.Class.define("desk.Animator",
 
 			var that = this;
 			function animate () {
-				var index = that.__index;
-				var numberOfObjects = that.__getNumberOfObjects();
-				var mesh = that.__getObject(index);
-				if (mesh) {
-					mesh.visible = true;
-				}
+				that.__index = (that.__index +1 )% numberOfObjects;
+				that.__showCurrentFrame();
 
-				var lastIndex = index - 1;
-				if (lastIndex<0) {
-					lastIndex += numberOfObjects;
-				}
-				mesh = that.__getObject(lastIndex);
-				if (mesh) {
-					mesh.visible = false;
-				}
 
-				if (that.__index == (numberOfObjects - 1)) {
-					that.__index = 0;
+				if (that.__snapshotCheckBox.getValue()) {
+					setTimeout(snapshot, that.getRefreshTime()/3);
 				}
-				else {
-					that.__index++;
-				}
-				that.__render();
 				if (that.__animate) {
 					setTimeout(animate, that.getRefreshTime());
 				}
 			}
 			animate();
+			function snapshot() {
+				that.__viewer.getThreeContainer().snapshot();
+			}
+		},
+
+		__showCurrentFrame : function () {
+			var index = this.__index;
+			var numberOfObjects = this.__getNumberOfObjects();
+			var mesh = this.__getObject(index);
+			if (mesh) {
+				mesh.visible = true;
+			}
+
+			mesh = this.__getObject((index - 1 + numberOfObjects) % numberOfObjects);
+			if (mesh) {
+				mesh.visible = false;
+			}
+
+			mesh = this.__getObject((index + 1) % numberOfObjects);
+			if (mesh) {
+				mesh.visible = false;
+			}
+			this.__viewer.render(index);
+			this.__indexLabel.setValue(index.toString());
 		},
 
 		/**
@@ -130,6 +135,23 @@ qx.Class.define("desk.Animator",
 		 */
 		stopAnimation : function () {
 			this.__animate = false;
+		},
+
+		/**
+		 * Seeks to the next frame
+		 */
+		getNextFrame : function () {
+			this.__index = (this.__index + 1 ) % this.__getNumberOfObjects();
+			this.__showCurrentFrame();
+		},
+
+		/**
+		 * Seeks to the previous frame
+		 */
+		getPreviousFrame : function () {
+			var numberOfObjects = this.__getNumberOfObjects();
+			this.__index = (this.__index - 1 +numberOfObjects) % numberOfObjects;
+			this.__showCurrentFrame();
 		},
 
 		__getNumberOfObjects : function () {
@@ -154,19 +176,31 @@ qx.Class.define("desk.Animator",
 		},
 
 		__getControlsContainer : function () {
+			var indexLabel = this.__indexLabel = new qx.ui.basic.Label("0");
+			indexLabel.setWidth(30);
+
 			var startButton = new qx.ui.form.Button(null, "icon/16/actions/media-playback-start.png");
 			startButton.addListener("execute", this.startAnimation, this);
 
 			var stopButton = new qx.ui.form.Button(null, "icon/16/actions/media-playback-stop.png");
 			stopButton.addListener("execute", this.stopAnimation, this);
 
+			var nextButton = new qx.ui.form.Button(null, "icon/16/actions/media-seek-forward.png");
+			nextButton.addListener("execute", this.getNextFrame, this);
+
+			var prevButton = new qx.ui.form.Button(null, "icon/16/actions/media-seek-backward.png");
+			prevButton.addListener("execute", this.getPreviousFrame, this);
+
 			var spinner = new qx.ui.form.Spinner(5, 50, 5000);
 			spinner.bind('value', this, 'refreshTime');
 
 			var container = new qx.ui.container.Composite();		
 			container.setLayout(new qx.ui.layout.HBox());
+			container.add(indexLabel);
 			container.add(startButton, {flex : 1});
 			container.add(stopButton, {flex : 1});
+			container.add(prevButton, {flex : 1});
+			container.add(nextButton, {flex : 1});
 			container.add(spinner);
 			return (container);
 		},
@@ -208,6 +242,8 @@ qx.Class.define("desk.Animator",
 			this.__list = list;
 			this.add(list, {flex : 1});
 			this.add(this.__getControlsContainer());
+			var snapCheckBox = this.__snapshotCheckBox = new qx.ui.form.CheckBox("snapshot");
+			this.add(snapCheckBox);
 
 			// Create drag indicator
 			var indicator = new qx.ui.core.Widget();
@@ -249,7 +285,7 @@ qx.Class.define("desk.Animator",
 
 				indicator.setWidth(orig.getBounds().width);
 				indicator.setDomPosition(origCoords.left-origCoords2.left,
-          origCoords.top-origCoords2.top);
+					origCoords.top-origCoords2.top);
 			});
 
 			list.addListener("dragover", function(e) {

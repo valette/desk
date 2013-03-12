@@ -132,7 +132,11 @@ qx.Class.define("desk.SceneContainer",
 
 		// number defining the maximum number of loaders
 		__numberOfLoaders : 10,
-		
+
+		getThreeContainer : function () {
+			return this.__threeContainer;
+		},
+
 		getScene : function() {
 			return this.__threeContainer.getScene();
 		},
@@ -1026,8 +1030,7 @@ qx.Class.define("desk.SceneContainer",
 			animateButton.addListener('execute', function () {
 				var nodes = this.__meshesTree.getSelectedNodes();
 				if (!this.__animator) {
-					var that = this;
-					this.__animator = new desk.Animator(function () {that.render();});
+					this.__animator = new desk.Animator(this);
 					this.__animator.addListener('close', function () {
 						this.__animator = null;
 					}, this);
