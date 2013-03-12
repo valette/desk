@@ -696,6 +696,9 @@ qx.Class.define("desk.SceneContainer",
                     loader = this.__ctmLoader = new THREE.CTMLoader( this.__threeContainer.getRenderer().context );
                 }
                 var self = this;
+				if (parameters.useBuffers === false) {
+					useBuffers = false;
+				}
 				loader.load (parameters.url, function (geometry) {
                     var mesh = self.addGeometry(geometry, parameters);
                     self.__numberOfLoaders++;
