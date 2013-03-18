@@ -56,6 +56,8 @@ qx.Class.define("desk.Actions",
 		scripts.push(threeURL + 'ctm/lzma.js');
 		scripts.push(threeURL + 'MeshAnalyser.js');
         scripts.push(baseURL + 'ext/async.min.js');
+        scripts.push(baseURL + 'ext/underscore-min.js');
+        scripts.push(baseURL + 'ext/parallel.min.js');
 		desk.FileSystem.includeScripts(scripts, function () {
 			this.__scriptsLoaded = true;
 			if (this.__actionsLoaded) {
