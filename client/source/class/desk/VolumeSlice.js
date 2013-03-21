@@ -18,8 +18,8 @@ qx.Class.define("desk.VolumeSlice",
 		this.base(arguments);
 
 		this.setOrientation(orientation);
-		this.__materials=[];
-		this.__image=new Image();
+		this.__materials = [];
+		this.__image = new Image();
 
 		parameters = parameters || {};
 
@@ -39,7 +39,7 @@ qx.Class.define("desk.VolumeSlice",
 			this.__textureFilter = THREE.NearestFilter;
 		}
 
-		this.__file=file;
+		this.__file = file;
 		this.update(callback);
 
 		this.__initChangeSliceTrigger();
@@ -252,7 +252,7 @@ qx.Class.define("desk.VolumeSlice",
 			var parameterMap={
 				action : "slice_volume",
 				input_volume : this.__file,
-				output_directory : "cache\/",
+				output_directory : "cache/",
 				format : this.getImageFormat(),
 				slice_orientation : this.getOrientation()};
 			desk.Actions.getInstance().launchAction(parameterMap, getAnswer, this);
@@ -385,11 +385,11 @@ qx.Class.define("desk.VolumeSlice",
 			texture.magFilter = filter;
 			texture.minFilter = filter;
 
-			var lookupTable = new THREE.DataTexture( this.__dummyLut , 2, 1, THREE.RGBAFormat );
+			var lookupTable = new THREE.DataTexture(this.__dummyLut, 2, 1, THREE.RGBAFormat);
 			lookupTable.generateMipmaps = false;
 			lookupTable.magFilter = filter;
 			lookupTable.minFilter = filter;
-			lookupTable.needsUpdate=true;
+			lookupTable.needsUpdate = true;
 
 			var middleShader;
 			switch (this.__scalarType)
@@ -397,19 +397,19 @@ qx.Class.define("desk.VolumeSlice",
 			case 2 :
 			case 15:
 				//char / signed char
-				middleShader=desk.VolumeSlice.FRAGMENTSHADERCHAR;
+				middleShader = desk.VolumeSlice.FRAGMENTSHADERCHAR;
 				break;
 			case 3:
-				middleShader=desk.VolumeSlice.FRAGMENTSHADERUCHAR;
+				middleShader = desk.VolumeSlice.FRAGMENTSHADERUCHAR;
 				break;
 			case 4:
-				middleShader=desk.VolumeSlice.FRAGMENTSHADERSHORT;
+				middleShader = desk.VolumeSlice.FRAGMENTSHADERSHORT;
 				break;
 			case 5:
-				middleShader=desk.VolumeSlice.FRAGMENTSHADERUSHORT;
+				middleShader = desk.VolumeSlice.FRAGMENTSHADERUSHORT;
 				break;
 			default:
-				middleShader=desk.VolumeSlice.FRAGMENTSHADERFLOAT;
+				middleShader = desk.VolumeSlice.FRAGMENTSHADERFLOAT;
 				break;
 			}
 
@@ -418,8 +418,7 @@ qx.Class.define("desk.VolumeSlice",
 				shader = [desk.VolumeSlice.FRAGMENTSHADERBEGIN,
 						middleShader,
 						desk.VolumeSlice.FRAGMENTSHADEREND].join("\n");
-			}
-			else {
+			} else {
 				shader = desk.VolumeSlice.FRAGMENTSHADERENDMULTICHANNEL;
 			}
 
@@ -458,7 +457,7 @@ qx.Class.define("desk.VolumeSlice",
 
 			var luts = this.getLookupTables();
 			if (luts) {
-				this.__setLookupTablesToMaterial ( luts , material );
+				this.__setLookupTablesToMaterial (luts , material);
 			}
 
 			this.__materials.push(material);
@@ -724,11 +723,12 @@ qx.Class.define("desk.VolumeSlice",
 			},this);
 
 			var _this=this;
+
 			this.__image.onload=function(){
 				clearTimeout(this.__timeOut);
-				_this.__updateInProgress=false;
+				_this.__updateInProgress = false;
 				var materials=_this.__materials;
-				for (var i=0;i<materials.length;i++){
+				for (var i = 0; i < materials.length; i++){
 					materials[i].uniforms.texture.value.needsUpdate = true;
 				}
 				_this.fireEvent("changeImage");
