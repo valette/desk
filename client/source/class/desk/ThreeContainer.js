@@ -81,12 +81,11 @@ qx.Class.define("desk.ThreeContainer",
 	},
 
 	events : {
-		// the "changeSlice" event is fired whenever the image changes
+		// fired after each render
 		"render" : "qx.event.type.Event"
 	},
 
-	members :
-	{
+	members : {
 		__renderFunction : null,
 		__renderingTriggered : false,
 
