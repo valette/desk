@@ -131,7 +131,7 @@ qx.Class.define("desk.Action",
             if (!this.getOutputSubdirectory()) {
                 return;
             }
-            if (loadJSON === false) {
+            if ((loadJSON === false) || (directory === "cache/")){
 				this.fireEvent("changeOutputDirectory");
 			} else {
 				desk.FileSystem.readFile(this.getOutputDirectory() + 'action.json',
@@ -323,6 +323,7 @@ qx.Class.define("desk.Action",
 					parameterMap.output_directory = this.__outputDirectory;
 				}
 
+
 				// add the value of the "force update" checkbox
 				parameterMap.force_update = this.__forceUpdateCheckBox.getValue();
 				this.__executionStatus.setValue("Processing...");
@@ -365,8 +366,9 @@ qx.Class.define("desk.Action",
 							// configure the send button
 							send.setEnabled(true);
 							send.setLabel("Update");
-
-							if (this.getOutputDirectory() == null) {
+							var currentOutputDir = this.getOutputDirectory();
+							if ((currentOutputDir === null) ||
+									(currentOutputDir.substring(0, 6) === "cache/")) {
 								this.setOutputDirectory(response.outputDirectory);
 							}
 
@@ -381,7 +383,11 @@ qx.Class.define("desk.Action",
 						if (out) {
 							parameterMap.output_directory = out;
 						}
-			
+
+						if (this.__outputDirectory.substring(0,6) === "cache/") {
+							parameterMap.output_directory = "cache/";
+						}
+
 						var that = this;
 						function launchAction() {
 							actionId = that.__actionsCounter;
