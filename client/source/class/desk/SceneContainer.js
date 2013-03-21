@@ -150,7 +150,9 @@ qx.Class.define("desk.SceneContainer",
 			var scene = this.__threeContainer.getScene();
 			if (scene) {
 				scene.traverse(function(child){
-					if(child instanceof THREE.Mesh){
+					if ((child instanceof THREE.Mesh) ||
+						(child instanceof THREE.ParticleSystem) ||
+						(child instanceof THREE.Line)) {
 						meshes.push(child);
 					}
 				});
@@ -333,6 +335,7 @@ qx.Class.define("desk.SceneContainer",
 
 		removeAllMeshes : function () {
 			this.removeMeshes(this.getMeshes());
+			this.__threeContainer.resetView();
 		},
 
         __openXMLFile : function (file, parameters, callback) {
@@ -733,22 +736,21 @@ qx.Class.define("desk.SceneContainer",
 			button.addListener("execute", function(e) {
 				this.__threeContainer.snapshot(factor);
 			}, this);
-	
+
 			button.setContextMenu(menu);
 			qx.util.DisposeUtil.disposeTriggeredBy(menu, this);
 			return button;
 		},
 
 		__getResetViewButton : function () {
-			var button=new qx.ui.form.Button("reset view");
-			button.addListener("execute", function(e) {
-				this.__boudingBoxDiagonalLength=0;
-				this.viewAll();}, this);
+			var button = new qx.ui.form.Button("reset view");
+			button.addListener("execute", this.__threeContainer.resetView,
+				this.__threeContainer);
 			return button;
 		},
 
-		__getDragLabel : function () {
-			var dragLabel=new qx.ui.basic.Label("Link").set({decorator: "main"});
+		__getDragLabel : function () {q
+			var dragLabel = new qx.ui.basic.Label("Link").set({decorator: "main"});
 			// drag and drop support
 			dragLabel.setDraggable(true);
 			dragLabel.addListener("dragstart", function(e) {
@@ -860,8 +862,7 @@ qx.Class.define("desk.SceneContainer",
 						mesh.material.opacity=opacity;
 						if (opacity<1) {
 							mesh.material.transparent=true;
-						}
-						else {
+						} else {
 							mesh.material.transparent=false;
 						}
                     });

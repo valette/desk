@@ -200,10 +200,19 @@ qx.Class.define("desk.ThreeContainer",
 		__boudingBoxDiagonalLength : 0,
 
 		/**
+		* resets the camera to view all objects in the scene
+		*/
+		resetView : function () {
+			this.__boudingBoxDiagonalLength = 0;
+			this.viewAll();
+		},
+
+		/**
 		* Sets the camera to view all objects in the scene
 		*/
-		viewAll : function ( ) {
+		viewAll : function () {
 			var bbox = new THREE.Box3();
+			var found;
 			this.__scene.traverse(function(child){
 				if (child.geometry) {
 					var geometry = child.geometry;
@@ -211,8 +220,13 @@ qx.Class.define("desk.ThreeContainer",
 						geometry.computeBoundingBox();
 					}
 					bbox.union(geometry.boundingBox);
+					found = true;
 				}
 			});
+
+			if (!found) {
+				return;
+			}
 
 			var min = bbox.min;
 			var max = bbox.max;
@@ -226,17 +240,15 @@ qx.Class.define("desk.ThreeContainer",
 			if (this.__boudingBoxDiagonalLength === 0) {
 				this.__boudingBoxDiagonalLength = bbdiaglength;
 				camera.position.copy(center);
-				camera.position.setZ(camera.position.z - bbdiaglength);
+				camera.position.z -= bbdiaglength;
+				camera.up.set(0,1,0);
 				controls.target.copy(center);
-			}
-			else {
+			} else {
 				var ratio = bbdiaglength / this.__boudingBoxDiagonalLength;
 				this.__boudingBoxDiagonalLength = bbdiaglength;
-				var backPedal = camera.position.clone();
-				backPedal.sub(controls.target);
-				backPedal.multiplyScalar(ratio);
-				backPedal.add(controls.target);
-				camera.position.copy(backPedal);
+				camera.position.sub(controls.target)
+					.multiplyScalar(ratio)
+					.add(controls.target);
 			}
 			controls.update();
 			this.render();
