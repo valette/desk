@@ -384,8 +384,10 @@ qx.Class.define("desk.Action",
 							parameterMap.output_directory = out;
 						}
 
-						if (this.__outputDirectory.substring(0,6) === "cache/") {
-							parameterMap.output_directory = "cache/";
+						if (this.__outputDirectory) {
+							if (this.__outputDirectory.substring(0,6) === "cache/") {
+								parameterMap.output_directory = "cache/";
+							}
 						}
 
 						var that = this;
@@ -550,9 +552,6 @@ qx.Class.define("desk.Action",
 			var fileAlreadyPickedFromBrowser = false;
 
 			var parameters = action.parameters;
-			if (this.__standalone) {
-				this.__window.setHeight(100+50*parameters.length);
-			}
 
             this.__forms = {};
 
@@ -563,7 +562,7 @@ qx.Class.define("desk.Action",
 				var found = false;
 				for (var j = 0; j < connections.length; j++) {
 					if (connections[j].parameter == parameterName) {
-						found=true;
+						found = true;
 						break;
 					}
 				}
