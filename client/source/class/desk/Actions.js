@@ -407,7 +407,7 @@ qx.Class.define("desk.Actions",
 				{
 					var actionName = actionsNames[n];
 					var action = actions[actionName];
-					
+					action.attributes = action.attributes || {};
 					var permissionLevel = parseInt(action.attributes.permissions, 10);
 					if (permissionLevel !== 0) {
 						permissionLevel = 1;
