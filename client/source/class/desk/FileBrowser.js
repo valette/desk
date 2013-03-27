@@ -11,15 +11,17 @@
 qx.Class.define("desk.FileBrowser", 
 {
 	extend : qx.ui.container.Composite,
-
-	construct : function(baseDir, standAlone)
-	{
-		if (baseDir) {
-			if(baseDir.substr(-1) == '/') {
-				baseDir = baseDir.substr(0, baseDir.length - 1);
-			}
-		} else {
-            baseDir = 'data';
+	/**
+	* Creates a new file browser
+	* @param baseDir {String} directory to browse. Defaluts to "data"
+	* @param standAlone {bool} defines whether the container should be
+	* embedded in a window or not (default : true).
+	* 
+	*/
+	construct : function(baseDir, standAlone) {
+		baseDir = baseDir || "data";
+		if(baseDir.substr(-1) === '/') {
+			baseDir = baseDir.substr(0, baseDir.length - 1);
 		}
 
 		this.base(arguments);
@@ -202,8 +204,6 @@ qx.Class.define("desk.FileBrowser",
 			this.__window = window;
 			window.open();
 		}
-
-		return (this);
 	},
 
 	destruct : function(){
@@ -272,20 +272,37 @@ qx.Class.define("desk.FileBrowser",
             return container;
 		},
 
+		/** Returns the window containing the container in standalone mode
+		* @return {qx.ui.window.Window} the file browser window
+		*/
 		getWindow : function() {
 			return this.__window;
 		},
 
+		/**
+		* Returns the field used to filter files
+		* @return {qx.ui.form.TextField} the filter field
+		*/
 		getFileFilter : function() {
 			return this.__filterField;
 		},
 		
-		// returns the directory for the given file, session type and Id
+		/**
+		* returns the directory for the given file, session type and Id
+		* @param file {String} file
+		* @param sessionType {String} type of session
+		* @param sessionId {Int} Id for the session
+		* @return {String} session directory
+		*/
 		getSessionDirectory : function (file,sessionType,sessionId) {
 			return file+"."+sessionType+"."+sessionId;
 		},
 
-		updateRoot : function (newRoot) {
+		/**
+		* Updates/changes the root
+		* @param newRoot {String} new root
+		*/
+		 updateRoot : function (newRoot) {
             if (newRoot) {
                 this.__baseDir = newRoot;
                 var dataModel = this.__virtualTree.getDataModel();
@@ -489,8 +506,13 @@ qx.Class.define("desk.FileBrowser",
 			}, this);
 		},
 
-		addAction : function (actionName, callback, context)
-		{
+		/**
+		* Adds a new action in context menu
+		* @param actionName {String} : label for the action
+		* @param callback {Function} : callback for the action
+		* @param context {Object} : optional context for the callback
+		*/
+		addAction : function (actionName, callback, context) {
 			var location = this.__actionNames.indexOf(actionName);
 			if (location == -1) {
 				this.__actionNames.push(actionName);
@@ -512,10 +534,18 @@ qx.Class.define("desk.FileBrowser",
 			this.__virtualTree.getContextMenu().add(button);
 		},
 
+		/**
+		* Changes the callback when a double click is performed
+		* @param callback {Function} callback when a file is double clicked
+		*/
 		setFileHandler : function (callback) {
-			this.__fileHandler=callback;
+			this.__fileHandler = callback;
 		},
 
+		/**
+		* Returns the qx.ui.treevirtual.TreeVirtual underneath
+		* @return {qx.ui.treevirtual.TreeVirtual} the virtual tree
+		*/
 		getTree : function () {
 			return (this.__virtualTree);
 		},
@@ -524,6 +554,10 @@ qx.Class.define("desk.FileBrowser",
 			return (this.__virtualTree.getSelectedNodes());
 		},
 
+		/**
+		* Returns an array containing currently selected files
+		* @return {Array} array of files (strings)
+		*/
 		getSelectedFiles : function () {
 			var selectedNodes = this.__getSelectedNodes();
 			var files = [];
@@ -546,6 +580,10 @@ qx.Class.define("desk.FileBrowser",
 			return (hierarchy.join("\/"));
 		},
 
+		/**
+		* Returns the base directory
+		* @return {String} base directory
+		*/
 		getRootDir : function () {
 			var baseDir = this.__baseDir + '/';
 			if (baseDir.charAt(baseDir.length - 1) === '/') {
@@ -588,6 +626,10 @@ qx.Class.define("desk.FileBrowser",
 			return (node);
 		},
 
+		/**
+		* Updates a directory
+		* @param file {String} directory to update
+		*/
 		updateDirectory : function (file) {
 			var browsers = this.__fileBrowsers;
 			for (var i = 0; i != browsers.length; i++) {
@@ -645,7 +687,7 @@ qx.Class.define("desk.FileBrowser",
 			if (node === null) {
 				return;
 			}
-			nodeId = node.nodeId;
+			var nodeId = node.nodeId;
 			dataModel.prune(nodeId,false);
 
 			for (var i = 0; i < files.length; i++) {
