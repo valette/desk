@@ -256,7 +256,7 @@ qx.Class.define("desk.Actions",
 		* @param actionParameters {Object} object containing action aprameters
 		* @param callback {Function} callback for when the action has been performed
 		* @param context {Object} optional context for the callback
-		* @return handle {String} action handle for managemenent (kill etc...)
+		* @return {String} action handle for managemenent (kill etc...)
 		*/
 		launchAction : function (actionParameters, callback, context) {
 			actionParameters = JSON.parse(JSON.stringify(actionParameters));
