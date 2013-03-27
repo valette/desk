@@ -637,68 +637,74 @@ qx.Class.define("desk.FileBrowser",
 				this.__virtualTree.nodeToggleOpened(node);
 		},
 
+		__caseInsensitiveSort : function (a, b) {
+			return a.toLowerCase().localeCompare(b.toLowerCase());
+		},
+
+		__readFileList : function (files, directory) {
+			var dataModel = this.__virtualTree.getDataModel();
+			var filesArray = [];
+			var directoriesArray = [];
+			var modificationTimes = [];
+			var sizes = [];
+			var node = this.__getFileNode(directory);
+			if (node === null) {
+				return;
+			}
+			nodeId = node.nodeId;
+			dataModel.prune(nodeId,false);
+
+			for (var i = 0; i < files.length; i++) {
+				var file = files[i];
+				var fileName = file.name;
+
+				if (!file.isDirectory) {
+					filesArray.push(fileName);
+					sizes[fileName] = file.size;
+				} else {
+					directoriesArray.push(fileName);
+				}
+				modificationTimes[fileName] = file.mtime;
+			}
+			directoriesArray.sort(this.__caseInsensitiveSort);
+			filesArray.sort(this.__caseInsensitiveSort);
+
+			for (i = 0; i < directoriesArray.length; i++) {
+				dataModel.addBranch(nodeId , directoriesArray[i]);
+			}
+
+			for (i = 0; i < filesArray.length; i++) {
+				var newNode;
+				var image = null;
+				switch (desk.FileSystem.getFileExtension(filesArray[i]))
+				{
+				case "vtk":
+				case "ply":
+				case "obj":
+				case "stl":
+					image = "desk/tris.png";
+					break;
+				case "mhd":
+				case "jpg":
+				case "png":
+					image = "desk/img.png";
+					break;
+				default:
+					break;
+				}
+				newNode = dataModel.addLeaf(nodeId, filesArray[i], image);
+				dataModel.setColumnData(newNode, 1, modificationTimes[filesArray[i]]);
+				dataModel.setColumnData(newNode, 2, sizes[filesArray[i]]);
+			}
+			dataModel.setData();
+		},
+
 		__expandDirectoryListing : function(nodeId) {
 			var directory = this.__getNodeFile(nodeId);
-			var dataModel = this.__virtualTree.getDataModel();
 
-			desk.FileSystem.readDir(directory, readFileList, this);
-
-			function readFileList(files)
-			{
-				var filesArray = [];
-				var directoriesArray = [];
-				var modificationTimes = [];
-				var sizes = [];
-				var node = this.__getFileNode(directory);
-				if (node === null) {
-					return;
-				}
-				nodeId = node.nodeId;
-				dataModel.prune(nodeId,false);
-
-				for (var i = 0; i < files.length; i++) {
-					var file = files[i];
-					var fileName = file.name;
-
-					if (!file.isDirectory) {
-						filesArray.push(fileName);
-						sizes[fileName] = file.size;
-					}
-					else {
-						directoriesArray.push(fileName);
-					}
-					modificationTimes[fileName] = file.mtime;
-				}
-				directoriesArray.sort();
-				filesArray.sort();
-
-				for (i = 0; i < directoriesArray.length; i++)
-					dataModel.addBranch(nodeId , directoriesArray[i]);
-
-				for (i = 0; i < filesArray.length; i++) {
-					var newNode;
-					switch (filesArray[i].substring(filesArray[i].length-4, filesArray[i].length))
-					{
-					case ".vtk":
-					case ".ply":
-					case ".obj":
-					case ".stl":
-						newNode = dataModel.addLeaf(nodeId, filesArray[i],"desk/tris.png");
-						break;
-					case ".mhd":
-					case ".jpg":
-					case ".png":
-						newNode = dataModel.addLeaf(nodeId, filesArray[i],"desk/img.png");
-						break;
-					default:
-						newNode = dataModel.addLeaf(nodeId, filesArray[i]);
-						break;
-					}
-					dataModel.setColumnData(newNode, 1, modificationTimes[filesArray[i]]);
-					dataModel.setColumnData(newNode, 2, sizes[filesArray[i]]);
-				}
-				dataModel.setData();
-			}
+			desk.FileSystem.readDir(directory, function (files) {
+				this.__readFileList(files, directory);
+			}, this);
 		}
 	}
 });
