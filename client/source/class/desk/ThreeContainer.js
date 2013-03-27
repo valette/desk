@@ -252,33 +252,44 @@ qx.Class.define("desk.ThreeContainer",
 			this.render();
 		},
 
+		__capture : function () {
+			this.render(true);
+			var strData = this.__renderer.domElement.toDataURL("image/png");
+			var saveData = strData.replace("image/png", "image/octet-stream");
+			document.location.href = saveData;
+		},
+
 		/**
 		* Triggers a snapshot of the scene which will be downloaded by the browser
+		* @param factor {Number} size multiplication factor e.g. when set to 2, the 
+		* image dimensions will be twice the current scene dimensions. Default : 1
 		*/
 		snapshot : function (factor) {
-			if (!factor) {
-				factor = 1;
-			}
+			factor = factor || 1;
 
-			var width = this.getWidth();
-			var height = this.getHeight();
-			var renderer = this.__renderer;
-		//	if (factor === 1) {
-				this.render(true);
-				var strData = renderer.domElement.toDataURL("image/png");
-				var saveData = strData.replace("image/png", "image/octet-stream");
-				document.location.href = saveData;
-		//	}
-	/*		else {
-				this.addListenerOnce("resize", function() {
-				console.log('test');
-					var strData = renderer.domElement.toDataURL("image/png");
-					var saveData = strData.replace("image/png", "image/octet-stream");
-					document.location.href = saveData;
-					this.set({width: width, height : height});
-				}, this);
-				this.set({width: width*factor, height : height*factor});
-			}*/
+			if (factor === 1) {
+				this.__capture();
+			} else {
+				var canvas = this.__threeCanvas; 
+				var width = canvas.getInnerSize().width;
+				var height = canvas.getInnerSize().height;
+				var newHeight = Math.round(height * factor);
+				var newWidth = Math.round(width * factor);
+				this.remove(canvas);
+
+				canvas.setCanvasWidth(newWidth);
+				canvas.setCanvasHeight(newHeight);
+
+				this.__renderer.setSize(newWidth, newHeight);
+				this.__camera.aspect = newWidth / newHeight;
+				this.__camera.updateProjectionMatrix();
+				this.__capture();
+
+				canvas.setCanvasWidth(width);
+				canvas.setCanvasHeight(height);
+				this.add(canvas, {width : "100%", height : "100%"});
+				this.__resizeThreeCanvas();
+			}
 		},
 
 		__threeCanvas : null,
