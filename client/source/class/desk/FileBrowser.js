@@ -479,7 +479,7 @@ qx.Class.define("desk.FileBrowser",
 				var nameLength = baseName.length;
 				baseName = baseName.substring(0, baseName.length - 3) + 'txt';
 				baseName = prompt('enter new file name : ', baseName);
-				if ( baseName !== null) {
+				if (baseName !== null) {
                     var self = this;
 					desk.FileSystem.writeFile( desk.FileSystem.getFileDirectory(file) + baseName,
 						'edit me',
@@ -491,8 +491,8 @@ qx.Class.define("desk.FileBrowser",
 
 		addAction : function (actionName, callback, context)
 		{
-			var location=this.__actionNames.indexOf(actionName);
-			if (location==-1) {
+			var location = this.__actionNames.indexOf(actionName);
+			if (location == -1) {
 				this.__actionNames.push(actionName);
 			} else {
 				console.log ('Warning : action "' + actionName + '" already exists, is overwritten!');
@@ -563,8 +563,7 @@ qx.Class.define("desk.FileBrowser",
 			var hierarchy;
 			if (inFile.length !== 0) {
 				hierarchy = inFile.split('/');
-			}
-			else {
+			} else {
 				hierarchy = [];
 			}
 			
@@ -605,18 +604,13 @@ qx.Class.define("desk.FileBrowser",
 			if (!node) {
 				return null;
 			}
-		//	if (node.type !== qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-		//	console.log('leaf : '+this.__getNodeFile(node));
-		//		return this.__getNodeFile(node);
-		//	}
 			return this.__getNodeFile(node.parentNodeId);
 		},
 
 		__updateDirectories : function (files) {
 			var foldersObject = {};
 			var foldersArray = [];
-			var i;
-			for (i = 0; i < files.length; i++) {
+			for (var i = 0; i < files.length; i++) {
 				var folder = files[i];
 				if (foldersObject[folder] === undefined) {
 					foldersObject[folder] = true;
