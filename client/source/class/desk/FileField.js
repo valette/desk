@@ -3,20 +3,19 @@
  */
 qx.Class.define("desk.FileField", 
 {
-  extend : qx.ui.form.TextField,
+	extend : qx.ui.form.TextField,
 
-  construct : function(text) {
-    this.base(arguments);
-    if (text) {
-      this.setValue(text);
-    }
-    this.setDroppable(true);
+	construct : function(text) {
+		this.base(arguments);
+		if (text) {
+			this.setValue(text);
+		}
+		this.setDroppable(true);
 		this.addListener("drop", function(e) {
-      if (e.supportsType("fileBrowser")) {
-        var originFileBrowser = e.getData("fileBrowser");
-        this.setValue(originFileBrowser.getSelectedFiles()[0]);
-      }
-    }, this);
-    return this;
-  }
+			if (e.supportsType("fileBrowser")) {
+				var originFileBrowser = e.getData("fileBrowser");
+				this.setValue(originFileBrowser.getSelectedFiles()[0]);
+			}
+		}, this);
+	}
 });
