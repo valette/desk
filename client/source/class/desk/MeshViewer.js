@@ -32,7 +32,6 @@ qx.Class.define("desk.MeshViewer",
             win.setCaption(file);
             this.addFile(file, parameters, callback, context);
         }
-		return (this);
 	},
 
 	members : {

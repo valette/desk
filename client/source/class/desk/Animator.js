@@ -22,7 +22,6 @@ qx.Class.define("desk.Animator",
 
 		this.__viewer = viewer || new desk.MeshViewer();
 		this.__createUI();
-		return (this);
 	},
 
 	properties : {

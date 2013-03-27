@@ -52,7 +52,6 @@ qx.Class.define("desk.MPRContainer",
 		if (file) {
 			this.addVolume(file, parameters, callback);
 		}
-		return (this);
 	},
 
 	destruct : function(){

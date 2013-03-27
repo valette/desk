@@ -26,7 +26,6 @@ qx.Class.define("desk.Random",
 
 		seed = seed || "defaultSeed"
 		this.__init(seed.toString());
-		return this;
 	},
 
 	members : {

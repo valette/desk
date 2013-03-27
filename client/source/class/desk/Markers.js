@@ -27,8 +27,6 @@ qx.Class.define("desk.Markers",
 		if(inParams.meshViewer!=null)
 			this.__meshViewer = inParams.meshViewer;
 		
-		
-		return this;
 	},
 	
 	events :

@@ -18,7 +18,6 @@ qx.Class.define("desk.ImageViewer",
 		this.add(this.__image,{flex : 1});
 
 		this.open();
-		return (this);
 	},
 
 	members : {

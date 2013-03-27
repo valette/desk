@@ -60,7 +60,6 @@ qx.Class.define("desk.SliceView",
 		}, this);
 		
 		this.__initUndo();
-		return (this);		
 	},
 
 	destruct : function(){

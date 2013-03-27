@@ -50,7 +50,6 @@ qx.Class.define("desk.AceContainer",
 			}
 		},
 	this);
-	return this;
   },
 
 

@@ -39,8 +39,6 @@ qx.Class.define("desk.VolumeViewer",
 		if (file) {
 			win.setCaption(file);
 		}
-
-		return (this);
 	},
 
 	members : {

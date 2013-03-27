@@ -22,8 +22,6 @@ qx.Class.define("desk.Action",
 		}
 
         this.__connections = [];
-
-		return (this);
 	},
 
 	properties : {

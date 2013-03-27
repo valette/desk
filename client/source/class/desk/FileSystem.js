@@ -24,8 +24,6 @@ qx.Class.define("desk.FileSystem",
 		}
 		this.__actionsURL = this.__baseURL + 'rpc/';
 		this.__filesURL = this.__baseURL + 'files/';
-
-		return this;
 	},
 
 	statics : {

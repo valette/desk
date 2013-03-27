@@ -60,7 +60,6 @@ qx.Class.define("desk.ThreeContainer",
 
 		threeCanvas.addListener("resize", this.__resizeThreeCanvas, this);
 		this.__setupFullscreen();
-		return this;
 	},
 
 	destruct : function(){

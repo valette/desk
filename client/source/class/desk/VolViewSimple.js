@@ -54,7 +54,6 @@ qx.Class.define("desk.VolViewSimple",
 			}, this);
 
 		this.open();
-		return (this);		
 	},
 
 	statics : {

@@ -7,7 +7,6 @@ qx.Class.define("desk.TabView",
 
 	construct : function() {
 		this.base(arguments);
-		return this;
 	},
 
 	members : {

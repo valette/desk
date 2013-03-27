@@ -80,7 +80,6 @@ qx.Class.define("desk.TextEditor",
             this.__executeButton.dispose();
             this.destroy();
         }, this);
-        return (this);
 	},
 
 	statics : {

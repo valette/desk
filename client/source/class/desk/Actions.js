@@ -71,8 +71,6 @@ qx.Class.define("desk.Actions",
 			new desk.LogContainer();
 			new desk.Random();
 		}
-
-		return this;
 	},
 
 	properties : {

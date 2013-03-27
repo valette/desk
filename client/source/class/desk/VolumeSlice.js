@@ -45,8 +45,6 @@ qx.Class.define("desk.VolumeSlice",
 		this.__initChangeSliceTrigger();
 
 		this.addListener("changeImageFormat", this.update, this);
-
-		return (this);		
 	},
 
 	properties : {

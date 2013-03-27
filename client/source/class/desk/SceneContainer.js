@@ -19,6 +19,8 @@
 * @ignore(Uint8Array)
 * @lint ignoreDeprecated(alert)
 * @ignore(desk.MeshTools)
+* @ignore (THREE.ParticleSystem)
+* @ignore (THREE.Line)
 */
 qx.Class.define("desk.SceneContainer", 
 {
@@ -87,7 +89,6 @@ qx.Class.define("desk.SceneContainer",
 			window.setCaption(file);
 		}
 		this.__addDropSupport();
-		return this;
 	},
 
 	destruct : function(){

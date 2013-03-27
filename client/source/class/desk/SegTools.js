@@ -50,7 +50,6 @@ qx.Class.define("desk.SegTools",
 		this.__labels = [];
 		this.open();
         this.center();
-		return (this);		
 	},
 
 	statics : {
