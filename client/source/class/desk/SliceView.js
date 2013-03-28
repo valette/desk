@@ -647,7 +647,10 @@ qx.Class.define("desk.SliceView",
 			volumeSlice.addListenerOnce('changeImage',function () {
 				this.getScene().add(mesh);
 			}, this);
-			volumeSlice.addListener('changeImage', this.render, this);
+			volumeSlice.addListener('changeImage', function () {
+				// whe need directly render to avoid race conditions
+					this.__threeContainer.render(true);
+				}, this);
 			volumeSlice.addListener("changeSlice", function (e) {
 				this.setSlice(e.getData());
 			}, this);
