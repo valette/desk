@@ -138,7 +138,8 @@ qx.Class.define("desk.SliceView",
 		__directionOverlays : null,
 
 		__paintWidth : 5,
-		__paintColor : null,
+		// default color is red
+		__paintColor : '#ff0000',
 
 		__getCamera : function () {
 			return this.__threeContainer.getCamera();
@@ -507,8 +508,7 @@ qx.Class.define("desk.SliceView",
 			} else {
 				context.clearRect (0, 0, width, height);
 				context.lineWidth = 0;
-				context.strokeStyle = this.__paintColor;
-				context.fillStyle = this.__paintColor;
+				context.strokeStyle = context.fillStyle = this.__paintColor;
 				context.beginPath();
 				context.arc(width / 2, height / 2, width/2,
 					0, 2 * Math.PI, false);
