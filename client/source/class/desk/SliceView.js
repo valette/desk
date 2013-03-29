@@ -70,8 +70,10 @@ qx.Class.define("desk.SliceView",
 		if (this.__drawingCanvas) {
 			this.__drawingCanvas.dispose();
 		}
-		this.__brushCanvas.dispose();
 
+		if (this.__brushCanvas) {
+			this.__brushCanvas.dispose();
+		}
 /*
 
 		this.__threeContainer.destroy();
