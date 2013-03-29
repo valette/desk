@@ -483,7 +483,7 @@ qx.Class.define("desk.SceneContainer",
 				geometry.computeBoundingSphere();
 				geometry.computeBoundingBox();
 				geometry.verticesNeedUpdate = true;
-				this.render();
+				this.render(true);
 			}
 
 			updateTexture.apply(this);

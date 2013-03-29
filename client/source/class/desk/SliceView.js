@@ -590,8 +590,7 @@ qx.Class.define("desk.SliceView",
 			geometry.computeVertexNormals();
 			geometry.computeBoundingSphere();
 
-			function updateTexture()
-			{
+			function updateTexture() {
 				var data = this.__drawingCanvas.getContext2d().getImageData(
 					0, 0, width, height).data;
 				for (var i = length; i--;) {
@@ -618,16 +617,17 @@ qx.Class.define("desk.SliceView",
 			var geometry = new THREE.Geometry();
 			var coordinates = volumeSlice.get2DCornersCoordinates();
 			for (var i = 0; i < 4; i++) {
-				geometry.vertices.push(	new THREE.Vector3(coordinates[2*i], coordinates[2*i + 1], 0));
+				geometry.vertices.push(new THREE.Vector3(coordinates[2 * i],
+					coordinates[2 * i + 1], 0));
 			}
 
 			geometry.faces.push(new THREE.Face4(0, 1, 2, 3));
-			geometry.faceVertexUvs[0].push( [
+			geometry.faceVertexUvs[0].push([
 				new THREE.Vector2(0, 0),
 				new THREE.Vector2(1, 0),
 				new THREE.Vector2(1, 1),
 				new THREE.Vector2(0, 1)
-				] );
+			]);
 
 			var listener = this.addListener("changeSlice", function (e) {
 				volumeSlice.setSlice(e.getData());
@@ -646,18 +646,19 @@ qx.Class.define("desk.SliceView",
 
 			volumeSlice.addListenerOnce('changeImage',function () {
 				this.getScene().add(mesh);
+				if (typeof callback === "function") {
+					callback(volumeSlice);
+				}
 			}, this);
+
 			volumeSlice.addListener('changeImage', function () {
 				// whe need directly render to avoid race conditions
-					this.__threeContainer.render(true);
-				}, this);
+				this.__threeContainer.render(true);
+			}, this);
+
 			volumeSlice.addListener("changeSlice", function (e) {
 				this.setSlice(e.getData());
 			}, this);
-
-			if (typeof callback === "function") {
-				callback(volumeSlice);
-			}		
 		},
 
 		__initFromVolume : function (volumeSlice) {
@@ -672,8 +673,7 @@ qx.Class.define("desk.SliceView",
 			var coordinates = volumeSlice.get2DCornersCoordinates();
 
 			position.set(0.5 * (coordinates[0] + coordinates[2]),
-				0.5 * (coordinates[3] + coordinates[5]),
-				0);
+				0.5 * (coordinates[3] + coordinates[5]), 0);
 			this.__threeContainer.getControls().target.copy(position);
 			position.setZ(volumeSlice.getBoundingBoxDiagonalLength() * 0.6);
 
