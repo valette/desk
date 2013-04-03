@@ -26,7 +26,7 @@ To install desk on your computer, you need:
 
 ### Installation ###
 
-	git clone https://github.com/valette/desk.git
+	git clone http://github.com/valette/desk.git
 	cd desk/server
 	npm install
 	./build.sh
