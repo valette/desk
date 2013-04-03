@@ -185,7 +185,7 @@ qx.Class.define("desk.MPRContainer",
 		__reorderMeshes : function () {
 			var volumes = this.__volumes.getChildren();
 			for (var i = 0; i < volumes.length; i++) {
-				var slices = volumes[i].getUserData("slices");
+				var slices = this.getVolumeSlices(volumes[i]);
 				for (var j = 0; j < slices.length; j++){
                     var slice = slices[j];
                     // slice might not be loaded yet
@@ -817,7 +817,7 @@ qx.Class.define("desk.MPRContainer",
 				this.fireDataEvent("removeVolume", volume);
 			}
 
-			var slices = volume.getUserData("slices");
+			var slices = thie.getVolumeSlices(volume);
 			this.applyToViewers (function (viewer) {
 				viewer.removeVolumes(slices);
 			});
@@ -1050,7 +1050,6 @@ qx.Class.define("desk.MPRContainer",
 			}
 
 			colormapGroup.addListener("changeSelection", function (e) {
-				var i;
 				var newColors;
 
 				switch (colormapGroup.getSelection()[0])
@@ -1086,7 +1085,7 @@ qx.Class.define("desk.MPRContainer",
 					newColors = 0;
 					break;
 				}
-				for (i = 0; i < slices.length; i++ ) {
+				for (var i = 0; i < slices.length; i++) {
 					slices[i].setLookupTables(newColors);
 				}
 			});
