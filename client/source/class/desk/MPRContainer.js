@@ -817,7 +817,7 @@ qx.Class.define("desk.MPRContainer",
 				this.fireDataEvent("removeVolume", volume);
 			}
 
-			var slices = thie.getVolumeSlices(volume);
+			var slices = this.getVolumeSlices(volume);
 			this.applyToViewers (function (viewer) {
 				viewer.removeVolumes(slices);
 			});
