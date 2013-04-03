@@ -983,128 +983,115 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		__createColormapWindow : function(volumeListItem) {
-			var slices=volumeListItem.getUserData("slices");
+			var slices = this.getVolumeSlices(volumeListItem);
 
-			var window=new qx.ui.window.Window();
-			window.setCaption("colors for "+slices[0].getFileName());
-			window.setLayout(new qx.ui.layout.HBox());
-			window.setShowClose(true);
-			window.setShowMinimize(false);
+			var window = new qx.ui.window.Window().set ({
+				caption : "colors for " + slices[0].getFileName(),
+				layout : new qx.ui.layout.HBox(),
+				showClose : true,
+				showMinimize : false
+			});
 
-			var colormapGroup = new qx.ui.form.RadioButtonGroup();
-			colormapGroup.setLayout(new qx.ui.layout.VBox());
+			var colormapGroup = new qx.ui.form.RadioButtonGroup().
+				set({layout : new qx.ui.layout.VBox()});
 			window.add(colormapGroup);
 
-			var noColors=new qx.ui.form.RadioButton("grey levels");
+			var noColors = new qx.ui.form.RadioButton("grey levels");
 			colormapGroup.add(noColors);
 
-			var ramp=new Uint8Array(256);
-			var zeros=new Uint8Array(256);
+			var ramp = new Uint8Array(256);
+			var zeros = new Uint8Array(256);
 			var i;
-			for ( i=0; i < 256; i++ ) {
+			for (i = 0; i < 256; i++) {
 				ramp[i] = i;
 				zeros[i] = 0;
 			}
 
-			var redColors=new qx.ui.form.RadioButton("reds");
+			var redColors = new qx.ui.form.RadioButton("reds");
 			colormapGroup.add(redColors);
 
-			var greenColors=new qx.ui.form.RadioButton("greens");
+			var greenColors = new qx.ui.form.RadioButton("greens");
 			colormapGroup.add(greenColors);
 
-			var blueColors=new qx.ui.form.RadioButton("blues");
+			var blueColors = new qx.ui.form.RadioButton("blues");
 			colormapGroup.add(blueColors);
 
-			var randomRedColors=new qx.ui.form.RadioButton("random reds");
+			var randomRedColors = new qx.ui.form.RadioButton("random reds");
 			colormapGroup.add(randomRedColors);
 
-			var randomGreenColors=new qx.ui.form.RadioButton("random greens");
+			var randomGreenColors = new qx.ui.form.RadioButton("random greens");
 			colormapGroup.add(randomGreenColors);
 
-			var randomBlueColors=new qx.ui.form.RadioButton("random blues");
+			var randomBlueColors = new qx.ui.form.RadioButton("random blues");
 			colormapGroup.add(randomBlueColors);
 
-			var randomColors=new qx.ui.form.RadioButton("random Colors");
+			var randomColors = new qx.ui.form.RadioButton("random Colors");
 			colormapGroup.add(randomColors);
-			var randomRed=new Uint8Array(256);
-			var randomGreen=new Uint8Array(256);
-			var randomBlue=new Uint8Array(256);
+			var randomRed = new Uint8Array(256);
+			var randomGreen = new Uint8Array(256);
+			var randomBlue = new Uint8Array(256);
 
-			for ( i = 0; i < 256; i++ ) {
+			for (i = 0; i < 256; i++) {
 				randomRed[i] = Math.floor(Math.random()*255);
 				randomGreen[i] = Math.floor(Math.random()*255);
 				randomBlue[i] = Math.floor(Math.random()*255);
 			}
-			var randomColorsArray=[randomRed, randomGreen, randomBlue];
 
-			var currentColors=slices[0].getLookupTables();
-			var otherColors=null;
-			if ( currentColors[0] != null ) {
-				otherColors=new qx.ui.form.RadioButton("other");
-				colormapGroup.add(otherColors);
-				colormapGroup.setSelection([otherColors]);
-			}
-			else {
-				colormapGroup.setSelection([noColors]);
+			var currentColors = slices[0].getLookupTables();
+			var otherColors = null;
+
+			colormapGroup.setSelection([noColors]);
+			if (currentColors) {
+				if (currentColors[0] != null) {
+					otherColors = new qx.ui.form.RadioButton("other");
+					colormapGroup.add(otherColors);
+					colormapGroup.setSelection([otherColors]);
+				}
 			}
 
 			colormapGroup.addListener("changeSelection", function (e) {
 				var i;
+				var newColors;
+
 				switch (colormapGroup.getSelection()[0])
 				{
 				case redColors :
-					for ( i = 0; i < slices.length; i++ ) {
-						slices[i].setLookupTables([ramp, zeros, zeros]);
-					}
+					newColors = [ramp, zeros, zeros];
 					break;
 				case greenColors :
-					for ( i = 0; i < slices.length; i++ ) {
-						slices[i].setLookupTables([zeros, ramp, zeros]);
-					}
+					newColors = [zeros, ramp, zeros];
 					break;
 				case blueColors :
-					for ( i = 0; i < slices.length; i++ ) {
-						slices[i].setLookupTables([zeros, zeros, ramp]);
-					}
+					newColors = [zeros, zeros, ramp];
 					break;
 				case randomRedColors :
-					for ( i = 0; i < slices.length; i++ ) {
-						slices[i].setLookupTables([randomRed, zeros, zeros]);
-					}
+					newColors = [randomRed, zeros, zeros];
 					break;
 				case randomGreenColors :
-					for ( i = 0; i < slices.length; i++ ) {
-						slices[i].setLookupTables([zeros, randomGreen, zeros]);
-					}
+					newColors = [zeros, randomGreen, zeros];
 					break;
 				case randomBlueColors :
-					for ( i = 0; i < slices.length ; i++ ) {
-						slices[i].setLookupTables([zeros, zeros, randomBlue]);
-					}
+					newColors = [zeros, zeros, randomBlue];
 					break;
 				case randomColors :
-					for ( i = 0; i < slices.length; i++ ) {
-						slices[i].setLookupTables(randomColorsArray);
-					}
+					newColors = [randomRed, randomGreen, randomBlue];
 					break;
 				case otherColors :
-					for ( i = 0; i < slices.length; i++ ) {
-						slices[i].setLookupTables(currentColors);
-					}
+					newColors = currentColors;
 					break;
 				case noColors :
-					for ( i = 0; i < slices.length; i++ ) {
-						slices[i].removeLookupTables();
-					}
+					newColors = 0;
 					break;
 				default :
-					for ( i = 0; i < slices.length; i++ ) {
-						slices[i].removeLookupTables();
-					}
+					newColors = 0;
 					break;
+				}
+				for (i = 0; i < slices.length; i++ ) {
+					slices[i].setLookupTables(newColors);
 				}
 			});
 			window.open();
+			window.center();
 		},
 
 		__addDropFileSupport : function () {

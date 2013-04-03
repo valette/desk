@@ -324,7 +324,11 @@ qx.Class.define("desk.VolumeSlice",
 			}
 		},
 
-		setLookupTables : function ( luts ) {
+		setLookupTables : function (luts) {
+			if (!luts) {
+				this.removeLookupTables();
+				return;
+			}
 			this.__lookupTables = luts;
 
 			var materials = this.__materials;
