@@ -5,23 +5,23 @@ qx.Class.define("desk.LogContainer",
 {
   extend : qx.ui.embed.Html,
 
-  construct : function (message) {
-    this.base(arguments);
-    this.set({overflowY : 'auto',
-          overflowX : 'auto',
-          font : "monospace",
-          padding: 3
-    });
-  },
+	construct : function (message) {
+		this.base(arguments);
+		this.set({overflowY : 'auto',
+			overflowX : 'auto',
+			font : "monospace",
+			padding: 3
+		});
+	},
 
-  members : {
+members : {
 
     /**
     * Clears the log contents
     */
     clear : function () {
-        this.setHtml('');
-		},
+		this.setHtml('');
+	},
 
     /**
     * Add log message
@@ -29,26 +29,26 @@ qx.Class.define("desk.LogContainer",
     * @param coloe {String} optional message color
     */
     log : function (message, color) {
-            if (message === undefined) {
-                return;
-            }
-			message = message.toString().replace(' ', '&nbsp');
-			var htmlMessage = '';
-			var lines = message.split('\n');
-			for (var i = 0; i < lines.length; i++) {
-				var line = lines[i] + '<br/>';
-				if (color) {
-					htmlMessage += '<span style="color:' + color + '">' + line + '</span>';
-				} else {
-					htmlMessage += line;
-				}
+		if (!message) {
+			return;
+		}
+		message = message.toString().replace(' ', '&nbsp');
+		var htmlMessage = '';
+		var lines = message.split('\n');
+		for (var i = 0; i < lines.length; i++) {
+			var line = lines[i] + '<br/>';
+			if (color) {
+				htmlMessage += '<span style="color:' + color + '">' + line + '</span>';
+			} else {
+				htmlMessage += line;
 			}
-      if (this.getHtml() === null){
-        this.setHtml(htmlMessage);
-      } else {
-        this.setHtml(this.getHtml() + htmlMessage);        
-      }
-			this.getContentElement().scrollToY(1000000); 
-    }
+		}
+		if (this.getHtml() === null){
+			this.setHtml(htmlMessage);
+		} else {
+			this.setHtml(this.getHtml() + htmlMessage);        
+		}
+		this.getContentElement().scrollToY(1000000, true); 
 	}
+}
 });
