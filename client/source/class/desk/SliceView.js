@@ -934,6 +934,9 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__onMouseOut : function (event) {
+			if (this.__sliderInUse) {
+				return;
+			}
 			if (!qx.ui.core.Widget.contains(this, event.getRelatedTarget())) {
 				this.__rightContainer.setVisibility("hidden");
 				this.__brushMesh.visible = false;
@@ -1226,6 +1229,13 @@ qx.Class.define("desk.SliceView",
 			var slider = new qx.ui.form.Slider();
 			this.__slider = slider;
 
+			slider.addListener('mousedown', function () {
+				this.__sliderInUse = true;
+			}, this)
+			slider.addListener('mouseup', function () {
+				this.__sliderInUse = false;
+			}, this)
+
 			slider.set ({minimum : 0, maximum : 100, value : 0,
 				width :30, opacity : 0.5, backgroundColor : "transparent",
 				orientation : "vertical", zIndex : 1000});
@@ -1239,6 +1249,9 @@ qx.Class.define("desk.SliceView",
 			rightContainer.setVisibility("hidden");
 			container.add(rightContainer, {right : 0, top : 0, height : "100%"});
 		},
+
+		// this member is true only when user is manipulating the slider
+		__sliderInUse : false,
 
 		__sliceLabel : null,
 
