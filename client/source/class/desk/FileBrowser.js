@@ -88,17 +88,28 @@ qx.Class.define("desk.FileBrowser",
 					height : 500});
 			win.add(this, {flex : 1});
 			this.__window = win;
+			win.addListener('close', function () {
+				this.destroy();
+				win.destroy();
+			}, this);
 			win.open();
 		}
 	},
 
-	destruct : function(){
+	destruct : function() {
 		if (this.__standAlone) {
 			this.__window.destroy();
 		}
 		this.__virtualTree.getDataModel().dispose();
 		this.__virtualTree.dispose();
 		qx.util.DisposeUtil.destroyContainer(this);
+		var browsers = this.__fileBrowsers;
+		for (var i = 0; i != browsers.length; i++) {
+			if (browsers[i] === this) {
+				browsers.splice(i, 1);
+				return;
+			}
+		}
 	},
 
 	members : {
