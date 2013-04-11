@@ -490,7 +490,8 @@ qx.Class.define("desk.SliceView",
 			this.__brushMesh = mesh;
 			this.__updateBrush();
 
-			mesh.visible = false;
+		// there is a bug within three.js...
+		//	mesh.visible = false;
 			this.getScene().add(mesh);
 		},
 
