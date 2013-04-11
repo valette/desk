@@ -118,14 +118,6 @@ qx.Class.define("desk.FileBrowser",
 			filterBox.add(filterField, {flex:1});
 			this.__filterField = filterField;
 
-			var filter = qx.lang.Function.bind(function(node) {
-				if (this.__isNodeLeaf(node)) {
-					var label = node.label;
-					return label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1;
-				}
-				return true;
-			}, this);
-
 			var resetButton = new qx.ui.form.Button("Reset filter");
 			resetButton.setAllowGrowY(false);
 			resetButton.addListener("execute",function(e){
@@ -134,7 +126,14 @@ qx.Class.define("desk.FileBrowser",
 			});
 
 			filterBox.add(resetButton);
-			dataModel.setFilter(filter);
+			var self = this;
+			dataModel.setFilter(function(node) {
+				if (self.__isNodeLeaf(node)) {
+					var label = node.label;
+					return label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1;
+				}
+				return true;
+			});
 			if(this.__standAlone) {
 				this.add(filterBox);
 			}
@@ -151,7 +150,6 @@ qx.Class.define("desk.FileBrowser",
 			if (this.__isNodeLeaf(node)) {
 				return;
 			}
-			console.log("refresh..");
 			this.__expandDirectoryListing(node.nodeId);
 		},
 
