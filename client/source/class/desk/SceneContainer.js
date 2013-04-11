@@ -179,10 +179,11 @@ qx.Class.define("desk.SceneContainer",
         __getMeshFromNode : function (node) {
             var leaf = this.__meshesTree.nodeGet(node);
             if (leaf) {
-                if (leaf.__customProperties)
-                return leaf.__customProperties.mesh;
-                else
-                return null;
+                if (leaf.__customProperties) {
+					return leaf.__customProperties.mesh;
+				} else {
+					return null;
+				}
             } else {
                 return null;
             }
