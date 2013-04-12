@@ -248,6 +248,8 @@ qx.Class.define("desk.ThreeContainer",
 					.multiplyScalar(ratio)
 					.add(controls.target);
 			}
+			camera.near = bbdiaglength /10000;
+			camera.far = bbdiaglength * 1000000;
 			controls.update();
 			this.render();
 		},
