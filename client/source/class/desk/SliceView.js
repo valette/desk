@@ -947,27 +947,29 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__onMouseMove : function (event) {
-			var htmlContainer = this.__threeContainer;
 			var controls = this.__threeContainer.getControls();
-			this.__rightContainer.setVisibility("visible");
-			var that = this;
-			this.__master.applyToViewers(function (viewer) {
-				if (viewer != that) {
-					viewer.__rightContainer.setVisibility("hidden");
-					// there is a race condition : sometimes the brush mesh is not ready
-					if (viewer.__brushMesh) {
-						viewer.__brushMesh.visible = false;
-						viewer.render();
+			var self = this;
+
+			if (this.__rightContainer.getVisibility() !== "visible") {
+				this.__rightContainer.setVisibility("visible");
+				this.__master.applyToViewers(function (viewer) {
+					if (viewer != self) {
+						viewer.__rightContainer.setVisibility("hidden");
+						// there is a race condition : sometimes the brush mesh is not ready
+						if (viewer.__brushMesh) {
+							viewer.__brushMesh.visible = false;
+							viewer.render();
+						}
 					}
-				}
-			});
+				});
+			}
 
 			var brushMesh = this.__brushMesh;
 			var position;
 			switch (this.__interactionMode)
 			{
 			case -1:
-				if (this.isPaintMode()||this.isEraseMode()) {
+				if (this.isPaintMode() || this.isEraseMode()) {
 					position = this.getPositionOnSlice(event);
 					brushMesh.visible = true;
 					brushMesh.position.set(position.x, position.y, 0);
@@ -979,26 +981,24 @@ qx.Class.define("desk.SliceView",
 				break;
 			case 1 :
 				brushMesh.visible = false;
-				var origin = htmlContainer.getContentLocation();
+				var origin = this.__threeContainer.getContentLocation();
 				controls.mouseMove(event.getDocumentLeft() - origin.left,
 					event.getDocumentTop() - origin.top);
 
 				var z = this.__getCamera().position.z;
-				this.render();
-				var myViewer = this;
 				this.__master.applyToViewers (function (viewer) {
-					if (viewer != myViewer) {
+					if (viewer != self) {
 						viewer.__getCamera().position.z *= 
 							Math.abs(z / viewer.__getCamera().position.z);
 						viewer.__propagateCameraToLinks();
-						viewer.render();
 						}
+						viewer.render();
 					});
 				this.__propagateCameraToLinks();
 				break;
 			case 2 :
 				brushMesh.visible = false;
-				origin = htmlContainer.getContentLocation();
+				origin = this.__threeContainer.getContentLocation();
 				controls.mouseMove(event.getDocumentLeft() - origin.left,
 						event.getDocumentTop() - origin.top);
 				this.render();
