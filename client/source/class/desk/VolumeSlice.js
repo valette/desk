@@ -13,7 +13,7 @@ qx.Class.define("desk.VolumeSlice",
 {
   extend : qx.core.Object,
 
-	construct : function(file, orientation, parameters, callback)
+	construct : function(file, orientation, parameters, callback, context)
 	{
 		this.base(arguments);
 
@@ -40,7 +40,7 @@ qx.Class.define("desk.VolumeSlice",
 		}
 
 		this.__file = file;
-		this.update(callback);
+		this.update(callback, context);
 
 		this.__initChangeSliceTrigger();
 
@@ -241,19 +241,20 @@ qx.Class.define("desk.VolumeSlice",
 			return [this.__scalarMin, this.__scalarMax];
 		},
 
-		update : function (callback) {
-			var _this=this;
-			function getAnswer(response) {
-				_this.openXMLURL(desk.FileSystem.getFileURL(response.outputDirectory) + "volume.xml", callback);
-			}
-
-			var parameterMap={
+		update : function (callback, context) {
+			var parameterMap = {
 				action : "slice_volume",
 				input_volume : this.__file,
 				output_directory : "cache/",
 				format : this.getImageFormat(),
-				slice_orientation : this.getOrientation()};
-			desk.Actions.getInstance().launchAction(parameterMap, getAnswer, this);
+				slice_orientation : this.getOrientation()
+			};
+
+			desk.Actions.getInstance().launchAction(parameterMap,
+				function (response) {
+					this.openXMLURL(desk.FileSystem.getFileURL(response.outputDirectory) + "volume.xml",
+						callback, context);
+			}, this);
 		},
 
 		getBrightness : function () {
@@ -637,16 +638,16 @@ qx.Class.define("desk.VolumeSlice",
 			}
 		},
 
-		openXMLURL : function (xmlURL, callback) {
-			var req = new qx.io.request.Xhr(xmlURL+"?nocache=" + Math.random());
+		openXMLURL : function (xmlURL, callback, context) {
+			var req = new qx.io.request.Xhr(xmlURL + "?nocache=" + Math.random());
 			req.setAsync(true);
 
 			req.addListener("success", function(e) {
 				this.__parseXMLresponse(e.getTarget().getResponse(), xmlURL);
-				if (typeof callback === 'function') {
-					callback();
-				}
 				req.dispose();
+				if (typeof callback === 'function') {
+					callback.apply(context);
+				}
 			}, this);
 
 			req.send();

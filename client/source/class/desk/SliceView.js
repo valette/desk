@@ -724,13 +724,9 @@ qx.Class.define("desk.SliceView",
 		 * @return {desk.VolumeSlice} : displayed volume
 		 */
 		addVolume : function (file, parameters, callback) {
-			var that = this;
 			var firstSlice = true;
 			var slices = this.__slices;
-			var sli = [];
 			for (var i = 0; i != slices.length; i++) {
-				sli.push(slices[i].getFileName());
-				sli.push(slices[i].getUserData('toDelete'));
 				if (slices[i].getUserData('toDelete') !== true) {
 					firstSlice = false;
 				}
@@ -749,12 +745,11 @@ qx.Class.define("desk.SliceView",
 						return;
 					}
 					if (firstSlice) {
-						that.__initFromVolume(volumeSlice);
+						this.__initFromVolume(volumeSlice);
 					}
-					volumeSlice.setSlice(that.getSlice());
-					that.__addSlice(volumeSlice, parameters, callback);
-				}
-			);
+					volumeSlice.setSlice(this.getSlice());
+					this.__addSlice(volumeSlice, parameters, callback);
+			}, this);
 			this.__slices.push(volumeSlice);
 			return volumeSlice;
 		},
