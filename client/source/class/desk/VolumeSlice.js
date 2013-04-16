@@ -163,7 +163,6 @@ qx.Class.define("desk.VolumeSlice",
 		__image : null,
 
 		__timestamp : null,
-		__fileFormatBox : null,
 
 		__extent : null,
 		__origin : null,
@@ -176,12 +175,6 @@ qx.Class.define("desk.VolumeSlice",
 		__scalarSize : null,
 		__scalarMin : null,
 		__scalarMax : null,
-
-		//THREE.js objects
-		__scene : null,
-		__camera : null,
-		__renderer : null,
-		__controls : null,
 
 		__lookupTables : null,
 
@@ -309,7 +302,7 @@ qx.Class.define("desk.VolumeSlice",
 			var lutAlpha = luts[3];
 			var p=0;
 			if (lutAlpha) {
-				for (var j=0;j<numberOfColors;j++) {
+				for (var j = 0; j < numberOfColors; j++) {
 					data[p++] = lutR[j];
 					data[p++] = lutG[j];
 					data[p++] = lutB[j];
@@ -363,19 +356,19 @@ qx.Class.define("desk.VolumeSlice",
 			addMembers(material.baseShader.baseUniforms, material.uniforms);
 			var extraUniforms = material.baseShader.extraUniforms;
 			material.fragmentShader = "";
-			for (var i=0;i!=extraUniforms.length;i++) {
-				var name=extraUniforms[i].name;
-				material.fragmentShader+="\n uniform float "+name+";";
-				material.uniforms[name]=extraUniforms[i];
+			for (var i = 0; i!= extraUniforms.length; i++) {
+				var name = extraUniforms[i].name;
+				material.fragmentShader += "\n uniform float " + name + ";";
+				material.uniforms[name] = extraUniforms[i];
 			}
 
-			material.fragmentShader+="\n"+material.baseShader.baseShaderBegin;
-			var extraShaders=material.baseShader.extraShaders;
-			for (i=0;i!=extraShaders.length;i++) {
-				material.fragmentShader+="\n"+extraShaders[i];
+			material.fragmentShader += "\n" + material.baseShader.baseShaderBegin;
+			var extraShaders = material.baseShader.extraShaders;
+			for (i = 0; i != extraShaders.length; i++) {
+				material.fragmentShader += "\n" + extraShaders[i];
 			}
-			material.fragmentShader+="\n"+material.baseShader.baseShaderEnd;
-			material.needsUpdate=true;
+			material.fragmentShader += "\n" + material.baseShader.baseShaderEnd;
+			material.needsUpdate = true;
 		},
 
 		__dummyLut : new Uint8Array(8),// [255, 0, 0, 255, 0, 0, 255, 255],
@@ -651,9 +644,9 @@ qx.Class.define("desk.VolumeSlice",
 			this.addListener("changeSlice", function(){
 				this.__updateTriggered = true;
 				this.__updateImage();
-			},this);
+			}, this);
 
-			var _this=this;
+			var _this = this;
 
 			this.__image.onload = function() {
 				clearTimeout(this.__timeOut);
