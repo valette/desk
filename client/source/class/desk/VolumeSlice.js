@@ -473,100 +473,98 @@ qx.Class.define("desk.VolumeSlice",
 		},
 
 		getCornersCoordinates : function () {
+			var coordinates = [];
 			switch (this.getOrientation())
 			{
 			// XY Z
 			case 0 :
 			default:
-				var z=this.__origin[2]+(this.getSlice()+this.__extent[4])*this.__spacing[2];
-				var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
-				var xmax=this.__origin[0]+(this.__extent[1]+1)*this.__spacing[0];
-				var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
-				var ymax=this.__origin[1]+(this.__extent[3]+1)*this.__spacing[1];
-				var coordinates=[];
-				coordinates[0]=xmin;
-				coordinates[1]=ymax;
-				coordinates[2]=z;
-				coordinates[3]=xmax;
-				coordinates[4]=ymax;
-				coordinates[5]=z;
-				coordinates[6]=xmax;
-				coordinates[7]=ymin;
-				coordinates[8]=z;
-				coordinates[9]=xmin;
-				coordinates[10]=ymin;
-				coordinates[11]=z;
-				return (coordinates);
+				var z = this.__origin[2] + (this.getSlice() + this.__extent[4]) * this.__spacing[2];
+				var xmin = this.__origin[0] + this.__extent[0] * this.__spacing[0];
+				var xmax = this.__origin[0] + (this.__extent[1] + 1) * this.__spacing[0];
+				var ymin = this.__origin[1] + this.__extent[2] * this.__spacing[1];
+				var ymax = this.__origin[1] + (this.__extent[3] + 1) * this.__spacing[1];
+				coordinates[0] = xmin;
+				coordinates[1] = ymax;
+				coordinates[2] = z;
+				coordinates[3] = xmax;
+				coordinates[4] = ymax;
+				coordinates[5] = z;
+				coordinates[6] = xmax;
+				coordinates[7] = ymin;
+				coordinates[8] = z;
+				coordinates[9] = xmin;
+				coordinates[10] = ymin;
+				coordinates[11] = z;
+				return coordinates;
 			// ZY X
 			case 1 :
-				var x=this.__origin[0]+(this.getSlice()+this.__extent[0])*this.__spacing[0];
-				ymin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
-				ymax=this.__origin[2]+(this.__extent[5]+1)*this.__spacing[2];
-				var zmin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
-				var zmax=this.__origin[1]+(this.__extent[3]+1)*this.__spacing[1];
-				coordinates=[];
-				coordinates[0]=x;
-				coordinates[1]=zmax;
-				coordinates[2]=ymin;
-				coordinates[3]=x;
-				coordinates[4]=zmax;
-				coordinates[5]=ymax;
-				coordinates[6]=x;
-				coordinates[7]=zmin;
-				coordinates[8]=ymax;
-				coordinates[9]=x;
-				coordinates[10]=zmin;
-				coordinates[11]=ymin;
-				return (coordinates);
+				var x = this.__origin[0] + (this.getSlice() + this.__extent[0]) * this.__spacing[0];
+				ymin = this.__origin[2] + this.__extent[4] * this.__spacing[2];
+				ymax = this.__origin[2] + (this.__extent[5] + 1) * this.__spacing[2];
+				var zmin = this.__origin[1] + this.__extent[2] * this.__spacing[1];
+				var zmax = this.__origin[1] + (this.__extent[3] + 1) * this.__spacing[1];
+				coordinates[0] = x;
+				coordinates[1] = zmax;
+				coordinates[2] = ymin;
+				coordinates[3] = x;
+				coordinates[4] = zmax;
+				coordinates[5] = ymax;
+				coordinates[6] = x;
+				coordinates[7] = zmin;
+				coordinates[8] = ymax;
+				coordinates[9] = x;
+				coordinates[10] = zmin;
+				coordinates[11] = ymin;
+				return coordinates;
 			// XZ Y
 			case 2 :
-				var y=this.__origin[1]+(this.getSlice()+this.__extent[2])*this.__spacing[1];
-				xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
-				xmax=this.__origin[0]+(this.__extent[1]+1)*this.__spacing[0];
-				zmin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
-				zmax=this.__origin[2]+(this.__extent[5]+1)*this.__spacing[2];
-				coordinates=[];
-				coordinates[0]=xmin;
-				coordinates[1]=y;
-				coordinates[2]=zmax;
-				coordinates[3]=xmax;
-				coordinates[4]=y;
-				coordinates[5]=zmax;
-				coordinates[6]=xmax;
-				coordinates[7]=y;
-				coordinates[8]=zmin;
-				coordinates[9]=xmin;
-				coordinates[10]=y;
-				coordinates[11]=zmin;
-				return (coordinates);
+				var y = this.__origin[1] + (this.getSlice() + this.__extent[2]) * this.__spacing[1];
+				xmin = this.__origin[0] + this.__extent[0] * this.__spacing[0];
+				xmax = this.__origin[0] + (this.__extent[1] + 1) * this.__spacing[0];
+				zmin = this.__origin[2] + this.__extent[4] * this.__spacing[2];
+				zmax = this.__origin[2] + (this.__extent[5] + 1)*this.__spacing[2];
+				coordinates[0] = xmin;
+				coordinates[1] = y;
+				coordinates[2] = zmax;
+				coordinates[3] = xmax;
+				coordinates[4] = y;
+				coordinates[5] = zmax;
+				coordinates[6] = xmax;
+				coordinates[7] = y;
+				coordinates[8] = zmin;
+				coordinates[9] = xmin;
+				coordinates[10] = y;
+				coordinates[11] = zmin;
+				return coordinates;
 			}
 		},
 
 		getBoundingBoxDiagonalLength : function () {
-			var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
-			var xmax=this.__origin[0]+(this.__extent[1]+1)*this.__spacing[0];
-			var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
-			var ymax=this.__origin[1]+(this.__extent[3]+1)*this.__spacing[1];
-			var zmin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
-			var zmax=this.__origin[2]+(this.__extent[5]+1)*this.__spacing[2];
-			return Math.sqrt((xmax-xmin)*(xmax-xmin)+
-								(ymax-ymin)*(ymax-ymin)+
-								(zmax-zmin)*(zmax-zmin));
+			var xmin = this.__origin[0] + this.__extent[0] * this.__spacing[0];
+			var xmax = this.__origin[0] + (this.__extent[1] + 1) * this.__spacing[0];
+			var ymin = this.__origin[1] + this.__extent[2] * this.__spacing[1];
+			var ymax = this.__origin[1] + (this.__extent[3] + 1) * this.__spacing[1];
+			var zmin = this.__origin[2] + this.__extent[4] * this.__spacing[2];
+			var zmax = this.__origin[2] + (this.__extent[5] + 1) * this.__spacing[2];
+			return Math.sqrt((xmax - xmin) * (xmax - xmin) +
+								(ymax - ymin) * (ymax - ymin) +
+								(zmax - zmin) * (zmax - zmin));
 		},
 
 		get2DDimensions: function () {
-			var dims=[];
+			var dims = [];
 			switch(this.getOrientation())
 			{
 				// ZY X
 				case 1 :
-					dims[0]=this.__dimensions[2];
-					dims[1]=this.__dimensions[1];
+					dims[0] = this.__dimensions[2];
+					dims[1] = this.__dimensions[1];
 					break;
 				// XZ Y
 				case 2 :
-					dims[0]=this.__dimensions[0];
-					dims[1]=this.__dimensions[2];
+					dims[0] = this.__dimensions[0];
+					dims[1] = this.__dimensions[2];
 					break;
 				// XY Z
 				default :
@@ -577,48 +575,48 @@ qx.Class.define("desk.VolumeSlice",
 		},
 
 		get2DCornersCoordinates : function () {
-			var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
-			var xmax=this.__origin[0]+(this.__extent[1]+1)*this.__spacing[0];
-			var ymin=this.__origin[1]+this.__extent[2]*this.__spacing[1];
-			var ymax=this.__origin[1]+(this.__extent[3]+1)*this.__spacing[1];
-			var zmin=this.__origin[2]+this.__extent[4]*this.__spacing[2];
-			var zmax=this.__origin[2]+(this.__extent[5]+1)*this.__spacing[2];
-			var coordinates=[];
+			var xmin = this.__origin[0] + this.__extent[0] * this.__spacing[0];
+			var xmax = this.__origin[0] + (this.__extent[1] + 1) * this.__spacing[0];
+			var ymin = this.__origin[1] + this.__extent[2] * this.__spacing[1];
+			var ymax = this.__origin[1] + (this.__extent[3] + 1) * this.__spacing[1];
+			var zmin = this.__origin[2] + this.__extent[4] * this.__spacing[2];
+			var zmax = this.__origin[2] + (this.__extent[5] + 1) * this.__spacing[2];
+			var coordinates = [];
 
 			switch(this.getOrientation())
 			{
 				// ZY X
 				case 1 :
-					coordinates[0]=zmin;
-					coordinates[1]=ymax;
-					coordinates[2]=zmax;
-					coordinates[3]=ymax;
-					coordinates[4]=zmax;
-					coordinates[5]=ymin;
-					coordinates[6]=zmin;
-					coordinates[7]=ymin;
+					coordinates[0] = zmin;
+					coordinates[1] = ymax;
+					coordinates[2] = zmax;
+					coordinates[3] = ymax;
+					coordinates[4] = zmax;
+					coordinates[5] = ymin;
+					coordinates[6] = zmin;
+					coordinates[7] = ymin;
 					break;
 				// XZ Y
 				case 2 :
-					coordinates[0]=xmin;
-					coordinates[1]=zmax;
-					coordinates[2]=xmax;
-					coordinates[3]=zmax;
-					coordinates[4]=xmax;
-					coordinates[5]=zmin;
-					coordinates[6]=xmin;
-					coordinates[7]=zmin;
+					coordinates[0] = xmin;
+					coordinates[1] = zmax;
+					coordinates[2] = xmax;
+					coordinates[3] = zmax;
+					coordinates[4] = xmax;
+					coordinates[5] = zmin;
+					coordinates[6] = xmin;
+					coordinates[7] = zmin;
 					break;
 				// XY Z
 				default :
-					coordinates[0]=xmin;
-					coordinates[1]=ymax;
-					coordinates[2]=xmax;
-					coordinates[3]=ymax;
-					coordinates[4]=xmax;
-					coordinates[5]=ymin;
-					coordinates[6]=xmin;
-					coordinates[7]=ymin;
+					coordinates[0] = xmin;
+					coordinates[1] = ymax;
+					coordinates[2] = xmax;
+					coordinates[3] = ymax;
+					coordinates[4] = xmax;
+					coordinates[5] = ymin;
+					coordinates[6] = xmin;
+					coordinates[7] = ymin;
 			}
 			return (coordinates);
 		},
@@ -662,27 +660,27 @@ qx.Class.define("desk.VolumeSlice",
 			// parse extent, dimensions, origin, spacing
 			var XMLextent = volume.getElementsByTagName("extent")[0];
 			this.__extent = new Array(parseInt(XMLextent.getAttribute("x1"), 10),
-							parseInt(XMLextent.getAttribute("x2"), 10),
-							parseInt(XMLextent.getAttribute("y1"), 10),
-							parseInt(XMLextent.getAttribute("y2"), 10),
-							parseInt(XMLextent.getAttribute("z1"), 10),
-							parseInt(XMLextent.getAttribute("z2"), 10));
+				parseInt(XMLextent.getAttribute("x2"), 10),
+				parseInt(XMLextent.getAttribute("y1"), 10),
+				parseInt(XMLextent.getAttribute("y2"), 10),
+				parseInt(XMLextent.getAttribute("z1"), 10),
+				parseInt(XMLextent.getAttribute("z2"), 10));
 
 			var XMLdimensions = volume.getElementsByTagName("dimensions")[0];
 
 			this.__dimensions = new Array(parseInt(XMLdimensions.getAttribute("x"), 10),
-							parseInt(XMLdimensions.getAttribute("y"), 10),
-							parseInt(XMLdimensions.getAttribute("z"), 10));
+				parseInt(XMLdimensions.getAttribute("y"), 10),
+				parseInt(XMLdimensions.getAttribute("z"), 10));
 
 			var XMLspacing = volume.getElementsByTagName("spacing")[0];
 			this.__spacing = new Array(parseFloat(XMLspacing.getAttribute("x")),
-							parseFloat(XMLspacing.getAttribute("y")),
-							parseFloat(XMLspacing.getAttribute("z")));
+				parseFloat(XMLspacing.getAttribute("y")),
+				parseFloat(XMLspacing.getAttribute("z")));
 
 			var XMLorigin = volume.getElementsByTagName("origin")[0];
 			this.__origin = new Array(parseFloat(XMLorigin.getAttribute("x")),
-							parseFloat(XMLorigin.getAttribute("y")),
-							parseFloat(XMLorigin.getAttribute("z")));
+				parseFloat(XMLorigin.getAttribute("y")),
+				parseFloat(XMLorigin.getAttribute("z")));
 
 			var XMLscalars = volume.getElementsByTagName("scalars")[0];
 			this.__numberOfScalarComponents = parseInt(XMLscalars.getAttribute("numberOfScalarComponents"),10);
@@ -710,8 +708,7 @@ qx.Class.define("desk.VolumeSlice",
 			if (this.isReady()) {
 				this.__updateTriggered = true;
 				this.__updateImage();
-			}
-			else {
+			} else {
 				this.setReady(true);
 			}
 		},
@@ -721,33 +718,33 @@ qx.Class.define("desk.VolumeSlice",
 
 		__initChangeSliceTrigger : function () {
 			this.addListener("changeSlice", function(){
-				this.__updateTriggered=true;
+				this.__updateTriggered = true;
 				this.__updateImage();
 			},this);
 
 			var _this=this;
 
-			this.__image.onload=function(){
+			this.__image.onload = function() {
 				clearTimeout(this.__timeOut);
 				_this.__updateInProgress = false;
-				var materials=_this.__materials;
+				var materials = _this.__materials;
 				for (var i = 0; i < materials.length; i++){
 					materials[i].uniforms.texture.value.needsUpdate = true;
 				}
 				_this.fireEvent("changeImage");
 			};
 
-			this.__image.onerror=function(){
-				_this.__updateTriggered=true;
-				_this.__updateInProgress=false;
+			this.__image.onerror = function() {
+				_this.__updateTriggered = true;
+				_this.__updateInProgress = false;
 				_this.__updateImage();
 			};
 
-			this.__image.onabort=function(){
-				_this.__updateTriggered=true;
-				_this.__updateInProgress=false;
+			this.__image.onabort = function() {
+				_this.__updateTriggered = true;
+				_this.__updateInProgress = false;
 				_this.__updateImage();
-				};
+			};
 		},
 
 		__timeOut : null,
@@ -758,13 +755,13 @@ qx.Class.define("desk.VolumeSlice",
 				return;
 			}
 			if (this.__updateTriggered) {
-				this.__timeOut=setTimeout(timeOut,5000);
+				this.__timeOut = setTimeout(timeOut,5000);
 				this.__reallyUpdateImage();
 			}
 
-			var _this=this;
+			var _this = this;
 			function timeOut () {
-				_this.__updateInProgress=false;
+				_this.__updateInProgress = false;
 				_this.__updateImage();
 				
 			}
@@ -773,10 +770,9 @@ qx.Class.define("desk.VolumeSlice",
 		__reallyUpdateImage : function() {
 			var fileSuffix;
 			if (this.__availableImageFormat === 0) {
-				fileSuffix=".png";
-			}
-			else {
-				fileSuffix=".jpg";
+				fileSuffix = ".png";
+			} else {
+				fileSuffix = ".jpg";
 			}
 
 			var orientationString;
@@ -784,21 +780,21 @@ qx.Class.define("desk.VolumeSlice",
 			{
 				// ZY X
 				case 1 :
-					orientationString="ZY";
+					orientationString = "ZY";
 					break;
 				// XZ Y
 				case 2 :
-					orientationString="XZ";
+					orientationString = "XZ";
 					break;
 				// XY Z
 				default :
-					orientationString="XY";
+					orientationString = "XY";
 					break;
 				}
-			this.__updateInProgress=true;
-			this.__updateTriggered=false;
+			this.__updateInProgress = true;
+			this.__updateTriggered = false;
 			this.__image.src = this.__path + this.__prefix + orientationString +
-        (this.__offset+this.getSlice()) + fileSuffix + "?nocache=" + this.__timestamp;
+			(this.__offset + this.getSlice()) + fileSuffix + "?nocache=" + this.__timestamp;
 		}
 	}
 });

@@ -704,17 +704,16 @@ qx.Class.define("desk.SliceView",
 				default:
 					break;
 			}
-			this.__initDone = true;
 
 			var dimensions = volumeSlice.getDimensions();
-			for (var coordinate = 0; coordinate< 3;coordinate ++) {
-				if (dimensions[coordinate] == 1) {
+			for (var coordinate = 0; coordinate < 3; coordinate++) {
+				if (dimensions[coordinate] === 1) {
 					dimensions[coordinate] = 0;
 				}
 			}
-			this.setCrossPosition(Math.round(dimensions[0]/2),
-									Math.round(dimensions[1]/2),
-									Math.round(dimensions[2]/2));		
+			this.setCrossPosition(Math.round(dimensions[0] / 2),
+				Math.round(dimensions[1] / 2),
+				Math.round(dimensions[2] / 2));		
 		},
 
 		/** adds a volume to the view
