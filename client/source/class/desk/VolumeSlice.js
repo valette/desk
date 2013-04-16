@@ -473,7 +473,6 @@ qx.Class.define("desk.VolumeSlice",
 		},
 
 		getCornersCoordinates : function () {
-			var coordinates = [];
 			switch (this.getOrientation())
 			{
 			// XY Z
@@ -484,19 +483,7 @@ qx.Class.define("desk.VolumeSlice",
 				var xmax = this.__origin[0] + (this.__extent[1] + 1) * this.__spacing[0];
 				var ymin = this.__origin[1] + this.__extent[2] * this.__spacing[1];
 				var ymax = this.__origin[1] + (this.__extent[3] + 1) * this.__spacing[1];
-				coordinates[0] = xmin;
-				coordinates[1] = ymax;
-				coordinates[2] = z;
-				coordinates[3] = xmax;
-				coordinates[4] = ymax;
-				coordinates[5] = z;
-				coordinates[6] = xmax;
-				coordinates[7] = ymin;
-				coordinates[8] = z;
-				coordinates[9] = xmin;
-				coordinates[10] = ymin;
-				coordinates[11] = z;
-				return coordinates;
+				return [xmin, ymax, z, xmax, ymax, z, xmax, ymin, z, xmin, ymin, z];
 			// ZY X
 			case 1 :
 				var x = this.__origin[0] + (this.getSlice() + this.__extent[0]) * this.__spacing[0];
@@ -504,19 +491,7 @@ qx.Class.define("desk.VolumeSlice",
 				ymax = this.__origin[2] + (this.__extent[5] + 1) * this.__spacing[2];
 				var zmin = this.__origin[1] + this.__extent[2] * this.__spacing[1];
 				var zmax = this.__origin[1] + (this.__extent[3] + 1) * this.__spacing[1];
-				coordinates[0] = x;
-				coordinates[1] = zmax;
-				coordinates[2] = ymin;
-				coordinates[3] = x;
-				coordinates[4] = zmax;
-				coordinates[5] = ymax;
-				coordinates[6] = x;
-				coordinates[7] = zmin;
-				coordinates[8] = ymax;
-				coordinates[9] = x;
-				coordinates[10] = zmin;
-				coordinates[11] = ymin;
-				return coordinates;
+				return [x, zmax, ymin, x, zmax, ymax, x, zmin, ymax, x, zmin, ymin];
 			// XZ Y
 			case 2 :
 				var y = this.__origin[1] + (this.getSlice() + this.__extent[2]) * this.__spacing[1];
@@ -524,19 +499,7 @@ qx.Class.define("desk.VolumeSlice",
 				xmax = this.__origin[0] + (this.__extent[1] + 1) * this.__spacing[0];
 				zmin = this.__origin[2] + this.__extent[4] * this.__spacing[2];
 				zmax = this.__origin[2] + (this.__extent[5] + 1)*this.__spacing[2];
-				coordinates[0] = xmin;
-				coordinates[1] = y;
-				coordinates[2] = zmax;
-				coordinates[3] = xmax;
-				coordinates[4] = y;
-				coordinates[5] = zmax;
-				coordinates[6] = xmax;
-				coordinates[7] = y;
-				coordinates[8] = zmin;
-				coordinates[9] = xmin;
-				coordinates[10] = y;
-				coordinates[11] = zmin;
-				return coordinates;
+				return [xmin, y, zmax, xmax, y, zmax, xmax, y, zmin, xmin, y, zmin];
 			}
 		},
 
@@ -553,25 +516,18 @@ qx.Class.define("desk.VolumeSlice",
 		},
 
 		get2DDimensions: function () {
-			var dims = [];
 			switch(this.getOrientation())
 			{
 				// ZY X
 				case 1 :
-					dims[0] = this.__dimensions[2];
-					dims[1] = this.__dimensions[1];
-					break;
+					return [this.__dimensions[2], this.__dimensions[1]];
 				// XZ Y
 				case 2 :
-					dims[0] = this.__dimensions[0];
-					dims[1] = this.__dimensions[2];
-					break;
+					return [this.__dimensions[0], this.__dimensions[2]];
 				// XY Z
 				default :
-					dims[0]=this.__dimensions[0];
-					dims[1]=this.__dimensions[1];
+					return [this.__dimensions[0], this.__dimensions[1]];
 			}
-			return (dims);
 		},
 
 		get2DCornersCoordinates : function () {
@@ -581,44 +537,19 @@ qx.Class.define("desk.VolumeSlice",
 			var ymax = this.__origin[1] + (this.__extent[3] + 1) * this.__spacing[1];
 			var zmin = this.__origin[2] + this.__extent[4] * this.__spacing[2];
 			var zmax = this.__origin[2] + (this.__extent[5] + 1) * this.__spacing[2];
-			var coordinates = [];
 
 			switch(this.getOrientation())
 			{
 				// ZY X
 				case 1 :
-					coordinates[0] = zmin;
-					coordinates[1] = ymax;
-					coordinates[2] = zmax;
-					coordinates[3] = ymax;
-					coordinates[4] = zmax;
-					coordinates[5] = ymin;
-					coordinates[6] = zmin;
-					coordinates[7] = ymin;
-					break;
+					return [zmin, ymax, zmax, ymax, zmax, ymin, zmin, ymin];
 				// XZ Y
 				case 2 :
-					coordinates[0] = xmin;
-					coordinates[1] = zmax;
-					coordinates[2] = xmax;
-					coordinates[3] = zmax;
-					coordinates[4] = xmax;
-					coordinates[5] = zmin;
-					coordinates[6] = xmin;
-					coordinates[7] = zmin;
-					break;
+					return [xmin, zmax, xmax, zmax, xmax, zmin, xmin, zmin];
 				// XY Z
 				default :
-					coordinates[0] = xmin;
-					coordinates[1] = ymax;
-					coordinates[2] = xmax;
-					coordinates[3] = ymax;
-					coordinates[4] = xmax;
-					coordinates[5] = ymin;
-					coordinates[6] = xmin;
-					coordinates[7] = ymin;
+					return [xmin, ymax, xmax, ymax, xmax, ymin, xmin, ymin];
 			}
-			return (coordinates);
 		},
 
 		getNumberOfSlices : function () {
