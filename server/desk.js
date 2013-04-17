@@ -102,6 +102,8 @@ if (fs.existsSync(serverPath + 'default')) {
 	app.use(homeURL ,express.static(serverPath + 'demo/default/release/'));
 }
 
+app.use(express.compress());
+
 // serve data files
 app.use(homeURL + 'files',express.static(deskPath));
 app.use(homeURL + 'files',express.directory(deskPath));
