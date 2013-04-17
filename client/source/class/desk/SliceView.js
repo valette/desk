@@ -934,6 +934,10 @@ qx.Class.define("desk.SliceView",
 			}
 			if (!qx.ui.core.Widget.contains(this, event.getRelatedTarget())) {
 				this.__rightContainer.setVisibility("hidden");
+				var container = this.__threeContainer;
+				var label = this.__directionOverlays[3];
+				container.remove(label);
+				container.add(label, {right: 1, top:"45%"});
 				this.__brushMesh.visible = false;
 				this.render();
 				this.fireDataEvent("viewMouseOut",event);
@@ -945,9 +949,18 @@ qx.Class.define("desk.SliceView",
 			var self = this;
 
 			if (this.__rightContainer.getVisibility() !== "visible") {
+				var container = this.__threeContainer;
+				var label = this.__directionOverlays[3];
+				container.remove(label);
+				container.add(label, {right: 32, top: "45%"});
+
 				this.__rightContainer.setVisibility("visible");
 				this.__master.applyToViewers(function (viewer) {
 					if (viewer != self) {
+						var container = viewer.__threeContainer;
+						var label = viewer.__directionOverlays[3];
+						container.remove(label);
+						container.add(label, {right: 1, top: "45%"});
 						viewer.__rightContainer.setVisibility("hidden");
 						// there is a race condition : sometimes the brush mesh is not ready
 						if (viewer.__brushMesh) {
@@ -1172,44 +1185,44 @@ qx.Class.define("desk.SliceView",
             qx.util.DisposeUtil.disposeTriggeredBy(font, this);
 			var northLabel = new qx.ui.basic.Label("S");
 			northLabel.set(settings);
-			container.add(northLabel, {left:"50%", top:"1%"});
+			container.add(northLabel, {left: "50%", top:"1%"});
 
 			var southLabel = new qx.ui.basic.Label("I");
 			southLabel.set(settings);
-			container.add(southLabel, {left:"50%", bottom:"1%"});
+			container.add(southLabel, {left: "50%", bottom:"1%"});
 
-            var eastLabel = new qx.ui.basic.Label("L");
-			eastLabel.set(settings);
-			container.add(eastLabel, {left:"1%", top:"45%"});
-
-            var westLabel = new qx.ui.basic.Label("R");
+            var westLabel = new qx.ui.basic.Label("L");
 			westLabel.set(settings);
-			container.add(westLabel, {right:32, top:"45%"});
+			container.add(westLabel, {left: "1%", top:"45%"});
+
+            var eastLabel = new qx.ui.basic.Label("R");
+			eastLabel.set(settings);
+			container.add(eastLabel, {right: "1%", top:"45%"});
 
 			directionOverlays.push(northLabel);
-			directionOverlays.push(eastLabel);
-			directionOverlays.push(southLabel);
 			directionOverlays.push(westLabel);
+			directionOverlays.push(southLabel);
+			directionOverlays.push(eastLabel);
 			switch (this.getOrientation())
 			{
 			case 0 :
 				northLabel.setValue("A");
 				southLabel.setValue("P");
-				eastLabel.setValue("L");
-				westLabel.setValue("R");
+				westLabel.setValue("L");
+				eastLabel.setValue("R");
 				break;
 			case 1 :
 				northLabel.setValue("A");
 				southLabel.setValue("P");
-				eastLabel.setValue("S");
-				westLabel.setValue("I");
+				westLabel.setValue("S");
+				eastLabel.setValue("I");
 				break;
 			case 2 :
 			default:
 				northLabel.setValue("S");
 				southLabel.setValue("I");
-				eastLabel.setValue("L");
-				westLabel.setValue("R");
+				westLabel.setValue("L");
+				eastLabel.setValue("R");
 				break;
 			}
 
