@@ -205,7 +205,7 @@ qx.Class.define("desk.VolumeSlice",
 		},
 
 		get2DSpacing : function () {
-			var spacing=this.__spacing;
+			var spacing = this.__spacing;
 			switch (this.getOrientation())
 			{
 				default:
@@ -258,8 +258,12 @@ qx.Class.define("desk.VolumeSlice",
 			return this.__contrast;
 		},
 
-		setBrightnessAndContrast : function (brightness, contrast)
-		{
+		/**
+		 * sets brightness and contrast for all generated materials
+		 * @param brightness {Number} brightness
+		 * @param contrast {Number} contrast
+		 */
+		setBrightnessAndContrast : function (brightness, contrast) {
 			this.__brightness = brightness;
 			this.__contrast = contrast;
 			var materials = this.__materials;
@@ -271,8 +275,11 @@ qx.Class.define("desk.VolumeSlice",
 			this.fireEvent("changeImage");
 		},
 
-		setOpacity : function (opacity)
-		{
+		/**
+		 * sets opacity for all generated materials
+		 * @param opacity {Number} opacity in the [0, 1] range
+		 */
+		 setOpacity : function (opacity) {
 			var materials = this.__materials;
 			for (var i = 0; i < materials.length; i++) {
 				materials[i].uniforms.opacity.value = opacity;
@@ -300,7 +307,7 @@ qx.Class.define("desk.VolumeSlice",
 			var lutG = luts[1];
 			var lutB = luts[2];
 			var lutAlpha = luts[3];
-			var p=0;
+			var p = 0;
 			if (lutAlpha) {
 				for (var j = 0; j < numberOfColors; j++) {
 					data[p++] = lutR[j];
@@ -373,7 +380,11 @@ qx.Class.define("desk.VolumeSlice",
 
 		__dummyLut : new Uint8Array(8),// [255, 0, 0, 255, 0, 0, 255, 255],
 
-		getMaterial :function () {
+		/**
+		 * returns a three.js material fit for rendering
+		 * @return {THREE.ShaderMaterial} material
+		 */
+		 getMaterial :function () {
 			var texture = new THREE.Texture(this.__image);
 			texture.needsUpdate = true;
 			texture.generateMipmaps = false;
@@ -465,50 +476,68 @@ qx.Class.define("desk.VolumeSlice",
 			return material;
 		},
 
+		/**
+		 * returns the volume bounding box in the form [xmin, xmax, ymin, ymax, zmin, zmax]
+		 * @return {Array} array of bounds
+		 */
+		getBounds : function () {
+			return [this.__origin[0] + this.__extent[0] * this.__spacing[0],
+				this.__origin[0] + (this.__extent[1] + 1) * this.__spacing[0],
+				this.__origin[1] + this.__extent[2] * this.__spacing[1],
+				this.__origin[1] + (this.__extent[3] + 1) * this.__spacing[1],
+				this.__origin[2] + this.__extent[4] * this.__spacing[2],
+				this.__origin[2] + (this.__extent[5] + 1) * this.__spacing[2]];
+		},
+
+		/**
+		 * returns the slice 3D coordinates the form [x0, y0, z0, ... , x3, y3, z3]
+		 * @return {Array} array of coordinates
+		 */
 		getCornersCoordinates : function () {
+			var bounds = this.getBounds();
 			switch (this.getOrientation())
 			{
 			// XY Z
 			case 0 :
 			default:
 				var z = this.__origin[2] + (this.getSlice() + this.__extent[4]) * this.__spacing[2];
-				var xmin = this.__origin[0] + this.__extent[0] * this.__spacing[0];
-				var xmax = this.__origin[0] + (this.__extent[1] + 1) * this.__spacing[0];
-				var ymin = this.__origin[1] + this.__extent[2] * this.__spacing[1];
-				var ymax = this.__origin[1] + (this.__extent[3] + 1) * this.__spacing[1];
-				return [xmin, ymax, z, xmax, ymax, z, xmax, ymin, z, xmin, ymin, z];
+				return [bounds[0], bounds[3], z,
+					bounds[1], bounds[3], z,
+					bounds[1], bounds[2], z,
+					bounds[0], bounds[2], z];
 			// ZY X
 			case 1 :
 				var x = this.__origin[0] + (this.getSlice() + this.__extent[0]) * this.__spacing[0];
-				ymin = this.__origin[2] + this.__extent[4] * this.__spacing[2];
-				ymax = this.__origin[2] + (this.__extent[5] + 1) * this.__spacing[2];
-				var zmin = this.__origin[1] + this.__extent[2] * this.__spacing[1];
-				var zmax = this.__origin[1] + (this.__extent[3] + 1) * this.__spacing[1];
-				return [x, zmax, ymin, x, zmax, ymax, x, zmin, ymax, x, zmin, ymin];
+				return [x, bounds[3], bounds[4],
+					x, bounds[3], bounds[5],
+					x, bounds[2], bounds[5],
+					x, bounds[2], bounds[4]];
 			// XZ Y
 			case 2 :
 				var y = this.__origin[1] + (this.getSlice() + this.__extent[2]) * this.__spacing[1];
-				xmin = this.__origin[0] + this.__extent[0] * this.__spacing[0];
-				xmax = this.__origin[0] + (this.__extent[1] + 1) * this.__spacing[0];
-				zmin = this.__origin[2] + this.__extent[4] * this.__spacing[2];
-				zmax = this.__origin[2] + (this.__extent[5] + 1)*this.__spacing[2];
-				return [xmin, y, zmax, xmax, y, zmax, xmax, y, zmin, xmin, y, zmin];
+				return [bounds[0], y, bounds[5],
+					bounds[1], y, bounds[5],
+					bounds[1], y, bounds[4],
+					bounds[0], y, bounds[4]];
 			}
 		},
 
-		getBoundingBoxDiagonalLength : function () {
-			var xmin = this.__origin[0] + this.__extent[0] * this.__spacing[0];
-			var xmax = this.__origin[0] + (this.__extent[1] + 1) * this.__spacing[0];
-			var ymin = this.__origin[1] + this.__extent[2] * this.__spacing[1];
-			var ymax = this.__origin[1] + (this.__extent[3] + 1) * this.__spacing[1];
-			var zmin = this.__origin[2] + this.__extent[4] * this.__spacing[2];
-			var zmax = this.__origin[2] + (this.__extent[5] + 1) * this.__spacing[2];
-			return Math.sqrt((xmax - xmin) * (xmax - xmin) +
-								(ymax - ymin) * (ymax - ymin) +
-								(zmax - zmin) * (zmax - zmin));
+		/**
+		 * returns the volume bounding box diagonal length
+		 * @return {Number} diagonal length
+		 */
+		 getBoundingBoxDiagonalLength : function () {
+			var bounds = this.getBounds();
+			return Math.sqrt(Math.pow(bounds[1] - bounds[0], 2) +
+							Math.pow(bounds[3] - bounds[2], 2) +
+							Math.pow(bounds[5] - bounds[4], 2));
 		},
 
-		get2DDimensions: function () {
+		/**
+		 * returns the dimensions of the slice in the form [dimx, dimy]
+		 * @return {Array} array of dimensions
+		 */
+		 get2DDimensions: function () {
 			switch(this.getOrientation())
 			{
 				// ZY X
@@ -523,29 +552,41 @@ qx.Class.define("desk.VolumeSlice",
 			}
 		},
 
-		get2DCornersCoordinates : function () {
-			var xmin = this.__origin[0] + this.__extent[0] * this.__spacing[0];
-			var xmax = this.__origin[0] + (this.__extent[1] + 1) * this.__spacing[0];
-			var ymin = this.__origin[1] + this.__extent[2] * this.__spacing[1];
-			var ymax = this.__origin[1] + (this.__extent[3] + 1) * this.__spacing[1];
-			var zmin = this.__origin[2] + this.__extent[4] * this.__spacing[2];
-			var zmax = this.__origin[2] + (this.__extent[5] + 1) * this.__spacing[2];
+		/**
+		 * returns the slice 2D coordinates the form [x0, y0, ... , x3, y3]
+		 * @return {Array} array of coordinates
+		 */
+		 get2DCornersCoordinates : function () {
+			var bounds = this.getBounds();
 
 			switch(this.getOrientation())
 			{
 				// ZY X
 				case 1 :
-					return [zmin, ymax, zmax, ymax, zmax, ymin, zmin, ymin];
+					return [bounds[4], bounds[3],
+							bounds[5], bounds[3],
+							bounds[5], bounds[2],
+							bounds[4], bounds[2]];
 				// XZ Y
 				case 2 :
-					return [xmin, zmax, xmax, zmax, xmax, zmin, xmin, zmin];
+					return [bounds[0], bounds[5],
+							bounds[1], bounds[5],
+							bounds[1], bounds[4],
+							bounds[0], bounds[4]];
 				// XY Z
 				default :
-					return [xmin, ymax, xmax, ymax, xmax, ymin, xmin, ymin];
+					return [bounds[0], bounds[3],
+							bounds[1], bounds[3],
+							bounds[1], bounds[2],
+							bounds[0], bounds[2]];
 			}
 		},
 
-		getNumberOfSlices : function () {
+		/**
+		 * returns the total number of slices
+		 * @return {Number} number of slices
+		 */
+		 getNumberOfSlices : function () {
 			switch(this.getOrientation())
 			{
 				// ZY X
@@ -675,11 +716,11 @@ qx.Class.define("desk.VolumeSlice",
 
 		__updateImage : function () {
 			if (this.__updateInProgress) {
-				this.__updateTriggered=true;
+				this.__updateTriggered = true;
 				return;
 			}
 			if (this.__updateTriggered) {
-				this.__timeOut = setTimeout(timeOut,5000);
+				this.__timeOut = setTimeout(timeOut, 5000);
 				this.__reallyUpdateImage();
 			}
 
@@ -717,8 +758,9 @@ qx.Class.define("desk.VolumeSlice",
 				}
 			this.__updateInProgress = true;
 			this.__updateTriggered = false;
-			this.__image.src = this.__path + this.__prefix + orientationString +
-			(this.__offset + this.getSlice()) + fileSuffix + "?nocache=" + this.__timestamp;
+			this.__image.src = this.__path + this.__prefix +
+				orientationString + (this.__offset + this.getSlice()) +
+				fileSuffix + "?nocache=" + this.__timestamp;
 		}
 	}
 });
