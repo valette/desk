@@ -17,7 +17,7 @@ qx.Class.define("desk.VolumeSlice",
 	{
 		this.base(arguments);
 
-		this.setOrientation(orientation);
+		this.__orientation = orientation;
 		this.__materials = [];
 		this.__image = new Image();
 
@@ -50,8 +50,6 @@ qx.Class.define("desk.VolumeSlice",
 	properties : {
 		slice : { init : -1, check: "Number", event : "changeSlice"},
 		imageFormat : { init : 1, check: "Number", event : "changeImageFormat"},
-		ready : { init : false, check: "Boolean", event : "changeReady"},
-		orientation : { init : 0, check: "Number", event : "changeOrientation"}
 	},
 
 	events : {
@@ -152,6 +150,7 @@ qx.Class.define("desk.VolumeSlice",
 	},
 
 	members : {
+		__orientation : 0,
 		__textureFilter : null,
 		__availableImageFormat : 1,
 
@@ -206,7 +205,7 @@ qx.Class.define("desk.VolumeSlice",
 
 		get2DSpacing : function () {
 			var spacing = this.__spacing;
-			switch (this.getOrientation())
+			switch (this.__orientation)
 			{
 				default:
 				case 0 :
@@ -240,7 +239,7 @@ qx.Class.define("desk.VolumeSlice",
 				input_volume : this.__file,
 				output_directory : "cache/",
 				format : this.getImageFormat(),
-				slice_orientation : this.getOrientation()
+				slice_orientation : this.__orientation
 			};
 
 			desk.Actions.getInstance().launchAction(parameterMap,
@@ -495,7 +494,7 @@ qx.Class.define("desk.VolumeSlice",
 		 */
 		getCornersCoordinates : function () {
 			var bounds = this.getBounds();
-			switch (this.getOrientation())
+			switch (this.__orientation)
 			{
 			// XY Z
 			case 0 :
@@ -538,7 +537,7 @@ qx.Class.define("desk.VolumeSlice",
 		 * @return {Array} array of dimensions
 		 */
 		 get2DDimensions: function () {
-			switch(this.getOrientation())
+			switch(this.__orientation)
 			{
 				// ZY X
 				case 1 :
@@ -559,7 +558,7 @@ qx.Class.define("desk.VolumeSlice",
 		 get2DCornersCoordinates : function () {
 			var bounds = this.getBounds();
 
-			switch(this.getOrientation())
+			switch(this.__orientation)
 			{
 				// ZY X
 				case 1 :
@@ -587,7 +586,7 @@ qx.Class.define("desk.VolumeSlice",
 		 * @return {Number} number of slices
 		 */
 		 getNumberOfSlices : function () {
-			switch(this.getOrientation())
+			switch(this.__orientation)
 			{
 				// ZY X
 				case 1 :
@@ -670,13 +669,15 @@ qx.Class.define("desk.VolumeSlice",
 				materials[i].uniforms.imageType.value = this.__availableImageFormat;
 			}
 
-			if (this.isReady()) {
+			if (this.__ready) {
 				this.__updateTriggered = true;
 				this.__updateImage();
 			} else {
-				this.setReady(true);
+				this.__ready = true;
 			}
 		},
+
+		__ready : false,
 
 		__updateTriggered : true,
 		__updateInProgress : false,
@@ -741,7 +742,7 @@ qx.Class.define("desk.VolumeSlice",
 			}
 
 			var orientationString;
-			switch(this.getOrientation())
+			switch(this.__orientation)
 			{
 				// ZY X
 				case 1 :

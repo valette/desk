@@ -816,6 +816,10 @@ qx.Class.define("desk.SliceView",
 		setCrossPosition : function (i,j,k) {
 			var slice, x, y;
 			var dimensions = this.__volume2DDimensions;
+			if (!dimensions) {
+				// dimensions might not exist if the volume is not ready yet
+				return;
+			}
 			switch ( this.getOrientation() )
 			{
 			case 0 :
@@ -1293,7 +1297,7 @@ qx.Class.define("desk.SliceView",
 			}
 			var _this = this;
 			this.__master.applyToViewers (function (viewer) {
-				if ((viewer != _this) && (viewer.__slices[0].isReady())) {
+				if (viewer != _this) {
 					viewer.setCrossPosition(i, j, k);
 				}
 			});
