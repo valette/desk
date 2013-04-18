@@ -56,7 +56,7 @@ qx.Class.define("desk.ThreeContainer",
 			antialias: true} 
 		);
 		this.__renderer = renderer;
-		renderer.setClearColorHex(0xffffff, 1);
+		renderer.setClearColor(0xffffff, 1);
 
 		threeCanvas.addListener("resize", this.__resizeThreeCanvas, this);
 		this.__setupFullscreen();

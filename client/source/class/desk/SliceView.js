@@ -443,14 +443,14 @@ qx.Class.define("desk.SliceView",
 			var coordinates = volumeSlice.get2DCornersCoordinates();
 			var dimensions = volumeSlice.get2DDimensions();
 
-			var ratio = [];
-			ratio[0] = (coordinates[2]-coordinates[0])/dimensions[0];
-			ratio[1] = (coordinates[5]-coordinates[3])/dimensions[1];
-			this.__coordinatesRatio = ratio;
+			this.__coordinatesRatio = 
+				[(coordinates[2] - coordinates[0]) / dimensions[0],
+				(coordinates[5] - coordinates[3]) / dimensions[1]];
 
 			for (var i = 0; i < 4; i++) {
 				geometry.vertices.push(
-					new THREE.Vector3(coordinates[2*i], coordinates[2*i+1], 0));
+					new THREE.Vector3(coordinates[2 * i],
+						coordinates[2 * i + 1], 0));
 			}
 
 			geometry.faces.push(new THREE.Face4(0, 1, 2, 3));
@@ -479,8 +479,7 @@ qx.Class.define("desk.SliceView",
 				width, height, THREE.RGBAFormat);
 			texture.generateMipmaps = false;
 			texture.needsUpdate = true;
-			texture.magFilter = THREE.NearestFilter;
-			texture.minFilter = THREE.NearestFilter;
+			texture.magFilter = texture.minFilter = THREE.NearestFilter;
 			
 			var material = new THREE.MeshBasicMaterial({map:texture, transparent: true});
 			material.side = THREE.DoubleSide;
@@ -490,8 +489,7 @@ qx.Class.define("desk.SliceView",
 			this.__brushMesh = mesh;
 			this.__updateBrush();
 
-		// there is a bug within three.js...
-		//	mesh.visible = false;
+			mesh.visible = false;
 			this.getScene().add(mesh);
 		},
 
@@ -1172,7 +1170,7 @@ qx.Class.define("desk.SliceView",
 		__createUI : function (file) {
 			var container = new desk.ThreeContainer();
 			this.__threeContainer = container;
-			container.getRenderer().setClearColorHex( 0x000000, 1 );
+			container.getRenderer().setClearColor( 0x000000, 1 );
 			this.add(container, {flex : 1});
 
 			var directionOverlays = this.__directionOverlays = [];
