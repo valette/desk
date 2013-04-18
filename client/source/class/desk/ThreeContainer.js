@@ -143,7 +143,6 @@ qx.Class.define("desk.ThreeContainer",
 
 		__resizeThreeCanvas : function () {		
 			var elementSize = this.__threeCanvas.getInnerSize();
-			this.__threeCanvasSize = elementSize;
 			if (!elementSize) {
 				return;
 			}
@@ -295,7 +294,6 @@ qx.Class.define("desk.ThreeContainer",
 		},
 
 		__threeCanvas : null,
-		__threeCanvasSize : null,
 		__scene : null,
 		__camera : null,
 		__controls : null,
