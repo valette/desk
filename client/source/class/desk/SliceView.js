@@ -33,9 +33,7 @@ qx.Class.define("desk.SliceView",
 		this.__slices = [];
 
 		if (typeof orientation == "number") {
-			this.setOrientation(orientation);
-		} else {
-			this.setOrientation(0);
+			this.__orientation = orientation;
 		}
 
 		this.__master = master;
@@ -101,7 +99,6 @@ qx.Class.define("desk.SliceView",
 
 		/** paint opacity (betwen 0 and 1) */
 		paintOpacity : { init : 1, check: "Number", event : "changePaintOpacity"},
-		orientation : { init : -1, check: "Number", event : "changeOrientation"},
 		orientPlane : { init : "", check: "String", event : "changeOrientPlane"},
 
 		/** is the interaction mode set to paint mode*/
@@ -126,6 +123,12 @@ qx.Class.define("desk.SliceView",
 	},
 
 	members : {
+		__orientation : 0,
+
+		getOrientation : function () {
+			return this.__orientation;
+		},
+
 		__threeContainer : null,
 
 		getThreeContainer : function () {
@@ -163,7 +166,7 @@ qx.Class.define("desk.SliceView",
 		},
 
 		projectOnSlice : function (x, y, z) {
-			switch (this.getOrientation()) {
+			switch (this.__orientation) {
 				case 0:
 					return {x: x, y:y};
 				case 1:
@@ -690,7 +693,7 @@ qx.Class.define("desk.SliceView",
 			this.__createBrushMesh(volumeSlice);
 			this.__createCrossMeshes(volumeSlice);
 			
-			switch (this.getOrientation())
+			switch (this.__orientation)
 			{
 				case 0 :
 					this.flipY();
@@ -730,7 +733,7 @@ qx.Class.define("desk.SliceView",
 			}
 
 			var volumeSlice = new desk.VolumeSlice(file,
-				this.getOrientation(), parameters, function () {
+				this.__orientation, parameters, function () {
 					if (volumeSlice.getUserData('toDelete')) {
 						// deletion was triggered before slice was completely loaded
 						for (var i = 0; i != slices.length; i++) {
@@ -785,7 +788,7 @@ qx.Class.define("desk.SliceView",
 					v[i] = dimensions[i] - 1;
 				}
 			}
-			switch (this.getOrientation())
+			switch (this.__orientation)
 			{
 			case 0 :
 				i = v[0];
@@ -820,7 +823,7 @@ qx.Class.define("desk.SliceView",
 				// dimensions might not exist if the volume is not ready yet
 				return;
 			}
-			switch ( this.getOrientation() )
+			switch (this.__orientation)
 			{
 			case 0 :
 				x = i;
@@ -1108,7 +1111,7 @@ qx.Class.define("desk.SliceView",
 		get3DPosition : function (event) {
 			var coordinates = this.getPositionOnSlice(event);
 			var slice = this.getSlice();
-			switch (this.getOrientation()) {
+			switch (this.__orientation) {
 			case 0 :
 				return {
 					i : coordinates.i,
@@ -1205,7 +1208,7 @@ qx.Class.define("desk.SliceView",
 			directionOverlays.push(westLabel);
 			directionOverlays.push(southLabel);
 			directionOverlays.push(eastLabel);
-			switch (this.getOrientation())
+			switch (this.__orientation)
 			{
 			case 0 :
 				northLabel.setValue("A");
@@ -1279,7 +1282,7 @@ qx.Class.define("desk.SliceView",
 			var i = this.__positionI;
 			var j = this.__positionJ;
 			var k = this.__positionK;
-			switch (this.getOrientation())
+			switch (this.__orientation)
 			{
 			case 0 :
 				this.__positionK = sliceId;
