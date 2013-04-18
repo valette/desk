@@ -49,7 +49,7 @@ qx.Class.define("desk.VolumeSlice",
 
 	properties : {
 		slice : { init : -1, check: "Number", event : "changeSlice"},
-		imageFormat : { init : 1, check: "Number", event : "changeImageFormat"},
+		imageFormat : { init : 1, check: "Number", event : "changeImageFormat"}
 	},
 
 	events : {
