@@ -72,8 +72,8 @@ qx.Class.define("desk.SliceView",
 		if (this.__brushCanvas) {
 			this.__brushCanvas.dispose();
 		}
-/*
 
+/*	
 		this.__threeContainer.destroy();
 		this.__slider.destroy();
 		this.__rightContainer.destroy();
@@ -492,7 +492,7 @@ qx.Class.define("desk.SliceView",
 			this.__brushMesh = mesh;
 			this.__updateBrush();
 
-			mesh.visible = false;
+	//		mesh.visible = false;
 			this.getScene().add(mesh);
 		},
 
@@ -542,22 +542,21 @@ qx.Class.define("desk.SliceView",
 			geometry.verticesNeedUpdate = true;
 		},
 
-		__setDrawingMesh : function (volumeSlice)
-		{
+		__setDrawingMesh : function (volumeSlice) {
 			var geometry = new THREE.Geometry();
 			var coordinates = volumeSlice.get2DCornersCoordinates();
 			for (var i = 0; i < 4; i++) {
 				geometry.vertices.push(
-					new THREE.Vector3(coordinates[2 * i],coordinates[2*i + 1], 0 ) );
+					new THREE.Vector3(coordinates[2 * i],coordinates[2*i + 1], 0));
 			}
 
-			geometry.faces.push( new THREE.Face4( 0, 1, 2, 3 ) );
-			geometry.faceVertexUvs[ 0 ].push( [
-				new THREE.Vector2( 0, 0),
-				new THREE.Vector2( 1, 0 ),
-				new THREE.Vector2( 1, 1 ),
-				new THREE.Vector2( 0, 1 )
-				]);
+			geometry.faces.push( new THREE.Face4(0, 1, 2, 3));
+			geometry.faceVertexUvs[0].push([
+				new THREE.Vector2(0, 0),
+				new THREE.Vector2(1, 0),
+				new THREE.Vector2(1, 1),
+				new THREE.Vector2(0, 1)
+			]);
 
 			var width = this.__volume2DDimensions[0];
 			var height = this.__volume2DDimensions[1];
@@ -568,12 +567,12 @@ qx.Class.define("desk.SliceView",
 				width: width,
 				height: height
 			});
-			this.__drawingCanvas.getContext2d().clearRect(0,0,width,height);
+			this.__drawingCanvas.getContext2d().clearRect(0, 0, width, height);
 
 			var length = width * height * 4;
 			var dataColor = new Uint8Array( length);
 
-			var texture = new THREE.DataTexture( dataColor, width, height, THREE.RGBAFormat );
+			var texture = new THREE.DataTexture(dataColor, width, height, THREE.RGBAFormat);
 			texture.generateMipmaps = false;
 			texture.needsUpdate = true;
 			texture.magFilter = THREE.NearestFilter;
@@ -583,7 +582,7 @@ qx.Class.define("desk.SliceView",
 			material.side = THREE.DoubleSide;
 
 			var mesh = new THREE.Mesh(geometry,material);
-			mesh.renderDepth=2;
+			mesh.renderDepth = 2;
 
 			this.getScene().add(mesh);
 			this.__drawingMesh = mesh;
@@ -605,14 +604,14 @@ qx.Class.define("desk.SliceView",
 
 			updateTexture.apply(this);
 
-			this.addListener('changeDrawing',function() {
-					updateTexture.apply(this);
-					this.render();
+			this.addListener('changeDrawing', function() {
+				updateTexture.apply(this);
+				this.render();
 			}, this);
 
 			this.addListener("changePaintOpacity", function (event) {
-					mesh.material.opacity = event.getData();
-					this.render();
+				mesh.material.opacity = event.getData();
+				this.render();
 			}, this);
 		},
 
