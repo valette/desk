@@ -294,141 +294,149 @@ qx.Class.define("desk.Action",
 		__afterValidation : function () {
 			var manager = this.__validationManager;
 			var send = this.__updateButton;
-			var connections=this.__connections;
+			var connections = this.__connections;
 			var i;
 
 			// check the validation status
-			if (manager.getValid()) {
-				// configure the send button
-				send.setEnabled(false);
-				send.setLabel("Updating Parents...");
-
-				var parameterMap = {"action" : this.__name};
-				var items = manager.getItems();
-				// add all parameters
-				for (i = 0; i < items.length; i++) {
-					var currentItem = items[i];
-					var value = currentItem.getValue();
-					if (typeof value === 'string') {
-                        if (value.length > 0) {
-                            parameterMap[currentItem.getPlaceholder()] = value;
-                        }
-					}
-				}
-
-				// add output directory if provided
-				if (this.__outputDirectory != null) {
-					parameterMap.output_directory = this.__outputDirectory;
-				}
-
-
-				// add the value of the "force update" checkbox
-				parameterMap.force_update = this.__forceUpdateCheckBox.getValue();
-				this.__executionStatus.setValue("Processing...");
-
-				// update parent Actions
-				var parentActions = [];
-				for (i = 0; i < connections.length; i++) {
-					var parentAction = connections[i].action;
-					var found = false;
-					for (var j = 0; j < parentActions.length; j++) {
-						if (parentActions[j] == parentAction) {
-							found=true;
-							break;
-						}
-					}
-					if (!found) {
-						parentActions.push(parentAction);
-					}
-				}
-				var numberOfFinishedParentActions = parentActions.length;
-				
-				function afterParentActionProcessed (event){
-					numberOfFinishedParentActions++;
-					if (event) {
-						var finishedAction = event.getTarget();
-						//locate action in connections array
-						for (var i = 0; i < connections.length; i++) {
-							var currentConnection = connections[i];
-							if (currentConnection.action == finishedAction) {
-								parameterMap[currentConnection.parameter] =
-									currentConnection.action.getOutputDirectory() +
-										desk.FileSystem.getFileName(currentConnection.file);
-							}
-						}
-					}
-					if (numberOfFinishedParentActions >= parentActions.length) {
-						send.setLabel("Processing...");
-						var actionId;
-						function getAnswer (response) {
-							// configure the send button
-							send.setEnabled(true);
-							send.setLabel("Update");
-							var currentOutputDir = this.getOutputDirectory();
-							if ((currentOutputDir === null) ||
-									(currentOutputDir.substring(0, 6) === "cache/")) {
-								this.setOutputDirectory(response.outputDirectory);
-							}
-
-							this.__executionStatus.setValue(response.status);
-							if ( this.__action.attributes.voidAction != "true" ) {
-								this.__showLogButton.setVisibility("visible");
-							}
-							this.fireDataEvent("actionUpdated", actionId);
-						}
-
-						var out = this.getOutputDirectory();
-						if (out) {
-							parameterMap.output_directory = out;
-						}
-
-						if (this.__outputDirectory) {
-							if (this.__outputDirectory.substring(0,6) === "cache/") {
-								parameterMap.output_directory = "cache/";
-							}
-						}
-
-						var that = this;
-						function launchAction() {
-							actionId = that.__actionsCounter;
-							that.__actionsCounter++;
-							desk.Actions.getInstance().launchAction (parameterMap, getAnswer, that);
-							that.fireDataEvent("actionTriggered", actionId);
-						}
-
-						if (this.getOutputSubdirectory() == null) {
-							launchAction();
-						}
-						else {
-							desk.FileSystem.exists(that.__outputDirectory + '/' +
-								that.getOutputSubdirectory(), function (exists) {
-									if (!exists) {
-										desk.Actions.getInstance().launchAction({
-											"action" : "add_subdirectory",
-											"subdirectory_name" : that.getOutputSubdirectory(),
-											"output_directory" : that.__outputDirectory}, launchAction, that);
-									} else {
-										launchAction();
-									}
-							});
-						}
-					}
-				}
-
-				if (parentActions.length > 0) {
-					for (i = 0; i != parentActions.length; i++) {
-						var currentParentAction = parentActions[i];
-						currentParentAction.addListenerOnce("actionUpdated", afterParentActionProcessed, this);
-						currentParentAction.executeAction();
-					}
-				}
-				else {
-					afterParentActionProcessed.apply(this);
-				}
-
-			}
-			else {
+			if (!manager.getValid()) {
 				alert(manager.getInvalidMessages().join("\n"));
+				return;
+			}
+				// configure the send button
+			send.setEnabled(false);
+			send.setLabel("Updating Parents...");
+
+			var parameterMap = {"action" : this.__name};
+			var items = manager.getItems();
+			// add all parameters
+			for (i = 0; i < items.length; i++) {
+				var currentItem = items[i];
+				var value = currentItem.getValue();
+				if (typeof value === 'string') {
+					if (value.length > 0) {
+						parameterMap[currentItem.getPlaceholder()] = value;
+					}
+				}
+			}
+
+			// add output directory if provided
+			if (this.__outputDirectory != null) {
+				parameterMap.output_directory = this.__outputDirectory;
+			}
+
+			// add the value of the "force update" checkbox
+			parameterMap.force_update = this.__forceUpdateCheckBox.getValue();
+			this.__executionStatus.setValue("Processing...");
+
+			// update parent Actions
+			var parentActions = [];
+			for (i = 0; i < connections.length; i++) {
+				var parentAction = connections[i].action;
+				var found = false;
+				for (var j = 0; j < parentActions.length; j++) {
+					if (parentActions[j] == parentAction) {
+						found = true;
+						break;
+					}
+				}
+				if (!found) {
+					parentActions.push(parentAction);
+				}
+			}
+			var numberOfFinishedParentActions = parentActions.length;
+			
+			function afterParentActionProcessed (event){
+				numberOfFinishedParentActions++;
+				if (event) {
+					var finishedAction = event.getTarget();
+					//locate action in connections array
+					for (var i = 0; i < connections.length; i++) {
+						var currentConnection = connections[i];
+						if (currentConnection.action == finishedAction) {
+							parameterMap[currentConnection.parameter] =
+								currentConnection.action.getOutputDirectory() +
+									desk.FileSystem.getFileName(currentConnection.file);
+						}
+					}
+				}
+				if (numberOfFinishedParentActions >= parentActions.length) {
+					send.setLabel("Processing...");
+
+					var out = this.getOutputDirectory();
+					if (out) {
+						parameterMap.output_directory = out;
+					}
+
+					if (this.__outputDirectory) {
+						if (this.__outputDirectory.substring(0,6) === "cache/") {
+							parameterMap.output_directory = "cache/";
+						}
+					}
+
+					this.__createSubdirectory(parameterMap);
+				}
+			}
+
+			if (parentActions.length > 0) {
+				for (i = 0; i != parentActions.length; i++) {
+					var currentParentAction = parentActions[i];
+					currentParentAction.addListenerOnce("actionUpdated", afterParentActionProcessed, this);
+					currentParentAction.executeAction();
+				}
+			} else {
+				afterParentActionProcessed.apply(this);
+			}
+		},
+
+		__createSubdirectory : function (parameterMap) {
+			var that = this;
+			if (!this.getOutputSubdirectory()) {
+				afterCreation();
+			} else {
+				desk.FileSystem.exists(that.__outputDirectory + '/' +
+					that.getOutputSubdirectory(), function (exists) {
+						if (!exists) {
+							desk.Actions.getInstance().launchAction({
+									"action" : "add_subdirectory",
+									"subdirectory_name" : that.getOutputSubdirectory(),
+									"output_directory" : that.__outputDirectory},
+							afterCreation);
+						} else {
+							afterCreation();
+						}
+				});
+			}
+
+			function afterCreation () {
+				that.__executeAction(parameterMap);
+			}
+		},
+
+		__executeAction : function (parameterMap) {
+			var actionId = this.__actionsCounter;
+			this.__actionsCounter++;
+			desk.Actions.getInstance().launchAction (parameterMap,
+				afterExecution);
+			this.fireDataEvent("actionTriggered", actionId);
+
+			var that = this;
+
+			function afterExecution (response) {
+				// configure the send button
+				var send = that.__updateButton;
+				send.setEnabled(true);
+				send.setLabel("Update");
+				var currentOutputDir = that.getOutputDirectory();
+				if ((currentOutputDir === null) ||
+						(currentOutputDir.substring(0, 6) === "cache/")) {
+					that.setOutputDirectory(response.outputDirectory);
+				}
+
+				that.__executionStatus.setValue(response.status);
+				if ( that.__action.attributes.voidAction != "true" ) {
+					that.__showLogButton.setVisibility("visible");
+				}
+				that.fireDataEvent("actionUpdated", actionId);
 			}
 		},
 
