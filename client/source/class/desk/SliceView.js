@@ -215,7 +215,8 @@ qx.Class.define("desk.SliceView",
 			var slices = this.__slices;
 			for (var i = 0; i != slices.length; i++) {
 				var slice = slices[i];
-				if (!slice.getUserData('toDelete')) {
+				if (!slice.getUserData('toDelete') &&
+					(slice.isReady())) {
 					return slice;
 				}
 			}
@@ -1271,6 +1272,10 @@ qx.Class.define("desk.SliceView",
 			var sliceId = e.getData();
 			this.__sliceLabel.setValue(sliceId + "");
 			// something fishy here : getNumberOfSlices should never be 0 but it is sometimes...
+			var slice = this.getFirstSlice();
+			if (!slice) {
+				return;
+			}
 			var newSliceId = this.getFirstSlice().getNumberOfSlices() - 
 				1 - sliceId;
 			if (newSliceId < 0) {

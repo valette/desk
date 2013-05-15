@@ -183,6 +183,12 @@ qx.Class.define("desk.VolumeSlice",
 		__contrast : 1,
 		__opacity : 1,
 
+		__ready : false,
+
+		isReady : function () {
+			return this.__ready;
+		},
+
 		getFileName : function () {
 			return this.__file;
 		},
@@ -676,8 +682,6 @@ qx.Class.define("desk.VolumeSlice",
 				this.__ready = true;
 			}
 		},
-
-		__ready : false,
 
 		__updateTriggered : true,
 		__updateInProgress : false,
