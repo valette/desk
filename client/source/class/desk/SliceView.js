@@ -44,6 +44,7 @@ qx.Class.define("desk.SliceView",
 		});
 
 		this.addListener("changePaintMode", function (e) {
+			this.__initDrawing();
 			if (e.getData()) {
 				this.setEraseMode(false);
 				this.__updateBrush();
@@ -51,6 +52,7 @@ qx.Class.define("desk.SliceView",
 		}, this);
 
 		this.addListener("changeEraseMode", function (e) {
+			this.__initDrawing();
 			if (e.getData()) {
 				this.setPaintMode(false);
 				this.__updateBrush();
@@ -194,6 +196,7 @@ qx.Class.define("desk.SliceView",
 		},
 
 		getDrawingCanvas : function () {
+			this.__initDrawing();
 			return this.__drawingCanvas;
 		},
 
@@ -224,11 +227,13 @@ qx.Class.define("desk.SliceView",
 		},
 
 		setPaintColor : function (color) {
+			this.__initDrawing();
 			this.__paintColor=color;
 			this.__updateBrush();
 		},
 
 		setPaintWidth : function (width) {
+			this.__initDrawing();
 			this.__paintWidth=width;
 			this.__updateBrush();
 		},
@@ -664,6 +669,16 @@ qx.Class.define("desk.SliceView",
 			}, this);
 		},
 
+		__initDrawingDone : false,
+
+		__initDrawing : function () {
+			if (this.__initDrawingDone) return;
+			var volumeSlice = this.getFirstSlice();
+			this.__setDrawingMesh(volumeSlice);
+			this.__createBrushMesh(volumeSlice);
+			this.__initDrawingDone = true;
+		},
+
 		__initFromVolume : function (volumeSlice) {
 			this.__slider.setMaximum(volumeSlice.getNumberOfSlices() - 1);
 			if (volumeSlice.getNumberOfSlices() === 1) {
@@ -689,10 +704,8 @@ qx.Class.define("desk.SliceView",
 			this.__volumeSpacing = volumeSlice.getSpacing();
 			this.__setupInteractionEvents();
 
-			this.__setDrawingMesh(volumeSlice);
-			this.__createBrushMesh(volumeSlice);
 			this.__createCrossMeshes(volumeSlice);
-			
+
 			switch (this.__orientation)
 			{
 				case 0 :
@@ -943,7 +956,7 @@ qx.Class.define("desk.SliceView",
 				var label = this.__directionOverlays[3];
 				container.remove(label);
 				container.add(label, {right: 1, top:"45%"});
-				this.__brushMesh.visible = false;
+				if (this.__brushMesh) this.__brushMesh.visible = false;
 				this.render();
 				this.fireDataEvent("viewMouseOut",event);
 			}
@@ -992,7 +1005,7 @@ qx.Class.define("desk.SliceView",
 				this.__setCrossPositionFromEvent(event);
 				break;
 			case 1 :
-				brushMesh.visible = false;
+				if (brushMesh) brushMesh.visible = false;
 				var origin = this.__threeContainer.getContentLocation();
 				controls.mouseMove(event.getDocumentLeft() - origin.left,
 					event.getDocumentTop() - origin.top);
@@ -1009,7 +1022,7 @@ qx.Class.define("desk.SliceView",
 				this.__propagateCameraToLinks();
 				break;
 			case 2 :
-				brushMesh.visible = false;
+				if (brushMesh) brushMesh.visible = false;
 				origin = this.__threeContainer.getContentLocation();
 				controls.mouseMove(event.getDocumentLeft() - origin.left,
 						event.getDocumentTop() - origin.top);
