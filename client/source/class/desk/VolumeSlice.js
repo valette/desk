@@ -193,6 +193,10 @@ qx.Class.define("desk.VolumeSlice",
 			return this.__file;
 		},
 
+		getOrientation : function () {
+			return this.__orientation;
+		},
+
 		getDimensions : function () {
 			return this.__dimensions;
 		},
