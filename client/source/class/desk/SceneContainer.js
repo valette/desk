@@ -1007,7 +1007,6 @@ qx.Class.define("desk.SceneContainer",
                 this.applyToSelectedMeshes(function (mesh) {
                         mesh.visible = false;
                 });
-
 				this.render();
 			},this);
 			menu.add(hideButton);
@@ -1049,42 +1048,27 @@ qx.Class.define("desk.SceneContainer",
 			},this);
 			menu.add(animateButton);
 			
-		//// Remove all menu buttons but the "show" and "hide" buttons for the volumeSlices
-			menu.addListener("appear", function()
-			{
+			var optionalButtons = [propertiesButton,
+				appearanceButton, removeButton, analysisButton,
+				animateButton];
+			
+			//// hide all menu buttons but the "show" and "hide" buttons for the volumeSlices
+			menu.addListener("appear", function() {
 				var selNode = this.__meshesTree.getSelectedNodes()[0];
 				var leaf = this.__meshesTree.nodeGet(selNode);
+				var visibility = "visible";
 				if (leaf) {
 					if (leaf.__customProperties) {
-						if(leaf.__customProperties.volumeSlice)
-						{
-							menu.remove(propertiesButton);
-							menu.remove(appearanceButton);
-							menu.remove(removeButton);
-							menu.remove(analysisButton);
-							menu.remove(animateButton);
+						if(leaf.__customProperties.volumeSlice) {
+							visibility = "excluded";
 						}
-						else
-							return null;
 					}
-					else
-						return null;
-				} else {
-					return null;
+				}
+				for (var i = 0; i < optionalButtons.length; i++) {
+					optionalButtons[i].setVisibility(visibility);
 				}
 			}, this);
-		//// Restore all the menu buttons
-			menu.addListener("disappear", function()
-			{
-				menu.add(propertiesButton);
-				menu.add(appearanceButton);
-				menu.add(showButton);
-				menu.add(hideButton);
-				menu.add(removeButton);
-				menu.add(analysisButton);
-				menu.add(animateButton);
-			});
-			
+
 			qx.util.DisposeUtil.disposeTriggeredBy(menu, this);
 			return menu;
 		}
