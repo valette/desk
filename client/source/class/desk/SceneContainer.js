@@ -225,17 +225,14 @@ qx.Class.define("desk.SceneContainer",
 				if (node.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 					var label = node.label;
 					var mesh = this.__getMeshFromNode(node);
+					var visibility = false;
 					if (label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1) {
-						if (mesh) {
-							mesh.visible = true;
-						}
-						return true;
-					} else {
-						if (mesh) {
-							mesh.visible = false;
-						}
-						return false;
+						visibility = true;
 					}
+					if (mesh) {
+						mesh.visible = visibility;
+					}
+					return visibility;
 				}
 				return true;
 			}, this);
@@ -1048,9 +1045,8 @@ qx.Class.define("desk.SceneContainer",
 			},this);
 			menu.add(animateButton);
 			
-			var optionalButtons = [propertiesButton,
-				appearanceButton, removeButton, analysisButton,
-				animateButton];
+			var optionalButtons = [propertiesButton, appearanceButton,
+				analysisButton, animateButton];
 			
 			//// hide all menu buttons but the "show" and "hide" buttons for the volumeSlices
 			menu.addListener("appear", function() {
