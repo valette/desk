@@ -2,7 +2,7 @@
  * Singleton class which stores all available actions, handles launching
  * and display actions in progress
  * @ignore (HackCTMWorkerURL)
- * @ignore (async.*)
+ * @ignore (async.queue)
  * @lint ignoreDeprecated (alert)
  */
 qx.Class.define("desk.Actions", 

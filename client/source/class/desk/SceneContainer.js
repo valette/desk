@@ -21,7 +21,8 @@
 * @ignore(desk.MeshTools)
 * @ignore (THREE.ParticleSystem)
 * @ignore (THREE.Line)
-* @ignore (async.*)
+* @ignore (async.queue)
+* @ignore (async.map)
 */
 qx.Class.define("desk.SceneContainer", 
 {
