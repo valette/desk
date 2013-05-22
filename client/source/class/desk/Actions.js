@@ -38,7 +38,6 @@ qx.Class.define("desk.Actions",
 		var baseURL = desk.FileSystem.getInstance().getBaseURL();
 		this.__baseActionsURL = baseURL + 'rpc/';
 
-		this.__populateActionMenu();
 		this.__ongoingActions = new qx.ui.form.List();
 		this.__ongoingActions.set ({width : 200, selectionMode : 'multi'});
 
@@ -54,16 +53,18 @@ qx.Class.define("desk.Actions",
 		scripts.push(threeURL + 'ctm/CTMLoader.js');
 		scripts.push(threeURL + 'ctm/ctm.js');
 		scripts.push(threeURL + 'ctm/lzma.js');
-        scripts.push(baseURL + 'ext/async.min.js');
-        scripts.push(baseURL + 'ext/underscore-min.js');
-        scripts.push(baseURL + 'ext/parallel.min.js');
+		scripts.push(baseURL + 'ext/async.min.js');
+		scripts.push(baseURL + 'ext/underscore-min.js');
+		scripts.push(baseURL + 'ext/parallel.min.js');
+
+		var self = this;
 		desk.FileSystem.includeScripts(scripts, function () {
-			this.__actionsQueue = async.queue(this.__launchAction.bind(this), 20);
-			this.__scriptsLoaded = true;
-			if (this.__actionsLoaded) {
-				this.__setReady();
-			}
-		}, this);
+			self.__actionsQueue = async.queue(self.__launchAction.bind(self), 20);
+			self.__populateActionMenu(function () {
+				self.__ready = true;
+				self.fireEvent('changeReady');
+			});
+		});
 
 		if (0) {
 			// this code just includes other desk classes by default...
@@ -167,15 +168,6 @@ qx.Class.define("desk.Actions",
 		isReady : function () {
 			return this.__ready;
 		},
-
-		__setReady : function () {
-			this.__ready = true;
-			this.fireEvent('changeReady');
-		},
-
-		__scriptsLoaded : false,
-
-		__actionsLoaded : false,
 
 		__actionMenu : null,
 		__actions : null,
@@ -369,7 +361,7 @@ qx.Class.define("desk.Actions",
 			req.send();
 		},
 
-		__populateActionMenu : function() {
+		__populateActionMenu : function(callback) {
 			this.__actionMenu = new qx.ui.menu.Menu();
 			desk.FileSystem.readFile('actions.json', function (request) {
 				var settings = JSON.parse(request.getResponseText());
@@ -391,8 +383,7 @@ qx.Class.define("desk.Actions",
 
 				var libs = {};
 				var actionsNames = Object.keys(actions);
-				for (var n = 0; n < actionsNames.length; n++)
-				{
+				for (var n = 0; n < actionsNames.length; n++) {
 					var actionName = actionsNames[n];
 					var action = actions[actionName];
 					action.attributes = action.attributes || {};
@@ -440,10 +431,7 @@ qx.Class.define("desk.Actions",
 					this.__actionMenu.add(menubutton);
 				}
 
-				this.__actionsLoaded = true;
-				if ( this.__scriptsLoaded ) {
-					this.__setReady();
-				}
+				callback();
 			}, this);
 		}
 	}
