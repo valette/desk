@@ -2,6 +2,7 @@
  * Singleton class which stores all available actions, handles launching
  * and display actions in progress
  * @ignore (HackCTMWorkerURL)
+ * @ignore (async.*)
  * @lint ignoreDeprecated (alert)
  */
 qx.Class.define("desk.Actions", 
@@ -32,7 +33,6 @@ qx.Class.define("desk.Actions",
 	*/
 	construct : function() {
 		this.base(arguments);
-		this.__actionsQueue = [];
 
 		// determine base URLs for RPC
 		var baseURL = desk.FileSystem.getInstance().getBaseURL();
@@ -58,6 +58,7 @@ qx.Class.define("desk.Actions",
         scripts.push(baseURL + 'ext/underscore-min.js');
         scripts.push(baseURL + 'ext/parallel.min.js');
 		desk.FileSystem.includeScripts(scripts, function () {
+			this.__actionsQueue = async.queue(this.__launchAction.bind(this), 20);
 			this.__scriptsLoaded = true;
 			if (this.__actionsLoaded) {
 				this.__setReady();
@@ -187,8 +188,8 @@ qx.Class.define("desk.Actions",
 
 		__permissionsLevel : 0,
 
+		// an async.queue to queue actions
 		__actionsQueue : null,
-		__maximumNumberOfParallelActions : 20,
 
 		/**
 		* Returns the permission level
@@ -221,7 +222,7 @@ qx.Class.define("desk.Actions",
 		* @return {qx.ui.menu.Menu} actions menu
 		*/
 		getActionsMenu : function (fileBrowser) {
-			this.__currentFileBrowser=fileBrowser;
+			this.__currentFileBrowser = fileBrowser;
 			return this.__actionMenu;
 		},
 		
@@ -240,16 +241,6 @@ qx.Class.define("desk.Actions",
 			qx.core.Init.getApplication().getRoot().add(this.__ongoingActions, {top : 0, right : 0});
 		},
 
-		__tryToLaunchActions : function () {
-			if ((this.__actionsQueue.length === 0)||(this.__maximumNumberOfParallelActions === 0)) {
-				return;
-			}
-			this.__maximumNumberOfParallelActions--;
-			var action=this.__actionsQueue[0];
-			this.__actionsQueue.shift();
-			this.__launchAction(action.action, action.callback, action.context);
-		},
-
 		/**
 		* launches an action
 		* @param actionParameters {Object} object containing action aprameters
@@ -262,10 +253,13 @@ qx.Class.define("desk.Actions",
 			// add handle
 			var handle = Math.random().toString();
 			actionParameters.handle = handle;
-			this.__actionsQueue.push ({action : actionParameters,
-									callback : callback,
-									context : context});
-			this.__tryToLaunchActions();
+			this.__actionsQueue.push (actionParameters,
+				function (response) {
+					if (typeof callback === "function") {
+						callback.call(context, response);
+					}
+				}
+			);
 			return handle;
 		},
 
@@ -310,9 +304,6 @@ qx.Class.define("desk.Actions",
 			var req = e.getTarget();
 			var parameters = req.getUserData('actionDetails');
 
-			this.__maximumNumberOfParallelActions++;
-			this.__tryToLaunchActions();
-
 			parameters.actionFinished = true;
 			var response = JSON.parse(req.getResponseText());
 			if (response.error) {
@@ -323,20 +314,21 @@ qx.Class.define("desk.Actions",
 				this.__ongoingActions.remove(parameters.actionItem);
 			}
 			var callback = parameters.callback;
-			if ( typeof callback === 'function') {
-					callback.call(parameters.context, response);
+			if (typeof callback === 'function') {
+					callback(response);
 			}
 			req.dispose();
 		},
 
-		__launchAction : function (actionParameters, callback, context) {
+		__launchAction : function (actionParameters, callback) {
 			if (this.isForceUpdate()) {
 				actionParameters.force_update = true;
 			}
 			var that = this;
 			var parameters = {actionFinished :false,
-				callback : callback, context : context,
-				actionParameters : actionParameters};
+				callback : callback,
+				actionParameters : actionParameters
+			};
 
 			setTimeout(function(){
 				if (!parameters.actionFinished) {
@@ -377,8 +369,7 @@ qx.Class.define("desk.Actions",
 			req.send();
 		},
 
-		__populateActionMenu : function()
-		{
+		__populateActionMenu : function() {
 			this.__actionMenu = new qx.ui.menu.Menu();
 			desk.FileSystem.readFile('actions.json', function (request) {
 				var settings = JSON.parse(request.getResponseText());
