@@ -85,6 +85,11 @@ qx.Class.define("desk.SceneContainer",
 
 		this.__meshesTree.setContextMenu(this.__getContextMenu());
 
+		this.__ctmLoader = new THREE.CTMLoader(this.__threeContainer.getRenderer().context);
+		this.__vtkLoader = new THREE.VTKLoader();
+
+		this.__ctmQueue= async.queue(this.__ctmLoad.bind(this), 10);
+
 		if (file) {
 			this.addFile(file, parameters, callback, context);
 			window.setCaption(file);
@@ -129,11 +134,14 @@ qx.Class.define("desk.SceneContainer",
 		// a treeVirtual element storing all meshes
 		__meshesTree : null,
 
-		// array containing the queue of meshes to load 
-		__meshesToLoad : null,
+		// a async.queue to load ctm meshes
+		__ctmQueue : null,
 
-		// number defining the maximum number of loaders
-		__numberOfLoaders : 10,
+		// a THREE.VTKLoader
+        __vtkLoader : null,
+
+		// a THREE.CTMLLoader
+        __ctmLoader : null,
 
 		getThreeContainer : function () {
 			return this.__threeContainer;
@@ -504,103 +512,106 @@ qx.Class.define("desk.SceneContainer",
 			}, this);
 		},
 
+		__draggingInProgress : false,
+
+		__onMouseDown : function (event) {
+			this.__threeContainer.capture();
+			var origin = this.__threeContainer.getContentLocation();
+			this.__draggingInProgress = true;
+			var button = 0;
+			if (event.isRightPressed() || 
+				(event.isCtrlPressed() && !event.isShiftPressed())) {
+				button = 1;
+			}
+			else if ( event.isMiddlePressed() ||
+				(event.isShiftPressed() && !event.isCtrlPressed())) {
+				button = 2;
+			}
+			else if (event.isCtrlPressed() && event.isShiftPressed()) {
+				button = 3;
+			}
+
+			this.__threeContainer.getControls().mouseDown(button,
+							event.getDocumentLeft() - origin.left,
+							event.getDocumentTop() - origin.top);
+		},
+
+		__onMouseMove : function (event) {
+			if (this.__draggingInProgress) {
+				var origin = this.__threeContainer.getContentLocation();
+				this.__threeContainer.getControls().mouseMove(event.getDocumentLeft() - origin.left,
+					event.getDocumentTop() - origin.top);
+				this.render();
+				this.__propagateLinks();
+			}
+		},
+
+		__onMouseUp : function (event) {
+			this.__threeContainer.releaseCapture();
+			this.__draggingInProgress = false;
+			this.__threeContainer.getControls().mouseUp();
+		},
+
+		__onMouseWheel : function (event) {
+			var tree = this.__meshesTree;
+			var children = [];
+			this.__threeContainer.getScene().traverse(function (object){
+				if (!object.__customProperties) {
+					return;
+				}
+
+				if (object.__customProperties.volumeSlice) {
+					children.push(object);
+				}
+			});
+			if (children.length !== 0) {
+				var meshes = [];
+				for (var i = 0; i < children.length; i++) {
+					var mesh = children[i];
+					if (mesh.visible) {
+						meshes.push(mesh);
+					}
+				}
+
+				var origin = this.__threeContainer.getContentLocation();
+				var x=event.getDocumentLeft() - origin.left;
+				var y=event.getDocumentTop() - origin.top;
+
+				var elementSize = this.__threeContainer.getInnerSize();
+				var x2 = ( x / elementSize.width ) * 2 - 1;
+				var y2 = - ( y / elementSize.height ) * 2 + 1;
+
+				var projector = new THREE.Projector();
+				var vector = new THREE.Vector3( x2, y2, 0.5 );
+				var camera = this.__threeContainer.getCamera();
+				projector.unprojectVector(vector, camera);
+
+				var ray = new THREE.Raycaster(camera.position,
+					vector.sub(camera.position).normalize());
+
+				var intersects = ray.intersectObjects(meshes);
+
+				if (intersects.length > 0) {
+					var volumeSlice = intersects[0].object.__customProperties.volumeSlice;
+					var maximum = volumeSlice.getNumberOfSlices() - 1;
+					var delta = Math.round(event.getWheelDelta()/2);
+					var newValue = volumeSlice.getSlice() + delta;
+					if (newValue > maximum) {
+						newValue = maximum;
+					}
+					if (newValue < 0) {
+						newValue = 0;
+					}
+					volumeSlice.setSlice(newValue);
+				}
+			}
+		},
+
 		__setupInteractions : function() {
-			var threeCanvas = this.__threeContainer;
-
-			var draggingInProgress=false;
-			threeCanvas.addListener("mousedown", function (event)	{
-				threeCanvas.capture();
-				var origin = threeCanvas.getContentLocation();
-				draggingInProgress = true;
-				var button = 0;
-				if (event.isRightPressed() || 
-					(event.isCtrlPressed() && !event.isShiftPressed())) {
-					button = 1;
-				}
-				else if ( event.isMiddlePressed() ||
-					(event.isShiftPressed() && !event.isCtrlPressed())) {
-					button = 2;
-				}
-				else if (event.isCtrlPressed() && event.isShiftPressed()) {
-					button = 3;
-				}
-
-				this.__threeContainer.getControls().mouseDown(button,
-								event.getDocumentLeft() - origin.left,
-								event.getDocumentTop() - origin.top);
-			}, this);
-
-			threeCanvas.addListener("mousemove", function (event)	{
-				if (draggingInProgress) {
-					var origin = threeCanvas.getContentLocation();
-					this.__threeContainer.getControls().mouseMove(event.getDocumentLeft() - origin.left,
-						event.getDocumentTop() - origin.top);
-					this.render();
-					this.__propagateLinks();
-				}
-			}, this);
-
-			threeCanvas.addListener("mouseup", function (event)	{
-				threeCanvas.releaseCapture();
-				draggingInProgress = false;
-				this.__threeContainer.getControls().mouseUp();
-			}, this);
-
-			threeCanvas.addListener("mousewheel", function (event)	{
-				var tree = this.__meshesTree;
-                var children = [];
-                this.__threeContainer.getScene().traverse(function (object){
-                    if (!object.__customProperties) {
-                        return;
-                    }
-
-                    if (object.__customProperties.volumeSlice) {
-                        children.push(object);
-                    }
-                });
-				if (children.length !== 0) {
-					var meshes = [];
-					for (var i = 0; i < children.length; i++) {
-                        var mesh = children[i];
-						if (mesh.visible) {
-							meshes.push(mesh);
-						}
-					}
-
-					var origin = threeCanvas.getContentLocation();
-					var x=event.getDocumentLeft() - origin.left;
-					var y=event.getDocumentTop() - origin.top;
-
-					var elementSize = this.__threeContainer.getInnerSize();
-					var x2 = ( x / elementSize.width ) * 2 - 1;
-					var y2 = - ( y / elementSize.height ) * 2 + 1;
-
-					var projector = new THREE.Projector();
-					var vector = new THREE.Vector3( x2, y2, 0.5 );
-					var camera = this.__threeContainer.getCamera();
-					projector.unprojectVector(vector, camera);
-
-					var ray = new THREE.Raycaster(camera.position,
-						vector.sub(camera.position).normalize());
-
-					var intersects = ray.intersectObjects(meshes);
-
-					if (intersects.length > 0) {
-						var volumeSlice = intersects[0].object.__customProperties.volumeSlice;
-						var maximum = volumeSlice.getNumberOfSlices() - 1;
-						var delta = Math.round(event.getWheelDelta()/2);
-						var newValue = volumeSlice.getSlice() + delta;
-						if (newValue > maximum) {
-							newValue = maximum;
-						}
-						if (newValue < 0) {
-							newValue = 0;
-						}
-						volumeSlice.setSlice(newValue);
-					}
-				}
-
-			}, this);
+			this.__threeContainer.addListener("mousedown", this.__onMouseDown, this);
+			this.__threeContainer.addListener("mousemove", this.__onMouseMove, this);
+			this.__threeContainer.addListener("mouseup", this.__onMouseUp, this);
+			this.__threeContainer.addListener("mousewheel", this.__onMouseWheel, this);
 		},
 
 		/**
@@ -612,15 +623,9 @@ qx.Class.define("desk.SceneContainer",
 			this.__threeContainer.render(force);
 		},
 
-        __vtkLoader : null,
-
 		loadVTKURL : function (parameters, callback) {
-			var loader = this.__vtkLoader;
-            if (!loader) {
-                loader = this.__vtkLoader = new THREE.VTKLoader();
-            }
 			var self = this;
-			loader.load (parameters.url, function(geometry){
+			this.__vtkLoader.load (parameters.url, function(geometry){
                var mesh = self.addGeometry(geometry, parameters);
                if (typeof(callback) === "function") {
 				   callback(mesh);
@@ -629,14 +634,7 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		loadCTMURL : function (parameters, callback) {
-			if (this.__meshesToLoad === null) {
-				this.__meshesToLoad=[];
-			}
-
-            parameters = parameters || {};
-
-			this.__meshesToLoad.push({parameters : parameters, callback : callback});
-			this.__loadQueue();
+			this.__ctmQueue.push(parameters, callback);
 		},
 
         addGeometry : function (geometry, parameters) {
@@ -676,40 +674,22 @@ qx.Class.define("desk.SceneContainer",
             return mesh;
         },
 
-		__loadQueue : function () {
-			if (this.__meshesToLoad.length === 0)
-				return;
-            var currentMesh = this.__meshesToLoad[0];
-			var parameters = currentMesh.parameters;
-            var callback = currentMesh.callback;
-			var _this=this;
+		__ctmLoad : function (parameters, callback) {
 			var useWorker = true;
 			var useBuffers = true;
 
-			if (this.__numberOfLoaders > 0){
-				this.__meshesToLoad.shift();
-				this.__numberOfLoaders--;
-				var loader = this.__ctmLoader;
-                if (!loader) {
-                    loader = this.__ctmLoader = new THREE.CTMLoader( this.__threeContainer.getRenderer().context );
-                }
-                var self = this;
-				if (parameters.useBuffers === false) {
-					useBuffers = false;
-				}
-				loader.load (parameters.url, function (geometry) {
-                    var mesh = self.addGeometry(geometry, parameters);
-                    self.__numberOfLoaders++;
-                    self.__loadQueue();
-                    if (typeof callback === 'function') {
-                        callback(mesh);
-                    }
-                }, { useWorker : useWorker, useBuffers : useBuffers});
-				this.__loadQueue();
+			var self = this;
+			if (parameters.useBuffers === false) {
+				useBuffers = false;
 			}
-		},
 
-        __ctmLoader : null,
+			this.__ctmLoader.load (parameters.url, function (geometry) {
+				var mesh = self.addGeometry(geometry, parameters);
+				if (typeof callback === 'function') {
+					callback(mesh);
+				}
+			}, { useWorker : useWorker, useBuffers : useBuffers});
+		},
 
 		__getSnapshotButton : function () {
 			var factor=1;
