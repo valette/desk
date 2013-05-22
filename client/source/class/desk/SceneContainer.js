@@ -21,6 +21,7 @@
 * @ignore(desk.MeshTools)
 * @ignore (THREE.ParticleSystem)
 * @ignore (THREE.Line)
+* @ignore (async.*)
 */
 qx.Class.define("desk.SceneContainer", 
 {
@@ -337,68 +338,63 @@ qx.Class.define("desk.SceneContainer",
 			this.__threeContainer.resetView();
 		},
 
+		__parseXMLData : function (file, rootDocument, parameters, callback) {
+			var meshes = rootDocument.getElementsByTagName("mesh");
+			var rootElement = rootDocument.childNodes[0];
+			if (rootElement.hasAttribute("timestamp")) {
+				parameters.mtime = parseFloat(rootElement.getAttribute("timestamp"));
+			} else {
+				parameters.mtime = Math.random();
+			}
+
+			var dataModel = this.__meshesTree.getDataModel();
+			var leaf = dataModel.addBranch(null, desk.FileSystem.getFileName(file), null);
+			dataModel.setData();
+
+			var path = desk.FileSystem.getFileDirectory(file);
+			var self = this;
+			async.map(meshes, function (mesh, callback) {
+				var meshParameters = { parent : leaf};
+				if (mesh.hasAttribute("color")) {
+					var colorstring = mesh.getAttribute("color");
+					var colors = colorstring.split(" ");
+					var color = [];
+					while (colors.length < 3) {
+						colors.push('1');
+					}
+					if (colors.length < 4) {
+						colors.push('1');
+					}
+					
+					if ( colors.length < 5) {
+						colors.push('0');
+					}
+					
+					for (var j = 0; j < 4; j++) {
+						color[j] = parseFloat(colors[j]);
+					}
+					color[4] = parseInt(colors[4], 10);
+					meshParameters.color = color;
+				}
+
+				var xmlName;
+				if (mesh.hasAttribute("Mesh")) {
+					xmlName = mesh.getAttribute("Mesh");
+				} else {
+					xmlName = mesh.getAttribute("mesh");
+				}
+				self.__readFile(path + "/" + xmlName, meshParameters, callback);
+			}, function (err, result) {
+				if (typeof callback == "function") {
+					callback();
+				}
+			});
+		},
+
         __openXMLFile : function (file, parameters, callback) {
             parameters = parameters | {};
             desk.FileSystem.readFile(file, function (request){
-                var rootDocument = request.getResponse();
-                var meshes = rootDocument.getElementsByTagName("mesh");
-                var rootElement = rootDocument.childNodes[0];
-                if (rootElement.hasAttribute("timestamp")) {
-                    parameters.mtime = parseFloat(rootElement.getAttribute("timestamp"));
-                } else {
-                    parameters.mtime = Math.random();
-                }
-
-                var dataModel = this.__meshesTree.getDataModel();
-                var leaf = dataModel.addBranch(null, desk.FileSystem.getFileName(file), null);
-                dataModel.setData();
-
-                var path = desk.FileSystem.getFileDirectory(file);
-                var numberOfMeshes = meshes.length;
-                var numberOfRemainingMeshes = numberOfMeshes;
-
-                function afterMeshLoading(){
-                    numberOfRemainingMeshes--;
-                    if ((numberOfRemainingMeshes === 0) &&
-                        (typeof callback === 'function')) {
-                            callback();
-                    }
-                }
-
-                for (var n = 0; n < numberOfMeshes; n++) {
-                    var meshParameters = { parent : leaf};
-                    var mesh = meshes[n];
-                    if (mesh.hasAttribute("color")) {
-                        var colorstring = mesh.getAttribute("color");
-                        var colors = colorstring.split(" ");
-                        var color = [];
-                        while (colors.length<3) {
-                            colors.push('1');
-                        }
-                        if (colors.length < 4) {
-                            colors.push('1');
-                        }
-                        
-                        if ( colors.length < 5) {
-                            colors.push('0');
-                        }
-                        
-                        for (var j = 0; j < 4; j++) {
-                            color[j] = parseFloat(colors[j]);
-                        }
-                        color[4] = parseInt(colors[4], 10);
-                        meshParameters.color = color;
-                    }
-
-                    var xmlName;
-                    if (mesh.hasAttribute("Mesh")) {
-                        xmlName = mesh.getAttribute("Mesh");
-                    }
-                    else {
-                        xmlName = mesh.getAttribute("mesh");
-                    }
-                    this.__readFile(path + "/" + xmlName, meshParameters, afterMeshLoading);
-                }
+                this.__parseXMLData(file, request.getResponse(), parameters, callback);
             }, this);
         },
 
