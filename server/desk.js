@@ -149,15 +149,15 @@ app.post(actionsBaseURL + 'reset', function(req, res){
 // handle password change
 app.post(actionsBaseURL + 'password', function(req, res){
 	if (!req.body.password) {
-		res.send(JSON.stringify({error : 'no password entered!'}));
+		res.json({error : 'no password entered!'});
 		return;
 	}
 	if (req.body.password.length > 4) {
 		identity.password = req.body.password;
 		fs.writeFileSync(passwordFile, JSON.stringify(identity));
-		res.send(JSON.stringify({status : "password changed"}));
+		res.json({status : "password changed"});
 	} else {
-		res.send(JSON.stringify({error : 'password too short!'}));
+		res.json({error : 'password too short!'});
 	}
 });
 
@@ -174,14 +174,14 @@ app.get(actionsBaseURL+':action', function (req, res) {
 		var path = req.query.path;
 		fs.exists(deskPath + path, function (exists) {
 			console.log('exists : ' + path	+ ' : ' + exists);
-			res.send(JSON.stringify({exists : exists}));
+			res.json({exists : exists});
 		});
 		break;
 	case 'ls' :
 		path = libPath.normalize(req.query.path) + '/';
 		actions.validatePath(path, function (error) {
 			if (error) {
-				res.send(JSON.stringify({error : error}));
+				res.json({error : error});
 				return;
 			}
 			actions.getDirectoryContent(path, function (message) {
