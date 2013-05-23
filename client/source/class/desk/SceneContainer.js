@@ -71,8 +71,7 @@ qx.Class.define("desk.SceneContainer",
 		topRightContainer.add(this.__getResetViewButton(), {flex : 1});
 		topRightContainer.add(this.__getSnapshotButton());
 
-		this.__meshesTree = new qx.ui.treevirtual.TreeVirtual(["meshes","wireframe"],
-			{initiallyHiddenColumns : [1]});
+		this.__meshesTree = new qx.ui.treevirtual.TreeVirtual(["meshes"]);
 		this.__meshesTree.setSelectionMode(qx.ui.treevirtual.TreeVirtual.SelectionMode.MULTIPLE_INTERVAL);
 		this.__meshesTree.set({
 			width  : 180,
@@ -89,7 +88,7 @@ qx.Class.define("desk.SceneContainer",
 		this.__ctmLoader = new THREE.CTMLoader(this.__threeContainer.getRenderer().context);
 		this.__vtkLoader = new THREE.VTKLoader();
 
-		this.__ctmQueue= async.queue(this.__ctmLoad.bind(this), 10);
+		this.__queue= async.queue(this.__urlLoad.bind(this), 10);
 
 		if (file) {
 			this.addFile(file, parameters, callback, context);
@@ -113,11 +112,10 @@ qx.Class.define("desk.SceneContainer",
 	},
 
 	properties : {
-		convertVTK : { init : true, check: "Boolean"}
+		convertVTK : {init : true, check: "Boolean"}
 	},
 
 	events : {
-		"meshesLoaded" : "qx.event.type.Event",
 		"close" : "qx.event.type.Event",
 		/**
 		 * Fired whenever a mesh is removed. Attached data is the removed mesh
@@ -135,8 +133,8 @@ qx.Class.define("desk.SceneContainer",
 		// a treeVirtual element storing all meshes
 		__meshesTree : null,
 
-		// a async.queue to load ctm meshes
-		__ctmQueue : null,
+		// a async.queue to load meshes
+		__queue : null,
 
 		// a THREE.VTKLoader
         __vtkLoader : null,
@@ -172,45 +170,36 @@ qx.Class.define("desk.SceneContainer",
 		},
 
         __addLeaf : function (parameters) {
-            var leaf;
-            parameters = parameters || {};
-            var dataModel = this.__meshesTree.getDataModel();
-            parameters.label = parameters.label || "mesh";
-            var parent = parameters.parent;
-            if (parent) {
-                leaf = dataModel.addLeaf(parent, parameters.label, null);
-            } else {
-                leaf = dataModel.addLeaf(null, parameters.label, null);            
-            }
-            dataModel.setData();
-            return leaf;
-        },
+			parameters = parameters || {};
+			var dataModel = this.__meshesTree.getDataModel();
+			parameters.label = parameters.label || "mesh";
+			var parent = parameters.parent;
+			var leaf = dataModel.addLeaf(parent, parameters.label, null);
+			dataModel.setData();
+			return leaf;
+		},
 
-        __getMeshFromNode : function (node) {
-            var leaf = this.__meshesTree.nodeGet(node);
-            if (leaf) {
-                if (leaf.__customProperties) {
+		__getMeshFromNode : function (node) {
+			var leaf = this.__meshesTree.nodeGet(node);
+			if (leaf) {
+				if (leaf.__customProperties) {
 					return leaf.__customProperties.mesh;
-				} else {
-					return null;
 				}
-            } else {
-                return null;
-            }
-        },
+			}
+			return null;
+		},
 
 		addMesh : function (mesh, parameters) {
-            parameters = parameters || {};
+			parameters = parameters || {};
 			this.__threeContainer.getScene().add(mesh);
-            var leaf = parameters.leaf;
-            if (leaf === undefined) {
-                leaf = this.__addLeaf(parameters);
-            }
-            parameters.mesh = mesh;
-            parameters.leaf = leaf;
-            this.__meshesTree.nodeGet(leaf).__customProperties = parameters;
-            mesh.__customProperties = parameters;
-        },
+			var leaf = parameters.leaf;
+			if (leaf === undefined) {
+				parameters.leaf = leaf = this.__addLeaf(parameters);
+			}
+			parameters.mesh = mesh;
+			this.__meshesTree.nodeGet(leaf).__customProperties = parameters;
+			mesh.__customProperties = parameters;
+		},
 
 		viewAll : function () {
 			this.__threeContainer.viewAll();
@@ -263,43 +252,28 @@ qx.Class.define("desk.SceneContainer",
 		__readFile : function (file, parameters, callback) {
             parameters = parameters || {};
 			var label = desk.FileSystem.getFileName(file);
-			var self = this;
-            var leafParameters = {label : label};
-            if (parameters.parent) {
-                leafParameters.parent = parameters.parent;
-            }
+			var leafParameters = {label : label};
+			leafParameters.parent = parameters.parent;
             var leaf = this.__addLeaf(leafParameters);
             parameters.leaf = leaf;
-			var extension = desk.FileSystem.getFileExtension(file);
 
-			function myCallback (mesh) {
-				self.viewAll();
-                if (typeof callback === 'function') {
-                    callback(mesh);
-                }
-			}
-
+			var self = this;
 			function loadMeshIntoScene(file) {
-				if ( parameters.mtime === undefined ) {
-					parameters.mtime=Math.random();
+				if (parameters.mtime === undefined) {
+					parameters.mtime = Math.random();
 				}
                 parameters.url = desk.FileSystem.getFileURL(file) + "?nocache=" + parameters.mtime;
-
-                if ((extension === "vtk") && (!self.isConvertVTK())) {
-					self.loadVTKURL(parameters, myCallback);
-				} else {
-                    self.loadCTMURL(parameters, myCallback);
-				}
+				self.loadURL(parameters, callback);
 			}
 
-            if ((extension =='vtk') && !this.isConvertVTK()) {
-                loadMeshIntoScene(file);
-                return;
-            }
-
+			var extension = desk.FileSystem.getFileExtension(file);
 			switch (extension)
 			{
             case "vtk":
+				if (!this.isConvertVTK()) {
+					loadMeshIntoScene(file);
+					break;
+				}
 			case "ply":
 			case "obj":
 			case "stl":
@@ -319,7 +293,7 @@ qx.Class.define("desk.SceneContainer",
 				loadMeshIntoScene(file);
 				break;
 			default : 
-				alert("error : file "+file+" cannot be displayed by mesh viewer");
+				alert("error : file " + file + " cannot be displayed by mesh viewer");
 			}
 		},
 
@@ -363,7 +337,7 @@ qx.Class.define("desk.SceneContainer",
 			var path = desk.FileSystem.getFileDirectory(file);
 			var self = this;
 			async.map(meshes, function (mesh, callback) {
-				var meshParameters = { parent : leaf};
+				var meshParameters = {parent : leaf};
 				if (mesh.hasAttribute("color")) {
 					var colorstring = mesh.getAttribute("color");
 					var colors = colorstring.split(" ");
@@ -400,13 +374,6 @@ qx.Class.define("desk.SceneContainer",
 			});
 		},
 
-        __openXMLFile : function (file, parameters, callback) {
-            parameters = parameters | {};
-            desk.FileSystem.readFile(file, function (request){
-                this.__parseXMLData(file, request.getResponse(), parameters, callback);
-            }, this);
-        },
-
 		/**
 		 * Loads a file in the scene.
 		 * @param file {String} input file
@@ -417,12 +384,14 @@ qx.Class.define("desk.SceneContainer",
 		addFile : function (file, parameters, callback, context) {
             parameters = parameters || {};
             this.__files.push(file);
-            function afterLoading(mesh) {
-                if (typeof callback === 'function') {
-                    callback.apply(context, [mesh]);
-                }
-            }
             parameters.file = file;
+
+			function afterLoading(mesh) {
+				if (typeof callback === 'function') {
+					callback.apply(context, [mesh]);
+				}
+			}
+
             var extension = desk.FileSystem.getFileExtension(file);
 			switch (extension)
 			{
@@ -435,10 +404,13 @@ qx.Class.define("desk.SceneContainer",
 					this.__readFile (file, parameters, afterLoading);
 					break;
 				case "xml":
-                    this.__openXMLFile(file, parameters, afterLoading);
+					desk.FileSystem.readFile(file, function (request){
+						this.__parseXMLData(file, request.getResponse(), parameters, callback);
+					}, this);
 					break;
 				default : 
-					alert ("error : meshviewer cannot read extension "+extension);
+					alert ("error : meshviewer cannot read extension " + extension);
+					break;
 			}
 		},
 
@@ -471,31 +443,26 @@ qx.Class.define("desk.SceneContainer",
 			]);
 
 			var material = volumeSlice.getMaterial();
-			material.transparent = false;
-			var mesh = new THREE.Mesh(geometry,material);
 			material.side = THREE.DoubleSide;
+			var mesh = new THREE.Mesh(geometry,material);
 
 			function updateTexture() {
 				var coords = volumeSlice.getCornersCoordinates();
 				for (var i = 0; i < 4; i++) {
 					geometry.vertices[i].set(coords[3*i], coords[3*i+1], coords[3*i+2]);
 				}
-				geometry.computeCentroids();
 				geometry.computeFaceNormals();
-				geometry.computeVertexNormals();
 				geometry.computeBoundingSphere();
-				geometry.computeBoundingBox();
 				geometry.verticesNeedUpdate = true;
 				this.render(true);
 			}
-
-			updateTexture.apply(this);
 
 			var listenerId = volumeSlice.addListener('changeImage', updateTexture, this);
             this.addMesh(mesh, {label : 'View ' + (volumeSlice.getOrientation()+1),
 				listenerId : listenerId,
                 volumeSlice : volumeSlice
             });
+			updateTexture.apply(this);
 		},
 
 		__addDropSupport : function () {
@@ -624,18 +591,8 @@ qx.Class.define("desk.SceneContainer",
 			this.__threeContainer.render(force);
 		},
 
-		loadVTKURL : function (parameters, callback) {
-			var self = this;
-			this.__vtkLoader.load (parameters.url, function(geometry){
-               var mesh = self.addGeometry(geometry, parameters);
-               if (typeof(callback) === "function") {
-				   callback(mesh);
-			   }
-			});
-		},
-
-		loadCTMURL : function (parameters, callback) {
-			this.__ctmQueue.push(parameters, callback);
+		loadURL : function (parameters, callback) {
+			this.__queue.push(parameters, callback);
 		},
 
         addGeometry : function (geometry, parameters) {
@@ -675,7 +632,7 @@ qx.Class.define("desk.SceneContainer",
             return mesh;
         },
 
-		__ctmLoad : function (parameters, callback) {
+		__urlLoad : function (parameters, callback) {
 			var useWorker = true;
 			var useBuffers = true;
 
@@ -683,8 +640,14 @@ qx.Class.define("desk.SceneContainer",
 			if (parameters.useBuffers === false) {
 				useBuffers = false;
 			}
+			var loader;
+			if (desk.FileSystem.getFileExtension(parameters.url) === "vtk") {
+				loader = this.__vtkLoader;
+			} else {
+				loader = this.__ctmLoader;
+			}
 
-			this.__ctmLoader.load (parameters.url, function (geometry) {
+			loader.load (parameters.url, function (geometry) {
 				var mesh = self.addGeometry(geometry, parameters);
 				if (typeof callback === 'function') {
 					callback(mesh);
