@@ -2,6 +2,7 @@
 * @ignore(Uint8Array)
 * @lint ignoreDeprecated(alert)
 * @asset(desk/Contrast_Logo_petit.PNG)
+* @ignore (async.each)
 */
 qx.Class.define("desk.MPRContainer", 
 {
@@ -231,24 +232,23 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		__applyViewsLayout : function (layout) {
-			var viewers=this.__viewers;
-			var gridContainer=this.__gridContainer;
-			var orientationContainer=this.__orientationContainer;
+			var viewers = this.__viewers;
+			var gridContainer = this.__gridContainer;
+			var orientationContainer = this.__orientationContainer;
 			var i;
-			for ( i=0; i < this.__nbUsedOrientations; i++ )
-			{
+			for (i = 0; i < this.__nbUsedOrientations; i++) {
 				gridContainer.remove( viewers[i] );
 			}
 			orientationContainer.removeAll();
 
-			for ( i=0; i < this.__nbUsedOrientations; i++ ) {
+			for (i = 0; i < this.__nbUsedOrientations; i++) {
 				var viewer;
 				//// Use  layout.charAt(i)-1  since layout uses 1,2,3  but  __layoutSelectBoxes  goes from 0 to 2 !
 				var letter = this.__layoutSelectBoxes[layout.charAt(i)-1].getSelection()[0].getLabel().charAt(0);
-				for (var j=0;j<this.__nbUsedOrientations;j++)
+				for (var j = 0; j < this.__nbUsedOrientations; j++)
 				{
-					viewer=viewers[j];
-					if ( viewer.getOrientPlane().charAt(0) == letter ) {
+					viewer = viewers[j];
+					if (viewer.getOrientPlane().charAt(0) == letter) {
 						break;
 					}
 				}
@@ -523,31 +523,36 @@ qx.Class.define("desk.MPRContainer",
             label.setTextAlign("left");
 			labelcontainer.add(label, {flex : 1});
 
-			var numberOfRemainingMeshes = this.__nbUsedOrientations;
 			var _this = this;
-			for(var i = 0; i < this.__nbUsedOrientations; i++) {
-				volumeSlices[i] = this.__viewers[i].addVolume(file, parameters, (function (myI) { 
-					return (function (volumeSlice) {
-						numberOfRemainingMeshes--;
-						if (numberOfRemainingMeshes === 0) {
-
-							if (parameters.visible !== undefined) {
-								hideShowCheckbox.setValue(parameters.visible);
-							}
-							scalarBounds = volumeSlice.getScalarBounds();
-//							updateWindowLevel();
-							volumeListItem.setUserData("loadingInProgress", false);
-							if (volumeListItem.getUserData("toDelete")) {
-								_this.removeVolume(volumeListItem);
-							}
-							_this.__reorderMeshes();
-							if (typeof callback === 'function') {
-								callback(volumeListItem);
-							}
-						}
-					});
-				} ) (i));
+			var orientations = [];
+			for(var i = 0; i != this.__nbUsedOrientations; i++) {
+				orientations.push(i);
 			}
+
+			async.each(orientations,
+				function (orientation, callback) {
+					volumeSlices[orientation] = 
+						_this.__viewers[orientation].addVolume(file,
+							parameters,
+							function (volumeSlice) {callback();}
+						);
+				},
+				function (err, results) {
+					if (parameters.visible !== undefined) {
+						hideShowCheckbox.setValue(parameters.visible);
+					}
+//					scalarBounds = volumeSlice.getScalarBounds();
+//					updateWindowLevel();
+					volumeListItem.setUserData("loadingInProgress", false);
+					if (volumeListItem.getUserData("toDelete")) {
+						_this.removeVolume(volumeListItem);
+					}
+					_this.__reorderMeshes();
+					if (typeof callback === 'function') {
+						callback(volumeListItem);
+					}					
+				}
+			);
 
 			var settingsContainer = new qx.ui.container.Composite();
 			settingsContainer.setLayout(new qx.ui.layout.HBox());
@@ -641,7 +646,7 @@ qx.Class.define("desk.MPRContainer",
 			brightnessButton.addListener("mouseup", function(event) {
 				brightnessButton.releaseCapture();
 				clicked = false;
-			}, this );
+			}, this);
 
 			var scalarBounds;
 

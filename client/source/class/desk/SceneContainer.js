@@ -22,7 +22,7 @@
 * @ignore (THREE.ParticleSystem)
 * @ignore (THREE.Line)
 * @ignore (async.queue)
-* @ignore (async.map)
+* @ignore (async.each)
 */
 qx.Class.define("desk.SceneContainer", 
 {
@@ -336,7 +336,7 @@ qx.Class.define("desk.SceneContainer",
 
 			var path = desk.FileSystem.getFileDirectory(file);
 			var self = this;
-			async.map(meshes, function (mesh, callback) {
+			async.each(meshes, function (mesh, callback) {
 				var meshParameters = {parent : leaf};
 				if (mesh.hasAttribute("color")) {
 					var colorstring = mesh.getAttribute("color");

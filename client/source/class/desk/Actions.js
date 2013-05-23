@@ -11,8 +11,7 @@ qx.Class.define("desk.Actions",
 
 	type : "singleton",
 
-	statics :
-	{
+	statics : {
 		/**
 		* Calls callback when the actions list is constructed
 		* @param callback {Function} : callback to be called when ready
