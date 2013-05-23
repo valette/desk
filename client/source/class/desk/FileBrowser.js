@@ -1,7 +1,7 @@
 /**
  * A file browser, with customizable launch options
  * 
- * @ignore (async.forEach)
+ * @ignore (async.each)
  * @lint ignoreDeprecated (alert)
  * @lint ignoreDeprecated (confirm)
  * @asset(desk/tris.png)
@@ -212,7 +212,7 @@ qx.Class.define("desk.FileBrowser",
 				if (confirm ('Are you sure you want to ' + actionType + ' move these files:\n' +
                         filesString + 'to :\n' + destination)) {
                     var that = this;
-                    async.forEach(files, function (file, callback) {
+                    async.each(files, function (file, callback) {
                         desk.Actions.getInstance().launchAction({
                                 action : actionType,
 								source : file,
@@ -435,7 +435,7 @@ qx.Class.define("desk.FileBrowser",
 			}
 			if (confirm(message)) {
 				var self = this;
-				async.forEach(nodes, function (node, callback) {
+				async.each(nodes, function (node, callback) {
 					var file = self.__getNodeFile(node.nodeId);
 					if (this.__isNodeLeaf(node)) {
 						self.__actions.launchAction({
