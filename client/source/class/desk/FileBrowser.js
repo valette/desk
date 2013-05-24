@@ -436,7 +436,7 @@ qx.Class.define("desk.FileBrowser",
 				var self = this;
 				async.each(nodes, function (node, callback) {
 					var file = self.__getNodeFile(node.nodeId);
-					if (this.__isNodeLeaf(node)) {
+					if (self.__isNodeLeaf(node)) {
 						self.__actions.launchAction({
 							action : 'delete_file',
 							file_name : file},
@@ -474,20 +474,15 @@ qx.Class.define("desk.FileBrowser",
 		},
 
 		__newFileAction : function (node) {
-			var file = desk.FileSystem.getFileName(this.__getNodeFile(node.nodeId));
-			if (this.__isNodeLeaf(node)) {
-				alert ('error : select a file, not a directory');
-			}
-			file = this.__getNodeFile(node.nodeId);
-			var baseName = desk.FileSystem.getFileName(file);
-			var nameLength = baseName.length;
-			baseName = baseName.substring(0, baseName.length - 3) + 'txt';
-			baseName = prompt('enter new file name : ', baseName);
+			var file = this.__getNodeFile(node.nodeId);
+			var baseName = prompt('enter new file name : ', "newFile");
 			if (baseName !== null) {
 				var self = this;
-				desk.FileSystem.writeFile( desk.FileSystem.getFileDirectory(file) + baseName,
-					'edit me',
-					function () {self.__expandDirectoryListing(node.parentNodeId);
+				desk.FileSystem.writeFile(
+					desk.FileSystem.getFileDirectory(file) + baseName,
+					'',
+					function () {
+						self.__expandDirectoryListing(node.parentNodeId);
 				});
 			}
 		},
