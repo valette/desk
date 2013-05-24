@@ -2,13 +2,13 @@
  * @author mrdoob / http://mrdoob.com/
  */
 
-THREE.VTKLoader = function () {
-
-	THREE.EventDispatcher.call( this );
-
-};
+THREE.VTKLoader = function () {};
 
 THREE.VTKLoader.prototype = {
+	addEventListener: THREE.EventDispatcher.prototype.addEventListener,
+	hasEventListener: THREE.EventDispatcher.prototype.hasEventListener,
+	removeEventListener: THREE.EventDispatcher.prototype.removeEventListener,
+	dispatchEvent: THREE.EventDispatcher.prototype.dispatchEvent,
 
 	constructor: THREE.VTKLoader,
 
