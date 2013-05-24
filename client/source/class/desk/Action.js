@@ -132,16 +132,21 @@ qx.Class.define("desk.Action",
             if ((loadJSON === false) || (directory === "cache/")){
 				this.fireEvent("changeOutputDirectory");
 			} else {
-				desk.FileSystem.readFile(this.getOutputDirectory() + 'action.json',
-					function(request) {
-					if (request.getStatus() === 200 ) {
-						this.__loadedParameters = JSON.parse(request.getResponseText());
-						this.__updateUIParameters();
-						if (this.__tabView) {
-							this.__addOutputTab();
-						}
+				var jsonFile = this.getOutputDirectory() + 'action.json';
+				desk.FileSystem.exists(jsonFile, function (exists) {
+					if (exists) {
+						desk.FileSystem.readFile(jsonFile,
+							function(request) {
+								if (request.getStatus() === 200 ) {
+									this.__loadedParameters = JSON.parse(request.getResponseText());
+									this.__updateUIParameters();
+									if (this.__tabView) {
+										this.__addOutputTab();
+									}
+								}
+								this.fireEvent("changeOutputDirectory");
+						}, this);
 					}
-					this.fireEvent("changeOutputDirectory");
 				}, this);
 			}
         },
