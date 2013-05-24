@@ -358,8 +358,7 @@ qx.Class.define("desk.FileBrowser",
 				new desk.ImageViewer(file);
 				break;
 			case "xml":
-				desk.FileSystem.readFile(file, function (request) {
-					var xmlDoc = request.getResponse();
+				desk.FileSystem.readFile(file, function (error, xmlDoc) {
 					if (xmlDoc.getElementsByTagName("mesh").length !== 0) {
 						new desk.MeshViewer(file);
 					} else {

@@ -110,8 +110,7 @@ qx.Class.define("desk.TextEditor",
 			desk.TextEditor.codeVersion++;
 			bodyContainer.appendChild(scriptContainer);
 
-			var that = this;
-			if (desk.TextEditor.codeInTextEditor){
+			if (desk.TextEditor.codeInTextEditor) {
 					desk.TextEditor.codeInTextEditor();
 			} else {
 				alert('Error while parsing your code, please check syntax');
@@ -131,21 +130,19 @@ qx.Class.define("desk.TextEditor",
 		*
 		* @param file {String} the file to edit
 		*/
-		openFile : function (file)
-		{
+		openFile : function (file) {
 			if (file.substring(file.length - 3) === '.js') {
 				this.__executeButton.setVisibility('visible');
                 this.__textArea.useHighlight(true);
-			}
-			else {
+			} else {
 				this.__executeButton.setVisibility('excluded');
                 this.__textArea.useHighlight(false);
 			}
 
 			this.__file = file;
 			this.__reloadButton.setEnabled(false);
-			desk.FileSystem.readFile(file, function (request){
-				this.__textArea.setCode(request.getResponseText());
+			desk.FileSystem.readFile(file, function (error, result) {
+				this.__textArea.setCode(result);
 				this.setCaption(file);
 				this.__reloadButton.setEnabled(true);
 			}, this);

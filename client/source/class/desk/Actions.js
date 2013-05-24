@@ -362,8 +362,7 @@ qx.Class.define("desk.Actions",
 
 		__populateActionMenu : function(callback) {
 			this.__actionMenu = new qx.ui.menu.Menu();
-			desk.FileSystem.readFile('actions.json', function (request) {
-				var settings = JSON.parse(request.getResponseText());
+			desk.FileSystem.readFile('actions.json', function (error, settings) {
 				this.__actions = settings;
 				var permissions = this.__permissionsLevel = parseInt(settings.permissions, 10);
 				if (permissions) {

@@ -38,8 +38,7 @@ qx.Class.define("desk.Action",
 		* @param file {String} .JSON file to get settings from
 		*/
 		CREATEFROMFILE : function (file) {
-			desk.FileSystem.readFile(file, function (request) {
-				var parameters = JSON.parse(request.getResponseText());
+			desk.FileSystem.readFile(file, function (err, parameters) {
 				var action = new desk.Action (parameters.action);
 				action.setActionParameters(parameters);
 				action.buildUI();
@@ -136,9 +135,9 @@ qx.Class.define("desk.Action",
 				desk.FileSystem.exists(jsonFile, function (exists) {
 					if (exists) {
 						desk.FileSystem.readFile(jsonFile,
-							function(request) {
-								if (request.getStatus() === 200 ) {
-									this.__loadedParameters = JSON.parse(request.getResponseText());
+							function(err, result) {
+								if (!err) {
+									this.__loadedParameters = result;
 									this.__updateUIParameters();
 									if (this.__tabView) {
 										this.__addOutputTab();

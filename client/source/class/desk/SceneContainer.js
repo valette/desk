@@ -404,8 +404,8 @@ qx.Class.define("desk.SceneContainer",
 					this.__readFile (file, parameters, afterLoading);
 					break;
 				case "xml":
-					desk.FileSystem.readFile(file, function (request){
-						this.__parseXMLData(file, request.getResponse(), parameters, callback);
+					desk.FileSystem.readFile(file, function (error, result){
+						this.__parseXMLData(file, result, parameters, callback);
 					}, this);
 					break;
 				default : 

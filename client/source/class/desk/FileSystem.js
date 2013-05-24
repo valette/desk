@@ -36,22 +36,35 @@ qx.Class.define("desk.FileSystem",
 		* 
 		* <pre class="javascript">
 		* example : <br>
-		* desk.FileSystem.readFile ("myFilePath", function (request) {<br>
-		*   var answer = request.getResponseText(); //to get the raw text response<br>
-		*   var xmlAnswer = request.getResponse(); //to get parsed xml<br>
+		* desk.FileSystem.readFile ("myFilePath", function (err, result) {<br>
+		*   if (!err) {
+		*     // do something with result
+		*   } else {
+		*     // read error message
+		*   }
 		* });<br>
 		* </pre>
 		*/
 		readFile : function (file, callback, context) {
-			var req = new qx.io.request.Xhr(
-				desk.FileSystem.getFileURL(file)+
-				"?nocache=" + Math.random());
-			req.setAsync(true);
-			req.addListener('load', function (e) {
-				callback.call(context, e.getTarget());
-				req.dispose();
+			desk.FileSystem.exists(file, function (exists) {
+				if (exists) {
+					var req = new qx.io.request.Xhr(
+						desk.FileSystem.getFileURL(file)+
+						"?nocache=" + Math.random());
+					req.setAsync(true);
+					req.addListener('load', function () {
+						callback.call(context, null, req.getResponse());
+						req.dispose();
+					});
+					req.addListener('error', function (e) {
+						callback.call(context, req.getStatusText());
+						req.dispose();
+					});
+					req.send();					
+				} else {
+					callback.call(context, "File does not exist");
+				}
 			});
-			req.send();
 		},
 
 		/**
@@ -170,8 +183,8 @@ qx.Class.define("desk.FileSystem",
 		*/
 		executeScript : function (file, callback, context) {
 			desk.Actions.init(function () {
-				desk.FileSystem.readFile(file, function (request) {
-					var code = new Function(request.getResponseText());
+				desk.FileSystem.readFile(file, function (err, response) {
+					var code = new Function(response);
 					code();
 					if (typeof callback == 'function') {
 						callback.call(context);
