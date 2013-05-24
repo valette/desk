@@ -28,22 +28,22 @@ qx.Class.define("desk.FileSystem",
 
 	statics : {
 		/**
-		* Loads a file into memory
+		* Loads a file into memory. Depending on the file type, the result can be a string, a json object or an xml element
 		*
 		* @param file {String} the file to load
 		* @param callback {Function} success callback, with request as first parameter
 		* @param context {Object} optional context for the callback
 		* 
-		* <pre class="javascript">
-		* example : <br>
+		* <pre class='javascript'>
+		* example :<br>
 		* desk.FileSystem.readFile ("myFilePath", function (err, result) {<br>
-		*   if (!err) {
-		*     // do something with result
-		*   } else {
-		*     // read error message
-		*   }
-		* });<br>
-		* </pre>
+		*   if (!err) {<br>
+		*      // do something with result<br>
+		*   } else {<br>
+		*      // read error message<br>
+		*   }<br>
+		*});<br>
+		*</pre>
 		*/
 		readFile : function (file, callback, context) {
 			desk.FileSystem.exists(file, function (exists) {
