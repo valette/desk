@@ -105,13 +105,14 @@ qx.Class.define("desk.TextEditor",
 			scriptContainer = this.__scriptContainer = document.createElement('script');
 			scriptContainer.setAttribute('type','text/javascript');
 			scriptContainer.text = 'desk.TextEditor.codeInTextEditor = function(){' +
-						this.__textArea.getCode() + '\n};' +
-						'\n//@ sourceURL=v' + desk.TextEditor.codeVersion;
+				this.__textArea.getCode() + '\n};' + '\n//@ sourceURL=v' +
+				desk.TextEditor.codeVersion + '-' +
+				desk.FileSystem.getFileName(this.__file);
 			desk.TextEditor.codeVersion++;
 			bodyContainer.appendChild(scriptContainer);
 
 			if (desk.TextEditor.codeInTextEditor) {
-					desk.TextEditor.codeInTextEditor();
+				desk.TextEditor.codeInTextEditor();
 			} else {
 				alert('Error while parsing your code, please check syntax');
 			}

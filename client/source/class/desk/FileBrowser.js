@@ -339,9 +339,11 @@ qx.Class.define("desk.FileBrowser",
 			var extension = desk.FileSystem.getFileExtension(file);
 			switch (extension)
 			{
+			case 'js':
+				desk.FileSystem.executeScript(file);
+				break;
 			case 'log':
 			case 'txt':
-			case 'js':
 				new desk.TextEditor (file);
 				break;
 			case "vtk":
