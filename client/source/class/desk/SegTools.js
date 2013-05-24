@@ -1622,6 +1622,7 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__clearSeeds : function ( ) {
+			var self = this;
 			this.__master.applyToViewers (function (viewer) {
 				viewer.setUserData("previousSlice", viewer.getSlice());
 				var seedsLists = viewer.getUserData(desk.SegTools.seedsListsString);
@@ -1637,6 +1638,7 @@ qx.Class.define("desk.SegTools",
 					seedsLists[i].setUserData(desk.SegTools.seedsArrayString, seedsArray);
 					seedsLists[i].setUserData(desk.SegTools.cacheTagsArrayString, cacheTagsArray);
 				}
+				self.__reloadSeedImage(viewer);
 			});
 		},
 
