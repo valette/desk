@@ -74,8 +74,6 @@ qx.Class.define("desk.Action",
 
 		__outputDirectory : null,
 
-		__dependencies : null,
-
 		__action : null,
 
 		__name : null,
@@ -151,35 +149,31 @@ qx.Class.define("desk.Action",
         },
 
 		__updateUIParameters : function () {
-			var manager = this.__validationManager;
-			if (manager !== null) {
-				var parameters = this.__loadedParameters;
+			var hideProvidedParameters = false;
+			function setUIParameters(parameters, hide) {
+				var manager = this.__validationManager;
+				if (!manager) {
+					return;
+				}
+				if (!parameters) {
+					return;
+				}
 				var items = manager.getItems();
-				var hideProvidedParameters = false;
-				function changeParameters() {
-					for (var i = 0; i != items.length; i++) {
-						var item = items[i];
-						var parameterName = item.getPlaceholder();
-						var parameterValue = parameters[parameterName];
-						if (parameterValue != null) {
-							item.setValue(parameterValue);
-							if (hideProvidedParameters) {
-								item.setVisibility("excluded");
-								item.getUserData("label").setVisibility("excluded");
-							}
+				for (var i = 0; i != items.length; i++) {
+					var item = items[i];
+					var parameterName = item.getPlaceholder();
+					var parameterValue = parameters[parameterName];
+					if (parameterValue != null) {
+						item.setValue(parameterValue);
+						if (hide) {
+							item.setVisibility("excluded");
+							item.getUserData("label").setVisibility("excluded");
 						}
 					}
 				}
-				if (parameters != null) {
-					changeParameters();
-				}
-
-				hideProvidedParameters = !this.__standalone;
-				parameters = this.__providedParameters;
-				if (parameters != null) {
-					changeParameters();
-				}
 			}
+			setUIParameters(this.__loadedParameters, false);
+			setUIParameters(this.__providedParameters, !this.__standalone);
 		},
 
 		/**
@@ -299,7 +293,6 @@ qx.Class.define("desk.Action",
 			var manager = this.__validationManager;
 			var send = this.__updateButton;
 			var connections = this.__connections;
-			var i;
 
 			// check the validation status
 			if (!manager.getValid()) {
@@ -313,7 +306,7 @@ qx.Class.define("desk.Action",
 			var parameterMap = {"action" : this.__name};
 			var items = manager.getItems();
 			// add all parameters
-			for (i = 0; i < items.length; i++) {
+			for (var i = 0; i < items.length; i++) {
 				var currentItem = items[i];
 				var value = currentItem.getValue();
 				if (typeof value === 'string') {
@@ -347,49 +340,40 @@ qx.Class.define("desk.Action",
 					parentActions.push(parentAction);
 				}
 			}
-			var numberOfFinishedParentActions = parentActions.length;
-			
-			function afterParentActionProcessed (event){
-				numberOfFinishedParentActions++;
-				if (event) {
-					var finishedAction = event.getTarget();
-					//locate action in connections array
-					for (var i = 0; i < connections.length; i++) {
-						var currentConnection = connections[i];
-						if (currentConnection.action == finishedAction) {
-							parameterMap[currentConnection.parameter] =
-								currentConnection.action.getOutputDirectory() +
-									desk.FileSystem.getFileName(currentConnection.file);
-						}
+
+			var self = this;
+			async.each(parentActions, 
+				function (action, callback) {
+					action.addListenerOnce("actionUpdated", function (event) {
+						callback();
+					});
+					action.executeAction();
+				},
+
+			function (err) {
+				// update parameters from connections
+				for (var i = 0; i < connections.length; i++) {
+					var connection = connections[i];
+					parameterMap[connection.parameter] =
+						connection.action.getOutputDirectory() +
+							desk.FileSystem.getFileName(connection.file);
+				}
+
+				send.setLabel("Processing...");
+
+				var out = self.getOutputDirectory();
+				if (out) {
+					parameterMap.output_directory = out;
+				}
+
+				if (self.__outputDirectory) {
+					if (self.__outputDirectory.substring(0,6) === "cache/") {
+						parameterMap.output_directory = "cache/";
 					}
 				}
-				if (numberOfFinishedParentActions >= parentActions.length) {
-					send.setLabel("Processing...");
 
-					var out = this.getOutputDirectory();
-					if (out) {
-						parameterMap.output_directory = out;
-					}
-
-					if (this.__outputDirectory) {
-						if (this.__outputDirectory.substring(0,6) === "cache/") {
-							parameterMap.output_directory = "cache/";
-						}
-					}
-
-					this.__createSubdirectory(parameterMap);
-				}
-			}
-
-			if (parentActions.length > 0) {
-				for (i = 0; i != parentActions.length; i++) {
-					var currentParentAction = parentActions[i];
-					currentParentAction.addListenerOnce("actionUpdated", afterParentActionProcessed, this);
-					currentParentAction.executeAction();
-				}
-			} else {
-				afterParentActionProcessed.apply(this);
-			}
+				self.__createSubdirectory(parameterMap);
+			});
 		},
 
 		__createSubdirectory : function (parameterMap) {
