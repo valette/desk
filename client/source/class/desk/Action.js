@@ -1,6 +1,7 @@
 /**
  * A container to launch RPC actions and edit parameters
  * @lint ignoreDeprecated (alert)
+ * @ignore (async.each)
  */
 qx.Class.define("desk.Action", 
 {
@@ -149,12 +150,11 @@ qx.Class.define("desk.Action",
         },
 
 		__updateUIParameters : function () {
-			var hideProvidedParameters = false;
+			var manager = this.__validationManager;
+			if (!manager) {
+				return;
+			}
 			function setUIParameters(parameters, hide) {
-				var manager = this.__validationManager;
-				if (!manager) {
-					return;
-				}
 				if (!parameters) {
 					return;
 				}
@@ -163,13 +163,14 @@ qx.Class.define("desk.Action",
 					var item = items[i];
 					var parameterName = item.getPlaceholder();
 					var parameterValue = parameters[parameterName];
-					if (parameterValue != null) {
+					if (parameterValue !== undefined) {
 						item.setValue(parameterValue);
 						if (hide) {
 							item.setVisibility("excluded");
 							item.getUserData("label").setVisibility("excluded");
 						}
 					}
+
 				}
 			}
 			setUIParameters(this.__loadedParameters, false);
@@ -494,22 +495,11 @@ qx.Class.define("desk.Action",
 			var action = this.__action;
 			this.setLayout(new qx.ui.layout.VBox(5));
 
-
-            var parametersContainer; 
-            if (1) {
-                var scroll = new qx.ui.container.Scroll();
-                parametersContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
-                scroll.add(parametersContainer, {flex : 1});
-                this.add(scroll, {flex : 1});
-            } else {
-                parametersContainer = this;
-            }
-/*
 			var scroll = new qx.ui.container.Scroll();
 			var parametersContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
 			scroll.add(parametersContainer, {flex : 1});
 			this.add(scroll, {flex : 1});
-*/
+
 			if (this.__standalone) {
 				this.__window = new qx.ui.window.Window();
 				this.__window.set({ layout : new qx.ui.layout.HBox(),
