@@ -57,6 +57,7 @@ qx.Class.define("desk.ThreeContainer",
 		);
 		this.__renderer = renderer;
 		renderer.setClearColor(0xffffff, 1);
+		this.__initRenderFunction();
 
 		threeCanvas.addListener("resize", this.__resizeThreeCanvas, this);
 		this.__setupFullscreen();
@@ -76,7 +77,7 @@ qx.Class.define("desk.ThreeContainer",
 		/**
 		* in fullscreen mode, the container covers the entire browser window
 		*/
-		fullscreen : { init : false, check: "Boolean", event : "changeFullscreen"}
+		fullscreen : {init : false, check: "Boolean", event : "changeFullscreen"}
 	},
 
 	events : {
@@ -111,31 +112,29 @@ qx.Class.define("desk.ThreeContainer",
 			}, this);
 		},
 
+		__initRenderFunction : function () {
+			var _this = this;
+			this.__renderFunction =	function () {
+				if (!_this.__renderer) {
+					// there is a race condition :
+					// rendering can be triggered after widget deletion
+					return;
+				}
+				_this.__renderer.render(_this.__scene, _this.__camera);
+				_this.__renderingTriggered = false;
+				_this.fireEvent('render');
+			};
+		},
+
 		/**
 		* Renders the scene
 		* @param force {Boolean} forces display (i.e. does not use
 		* requestAnimationFrame())
 		*/
-		render : function ( force ) {
-			var _this = this;
-			if (!this.__renderFunction) {
-				this.__renderFunction =	function () {
-					if (!_this.__renderer) {
-						// there is a race condition :
-						// rendering can be triggered after widget deletion
-						return;
-					}
-					_this.__renderer.render( _this.__scene, _this.__camera );
-					_this.__renderingTriggered = false;
-					_this.fireEvent('render');
-				};
-			}
+		render : function (force) {
 			if (force) {
 				this.__renderFunction();
-				return;
-			}			
-
-			if (!this.__renderingTriggered) {
+			} else if (!this.__renderingTriggered) {
 				this.__renderingTriggered = true;
 				requestAnimationFrame(this.__renderFunction);
 			}
