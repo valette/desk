@@ -403,9 +403,12 @@ qx.Class.define("desk.FileBrowser",
 				nodeId = node.parentNodeId;
 			}
 			var uploader = new desk.Uploader(this.__getNodeFile(nodeId));
-			uploader.addListener("upload", function () {
-				this.__expandDirectoryListing(nodeId);
-			}, this);
+			var self = this;
+			uploader.addListener("upload",
+				_.throttle(function () {
+					self.__expandDirectoryListing(nodeId);
+				}, 2000)
+			);
 		},
 
 		__newDirectoryAction : function (node) {
