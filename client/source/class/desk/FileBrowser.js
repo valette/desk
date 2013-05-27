@@ -458,6 +458,7 @@ qx.Class.define("desk.FileBrowser",
 					}
 				}, function (err) {
 					self.__updateDirectories(files);
+					self.__virtualTree.resetSelection();
 				});
 			}
 		},
