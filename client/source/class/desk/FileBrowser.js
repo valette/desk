@@ -6,6 +6,7 @@
  * @lint ignoreDeprecated (confirm)
  * @asset(desk/tris.png)
  * @asset(desk/img.png)
+ * @ignore (_.throttle)
 */
 
 qx.Class.define("desk.FileBrowser", 
