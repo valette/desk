@@ -723,7 +723,6 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		__getPropertyWidget : function (parentWindow){
-			var _this=this;
 			var meshesTree=this.__meshesTree;
 			
 			var mainContainer = new qx.ui.container.Composite();
@@ -824,13 +823,13 @@ qx.Class.define("desk.SceneContainer",
 					var shapesArray=meshesTree.getSelectedNodes();
 					for (var i=0;i<shapesArray.length;i++)
 					{
-						var shape=_this.__meshes[shapesArray[i].nodeId];
+						var shape=this.__meshes[shapesArray[i].nodeId];
 						shape.material.wireframe=wireframeCheckBox.getValue();
 					}
 					console.log(wireframeCheckBox.getValue());
-					_this.render();
+					this.render();
 				}
-				});*/
+				}, this);*/
 
 			renderDepthSpinner.addListener("changeValue", function(event){
 				if (enableUpdate) {
