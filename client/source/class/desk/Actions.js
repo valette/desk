@@ -285,7 +285,7 @@ qx.Class.define("desk.Actions",
 			req.setAsync(true);
 			req.setRequestData({manage : 'list'});
 			req.addListener("success", function (e){
-				callback.call(context, JSON.parse(e.getTarget().getResponseText()));
+				callback.call(context, e.getTarget().getResponse());
 				req.dispose();
 			}, this);
 			req.send();

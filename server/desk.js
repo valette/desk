@@ -134,8 +134,8 @@ app.post(actionsBaseURL + 'upload', function(req, res) {
 // handle actions
 app.post(actionsBaseURL + 'action', function(req, res){
 	res.connection.setTimeout(0);
-    actions.performAction(req.body, function (message) {
-		res.send(message);
+    actions.performAction(req.body, function (response) {
+		res.json(response);
 	});
 });
 
@@ -161,7 +161,7 @@ app.post(actionsBaseURL + 'password', function(req, res){
 	}
 });
 
-app.get(actionsBaseURL+':action', function (req, res) {
+app.get(actionsBaseURL + ':action', function (req, res) {
 	var action = req.params.action;
 	switch (action) {
 	case 'clearcache' :
