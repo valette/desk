@@ -257,21 +257,12 @@ qx.Class.define("desk.SceneContainer",
             var leaf = this.__addLeaf(leafParameters);
             parameters.leaf = leaf;
 
-			var self = this;
-			function loadMeshIntoScene(file) {
-				if (parameters.mtime === undefined) {
-					parameters.mtime = Math.random();
-				}
-                parameters.url = desk.FileSystem.getFileURL(file) + "?nocache=" + parameters.mtime;
-				self.loadURL(parameters, callback);
-			}
-
 			var extension = desk.FileSystem.getFileExtension(file);
 			switch (extension)
 			{
             case "vtk":
 				if (!this.isConvertVTK()) {
-					loadMeshIntoScene(file);
+					this.__loadFile(file, parameters, callback);
 					break;
 				}
 			case "ply":
@@ -285,17 +276,24 @@ qx.Class.define("desk.SceneContainer",
                     function (response) {
                        var outputDir = response.outputDirectory;
                         parameters.mtime = response.MTime;
-                        loadMeshIntoScene(outputDir + '/mesh.ctm');
-				});
+                        this.__loadFile(outputDir + '/mesh.ctm', parameters, callback);
+				}, this);
 				break;
 
 			case "ctm":
-				loadMeshIntoScene(file);
+				this.__loadFile(file, parameters, callback);
 				break;
 			default : 
 				alert("error : file " + file + " cannot be displayed by mesh viewer");
 			}
 		},
+
+		__loadFile : function (file, parameters, callback) {
+			parameters.mtime = parameters.mtime || Math.random();
+			parameters.url = desk.FileSystem.getFileURL(file) + "?nocache=" + parameters.mtime;
+			this.loadURL(parameters, callback);
+		},
+
 
 		update : function () {
             var files = this.__files;
