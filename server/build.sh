@@ -20,8 +20,5 @@ make -f Makefile.linux -j $njobs
 cd ..
 
 cd ..
-echo 'here'
-pwd
-ls
 # create links to libs
 cp includes/includes.json.example includes/base.json
