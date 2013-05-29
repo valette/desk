@@ -514,7 +514,7 @@ qx.Class.define("desk.Action",
 			var showLogButton = new qx.ui.form.Button("Show console log");
 			this.__showLogButton = showLogButton;
 			showLogButton.addListener("execute",function () {
-				new desk.TextEditor(this.getOutputDirectory() + "/action.log");
+				new desk.TextEditor(this.getOutputDirectory() + "action.log");
 			}, this);
 			showLogButton.setVisibility("excluded");
 
