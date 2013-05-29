@@ -17,5 +17,26 @@ qx.Class.define("desk.FileField",
 				this.setValue(originFileBrowser.getSelectedFiles()[0]);
 			}
 		}, this);
+		this.setDraggable(true);
+		this.addListener('dragstart', this.__onDragStart);
+		this.addListener("droprequest", this.__onDropRequest, this);
+	},
+
+	members : {
+		__onDragStart : function (e) {
+			e.addAction("copy");
+			e.addType("file");
+		},
+
+		__onDropRequest : function(e) {
+			var type = e.getCurrentType();
+			switch (type) {
+			case "file":
+				e.addData(type, this.getValue());
+				break;
+			default :
+				break;
+			}
+		}
 	}
 });
