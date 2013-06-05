@@ -440,7 +440,9 @@ qx.Class.define("desk.Actions",
 					this.__actionMenu.add(menubutton);
 				}
 
-				callback();
+				if (typeof callback === "function") {
+					callback();
+				}
 			}, this);
 		}
 	}
