@@ -99,7 +99,7 @@ qx.Class.define("desk.AceContainer",
       this.setDecorator("main");
 
       // plain text area
-      var font = qx.bom.Font.fromString("15 serif");
+      var font = new qx.bom.Font.fromString("15 serif");
       qx.util.DisposeUtil.disposeTriggeredBy(font, this);
       this.__textarea = new qx.ui.form.TextArea().set({
         wrap      : false,
@@ -214,7 +214,7 @@ qx.Class.define("desk.AceContainer",
       if (this.__ace) {
         this.__ace.setFontSize(size + 'px');
       } 
-      this.__textarea.setFont(qx.bom.Font.fromString(size + ' serif'));
+      this.__textarea.setFont(new qx.bom.Font.fromString(size + ' serif'));
     },
 
     /**

@@ -146,7 +146,7 @@ qx.Class.define("desk.TextEditor",
 				this.__textArea.setCode(result);
 				this.setCaption(file);
 				this.__reloadButton.setEnabled(true);
-			}, this);
+			}, this, true);
 		}
 	}
 });

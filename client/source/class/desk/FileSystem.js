@@ -33,6 +33,7 @@ qx.Class.define("desk.FileSystem",
 		* @param file {String} the file to load
 		* @param callback {Function} success callback, with request as first parameter
 		* @param context {Object} optional context for the callback
+		* @param forceText {Boolean} boolean to force response as text instead of json or xml
 		* 
 		* <pre class='javascript'>
 		* example :<br>
@@ -45,7 +46,7 @@ qx.Class.define("desk.FileSystem",
 		*});<br>
 		*</pre>
 		*/
-		readFile : function (file, callback, context) {
+		readFile : function (file, callback, context, forceText) {
 			desk.FileSystem.exists(file, function (exists) {
 				if (exists) {
 					var req = new qx.io.request.Xhr(
@@ -53,7 +54,13 @@ qx.Class.define("desk.FileSystem",
 						"?nocache=" + Math.random());
 					req.setAsync(true);
 					req.addListener('load', function () {
-						callback.call(context, null, req.getResponse());
+						var response;
+						if (forceText) {
+							response = req.getResponseText()
+						} else {
+							response = req.getResponse()
+						}
+						callback.call(context, null, response);
 						req.dispose();
 					});
 					req.addListener('error', function (e) {

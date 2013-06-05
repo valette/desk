@@ -298,7 +298,18 @@ qx.Class.define("desk.Actions",
 			parameters.actionFinished = true;
 			var response = JSON.parse(req.getResponseText());
 			if (response.error) {
-				alert ("error for action " + parameters.actionParameters.action + ": \n" + response.error);
+				var err = response.error;
+				var message = "error for action " + parameters.actionParameters.action + ": \n";
+				if (err.signal) {
+					message += "signal : " + err.signal + "\n";
+				}
+				if (err.code) {
+					message += "code : " + err.code + "\n";
+				}
+				if (response.stderr) {
+					message += "stderr : " + response.stderr + "\n";
+				}
+				alert (message);
 			}
 
 			if (parameters.actionItem) {
