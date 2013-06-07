@@ -29,7 +29,10 @@ qx.Class.define("desk.Action",
 		/**
 		* Contains the output sub-directory.
 		*/
-		outputSubdirectory : {init : null}
+		outputSubdirectory : {init : null},
+
+		/** disable caching*/
+		forceUpdate : { init : false, check: "Boolean", event : "changeForceUpdate"}
 	},
 
 	statics :
@@ -652,6 +655,8 @@ qx.Class.define("desk.Action",
 
 			var forceUpdateCheckBox = new qx.ui.form.CheckBox("force");
 			this.__forceUpdateCheckBox = forceUpdateCheckBox;
+			this.bind("forceUpdate", forceUpdateCheckBox, "value");
+			forceUpdateCheckBox.bind("value", this, "forceUpdate");
 
 			this.__executionStatus = new qx.ui.form.TextField().set({
 				readOnly: true});
