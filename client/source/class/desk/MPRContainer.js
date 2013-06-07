@@ -400,7 +400,7 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		__addViewerToGrid : function (sliceView, r, c) {
-			var fullscreen=false;
+			var fullscreen = false;
 			this.__gridContainer.add(sliceView, {row: r, column: c});
 			this.__orientationContainer.add(sliceView.getReorientationContainer(this.__orientationButtonGroup), {row: r, column: c});
 			sliceView.setUserData( "positionInGrid", { row :r , column :c } );
@@ -524,20 +524,15 @@ qx.Class.define("desk.MPRContainer",
 			labelcontainer.add(label, {flex : 1});
 
 			var _this = this;
-			var orientations = [];
-			for(var i = 0; i != this.__nbUsedOrientations; i++) {
-				orientations.push(i);
-			}
-
-			async.each(orientations,
-				function (orientation, callback) {
-					volumeSlices[orientation] = 
-						_this.__viewers[orientation].addVolume(file,
+			async.each(this.__viewers,
+				function (viewer, callback) {
+					volumeSlices[viewer.getOrientation()] = viewer.addVolume(
+							file,
 							parameters,
 							function (volumeSlice) {callback();}
 						);
 				},
-				function (err, results) {
+				function (err) {
 					if (parameters.visible !== undefined) {
 						hideShowCheckbox.setValue(parameters.visible);
 					}
