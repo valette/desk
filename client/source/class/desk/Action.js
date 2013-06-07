@@ -332,18 +332,9 @@ qx.Class.define("desk.Action",
 			// update parent Actions
 			var parentActions = [];
 			for (i = 0; i < connections.length; i++) {
-				var parentAction = connections[i].action;
-				var found = false;
-				for (var j = 0; j < parentActions.length; j++) {
-					if (parentActions[j] == parentAction) {
-						found = true;
-						break;
-					}
-				}
-				if (!found) {
-					parentActions.push(parentAction);
-				}
+				parentActions.push(connections[i].action);
 			}
+			parentActions = _.uniq(parentActions);
 
 			var self = this;
 			async.each(parentActions, 
@@ -364,7 +355,6 @@ qx.Class.define("desk.Action",
 				}
 
 				send.setLabel("Processing...");
-
 				var out = self.getOutputDirectory();
 				if (out) {
 					parameterMap.output_directory = out;
@@ -376,14 +366,16 @@ qx.Class.define("desk.Action",
 					}
 				}
 
-				self.__createSubdirectory(parameterMap);
+				self.__createSubdirectory(function () {
+					self.__executeAction(parameterMap);
+				});
 			});
 		},
 
-		__createSubdirectory : function (parameterMap) {
+		__createSubdirectory : function (callback) {
 			var that = this;
 			if (!this.getOutputSubdirectory()) {
-				afterCreation();
+				callback();
 			} else {
 				desk.FileSystem.exists(that.__outputDirectory + '/' +
 					that.getOutputSubdirectory(), function (exists) {
@@ -392,15 +384,11 @@ qx.Class.define("desk.Action",
 									"action" : "add_subdirectory",
 									"subdirectory_name" : that.getOutputSubdirectory(),
 									"output_directory" : that.__outputDirectory},
-							afterCreation);
+							callback);
 						} else {
-							afterCreation();
+							callback();
 						}
 				});
-			}
-
-			function afterCreation () {
-				that.__executeAction(parameterMap);
 			}
 		},
 
@@ -408,28 +396,27 @@ qx.Class.define("desk.Action",
 			var actionId = this.__actionsCounter;
 			this.__actionsCounter++;
 			desk.Actions.getInstance().launchAction (parameterMap,
-				afterExecution);
+				function (response) {
+					this.__afterExecute(actionId, response);
+			}, this);
 			this.fireDataEvent("actionTriggered", actionId);
+		},
 
-			var that = this;
-
-			function afterExecution (response) {
-				// configure the send button
-				var send = that.__updateButton;
-				send.setEnabled(true);
-				send.setLabel("Update");
-				var currentOutputDir = that.getOutputDirectory();
-				if ((currentOutputDir === null) ||
-						(currentOutputDir.substring(0, 6) === "cache/")) {
-					that.setOutputDirectory(response.outputDirectory);
-				}
-
-				that.__executionStatus.setValue(response.status);
-				if ( that.__action.attributes.voidAction != "true" ) {
-					that.__showLogButton.setVisibility("visible");
-				}
-				that.fireDataEvent("actionUpdated", actionId);
+		__afterExecute : function (actionId, response) {
+			var send = this.__updateButton;
+			send.setEnabled(true);
+			send.setLabel("Update");
+			var currentOutputDir = this.getOutputDirectory();
+			if ((currentOutputDir === null) ||
+					(currentOutputDir.substring(0, 6) === "cache/")) {
+				this.setOutputDirectory(response.outputDirectory);
 			}
+
+			this.__executionStatus.setValue(response.status);
+			if (this.__action.attributes.voidAction != "true" ) {
+				this.__showLogButton.setVisibility("visible");
+			}
+			this.fireDataEvent("actionUpdated", actionId);
 		},
 
         __forms : null,
@@ -439,7 +426,6 @@ qx.Class.define("desk.Action",
                 return this.__forms[parameterName];
             }
         },
-
 
         __intValidator : function(value, item) {
 			var parameterName = this.name;
@@ -489,7 +475,6 @@ qx.Class.define("desk.Action",
 		__dummyValidator : function(value, item) {
             return (true);
         },
-
 
 		/**
 		* Builds the UI
