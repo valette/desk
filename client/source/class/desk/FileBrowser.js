@@ -355,11 +355,6 @@ qx.Class.define("desk.FileBrowser",
 			case "off":
 				new desk.MeshViewer(file);
 				break;
-			case "png":
-			case "jpg":
-			case "bmp":
-				new desk.ImageViewer(file);
-				break;
 			case "xml":
 				desk.FileSystem.readFile(file, function (error, xmlDoc) {
 					if (xmlDoc.getElementsByTagName("mesh").length !== 0) {
@@ -369,6 +364,9 @@ qx.Class.define("desk.FileBrowser",
 					}
 				});
 				break;
+			case "png":
+			case "jpg":
+			case "bmp":
 			case "mhd":
 				new desk.VolumeViewer(file);
 				break;
