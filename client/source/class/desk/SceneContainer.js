@@ -90,6 +90,12 @@ qx.Class.define("desk.SceneContainer",
 
 		this.__queue= async.queue(this.__urlLoad.bind(this), 10);
 
+		var self = this;
+		this.__setData = _.throttle(function () {
+				self.__meshesTree.getDataModel().setData();
+			}, 2000)
+
+
 		if (file) {
 			this.addFile(file, parameters, callback, context);
 			window.setCaption(file);
@@ -142,6 +148,8 @@ qx.Class.define("desk.SceneContainer",
 		// a THREE.CTMLLoader
         __ctmLoader : null,
 
+		__setData : null,
+
 		getThreeContainer : function () {
 			return this.__threeContainer;
 		},
@@ -175,7 +183,7 @@ qx.Class.define("desk.SceneContainer",
 			parameters.label = parameters.label || "mesh";
 			var parent = parameters.parent;
 			var leaf = dataModel.addLeaf(parent, parameters.label, null);
-			dataModel.setData();
+			this.__setData();
 			return leaf;
 		},
 
@@ -215,7 +223,7 @@ qx.Class.define("desk.SceneContainer",
 			var filterField = new qx.ui.form.TextField();
 			filterField.setValue("");
 			filterField.addListener("input", function() {
-				dataModel.setData();
+				this.__setData();
 				this.render();
 			}, this);
 			container.add(filterField);
@@ -240,7 +248,7 @@ qx.Class.define("desk.SceneContainer",
 			resetButton.setAllowGrowY(false);
 			resetButton.addListener("execute",function(e){
 				filterField.setValue("");
-				dataModel.setData();
+				this.__setData();
 				this.render();
 			}, this);
 
@@ -330,7 +338,7 @@ qx.Class.define("desk.SceneContainer",
 
 			var dataModel = this.__meshesTree.getDataModel();
 			var leaf = dataModel.addBranch(null, desk.FileSystem.getFileName(file), null);
-			dataModel.setData();
+			this.__setData();
 
 			var path = desk.FileSystem.getFileDirectory(file);
 			var self = this;
@@ -415,16 +423,20 @@ qx.Class.define("desk.SceneContainer",
 		/**
 		 * Attaches a set of desk.VolumeSlice to the scene
 		 * @param volumeSlices {Array} Array of deskVolumeSlice;
+		 * @return {Array} array of THREE.Mesh
 		 */
 		attachVolumeSlices : function (volumeSlices) {
+			var meshes = [];
 			for (var i = 0; i < volumeSlices.length; i++) {
-				this.attachVolumeSlice(volumeSlices[i]);
+				meshes.push(this.attachVolumeSlice(volumeSlices[i]));
 			}
+			return meshes;
 		},
 
 		/**
 		 * Attaches a set of desk.VolumeSlice to the scene
 		 * @param volumeSlice {desk.VolumeSlice} volume slice to attach;
+		 * @return {THREE.Mesh} the created mesh;
 		 */
 		attachVolumeSlice : function (volumeSlice) {
 			var geometry = new THREE.Geometry();
@@ -461,6 +473,7 @@ qx.Class.define("desk.SceneContainer",
                 volumeSlice : volumeSlice
             });
 			updateTexture.apply(this);
+			return mesh;
 		},
 
 		__addDropSupport : function () {
@@ -874,27 +887,38 @@ qx.Class.define("desk.SceneContainer",
 			var dataModel = this.__meshesTree.getDataModel();
 			var parameters = mesh.__customProperties;
 
-			var leaf = mesh.__customProperties.leaf;
-			delete leaf.__customProperties;
-			dataModel.prune(leaf, true);
-			parameters.mesh = 0;
-			// test if mesh is actually a volume slice
-			var volumeSlice = parameters.volumeSlice;
-			if (volumeSlice) {
-				volumeSlice.removeListenerById(parameters.listenerId);
+			var keepGeometry = false;
+			var keepMaterial = false;
+
+			if (parameters) {
+				var leaf = parameters.leaf;
+				delete leaf.__customProperties;
+				dataModel.prune(leaf, true);
+				parameters.mesh = 0;
+				// test if mesh is actually a volume slice
+				var volumeSlice = parameters.volumeSlice;
+				if (volumeSlice) {
+					volumeSlice.removeListenerById(parameters.listenerId);
+				}
+				delete mesh.__customProperties;
+				if (!this.__destructorHack) {
+					// hack to avoid assertion errors (to debug...)
+					this.__setData();
+				}
+				keepGeometry = parameters.keepGeometry;
+				keepMaterial = parameters.keepMaterial;
 			}
 
-			delete mesh.__customProperties;
 			this.__threeContainer.getScene().remove(mesh);
-			var map = mesh.material.map;
-			if (map) {
-				map.dispose();
+			if (!keepGeometry) {
+				mesh.geometry.dispose();
 			}
-			mesh.geometry.dispose();
-			mesh.material.dispose();
-			if (!this.__destructorHack) {
-				// hack to avoid assertion errors (to debug...)
-				dataModel.setData();
+			if (!keepMaterial) {
+				var map = mesh.material.map;
+				if (map) {
+					map.dispose();
+				}
+				mesh.material.dispose();
 			}
 			this.fireDataEvent("meshRemoved", mesh);
         },
@@ -987,7 +1011,14 @@ qx.Class.define("desk.SceneContainer",
 			
 			//// hide all menu buttons but the "show" and "hide" buttons for the volumeSlices
 			menu.addListener("appear", function() {
-				var selNode = this.__meshesTree.getSelectedNodes()[0];
+				var nodes = this.__meshesTree.getSelectedNodes();
+				if (!nodes) {
+					return;
+				}
+				var selNode = nodes[0];
+				if (!selNode) {
+					return;
+				}
 				var leaf = this.__meshesTree.nodeGet(selNode);
 				var visibility = "visible";
 				if (leaf) {

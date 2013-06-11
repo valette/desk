@@ -482,6 +482,10 @@ qx.Class.define("desk.VolumeSlice",
 //			var thresholdValue=200.0;
 //			material.baseShader.extraUniforms.push({name : "thresholdlow", type: "f", value: thresholdValue });
 //			this.updateMaterial(material);
+			var self = this;
+			material.addEventListener('dispose', function () {
+				self.__materials = _.without(self.__materials, material);
+			});
 			return material;
 		},
 
