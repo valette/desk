@@ -45,7 +45,11 @@ qx.Class.define("desk.Actions",
 		HackCTMWorkerURL = threeURL + "ctm/CTMWorkerMin.js";
 		
 		var scripts = [];
-		scripts.push(threeURL + 'three.min.js');
+		if (qx.core.Environment.get("qx.debug")) {
+			scripts.push(threeURL + 'three.js');
+		} else {
+			scripts.push(threeURL + 'three.min.js');
+		}
 		scripts.push(threeURL + 'Detector.js');
 		scripts.push(threeURL + 'VTKLoader.js');
 		scripts.push(threeURL + 'TrackballControls2.js');
@@ -55,6 +59,7 @@ qx.Class.define("desk.Actions",
 		scripts.push(baseURL + 'ext/async.min.js');
 		scripts.push(baseURL + 'ext/underscore-min.js');
 		scripts.push(baseURL + 'ext/parallel.min.js');
+
 
 		var self = this;
 		desk.FileSystem.includeScripts(scripts, function () {
