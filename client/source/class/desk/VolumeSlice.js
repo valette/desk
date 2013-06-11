@@ -6,6 +6,7 @@
 * @ignore(THREE.RGBAFormat)
 * @ignore(THREE.ShaderMaterial)
 * @ignore(Uint8Array)
+* @ignore (_.without)
 * @lint ignoreDeprecated(alert)
 */
 

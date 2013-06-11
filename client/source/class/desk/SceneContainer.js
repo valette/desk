@@ -23,6 +23,7 @@
 * @ignore (THREE.Line)
 * @ignore (async.queue)
 * @ignore (async.each)
+* @ignore (_.throttle)
 */
 qx.Class.define("desk.SceneContainer", 
 {
@@ -52,12 +53,11 @@ qx.Class.define("desk.SceneContainer",
 		var button=new qx.ui.form.Button("+").set({opacity : 0.5});
 		this.__threeContainer.add (button, {left : 3, top : 3});
 		button.addListener("execute", function () {
-			if (elementsList.getVisibility()=="visible") {
+			if (elementsList.getVisibility() === "visible") {
 				elementsList.setVisibility("excluded");
 				button.setLabel("+");
 				this.render();
-			}
-			else {
+			} else {
 				elementsList.setVisibility("visible");
 				button.setLabel("-");
 				this.render();
@@ -94,7 +94,6 @@ qx.Class.define("desk.SceneContainer",
 		this.__setData = _.throttle(function () {
 				self.__meshesTree.getDataModel().setData();
 			}, 2000)
-
 
 		if (file) {
 			this.addFile(file, parameters, callback, context);
@@ -875,14 +874,19 @@ qx.Class.define("desk.SceneContainer",
         },
 
 		removeMeshes : function (meshes) {
-			for (var i=0;i<meshes.length;i++) {
-				this.removeMesh(meshes[i]);
+			for (var i = 0; i < meshes.length; i++) {
+				this.__removeMesh(meshes[i], true);
 			}
+			this.__setData();
 		},
 
 		__destructorHack : false,
 
-        removeMesh : function (mesh) {
+		removeMesh : function (mesh) {
+			this.__removeMesh(mesh);
+		},
+
+		__removeMesh : function (mesh, doNotSetData) {
 			var renderer = this.__threeContainer.getRenderer();
 			var dataModel = this.__meshesTree.getDataModel();
 			var parameters = mesh.__customProperties;
@@ -903,7 +907,9 @@ qx.Class.define("desk.SceneContainer",
 				delete mesh.__customProperties;
 				if (!this.__destructorHack) {
 					// hack to avoid assertion errors (to debug...)
-					this.__setData();
+					if (!doNotSetData) {
+						this.__setData();
+					}
 				}
 				keepGeometry = parameters.keepGeometry;
 				keepMaterial = parameters.keepMaterial;
