@@ -33,14 +33,21 @@
 </div>
 
 <script type="text/javascript">
+function endsWith(str, suffix) {
+    return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
+
+
   var hideDiv = function(){document.getElementById("loading").className = "loading-invisible";};
   var oldLoad = window.onload;
   var newLoad = oldLoad ? function(){hideDiv.call(this);oldLoad.call(this);} : hideDiv;
   window.onload = newLoad;
   var myLocation = window.location.href;
   if (myLocation.charAt(myLocation.length - 1) != '/') {
-	  // add a trailing slash, as there is abug with node...
-  	window.location = myLocation + '/';
+	if (!endsWith(myLocation, ".html") && !endsWith(myLocation, ".htm")) {
+		// add a trailing slash, as there is a bug with node...
+		window.location = myLocation + '/';
+	}
   }
 </script>
 
