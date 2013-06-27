@@ -5,7 +5,8 @@ var fs      = require('fs'),
     http    = require('http'),
     https   = require('https'),
     exec    = require('child_process').exec,
-	actions = require('cl-rpc');
+    actions = require(__dirname + '/cl-rpc/cl-rpc');
+//	actions = require('cl-rpc');
 
 var	user = process.env.USER;
 console.log("UID : "+process.getuid());

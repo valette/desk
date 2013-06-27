@@ -1,0 +1,34 @@
+{
+  "name": "cl-rpc",
+  "version": "0.1.8",
+  "description": "A simple rpc module that launches command-line programms",
+  "main": "cl-rpc.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/valette/cl-rpc.git"
+  },
+  "author": {
+    "name": "Sebastien Valette"
+  },
+  "license": "BSD",
+  "gitHead": "006ecc53142c4aca24133ad3d83cd29fbf1f4002",
+  "dependencies": {
+    "cron": ">0.0.0",
+    "pretty-data": ">0.0.0",
+    "async": ">0.0.0",
+    "winston": ">0.0.0"
+  },
+  "bugs": {
+    "url": "https://github.com/valette/cl-rpc/issues"
+  },
+  "readme": "ERROR: No README data found!",
+  "_id": "cl-rpc@0.1.8",
+  "dist": {
+    "shasum": "0305e65073024bd90f7464d541f1bb337f36a068"
+  },
+  "_from": "cl-rpc@>0.0.0",
+  "_resolved": "https://registry.npmjs.org/cl-rpc/-/cl-rpc-0.1.8.tgz"
+}

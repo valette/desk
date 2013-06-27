@@ -11,7 +11,10 @@
 
   "dependencies": {
     "express" : ">0.0.0",
-    "cl-rpc" : ">0.0.0"
+    "cron": ">0.0.0",
+    "pretty-data": ">0.0.0",
+    "async": ">0.0.0",
+    "winston": ">0.0.0"
   },
   "optionalDependencies": {},
   "engines": {
