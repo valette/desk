@@ -200,6 +200,11 @@ qx.Class.define("desk.SliceView",
 			return this.__drawingCanvas;
 		},
 
+        getDrawingMesh : function () {
+			this.__initDrawing();
+			return this.__drawingMesh;
+		},
+
 		isDrawingCanvasModified : function () {
 			return this.__drawingCanvasModified;
 		},
