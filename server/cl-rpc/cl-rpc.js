@@ -628,9 +628,12 @@ exports.performAction = function (POST, callback) {
 		ongoingActions[actionHandle] = handle;
 		response.handle = actionHandle;
 
-		var logStream = fs.createWriteStream(libpath.join(filesRoot, outputDirectory, "action.log"));
-		handle.childProcess.stdout.pipe(logStream);
-		handle.childProcess.stderr.pipe(logStream);
+		var logStream;
+		if (outputDirectory) {
+			logStream = fs.createWriteStream(libpath.join(filesRoot, outputDirectory, "action.log"));
+			handle.childProcess.stdout.pipe(logStream);
+			handle.childProcess.stderr.pipe(logStream);
+		}
 
 		function afterExecution(err, stdout, stderr) {
 			if (logStream) {
