@@ -596,6 +596,12 @@ qx.Class.define("desk.SliceView",
 			mesh.renderDepth = 2;
 
 			this.getScene().add(mesh);
+			if (this.__drawingMesh) {
+				this.getScene().remove(this.__drawingMesh);
+				this.__drawingMesh.geometry.dispose();
+				this.__drawingMesh.material.map.dispose();
+				this.__drawingMesh.material.dispose();
+			}
 			this.__drawingMesh = mesh;
 
 			geometry.computeCentroids();
@@ -685,6 +691,7 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__initFromVolume : function (volumeSlice) {
+			this.__initDrawingDone = false;
 			this.__slider.setMaximum(volumeSlice.getNumberOfSlices() - 1);
 			if (volumeSlice.getNumberOfSlices() === 1) {
 				this.__slider.setVisibility("hidden");
