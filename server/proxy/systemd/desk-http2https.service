@@ -1,7 +1,0 @@
-# Adjust according to man 5 systemd.exec
-
-[Service]
-ExecStart=/usr/local/bin/node /home/desk-proxy/git/desk/proxy/http2https.js
-StandardOutput=syslog
-User=desk-proxy
-Group=desk-proxy
