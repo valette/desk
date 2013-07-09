@@ -1,23 +1,32 @@
 var fs = require('fs'),
     http = require('http'),
+    https = require('https'),
     httpProxy = require('http-proxy'),
     exec  = require('child_process').exec,
     async = require('async');
 
 var usersFile = __dirname + '/users.json';
 
-var options = {
-	https: {
-		key: fs.readFileSync(__dirname+'/privatekey.pem', 'utf8'),
-		cert: fs.readFileSync(__dirname+'/certificate.pem', 'utf8')
-	},
-	router: {}
-};
+var proxy = new httpProxy.RoutingProxy({router : {}});
 
-var proxyServer = httpProxy.createServer(options);
+var proxyServer = https.createServer({
+        key: fs.readFileSync(__dirname+'/privatekey.pem', 'utf8'),
+        cert: fs.readFileSync(__dirname+'/certificate.pem', 'utf8')
+	}, function (req, res) {
+		if (req.url === '/') {
+			res.writeHead(301, {Location: 'https://desk.creatis.insa-lyon.fr/demo'});
+			res.end();
+			return;
+		}
+		proxy.proxyRequest(req, res)
+	}
+);
+
+//var proxyServer = httpProxy.createServer(options);
 var port = 8081;
-console.log('desk-proxy service listening on port ' + port);
 proxyServer.listen(port);
+console.log('desk-proxy service listening on port ' + port);
+
 
 var server = http.createServer(function (req, res) {
 	res.writeHead(301,
@@ -37,7 +46,7 @@ function updateRoutes() {
 	routes = {};
 
 	async.forEachSeries(users, addUser, function () {
-		proxyServer.proxy.proxyTable.setRoutes(routes);
+		proxy.proxyTable.setRoutes(routes);
 		console.log('... done! Routes:');
 		console.log(routes);
 	});
