@@ -29,7 +29,13 @@ To install desk on your computer, you need:
 	git clone http://github.com/valette/desk.git
 	cd desk/server
 	npm install
-	./build.sh
+	./build-linux.sh
+
+or
+
+        ./build-macosx.sh
+
+on MacOS X.
 
 ### Usage ###
 
