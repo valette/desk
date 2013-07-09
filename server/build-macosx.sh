@@ -16,7 +16,7 @@ cd ..
 rm -rf OpenCTM
 git clone http://github.com/valette/OpenCTM.git
 cd OpenCTM
-make -f Makefile.linux -j $njobs
+make -f Makefile.macosx -j $njobs
 cd ..
 
 cd ..
