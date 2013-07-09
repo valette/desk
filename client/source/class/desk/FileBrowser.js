@@ -341,7 +341,11 @@ qx.Class.define("desk.FileBrowser",
 			switch (extension)
 			{
 			case 'js':
-				desk.FileSystem.executeScript(file);
+				if (desk.Actions.getInstance().getSettings().permissions) {
+					desk.FileSystem.executeScript(file);
+				} else {
+					new desk.TextEditor (file);
+				}
 				break;
 			case 'log':
 			case 'txt':

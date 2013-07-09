@@ -159,7 +159,8 @@ includeActionsJSON = function (file, callback) {
 		console.log(actionsArray.length + " actions in " + file);
 
 		for (var i = 0; i < actionsArray.length; i++) {
-			var action = localActions[actionsArray[i]];
+			var actionName = actionsArray[i];
+			var action = localActions[actionName];
 			action.lib = libraryName;
 			var attributes = action.attributes;
 			if ( typeof (attributes.js) === 'string' ) {
@@ -175,7 +176,13 @@ includeActionsJSON = function (file, callback) {
 			else if ( typeof (attributes.command) === 'string' ) {
 				attributes.executable = attributes.command;
 			}
-			actions[actionsArray[i]] = action;
+			var existingAction = actions[actionName];
+			if (existingAction) {
+				if (action.priority < existingAction.priority) {
+					continue;
+				}
+			}
+			actions[actionName] = action;
 		}
 
 		var dirs = actionsObject.dataDirs || {};
