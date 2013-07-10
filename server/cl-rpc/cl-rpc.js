@@ -186,11 +186,16 @@ includeActionsJSON = function (file, callback) {
 		}
 
 		var dirs = actionsObject.dataDirs || {};
-			var keys = Object.keys(dirs);
-			for (i = 0; i != keys.length ; i++) {
-				var key = keys[i];
-				dataDirs[key] = dirs[key];
-			}	
+		var keys = Object.keys(dirs);
+		for (i = 0; i != keys.length ; i++) {
+			var key = keys[i];
+			var source = dirs[key];
+			if (source.indexOf('./') === 0) {
+				// source is relative, prepend directory
+				source = libpath.join(libpath.dirname(file), source);
+			}
+			dataDirs[key] = source;
+		}	
 
 		var includes = actionsObject.include || [];
 		for (i = 0; i != includes.length; i++) {
