@@ -524,7 +524,7 @@ qx.Class.define("desk.MPRContainer",
 			labelcontainer.add(label, {flex : 1});
 
 			var _this = this;
-			async.each(this.__viewers,
+			async.eachSeries(this.__viewers,
 				function (viewer, callback) {
 					volumeSlices[viewer.getOrientation()] = viewer.addVolume(
 							file,
