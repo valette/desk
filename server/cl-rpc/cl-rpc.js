@@ -85,7 +85,7 @@ var job = new cronJob({
 exports.validatePath = function (path, callback) {
 	fs.realpath(filesRoot + path, function (err, realPath) {
 		if (err) {
-			callback(err.message);
+			callback(err);
 			return;
 		}
 		else {
