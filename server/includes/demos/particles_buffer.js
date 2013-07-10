@@ -30,7 +30,7 @@ var attributes = {
 	customColor: { type: 'c', value: null }
 };
 
-var textureURL = desk.FileSystem.getFileURL('demo/spark1.png');
+var textureURL = desk.FileSystem.getFileURL('demos/spark1.png');
 
 var uniforms = {
 	amplitude: { type: "f", value: 1.0 },
