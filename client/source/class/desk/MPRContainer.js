@@ -2,7 +2,7 @@
 * @ignore(Uint8Array)
 * @lint ignoreDeprecated(alert)
 * @asset(desk/Contrast_Logo_petit.PNG)
-* @ignore (async.each)
+* @ignore (async.eachSeries)
 */
 qx.Class.define("desk.MPRContainer", 
 {
