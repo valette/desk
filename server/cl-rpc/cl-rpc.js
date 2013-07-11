@@ -301,6 +301,7 @@ exports.performAction = function (POST, callback) {
 			var handle = ongoingActions[POST.handle];
 			if (!handle) {
 				callback ({status : 'not found'});
+				return;
 			}
 			var processToKill = handle.childProcess;
 			if (processToKill) {
@@ -363,6 +364,14 @@ exports.performAction = function (POST, callback) {
 		}
 
 		commandLine += action.attributes.executable + ' ';
+		fs.stat(action.attributes.executable, function (err, stats) {
+			if (!err) {
+				var time = stats.mtime.getTime();
+				if (time > inputMTime) {
+					inputMTime = time;
+				}
+			}
+		});
 
 		function parseParameter (parameter, callback) {
             function validateValue (parameterValue, parameter) {
