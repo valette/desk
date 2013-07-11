@@ -695,6 +695,8 @@ qx.Class.define("desk.SliceView",
 			this.__slider.setMaximum(volumeSlice.getNumberOfSlices() - 1);
 			if (volumeSlice.getNumberOfSlices() === 1) {
 				this.__slider.setVisibility("hidden");
+			} else {
+				this.__slider.setVisibility("visible");
 			}
 
 			var camera = this.__getCamera();
