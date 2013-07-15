@@ -24,6 +24,7 @@ qx.Class.define("desk.MeshViewer",
 		this.__window = win;
 
 		win.addListener('close', function() {
+			this.fireEvent("close")
 			this.dispose();
 			win.destroy();
 		}, this);

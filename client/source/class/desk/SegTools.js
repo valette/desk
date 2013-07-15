@@ -25,7 +25,7 @@ qx.Class.define("desk.SegTools",
 			resizable : [false, false, false, false]
 		});
 
-		this.__buildRightContainer();
+		this.__buildActions();
 
 		var _this = this;
 		var listenersIds = [];
@@ -107,7 +107,9 @@ qx.Class.define("desk.SegTools",
 		__penSize : null,
 		__eraserButton : null,
 		__eraserCursor : null,
-		
+
+		__meshViewer : null,
+
 		getMeshViewer : function() {
 			return this.__meshViewer;
 		},
@@ -145,28 +147,19 @@ qx.Class.define("desk.SegTools",
 			}
 		},
 
-		__buildRightContainer : function()
-		{	
-			var tools = this;
-			
-			var theMaster = tools.__master;
-			
-			var volFile = tools.__file;
-			
-			var fileSystem = desk.FileSystem.getInstance();
-
-			var spacing=5;
-			
-			var tRCL=new qx.ui.layout.HBox();
+		__buildActions : function() {	
+			var volFile = this.__file;
+			var spacing = 5;
+			var tRCL = new qx.ui.layout.HBox();
 			tRCL.setSpacing(spacing);
-			tools.__topRightContainer = new qx.ui.container.Composite(tRCL);
+			this.__topRightContainer = new qx.ui.container.Composite(tRCL);
 
 			var bRCL=new qx.ui.layout.HBox();
 			bRCL.setSpacing(spacing);
-			tools.__bottomRightContainer= new qx.ui.container.Composite(bRCL);
+			this.__bottomRightContainer= new qx.ui.container.Composite(bRCL);
 
-		////Create pen size chose widget
-            tools.__penSize = new qx.ui.form.Spinner().set({
+			////Create pen size chose widget
+            this.__penSize = new qx.ui.form.Spinner().set({
                 minimum: 1,
                 maximum: 100,
                 value: 1
@@ -181,57 +174,53 @@ qx.Class.define("desk.SegTools",
 			
 			var penLabel = new qx.ui.basic.Label("Brush : ");
 			this.__topRightContainer.add(penLabel);
-			this.__topRightContainer.add(tools.__penSize);
+			this.__topRightContainer.add(this.__penSize);
 			
-		////Create eraser on/off button
-            tools.__eraserButton = new qx.ui.form.ToggleButton("Eraser");
-			
+			////Create eraser on/off button
+            this.__eraserButton = new qx.ui.form.ToggleButton("Eraser");
 			this.__eraserButton.addListener("changeValue", function(e) {
 				this.__master.applyToViewers(function (viewer) {
 					viewer.setEraseMode(e.getData());
 				});
 			}, this);
+			this.__topRightContainer.add(this.__eraserButton);
 
-			tools.__topRightContainer.add(tools.__eraserButton);
-
-		////Create labels zone
+			////Create labels zone
 			var paintPage = new qx.ui.tabview.Page("paint");
 			var paintPageLayout = new qx.ui.layout.VBox();
 			paintPageLayout.setSpacing(5);
             paintPage.setLayout(paintPageLayout);
-			paintPage.add(tools.__topRightContainer);
+			paintPage.add(this.__topRightContainer);
 
-			tools.__colorsContainer = new qx.ui.container.Composite();
-            tools.__colorsContainer.setLayout(new qx.ui.layout.Grid(1,1));
-
-			tools.__colorsContainer.setDroppable(true);
-			tools.__colorsContainer.addListener("drop", function(e) {
+			this.__colorsContainer = new qx.ui.container.Composite();
+            this.__colorsContainer.setLayout(new qx.ui.layout.Grid(1,1));
+			this.__colorsContainer.setDroppable(true);
+			this.__colorsContainer.addListener("drop", function(e) {
 				if (e.supportsType("fileBrowser")) {
 					this.__loadColors(e.getData("fileBrowser").getSelectedFiles()[0]);
 				}
 			}, this);
-
-			paintPage.add(tools.__colorsContainer);
+			paintPage.add(this.__colorsContainer);
 
 			var bRCL = new qx.ui.layout.HBox();
 			bRCL.setSpacing(spacing);
-			tools.__mainBottomRightContainer = new qx.ui.container.Composite(bRCL);
+			this.__mainBottomRightContainer = new qx.ui.container.Composite(bRCL);
 			
 			var tabView = new desk.TabView();
-			tools.__tabView = tabView;
+			this.__tabView = tabView;
             tabView.add(paintPage);
 			tabView.setVisibility("excluded");
 
-			var sessionWdgt = tools.__getSessionsWidget();
+			var sessionWdgt = this.__getSessionsWidget();
 			this.__addSeedsListsToViews();
 			this.add(sessionWdgt);
 			
-			this.add(tools.__mainBottomRightContainer, {flex : 1});
+			this.add(this.__mainBottomRightContainer, {flex : 1});
 
-			tools.__mainBottomRightContainer.add(tabView);
+			this.__mainBottomRightContainer.add(tabView);
 			
 			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
-			tools.__topRightContainer.add(whileDrawingDrwngOpacityLabel);
+			this.__topRightContainer.add(whileDrawingDrwngOpacityLabel);
 			
             var whileDrawingDrwngOpacitySlider = new qx.ui.form.Slider();
 			whileDrawingDrwngOpacitySlider.setValue(100);
@@ -274,94 +263,84 @@ qx.Class.define("desk.SegTools",
 			meshingAction.buildUI();
 			tabView.addElement('meshing', meshingAction.getTabView());
 
-			tools.addListener("changeSessionDirectory", function (e)
-			{
+			this.addListener("changeSessionDirectory", function (e) {
 				var directory=e.getData();
 				medianFilteringAction.setOutputDirectory(directory);
 				if (segmentationToken != null) {
-					theMaster.removeVolume(segmentationToken);
+					this.__master.removeVolume(segmentationToken);
 				}
 				clusteringAction.setOutputDirectory(directory);
 				segmentationAction.setOutputDirectory(directory);
 				meshingAction.setOutputDirectory(directory);
 				segmentationAction.setActionParameters({
 					"input_volume" : volFile,
-					"seeds" : tools.getSessionDirectory() + "/seeds.xml"
+					"seeds" : this.getSessionDirectory() + "/seeds.xml"
 				});
 				clusteringAction.setActionParameters({
 					"input_volume" : volFile
 				});
 				meshingAction.setActionParameters({
-					"input_volume" : tools.getSessionDirectory() + "/filtering/output.mhd",
-					"colors" : tools.getSessionDirectory() + "/seeds.xml"
+					"input_volume" : this.getSessionDirectory() + "/filtering/output.mhd",
+					"colors" : this.getSessionDirectory() + "/seeds.xml"
 				});
-			});
+			}, this);
 
-			tools.__startSegmentationButton = new qx.ui.form.Button("Start segmentation");
-			tools.__startSegmentationButton.addListener("execute", function ()
-			{
-				tools.__startSegmentationButton.setEnabled(false);
-				tools.__segmentationInProgress = true;
-				tools.__saveCurrentSeeds(function() {
+			this.__startSegmentationButton = new qx.ui.form.Button("Start segmentation");
+			this.__startSegmentationButton.addListener("execute", function () {
+				this.__startSegmentationButton.setEnabled(false);
+				this.__segmentationInProgress = true;
+				this.__saveCurrentSeeds(function() {
 							medianFilteringAction.executeAction();});
 			}, this);
-			tools.__bottomRightContainer.add(tools.__startSegmentationButton);
+			this.__bottomRightContainer.add(this.__startSegmentationButton);
 
-			var meshingButton=new qx.ui.form.Button("extract meshes");
-			tools.__extractMeshesButton=meshingButton;
+			var meshingButton = new qx.ui.form.Button("extract meshes");
+			this.__extractMeshesButton = meshingButton;
 			meshingButton.addListener("execute", function () {
-				tools.__startSegmentationButton.setEnabled(false);
+				this.__startSegmentationButton.setEnabled(false);
 				meshingButton.setEnabled(false);
 				meshingAction.executeAction();
 				}, this);
-			tools.__bottomRightContainer.add(meshingButton);
+			this.__bottomRightContainer.add(meshingButton);
 
-			var segmentationToken=null;
-			medianFilteringAction.addListener("actionUpdated", function ()
-			{
-				tools.__startSegmentationButton.setEnabled(true);
-				if (segmentationToken==null)
-				{
-					segmentationToken=theMaster.addVolume(medianFilteringAction.getOutputDirectory()+"output.mhd",
+			var segmentationToken = null;
+			medianFilteringAction.addListener("actionUpdated", function () {
+				this.__startSegmentationButton.setEnabled(true);
+				if (!segmentationToken) {
+					segmentationToken = this.__master.addVolume(medianFilteringAction.getOutputDirectory()+"output.mhd",
 								{opacity : 0.5, imageFormat : 0,
-								colors : [tools.__labelColorsRed, tools.__labelColorsGreen, tools.__labelColorsBlue]});
-				}
-				else
-				{
-					theMaster.updateVolume(segmentationToken);
+								colors : [this.__labelColorsRed, this.__labelColorsGreen, this.__labelColorsBlue]});
+				} else {
+					this.__master.updateVolume(segmentationToken);
 				}
 
-				tools.fireEvent("gotSegmentedVolume");
+				this.fireEvent("gotSegmentedVolume");
 			}, this);
 
-			tools.__master.addListener("removeVolume", function (e) {
-				if (e.getData()==segmentationToken) {
-					segmentationToken=null;
+			this.__master.addListener("removeVolume", function (e) {
+				if (e.getData() == segmentationToken) {
+					segmentationToken = null;
 				}
 			});
 
-			var meshViewer=null;
-
-			meshingAction.addListener("actionUpdated", function ()
-			{
+			meshingAction.addListener("actionUpdated", function () {
 				meshingButton.setEnabled(true);
-				tools.__startSegmentationButton.setEnabled(true);
-				if (meshViewer==null) {
-					meshViewer=new desk.MeshViewer(tools.getSessionDirectory()+
+				this.__startSegmentationButton.setEnabled(true);
+				if (!this.__meshViewer) {
+					this.__meshViewer = new desk.MeshViewer(this.getSessionDirectory() +
 						"/meshes/meshes.xml");
-					meshViewer.addListener("close", function () {
-						meshViewer=null;
-					})
+					this.__meshViewer.addListener("close", function () {
+						this.__meshViewer = null;
+					}, this)
 				} else {
-					meshViewer.update();
+					this.__meshViewer.update();
 				}
 
-				tools.fireDataEvent("meshingActionUpdated", meshViewer);
-				this.__meshViewer = meshViewer;
+				this.fireDataEvent("meshingActionUpdated", this.__meshViewer);
 			}, this);
 
-			tools.__seedsTypeSelectBox = tools.__getSeedsTypeSelectBox();
-			paintPage.addAt(tools.__seedsTypeSelectBox,0);
+			this.__seedsTypeSelectBox = this.__getSeedsTypeSelectBox();
+			paintPage.addAt(this.__seedsTypeSelectBox,0);
 		},
 
 		__rebuildLabelsList : function () {

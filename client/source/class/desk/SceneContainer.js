@@ -92,6 +92,9 @@ qx.Class.define("desk.SceneContainer",
 
 		var self = this;
 		this.__setData = _.throttle(function () {
+				if (self.__destructorHack) {
+					return;
+				}
 				self.__meshesTree.getDataModel().setData();
 			}, 2000)
 
@@ -103,8 +106,7 @@ qx.Class.define("desk.SceneContainer",
 	},
 
 	destruct : function(){
-		this.fireEvent("close");
-		// this hack helps avoiding assertion errors when calling removeAllMeshes (to debug...)
+		// this hack helps avoiding assertion errors (to debug...)
 		this.__destructorHack = true;
 		this.removeAllMeshes();
 		this.unlink();
