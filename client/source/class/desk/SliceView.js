@@ -56,7 +56,8 @@ qx.Class.define("desk.SliceView",
 				this.__updateBrush();
 			}
 		}, this);
-		
+		this.__threeContainer.getControls().update();
+
 		this.__initUndo();
 	},
 
@@ -95,6 +96,9 @@ qx.Class.define("desk.SliceView",
 		/** current display slice */
 		slice : { init : 0, check: "Number", event : "changeSlice"},
 
+		/** current camera z position */
+		cameraZ : { init : 1, check: "Number", event : "changeCameraZ", apply : "__applyCameraZ"},
+
 		viewOn : { init : false, check: "Boolean", event : "changeViewOn"},
 
 		/** paint opacity (betwen 0 and 1) */
@@ -114,7 +118,6 @@ qx.Class.define("desk.SliceView",
 	events : {
 		"changeDrawing" : "qx.event.type.Event",
 		"changeCrossPosition" : "qx.event.type.Event",
-		"changeCameraZ" : "qx.event.type.Event",
 		"viewMouseDown" : "qx.event.type.Event",
 		"viewMouseMove" : "qx.event.type.Event",
 		"viewMouseOver" : "qx.event.type.Event",
@@ -335,9 +338,7 @@ qx.Class.define("desk.SliceView",
 		flipX : function () {
 			this.applyToLinks(function () {
 				if(this.isOrientationChangesOperateOnCamera()) {
-					var position = this.__getCamera().position;
-					position.setZ( - position.z);
-					this.__threeContainer.getControls().update();
+					this.setCameraZ( - this.getCameraZ());
 				} else {
 					var overlays = this.__directionOverlays;
 					var tempValue = overlays[1].getValue();
@@ -351,10 +352,8 @@ qx.Class.define("desk.SliceView",
 		flipY : function () {
 			this.applyToLinks(function () {
 				if(this.isOrientationChangesOperateOnCamera()) {
-					var camera = this.__getCamera();
-					camera.position.setZ( - camera.position.z);
-					camera.up.negate();
-					this.__threeContainer.getControls().update();
+					this.__getCamera().up.negate();
+					this.setCameraZ( - this.getCameraZ());
 				} else {
 					var overlays = this.__directionOverlays;
 					var tempValue = overlays[0].getValue();
@@ -405,8 +404,15 @@ qx.Class.define("desk.SliceView",
 			this.applyToOtherLinks(function (me) {
 				this.__threeContainer.getControls().copy(me.__threeContainer.getControls());
 				this.setSlice(me.getSlice());
+				this.setCameraZ(me.getCameraZ());
 				this.render();
 			});
+		},
+
+		__applyCameraZ : function (z) {
+			this.__getCamera().position.z = z;
+			this.__threeContainer.getControls().update();
+			this.render();
 		},
 
 		__createCrossMeshes : function (volumeSlice) {
@@ -705,7 +711,8 @@ qx.Class.define("desk.SliceView",
 			position.set(0.5 * (coordinates[0] + coordinates[2]),
 				0.5 * (coordinates[3] + coordinates[5]), 0);
 			this.__threeContainer.getControls().target.copy(position);
-			position.setZ(volumeSlice.getBoundingBoxDiagonalLength() * 0.6);
+			position.z = volumeSlice.getBoundingBoxDiagonalLength() * 0.6;
+			this.setCameraZ(volumeSlice.getBoundingBoxDiagonalLength() * 0.6);
 
 			this.__projector = new THREE.Projector();
 			this.__intersection = new THREE.Vector3();
@@ -900,7 +907,7 @@ qx.Class.define("desk.SliceView",
 
 		/**
 		* interactionMode : 
-		* 1 : nothing
+		* -1 : nothing
 		* 0 : left click
 		* 1 : zoom
 		* 2 : pan
@@ -1020,9 +1027,8 @@ qx.Class.define("desk.SliceView",
 					event.getDocumentTop() - origin.top);
 
 				var z = this.__getCamera().position.z;
-				this.render();
+				this.setCameraZ(z);
 				this.__propagateCameraToLinks();
-				this.fireEvent("changeCameraZ");
 				break;
 			case 2 :
 				if (brushMesh) brushMesh.visible = false;

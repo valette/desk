@@ -244,18 +244,11 @@ qx.Class.define("desk.MPRContainer",
 
 		__onChangeCameraZ : function (e) {
 			var sliceView = e.getTarget();
-			var z = sliceView.getThreeContainer().getCamera().position.z;
+			var z = e.getData();
 			this.applyToViewers (function (viewer) {
 				if (viewer != sliceView) {
-					var position = viewer.getThreeContainer().getCamera().position;
-					var oldZ = position.z;
-					var newZ = oldZ * Math.abs(z / oldZ);
-					if (newZ != oldZ) {
-						position.z = newZ;
-						viewer.__propagateCameraToLinks();
-						viewer.render();
-						viewer.fireEvent("changeCameraZ");
-					}
+					var oldZ = viewer.getCameraZ();
+					viewer.setCameraZ(oldZ * Math.abs(z / oldZ));
 				}
 			});
 		},
