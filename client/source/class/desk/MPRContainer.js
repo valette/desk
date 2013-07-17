@@ -223,13 +223,41 @@ qx.Class.define("desk.MPRContainer",
 
 		__addViewers : function () {
 			this.__viewers = [];
-			for(var i=0; i<this.__nbUsedOrientations; i++) {
-				var sliceView = new desk.SliceView(this, i);
+			for(var i=0; i < this.__nbUsedOrientations; i++) {
+				var sliceView = new desk.SliceView(i);
 				this.__viewers.push(sliceView);
 				var viewGridCoor = this.__windowsInGridCoord.viewers[i];
 				this.__addViewerToGrid(sliceView, viewGridCoor.r, viewGridCoor.c);
 				sliceView.setOrientPlane(this.__viewsNames[i]);
+				sliceView.addListener("changeCrossPosition", this.__onChangeCrossPosition, this);
+				sliceView.addListener("changeCameraZ", this.__onChangeCameraZ, this);
 			}
+		},
+
+		__onChangeCrossPosition : function (e) {
+			var sliceView = e.getTarget();
+			var position = sliceView.getCrossPosition();
+			this.applyToViewers(function (viewer) {
+				viewer.setCrossPosition(position.i, position.j, position.k);
+			});
+		},
+
+		__onChangeCameraZ : function (e) {
+			var sliceView = e.getTarget();
+			var z = sliceView.getThreeContainer().getCamera().position.z;
+			this.applyToViewers (function (viewer) {
+				if (viewer != sliceView) {
+					var position = viewer.getThreeContainer().getCamera().position;
+					var oldZ = position.z;
+					var newZ = oldZ * Math.abs(z / oldZ);
+					if (newZ != oldZ) {
+						position.z = newZ;
+						viewer.__propagateCameraToLinks();
+						viewer.render();
+						viewer.fireEvent("changeCameraZ");
+					}
+				}
+			});
 		},
 
 		__applyViewsLayout : function (layout) {

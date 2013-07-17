@@ -1,6 +1,5 @@
 /**
-* A container used to display volume slices. It is mostly used by the
-* desk.MPRContainer and somewhat useless outside this context
+* A container used to display volume slices.
 * 
 * @ignore(THREE.Mesh)
 * @ignore(THREE.Vector2)
@@ -24,7 +23,7 @@ qx.Class.define("desk.SliceView",
 	extend : qx.ui.container.Composite,
 	include : desk.LinkMixin,
 
-	construct : function(master, orientation)
+	construct : function(orientation)
 	{
 		this.base(arguments);
 		this.setLayout(new qx.ui.layout.HBox());
@@ -36,7 +35,6 @@ qx.Class.define("desk.SliceView",
 			this.__orientation = orientation;
 		}
 
-		this.__master = master;
 		this.__createUI();
 
 		this.__drawingCanvas = new qx.ui.embed.Canvas().set({
@@ -115,6 +113,8 @@ qx.Class.define("desk.SliceView",
 
 	events : {
 		"changeDrawing" : "qx.event.type.Event",
+		"changeCrossPosition" : "qx.event.type.Event",
+		"changeCameraZ" : "qx.event.type.Event",
 		"viewMouseDown" : "qx.event.type.Event",
 		"viewMouseMove" : "qx.event.type.Event",
 		"viewMouseOver" : "qx.event.type.Event",
@@ -151,8 +151,6 @@ qx.Class.define("desk.SliceView",
 		__getCamera : function () {
 			return this.__threeContainer.getCamera();
 		},
-
-		__master : null,
 
 		__drawingCanvas : null,
 		__drawingMesh : null,
@@ -834,16 +832,25 @@ qx.Class.define("desk.SliceView",
 				k = v[1];
 				break;
 			}
-			this.__master.applyToViewers(function (viewer) {
-				viewer.setCrossPosition(i, j, k);
-			});
+
+			this.setCrossPosition(i, j, k);
 		},
 
 		__positionI : null,
 		__positionJ : null,
 		__positionK : null,
 
+		getCrossPosition : function () {
+			return {i : this.__positionI,
+					j : this.__positionJ,
+					k : this.__positionK};
+		},
+
 		setCrossPosition : function (i,j,k) {
+			if ((this.__positionI === i) && (this.__positionJ === j) &&
+				(this.__positionK === k)) {
+					return;
+			}
 			var slice, x, y;
 			var dimensions = this.__volume2DDimensions;
 			if (!dimensions) {
@@ -875,14 +882,17 @@ qx.Class.define("desk.SliceView",
 			x = coordinates[0] + ( 0.5 + x )*spacing[0];
 			y = coordinates[1] - ( 0.5 + y )*spacing[1];
 
-			this.applyToLinks (function () {
-				this.__positionI=i;
-				this.__positionJ=j;
-				this.__positionK=k;
-				this.__crossMeshes[0].position.setY(y);
-				this.__crossMeshes[1].position.setX(x);
-				this.setSlice(slice);
-				this.render();
+			this.__positionI = i;
+			this.__positionJ = j;
+			this.__positionK = k;
+			this.__crossMeshes[0].position.setY(y);
+			this.__crossMeshes[1].position.setX(x);
+			this.setSlice(slice);
+			this.render();
+
+			this.fireEvent("changeCrossPosition");
+			this.applyToOtherLinks (function () {
+				this.setCrossPosition(i, j, k);
 			});
 		},
 
@@ -979,28 +989,13 @@ qx.Class.define("desk.SliceView",
 		__onMouseMove : function (event) {
 			var controls = this.__threeContainer.getControls();
 			var self = this;
-
-			if (this.__rightContainer.getVisibility() !== "visible") {
+			if (this.__rightContainer.getVisibility() === "hidden") {
 				var container = this.__threeContainer;
 				var label = this.__directionOverlays[3];
 				container.remove(label);
 				container.add(label, {right: 32, top: "45%"});
 
 				this.__rightContainer.setVisibility("visible");
-				this.__master.applyToViewers(function (viewer) {
-					if (viewer != self) {
-						var container = viewer.__threeContainer;
-						var label = viewer.__directionOverlays[3];
-						container.remove(label);
-						container.add(label, {right: 1, top: "45%"});
-						viewer.__rightContainer.setVisibility("hidden");
-						// there is a race condition : sometimes the brush mesh is not ready
-						if (viewer.__brushMesh) {
-							viewer.__brushMesh.visible = false;
-							viewer.render();
-						}
-					}
-				});
 			}
 
 			var brushMesh = this.__brushMesh;
@@ -1025,15 +1020,9 @@ qx.Class.define("desk.SliceView",
 					event.getDocumentTop() - origin.top);
 
 				var z = this.__getCamera().position.z;
-				this.__master.applyToViewers (function (viewer) {
-					if (viewer != self) {
-						viewer.__getCamera().position.z *= 
-							Math.abs(z / viewer.__getCamera().position.z);
-						viewer.__propagateCameraToLinks();
-						}
-						viewer.render();
-					});
+				this.render();
 				this.__propagateCameraToLinks();
+				this.fireEvent("changeCameraZ");
 				break;
 			case 2 :
 				if (brushMesh) brushMesh.visible = false;
@@ -1329,12 +1318,8 @@ qx.Class.define("desk.SliceView",
 				j = sliceId;
 				break;
 			}
-			var _this = this;
-			this.__master.applyToViewers (function (viewer) {
-				if (viewer != _this) {
-					viewer.setCrossPosition(i, j, k);
-				}
-			});
+
+			this.setCrossPosition(i, j, k);
 			this.__propagateCameraToLinks();
 		},
 
