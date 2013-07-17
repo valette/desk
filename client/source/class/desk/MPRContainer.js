@@ -45,6 +45,7 @@ qx.Class.define("desk.MPRContainer",
         this.add(gridContainer, {flex : 1});
 		this.add(fullscreenContainer, {flex : 1});
 
+		this.__fullscreenButtons = [];
 		this.__createVolumesList();
 		this.__createOrientationWindow();
 		this.__addViewers();
@@ -237,7 +238,10 @@ qx.Class.define("desk.MPRContainer",
 			var orientationContainer = this.__orientationContainer;
 			var i;
 			for (i = 0; i < this.__nbUsedOrientations; i++) {
-				gridContainer.remove( viewers[i] );
+				var viewer = viewers[i];
+				if (qx.ui.core.Widget.contains(gridContainer, viewer)) {
+					gridContainer.remove(viewer);
+				}
 			}
 			orientationContainer.removeAll();
 
@@ -400,41 +404,57 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		__addViewerToGrid : function (sliceView, r, c) {
-			var fullscreen = false;
 			this.__gridContainer.add(sliceView, {row: r, column: c});
 			this.__orientationContainer.add(sliceView.getReorientationContainer(this.__orientationButtonGroup), {row: r, column: c});
 			sliceView.setUserData( "positionInGrid", { row :r , column :c } );
 
-			// sliceView.addListener("mouseover", function(){ sliceView.setUserData("thisViewON", true); });
-			// sliceView.addListener("mouseout", function(){ sliceView.setUserData("thisViewON", false); });
-			// sliceView.setUserData("thisViewON", false);
 			sliceView.addListener("mouseover", function(){ sliceView.setViewOn(true); });
 			sliceView.addListener("mouseout", function(){ sliceView.setViewOn(false); });
 			var fullscreenCommand = new qx.ui.core.Command("Ctrl+P");
 			qx.util.DisposeUtil.disposeTriggeredBy(fullscreenCommand, sliceView);
 			var fullscreenButton = new qx.ui.form.Button("+", null, fullscreenCommand).set( { opacity: 0.5 } );
 			sliceView.getRightContainer().add(fullscreenButton);
+			var orientation = sliceView.getOrientation();
+			this.__fullscreenButtons[orientation] = fullscreenButton;
+			
 			fullscreenButton.addListener("execute", function () {
-					if (!fullscreen) {
-						// if(sliceView.getUserData("thisViewON")==true) {
-						if(sliceView.getViewOn()==true) {
-							fullscreenButton.setLabel("-");
-							this.__gridContainer.setVisibility("excluded");
-							this.__fullscreenContainer.add(sliceView, {flex : 1});
-							this.__fullscreenContainer.setVisibility("visible");
-							fullscreen=true;
-							this.fireDataEvent("switchFullScreen", true);
-						}
-					} else {
-						fullscreenButton.setLabel("+");
-						this.__fullscreenContainer.setVisibility("excluded");
-						fullscreen=false;
-						this.__fullscreenContainer.remove(sliceView);
-						this.__gridContainer.add(sliceView, sliceView.getUserData("positionInGrid"));
-						this.__gridContainer.setVisibility("visible");
-						this.fireDataEvent("switchFullScreen", false);
+				if (fullscreenButton.getLabel() === "+") {
+					if(sliceView.getViewOn()==true) {
+						this.maximizeViewer(orientation);
 					}
+				} else {
+					this.resetMaximize();
+				}
 			}, this);
+		},
+
+		__fullscreenButtons : null,
+
+		
+		/**
+		 * maximizes a viewer so that it fills the entire container
+		 * @param orientation {Number} : viewer orientation to maximize
+		 */
+		 maximizeViewer : function (orientation) {
+			this.__fullscreenButtons[orientation].setLabel("-");
+			var sliceView = this.__viewers[orientation];
+			this.__gridContainer.setVisibility("excluded");
+			this.__fullscreenContainer.add(sliceView, {flex : 1});
+			this.__fullscreenContainer.setVisibility("visible");
+			this.fireDataEvent("switchFullScreen", true);		
+		},
+
+		/**
+		 * resets all viewers to the same size
+		 */
+		 resetMaximize : function () {
+			this.__fullscreenContainer.setVisibility("excluded");
+			for (var i = 0; i != this.__nbUsedOrientations; i++) {
+				this.__fullscreenButtons[i].setLabel("+");
+			}
+			this.__gridContainer.setVisibility("visible");
+			this.__applyViewsLayout(this.getViewsLayout());
+			this.fireDataEvent("switchFullScreen", false);			
 		},
 
 		/**
