@@ -9,19 +9,19 @@ qx.Class.define("desk.MPRContainer",
     extend : qx.ui.container.Composite,
 	include : desk.ActionLinkMixin,
 
-	construct : function(file, parameters, callback)
+	construct : function(file, options, callback)
 	{
         this.base(arguments);
         this.setLayout(new qx.ui.layout.VBox());
 
-		parameters = parameters || {};
-		this.__windowsInGridCoord = parameters.inGridCoord || {
+		options = options || {};
+		this.__windowsInGridCoord = options.inGridCoord || {
 			viewers : [{c:0,r:0}, {c:1,r:0}, {c:0,r:1}],
 			volList : {c:1,r:1}
 		};
 
         this.__viewsNames = ["Axial", "Sagittal", "Coronal"];
-		this.__nbUsedOrientations = parameters.nbOrientations || 3;
+		this.__nbUsedOrientations = options.nbOrientations || 3;
 
 		var gridLayout = new qx.ui.layout.Grid(2,2);
 		for (var i = 0 ; i < 2 ; i++) {
@@ -38,7 +38,7 @@ qx.Class.define("desk.MPRContainer",
 		this.__fullscreenContainer = fullscreenContainer;
 		fullscreenContainer.setVisibility("excluded");
 
-        if (parameters.standAlone == false) {
+        if (options.standAlone == false) {
             this.__standalone = false;
         }
 
@@ -52,7 +52,7 @@ qx.Class.define("desk.MPRContainer",
 		this.__addDropFileSupport();
 
 		if (file) {
-			this.addVolume(file, parameters, callback);
+			this.addVolume(file, options, callback);
 		}
 	},
 
@@ -90,10 +90,10 @@ qx.Class.define("desk.MPRContainer",
         * visualizes the output of an action whenever it is updated
         * @param action {desk.Action} : action to watch
         * @param file {String} : output file to visualize (without path)
-        * @param parameters {Object} : parameters object containing settings
+        * @param options {Object} : options object containing settings
         * such as imageFormat (0 or 1), label (text), visible (bool)
         */
-        watchAction : function (action, file, parameters, callback) {
+        watchAction : function (action, file, options, callback) {
             var volume;
             var currentActionId = -1;
             action.addListener('actionTriggered', function (e) {
@@ -112,7 +112,7 @@ qx.Class.define("desk.MPRContainer",
                 if (volume) {
                     this.removeVolume(volume);
                 }
-                volume = this.addVolume(action.getOutputDirectory() + file, parameters, callback);
+                volume = this.addVolume(action.getOutputDirectory() + file, options, callback);
             }, this);
 
             this.addListener('removeVolume', function (e) {
@@ -469,23 +469,23 @@ qx.Class.define("desk.MPRContainer",
         /**
 		* adds a file into the viewer
 		* @param file {String} : file to load
-        * @param parameters {Object} : parameters object containing settings
+        * @param options {Object} : options object containing settings
         * such as imageFormat (0 or 1), label (text), visible (bool)
         * @param callback {Function} : callback when loaded.
         * @return {qx.ui.container.Composite}  volume item
 		*/
-		addVolume : function (file, parameters, callback) {
+		addVolume : function (file, options, callback) {
 			var volumeSlices = [];
 
 			var opacity = 1;
 			var imageFormat = 1;
 
-            parameters = parameters || {};
-            if ( parameters.opacity != null ) {
-				opacity = parameters.opacity;
+            options = options || {};
+            if ( options.opacity != null ) {
+				opacity = options.opacity;
 			}
-			if ( parameters.imageFormat != null ) {
-				imageFormat = parameters.imageFormat;
+			if ( options.imageFormat != null ) {
+				imageFormat = options.imageFormat;
 			}
 
 			var volumeListItem = new qx.ui.container.Composite();
@@ -537,8 +537,8 @@ qx.Class.define("desk.MPRContainer",
 			volumeListItem.add(labelcontainer);
 
             var label = new qx.ui.basic.Label(baseName);
-            if (parameters.label) {
-                label.setValue(parameters.label);
+            if (options.label) {
+                label.setValue(options.label);
             }
             label.setTextAlign("left");
 			labelcontainer.add(label, {flex : 1});
@@ -548,13 +548,13 @@ qx.Class.define("desk.MPRContainer",
 				function (viewer, callback) {
 					volumeSlices[viewer.getOrientation()] = viewer.addVolume(
 							file,
-							parameters,
+							options,
 							function (volumeSlice) {callback();}
 						);
 				},
 				function (err) {
-					if (parameters.visible !== undefined) {
-						hideShowCheckbox.setValue(parameters.visible);
+					if (options.visible !== undefined) {
+						hideShowCheckbox.setValue(options.visible);
 					}
 //					scalarBounds = volumeSlice.getScalarBounds();
 //					updateWindowLevel();
