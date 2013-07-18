@@ -66,7 +66,7 @@ qx.Class.define("desk.SliceView",
 
 	properties : {
 		/** current display slice */
-		slice : { init : 0, check: "Number", event : "changeSlice"},
+		slice : { init : 0, check: "Number", event : "changeSlice", apply : "__applyChangeSlice"},
 
 		/** current camera z position */
 		cameraZ : { init : 1, check: "Number", event : "changeCameraZ", apply : "__applyCameraZ"},
@@ -1193,20 +1193,16 @@ qx.Class.define("desk.SliceView",
                 opacity : 0.5
             };
             qx.util.DisposeUtil.disposeTriggeredBy(font, this);
-			var northLabel = new qx.ui.basic.Label("S");
-			northLabel.set(settings);
+			var northLabel = new qx.ui.basic.Label("S").set(settings);
 			container.add(northLabel, {left: "50%", top:"1%"});
 
-			var southLabel = new qx.ui.basic.Label("I");
-			southLabel.set(settings);
+			var southLabel = new qx.ui.basic.Label("I").set(settings);
 			container.add(southLabel, {left: "50%", bottom:"1%"});
 
-            var westLabel = new qx.ui.basic.Label("L");
-			westLabel.set(settings);
+            var westLabel = new qx.ui.basic.Label("L").set(settings);
 			container.add(westLabel, {left: "1%", top:"45%"});
 
-            var eastLabel = new qx.ui.basic.Label("R");
-			eastLabel.set(settings);
+            var eastLabel = new qx.ui.basic.Label("R").set(settings);
 			container.add(eastLabel, {right: "1%", top:"45%"});
 
 			directionOverlays.push(northLabel, westLabel, southLabel, eastLabel);
@@ -1258,8 +1254,6 @@ qx.Class.define("desk.SliceView",
 				this.setSlice(this.getFirstSlice().getNumberOfSlices()-1-e.getData());
 			}, this);
 
-			this.addListener("changeSlice", this.__onChangeSlice, this);
-
 			rightContainer.add(slider, {flex : 1});
 			rightContainer.setVisibility("hidden");
 			container.add(rightContainer, {right : 0, top : 0, height : "100%"});
@@ -1270,16 +1264,14 @@ qx.Class.define("desk.SliceView",
 
 		__sliceLabel : null,
 
-		__onChangeSlice : function (e) {
-			var sliceId = e.getData();
+		__applyChangeSlice : function (sliceId) {
 			this.__sliceLabel.setValue(sliceId + "");
 			// something fishy here : getNumberOfSlices should never be 0 but it is sometimes...
 			var slice = this.getFirstSlice();
 			if (!slice) {
 				return;
 			}
-			var newSliceId = this.getFirstSlice().getNumberOfSlices() - 
-				1 - sliceId;
+			var newSliceId = slice.getNumberOfSlices() - 1 - sliceId;
 			if (newSliceId < 0) {
 				newSliceId = 0;
 			}
@@ -1288,19 +1280,17 @@ qx.Class.define("desk.SliceView",
 			var i = this.__positionI;
 			var j = this.__positionJ;
 			var k = this.__positionK;
+
 			switch (this.__orientation)
 			{
 			case 0 :
-				this.__positionK = sliceId;
 				k = sliceId;
 				break;
 			case 1 :
-				this.__positionI = sliceId;
 				i = sliceId;
 				break;
 			case 2 :
 			default :
-				this.__positionJ = sliceId;
 				j = sliceId;
 				break;
 			}
