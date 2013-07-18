@@ -23,42 +23,14 @@ qx.Class.define("desk.SliceView",
 	extend : qx.ui.container.Composite,
 	include : desk.LinkMixin,
 
-	construct : function(orientation)
-	{
+	construct : function(orientation) {
 		this.base(arguments);
-		this.setLayout(new qx.ui.layout.HBox());
-		this.setDecorator("main");
-
+		this.set({layout : new qx.ui.layout.HBox(), decorator : "main"});
 		this.__slices = [];
-
-		if (typeof orientation == "number") {
-			this.__orientation = orientation;
-		}
-
+		this.__orientation = orientation || 0;
 		this.__createUI();
-
-		this.__drawingCanvas = new qx.ui.embed.Canvas().set({
-			syncDimension: true
-		});
-
-		this.addListener("changePaintMode", function (e) {
-			this.__initDrawing();
-			if (e.getData()) {
-				this.setEraseMode(false);
-				this.__updateBrush();
-			}
-		}, this);
-
-		this.addListener("changeEraseMode", function (e) {
-			this.__initDrawing();
-			if (e.getData()) {
-				this.setPaintMode(false);
-				this.__updateBrush();
-			}
-		}, this);
-		this.__threeContainer.getControls().update();
-
 		this.__initUndo();
+		this.__setupInteractionEvents();
 	},
 
 	destruct : function(){
@@ -106,10 +78,10 @@ qx.Class.define("desk.SliceView",
 		orientPlane : { init : "", check: "String", event : "changeOrientPlane"},
 
 		/** is the interaction mode set to paint mode*/
-		paintMode : { init : false, check: "Boolean", event : "changePaintMode"},
+		paintMode : { init : false, check: "Boolean", event : "changePaintMode", apply : "__applyPaintMode"},
 
 		/** is the interaction mode set to erase mode*/
-		eraseMode : { init : false, check: "Boolean", event : "changeEraseMode"},
+		eraseMode : { init : false, check: "Boolean", event : "changeEraseMode", apply : "__applyEraseMode"},
 
 		/** Should the flip and rotate operations operate on camera or orientation markers*/
 		orientationChangesOperateOnCamera : { init : true, check: "Boolean"}
@@ -128,6 +100,22 @@ qx.Class.define("desk.SliceView",
 	},
 
 	members : {
+		__applyEraseMode : function (mode) {
+			this.__initDrawing();
+			if (mode) {
+				this.setPaintMode(false);
+				this.__updateBrush();
+			}
+		},
+
+		__applyPaintMode : function (mode) {
+			this.__initDrawing();
+			if (mode) {
+				this.setEraseMode(false);
+				this.__updateBrush();
+			}
+		},
+
 		__orientation : 0,
 
 		getOrientation : function () {
@@ -425,15 +413,15 @@ qx.Class.define("desk.SliceView",
 			});
 
 			var hGeometry = new THREE.Geometry();
-			hGeometry.vertices.push(new THREE.Vector3(coordinates[0], 0, 0));
-			hGeometry.vertices.push(new THREE.Vector3(coordinates[2], 0, 0));
+			hGeometry.vertices.push(new THREE.Vector3(coordinates[0], 0, 0),
+				new THREE.Vector3(coordinates[2], 0, 0));
 			var hline = new THREE.Line(hGeometry, material);
 			hline.renderDepth = -900;
 			this.getScene().add(hline);
 
 			var vGeometry = new THREE.Geometry();
-			vGeometry.vertices.push(new THREE.Vector3(0, coordinates[1], 0));
-			vGeometry.vertices.push(new THREE.Vector3(0, coordinates[5], 0));
+			vGeometry.vertices.push(new THREE.Vector3(0, coordinates[1], 0),
+				new THREE.Vector3(0, coordinates[5], 0));
 			var vline = new THREE.Line(vGeometry, material);
 			vline.renderDepth = -900;
 			this.getScene().add(vline);
@@ -447,8 +435,7 @@ qx.Class.define("desk.SliceView",
                 }
             }
 			this.__crossMeshes = crossMeshes = [];
-			crossMeshes.push(hline);
-			crossMeshes.push(vline);
+			crossMeshes.push(hline, vline);
 		},
 
 		__coordinatesRatio : null,
@@ -721,7 +708,6 @@ qx.Class.define("desk.SliceView",
 			this.__volume2DDimensions = volumeSlice.get2DDimensions();
 			this.__volumeOrigin = volumeSlice.getOrigin();
 			this.__volumeSpacing = volumeSlice.getSpacing();
-			this.__setupInteractionEvents();
 
 			this.__createCrossMeshes(volumeSlice);
 
@@ -902,8 +888,6 @@ qx.Class.define("desk.SliceView",
 				this.setCrossPosition(i, j, k);
 			});
 		},
-
-        __interactionEventsSetup : false,
 
 		/**
 		* interactionMode : 
@@ -1110,16 +1094,12 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__setupInteractionEvents : function () {
-            if (this.__interactionEventsSetup) {
-                return;
-            }
-            this.__interactionEventsSetup = true;
-			var htmlContainer = this.__threeContainer;
-			htmlContainer.addListener("mousedown", this.__onMouseDown, this);
-			htmlContainer.addListener("mouseout", this.__onMouseOut, this);
-			htmlContainer.addListener("mousemove", this.__onMouseMove, this);
-			htmlContainer.addListener("mouseup", this.__onMouseUp, this);
-			htmlContainer.addListener("mousewheel", this.__onMouseWheel, this);
+			var container = this.__threeContainer;
+			container.addListener("mousedown", this.__onMouseDown, this);
+			container.addListener("mouseout", this.__onMouseOut, this);
+			container.addListener("mousemove", this.__onMouseMove, this);
+			container.addListener("mouseup", this.__onMouseUp, this);
+			container.addListener("mousewheel", this.__onMouseWheel, this);
 		},
 
 		__intersection : null,
@@ -1197,8 +1177,11 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__createUI : function (file) {
-			var container = new desk.ThreeContainer();
-			this.__threeContainer = container;
+			this.__drawingCanvas = new qx.ui.embed.Canvas().set({
+				syncDimension: true
+			});
+
+			var container = this.__threeContainer = new desk.ThreeContainer();
 			container.getRenderer().setClearColor( 0x000000, 1 );
 			this.add(container, {flex : 1});
 
@@ -1226,10 +1209,7 @@ qx.Class.define("desk.SliceView",
 			eastLabel.set(settings);
 			container.add(eastLabel, {right: "1%", top:"45%"});
 
-			directionOverlays.push(northLabel);
-			directionOverlays.push(westLabel);
-			directionOverlays.push(southLabel);
-			directionOverlays.push(eastLabel);
+			directionOverlays.push(northLabel, westLabel, southLabel, eastLabel);
 			switch (this.__orientation)
 			{
 			case 0 :
