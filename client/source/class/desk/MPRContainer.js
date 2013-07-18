@@ -287,11 +287,11 @@ qx.Class.define("desk.MPRContainer",
 			gridContainer.removeAll();
 			orientationContainer.removeAll();
 
-			for (i = 0; i < this.__nbUsedOrientations; i++) {
+			for (var i = 0; i < this.__nbUsedOrientations; i++) {
 				//// Use  layout.charAt(i)-1  since layout uses 1,2,3  but  __layoutSelectBoxes  goes from 0 to 2 !
 				var letter = this.__layoutSelectBoxes[layout.charAt(i)-1].getSelection()[0].getLabel().charAt(0);
 				for (var j = 0; j < this.__nbUsedOrientations; j++) {
-					viewer = viewers[j];
+					var viewer = viewers[j];
 					if (viewer.getOrientPlane().charAt(0) == letter) {
 						break;
 					}
