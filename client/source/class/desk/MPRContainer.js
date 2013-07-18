@@ -2,7 +2,7 @@
 * @ignore(Uint8Array)
 * @lint ignoreDeprecated(alert)
 * @asset(desk/Contrast_Logo_petit.PNG)
-* @ignore (async.eachSeries)
+* @ignore (async.each)
 */
 qx.Class.define("desk.MPRContainer", 
 {
@@ -565,7 +565,7 @@ qx.Class.define("desk.MPRContainer",
 			labelcontainer.add(label, {flex : 1});
 
 			var _this = this;
-			async.eachSeries(this.__viewers,
+			async.each(this.__viewers,
 				function (viewer, callback) {
 					volumeSlices[viewer.getOrientation()] = viewer.addVolume(
 							file,

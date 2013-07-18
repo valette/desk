@@ -428,22 +428,21 @@ qx.Class.define("desk.SliceView",
 			hGeometry.vertices.push(new THREE.Vector3(coordinates[0], 0, 0));
 			hGeometry.vertices.push(new THREE.Vector3(coordinates[2], 0, 0));
 			var hline = new THREE.Line(hGeometry, material);
+			hline.renderDepth = -900;
 			this.getScene().add(hline);
-			hline.renderDepth = 1;
 
 			var vGeometry = new THREE.Geometry();
 			vGeometry.vertices.push(new THREE.Vector3(0, coordinates[1], 0));
 			vGeometry.vertices.push(new THREE.Vector3(0, coordinates[5], 0));
 			var vline = new THREE.Line(vGeometry, material);
-            var scene = this.getScene();
-			vline.renderDepth = 1;
-			scene.add(vline);
+			vline.renderDepth = -900;
+			this.getScene().add(vline);
 
             var crossMeshes = this.__crossMeshes;
             if (crossMeshes) {
                 for (var i = 0; i < crossMeshes.length; i++) {
 					var mesh = crossMeshes[i];
-                    scene.remove(mesh);
+                    this.getScene().remove(mesh);
                     mesh.geometry.dispose();
                 }
             }
@@ -503,11 +502,11 @@ qx.Class.define("desk.SliceView",
 			material.side = THREE.DoubleSide;
 
 			var mesh = new THREE.Mesh(geometry,material);
-			mesh.renderDepth = 0;
+			mesh.renderDepth = -1000;
 			this.__brushMesh = mesh;
 			this.__updateBrush();
 
-	//		mesh.visible = false;
+			mesh.visible = false;
 			this.getScene().add(mesh);
 		},
 
@@ -597,7 +596,7 @@ qx.Class.define("desk.SliceView",
 			material.side = THREE.DoubleSide;
 
 			var mesh = new THREE.Mesh(geometry,material);
-			mesh.renderDepth = 2;
+			mesh.renderDepth = -800;
 
 			this.getScene().add(mesh);
 			if (this.__drawingMesh) {
@@ -661,6 +660,7 @@ qx.Class.define("desk.SliceView",
 			var material = volumeSlice.getMaterial();
 			material.side = THREE.DoubleSide;
 			var mesh = new THREE.Mesh(geometry, material);
+			mesh.renderDepth = - this.__slices.length;
 			volumeSlice.setUserData("mesh", mesh);
 			geometry.computeCentroids();
 			geometry.computeFaceNormals();
@@ -744,9 +744,10 @@ qx.Class.define("desk.SliceView",
 					dimensions[coordinate] = 0;
 				}
 			}
+			this.__positionI = undefined; // to force cross position update
 			this.setCrossPosition(Math.round(dimensions[0] / 2),
 				Math.round(dimensions[1] / 2),
-				Math.round(dimensions[2] / 2));		
+				Math.round(dimensions[2] / 2));
 		},
 
 		/** adds a volume to the view
@@ -794,14 +795,13 @@ qx.Class.define("desk.SliceView",
 		 **/
 		setSliceRank : function (volumeSlice, rank) {
 			var slices = this.__slices;
-            var length = slices.length;
-			for (var i = 0; i < length; i++) {
+			for (var i = 0; i < slices.length; i++) {
                 var slice = slices[i];
-					if (slice === volumeSlice) {
+				if (slice === volumeSlice) {
 					var mesh = slice.getUserData("mesh");
 					if (mesh) {
 						// the mesh may not exist if no slice has been loaded yet
-						mesh.renderDepth = 3 + length - rank;
+						mesh.renderDepth = - rank;
 					}
 				}
 			}
