@@ -398,7 +398,9 @@ qx.Class.define("desk.MPRContainer",
 			function changeFlipStrategy (e) {
 				var flipCamera = e.getTarget().getUserData('flipCamera');
 				this.applyToViewers(function (viewer) {
-					viewer.setOrientationChangesOperateOnCamera(flipCamera);
+					viewer.applyToLinks(function () {
+						this.setOrientationChangesOperateOnCamera(flipCamera);
+					});
 				});
 			}
 			slicesOrButton.addListener('execute' , changeFlipStrategy, this);
