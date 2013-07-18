@@ -965,6 +965,7 @@ qx.Class.define("desk.SliceView",
 			if (this.__sliderInUse) {
 				return;
 			}
+			this.setViewOn(false);
 			if (!qx.ui.core.Widget.contains(this, event.getRelatedTarget())) {
 				this.__rightContainer.setVisibility("hidden");
 				var container = this.__threeContainer;
@@ -978,6 +979,7 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__onMouseMove : function (event) {
+			this.setViewOn(true);
 			var controls = this.__threeContainer.getControls();
 			var self = this;
 			if (this.__rightContainer.getVisibility() === "hidden") {
@@ -1304,7 +1306,7 @@ qx.Class.define("desk.SliceView",
 		__doingIndex : null,
 
 		__onCtrlZ : function (event) {
-			if(this.getViewOn() == true) {
+			if(this.getViewOn()) {
 				var undoData = this.__undoData;
 				if ((0 < undoData.length) && (-1 < this.__doingIndex)) {
 					var doingIndex = this.__doingIndex;
@@ -1326,7 +1328,7 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__onCtrlY : function (event) {
-			if(this.getViewOn() == true) {
+			if(this.getViewOn()) {
 				var undoData = this.__undoData;
 				if(0 < undoData.length) {
 					this.__doingIndex++;
