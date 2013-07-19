@@ -26,20 +26,18 @@ qx.Class.define("desk.ThreeContainer",
 		var canvas = new qx.ui.layout.Canvas()
 		this.setLayout(canvas);
 		qx.util.DisposeUtil.disposeTriggeredBy(canvas, this);
-		var threeCanvas = new qx.ui.embed.Canvas();
+		var threeCanvas = this.__threeCanvas = new qx.ui.embed.Canvas();
 		this.add(threeCanvas, {width : "100%", height : "100%"});
-		this.__threeCanvas = threeCanvas;
 
 		if (!Detector.webgl) Detector.addGetWebGLMessage();
 
-		var scene = new THREE.Scene();
-		var camera = new THREE.PerspectiveCamera(60,1, 0.01, 1e10);
-		var controls = new THREE.TrackballControls2(camera,threeCanvas.getContentElement().getCanvas());
+		var scene = this.__scene = new THREE.Scene();
+		var camera = this.__camera = 
+			new THREE.PerspectiveCamera(60,1, 0.01, 1e10);
+		var controls = this.__controls = 
+			new THREE.TrackballControls2(camera,threeCanvas.getContentElement().getCanvas());
 
-		this.__controls = controls;
 		controls.zoomSpeed = 6;
-		this.__scene = scene;
-		this.__camera = camera;
 		scene.add(camera);
 
 		// lights
@@ -51,11 +49,10 @@ qx.Class.define("desk.ThreeContainer",
 		scene.add(ambientLight);
 
 		// renderer
-		var renderer = new THREE.WebGLRenderer(
+		var renderer = this.__renderer = new THREE.WebGLRenderer(
 			{canvas : threeCanvas.getContentElement().getCanvas(),
 			antialias: true} 
 		);
-		this.__renderer = renderer;
 		renderer.setClearColor(0xffffff, 1);
 		this.__initRenderFunction();
 
