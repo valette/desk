@@ -61,6 +61,9 @@ qx.Class.define("desk.ThreeContainer",
 
 		threeCanvas.addListener("resize", this.__resizeThreeCanvas, this);
 		this.__setupFullscreen();
+		this.addListenerOnce('appear', function () {
+			this.__appeared = true;
+		}, this);
 	},
 
 	destruct : function(){
@@ -86,6 +89,7 @@ qx.Class.define("desk.ThreeContainer",
 	},
 
 	members : {
+		__appeared : false,
 		__renderFunction : null,
 		__renderingTriggered : false,
 
@@ -132,6 +136,9 @@ qx.Class.define("desk.ThreeContainer",
 		* requestAnimationFrame())
 		*/
 		render : function (force) {
+			if (!this.__appeared) {
+				return;
+			}
 			if (force) {
 				this.__renderFunction();
 			} else if (!this.__renderingTriggered) {
