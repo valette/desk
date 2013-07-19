@@ -47,11 +47,13 @@ qx.Class.define("desk.MPRContainer",
         this.add(gridContainer, {flex : 1});
 		this.add(fullscreenContainer, {flex : 1});
 
-		this.__fullscreenButtons = [];
+		this.__maximizeButtons = [];
 		this.__createVolumesList();
-		this.__createOrientationWindow();
 		this.__addViewers();
-		this.__addDropFileSupport();
+
+		this.setDroppable(true);
+		this.addListener("drop", this.__onDrop);
+
 		this.initViewsLayout();
 		if (file) {
 			this.addVolume(file, options, callback);
@@ -60,8 +62,10 @@ qx.Class.define("desk.MPRContainer",
 
 	destruct : function() {
 		this.removeAllVolumes();
-		this.__orientationWindow.dispose();
-		qx.util.DisposeUtil.destroyContainer(this.__orientationContainer);
+		if (this.__orientationWindow) {
+			this.__orientationWindow.dispose();
+			qx.util.DisposeUtil.destroyContainer(this.__orientationContainer);
+		}
 		qx.util.DisposeUtil.destroyContainer(this);
 		this.__volumes.dispose();
 		this.__windowsInGridCoord = null;
@@ -137,14 +141,6 @@ qx.Class.define("desk.MPRContainer",
 			this.__gridContainer.setUserData("freeRow", gridCoor.row);
 			this.__gridContainer.setUserData("freeColumn", gridCoor.column);
 			return this.__gridContainer;
-		},
-
-		/**
-		 * Returns the window where the user can change different
-		 * orientation parameters
-		 */
-		getOrientationWindow : function() {
-			return this.__orientationWindow;
 		},
 
 		/**
@@ -227,38 +223,36 @@ qx.Class.define("desk.MPRContainer",
 				sliceView.setOrientPlane(this.__viewsNames[i]);
 				sliceView.addListener("changeCrossPosition", this.__onChangeCrossPosition, this);
 				sliceView.addListener("changeCameraZ", this.__onChangeCameraZ, this);
-				this.__setupFullScreen (sliceView);
+				this.__setupMaximize(sliceView);
 				var button = new qx.ui.form.Button("+").set({opacity: 0.5});
 				button.setUserData("sliceView", sliceView);
-				sliceView.setUserData("fullscreenButton", button);
-				button.addListener("execute", this.__onFullscreenButtonClick, this);
+				sliceView.setUserData("maximizeButton", button);
+				button.addListener("execute", this.__onMaximizeButtonClick, this);
 				sliceView.getRightContainer().add(button);
-				this.__fullscreenButtons[i] = button;
+				this.__maximizeButtons[i] = button;
 				qx.util.DisposeUtil.disposeTriggeredBy(button, sliceView);
 			}
 		},
 
-		__setupFullScreen : function (sliceView) {
+		__setupMaximize : function (sliceView) {
 			sliceView.addListener('keypress', function (e) {
 				if (e.getKeyIdentifier() === 'P') {
-					this.__toggleFullscreen(sliceView.getUserData("fullscreenButton"));
+					this.__toggleMaximize(sliceView.getUserData("maximizeButton"));
 				}
 			},this);
 		},
 
-		__toggleFullscreen : function (button) {
+		__toggleMaximize : function (button) {
 			var sliceView = button.getUserData("sliceView");
 			if (button.getLabel() === "+") {
-				if(sliceView.getViewOn()) {
-					this.maximizeViewer(sliceView.getOrientation());
-				}
+				this.maximizeViewer(sliceView.getOrientation());
 			} else {
 				this.resetMaximize();
 			}			
 		},
 
-		__onFullscreenButtonClick : function (e) {
-			this.__toggleFullscreen(e.getTarget());
+		__onMaximizeButtonClick : function (e) {
+			this.__toggleMaximize(e.getTarget());
 		},
 
 		__onChangeCrossPosition : function (e) {
@@ -285,20 +279,26 @@ qx.Class.define("desk.MPRContainer",
 			var gridContainer = this.__gridContainer;
 			var orientationContainer = this.__orientationContainer;
 			gridContainer.removeAll();
-			orientationContainer.removeAll();
+			if (orientationContainer) {
+				orientationContainer.removeAll();
+			}
+
+			var layout = this.getViewsLayout();
 
 			for (var i = 0; i < this.__nbUsedOrientations; i++) {
 				//// Use  layout.charAt(i)-1  since layout uses 1,2,3  but  __layoutSelectBoxes  goes from 0 to 2 !
-				var letter = this.__layoutSelectBoxes[layout.charAt(i)-1].getSelection()[0].getLabel().charAt(0);
+				var letter = layout.charAt(i);
 				for (var j = 0; j < this.__nbUsedOrientations; j++) {
 					var viewer = viewers[j];
-					if (viewer.getOrientPlane().charAt(0) == letter) {
+					if ( ('' + (viewer.getOrientation() + 1)) === letter) {
 						break;
 					}
 				}
 				var coords = this.__windowsInGridCoord.viewers[i];
 				gridContainer.add (viewer, coords);
-				orientationContainer.add(viewer.getReorientationContainer(), coords);
+				if (orientationContainer) {
+					orientationContainer.add(viewer.getReorientationContainer(), coords);
+				}
 			}
             if (this.__standalone) {
 				this.__gridContainer.add(this.__volumesScroll,
@@ -375,9 +375,18 @@ qx.Class.define("desk.MPRContainer",
 			}
 		},
 
-		__createOrientationWindow : function () {
-			var window = new qx.ui.window.Window().set({caption : "Layout and Orientation"});
-			window.setLayout(new qx.ui.layout.VBox());
+		/**
+		 * Returns the window where the user can change different
+		 * orientation parameters
+		 */
+		getOrientationWindow : function () {
+			if (this.__orientationWindow) {
+				return this.__orientationWindow;
+			}
+			var window = this.__orientationWindow = 
+				new qx.ui.window.Window()
+				.set({caption : "Layout and Orientation",
+					layout : new qx.ui.layout.VBox()});
 
 			window.add (new qx.ui.basic.Label("Windows layout :"));
 			var planesContainer = new qx.ui.container.Composite();
@@ -432,21 +441,21 @@ qx.Class.define("desk.MPRContainer",
 				gridLayout.setColumnFlex(i, 1);
 			}
 			window.add(gridContainer);
-			this.__orientationWindow = window;
 
 			gridContainer.setLayout(gridLayout);
 			this.__orientationContainer = gridContainer;
+			this.__applyViewsLayout(this.getViewsLayout());
+			return window;
 		},
 
-		__fullscreenButtons : null,
+		__maximizeButtons : null,
 
-		
 		/**
 		 * maximizes a viewer so that it fills the entire container
 		 * @param orientation {Number} : viewer orientation to maximize
 		 */
 		 maximizeViewer : function (orientation) {
-			this.__fullscreenButtons[orientation].setLabel("-");
+			this.__maximizeButtons[orientation].setLabel("-");
 			var sliceView = this.__viewers[orientation];
 			this.__gridContainer.setVisibility("excluded");
 			this.__fullscreenContainer.add(sliceView, {flex : 1});
@@ -460,7 +469,7 @@ qx.Class.define("desk.MPRContainer",
 		 resetMaximize : function () {
 			this.__fullscreenContainer.setVisibility("excluded");
 			for (var i = 0; i != this.__nbUsedOrientations; i++) {
-				this.__fullscreenButtons[i].setLabel("+");
+				this.__maximizeButtons[i].setLabel("+");
 			}
 			this.__gridContainer.setVisibility("visible");
 			this.__applyViewsLayout(this.getViewsLayout());
@@ -873,7 +882,8 @@ qx.Class.define("desk.MPRContainer",
 		__getOrientationButton : function () {
 			var button = new qx.ui.form.Button("Layout/Orientation");
 			button.addListener ("execute", function () {
-				this.__orientationWindow.open();
+				this.getOrientationWindow().center()
+				this.getOrientationWindow().open();
 			}, this);
 			return (button);
 		},
@@ -1121,23 +1131,20 @@ qx.Class.define("desk.MPRContainer",
 			window.center();
 		},
 
-		__addDropFileSupport : function () {
-			this.setDroppable(true);
-			this.addListener("drop", function(e) {
-				if (e.supportsType("fileBrowser")) {
-					var files = e.getData("fileBrowser").getSelectedFiles();
-					for (var i = 0; i < files.length; i++) {
-						this.addVolume(files[i]);
-					}
-				} else if (e.supportsType("file")) {
-					if (e.supportsType("VolumeViewer")) {
-						if (this == e.getData("VolumeViewer")) {
-							return;
-						}
-					}						
-					this.addVolume(e.getData("file"));
+		__onDrop : function (e) {
+			if (e.supportsType("fileBrowser")) {
+				var files = e.getData("fileBrowser").getSelectedFiles();
+				for (var i = 0; i < files.length; i++) {
+					this.addVolume(files[i]);
 				}
-			}, this);
+			} else if (e.supportsType("file")) {
+				if (e.supportsType("VolumeViewer")) {
+					if (this == e.getData("VolumeViewer")) {
+						return;
+					}
+				}						
+				this.addVolume(e.getData("file"));
+			}
 		}
 	}
 });

@@ -71,8 +71,6 @@ qx.Class.define("desk.SliceView",
 		/** current camera z position */
 		cameraZ : { init : 1, check: "Number", event : "changeCameraZ", apply : "__applyCameraZ"},
 
-		viewOn : { init : false, check: "Boolean", event : "changeViewOn"},
-
 		/** paint opacity (betwen 0 and 1) */
 		paintOpacity : { init : 1, check: "Number", event : "changePaintOpacity"},
 		orientPlane : { init : "", check: "String", event : "changeOrientPlane"},
@@ -100,6 +98,12 @@ qx.Class.define("desk.SliceView",
 	},
 
 	members : {
+		isViewOn : function () {
+			return this.__viewOn;
+		},
+
+		__viewOn : false,
+
 		__applyEraseMode : function (mode) {
 			this.__initDrawing();
 			if (mode) {
@@ -850,8 +854,7 @@ qx.Class.define("desk.SliceView",
 				// dimensions might not exist if the volume is not ready yet
 				return;
 			}
-			switch (this.__orientation)
-			{
+			switch (this.__orientation) {
 			case 0 :
 				x = i;
 				y = dimensions[1] - 1 -j;
@@ -965,7 +968,7 @@ qx.Class.define("desk.SliceView",
 			if (this.__sliderInUse) {
 				return;
 			}
-			this.setViewOn(false);
+			this.__viewOn = false;
 			if (!qx.ui.core.Widget.contains(this, event.getRelatedTarget())) {
 				this.__rightContainer.setVisibility("hidden");
 				var container = this.__threeContainer;
@@ -979,7 +982,7 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__onMouseMove : function (event) {
-			this.setViewOn(true);
+			this.__viewOn = true;
 			var controls = this.__threeContainer.getControls();
 			var self = this;
 			if (this.__rightContainer.getVisibility() === "hidden") {
@@ -987,7 +990,6 @@ qx.Class.define("desk.SliceView",
 				var label = this.__directionOverlays[3];
 				container.remove(label);
 				container.add(label, {right: 32, top: "45%"});
-
 				this.__rightContainer.setVisibility("visible");
 			}
 
@@ -1306,7 +1308,7 @@ qx.Class.define("desk.SliceView",
 		__doingIndex : null,
 
 		__onCtrlZ : function (event) {
-			if(this.getViewOn()) {
+			if(this.__viewOn) {
 				var undoData = this.__undoData;
 				if ((0 < undoData.length) && (-1 < this.__doingIndex)) {
 					var doingIndex = this.__doingIndex;
@@ -1328,7 +1330,7 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__onCtrlY : function (event) {
-			if(this.getViewOn()) {
+			if(this.__viewOn) {
 				var undoData = this.__undoData;
 				if(0 < undoData.length) {
 					this.__doingIndex++;
