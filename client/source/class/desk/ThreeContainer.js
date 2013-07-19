@@ -63,6 +63,7 @@ qx.Class.define("desk.ThreeContainer",
 		this.__setupFullscreen();
 		this.addListenerOnce('appear', function () {
 			this.__appeared = true;
+			this.render();
 		}, this);
 	},
 
