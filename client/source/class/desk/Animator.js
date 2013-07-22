@@ -1,10 +1,10 @@
 /**
  * Simpe class to animate meshes
  * @ignore (async.map)
-#asset(qx/icon/${qx.icontheme}/16/actions/media-playback-start.png) 
-#asset(qx/icon/${qx.icontheme}/16/actions/media-playback-stop.png) 
-#asset(qx/icon/${qx.icontheme}/16/actions/media-seek-backward.png) 
-#asset(qx/icon/${qx.icontheme}/16/actions/media-seek-forward.png) 
+ * @asset(qx/icon/${qx.icontheme}/16/actions/media-playback-start.png) 
+ * @asset(qx/icon/${qx.icontheme}/16/actions/media-playback-stop.png) 
+ * @asset(qx/icon/${qx.icontheme}/16/actions/media-seek-backward.png) 
+ * @asset(qx/icon/${qx.icontheme}/16/actions/media-seek-forward.png) 
 */
 
 qx.Class.define("desk.Animator", 

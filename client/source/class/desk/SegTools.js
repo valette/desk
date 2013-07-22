@@ -13,7 +13,12 @@ qx.Class.define("desk.SegTools",
 		this.base(arguments);
 		this.__master = master;
 		this.__file = globalFile;
-		
+
+		this.__labelUnfocusedBorder = new qx.ui.decoration.Decorator().
+			set ({width : 2, style : "solid", color : "black"});
+		this.__labelFocusedBorder = new qx.ui.decoration.Decorator().
+			set ({width : 3, style : "solid", color : "red"});
+
 		this.set({
 			layout : new qx.ui.layout.VBox(),
 			showMinimize: false,
@@ -812,8 +817,9 @@ qx.Class.define("desk.SegTools",
 
 		__selectedLabel : null,
 
-		__labelUnfocusedBorder : new qx.ui.decoration.Single(2, "solid", "black"),
-		__labelFocusedBorder : new qx.ui.decoration.Single(3, "solid", "red"),
+		__labelUnfocusedBorder : null,
+
+		__labelFocusedBorder : null,
 
 		__addColorItem : function(label, labelName, red, green, blue,
 					meshRed, meshGreen, meshBlue, opacity, depth)

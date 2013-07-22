@@ -269,7 +269,11 @@ qx.Class.define("desk.MPRContainer",
 			this.applyToViewers (function (viewer) {
 				if (viewer != sliceView) {
 					var oldZ = viewer.getCameraZ();
-					viewer.setCameraZ(oldZ * Math.abs(z / oldZ));
+					if (oldZ * z < 0) {
+						viewer.setCameraZ(-z);
+					} else {
+						viewer.setCameraZ(z);
+					}
 				}
 			});
 		},

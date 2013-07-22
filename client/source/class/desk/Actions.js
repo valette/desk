@@ -4,6 +4,8 @@
  * @ignore (HackCTMWorkerURL)
  * @ignore (async.queue)
  * @lint ignoreDeprecated (alert)
+ * @require(desk.LogContainer)
+ * @require(desk.Random)
  */
 qx.Class.define("desk.Actions", 
 {
@@ -69,13 +71,8 @@ qx.Class.define("desk.Actions",
 				self.fireEvent('changeReady');
 			});
 		});
-
-		if (0) {
-			// this code just includes other desk classes by default...
-			new qxjqplot.Plot();
-			new desk.LogContainer();
-			new desk.Random();
-		}
+		// hack to include qxjqplot
+		new qxjqplot.Plot();
 	},
 
 	properties : {

@@ -1255,6 +1255,7 @@ qx.Class.define("desk.SliceView",
 				width :30, opacity : 0.5, backgroundColor : "transparent",
 				orientation : "vertical", zIndex : 1000});
 			slider.addListener("changeValue",function(e){
+				if (!this.getFirstSlice()) return;
 				this.setSlice(this.getFirstSlice().getNumberOfSlices()-1-e.getData());
 			}, this);
 
