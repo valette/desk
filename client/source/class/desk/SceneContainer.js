@@ -114,7 +114,7 @@ qx.Class.define("desk.SceneContainer",
 		this.__meshesTree.dispose();
 		this.__meshesTree.getDataModel().dispose();
 		qx.util.DisposeUtil.destroyContainer(children[0]);
-		qx.util.DisposeUtil.destroyContainer(children[1]);
+		children[0].dispose();
 		this.__ctmLoader = null;
 	},
 

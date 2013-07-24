@@ -66,7 +66,11 @@ qx.Class.define("desk.MPRContainer",
 			this.__orientationWindow.dispose();
 			qx.util.DisposeUtil.destroyContainer(this.__orientationContainer);
 		}
-		qx.util.DisposeUtil.destroyContainer(this);
+
+		this.applyToViewers(function (viewer) {
+			viewer.dispose();
+		});
+
 		this.__volumes.dispose();
 		this.__windowsInGridCoord = null;
 		this.__viewsNames = null;

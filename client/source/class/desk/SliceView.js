@@ -37,7 +37,8 @@ qx.Class.define("desk.SliceView",
 		this.removeVolumes(this.__slices);
 		this.unlink();
 		//clean the scene
-		qx.util.DisposeUtil.destroyContainer(this);
+		qx.util.DisposeUtil.destroyContainer(this.__rightContainer);
+		
 		if (this.__drawingCanvas) {
 			this.__drawingCanvas.dispose();
 		}
@@ -46,15 +47,6 @@ qx.Class.define("desk.SliceView",
 			this.__brushCanvas.dispose();
 		}
 
-/*	
-		this.__threeContainer.destroy();
-		this.__slider.destroy();
-		this.__rightContainer.destroy();
-		this.__sliceLabel.destroy();
-		var overlays = this.__directionOverlays;
-		for (var i = 0; i != overlays.length; i++) {
-			overlays[i].destroy();
-		}*/
 		this.__intersection = null;
 		this.__2DCornersCoordinates = null;
 		this.__volume2DDimensions = null;

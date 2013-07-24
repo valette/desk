@@ -20,22 +20,27 @@ qx.Class.define("desk.ThreeContainer",
 	/**
 	 * Constructor
 	*/
-	construct : function()
-	{
+	construct : function() {
 		this.base(arguments);
+
 		var canvas = new qx.ui.layout.Canvas()
 		this.setLayout(canvas);
-		qx.util.DisposeUtil.disposeTriggeredBy(canvas, this);
-		var threeCanvas = this.__threeCanvas = new qx.ui.embed.Canvas();
+
+		// get canvas from garbage collector if any
+		var garbage = this.__garbageContainer.getChildren();
+		if (!garbage.length) {
+			var threeCanvas = this.__threeCanvas = new qx.ui.embed.Canvas();
+		} else {
+			var threeCanvas = this.__threeCanvas = garbage[0];
+		}
 		this.add(threeCanvas, {width : "100%", height : "100%"});
+		var canvas = threeCanvas.getContentElement().getCanvas();
 
 		if (!Detector.webgl) Detector.addGetWebGLMessage();
 
 		var scene = this.__scene = new THREE.Scene();
-		var camera = this.__camera = 
-			new THREE.PerspectiveCamera(60,1, 0.01, 1e10);
-		var controls = this.__controls = 
-			new THREE.TrackballControls2(camera,threeCanvas.getContentElement().getCanvas());
+		var camera = this.__camera = new THREE.PerspectiveCamera(60,1, 0.01, 1e10);
+		var controls = this.__controls = new THREE.TrackballControls2(camera, canvas);
 
 		controls.zoomSpeed = 6;
 		scene.add(camera);
@@ -45,30 +50,24 @@ qx.Class.define("desk.ThreeContainer",
 		dirLight.position.set(200, 200, 1000).normalize();
 		camera.add(dirLight);
 		camera.add(dirLight.target);
-		var ambientLight = new THREE.AmbientLight(0x555555);
-		scene.add(ambientLight);
+		scene.add(new THREE.AmbientLight(0x555555));
 
 		// renderer
-		var renderer = this.__renderer = new THREE.WebGLRenderer(
-			{canvas : threeCanvas.getContentElement().getCanvas(),
-			antialias: true} 
-		);
-		renderer.setClearColor(0xffffff, 1);
+		var renderer = this.__renderer = new THREE.WebGLRenderer({canvas : canvas, antialias: true});
 		this.__initRenderFunction();
 
-		threeCanvas.addListener("resize", this.__resizeThreeCanvas, this);
+		this.__listenerId = threeCanvas.addListener("resize", this.__resizeThreeCanvas, this);
 		this.__setupFullscreen();
-		this.addListenerOnce('appear', function () {
-			this.__appeared = true;
-			this.render();
-		}, this);
+		this.addListenerOnce('appear', this.__onAppear, this);
 	},
 
 	destruct : function(){
+		this.__threeCanvas.removeListenerById(this.__listenerId);
+		this.__garbageContainer.add(this.__threeCanvas);
+
 		//clean the scene
 		this.__scene = null;
 		this.__renderer = null;
-		this.__threeCanvas.destroy();
 		this.__threeCanvas = null;
 		this.__camera = null;
 		this.__controls = null;
@@ -87,9 +86,17 @@ qx.Class.define("desk.ThreeContainer",
 	},
 
 	members : {
+		__garbageContainer : new qx.ui.container.Composite(new qx.ui.layout.HBox()),
+		__listenerId : null,
+
 		__appeared : false,
 		__renderFunction : null,
 		__renderingTriggered : false,
+
+		__onAppear : function () {
+			this.__appeared = true;
+			this.__resizeThreeCanvas();
+		},
 
 		__setupFullscreen : function () {
 			var parent, width, height;
@@ -145,7 +152,7 @@ qx.Class.define("desk.ThreeContainer",
 			}
 		},
 
-		__resizeThreeCanvas : function () {		
+		__resizeThreeCanvas : function () {
 			var elementSize = this.__threeCanvas.getInnerSize();
 			if (!elementSize) {
 				return;
@@ -154,6 +161,7 @@ qx.Class.define("desk.ThreeContainer",
 			this.__camera.aspect = elementSize.width / elementSize.height;
 			this.__camera.updateProjectionMatrix();
 			this.__controls.setSize(elementSize.width, elementSize.height);
+			this.__controls.update();
 			this.render();
 		},
 
