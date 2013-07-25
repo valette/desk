@@ -11,8 +11,7 @@ qx.Class.define("desk.TextEditor",
 	*
 	* @param file {String} the file to edit
 	*/
-	construct : function(file)
-	{
+	construct : function(file) {
 		this.base(arguments);
 		this.setLayout(new qx.ui.layout.VBox());
 		this.setHeight(400);
@@ -64,13 +63,11 @@ qx.Class.define("desk.TextEditor",
         buttonsContainer.add (spinner);
 		this.add(buttonsContainer);
 
-		var textArea = new desk.AceContainer(function () {
-			if (file) {
-				this.openFile(file);
-			}
-		}, this);
+		var textArea = this.__textArea = new desk.AceContainer();
+		if (file) {
+			this.openFile(file);
+		}
 
-		this.__textArea = textArea;
         this.add(textArea, {flex : 1});
 		this.open();
 		this.center();
@@ -132,12 +129,25 @@ qx.Class.define("desk.TextEditor",
 		* @param file {String} the file to edit
 		*/
 		openFile : function (file) {
-			if (file.substring(file.length - 3) === '.js') {
-				this.__executeButton.setVisibility('visible');
-                this.__textArea.useHighlight(true);
-			} else {
-				this.__executeButton.setVisibility('excluded');
-                this.__textArea.useHighlight(false);
+			switch (desk.FileSystem.getFileExtension(file)) {
+				case "cxx":
+				case "cpp":
+				case "h":
+				case "txx":
+				case "c":
+					this.__textArea.setMode("c_cpp");
+					this.__textArea.useHighlight(true);
+					this.__executeButton.setVisibility('excluded');
+					break;
+				case "js" :
+					this.__executeButton.setVisibility('visible');
+					this.__textArea.setMode("javascript");
+					this.__textArea.useHighlight(true);
+					break;
+				default : 
+					this.__executeButton.setVisibility('excluded');
+					this.__textArea.useHighlight(false);
+					break;
 			}
 
 			this.__file = file;
