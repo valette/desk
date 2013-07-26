@@ -961,16 +961,14 @@ qx.Class.define("desk.SliceView",
 				return;
 			}
 			this.__viewOn = false;
-			if (!qx.ui.core.Widget.contains(this, event.getRelatedTarget())) {
-				this.__rightContainer.setVisibility("hidden");
-				var container = this.__threeContainer;
-				var label = this.__directionOverlays[3];
-				container.remove(label);
-				container.add(label, {right: 1, top:"45%"});
-				if (this.__brushMesh) this.__brushMesh.visible = false;
-				this.render();
-				this.fireDataEvent("viewMouseOut",event);
-			}
+			this.__rightContainer.setVisibility("hidden");
+			var container = this.__threeContainer;
+			var label = this.__directionOverlays[3];
+			container.remove(label);
+			container.add(label, {right: 1, top:"45%"});
+			if (this.__brushMesh) this.__brushMesh.visible = false;
+			this.render();
+			this.fireDataEvent("viewMouseOut",event);
 		},
 
 		__onMouseMove : function (event) {
