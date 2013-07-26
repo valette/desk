@@ -962,10 +962,7 @@ qx.Class.define("desk.SliceView",
 			}
 			this.__viewOn = false;
 			this.__rightContainer.setVisibility("hidden");
-			var container = this.__threeContainer;
-			var label = this.__directionOverlays[3];
-			container.remove(label);
-			container.add(label, {right: 1, top:"45%"});
+			this.__directionOverlays[3].setLayoutProperties({right: 1, top:"45%"});
 			if (this.__brushMesh) this.__brushMesh.visible = false;
 			this.render();
 			this.fireDataEvent("viewMouseOut",event);
@@ -976,10 +973,7 @@ qx.Class.define("desk.SliceView",
 			var controls = this.__threeContainer.getControls();
 			var self = this;
 			if (this.__rightContainer.getVisibility() === "hidden") {
-				var container = this.__threeContainer;
-				var label = this.__directionOverlays[3];
-				container.remove(label);
-				container.add(label, {right: 32, top: "45%"});
+				this.__directionOverlays[3].setLayoutProperties({right: 32, top: "45%"});
 				this.__rightContainer.setVisibility("visible");
 			}
 
