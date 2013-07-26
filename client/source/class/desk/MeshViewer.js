@@ -10,14 +10,13 @@ qx.Class.define("desk.MeshViewer",
         this.base(arguments);
 		var win = new qx.ui.window.Window();
 		win.set({layout : new qx.ui.layout.VBox(),
-			showClose : true,
-			width : 600,
-			height : 400,
-			showMinimize : false,
-			useResizeFrame : true,
-			useMoveFrame : true,
-			contentPadding : 2
+			showMinimize : false
+		//	contentPadding : 2
 		});
+
+		var minSize = Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.85);
+		win.set({width : minSize, height : minSize});
+
         win.add(this, {flex : 1});
         win.open();
 		win.center();

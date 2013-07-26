@@ -8,13 +8,9 @@ qx.Class.define("desk.VolumeViewer",
     construct : function(file, parameters, callback)
 	{
         this.base(arguments, file, parameters, callback);
-		var win = new qx.ui.window.Window();
-		this.__window = win;
+		var win = this.__window = new qx.ui.window.Window();
 		win.set ({layout : new qx.ui.layout.VBox(),
-			showClose : true,
-			showMinimize : false,
-			useResizeFrame : true,
-			useMoveFrame : true
+			showMinimize : false
 		});
 
 		win.addListener('close', function (){
@@ -22,19 +18,11 @@ qx.Class.define("desk.VolumeViewer",
 			win.destroy();
 		}, this);
 
-		var width = window.innerWidth;
-		var height = window.innerHeight;
-		var minSize = height;
-		if (minSize > width) {
-			minSize = width;
-		}
-		minSize = Math.round(minSize * 0.85);
-		
+		var minSize = Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.85);
 		win.set({width : minSize, height : minSize});
-        win.add(this, {flex : 1});
+		win.add(this, {flex : 1});
 		win.open();
 		win.center();
-		this._window = win;
 
 		if (file) {
 			win.setCaption(file);
