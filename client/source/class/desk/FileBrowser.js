@@ -81,15 +81,13 @@ qx.Class.define("desk.FileBrowser",
 		virtualTree.addListener('drop', this.__onDrop, this);
 
 		if (this.__standAlone) {
-			var win = new qx.ui.window.Window();
+			var win = this.__window = new qx.ui.window.Window();
 			win.set({ShowMinimize : false,
-					layout : new qx.ui.layout.VBox(),
-					useMoveFrame : true,
-					caption : this.__baseDir,
-					width : 400,
-					height : 500});
+				layout : new qx.ui.layout.VBox(),
+				caption : this.__baseDir,
+				width : 400,
+				height : 500});
 			win.add(this, {flex : 1});
-			this.__window = win;
 			win.addListener('close', function () {
 				this.destroy();
 				win.destroy();
