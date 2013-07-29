@@ -412,6 +412,10 @@ qx.Class.define("desk.SceneContainer",
 					break;
 				case "xml":
 					desk.FileSystem.readFile(file, function (error, result){
+						if (error) {
+							alert("Error while reading " + file + "\n" + error);
+							throw (error);
+						}
 						this.__parseXMLData(file, result, parameters, callback);
 					}, this);
 					break;

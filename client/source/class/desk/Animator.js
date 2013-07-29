@@ -246,7 +246,7 @@ qx.Class.define("desk.Animator",
 
 			// Create drag indicator
 			var indicator = new qx.ui.core.Widget();
-			indicator.setDecorator(new qx.ui.decoration.Single().set({
+			indicator.setDecorator(new qx.ui.decoration.Decorator().set({
 				top : [ 1, "solid", "#33508D" ]
 			}));
 			indicator.setHeight(0);
@@ -279,8 +279,8 @@ qx.Class.define("desk.Animator",
 					return;
 				}
 
-				var origCoords2 = list.getContainerLocation();
-				var origCoords = orig.getContainerLocation();
+				var origCoords2 = list.getContentLocation();
+				var origCoords = orig.getContentLocation();
 
 				indicator.setWidth(orig.getBounds().width);
 				indicator.setDomPosition(origCoords.left-origCoords2.left,
@@ -302,8 +302,7 @@ qx.Class.define("desk.Animator",
 				reorderList(currentListItem);
 			});
 
-			function reorderList (listItem)
-			{
+			function reorderList (listItem) {
 				// Only continue if the target is a list item.
 				if (listItem.classname != "qx.ui.form.ListItem") {
 					return ;

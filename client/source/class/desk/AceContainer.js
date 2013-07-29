@@ -40,7 +40,6 @@ qx.Class.define("desk.AceContainer", {
 		this.add(this.__textarea, {flex : 1});
 
 		this.__editor = new qx.ui.core.Widget();
-		var highlightDisabled = false;
 		this.__editor.addListenerOnce("appear", this.__loadAce, this);
 		this.__editor.setVisibility("excluded");
 		this.add(this.__editor, {flex : 1});
@@ -172,9 +171,9 @@ qx.Class.define("desk.AceContainer", {
 		}
 	},
 
-	destruct : function()
-	{
-		this._disposeObjects("__textarea");
+	destruct : function() {
+		this.__textarea.dispose();
+		this.__editor.dispose();
 		this.__ace = null;
 	}
 });

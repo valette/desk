@@ -742,12 +742,11 @@ qx.Class.define("desk.MPRContainer",
 					return result;
 				}
 
-				var slice=volumeListItem.getUserData("slices")[0];
-				var window=new qx.ui.window.Window();
-				window.setCaption(slice.getFileName());
-				window.setLayout(new qx.ui.layout.VBox());
-				window.setShowClose(true);
-				window.setShowMinimize(false);
+				var slice = volumeListItem.getUserData("slices")[0];
+				var window = new qx.ui.window.Window().set({
+					caption : slice.getFileName(),
+					layout : new qx.ui.layout.VBox(),
+					showMinimize : false});
 				window.setResizable(false,false,false,false);
 				window.add(new qx.ui.basic.Label("volume : "+slice.getFileName()));
 				window.add(new qx.ui.basic.Label("dimensions : "+formatArray(slice.getDimensions())));

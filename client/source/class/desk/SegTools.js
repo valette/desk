@@ -71,8 +71,7 @@ qx.Class.define("desk.SegTools",
 		defaultColorsFile : null,
 		filePrefixes : ["seed","correction"],
 		seedsListsString : "seedsLists",
-		seedsArrayString : "seedsArray",
-		cacheTagsArrayString : "cacheTagsArray"
+		seedsArrayString : "seedsArray"
 	},
 
 	events : {
@@ -132,7 +131,6 @@ qx.Class.define("desk.SegTools",
 			var seedsType = _this.getSeedsType();
 			var seedsList = sliceView.getUserData(desk.SegTools.seedsListsString)[seedsType];
 			var seedsArray = seedsList.getUserData(desk.SegTools.seedsArrayString);
-			var cacheTagsArray = seedsList.getUserData(desk.SegTools.cacheTagsArrayString);
 			var sliceId=sliceView.getSlice();
 
 			if (seedsArray[sliceId] != 0) {
@@ -145,7 +143,7 @@ qx.Class.define("desk.SegTools",
 				}
 				imageLoader.src = desk.FileSystem.getFileURL(_this.getSessionDirectory()) + "/" +
 								_this.__getSeedFileName (sliceView, sliceId, seedsType) +
-								"?nocache=" + cacheTagsArray[sliceId];
+								"?nocache=" + Math.random();
 			} else {
 				seedsList.resetSelection();
 				sliceView.fireEvent("changeDrawing");
@@ -1208,8 +1206,7 @@ qx.Class.define("desk.SegTools",
 					cpSessCheckBox.setEnabled(cpSessCheckBox.getUserData("oldEnabled"));
 				button.setEnabled(!rmSChBoxValue);
 			});
-			function checkRmsession()
-			{
+			function checkRmsession() {
 				if(rmSessCheckBox.getValue()&&(typeof tools.getSessionDirectory() == "string"))
 				{
 					var sessionDirectory = tools.getSessionDirectory();
@@ -1261,8 +1258,8 @@ qx.Class.define("desk.SegTools",
 					}
 			}
 			
-        	var wasAnySeedModified=false;
-        	var _this=this;
+        	var wasAnySeedModified = false;
+        	var _this = this;
 			this.__master.applyToViewers (function (viewer) {
 				var base64Img = _this.__getNewSeedsImage (viewer);
 				if (base64Img != false) {
@@ -1440,10 +1437,8 @@ qx.Class.define("desk.SegTools",
 			desk.Actions.getInstance().launchAction(parameterMap, callback);
 		},
 
-		__getSeedsTypeSelectBox : function()
-		{
+		__getSeedsTypeSelectBox : function() {
 			var selectBox = new qx.ui.form.SelectBox();
-
 			var seedsItem = new qx.ui.form.ListItem("seeds");
 			seedsItem.setUserData("seedsType", 0);
 			selectBox.add(seedsItem);
@@ -1605,21 +1600,17 @@ qx.Class.define("desk.SegTools",
 				for (var i = 0; i < 2; i++) {
 					var numberOfSlices = viewer.getFirstSlice().getNumberOfSlices();
 					var seedsArray = [];
-					var cacheTagsArray = [];
 					for (var j = 0;j != numberOfSlices; j++) {
 						seedsArray[j] = 0;
-						cacheTagsArray[j] = Math.random();
 					}
 					seedsLists[i].removeAll();
 					seedsLists[i].setUserData(desk.SegTools.seedsArrayString, seedsArray);
-					seedsLists[i].setUserData(desk.SegTools.cacheTagsArrayString, cacheTagsArray);
 				}
 				self.__reloadSeedImage(viewer);
 			});
 		},
 
-		__addNewSeedItemToList : function ( sliceView, sliceId, seedsType )
-		{
+		__addNewSeedItemToList : function ( sliceView, sliceId, seedsType ) {
 			var seedsList = sliceView.getUserData(desk.SegTools.seedsListsString)[seedsType];
 			var seeds = seedsList.getChildren();
 			var tempPos = 0;
@@ -1629,10 +1620,6 @@ qx.Class.define("desk.SegTools",
 				var currentId = seeds[i].getUserData("slice");
 				if(currentId > sliceId) {
 					tempPos++;
-				}
-				if (currentId == sliceId) {
-					seedsList.getUserData(desk.SegTools.cacheTagsArrayString)[sliceId] = Math.random();
-					return;
 				}
 			}
 
@@ -1644,7 +1631,6 @@ qx.Class.define("desk.SegTools",
 
 			seedsList.addAt(sliceItem, tempPos);
 			seedsList.getUserData(desk.SegTools.seedsArrayString)[sliceId] = sliceItem;
-			seedsList.getUserData(desk.SegTools.cacheTagsArrayString)[sliceId] = Math.random();
 		},
 
 		__getSeedFileName : function(sliceView, sliceId, seedType) {			

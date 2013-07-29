@@ -13,54 +13,46 @@ qx.Class.define("desk.TextEditor",
 	*/
 	construct : function(file) {
 		this.base(arguments);
-		this.setLayout(new qx.ui.layout.VBox());
-		this.setHeight(400);
-		this.setWidth(500);
-		this.setShowClose(true);
-		this.setShowMinimize(false);
-		this.setResizable(true,true,true,true);
-		this.setUseResizeFrame(true);
-		this.setUseMoveFrame(true);
+		this.set({layout : new qx.ui.layout.VBox(), 
+			height :400, width : 500, showMinimize : false});
 
 		this.__reloadButton = new qx.ui.form.Button("Reload");
-		this.__reloadButton.setKeepFocus(true);
 		this.__reloadButton.addListener("execute", function(e) {
 			this.openFile(this.__file);
 		}, this);
 
 		var saveButton = this.__saveButton = new qx.ui.form.Button("Save");
-		saveButton.setKeepFocus(true);
 		saveButton.addListener("execute", this.save, this);
 
         this.addListener('keydown', function (e) {
-            if (e.isCtrlPressed()) {
-              if (e.getKeyIdentifier() === 'S') {
-                e.preventDefault();
-                this.save();
-              }
-              if (e.getKeyIdentifier() === 'G') {
-                e.preventDefault();
-                this.__textArea.getAce().findNext();
-              }
-            }
+            if (!e.isCtrlPressed()) return;
+			switch (e.getKeyIdentifier()) {
+				case 'S' : 
+					e.preventDefault();
+					this.save();
+					break;
+				case 'G' :
+					e.preventDefault();
+					this.__textArea.getAce().findNext();
+				default :
+					break;
+			}
         }, this);
 
 		this.__executeButton = new qx.ui.form.Button("execute");
-		this.__executeButton.setKeepFocus(true);
 		this.__executeButton.addListener("execute", this.__onExecute, this);
 
-		var spinner = new qx.ui.form.Spinner(5, 15, 50);
-        this.__spinner = spinner;
+		var spinner = this.__spinner = new qx.ui.form.Spinner(5, 15, 50);
 		spinner.addListener('changeValue', function (e) {
             this.__textArea.setFontSize(e.getData());
         }, this);
 
-		var buttonsContainer = new qx.ui.container.Composite();
+		var buttonsContainer = this.__buttonsContainer = new qx.ui.container.Composite();
 		buttonsContainer.setLayout(new qx.ui.layout.HBox());
 		buttonsContainer.add(this.__executeButton, {flex : 1});
 		buttonsContainer.add(this.__reloadButton, {flex : 1});
 		buttonsContainer.add(saveButton, {flex : 1});
-        buttonsContainer.add (spinner);
+        buttonsContainer.add(spinner);
 		this.add(buttonsContainer);
 
 		var textArea = this.__textArea = new desk.AceContainer();
@@ -71,12 +63,13 @@ qx.Class.define("desk.TextEditor",
         this.add(textArea, {flex : 1});
 		this.open();
 		this.center();
-        this.addListener('close', function () {
-            this.__textArea.dispose();
-            this.__reloadButton.dispose();
-            this.__executeButton.dispose();
-            this.destroy();
-        }, this);
+        this.addListener('close', this.destroy, this);
+	},
+
+	destruct : function(file) {
+		this.__removeScript();
+		qx.util.DisposeUtil.destroyContainer(this.__buttonsContainer);
+		this.__textArea.dispose();
 	},
 
 	statics : {
@@ -91,15 +84,20 @@ qx.Class.define("desk.TextEditor",
 		__executeButton : null,
         __saveButton : null,
 		__scriptContainer : null,
+		__buttonsContainer : null,
+
+		__removeScript : function () {
+			var scriptContainer = this.__scriptContainer;
+			if (scriptContainer) {
+				document.getElementsByTagName('body')[0].removeChild(scriptContainer);
+			}
+		},
 
 		__onExecute : function() {
 			desk.TextEditor.codeInTextEditor = null;
+			this.__removeScript();
 			var bodyContainer = document.getElementsByTagName('body')[0];
-			var scriptContainer = this.__scriptContainer;
-			if (scriptContainer) {
-				bodyContainer.removeChild(scriptContainer);
-			}
-			scriptContainer = this.__scriptContainer = document.createElement('script');
+			var scriptContainer = this.__scriptContainer = document.createElement('script');
 			scriptContainer.setAttribute('type','text/javascript');
 			scriptContainer.text = 'desk.TextEditor.codeInTextEditor = function(){' +
 				this.__textArea.getCode() + '\n};' + '\n//@ sourceURL=v' +
@@ -115,7 +113,10 @@ qx.Class.define("desk.TextEditor",
 			}
 		},
 
-        save : function () {
+ 		/**
+		* Saves content to file
+		*/
+		save : function () {
             this.__saveButton.setEnabled(false);
             desk.FileSystem.writeFile(this.__file, this.__textArea.getCode(), function () {
                 this.__saveButton.setEnabled(true);
