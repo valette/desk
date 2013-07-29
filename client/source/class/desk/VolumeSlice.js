@@ -507,28 +507,31 @@ qx.Class.define("desk.VolumeSlice",
 		 * returns the slice 3D coordinates the form [x0, y0, z0, ... , x3, y3, z3]
 		 * @return {Array} array of coordinates
 		 */
-		getCornersCoordinates : function () {
+		getCornersCoordinates : function (slice) {
+            if (slice === undefined) {
+                slice = this.getSlice();
+            }
 			var bounds = this.getBounds();
 			switch (this.__orientation)
 			{
 			// XY Z
 			case 0 :
 			default:
-				var z = this.__origin[2] + (this.getSlice() + this.__extent[4]) * this.__spacing[2];
+				var z = this.__origin[2] + (slice + this.__extent[4]) * this.__spacing[2];
 				return [bounds[0], bounds[3], z,
 					bounds[1], bounds[3], z,
 					bounds[1], bounds[2], z,
 					bounds[0], bounds[2], z];
 			// ZY X
 			case 1 :
-				var x = this.__origin[0] + (this.getSlice() + this.__extent[0]) * this.__spacing[0];
+				var x = this.__origin[0] + (slice + this.__extent[0]) * this.__spacing[0];
 				return [x, bounds[3], bounds[4],
 					x, bounds[3], bounds[5],
 					x, bounds[2], bounds[5],
 					x, bounds[2], bounds[4]];
 			// XZ Y
 			case 2 :
-				var y = this.__origin[1] + (this.getSlice() + this.__extent[2]) * this.__spacing[1];
+				var y = this.__origin[1] + (slice + this.__extent[2]) * this.__spacing[1];
 				return [bounds[0], y, bounds[5],
 					bounds[1], y, bounds[5],
 					bounds[1], y, bounds[4],
@@ -746,7 +749,13 @@ qx.Class.define("desk.VolumeSlice",
 			}
 		},
 
-		__reallyUpdateImage : function() {
+		
+		/**
+		 * returns the full file name for a given slice
+		 * @param slice {Number} slice number
+		 * @return {String} full file name
+		 */
+		getSliceURL : function (slice) {
 			var fileSuffix;
 			if (this.__availableImageFormat === 0) {
 				fileSuffix = ".png";
@@ -755,8 +764,7 @@ qx.Class.define("desk.VolumeSlice",
 			}
 
 			var orientationString;
-			switch(this.__orientation)
-			{
+			switch(this.__orientation) {
 				// ZY X
 				case 1 :
 					orientationString = "ZY";
@@ -769,12 +777,17 @@ qx.Class.define("desk.VolumeSlice",
 				default :
 					orientationString = "XY";
 					break;
-				}
+			}
+
+			return this.__path + this.__prefix +
+				orientationString + (this.__offset + slice) +
+				fileSuffix;
+		},
+
+		__reallyUpdateImage : function() {
 			this.__updateInProgress = true;
 			this.__updateTriggered = false;
-			this.__image.src = this.__path + this.__prefix +
-				orientationString + (this.__offset + this.getSlice()) +
-				fileSuffix + "?nocache=" + this.__timestamp;
+			this.__image.src = this.getSliceURL(this.getSlice()) + "?nocache=" + this.__timestamp;
 		}
 	}
 });

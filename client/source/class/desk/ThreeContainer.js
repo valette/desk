@@ -219,11 +219,10 @@ qx.Class.define("desk.ThreeContainer",
 					if (!geometry.boundingBox) {
 						geometry.computeBoundingBox();
 					}
-					bbox.union(geometry.boundingBox);
+					bbox.union(geometry.boundingBox.clone().translate(child.position));
 					found = true;
 				}
 			});
-
 			if (!found) {
 				return;
 			}
