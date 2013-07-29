@@ -867,8 +867,8 @@ qx.Class.define("desk.SliceView",
 
 			var spacing = this.__volume2DSpacing;
 			var coordinates = this.__2DCornersCoordinates;
-			x = coordinates[0] + ( 0.5 + x )*spacing[0];
-			y = coordinates[1] - ( 0.5 + y )*spacing[1];
+			x = coordinates[0] + (0.5 + x) * spacing[0];
+			y = coordinates[1] - (0.5 + y) * spacing[1];
 
 			this.__positionI = i;
 			this.__positionJ = j;
@@ -1065,18 +1065,14 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__onMouseWheel : function (event) {
-			var slider = this.__slider;
 			var delta = 1;
+			var slider = this.__slider;
 			if (event.getWheelDelta() < 0) {
 				delta = -1;
 			}
 			var newValue = slider.getValue() + delta;
-			if (newValue > slider.getMaximum()) {
-				newValue = slider.getMaximum();
-			}
-			if (newValue < slider.getMinimum()) {
-				newValue = slider.getMinimum();
-			}
+			newValue = Math.min(newValue, slider.getMaximum());
+			newValue = Math.max(newValue, slider.getMinimum());
 			slider.setValue(newValue);
 			this.fireDataEvent("viewMouseWheel",event);
 		},
@@ -1260,11 +1256,10 @@ qx.Class.define("desk.SliceView",
 			if (!slice) {
 				return;
 			}
-			var newSliceId = slice.getNumberOfSlices() - 1 - sliceId;
-			if (newSliceId < 0) {
-				newSliceId = 0;
-			}
-			this.__slider.setValue(newSliceId);
+			var sliderValue = slice.getNumberOfSlices() - 1 - sliceId;
+			sliderValue = Math.max(slice, this.__slider.getMinimum());
+			sliderValue = Math.min(slice, this.__slider.getMaximum());
+			this.__slider.setValue(sliderValue);
 
 			var i = this.__positionI;
 			var j = this.__positionJ;

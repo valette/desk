@@ -22,17 +22,9 @@ qx.Class.define("desk.ThreeContainer",
 	*/
 	construct : function() {
 		this.base(arguments);
+		this.setLayout(new qx.ui.layout.Canvas());
 
-		var canvas = new qx.ui.layout.Canvas()
-		this.setLayout(canvas);
-
-		// get canvas from garbage collector if any
-		var garbage = this.__garbageContainer.getChildren();
-		if (!garbage.length) {
-			var threeCanvas = this.__threeCanvas = new qx.ui.embed.Canvas();
-		} else {
-			var threeCanvas = this.__threeCanvas = garbage[0];
-		}
+		var threeCanvas = this.__threeCanvas = this.__garbageContainer.getChildren()[0] || new qx.ui.embed.Canvas();
 		this.add(threeCanvas, {width : "100%", height : "100%"});
 		var canvas = threeCanvas.getContentElement().getCanvas();
 
@@ -41,7 +33,6 @@ qx.Class.define("desk.ThreeContainer",
 		var scene = this.__scene = new THREE.Scene();
 		var camera = this.__camera = new THREE.PerspectiveCamera(60,1, 0.01, 1e10);
 		var controls = this.__controls = new THREE.TrackballControls2(camera, canvas);
-
 		controls.zoomSpeed = 6;
 		scene.add(camera);
 
