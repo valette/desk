@@ -1190,8 +1190,7 @@ qx.Class.define("desk.SliceView",
 			container.add(eastLabel, {right: "1%", top:"45%"});
 
 			directionOverlays.push(northLabel, westLabel, southLabel, eastLabel);
-			switch (this.__orientation)
-			{
+			switch (this.__orientation) {
 			case 0 :
 				northLabel.setValue("A");
 				southLabel.setValue("P");
@@ -1213,32 +1212,27 @@ qx.Class.define("desk.SliceView",
 				break;
 			}
 
-			var rightContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox());
-			this.__rightContainer = rightContainer;
-
-			var label = new qx.ui.basic.Label("0");
-			this.__sliceLabel = label;
+			var label = this.__sliceLabel = new qx.ui.basic.Label("0");
 			label.set({textAlign: "center", width : 40, font : font, textColor : "yellow"});
-			rightContainer.add(label);
 			container.add(label, {top :0, left :0});
-			var slider = new qx.ui.form.Slider();
-			this.__slider = slider;
 
+			var slider = this.__slider = new qx.ui.form.Slider().set (
+				{minimum : 0, maximum : 100, value : 0,
+				width :30, opacity : 0.5, backgroundColor : "transparent",
+				orientation : "vertical", zIndex : 1000
+			});
 			slider.addListener('mousedown', function () {
 				this.__sliderInUse = true;
 			}, this)
 			slider.addListener('mouseup', function () {
 				this.__sliderInUse = false;
 			}, this)
-
-			slider.set ({minimum : 0, maximum : 100, value : 0,
-				width :30, opacity : 0.5, backgroundColor : "transparent",
-				orientation : "vertical", zIndex : 1000});
 			slider.addListener("changeValue",function(e){
 				if (!this.getFirstSlice()) return;
 				this.setSlice(this.getFirstSlice().getNumberOfSlices()-1-e.getData());
 			}, this);
 
+			var rightContainer = this.__rightContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox());
 			rightContainer.add(slider, {flex : 1});
 			rightContainer.setVisibility("hidden");
 			container.add(rightContainer, {right : 0, top : 0, height : "100%"});
@@ -1257,26 +1251,25 @@ qx.Class.define("desk.SliceView",
 				return;
 			}
 			var sliderValue = slice.getNumberOfSlices() - 1 - sliceId;
-			sliderValue = Math.max(slice, this.__slider.getMinimum());
-			sliderValue = Math.min(slice, this.__slider.getMaximum());
+			sliderValue = Math.max(sliderValue, this.__slider.getMinimum());
+			sliderValue = Math.min(sliderValue, this.__slider.getMaximum());
 			this.__slider.setValue(sliderValue);
 
 			var i = this.__positionI;
 			var j = this.__positionJ;
 			var k = this.__positionK;
 
-			switch (this.__orientation)
-			{
-			case 0 :
-				k = sliceId;
-				break;
-			case 1 :
-				i = sliceId;
-				break;
-			case 2 :
-			default :
-				j = sliceId;
-				break;
+			switch (this.__orientation) {
+				case 0 :
+					k = sliceId;
+					break;
+				case 1 :
+					i = sliceId;
+					break;
+				case 2 :
+				default :
+					j = sliceId;
+					break;
 			}
 
 			this.setCrossPosition(i, j, k);
@@ -1288,46 +1281,43 @@ qx.Class.define("desk.SliceView",
 		__doingIndex : null,
 
 		__onCtrlZ : function (event) {
-			if(this.__viewOn) {
-				var undoData = this.__undoData;
-				if ((0 < undoData.length) && (-1 < this.__doingIndex)) {
-					var doingIndex = this.__doingIndex;
-					if(doingIndex === undoData.length - 1) {
-						this.__saveDrawingToUndoStack();
-					}
-					var canvas = this.__drawingCanvas;
-					var context = canvas.getContext2d();
-					var image = canvas.getContext2d().getImageData(
-						0, 0, canvas.getWidth(), canvas.getHeight());
-					context.clearRect(0, 0, canvas.getCanvasWidth(),
-						canvas.getCanvasHeight());
-					var currData = undoData[doingIndex];
-					context.putImageData(currData, 0, 0);
-					this.__doingIndex = doingIndex-1;
-					this.fireEvent("changeDrawing");
-				}
+			if(!this.__viewOn) return;
+			var undoData = this.__undoData;
+			var doingIndex = this.__doingIndex;
+			if (!undoData.length || (doingIndex < 0)) return;
+			if(doingIndex === undoData.length - 1) {
+				this.__saveDrawingToUndoStack();
 			}
+			var canvas = this.__drawingCanvas;
+			var context = canvas.getContext2d();
+			var image = canvas.getContext2d().getImageData(
+				0, 0, canvas.getWidth(), canvas.getHeight());
+			context.clearRect(0, 0, canvas.getCanvasWidth(),
+				canvas.getCanvasHeight());
+			var currData = undoData[doingIndex];
+			context.putImageData(currData, 0, 0);
+			this.__doingIndex = doingIndex - 1;
+			this.fireEvent("changeDrawing");
 		},
 
 		__onCtrlY : function (event) {
-			if(this.__viewOn) {
-				var undoData = this.__undoData;
-				if(0 < undoData.length) {
-					this.__doingIndex++;
-					if (this.__doingIndex + 1 < undoData.length) {
-						var canvas = this.__drawingCanvas;
-						var context = canvas.getContext2d();
-						context.clearRect(0, 0,
-							canvas.getCanvasWidth(),canvas.getCanvasHeight());
-						var currData = undoData[this.__doingIndex + 1];
-						context.putImageData(currData, 0, 0);
-						if(this.__doingIndex === undoData.length-1)
-							undoData.pop();
-						this.fireEvent("changeDrawing");
-					}
-					else
-						this.__doingIndex--;
-				}
+			if(! this.__viewOn) return;
+			var undoData = this.__undoData;
+			if(!undoData.length) return;
+			this.__doingIndex++;
+			if (this.__doingIndex + 1 < undoData.length) {
+				var canvas = this.__drawingCanvas;
+				var context = canvas.getContext2d();
+				context.clearRect(0, 0,
+					canvas.getCanvasWidth(),canvas.getCanvasHeight());
+				var currData = undoData[this.__doingIndex + 1];
+				context.putImageData(currData, 0, 0);
+				if(this.__doingIndex === undoData.length-1)
+					undoData.pop();
+				this.fireEvent("changeDrawing");
+			}
+			else {
+				this.__doingIndex--;
 			}
 		},
 
