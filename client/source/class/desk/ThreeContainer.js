@@ -25,6 +25,7 @@ qx.Class.define("desk.ThreeContainer",
 		this.setLayout(new qx.ui.layout.Canvas());
 
 		var threeCanvas = this.__threeCanvas = this.__garbageContainer.getChildren()[0] || new qx.ui.embed.Canvas();
+		threeCanvas.setZIndex(0);
 		this.add(threeCanvas, {width : "100%", height : "100%"});
 		var canvas = threeCanvas.getContentElement().getCanvas();
 
@@ -45,6 +46,7 @@ qx.Class.define("desk.ThreeContainer",
 
 		// renderer
 		var renderer = this.__renderer = new THREE.WebGLRenderer({canvas : canvas, antialias: true});
+		renderer.setClearColor( 0xffffff, 1 );
 		this.__initRenderFunction();
 
 		this.__listenerId = threeCanvas.addListener("resize", this.__resizeThreeCanvas, this);
@@ -104,7 +106,7 @@ qx.Class.define("desk.ThreeContainer",
 							zIndex : 10000000});
 					qx.core.Init.getApplication().getRoot().add(this);
 				}
-			});
+			}, this);
 			this.addListener('keypress', function (event) {
 				if (event.getKeyIdentifier() === 'F') {
 					this.toggleFullscreen();
