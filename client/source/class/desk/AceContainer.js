@@ -60,7 +60,7 @@ qx.Class.define("desk.AceContainer", {
 		__highlighted : false,
 		__editor : null,
 		__ace : null,
-		__fontSize : null,
+		__fontSize : 15,
 
 		/**
 		* Returns the underlying ACE object
@@ -89,17 +89,17 @@ qx.Class.define("desk.AceContainer", {
 			// configure the editor
 			var session = editor.getSession();
 
-			// copy the inital value
-			session.setValue(this.__textarea.getValue() || "");
+			this.__editor.addListener("resize", this.__onResize, this);
 			this.useHighlight(this.__highlighted);
 			this.setFontSize(this.__fontSize);
+			this.__onResize();
+		},
 
+		__onResize : function () {
 			var self = this;
-			this.__editor.addListener("resize", function () {
-				setTimeout(function() {
-					self.__ace.resize();
-				}, 0);
-			});
+			setTimeout(function() {
+				self.__ace.resize();
+			}, 0);
 		},
 
 		/**
@@ -138,7 +138,7 @@ qx.Class.define("desk.AceContainer", {
 			this.__fontSize = size;
 			if (this.__ace) {
 				this.__ace.setFontSize(size);
-			} 
+			}
 			this.__textarea.setFont(new qx.bom.Font.fromString(size + ' serif'));
 		},
 
@@ -147,9 +147,7 @@ qx.Class.define("desk.AceContainer", {
 		* @param value {Boolean} True, if the code editor should be used.
 		*/
 		useHighlight : function(value) {
-			this.__highlighted = value;
-
-			if (value) {
+			if (this.__highlighted = value) {
 				// change the visibility
 				this.__editor.setVisibility("visible");
 				this.__textarea.setVisibility("excluded");
