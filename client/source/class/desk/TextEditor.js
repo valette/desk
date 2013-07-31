@@ -42,7 +42,7 @@ qx.Class.define("desk.TextEditor",
 		this.__executeButton = new qx.ui.form.Button("execute");
 		this.__executeButton.addListener("execute", this.__onExecute, this);
 
-		var spinner = this.__spinner = new qx.ui.form.Spinner(5, 15, 50);
+		var spinner = this.__spinner = new qx.ui.form.Spinner(5, 14, 50);
 		spinner.addListener('changeValue', function (e) {
             this.__textArea.setFontSize(e.getData());
         }, this);

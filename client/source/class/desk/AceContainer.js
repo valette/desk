@@ -60,7 +60,7 @@ qx.Class.define("desk.AceContainer", {
 		__highlighted : false,
 		__editor : null,
 		__ace : null,
-		__fontSize : 15,
+		__fontSize : 14,
 
 		/**
 		* Returns the underlying ACE object
