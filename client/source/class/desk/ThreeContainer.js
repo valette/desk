@@ -107,8 +107,9 @@ qx.Class.define("desk.ThreeContainer",
 					qx.core.Init.getApplication().getRoot().add(this);
 				}
 			}, this);
-			this.addListener('keypress', function (event) {
-				if (event.getKeyIdentifier() === 'F') {
+			this.addListener('keydown', function (event) {
+				if ((event.getTarget() == this.getCanvas()) &&
+                    (event.getKeyIdentifier() === 'F')) {
 					this.toggleFullscreen();
 				}
 			}, this);

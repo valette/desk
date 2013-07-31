@@ -42,13 +42,13 @@ qx.Class.define("desk.SceneContainer",
 		}
 
 		var leftContainer = this.__leftContainer = new qx.ui.container.Composite();
-		leftContainer.setLayout(new qx.ui.layout.VBox(3));
-		this.add(leftContainer, {left : 0, bottom : 25, height : "50%"});
+		leftContainer.setLayout(new qx.ui.layout.VBox());
+		this.add(leftContainer, {left : 0, top : 0, height : "100%"});
 		leftContainer.setVisibility("excluded");
 
 		this.__setupInteractions();
-		var button = new qx.ui.form.Button("+").set({opacity : 0.5});
-		this.add (button, {left : 3, bottom : 3});
+		var button = new qx.ui.form.Button("+").set({opacity : 0.5, width : 30});
+		this.add (button, {left : 0, top : 0});
 		button.addListener("execute", function () {
 			if (leftContainer.getVisibility() === "visible") {
 				leftContainer.setVisibility("excluded");
@@ -57,18 +57,29 @@ qx.Class.define("desk.SceneContainer",
 			} else {
 				leftContainer.setVisibility("visible");
 				button.setLabel("-");
+				var ren = this.__meshesTree.getDataRowRenderer();
+				var color = this.getRenderer().getClearColor();
+				var colors = ren._colors;
+				colors.colNormal = "rgb(" + (255 * (1 - color.r)) + "," +
+					(255 * (1 - color.g)) + "," + (255 * (1 - color.b)) + ")";
+				colors.bgcolEven = colors.bgcolOdd = colors.horLine = "transparent";
+				colors.bgcolFocused = "rgba(249, 249, 249, 0.5)";
+				colors.bgcolFocusedSelected = "rgba(60, 100, 170, 0.5)";
+				colors.bgcolSelected = "rgba(51, 94, 168, 0.5)";
 				this.render();
 			}
 		}, this);
 
 		var buttonsContainer = new qx.ui.container.Composite();
 		buttonsContainer.setLayout(new qx.ui.layout.HBox());
-		buttonsContainer.add(this.__getDragLabel());
+		buttonsContainer.add(new qx.ui.core.Spacer(32));
+		buttonsContainer.add(this.__getDragLabel(), {flex : 1});
 		buttonsContainer.add(this.__getResetViewButton(), {flex : 1});
 		buttonsContainer.add(this.__getSnapshotButton());
 		leftContainer.add(buttonsContainer);
 
 		this.__meshesTree = new qx.ui.treevirtual.TreeVirtual(["meshes"]);
+		this.__meshesTree.setBackgroundColor("transparent");
 		this.__meshesTree.setSelectionMode(qx.ui.treevirtual.TreeVirtual.SelectionMode.MULTIPLE_INTERVAL);
 		this.__meshesTree.set({
 			width  : 180,
@@ -91,7 +102,7 @@ qx.Class.define("desk.SceneContainer",
 		this.__setData = _.throttle(function () {
 				self.__meshesTree.getDataModel().setData();
 				self.render();
-			}, 500)
+			}, 500);
 
 		if (file) {
 			this.addFile(file, parameters, callback, context);
@@ -207,7 +218,7 @@ qx.Class.define("desk.SceneContainer",
 			container.add(filterText);
 
 			var filterField = new qx.ui.form.TextField();
-			filterField.setValue("");
+			filterField.set({value : "", backgroundColor : "transparent"});
 			filterField.addListener("input", function() {
 				this.__setData();
 				this.render();
@@ -521,7 +532,7 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		__onMouseWheel : function (event) {
-			if (!this.isCaptured() && (event.getTarget() != this.getCanvas())) return;
+			if (event.getTarget() != this.getCanvas()) return;
 			var tree = this.__meshesTree;
 			var children = [];
 			this.getScene().traverse(function (object){
@@ -680,8 +691,9 @@ qx.Class.define("desk.SceneContainer",
 			return button;
 		},
 
-		__getDragLabel : function () {q
-			var dragLabel = new qx.ui.basic.Label("Link").set({decorator: "main"});
+		__getDragLabel : function () {
+			var dragLabel = new qx.ui.basic.Label("Link").set({
+                decorator: "button-box", width : 30, height : 30});
 			// drag and drop support
 			dragLabel.setDraggable(true);
 			dragLabel.addListener("dragstart", function(e) {
