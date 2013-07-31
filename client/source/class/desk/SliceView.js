@@ -20,12 +20,11 @@
 
 qx.Class.define("desk.SliceView", 
 {
-	extend : qx.ui.container.Composite,
+	extend : desk.ThreeContainer,
 	include : desk.LinkMixin,
 
 	construct : function(orientation) {
 		this.base(arguments);
-		this.set({layout : new qx.ui.layout.HBox(), decorator : "main"});
 		this.__slices = [];
 		this.__orientation = orientation || 0;
 		this.__createUI();
@@ -118,12 +117,6 @@ qx.Class.define("desk.SliceView",
 			return this.__orientation;
 		},
 
-		__threeContainer : null,
-
-		getThreeContainer : function () {
-			return this.__threeContainer;
-		},
-
 		__slices : null,
 
 		__slider : null,
@@ -135,10 +128,6 @@ qx.Class.define("desk.SliceView",
 		// default color is red
 		__paintColor : '#ff0000',
 
-		__getCamera : function () {
-			return this.__threeContainer.getCamera();
-		},
-
 		__drawingCanvas : null,
 		__drawingMesh : null,
 
@@ -147,10 +136,6 @@ qx.Class.define("desk.SliceView",
 		__crossMeshes : null,
 		
 		__drawingCanvasModified : false,
-
-		getScene : function() {
-			return this.__threeContainer.getScene();
-		},
 
 		projectOnSlice : function (x, y, z) {
 			switch (this.__orientation) {
@@ -228,10 +213,6 @@ qx.Class.define("desk.SliceView",
 			this.__updateBrush();
 		},
 
-		render : function () {
-			this.__threeContainer.render();
-		},
-
 		/**
 		 * Removes a volume from the view.
 		 * @param slices {desk.VolumeSlice} slice to remove
@@ -276,8 +257,8 @@ qx.Class.define("desk.SliceView",
 		rotateLeft : function () {
 			this.applyToLinks(function () {
 				if(this.isOrientationChangesOperateOnCamera()) {
-					var camera = this.__getCamera();
-					var controls = this.__threeContainer.getControls(); 
+					var camera = this.getCamera();
+					var controls = this.getControls(); 
 					var direction = controls.target.clone();
 					direction.sub(camera.position);
 					var up = camera.up;
@@ -299,8 +280,8 @@ qx.Class.define("desk.SliceView",
 		rotateRight : function () {
 			this.applyToLinks(function () {
 				if(this.isOrientationChangesOperateOnCamera()) {
-					var camera = this.__getCamera();
-					var controls = this.__threeContainer.getControls(); 
+					var camera = this.getCamera();
+					var controls = this.getControls(); 
 					var direction = controls.target.clone();
 					direction.sub(camera.position);
 					var up = camera.up;
@@ -336,7 +317,7 @@ qx.Class.define("desk.SliceView",
 		flipY : function () {
 			this.applyToLinks(function () {
 				if(this.isOrientationChangesOperateOnCamera()) {
-					this.__getCamera().up.negate();
+					this.getCamera().up.negate();
 					this.setCameraZ( - this.getCameraZ());
 				} else {
 					var overlays = this.__directionOverlays;
@@ -357,7 +338,7 @@ qx.Class.define("desk.SliceView",
 				return this.__reorientationContainer;
 			}
 			
-			var gridContainer = new qx.ui.container.Composite();
+			var gridContainer = this.__reorientationContainer = new qx.ui.container.Composite();
 			var gridLayout = new qx.ui.layout.Grid(3, 3);
 			for (var i=0;i<2;i++) {
 				gridLayout.setRowFlex(i, 1);
@@ -380,13 +361,12 @@ qx.Class.define("desk.SliceView",
 			var flipY = new qx.ui.form.Button("Flip Y");
 			flipY.addListener("execute", this.flipY, this);
 			gridContainer.add(flipY, {row: 1, column: 1});
-			this.__reorientationContainer = gridContainer;
 			return gridContainer;
 		},
 
 		__propagateCameraToLinks : function () {
 			this.applyToOtherLinks(function (me) {
-				this.__threeContainer.getControls().copy(me.__threeContainer.getControls());
+				this.getControls().copy(me.__threeContainer.getControls());
 				this.setSlice(me.getSlice());
 				this.setCameraZ(me.getCameraZ());
 				this.render();
@@ -394,8 +374,8 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__applyCameraZ : function (z) {
-			this.__getCamera().position.z = z;
-			this.__threeContainer.getControls().update();
+			this.getCamera().position.z = z;
+			this.getControls().update();
 			this.render();
 		},
 
@@ -659,7 +639,7 @@ qx.Class.define("desk.SliceView",
 
 			volumeSlice.addListener('changeImage', function () {
 				// whe need directly render to avoid race conditions
-				this.__threeContainer.render(true);
+				this.render(true);
 			}, this);
 
 			volumeSlice.addListener("changeSlice", function (e) {
@@ -686,14 +666,14 @@ qx.Class.define("desk.SliceView",
 				this.__slider.setVisibility("visible");
 			}
 
-			var camera = this.__getCamera();
+			var camera = this.getCamera();
 			var position = camera.position;
 			camera.up.set(0, 1, 0);
 			var coordinates = volumeSlice.get2DCornersCoordinates();
 
 			position.set(0.5 * (coordinates[0] + coordinates[2]),
 				0.5 * (coordinates[3] + coordinates[5]), 0);
-			this.__threeContainer.getControls().target.copy(position);
+			this.getControls().target.copy(position);
 			position.z = volumeSlice.getBoundingBoxDiagonalLength() * 0.6;
 			this.setCameraZ(volumeSlice.getBoundingBoxDiagonalLength() * 0.6);
 
@@ -896,21 +876,20 @@ qx.Class.define("desk.SliceView",
 		__interactionMode : -1,
 
 		__onMouseDown : function (event) {
-			var htmlContainer = this.__threeContainer;
-			htmlContainer.capture();
-			var controls = this.__threeContainer.getControls();
+			this.capture();
+			var controls = this.getControls();
 			this.__interactionMode = 0;
 			var origin, position, width;
 			if (event.isRightPressed() || event.isCtrlPressed()) {
 				this.__interactionMode = 1;
-				origin = htmlContainer.getContentLocation();
+				origin = this.getContentLocation();
 				controls.mouseDown(this.__interactionMode,
 					event.getDocumentLeft() - origin.left,
 					event.getDocumentTop() - origin.top);
 			}
 			else if ((event.isMiddlePressed())||(event.isShiftPressed())) {
 				this.__interactionMode = 2;
-				origin = htmlContainer.getContentLocation();
+				origin = this.getContentLocation();
 				controls.mouseDown(this.__interactionMode,
 					event.getDocumentLeft()-origin.left,
 					event.getDocumentTop()-origin.top);
@@ -970,7 +949,7 @@ qx.Class.define("desk.SliceView",
 
 		__onMouseMove : function (event) {
 			this.__viewOn = true;
-			var controls = this.__threeContainer.getControls();
+			var controls = this.getControls();
 			var self = this;
 			if (this.__rightContainer.getVisibility() === "hidden") {
 				this.__directionOverlays[3].setLayoutProperties({right: 32, top: "45%"});
@@ -994,17 +973,17 @@ qx.Class.define("desk.SliceView",
 				break;
 			case 1 :
 				if (brushMesh) brushMesh.visible = false;
-				var origin = this.__threeContainer.getContentLocation();
+				var origin = this.getContentLocation();
 				controls.mouseMove(event.getDocumentLeft() - origin.left,
 					event.getDocumentTop() - origin.top);
 
-				var z = this.__getCamera().position.z;
+				var z = this.getCamera().position.z;
 				this.setCameraZ(z);
 				this.__propagateCameraToLinks();
 				break;
 			case 2 :
 				if (brushMesh) brushMesh.visible = false;
-				origin = this.__threeContainer.getContentLocation();
+				origin = this.getContentLocation();
 				controls.mouseMove(event.getDocumentLeft() - origin.left,
 						event.getDocumentTop() - origin.top);
 				this.render();
@@ -1040,8 +1019,8 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__onMouseUp : function (event)	{
-			this.__threeContainer.releaseCapture();
-			this.__threeContainer.getControls().mouseUp();
+			this.releaseCapture();
+			this.getControls().mouseUp();
 			if ((this.isPaintMode()) && (this.__interactionMode == 3)) {
 				var context = this.__drawingCanvas.getContext2d();
 				var position = this.getPositionOnSlice(event);
@@ -1078,12 +1057,11 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__setupInteractionEvents : function () {
-			var container = this.__threeContainer;
-			container.addListener("mousedown", this.__onMouseDown, this);
-			container.addListener("mouseout", this.__onMouseOut, this);
-			container.addListener("mousemove", this.__onMouseMove, this);
-			container.addListener("mouseup", this.__onMouseUp, this);
-			container.addListener("mousewheel", this.__onMouseWheel, this);
+			this.addListener("mousedown", this.__onMouseDown, this);
+			this.addListener("mouseout", this.__onMouseOut, this);
+			this.addListener("mousemove", this.__onMouseMove, this);
+			this.addListener("mouseup", this.__onMouseUp, this);
+			this.addListener("mousewheel", this.__onMouseWheel, this);
 		},
 
 		__intersection : null,
@@ -1131,29 +1109,28 @@ qx.Class.define("desk.SliceView",
 		},
 		
 		getPositionOnSlice : function (event) {
-			var viewPort=this.__threeContainer;
-			var origin=viewPort.getContentLocation();
-			var x=event.getDocumentLeft()-origin.left;
-			var y=event.getDocumentTop()-origin.top;
+			var origin = this.getContentLocation();
+			var x = event.getDocumentLeft() - origin.left;
+			var y = event.getDocumentTop() - origin.top;
 
-			var elementSize=this.__threeContainer.getInnerSize();
+			var elementSize = this.getInnerSize();
 			var x2 = ( x / elementSize.width ) * 2 - 1;
 			var y2 = - ( y / elementSize.height ) * 2 + 1;
 
 			var projector = this.__projector;
 			var intersection = this.__intersection.set( x2, y2, 0);
-			var coordinates=this.__2DCornersCoordinates;
-			var dimensions=this.__volume2DDimensions;
+			var coordinates = this.__2DCornersCoordinates;
+			var dimensions = this.__volume2DDimensions;
 
-			var camera=this.__getCamera();
+			var camera = this.getCamera();
 			projector.unprojectVector( intersection, camera );
 
-			var cameraPosition=camera.position;
-			intersection.sub( cameraPosition );
-			intersection.multiplyScalar(-cameraPosition.z/intersection.z);
-			intersection.add( cameraPosition );
-			var xinter=intersection.x;
-			var yinter=intersection.y;
+			var cameraPosition = camera.position;
+			intersection.sub(cameraPosition).
+				multiplyScalar(-cameraPosition.z/intersection.z).
+				add( cameraPosition );
+			var xinter = intersection.x;
+			var yinter = intersection.y;
 
 			var intxc=Math.floor((xinter-coordinates[0])*dimensions[0]/(coordinates[2]-coordinates[0]));
 			var intyc=dimensions[1] - 1- Math.floor((yinter-coordinates[1])*dimensions[1]/(coordinates[5]-coordinates[1]));
@@ -1165,9 +1142,7 @@ qx.Class.define("desk.SliceView",
 				syncDimension: true
 			});
 
-			var container = this.__threeContainer = new desk.ThreeContainer();
-			container.getRenderer().setClearColor( 0x000000, 1 );
-			this.add(container, {flex : 1});
+			this.getRenderer().setClearColor( 0x000000, 1 );
 
 			var directionOverlays = this.__directionOverlays = [];
 			var font = new qx.bom.Font(16, ["Arial"]);
@@ -1178,16 +1153,16 @@ qx.Class.define("desk.SliceView",
             };
             qx.util.DisposeUtil.disposeTriggeredBy(font, this);
 			var northLabel = new qx.ui.basic.Label("S").set(settings);
-			container.add(northLabel, {left: "50%", top:"1%"});
+			this.add(northLabel, {left: "50%", top:"1%"});
 
 			var southLabel = new qx.ui.basic.Label("I").set(settings);
-			container.add(southLabel, {left: "50%", bottom:"1%"});
+			this.add(southLabel, {left: "50%", bottom:"1%"});
 
             var westLabel = new qx.ui.basic.Label("L").set(settings);
-			container.add(westLabel, {left: "1%", top:"45%"});
+			this.add(westLabel, {left: "1%", top:"45%"});
 
             var eastLabel = new qx.ui.basic.Label("R").set(settings);
-			container.add(eastLabel, {right: "1%", top:"45%"});
+			this.add(eastLabel, {right: "1%", top:"45%"});
 
 			directionOverlays.push(northLabel, westLabel, southLabel, eastLabel);
 			switch (this.__orientation) {
@@ -1214,7 +1189,7 @@ qx.Class.define("desk.SliceView",
 
 			var label = this.__sliceLabel = new qx.ui.basic.Label("0");
 			label.set({textAlign: "center", width : 40, font : font, textColor : "yellow"});
-			container.add(label, {top :0, left :0});
+			this.add(label, {top :0, left :0});
 
 			var slider = this.__slider = new qx.ui.form.Slider().set (
 				{minimum : 0, maximum : 100, value : 0,
@@ -1235,7 +1210,7 @@ qx.Class.define("desk.SliceView",
 			var rightContainer = this.__rightContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox());
 			rightContainer.add(slider, {flex : 1});
 			rightContainer.setVisibility("hidden");
-			container.add(rightContainer, {right : 0, top : 0, height : "100%"});
+			this.add(rightContainer, {right : 0, top : 0, height : "100%"});
 		},
 
 		// this member is true only when user is manipulating the slider
