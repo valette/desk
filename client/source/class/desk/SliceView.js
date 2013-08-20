@@ -10,7 +10,7 @@
 * @ignore(THREE.MeshBasicMaterial)
 * @ignore(THREE.LineBasicMaterial)
 * @ignore(THREE.Vector3)
-* @ignore(THREE.Face4)
+* @ignore(THREE.Face3)
 * @ignore(THREE.DoubleSide)
 * @ignore(THREE.Projector)
 * @ignore(THREE.Geometry)
@@ -433,13 +433,14 @@ qx.Class.define("desk.SliceView",
 						coordinates[2 * i + 1], 0));
 			}
 
-			geometry.faces.push(new THREE.Face4(0, 1, 2, 3));
-			geometry.faceVertexUvs[0].push([
-				new THREE.Vector2(0, 0),
-				new THREE.Vector2(1, 0),
-				new THREE.Vector2(1, 1),
-				new THREE.Vector2(0, 1)
-				]);
+			geometry.faces.push(new THREE.Face3(0, 1, 2));
+			geometry.faces.push(new THREE.Face3(0, 2, 3));
+			var uv0 = 	new THREE.Vector2(0, 0),
+				uv1 = new THREE.Vector2(1, 0),
+				uv2 = new THREE.Vector2(1, 1),
+				uv3 = new THREE.Vector2(0, 1);
+			geometry.faceVertexUvs[0].push([uv0, uv1, uv2]);
+			geometry.faceVertexUvs[0].push([uv0, uv2, uv3]);
 
 			var width = 100;
 			var height = 100;
@@ -527,13 +528,14 @@ qx.Class.define("desk.SliceView",
 					new THREE.Vector3(coordinates[2 * i],coordinates[2*i + 1], 0));
 			}
 
-			geometry.faces.push( new THREE.Face4(0, 1, 2, 3));
-			geometry.faceVertexUvs[0].push([
-				new THREE.Vector2(0, 0),
-				new THREE.Vector2(1, 0),
-				new THREE.Vector2(1, 1),
-				new THREE.Vector2(0, 1)
-			]);
+			geometry.faces.push(new THREE.Face3(0, 1, 2));
+			geometry.faces.push(new THREE.Face3(0, 2, 3));
+			var uv0 = 	new THREE.Vector2(0, 0),
+				uv1 = new THREE.Vector2(1, 0),
+				uv2 = new THREE.Vector2(1, 1),
+				uv3 = new THREE.Vector2(0, 1);
+			geometry.faceVertexUvs[0].push([uv0, uv1, uv2]);
+			geometry.faceVertexUvs[0].push([uv0, uv2, uv3]);
 
 			var width = this.__volume2DDimensions[0];
 			var height = this.__volume2DDimensions[1];
@@ -606,13 +608,14 @@ qx.Class.define("desk.SliceView",
 					coordinates[2 * i + 1], 0));
 			}
 
-			geometry.faces.push(new THREE.Face4(0, 1, 2, 3));
-			geometry.faceVertexUvs[0].push([
-				new THREE.Vector2(0, 0),
-				new THREE.Vector2(1, 0),
-				new THREE.Vector2(1, 1),
-				new THREE.Vector2(0, 1)
-			]);
+			geometry.faces.push(new THREE.Face3(0, 1, 2));
+			geometry.faces.push(new THREE.Face3(0, 2, 3));
+			var uv0 = 	new THREE.Vector2(0, 0),
+				uv1 = new THREE.Vector2(1, 0),
+				uv2 = new THREE.Vector2(1, 1),
+				uv3 = new THREE.Vector2(0, 1);
+			geometry.faceVertexUvs[0].push([uv0, uv1, uv2]);
+			geometry.faceVertexUvs[0].push([uv0, uv2, uv3]);
 
 			var listener = this.addListener("changeSlice", function (e) {
 				volumeSlice.setSlice(e.getData());
