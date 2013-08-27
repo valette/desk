@@ -58,6 +58,72 @@ qx.Class.define("desk.ThreeContainer",
 		this.__threeCanvas.removeListenerById(this.__listenerId);
 		this.__garbageContainer.add(this.__threeCanvas);
 
+		var ctx = this.__threeCanvas.getContentElement().getCanvas().getContext("webgl");
+		// clean webgl context;
+		// from https://www.khronos.org/registry/webgl/sdk/debug/webgl-debug.js
+		var numAttribs = ctx.getParameter(ctx.MAX_VERTEX_ATTRIBS);
+		var tmp = ctx.createBuffer();
+		ctx.bindBuffer(ctx.ARRAY_BUFFER, tmp);
+		for (var ii = 0; ii < numAttribs; ++ii) {
+			ctx.disableVertexAttribArray(ii);
+			ctx.vertexAttribPointer(ii, 4, ctx.FLOAT, false, 0, 0);
+			ctx.vertexAttrib1f(ii, 0);
+		}
+		ctx.deleteBuffer(tmp);
+
+		var numTextureUnits = ctx.getParameter(ctx.MAX_TEXTURE_IMAGE_UNITS);
+		for (var ii = 0; ii < numTextureUnits; ++ii) {
+			ctx.activeTexture(ctx.TEXTURE0 + ii);
+			ctx.bindTexture(ctx.TEXTURE_CUBE_MAP, null);
+			ctx.bindTexture(ctx.TEXTURE_2D, null);
+		}
+
+		ctx.activeTexture(ctx.TEXTURE0);
+		ctx.useProgram(null);
+		ctx.bindBuffer(ctx.ARRAY_BUFFER, null);
+		ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, null);
+		ctx.bindFramebuffer(ctx.FRAMEBUFFER, null);
+		ctx.bindRenderbuffer(ctx.RENDERBUFFER, null);
+		ctx.disable(ctx.BLEND);
+		ctx.disable(ctx.CULL_FACE);
+		ctx.disable(ctx.DEPTH_TEST);
+		ctx.disable(ctx.DITHER);
+		ctx.disable(ctx.SCISSOR_TEST);
+		ctx.blendColor(0, 0, 0, 0);
+		ctx.blendEquation(ctx.FUNC_ADD);
+		ctx.blendFunc(ctx.ONE, ctx.ZERO);
+		ctx.clearColor(0, 0, 0, 0);
+		ctx.clearDepth(1);
+		ctx.clearStencil(-1);
+		ctx.colorMask(true, true, true, true);
+		ctx.cullFace(ctx.BACK);
+		ctx.depthFunc(ctx.LESS);
+		ctx.depthMask(true);
+		ctx.depthRange(0, 1);
+		ctx.frontFace(ctx.CCW);
+		ctx.hint(ctx.GENERATE_MIPMAP_HINT, ctx.DONT_CARE);
+		ctx.lineWidth(1);
+		ctx.pixelStorei(ctx.PACK_ALIGNMENT, 4);
+		ctx.pixelStorei(ctx.UNPACK_ALIGNMENT, 4);
+		ctx.pixelStorei(ctx.UNPACK_FLIP_Y_WEBGL, false);
+		ctx.pixelStorei(ctx.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+		// TODO: Delete this IF.
+		if (ctx.UNPACK_COLORSPACE_CONVERSION_WEBGL) {
+			ctx.pixelStorei(ctx.UNPACK_COLORSPACE_CONVERSION_WEBGL, ctx.BROWSER_DEFAULT_WEBGL);
+		}
+		ctx.polygonOffset(0, 0);
+		ctx.sampleCoverage(1, false);
+		ctx.scissor(0, 0, ctx.canvas.width, ctx.canvas.height);
+		ctx.stencilFunc(ctx.ALWAYS, 0, 0xFFFFFFFF);
+		ctx.stencilMask(0xFFFFFFFF);
+		ctx.stencilOp(ctx.KEEP, ctx.KEEP, ctx.KEEP);
+		ctx.viewport(0, 0, ctx.canvas.width, ctx.canvas.height);
+		ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT | ctx.STENCIL_BUFFER_BIT);
+
+		// TODO: This should NOT be needed but Firefox fails with 'hint'
+		while(ctx.getError());
+
+
 		//clean the scene
 		this.__scene = null;
 		this.__renderer = null;
