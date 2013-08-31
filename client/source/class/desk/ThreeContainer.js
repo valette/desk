@@ -125,10 +125,14 @@ qx.Class.define("desk.ThreeContainer",
 
 
 		//clean the scene
+		this._deleteMembers(this.__scene);
 		this.__scene = null;
+		this._deleteMembers(this.__renderer);
 		this.__renderer = null;
 		this.__threeCanvas = null;
+		this._deleteMembers(this.__camera);
 		this.__camera = null;
+		this._deleteMembers(this.__controls);
 		this.__controls = null;
 	},
 
@@ -140,11 +144,21 @@ qx.Class.define("desk.ThreeContainer",
 	},
 
 	events : {
+		// fired before each render
+		"beforeRender" : "qx.event.type.Event",
+
 		// fired after each render
 		"render" : "qx.event.type.Event"
 	},
 
 	members : {
+		_deleteMembers : function (object) {
+			var members = Object.keys(object);
+			for (var i = 0; i < members.length; i++) {
+				delete object[members[i]];
+			}
+		},
+
 		__garbageContainer : new qx.ui.container.Composite(new qx.ui.layout.HBox()),
 		__listenerId : null,
 
@@ -189,6 +203,7 @@ qx.Class.define("desk.ThreeContainer",
 					// rendering can be triggered after widget deletion
 					return;
 				}
+				_this.fireEvent("beforeRender");
 				_this.__renderer.render(_this.__scene, _this.__camera);
 				_this.__renderingTriggered = false;
 				_this.fireEvent('render');

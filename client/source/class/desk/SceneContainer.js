@@ -917,8 +917,19 @@ qx.Class.define("desk.SceneContainer",
 					map.dispose();
 				}
 				mesh.material.dispose();
+				var uniforms = Object.keys(mesh.material.uniforms);
+				for (var i = 0; i != uniforms.length; i++) {
+					var uniform = mesh.material.uniforms[uniforms[i]].value;
+					if (uniform) {
+						if (typeof uniform.dispose === "function") {
+							uniform.dispose();
+						}
+					}
+				}
 			}
+			//mesh.dispose();
 			this.fireDataEvent("meshRemoved", mesh);
+			this._deleteMembers(mesh);
         },
 
 		__animator : null,
@@ -931,6 +942,7 @@ qx.Class.define("desk.SceneContainer",
 			propertiesButton.addListener("execute", function (){
 				var node = this.__meshesTree.getSelectedNodes()[0];
 				var mesh = this.__getMeshFromNode(node);
+				console.log(mesh);
 				alert ("Mesh with "+mesh.geometry.attributes.position.numItems/3+" vertices and "+
 						mesh.geometry.attributes.index.numItems/3+" polygons");
 			}, this);
