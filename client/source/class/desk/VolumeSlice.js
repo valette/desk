@@ -24,8 +24,8 @@ qx.Class.define("desk.VolumeSlice",
 
 		parameters = parameters || {};
 
-		if (parameters.imageFormat != null) {
-			this.setImageFormat(parameters.imageFormat);
+		if (parameters.format != null) {
+			this.setImageFormat(parameters.format);
 		}
 
 		if (parameters.colors) {
@@ -34,6 +34,11 @@ qx.Class.define("desk.VolumeSlice",
 		if (parameters.opacity != null) {
 			this.__opacity = parameters.opacity;
 		}
+
+		if (parameters.convert_to_uchar) {
+			this.__convert_to_uchar = parameters.convert_to_uchar;
+		}
+
 		if (parameters.linearFilter) {
 			this.__textureFilter = THREE.LinearFilter;
 		} else {
@@ -184,6 +189,8 @@ qx.Class.define("desk.VolumeSlice",
 		__contrast : 1,
 		__opacity : 1,
 
+		__convert_to_uchar : null,
+
 		__ready : false,
 
 		isReady : function () {
@@ -252,6 +259,10 @@ qx.Class.define("desk.VolumeSlice",
 				format : this.getImageFormat(),
 				slice_orientation : this.__orientation
 			};
+
+			if (this.__convert_to_uchar) {
+				parameterMap.convert_to_uchar = "1";
+			}
 
 			desk.Actions.getInstance().launchAction(parameterMap,
 				function (response) {
