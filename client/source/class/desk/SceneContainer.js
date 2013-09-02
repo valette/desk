@@ -43,7 +43,7 @@ qx.Class.define("desk.SceneContainer",
 
 		var leftContainer = this.__leftContainer = new qx.ui.container.Composite();
 		leftContainer.setLayout(new qx.ui.layout.VBox());
-		this.add(leftContainer, {left : 0, top : 0, height : "100%"});
+		this.add(leftContainer, {left : 0, top : 30});
 		leftContainer.setVisibility("excluded");
 
 		this.__setupInteractions();
@@ -72,7 +72,6 @@ qx.Class.define("desk.SceneContainer",
 
 		var buttonsContainer = new qx.ui.container.Composite();
 		buttonsContainer.setLayout(new qx.ui.layout.HBox());
-		buttonsContainer.add(new qx.ui.core.Spacer(32));
 		buttonsContainer.add(this.__getDragLabel(), {flex : 1});
 		buttonsContainer.add(this.__getResetViewButton(), {flex : 1});
 		buttonsContainer.add(this.__getSnapshotButton());
@@ -101,7 +100,6 @@ qx.Class.define("desk.SceneContainer",
 		var self = this;
 		this.__setData = _.throttle(function () {
 				self.__meshesTree.getDataModel().setData();
-				self.render();
 			}, 500);
 
 		if (file) {
@@ -220,7 +218,7 @@ qx.Class.define("desk.SceneContainer",
 			var filterField = new qx.ui.form.TextField();
 			filterField.set({value : "", backgroundColor : "transparent"});
 			filterField.addListener("input", function() {
-				this.__setData();
+				this.__meshesTree.getDataModel().setData()
 				this.render();
 			}, this);
 			container.add(filterField);
