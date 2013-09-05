@@ -104,7 +104,7 @@ qx.Class.define("desk.Animator",
 			}
 			animate();
 			function snapshot() {
-				that.__viewer.getThreeContainer().snapshot();
+				that.__viewer.snapshot();
 			}
 		},
 

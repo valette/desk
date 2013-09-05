@@ -366,7 +366,7 @@ qx.Class.define("desk.SliceView",
 
 		__propagateCameraToLinks : function () {
 			this.applyToOtherLinks(function (me) {
-				this.getControls().copy(me.__threeContainer.getControls());
+				this.getControls().copy(me.getControls());
 				this.setSlice(me.getSlice());
 				this.setCameraZ(me.getCameraZ());
 				this.render();

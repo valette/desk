@@ -977,9 +977,9 @@ qx.Class.define("desk.MPRContainer",
 							viewer.link(viewers2[j]);
 						}
 					}
-					var originControls = viewer.getThreeContainer().getControls()
+					var originControls = viewer.getControls()
 					viewer.applyToOtherLinks(function (me) {
-						var controls = this.getThreeContainer().getControls();
+						var controls = this.getControls();
 						controls.copy(originControls);
 						controls.update();
 						this.render();

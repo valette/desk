@@ -151,12 +151,6 @@ qx.Class.define("desk.SceneContainer",
 
 		__leftContainer : null,
 
-		getThreeContainer : function () {
-			console.warn("Deprecated call to desk.SceneContainer.getThreeContainer");
-			console.warn("desk.SceneContainer now inherits from desk.ThreeContainer");
-			return this;
-		},
-
 		applyAfterEachRendering : function (callback, context) {
 			this.addListener('render', callback, context);
 		},
