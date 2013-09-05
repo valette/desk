@@ -671,15 +671,12 @@ exports.performAction = function (POST, callback) {
 			if (err) {
 				if (err.killed) {
 					response.status = "KILLED";
+					callback();
 				} else {
-					response.status = "ERROR";
-					response.error = err;
+					callback(err);
 				}
-				callback();
 			} else if (stderr) {
-				response.status = "ERROR";
-				response.error = err;
-				callback();
+				callback(stderr);
 			} else {
 				response.status = 'OK (' + (new Date().getTime() - startTime) / 1000 + 's)';
 				if (writeJSON) {
