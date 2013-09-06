@@ -206,7 +206,12 @@ qx.Class.define("desk.Actions",
 		* @return {Object} action parameters as a JSON object
 		*/	
 		getAction : function (name) {
-			return (JSON.parse(JSON.stringify(this.__actionsObject[name])));
+			var action = this.__actionsObject[name];
+			if (action) {
+				return JSON.parse(JSON.stringify(action));
+			} else {
+				return null;
+			}
 		},
 
 		/**
