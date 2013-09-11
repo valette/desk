@@ -253,35 +253,29 @@ qx.Class.define("desk.VolumeSlice",
 
 		update : function (callback, context) {
 		    var extension = desk.FileSystem.getFileExtension(this.__file);
-	            var parameterMap;
+            var parameterMap = {
+			    input_volume : this.__file,
+			    output_directory : "cache/",
+			    slice_orientation : this.__orientation
+			};
 
-                    if ((desk.Actions.getInstance().getAction("vol_slice") != null)
-                        && (extension == "vol"))
-                    {
-                        parameterMap = {
-			    action : "vol_slice",
-			    input_volume : this.__file,
-			    output_directory : "cache/",
-			    slice_orientation : this.__orientation
-			};
-                    }
-                    else 
-                    {
-                        parameterMap = {
-			    action : "slice_volume",
-			    input_volume : this.__file,
-			    output_directory : "cache/",
-			    format : this.getImageFormat(),
-			    slice_orientation : this.__orientation
-			};
-                        
-                    }
+			if (this.__convert_to_uchar) {
+				parameterMap.convert_to_uchar = "1";
+			}
+
+			if ((desk.Actions.getInstance().getAction("vol_slice") != null)
+				&& (extension == "vol")) {
+				parameterMap.action = "vol_slice";
+			} else {
+				parameterMap.action = "slice_volume";
+			    parameterMap.format = this.getImageFormat();
+			}
 		    desk.Actions.getInstance().launchAction(parameterMap,
-				                            function (response) {
-					                            this.openXMLURL(desk.FileSystem.getFileURL(response.outputDirectory) + "volume.xml",
-						                                    callback, context);
-		                                            }, this);
-               	},
+				function (response) {
+					this.openXMLURL(desk.FileSystem.getFileURL(response.outputDirectory) + "volume.xml",
+						callback, context);
+			}, this);
+		},
 
 		getBrightness : function () {
 			return this.__brightness;
