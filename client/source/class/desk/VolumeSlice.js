@@ -18,7 +18,7 @@ qx.Class.define("desk.VolumeSlice",
 	{
 		this.base(arguments);
 
-		this.__orientation = orientation;
+		this.setOrientation(orientation);
 		this.__materials = [];
 		this.__image = new Image();
 
@@ -55,6 +55,7 @@ qx.Class.define("desk.VolumeSlice",
 
 	properties : {
 		slice : { init : -1, check: "Number", event : "changeSlice"},
+		orientation : { init : 0, check: "Number", event : "changeOrientation"},
 		imageFormat : { init : 1, check: "Number", event : "changeImageFormat"}
 	},
 
@@ -156,7 +157,6 @@ qx.Class.define("desk.VolumeSlice",
 	},
 
 	members : {
-		__orientation : 0,
 		__textureFilter : null,
 		__availableImageFormat : 1,
 
@@ -201,10 +201,6 @@ qx.Class.define("desk.VolumeSlice",
 			return this.__file;
 		},
 
-		getOrientation : function () {
-			return this.__orientation;
-		},
-
 		getDimensions : function () {
 			return this.__dimensions;
 		},
@@ -223,7 +219,7 @@ qx.Class.define("desk.VolumeSlice",
 
 		get2DSpacing : function () {
 			var spacing = this.__spacing;
-			switch (this.__orientation)
+			switch (this.getOrientation())
 			{
 				default:
 				case 0 :
@@ -256,7 +252,7 @@ qx.Class.define("desk.VolumeSlice",
             var parameterMap = {
 			    input_volume : this.__file,
 			    output_directory : "cache/",
-			    slice_orientation : this.__orientation
+			    slice_orientation : this.getOrientation()
 			};
 
 			if (this.__convert_to_uchar) {
@@ -529,7 +525,7 @@ qx.Class.define("desk.VolumeSlice",
                 slice = this.getSlice();
             }
 			var bounds = this.getBounds();
-			switch (this.__orientation)
+			switch (this.getOrientation())
 			{
 			// XY Z
 			case 0 :
@@ -572,7 +568,7 @@ qx.Class.define("desk.VolumeSlice",
 		 * @return {Array} array of dimensions
 		 */
 		 get2DDimensions: function () {
-			switch(this.__orientation)
+			switch(this.getOrientation())
 			{
 				// ZY X
 				case 1 :
@@ -593,7 +589,7 @@ qx.Class.define("desk.VolumeSlice",
 		 get2DCornersCoordinates : function () {
 			var bounds = this.getBounds();
 
-			switch(this.__orientation)
+			switch(this.getOrientation())
 			{
 				// ZY X
 				case 1 :
@@ -621,7 +617,7 @@ qx.Class.define("desk.VolumeSlice",
 		 * @return {Number} number of slices
 		 */
 		 getNumberOfSlices : function () {
-			switch(this.__orientation)
+			switch(this.getOrientation())
 			{
 				// ZY X
 				case 1 :
@@ -781,7 +777,7 @@ qx.Class.define("desk.VolumeSlice",
 			}
 
 			var orientationString;
-			switch(this.__orientation) {
+			switch(this.getOrientation()) {
 				// ZY X
 				case 1 :
 					orientationString = "ZY";
