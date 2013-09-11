@@ -373,6 +373,14 @@ qx.Class.define("desk.FileBrowser",
 			case "mhd":
 				new desk.VolumeViewer(file);
 				break;
+			case "vol": 
+                            if (desk.Actions.getInstance().getAction("vol_slice") != null)
+                            {
+				new desk.VolumeViewer(file);
+				break;
+                            }
+                            else
+                                console.log("vol_slice action does not exist. Skipping this filetype handler.")
 			case "json":
 				desk.Action.CREATEFROMFILE(file);
 				break;
