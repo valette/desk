@@ -13,12 +13,13 @@ var proxyServer = https.createServer({
         key: fs.readFileSync(__dirname+'/privatekey.pem', 'utf8'),
         cert: fs.readFileSync(__dirname+'/certificate.pem', 'utf8')
 	}, function (req, res) {
+		req.socket.setTimeout(36000000);
 		if (req.url === '/') {
 			res.writeHead(301, {Location: 'https://desk.creatis.insa-lyon.fr/demo'});
 			res.end();
 			return;
 		}
-		proxy.proxyRequest(req, res)
+		proxy.proxyRequest(req, res);
 	}
 );
 
