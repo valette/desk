@@ -61,6 +61,7 @@ qx.Class.define("desk.Actions",
 		scripts.push(baseURL + 'ext/async.min.js');
 		scripts.push(baseURL + 'ext/underscore-min.js');
 		scripts.push(baseURL + 'ext/parallel.min.js');
+		scripts.push(baseURL + 'ext/operative.min.js');
 
 
 		var self = this;
