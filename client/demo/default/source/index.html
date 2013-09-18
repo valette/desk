@@ -44,7 +44,7 @@ function endsWith(str, suffix) {
   window.onload = newLoad;
   var myLocation = window.location.href;
   if (myLocation.charAt(myLocation.length - 1) != '/') {
-	if (!endsWith(myLocation, ".html") && !endsWith(myLocation, ".htm")) {
+	if ((myLocation.indexOf('?') < 0) && !endsWith(myLocation, ".html") && !endsWith(myLocation, ".htm")) {
 		// add a trailing slash, as there is a bug with node...
 		window.location = myLocation + '/';
 	}
