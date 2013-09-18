@@ -60,8 +60,8 @@ qx.Class.define("desk.Actions",
 		scripts.push(threeURL + 'ctm/lzma.js');
 		scripts.push(baseURL + 'ext/async.min.js');
 		scripts.push(baseURL + 'ext/underscore-min.js');
-		scripts.push(baseURL + 'ext/parallel.min.js');
 		scripts.push(baseURL + 'ext/operative.min.js');
+		scripts.push(baseURL + 'ext/kdTree-min.js');
 
 
 		var self = this;
