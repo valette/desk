@@ -311,7 +311,7 @@ qx.Class.define("desk.SegTools",
 				this.__startSegmentationButton.setEnabled(true);
 				if (!segmentationToken) {
 					segmentationToken = this.__master.addVolume(medianFilteringAction.getOutputDirectory()+"output.mhd",
-								{opacity : 0.5, imageFormat : 0,
+								{opacity : 0.5, format : 0,
 								colors : [this.__labelColorsRed, this.__labelColorsGreen, this.__labelColorsBlue]});
 				} else {
 					this.__master.updateVolume(segmentationToken);
