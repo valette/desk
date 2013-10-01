@@ -42,6 +42,12 @@ qx.Class.define("desk.TextEditor",
 		this.__executeButton = new qx.ui.form.Button("execute");
 		this.__executeButton.addListener("execute", this.__onExecute, this);
 
+		this.__foldButton = new qx.ui.form.Button("F");
+		this.__foldButton.setToolTipText("Fold all");
+		this.__foldButton.addListener("execute", function () {
+			this.__textArea.getAce().getSession().foldAll();
+		}, this);
+
 		var spinner = this.__spinner = new qx.ui.form.Spinner(5, 14, 50);
 		spinner.addListener('changeValue', function (e) {
             this.__textArea.setFontSize(e.getData());
@@ -51,6 +57,7 @@ qx.Class.define("desk.TextEditor",
 		buttonsContainer.setLayout(new qx.ui.layout.HBox());
 		buttonsContainer.add(this.__executeButton, {flex : 1});
 		buttonsContainer.add(this.__reloadButton, {flex : 1});
+		buttonsContainer.add(this.__foldButton);
 		buttonsContainer.add(saveButton, {flex : 1});
         buttonsContainer.add(spinner);
 		this.add(buttonsContainer);
@@ -85,6 +92,7 @@ qx.Class.define("desk.TextEditor",
         __saveButton : null,
 		__scriptContainer : null,
 		__buttonsContainer : null,
+		__foldButton : null,
 
 		__removeScript : function () {
 			var scriptContainer = this.__scriptContainer;
@@ -139,13 +147,16 @@ qx.Class.define("desk.TextEditor",
 					this.__textArea.setMode("c_cpp");
 					this.__textArea.useHighlight(true);
 					this.__executeButton.setVisibility('excluded');
+					this.__foldButton.setVisibility('visible');
 					break;
 				case "js" :
 					this.__executeButton.setVisibility('visible');
 					this.__textArea.setMode("javascript");
 					this.__textArea.useHighlight(true);
+					this.__foldButton.setVisibility('visible');
 					break;
 				default : 
+					this.__foldButton.setVisibility('excluded');
 					this.__executeButton.setVisibility('excluded');
 					this.__textArea.useHighlight(false);
 					break;
