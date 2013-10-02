@@ -155,7 +155,11 @@ qx.Class.define("desk.ThreeContainer",
 		_deleteMembers : function (object) {
 			var members = Object.keys(object);
 			for (var i = 0; i < members.length; i++) {
-				delete object[members[i]];
+				if (members[i] === "children") {
+					object.children.length = 0;
+				} else {
+					delete object[members[i]];
+				}
 			}
 		},
 
