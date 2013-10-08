@@ -311,7 +311,6 @@ qx.Class.define("desk.SceneContainer",
 
 		removeAllMeshes : function () {
 			this.removeMeshes(this.getMeshes());
-			this.resetView();
 		},
 
 		__parseXMLData : function (file, rootDocument, parameters, callback) {
