@@ -339,7 +339,7 @@ qx.Class.define("desk.ThreeContainer",
 			}
 			camera.near = bbdiaglength /10000;
 			camera.far = bbdiaglength * 1000000;
-			controls.update();
+			this.__resizeThreeCanvas();
 			this.render();
 		},
 
