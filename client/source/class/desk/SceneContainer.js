@@ -120,7 +120,15 @@ qx.Class.define("desk.SceneContainer",
 	},
 
 	properties : {
-		convertVTK : {init : true, check: "Boolean"}
+		/**
+		 * if true, .vtk files will be converted to .ctm files before loading
+		 */
+		convertVTK : {init : true, check: "Boolean"},
+		
+		/**
+		 * allows picking with mouse instead of rotation, pan, etc..
+		 */
+		 pickMode : {init : false, check: "Boolean"}
 	},
 
 	events : {
@@ -128,7 +136,11 @@ qx.Class.define("desk.SceneContainer",
 		/**
 		 * Fired whenever a mesh is removed. Attached data is the removed mesh
 		 */
-		"meshRemoved" : "qx.event.type.Data"
+		"meshRemoved" : "qx.event.type.Data",
+		/**
+		 * Fired whenever picking is performed (in pick mode only)
+		 */
+		"pick" : "qx.event.type.Data"
 		},
 
 	members : {
@@ -487,8 +499,13 @@ qx.Class.define("desk.SceneContainer",
 		__onMouseDown : function (event) {
 			if (event.getTarget() != this.getCanvas()) return;
 			this.capture();
-			var origin = this.getContentLocation();
 			this.__draggingInProgress = true;
+			if (this.isPickMode()) {
+				var mesh = this.__pickMeshes(event, this.getMeshes());
+				if (mesh) this.fireDataEvent("pick", mesh);
+				return;
+			}
+			var origin = this.getContentLocation();
 			var button = 0;
 			if (event.isRightPressed() || 
 				(event.isCtrlPressed() && !event.isShiftPressed())) {
@@ -509,6 +526,11 @@ qx.Class.define("desk.SceneContainer",
 
 		__onMouseMove : function (event) {
 			if (this.__draggingInProgress) {
+				if (this.isPickMode()) {
+					var mesh = this.__pickMeshes(event, this.getMeshes());
+					if (mesh) this.fireDataEvent("pick", mesh);
+					return;
+				}
 				var origin = this.getContentLocation();
 				this.getControls().mouseMove(event.getDocumentLeft() - origin.left,
 					event.getDocumentTop() - origin.top);
@@ -523,59 +545,65 @@ qx.Class.define("desk.SceneContainer",
 			this.getControls().mouseUp();
 		},
 
+		__pickMeshes : function (event, meshes) {
+			var origin = this.getContentLocation();
+			var x = event.getDocumentLeft() - origin.left;
+			var y = event.getDocumentTop() - origin.top;
+
+			var elementSize = this.getInnerSize();
+			var x2 = ( x / elementSize.width ) * 2 - 1;
+			var y2 = - ( y / elementSize.height ) * 2 + 1;
+
+			var projector = new THREE.Projector();
+			var vector = new THREE.Vector3( x2, y2, 0.5 );
+			var camera = this.getCamera();
+			projector.unprojectVector(vector, camera);
+
+			var ray = new THREE.Raycaster(camera.position,
+				vector.sub(camera.position).normalize());
+
+			var intersection =  ray.intersectObjects(meshes);
+			var closest = null;
+			var distance = 1e10;
+			for (var i = 0; i < intersection.length; i++) {
+				var inter = intersection[i];
+				if (inter.distance < distance) {
+					distance = inter.distance;
+					closest = inter;
+				}
+			}
+			return closest;
+		},
+
 		__onMouseWheel : function (event) {
 			if (event.getTarget() != this.getCanvas()) return;
 			var tree = this.__meshesTree;
-			var children = [];
+			var meshes = [];
 			this.getScene().traverse(function (object){
 				if (!object.__customProperties) {
 					return;
 				}
-
-				if (object.__customProperties.volumeSlice) {
-					children.push(object);
+				if ((object.__customProperties.volumeSlice) &&
+					(object.visible)){
+					meshes.push(object);
 				}
 			});
-			if (children.length !== 0) {
-				var meshes = [];
-				for (var i = 0; i < children.length; i++) {
-					var mesh = children[i];
-					if (mesh.visible) {
-						meshes.push(mesh);
-					}
+			if (meshes.length === 0) return;
+
+			var intersects = this.__pickMeshes(event, meshes);
+			if (intersects) {
+				var volumeSlice = intersects.object.__customProperties.volumeSlice;
+				var maximum = volumeSlice.getNumberOfSlices() - 1;
+				var delta = 1;
+				if (event.getWheelDelta() < 0) delta = -1;
+				var newValue = volumeSlice.getSlice() + delta;
+				if (newValue > maximum) {
+					newValue = maximum;
 				}
-
-				var origin = this.getContentLocation();
-				var x=event.getDocumentLeft() - origin.left;
-				var y=event.getDocumentTop() - origin.top;
-
-				var elementSize = this.getInnerSize();
-				var x2 = ( x / elementSize.width ) * 2 - 1;
-				var y2 = - ( y / elementSize.height ) * 2 + 1;
-
-				var projector = new THREE.Projector();
-				var vector = new THREE.Vector3( x2, y2, 0.5 );
-				var camera = this.getCamera();
-				projector.unprojectVector(vector, camera);
-
-				var ray = new THREE.Raycaster(camera.position,
-					vector.sub(camera.position).normalize());
-
-				var intersects = ray.intersectObjects(meshes);
-
-				if (intersects.length > 0) {
-					var volumeSlice = intersects[0].object.__customProperties.volumeSlice;
-					var maximum = volumeSlice.getNumberOfSlices() - 1;
-					var delta = Math.round(event.getWheelDelta()/2);
-					var newValue = volumeSlice.getSlice() + delta;
-					if (newValue > maximum) {
-						newValue = maximum;
-					}
-					if (newValue < 0) {
-						newValue = 0;
-					}
-					volumeSlice.setSlice(newValue);
+				if (newValue < 0) {
+					newValue = 0;
 				}
+				volumeSlice.setSlice(newValue);
 			}
 		},
 
@@ -865,8 +893,6 @@ qx.Class.define("desk.SceneContainer",
 			}
 			this.__setData();
 		},
-
-		__destructorHack : false,
 
 		removeMesh : function (mesh) {
 			this.__removeMesh(mesh);
