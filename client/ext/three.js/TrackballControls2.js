@@ -8,15 +8,12 @@ THREE.TrackballControls2 = function ( object ) {
 	STATE = { NONE : -1, ROTATE : 0, ZOOM : 1, PAN : 2 , ROTATE_Z : 3};
 
 	this.object = object;
-//	this.domElement = ( domElement !== undefined ) ? domElement : document;
-
-	// API
 
 	this.enabled = true;
 
 	this.setSize= function(width, height)
 	{
-		this.screen = { width: width, height: height, offsetLeft: 0, offsetTop: 0 };
+		this.screen = { width: width, height: height};
 		this.radius = ( this.screen.width + this.screen.height );
 	}
 
@@ -30,7 +27,6 @@ THREE.TrackballControls2 = function ( object ) {
 	this.noZoom = false;
 	this.noPan = false;
 
-//	this.staticMoving = false;
 //	this.dynamicDampingFactor = 0.2;
 
 	this.minDistance = 0;
@@ -69,7 +65,7 @@ THREE.TrackballControls2 = function ( object ) {
 
 	this.copy = function (source) {
 
-		var internals=source.getInternals();
+		var internals = source.getInternals();
 		_zoomStart.copy(internals[0]);
 		_zoomEnd.copy(internals[1]);
 		_panStart.copy(internals[2]);
@@ -101,11 +97,11 @@ THREE.TrackballControls2 = function ( object ) {
 
 	};
 
-	this.rotateCamera = function() {
+	var axis = new THREE.Vector3(),
+		quaternion = new THREE.Quaternion();
 
-		var axis = new THREE.Vector3(),
-			quaternion = new THREE.Quaternion(),
-			angle;
+	this.rotateCamera = function() {
+		var angle;
 
 		if ( _this._dy != 0 ) {
 			angle = _this.rotateSpeed * _this._dy/_this.radius;
@@ -115,7 +111,7 @@ THREE.TrackballControls2 = function ( object ) {
 
 			_eye.applyQuaternion(quaternion);
 			_this.object.up.applyQuaternion(quaternion);
-			_this._dy=0;
+		//	_this._dy=0;
 		}
 
 		if ( _this._dx != 0 ) {
@@ -125,16 +121,15 @@ THREE.TrackballControls2 = function ( object ) {
 
 			_eye.applyQuaternion(quaternion);
 			_this.object.up.applyQuaternion(quaternion);
-			_this._dx=0;
+	//		_this._dx=0;
 		}
 
 		if ( _this._alpha != 0 ) {
 			axis.copy( _eye ).normalize();
 			quaternion.setFromAxisAngle( axis , _this._alpha );
 
-			//_eye.applyQuaternion(quaternion);
 			_this.object.up.applyQuaternion(quaternion);
-			_this._alpha=0;
+		//	_this._alpha=0;
 		}
 
 	};
@@ -147,15 +142,7 @@ THREE.TrackballControls2 = function ( object ) {
 
 			_eye.multiplyScalar( factor );
 
-//			if ( _this.staticMoving ) {
-
 				_zoomStart = _zoomEnd;
-/*
-			} else {
-
-				_zoomStart.y += ( _zoomEnd.y - _zoomStart.y ) * this.dynamicDampingFactor;
-
-			}*/
 
 		}
 
@@ -175,15 +162,7 @@ THREE.TrackballControls2 = function ( object ) {
 			_this.object.position.add( pan );
 			_this.target.add( pan );
 
-//			if ( _this.staticMoving ) {
-
-				_panStart = _panEnd;
-
-	/*		} else {
-
-				_panStart.add( mouseChange.sub( _panEnd, _panStart ).multiplyScalar( _this.dynamicDampingFactor ) );
-
-			}*/
+			_panStart = _panEnd;
 
 		}
 
@@ -210,9 +189,6 @@ THREE.TrackballControls2 = function ( object ) {
 	};
 
 	this.update = function() {
-		this._update();
-	};
-	this._update = function() {
 
 		_eye.copy( _this.object.position ).sub( this.target );
 
@@ -240,9 +216,9 @@ THREE.TrackballControls2 = function ( object ) {
 
 		_this.object.lookAt( _this.target );
 
-		_this._dx=0;
-		_this._dy=0;
-		_this._alpha=0;
+		_this._dx = 0;
+		_this._dy = 0;
+		_this._alpha = 0;
 	};
 
 
@@ -290,7 +266,7 @@ THREE.TrackballControls2 = function ( object ) {
 
 	};
 
-	this.mouseDown= function ( button, x ,y ) {
+	this.mouseDown = function ( button, x ,y ) {
 
 		if ( ! _this.enabled ) return;
 
@@ -298,11 +274,7 @@ THREE.TrackballControls2 = function ( object ) {
 
 			_state = button;
 
-			if ( _state === STATE.ROTATE && !_this.noRotate ) {
-
-			//	_rotateStart = _rotateEnd = _this.getMouseProjectionOnBall( x, y );
-
-			} else if ( _state === STATE.ZOOM && !_this.noZoom ) {
+			if ( _state === STATE.ZOOM && !_this.noZoom ) {
 
 				_zoomStart = _zoomEnd = _this.getMouseOnScreen( x, y );
 
@@ -311,13 +283,13 @@ THREE.TrackballControls2 = function ( object ) {
 				_panStart = _panEnd = _this.getMouseOnScreen( x, y );
 
 			}
-			_this._xinit=x;
-			_this._yinit=y;
+			_this._xinit = x;
+			_this._yinit = y;
 		}
 
 	};
 
-	this.mouseMove =function ( x, y ) {
+	this.mouseMove = function ( x, y ) {
 
 		if ( ! _this.enabled ) return;
 
@@ -377,7 +349,7 @@ THREE.TrackballControls2 = function ( object ) {
 
 		_this._xinit = x;
 		_this._yinit = y;
-		_this._update();
+		_this.update();
 	};
 
 	this.mouseUp = function( ) {
