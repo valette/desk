@@ -4,14 +4,13 @@
 
 THREE.TrackballControls2 = function ( object ) {
 
-	var _this = this,
 	STATE = { NONE : -1, ROTATE : 0, ZOOM : 1, PAN : 2 , ROTATE_Z : 3};
 
 	this.object = object;
 
 	this.enabled = true;
 
-	this.setSize= function(width, height)
+	this.setSize = function(width, height)
 	{
 		this.screen = { width: width, height: height};
 		this.radius = ( this.screen.width + this.screen.height );
@@ -27,13 +26,8 @@ THREE.TrackballControls2 = function ( object ) {
 	this.noZoom = false;
 	this.noPan = false;
 
-//	this.dynamicDampingFactor = 0.2;
-
 	this.minDistance = 0;
 	this.maxDistance = Infinity;
-
-	this.keys = [ 65 /*A*/, 83 /*S*/, 68 /*D*/ ];
-
 
 	// internals
 
@@ -44,17 +38,17 @@ THREE.TrackballControls2 = function ( object ) {
 
 	_eye = new THREE.Vector3(),
 
-	_zoomStart = new THREE.Vector2(),
-	_zoomEnd = new THREE.Vector2(),
+	_zoomStart = 0,
+	_zoomEnd = 0,
 
 	_panStart = new THREE.Vector2(),
 	_panEnd = new THREE.Vector2();
 
-	this._dx=0;
-	this._dy=0;
-	this._xinit=0;
-	this._yinit=0;
-	this._alpha=0;
+	this._dx = 0;
+	this._dy = 0;
+	this._xinit = 0;
+	this._yinit = 0;
+	this._alpha = 0;
 
 	// methods
 
@@ -66,33 +60,23 @@ THREE.TrackballControls2 = function ( object ) {
 	this.copy = function (source) {
 
 		var internals = source.getInternals();
-		_zoomStart.copy(internals[0]);
-		_zoomEnd.copy(internals[1]);
+		_zoomStart = internals[0];
+		_zoomEnd = internals[1];
 		_panStart.copy(internals[2]);
 		_panEnd.copy(internals[3]);
 
 		_eye.copy(internals[4]);	
-		_this.object.up.copy(source.object.up);
-		_this.object.position.copy(source.object.position);
-		_this.target.copy(source.target);
-
-	};
-
-	this.handleEvent = function ( event ) {
-
-		if ( typeof this[ event.type ] == 'function' ) {
-
-			this[ event.type ]( event );
-
-		}
+		this.object.up.copy(source.object.up);
+		this.object.position.copy(source.object.position);
+		this.target.copy(source.target);
 
 	};
 
 	this.getMouseOnScreen = function( x, y ) {
 
 		return new THREE.Vector2(
-			x / _this.radius,
-			y / _this.radius
+			x / this.radius,
+			y / this.radius
 		);
 
 	};
@@ -103,40 +87,37 @@ THREE.TrackballControls2 = function ( object ) {
 	this.rotateCamera = function() {
 		var angle;
 
-		if ( _this._dy != 0 ) {
-			angle = _this.rotateSpeed * _this._dy/_this.radius;
+		if ( this._dy != 0 ) {
+			angle = this.rotateSpeed * this._dy / this.radius;
 
-			axis.crossVectors( _eye, _this.object.up ).normalize();
+			axis.crossVectors( _eye, this.object.up ).normalize();
 			quaternion.setFromAxisAngle( axis, angle );
 
 			_eye.applyQuaternion(quaternion);
-			_this.object.up.applyQuaternion(quaternion);
-		//	_this._dy=0;
+			this.object.up.applyQuaternion(quaternion);
 		}
 
-		if ( _this._dx != 0 ) {
-			angle = -_this.rotateSpeed * _this._dx/_this.radius;
-			axis.copy( _this.object.up ).normalize();
+		if ( this._dx != 0 ) {
+			angle = - this.rotateSpeed * this._dx / this.radius;
+			axis.copy( this.object.up ).normalize();
 			quaternion.setFromAxisAngle( axis , angle );
 
 			_eye.applyQuaternion(quaternion);
-			_this.object.up.applyQuaternion(quaternion);
-	//		_this._dx=0;
+			this.object.up.applyQuaternion(quaternion);
 		}
 
-		if ( _this._alpha != 0 ) {
+		if ( this._alpha != 0 ) {
 			axis.copy( _eye ).normalize();
-			quaternion.setFromAxisAngle( axis , _this._alpha );
+			quaternion.setFromAxisAngle( axis , this._alpha );
 
-			_this.object.up.applyQuaternion(quaternion);
-		//	_this._alpha=0;
+			this.object.up.applyQuaternion(quaternion);
 		}
 
 	};
 
 	this.zoomCamera = function() {
 
-		var factor = 1.0 + ( _zoomEnd.y - _zoomStart.y ) * _this.zoomSpeed;
+		var factor = 1.0 + ( _zoomEnd - _zoomStart ) * this.zoomSpeed;
 
 		if ( factor !== 1.0 && factor > 0.0 ) {
 
@@ -154,13 +135,13 @@ THREE.TrackballControls2 = function ( object ) {
 
 		if ( mouseChange.lengthSq() ) {
 
-			mouseChange.multiplyScalar( _eye.length() * _this.panSpeed );
+			mouseChange.multiplyScalar( _eye.length() * this.panSpeed );
 
-			var pan = _eye.clone().cross( _this.object.up ).setLength( mouseChange.x );
-			pan.add( _this.object.up.clone().setLength( mouseChange.y ) );
+			var pan = _eye.clone().cross( this.object.up ).setLength( mouseChange.x );
+			pan.add( this.object.up.clone().setLength( mouseChange.y ) );
 
-			_this.object.position.add( pan );
-			_this.target.add( pan );
+			this.object.position.add( pan );
+			this.target.add( pan );
 
 			_panStart = _panEnd;
 
@@ -170,17 +151,17 @@ THREE.TrackballControls2 = function ( object ) {
 
 	this.checkDistances = function() {
 
-		if ( !_this.noZoom || !_this.noPan ) {
+		if ( !this.noZoom || !this.noPan ) {
 
-			if ( _this.object.position.lengthSq() > _this.maxDistance * _this.maxDistance ) {
+			if ( this.object.position.lengthSq() > this.maxDistance * this.maxDistance ) {
 
-				_this.object.position.setLength( _this.maxDistance );
+				this.object.position.setLength( this.maxDistance );
 
 			}
 
-			if ( _eye.lengthSq() < _this.minDistance * _this.minDistance ) {
+			if ( _eye.lengthSq() < this.minDistance * this.minDistance ) {
 
-				_this.object.position.addVectors( _this.target, _eye.setLength( _this.minDistance ) );
+				this.object.position.addVectors( this.target, _eye.setLength( this.minDistance ) );
 
 			}
 
@@ -190,113 +171,69 @@ THREE.TrackballControls2 = function ( object ) {
 
 	this.update = function() {
 
-		_eye.copy( _this.object.position ).sub( this.target );
+		_eye.copy( this.object.position ).sub( this.target );
 
-		if ( !_this.noRotate ) {
+		if ( !this.noRotate ) {
 
-			_this.rotateCamera();
+			this.rotateCamera();
 
 		}
 		
-		if ( !_this.noZoom ) {
+		if ( !this.noZoom ) {
 
-			_this.zoomCamera();
-
-		}
-
-		if ( !_this.noPan ) {
-
-			_this.panCamera();
+			this.zoomCamera();
 
 		}
 
-		_this.object.position.addVectors( _this.target, _eye );
+		if ( !this.noPan ) {
 
-		_this.checkDistances();
+			this.panCamera();
 
-		_this.object.lookAt( _this.target );
+		}
 
-		_this._dx = 0;
-		_this._dy = 0;
-		_this._alpha = 0;
+		this.object.position.addVectors( this.target, _eye );
+
+		this.checkDistances();
+
+		this.object.lookAt( this.target );
+
+		this._dx = 0;
+		this._dy = 0;
+		this._alpha = 0;
 	};
 
-
-	// listeners
-
-	function keydown( event ) {
-
-		if ( ! _this.enabled ) return;
-
-		if ( _state !== STATE.NONE ) {
-
-			return;
-
-		} else if ( event.keyCode === _this.keys[ STATE.ROTATE ] && !_this.noRotate ) {
-
-			_state = STATE.ROTATE;
-
-		} else if ( event.keyCode === _this.keys[ STATE.ZOOM ] && !_this.noZoom ) {
-
-			_state = STATE.ZOOM;
-
-		} else if ( event.keyCode === _this.keys[ STATE.PAN ] && !_this.noPan ) {
-
-			_state = STATE.PAN;
-
-		}
-
-		if ( _state !== STATE.NONE ) {
-
-			_keyPressed = true;
-
-		}
-
-	};
-
-	function keyup( event ) {
-
-		if ( ! _this.enabled ) return;
-
-		if ( _state !== STATE.NONE ) {
-
-			_state = STATE.NONE;
-
-		}
-
-	};
 
 	this.mouseDown = function ( button, x ,y ) {
 
-		if ( ! _this.enabled ) return;
+		if ( ! this.enabled ) return;
 
 		if ( _state === STATE.NONE ) {
 
 			_state = button;
 
-			if ( _state === STATE.ZOOM && !_this.noZoom ) {
+			if ( _state === STATE.ZOOM && !this.noZoom ) {
 
-				_zoomStart = _zoomEnd = _this.getMouseOnScreen( x, y );
+				_zoomStart = _zoomEnd = this.getMouseOnScreen( x, y ).y;
 
 			} else if ( !this.noPan ) {
 
-				_panStart = _panEnd = _this.getMouseOnScreen( x, y );
+				_panStart = _panEnd = this.getMouseOnScreen( x, y );
 
 			}
-			_this._xinit = x;
-			_this._yinit = y;
+			this._xinit = x;
+			this._yinit = y;
 		}
 
 	};
 
 	this.mouseMove = function ( x, y ) {
 
-		if ( ! _this.enabled ) return;
+		if ( ! this.enabled ) return;
 
 		if ( _keyPressed ) {
 
-			_zoomStart = _zoomEnd = _this.getMouseOnScreen( x, y );
-			_panStart = _panEnd = _this.getMouseOnScreen( x, y );
+			_zoomStart = _zoomEnd = this.getMouseOnScreen( x, y ).y;
+			_panStart = _panEnd = this.getMouseOnScreen( x, y );
 
 			_keyPressed = false;
 
@@ -307,25 +244,25 @@ THREE.TrackballControls2 = function ( object ) {
 
 			return;
 
-		} else if ( _state === STATE.ROTATE && !_this.noRotate ) {
+		} else if ( _state === STATE.ROTATE && !this.noRotate ) {
 
-			_this._dx=+x-_this._xinit;
-			_this._dy=+y-_this._yinit;
+			this._dx=+x-this._xinit;
+			this._dy=+y-this._yinit;
 
-		} else if ( _state === STATE.ZOOM && !_this.noZoom ) {
+		} else if ( _state === STATE.ZOOM && !this.noZoom ) {
 
-			_zoomEnd = _this.getMouseOnScreen( x, y );
+			_zoomEnd = this.getMouseOnScreen( x, y ).y;
 
-		} else if ( _state === STATE.PAN && !_this.noPan ) {
+		} else if ( _state === STATE.PAN && !this.noPan ) {
 
-			_panEnd = _this.getMouseOnScreen( x, y );
+			_panEnd = this.getMouseOnScreen( x, y );
 
 		} else if ( _state === STATE.ROTATE_Z ) {
 
 			var p1 = new THREE.Vector2( x - 0.5 * this.screen.width,
 								y - 0.5 * this.screen.height);
-			var p2 = new THREE.Vector2( _this._xinit - 0.5 * this.screen.width,
-								_this._yinit - 0.5 * this.screen.height);
+			var p2 = new THREE.Vector2( this._xinit - 0.5 * this.screen.width,
+								this._yinit - 0.5 * this.screen.height);
 
 			var n1 = p1.length();
 			var n2 = p2.length();
@@ -347,9 +284,9 @@ THREE.TrackballControls2 = function ( object ) {
 			}
 		}
 
-		_this._xinit = x;
-		_this._yinit = y;
-		_this.update();
+		this._xinit = x;
+		this._yinit = y;
+		this.update();
 	};
 
 	this.mouseUp = function( ) {
