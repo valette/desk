@@ -400,8 +400,17 @@ qx.Class.define("desk.FileBrowser",
 
 		__downloadAction : function (node) {
 			if (this.__isNodeLeaf(node)) {
-				new qx.html.Iframe(desk.FileSystem.getActionURL('download') +
-					'?file=' + this.__getNodeFile(node));
+				var iframe = qx.bom.Iframe.create({
+					name : "testFrame" + Math.random(),
+					src : desk.FileSystem.getActionURL('download') +
+						'?file=' + this.__getNodeFile(node)
+				});
+
+				qx.bom.Element.addListener(iframe, "load", function(e) {
+					iframe.dispose();
+				});
+
+				document.body.appendChild(iframe);
 			} else {
 				alert("Cannot download a directory!");
 			}
