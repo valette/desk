@@ -197,10 +197,7 @@ app.get(actionsBaseURL + ':action', function (req, res) {
 				res.send(error);
 				return;
 			}
-			res.setHeader('Content-Disposition','attachment; filename=' +
-				libPath.basename(file));
-			var fileStream = fs.createReadStream(deskPath + file);
-			fileStream.pipe(res);
+			res.download(deskPath + file);
 		});
 		break;
 	default : 
