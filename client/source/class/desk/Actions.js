@@ -2,6 +2,7 @@
  * Singleton class which stores all available actions, handles launching
  * and display actions in progress
  * @ignore (HackCTMWorkerURL)
+ * @asset(desk/desk.png)
  * @ignore (async.queue)
  * @lint ignoreDeprecated (alert)
  * @require(desk.LogContainer)
