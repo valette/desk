@@ -187,7 +187,7 @@ qx.Class.define("desk.ThreeContainer",
 					parent = this.getLayoutParent();
 					this.set ({width : window.innerWidth,
 							height : window.innerHeight,
-							zIndex : 10000000});
+							zIndex : 500000});
 					qx.core.Init.getApplication().getRoot().add(this);
 				}
 			}, this);
