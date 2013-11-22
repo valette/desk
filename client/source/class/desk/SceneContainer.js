@@ -859,8 +859,9 @@ qx.Class.define("desk.SceneContainer",
 
         getSelectedMeshes : function () {
             var meshes = [];
+            var self = this;
             this.__meshesTree.getSelectedNodes().forEach(function (node) {
-                var mesh = this.__getMeshFromNode(node);
+                var mesh = self.__getMeshFromNode(node);
                 if (mesh) {
                     meshes.push(mesh);
                 }
