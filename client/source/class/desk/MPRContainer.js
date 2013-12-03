@@ -49,7 +49,7 @@ qx.Class.define("desk.MPRContainer",
 
 		this.__maximizeButtons = [];
 		this.__createVolumesList();
-		this.__addViewers();
+		this.__addViewers(options);
 
 		this.setDroppable(true);
 		this.addListener("drop", this.__onDrop);
@@ -219,10 +219,10 @@ qx.Class.define("desk.MPRContainer",
             scroll.add(container);
 		},
 
-		__addViewers : function () {
+		__addViewers : function (options) {
 			this.__viewers = [];
 			for(var i = 0; i < this.__nbUsedOrientations; i++) {
-				var sliceView = new desk.SliceView(i);
+				var sliceView = new desk.SliceView(i, options);
 				this.__viewers.push(sliceView);
 				sliceView.setOrientPlane(this.__viewsNames[i]);
 				sliceView.addListener("changeCrossPosition", this.__onChangeCrossPosition, this);
