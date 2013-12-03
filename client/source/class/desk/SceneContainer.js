@@ -34,6 +34,7 @@ qx.Class.define("desk.SceneContainer",
 	{
         this.base(arguments);
         this.__files = [];
+		qx.Class.include(qx.ui.treevirtual.TreeVirtual, qx.ui.treevirtual.MNode);
 
         parameters = parameters || {};
 
@@ -297,7 +298,7 @@ qx.Class.define("desk.SceneContainer",
 
 		__loadFile : function (file, parameters, callback) {
 			parameters.mtime = parameters.mtime || Math.random();
-			parameters.url = desk.FileSystem.getFileURL(file) + "?nocache=" + parameters.mtime;
+			parameters.url = desk.FileSystem.getFileURL(file);
 			this.loadURL(parameters, callback);
 		},
 
@@ -665,7 +666,7 @@ qx.Class.define("desk.SceneContainer",
 				loader = this.__ctmLoader;
 			}
 
-			loader.load (parameters.url, function (geometry) {
+			loader.load (parameters.url + "?nocache=" + parameters.mtime, function (geometry) {
 				var mesh = self.addGeometry(geometry, parameters);
 				if (typeof callback === 'function') {
 					callback(mesh);
