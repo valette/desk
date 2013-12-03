@@ -45,7 +45,8 @@ qx.Class.define("desk.ThreeContainer",
 		scene.add(new THREE.AmbientLight(0x555555));
 
 		// renderer
-		var renderer = this.__renderer = new THREE.WebGLRenderer({canvas : canvas, antialias: true});
+		var renderer = this.__renderer = new THREE.WebGLRenderer({
+			canvas : canvas, antialias: true, alpha : true, premultipliedAlpha : false});
 		renderer.setClearColor( 0xffffff, 1 );
 		this.__initRenderFunction();
 
