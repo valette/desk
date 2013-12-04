@@ -23,10 +23,12 @@ qx.Class.define("desk.SliceView",
 	extend : desk.ThreeContainer,
 	include : desk.LinkMixin,
 
-	construct : function(orientation) {
+	construct : function(orientation, options) {
 		this.base(arguments);
 		this.__slices = [];
 		this.__orientation = orientation || 0;
+		options = options || {};
+		this.__textColor = options.textColor || "yellow";
 		this.__createUI();
 		this.__initUndo();
 		this.__setupInteractionEvents();
@@ -136,6 +138,8 @@ qx.Class.define("desk.SliceView",
 		__crossMeshes : null,
 		
 		__drawingCanvasModified : false,
+
+		__textColor : null,
 
 		projectOnSlice : function (x, y, z) {
 			switch (this.__orientation) {
@@ -1150,7 +1154,7 @@ qx.Class.define("desk.SliceView",
 			var directionOverlays = this.__directionOverlays = [];
 			var font = new qx.bom.Font(16, ["Arial"]);
 			font.setBold(true);
-            var settings = {textColor : "yellow",
+            var settings = {textColor : this.__textColor,
                 font : font,
                 opacity : 0.5
             };
@@ -1191,7 +1195,8 @@ qx.Class.define("desk.SliceView",
 			}
 
 			var label = this.__sliceLabel = new qx.ui.basic.Label("0");
-			label.set({textAlign: "center", width : 40, font : font, textColor : "yellow"});
+			label.set({textAlign: "center", width : 40, font : font,
+				textColor : this.__textColor});
 			this.add(label, {top :0, left :0});
 
 			var slider = this.__slider = new qx.ui.form.Slider().set (

@@ -3,6 +3,8 @@
  * and display actions in progress
  * @ignore (HackCTMWorkerURL)
  * @asset(desk/desk.png)
+ * @asset(desk/desk.png)
+ * @asset(qx/icon/${qx.icontheme}/16/categories/system.png) 
  * @ignore (async.queue)
  * @lint ignoreDeprecated (alert)
  * @require(desk.LogContainer)
@@ -40,8 +42,9 @@ qx.Class.define("desk.Actions",
 		var baseURL = desk.FileSystem.getInstance().getBaseURL();
 		this.__baseActionsURL = baseURL + 'rpc/';
 
-		this.__ongoingActions = new qx.ui.form.List();
-		this.__ongoingActions.set ({width : 200, selectionMode : 'multi'});
+		this.__ongoingActions = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+		this.__ongoingActions.set ({width : 200, zIndex : 1000000,
+			decorator : "statusbar", backgroundColor : "transparent"});
 
 		// load external three.js files
 		var threeURL = baseURL + 'ext/three.js/';
@@ -95,8 +98,7 @@ qx.Class.define("desk.Actions",
 		__baseActionsURL : null,
 		__ready : false,
 
-		__createOngoingActionsMenu : function () {
-			var list = this.__ongoingActions;
+		__createActionsMenu : function () {
 			var menu = new qx.ui.menu.Menu();
 			var forceButton = new qx.ui.menu.CheckBox("Force Update");
 			forceButton.bind('value', this, 'forceUpdate');
@@ -115,20 +117,6 @@ qx.Class.define("desk.Actions",
 				req.send();
 			}, this);
 			menu.add(reloadButton);
-
-			var killButton = new qx.ui.menu.Button('kill selected');
-			killButton.addListener('execute', function () {
-				var selection = list.getSelection();
-				for (var i = 0; i != selection.length; i++) {
-					var actionItem = selection[i];
-					this.killAction(actionItem.getUserData('actionParameters').handle, function () {
-						if (!actionItem.getUserData('launchedByUser')) {
-							this.__ongoingActions.remove(actionItem);
-						}
-					}, this);
-				}
-			}, this);
-			menu.add(killButton);
 
 			var passwordButton = new qx.ui.menu.Button('change password');
 			passwordButton.addListener('execute', function () {
@@ -150,9 +138,11 @@ qx.Class.define("desk.Actions",
 			}, this);
 			menu.add(passwordButton);
 
-			list.setContextMenu(menu);
+			var button = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png", menu);
 
-			// dislpay list of already running acions
+			qx.core.Init.getApplication().getRoot().add(button, {top : 0, right : 0});
+
+			// dislpay list of already running actions
 			this.getOngoingActions(function (actions) {
 				var keys = Object.keys(actions);
 				for (var i = 0; i != keys.length; i++) {
@@ -175,6 +165,7 @@ qx.Class.define("desk.Actions",
 		__actionMenu : null,
 		__actions : null,
 		__ongoingActions : null,
+		__settingsButton : null,
 
 		__actionsList : null,
 		__actionsObject : null,
@@ -238,7 +229,7 @@ qx.Class.define("desk.Actions",
 		* builds the actions UI
 		*/
 		buildUI : function () {
-			qx.core.Init.getApplication().getRoot().add(this.__ongoingActions, {top : 0, right : 0});
+			qx.core.Init.getApplication().getRoot().add(this.__ongoingActions, {top : 0, right : 100});
 		},
 
 		/**
@@ -275,7 +266,9 @@ qx.Class.define("desk.Actions",
 			req.setAsync(true);
 			req.setRequestData({manage : 'kill', handle : handle});
 			req.addListener("success", function (e){
-				callback.call(context, JSON.parse(e.getTarget().getResponseText()));
+				if (typeof callback === "function") {
+					callback.call(context, JSON.parse(e.getTarget().getResponseText()));
+				}
 				req.dispose();
 			}, this);
 			req.send();
@@ -321,8 +314,10 @@ qx.Class.define("desk.Actions",
 				alert (message);
 			}
 
-			if (parameters.actionItem) {
-				this.__ongoingActions.remove(parameters.actionItem);
+			var uiItem = parameters.actionItem
+			if (uiItem) {
+				this.__ongoingActions.remove(uiItem);
+				uiItem.dispose();
 			}
 			var callback = parameters.callback;
 			if (typeof callback === 'function') {
@@ -344,18 +339,22 @@ qx.Class.define("desk.Actions",
 			setTimeout(function(){
 				if (!parameters.actionFinished) {
 					var actionItem = parameters.actionItem = new qx.ui.form.ListItem(actionParameters.action);
-					actionItem.setUserData('actionParameters', actionParameters);
-					actionItem.setUserData('launchedByUser', true);
+					actionItem.set({decorator : "button-hover", opacity : 0.7});
 					that.__ongoingActions.add(actionItem);
+					var killButton = new qx.ui.menu.Button('kill');
+					killButton.addListener('execute', function () {
+						this.killAction(actionParameters.handle);
+					}, that);
+					var menu = new qx.ui.menu.Menu();
+					menu.add(killButton);
+					actionItem.setContextMenu(menu);
 				}
 			}, 1230);
 			
 			var req = new qx.io.request.Xhr();
 			req.setUserData('actionDetails', parameters);
-			req.setUrl(desk.FileSystem.getActionURL('action'));
-			req.setMethod("POST");
-			req.setAsync(true);
-			req.setRequestData(actionParameters);
+			req.set({url : desk.FileSystem.getActionURL('action'),
+				method : "POST", async : true, requestData : actionParameters});
 
 			var numberOfRetries = 3;
 
@@ -364,10 +363,8 @@ qx.Class.define("desk.Actions",
 				numberOfRetries--;
 				if (numberOfRetries>0) {
 					req = new qx.io.request.Xhr();
-					req.setUrl(that.__baseActionsURL + 'actions');
-					req.setMethod("POST");
-					req.setAsync(true);
-					req.setRequestData(actionParameters);
+					req.set({url : that.__baseActionsURL + 'actions', 
+						method : "POST", async : true, requestData : actionParameters});
 					req.addListener("success", this.__onSuccess, this);
 					req.addListener("error", onError, this);
 					req.setUserData('actionDetails', parameters);
@@ -386,7 +383,7 @@ qx.Class.define("desk.Actions",
 				this.__actions = settings;
 				var permissions = this.__permissionsLevel = parseInt(settings.permissions, 10);
 				if (permissions) {
-					this.__createOngoingActionsMenu();
+					this.__createActionsMenu();
 				}
 
 				var actions = this.__actions.actions;

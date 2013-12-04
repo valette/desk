@@ -234,6 +234,9 @@ qx.Class.define("desk.FileSystem",
 				fs.__includedScripts = {};
 			}
 			var index = -1;
+			var req = new qx.bom.request.Script();
+			req.onload = myScriptLoader;
+
 			function myScriptLoader() {
 				if (index >= 0) {
 					fs.__includedScripts[scripts[index]] = 1;
@@ -244,9 +247,11 @@ qx.Class.define("desk.FileSystem",
 						// the script is already loaded. Use a timeout to stay async
 						setTimeout(myScriptLoader,1);
 					} else {
-						new qx.io.ScriptLoader().load(scripts[index], myScriptLoader);
+						req.open("GET", scripts[index]);
+						req.send();
 					}
 				} else {
+					req.dispose();
 					if (typeof callback === 'function') {
 						callback.apply(context);
 					}

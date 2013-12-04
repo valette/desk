@@ -133,8 +133,9 @@ qx.Class.define("desk.VolumeSlice",
 				"vec4 colorFromLookupTable = texture2D( lookupTable,colorIndex  );",
 				"colorFromLookupTable[3] *= opacity;",
 				"gl_FragColor=mix (correctedColor, colorFromLookupTable, useLookupTable);",
-			"}"
 		].join("\n"),
+
+		FRAGMENTSHADERFINISH : "\n }",
 
 		FRAGMENTSHADERENDMULTICHANNEL : [
 			"uniform sampler2D texture;",
@@ -447,7 +448,8 @@ qx.Class.define("desk.VolumeSlice",
 			if (this.__numberOfScalarComponents == 1) {
 				shader = [desk.VolumeSlice.FRAGMENTSHADERBEGIN,
 						middleShader,
-						desk.VolumeSlice.FRAGMENTSHADEREND].join("\n");
+						desk.VolumeSlice.FRAGMENTSHADEREND,
+						desk.VolumeSlice.FRAGMENTSHADERFINISH].join("\n");
 			} else {
 				shader = desk.VolumeSlice.FRAGMENTSHADERENDMULTICHANNEL;
 			}
@@ -466,9 +468,10 @@ qx.Class.define("desk.VolumeSlice",
 				};
 
 			var baseShaderBegin = [desk.VolumeSlice.FRAGMENTSHADERBEGIN,
-						middleShader].join("\n");
+						middleShader,
+						desk.VolumeSlice.FRAGMENTSHADEREND].join("\n");
 
-			var baseShaderEnd = desk.VolumeSlice.FRAGMENTSHADEREND;
+			var baseShaderEnd = desk.VolumeSlice.FRAGMENTSHADERFINISH;
 
 			var material = new THREE.ShaderMaterial({
 				uniforms: baseUniforms,

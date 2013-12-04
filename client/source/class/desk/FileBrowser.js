@@ -250,11 +250,6 @@ qx.Class.define("desk.FileBrowser",
 		__actionNames : null,
 		__actionCallbacks : null,
 		__actions : null,
-		__actionsMenuButton : null,
-
-        __changeRootDir : function (event) {
-            this.updateRoot(event.getTarget().getLabel());
-        },
 
         __getShortcutsContainer : function() {
             var container = new qx.ui.container.Composite();
@@ -264,27 +259,27 @@ qx.Class.define("desk.FileBrowser",
             var permissions = settings.permissions;
             var dirs = Object.keys(dataDirs);
             dirs.sort();
-            for (var i = 0; i != dirs.length; i++) {
-                var dir = dirs[i];
-                if (dir === "cache") {
-					continue;
+            var self = this;
+            dirs.forEach(function (dir) {
+                if ((dir === "cache") || 
+					((permissions === 0) && (dir ==="actions"))) {
+					return;
 				}
-				if ((permissions === 0) && (dir ==="actions")){
-					continue;
-				}
+
                 var button = new qx.ui.form.Button(dir);
-                button.addListener("execute", this.__changeRootDir, this);
+                button.addListener("execute", function () {
+					this.updateRoot(dir);
+				}, self);
                 container.add(button, {flex : 1});
                 var menu = new qx.ui.menu.Menu();
                 var openButton = new qx.ui.menu.Button('open in new window');
-                openButton.setUserData('dir', dir);
                 openButton.addListener('execute', function (e) {
-					var browser = new desk.FileBrowser(e.getTarget().getUserData('dir'));
+					var browser = new desk.FileBrowser(dir);
 					browser.getWindow().center();
 				})
 				menu.add(openButton);
 				button.setContextMenu(menu);
-            }
+            });
             return container;
 		},
 
@@ -311,7 +306,7 @@ qx.Class.define("desk.FileBrowser",
 		* @return {String} session directory
 		*/
 		getSessionDirectory : function (file,sessionType,sessionId) {
-			return file+"."+sessionType+"."+sessionId;
+			return file + "." + sessionType + "."+sessionId;
 		},
 
 		/**

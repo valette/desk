@@ -34,6 +34,7 @@ qx.Class.define("desk.SceneContainer",
 	{
         this.base(arguments);
         this.__files = [];
+		qx.Class.include(qx.ui.treevirtual.TreeVirtual, qx.ui.treevirtual.MNode);
 
         parameters = parameters || {};
 
@@ -258,7 +259,7 @@ qx.Class.define("desk.SceneContainer",
 
 		__readFile : function (file, parameters, callback) {
             parameters = parameters || {};
-			var label = desk.FileSystem.getFileName(file);
+			var label = parameters.label || desk.FileSystem.getFileName(file);
 			var leafParameters = {label : label};
 			leafParameters.parent = parameters.parent;
             var leaf = this.__addLeaf(leafParameters);
@@ -297,7 +298,7 @@ qx.Class.define("desk.SceneContainer",
 
 		__loadFile : function (file, parameters, callback) {
 			parameters.mtime = parameters.mtime || Math.random();
-			parameters.url = desk.FileSystem.getFileURL(file) + "?nocache=" + parameters.mtime;
+			parameters.url = desk.FileSystem.getFileURL(file);
 			this.loadURL(parameters, callback);
 		},
 
@@ -580,12 +581,10 @@ qx.Class.define("desk.SceneContainer",
 			var tree = this.__meshesTree;
 			var meshes = [];
 			this.getScene().traverse(function (object){
-				if (!object.__customProperties) {
-					return;
-				}
-				if ((object.__customProperties.volumeSlice) &&
-					(object.visible)){
-					meshes.push(object);
+				if (object.__customProperties) {
+					if ((object.__customProperties.volumeSlice) && (object.visible)){
+						meshes.push(object);
+					}
 				}
 			});
 			if (meshes.length === 0) return;
@@ -597,12 +596,8 @@ qx.Class.define("desk.SceneContainer",
 				var delta = 1;
 				if (event.getWheelDelta() < 0) delta = -1;
 				var newValue = volumeSlice.getSlice() + delta;
-				if (newValue > maximum) {
-					newValue = maximum;
-				}
-				if (newValue < 0) {
-					newValue = 0;
-				}
+				newValue = Math.min(newValue, maximum);
+				newValue = Math.max(newValue, 0);
 				volumeSlice.setSlice(newValue);
 			}
 		},
@@ -671,7 +666,7 @@ qx.Class.define("desk.SceneContainer",
 				loader = this.__ctmLoader;
 			}
 
-			loader.load (parameters.url, function (geometry) {
+			loader.load (parameters.url + "?nocache=" + parameters.mtime, function (geometry) {
 				var mesh = self.addGeometry(geometry, parameters);
 				if (typeof callback === 'function') {
 					callback(mesh);
@@ -680,22 +675,17 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		__getSnapshotButton : function () {
-			var factor=1;
+			var factor = 1;
 			var menu = new qx.ui.menu.Menu();
-			var x1button = new qx.ui.menu.Button("x1");
-			x1button.addListener("execute", function (){factor=1;},this);
-			menu.add(x1button);
-			var x2button = new qx.ui.menu.Button("x2");
-			x2button.addListener("execute", function (){factor=2;},this);
-			menu.add(x2button);
-			var x3button = new qx.ui.menu.Button("x3");
-			x3button.addListener("execute", function (){factor=3;},this);
-			menu.add(x3button);
-			var x4button = new qx.ui.menu.Button("x4");
-			x4button.addListener("execute", function (){factor=4;},this);
-			menu.add(x4button);
+			[1, 2, 3, 4].forEach(function (f) {
+				var button = new qx.ui.menu.Button("x" + f);
+				button.addListener("execute", function (){
+					factor = f;
+				},this);
+				menu.add(button);
+			});
 
-			var button=new qx.ui.form.Button(null, "desk/camera-photo.png");
+			var button = new qx.ui.form.Button(null, "desk/camera-photo.png");
 			button.addListener("execute", function(e) {
 				this.snapshot(factor);
 			}, this);
@@ -869,22 +859,19 @@ qx.Class.define("desk.SceneContainer",
 		},
 
         getSelectedMeshes : function () {
-            var nodes = this.__meshesTree.getSelectedNodes();
             var meshes = [];
-			for (var i = 0; i < nodes.length; i++) {
-                var mesh = this.__getMeshFromNode(nodes[i]);
+            var self = this;
+            this.__meshesTree.getSelectedNodes().forEach(function (node) {
+                var mesh = self.__getMeshFromNode(node);
                 if (mesh) {
                     meshes.push(mesh);
                 }
-			}
+			});
             return meshes;
         },
 
         applyToSelectedMeshes : function (iterator) {
-			var meshes = this.getSelectedMeshes();
-			for (var i = 0; i < meshes.length; i++) {
-                iterator(meshes[i]);
-			}
+			this.getSelectedMeshes().forEach(iterator);
         },
 
 		removeMeshes : function (meshes) {

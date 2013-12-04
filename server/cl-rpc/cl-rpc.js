@@ -366,10 +366,7 @@ exports.performAction = function (POST, callback) {
 		commandLine += action.attributes.executable + ' ';
 		fs.stat(action.attributes.executable, function (err, stats) {
 			if (!err) {
-				var time = stats.mtime.getTime();
-				if (time > inputMTime) {
-					inputMTime = time;
-				}
+				inputMTime = Math.max(stats.mtime.getTime(), inputMTime);
 			}
 		});
 
@@ -426,10 +423,7 @@ exports.performAction = function (POST, callback) {
 							}
 							commandLine += path + " ";
 							fs.stat(filesRoot + parameterValue, function (err, stats) {
-								var time = stats.mtime.getTime();
-								if (time > inputMTime) {
-									inputMTime = time;
-								}
+								inputMTime = Math.max(stats.mtime.getTime(), inputMTime);
 								callback ();
 							});
 						});
@@ -442,10 +436,7 @@ exports.performAction = function (POST, callback) {
 							}
 							commandLine += path + " ";
 							fs.stat(filesRoot + parameterValue, function (err, stats) {
-								var time = stats.mtime.getTime();
-								if (time > inputMTime) {
-									inputMTime = time;
-								}
+								inputMTime = Math.max(stats.mtime.getTime(), inputMTime);
 								if (!stats.isDirectory()) {
 									callback ("error : " + parameterValue + " is not a directory");
 								}
@@ -576,7 +567,11 @@ exports.performAction = function (POST, callback) {
 	{
 		actionParameters.output_directory = outputDirectory;
 		console.log (header + 'in : ' + outputDirectory);
-		console.log (header + commandLine);
+		if (commandLine.length < 500) {
+			console.log (header + commandLine);
+		} else {
+			console.log (header + commandLine.substr(0,500) + '...[trimmed]');
+		}
 
 		if ((action.attributes.voidAction === "true")||
         (POST.force_update === "true") ||
@@ -585,7 +580,7 @@ exports.performAction = function (POST, callback) {
 		}
 		else {
 			// check if action was already performed
-			var actionFile = filesRoot + outputDirectory + "/action.json";
+			var actionFile = libpath.join(filesRoot, outputDirectory, "action.json");
 			fs.stat(actionFile, function (err, stats) {
 				if ((err)||(stats.mtime.getTime() < inputMTime)) {
 					callback();
@@ -594,10 +589,8 @@ exports.performAction = function (POST, callback) {
 						if (data == JSON.stringify(actionParameters)) {
 							console.log(header + "cached");
 							cachedAction = true;
-							callback();
-						} else {
-							callback();
 						}
+						callback();
 					});
 				}
 			});
@@ -611,11 +604,15 @@ exports.performAction = function (POST, callback) {
 		}
 
 		if (cachedAction) {
-			fs.readFile(libpath.join(filesRoot, outputDirectory, 'action.log'),
-				function (err, string) {
-					response.status = 'CACHED';
-					response.log = string;
-					callback();
+			fs.utimes(libpath.join(filesRoot, outputDirectory, "action.json"),
+				inputMTime, inputMTime,
+				function () {
+					fs.readFile(libpath.join(filesRoot, outputDirectory, 'action.log'),
+					function (err, string) {
+						response.status = 'CACHED';
+						response.log = string;
+						callback();
+				});
 			});
 			return;
 		}
