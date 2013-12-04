@@ -5,7 +5,9 @@ var fs = require('fs'),
     exec  = require('child_process').exec,
     async = require('async');
 
-var usersFile = __dirname + '/users.json';
+var	port = 80,
+	port2 = 443,
+	routesFile = __dirname + '/routes.json';
 
 var proxy = new httpProxy.RoutingProxy({router : {}});
 
@@ -23,37 +25,54 @@ var proxyServer = https.createServer({
 	}
 );
 
-//var proxyServer = httpProxy.createServer(options);
-var port = 8081;
-proxyServer.listen(port);
-console.log('desk-proxy service listening on port ' + port);
-
-
 var server = http.createServer(function (req, res) {
 	res.writeHead(301,
 		{Location: 'https://desk.creatis.insa-lyon.fr' + req.url});
 	res.end();
 });
-server.listen(8080);
-console.log('desk-http2https service listening on port 8080');
+
+async.series([
+	updateRoutes,
+
+	function (callback) {
+		server.listen(port, callback)
+	},
+
+	function (callback) {
+		proxyServer.listen(port2, callback);
+	}
+], function () {
+	console.log('desk-http2https service listening on port ' + port);
+	console.log('desk-proxy service listening on port ' + port2);
+	process.setgid('dproxy');
+	process.setuid('dproxy');
+});
+
 
 var routes;
-fs.watchFile(usersFile, updateRoutes);
+fs.watchFile(routesFile, updateRoutes);
 
-function updateRoutes() {
+function updateRoutes(callback) {
 	console.log(new Date());
-	console.log(usersFile + ' modified, updating routes...');
-	var users = JSON.parse(fs.readFileSync(usersFile)).users;
+	console.log(routesFile + ' modified, updating routes...');
+	var routesContent = JSON.parse(fs.readFileSync(routesFile));
+	var users = routesContent.users;
 	routes = {};
 
 	async.forEachSeries(users, addUser, function () {
+		// add external proxies
+		var others = routesContent.others || {};
+		Object.keys(others).forEach(function (key) {
+			routes['desk.creatis.insa-lyon.fr/' + key] = others[key];
+		});
 		proxy.proxyTable.setRoutes(routes);
 		console.log('... done! Routes:');
 		console.log(routes);
+		if (typeof callback === "function") callback();
 	});
 }
 
-console.log('Watching file ' + usersFile + ' for routes');
+console.log('Watching file ' + routesFile + ' for routes');
 
 function addUser(user, callback) {
         exec('id -u ' + user, function (err, stdout) {
@@ -63,6 +82,4 @@ function addUser(user, callback) {
                 callback();
         });
 }
-
-updateRoutes();
 

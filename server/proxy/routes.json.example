@@ -1,0 +1,9 @@
+{
+"users" : [
+"user1",
+"user2"
+],
+"others" : {
+	"foo" : "http adress"
+}
+}
