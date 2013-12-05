@@ -5,6 +5,8 @@ var fs      = require('fs'),
     http    = require('http'),
     https   = require('https'),
     exec    = require('child_process').exec,
+    formidable = require('formidable'),
+    util = require('util'),
     actions = require(__dirname + '/cl-rpc/cl-rpc');
 //	actions = require('cl-rpc');
 
@@ -93,7 +95,8 @@ if (identity) {
 }
 
 // handle body parsing
-app.use(express.bodyParser({uploadDir: uploadDir }));
+app.use(express.json());
+app.use(express.urlencoded());
 
 if (fs.existsSync(serverPath + 'default')) {
 	console.log('serving custom default folder');
@@ -117,19 +120,25 @@ app.use(homeURL, express.directory(serverPath));
 
 // handle uploads
 app.post(actionsBaseURL + 'upload', function(req, res) {
-	var file = req.files.file;
-	var outputDir = req.body.uploadDir.toString().replace(/%2F/g,'/') || 'upload';
-	outputDir = deskPath + outputDir;
-	console.log("file : " + file.path.toString());
-	console.log("uploaded to " +  outputDir + '/' + file.name.toString());
-	fs.rename(file.path.toString(), outputDir+'/' + file.name.toString(), function(err) {
-		if (err) throw err;
-		// delete the temporary file
-		fs.unlink(file.path.toString(), function() {
-			if (err)  {throw err;}
+
+	var form = new formidable.IncomingForm();
+	form.uploadDir = uploadDir;
+	form.parse(req, function(err, fields, files) {
+		var file = files.file;
+		var outputDir = fields.uploadDir.toString().replace(/%2F/g,'/') || 'upload';
+		outputDir = deskPath + outputDir;
+		console.log("file : " + file.path.toString());
+		var fullName = libPath.join(outputDir, file.name.toString());
+		console.log("uploaded to " +  fullName);
+		fs.rename(file.path.toString(), fullName, function(err) {
+			if (err) throw err;
+			// delete the temporary file
+			fs.unlink(file.path.toString(), function() {
+				if (err)  {throw err;}
+			});
 		});
+		res.send('file ' + file.name + ' uploaded successfully');
 	});
-	res.send('files uploaded!');
 });
 
 // handle actions

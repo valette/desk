@@ -6,15 +6,14 @@
     "name": "Sebastien Valette"
   },
   "version": "0.0.1",
-  "devDependencies": {
-  },
-
+  "devDependencies": {},
   "dependencies": {
-    "express" : ">0.0.0",
+    "express": ">0.0.0",
     "cron": ">0.0.0",
     "pretty-data": ">0.0.0",
     "async": ">0.0.0",
-    "winston": ">0.0.0"
+    "winston": ">0.0.0",
+    "formidable": ">0.0.0"
   },
   "optionalDependencies": {},
   "engines": {
