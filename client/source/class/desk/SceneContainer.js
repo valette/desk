@@ -213,6 +213,7 @@ qx.Class.define("desk.SceneContainer",
 			parameters.mesh = mesh;
 			this.__meshesTree.nodeGet(leaf).__customProperties = parameters;
 			mesh.__customProperties = parameters;
+			this.viewAll();
 		},
 
 		__getFilterContainer : function () {
@@ -647,7 +648,6 @@ qx.Class.define("desk.SceneContainer",
 			var mesh = new THREE.Mesh(geometry, material );
 			mesh.renderDepth = color[4];
             this.addMesh( mesh, parameters );
-			this.viewAll();
             return mesh;
         },
 
