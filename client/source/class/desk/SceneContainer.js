@@ -12,6 +12,7 @@
 * @ignore(THREE.VTKLoader)
 * @ignore(THREE.Geometry)
 * @ignore(THREE.MeshPhongMaterial)
+* @ignore(THREE.WireframeHelper)
 * @ignore(THREE.Color)
 * @ignore(THREE.CTMLoader)
 * @ignore(requestAnimationFrame)
@@ -811,7 +812,7 @@ qx.Class.define("desk.SceneContainer",
 			opacitySlider.addListener("changeValue", function(event){
 				if (enableUpdate) {
 					var opacity=opacitySlider.getValue()/ratio;
-                    this.applyToSelectedMeshes(function (mesh){
+                    this.getSelectedMeshes().forEach(function (mesh){
 						mesh.material.opacity=opacity;
 						if (opacity<1) {
 							mesh.material.transparent=true;
@@ -825,7 +826,7 @@ qx.Class.define("desk.SceneContainer",
 
 			colorSelector.addListener("changeValue", function(event){
 				if (enableUpdate) {
-                    this.applyToSelectedMeshes(function (mesh){
+                    this.getSelectedMeshes().forEach(function (mesh){
 						mesh.material.color.setRGB (colorSelector.getRed()/ratio,
 									colorSelector.getGreen()/ratio,
 									colorSelector.getBlue()/ratio);
@@ -850,7 +851,7 @@ qx.Class.define("desk.SceneContainer",
 
 			renderDepthSpinner.addListener("changeValue", function(event){
 				if (enableUpdate) {
-                    this.applyToSelectedMeshes(function (mesh){
+                    this.getSelectedMeshes().forEach(function (mesh){
                         mesh.renderDepth=renderDepthSpinner.getValue();
                     });
 					this.render();
@@ -869,10 +870,6 @@ qx.Class.define("desk.SceneContainer",
                 }
 			});
             return meshes;
-        },
-
-        applyToSelectedMeshes : function (iterator) {
-			this.getSelectedMeshes().forEach(iterator);
         },
 
 		removeMeshes : function (meshes) {
@@ -976,7 +973,7 @@ qx.Class.define("desk.SceneContainer",
 
 			var showButton = new qx.ui.menu.Button("show");
 			showButton.addListener("execute", function (){
-                this.applyToSelectedMeshes(function (mesh) {
+                this.getSelectedMeshes().forEach(function (mesh) {
                         mesh.visible = true;
                 });
 				this.render();
@@ -985,7 +982,7 @@ qx.Class.define("desk.SceneContainer",
 
 			var hideButton = new qx.ui.menu.Button("hide");
 			hideButton.addListener("execute", function (){
-                this.applyToSelectedMeshes(function (mesh) {
+                this.getSelectedMeshes().forEach(function (mesh) {
                         mesh.visible = false;
                 });
 				this.render();
@@ -995,7 +992,7 @@ qx.Class.define("desk.SceneContainer",
 			var edgesButton = new qx.ui.menu.Button("show/hide edges");
 			edgesButton.addListener("execute", function (){
 				var self = this;
-                this.applyToSelectedMeshes(function (mesh) {
+                this.getSelectedMeshes().forEach(function (mesh) {
 					var edges = mesh.userData.edges;
 					if (edges) {
 						self.getScene().remove(edges);
