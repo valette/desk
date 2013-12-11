@@ -212,7 +212,7 @@ qx.Class.define("desk.SceneContainer",
 			}
 			parameters.mesh = mesh;
 			this.__meshesTree.nodeGet(leaf).__customProperties = parameters;
-			mesh.__customProperties = parameters;
+			mesh.userData.__customProperties = parameters;
 			this.viewAll();
 		},
 
@@ -582,8 +582,9 @@ qx.Class.define("desk.SceneContainer",
 			var tree = this.__meshesTree;
 			var meshes = [];
 			this.getScene().traverse(function (object){
-				if (object.__customProperties) {
-					if ((object.__customProperties.volumeSlice) && (object.visible)){
+				var properties = object.userData.__customProperties;
+				if (properties) {
+					if ((properties.volumeSlice) && (object.visible)){
 						meshes.push(object);
 					}
 				}
@@ -592,7 +593,7 @@ qx.Class.define("desk.SceneContainer",
 
 			var intersects = this.__pickMeshes(event, meshes);
 			if (intersects) {
-				var volumeSlice = intersects.object.__customProperties.volumeSlice;
+				var volumeSlice = intersects.object.userData.__customProperties.volumeSlice;
 				var maximum = volumeSlice.getNumberOfSlices() - 1;
 				var delta = 1;
 				if (event.getWheelDelta() < 0) delta = -1;
@@ -886,24 +887,21 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		__removeMesh : function (mesh, doNotSetData) {
-			var renderer = this.getRenderer();
-			var dataModel = this.__meshesTree.getDataModel();
-			var parameters = mesh.__customProperties;
-
+			var parameters = mesh.userData.__customProperties;
 			var keepGeometry = false;
 			var keepMaterial = false;
 
 			if (parameters) {
 				var leaf = parameters.leaf;
 				delete leaf.__customProperties;
-				dataModel.prune(leaf, true);
+				this.__meshesTree.getDataModel().prune(leaf, true);
 				parameters.mesh = 0;
 				// test if mesh is actually a volume slice
 				var volumeSlice = parameters.volumeSlice;
 				if (volumeSlice) {
 					volumeSlice.removeListenerById(parameters.listenerId);
 				}
-				delete mesh.__customProperties;
+				delete mesh.userData.__customProperties;
 				if (!doNotSetData) {
 					this.__setData();
 				}
@@ -947,8 +945,19 @@ qx.Class.define("desk.SceneContainer",
 				var node = this.__meshesTree.getSelectedNodes()[0];
 				var mesh = this.__getMeshFromNode(node);
 				console.log(mesh);
-				alert ("Mesh with "+mesh.geometry.attributes.position.numItems/3+" vertices and "+
-						mesh.geometry.attributes.index.numItems/3+" polygons");
+				var geometry = mesh.geometry;
+				var numVertices = 0, numTriangles = 0;
+				if ( geometry instanceof THREE.Geometry ) {
+					numVertices = geometry.vertices.length;
+					numTriangles = geometry.faces.length;
+				} else {
+					numVertices = geometry.attributes.position.numItems / 3;
+					if (geometry.attributes.index) {
+						numTriangles = geometry.attributes.index.numItems / 3;
+					}
+				}
+				alert ("Mesh with " + numVertices + " vertices and " +
+						numTriangles + " triangles");
 			}, this);
 			menu.add(propertiesButton);
 
@@ -982,6 +991,31 @@ qx.Class.define("desk.SceneContainer",
 				this.render();
 			},this);
 			menu.add(hideButton);
+
+			var edgesButton = new qx.ui.menu.Button("show/hide edges");
+			edgesButton.addListener("execute", function (){
+				var self = this;
+                this.applyToSelectedMeshes(function (mesh) {
+					var edges = mesh.userData.edges;
+					if (edges) {
+						self.getScene().remove(edges);
+						edges.geometry.dispose();
+						self._deleteMembers(edges);
+						delete mesh.userData.edges;
+					} else {
+						edges = new THREE.WireframeHelper(mesh);
+						var material = edges.material;
+						material.color.setRGB(0,0,0);
+						material.polygonOffset = true;
+						material.polygonOffsetFactor = 0;
+						material.polygonOffsetUnits = 0;
+						mesh.userData.edges = edges;
+						self.getScene().add(edges);
+					}
+				});
+				this.render();
+			},this);
+			menu.add(edgesButton);
 
 			var removeButton = new qx.ui.menu.Button("remove");
 			removeButton.addListener("execute", function (){
