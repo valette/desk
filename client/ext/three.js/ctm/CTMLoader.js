@@ -116,7 +116,7 @@ THREE.CTMLoader.prototype.load = function( url, callback, parameters ) {
 
 							var ctmFile = files[ i ];
 
-//                            				var e1 = Date.now();
+                            				var e1 = Date.now();
                             				// console.log( "CTM data parse time [worker]: " + (e1-s) + " ms" );
 
 							if ( useBuffers ) {
@@ -129,8 +129,8 @@ THREE.CTMLoader.prototype.load = function( url, callback, parameters ) {
 
 							}
 
- //                           				var e = Date.now();
- //                           				console.log( "model load time [worker]: " + (e-e1) + " ms, total: " + (e-s));
+                            				var e = Date.now();
+                            				console.log( "model load time [worker]: " + (e-e1) + " ms, total: " + (e-s));
 
 						}
 
