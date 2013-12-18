@@ -165,10 +165,6 @@ qx.Class.define("desk.SceneContainer",
 
 		__leftContainer : null,
 
-		applyAfterEachRendering : function (callback, context) {
-			this.addListener('render', callback, context);
-		},
-
 		getMeshes : function() {
 			var meshes = [];
 			var scene = this.getScene();
@@ -756,10 +752,6 @@ qx.Class.define("desk.SceneContainer",
 			var colorSelector=new qx.ui.control.ColorSelector();
 			bottomBox.add(colorSelector);//, {flex:1});
 
-/*			var wireframeCheckBox=new qx.ui.form.CheckBox("wireframe");
-			topBox.add(wireframeCheckBox);
-		*/	
-
 			var renderDepthLabel=new qx.ui.basic.Label("Render Depth");
 			topBox.add(renderDepthLabel);
 
@@ -796,7 +788,6 @@ qx.Class.define("desk.SceneContainer",
 					colorSelector.setBlue(Math.round(ratio*color.b));
 					colorSelector.setPreviousColor(Math.round(ratio*color.r),
 							Math.round(ratio*color.g),Math.round(ratio*color.b));
-			//		wireframeCheckBox.setValue(firstSelectedMesh.material.wireframe);
 					opacitySlider.setValue(Math.round(firstSelectedMesh.material.opacity*ratio));
                     if (firstSelectedMesh.renderDepth) {
                         renderDepthSpinner.setValue(firstSelectedMesh.renderDepth);
@@ -834,20 +825,6 @@ qx.Class.define("desk.SceneContainer",
 					this.render();
 				}
 			}, this);
-
-/*			wireframeCheckBox.addListener('changeValue',function(event){
-				if (enableUpdate)
-				{
-					var shapesArray=meshesTree.getSelectedNodes();
-					for (var i=0;i<shapesArray.length;i++)
-					{
-						var shape=this.__meshes[shapesArray[i].nodeId];
-						shape.material.wireframe=wireframeCheckBox.getValue();
-					}
-					console.log(wireframeCheckBox.getValue());
-					this.render();
-				}
-				}, this);*/
 
 			renderDepthSpinner.addListener("changeValue", function(event){
 				if (enableUpdate) {
@@ -972,10 +949,9 @@ qx.Class.define("desk.SceneContainer",
 			menu.add(appearanceButton);
 
 			var showButton = new qx.ui.menu.Button("show/hide");
-			var visible = true;
 			showButton.addListener("execute", function (){
                 this.getSelectedMeshes().forEach(function (mesh) {
-					visible = !visible;
+					var visible = !mesh.visible;
 					mesh.visible = visible;
 					var edges = mesh.userData.edges;
 					if (edges) edges.visible = visible;
