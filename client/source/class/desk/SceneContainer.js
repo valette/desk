@@ -971,23 +971,18 @@ qx.Class.define("desk.SceneContainer",
 			}, this);
 			menu.add(appearanceButton);
 
-			var showButton = new qx.ui.menu.Button("show");
+			var showButton = new qx.ui.menu.Button("show/hide");
+			var visible = true;
 			showButton.addListener("execute", function (){
                 this.getSelectedMeshes().forEach(function (mesh) {
-                        mesh.visible = true;
+					visible = !visible;
+					mesh.visible = visible;
+					var edges = mesh.userData.edges;
+					if (edges) edges.visible = visible;
                 });
 				this.render();
 			},this);
 			menu.add(showButton);
-
-			var hideButton = new qx.ui.menu.Button("hide");
-			hideButton.addListener("execute", function (){
-                this.getSelectedMeshes().forEach(function (mesh) {
-                        mesh.visible = false;
-                });
-				this.render();
-			},this);
-			menu.add(hideButton);
 
 			var edgesButton = new qx.ui.menu.Button("show/hide edges");
 			edgesButton.addListener("execute", function (){
