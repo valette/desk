@@ -25,7 +25,7 @@ qx.Class.define("desk.ThreeContainer",
 		this.setLayout(new qx.ui.layout.Canvas());
 
 		var threeCanvas = this.__threeCanvas = this.__garbageContainer.getChildren()[0] || new qx.ui.embed.Canvas();
-		threeCanvas.setZIndex(0);
+		threeCanvas.set({syncDimension : true, zIndex : 0});
 		this.add(threeCanvas, {width : "100%", height : "100%"});
 		var canvas = threeCanvas.getContentElement().getCanvas();
 
@@ -52,7 +52,7 @@ qx.Class.define("desk.ThreeContainer",
 
 		this.__listenerId = threeCanvas.addListener("resize", this.__resizeThreeCanvas, this);
 		this.__setupFullscreen();
-		this.addListenerOnce('appear', this.__onAppear, this);
+		this.__resizeThreeCanvas();
 	},
 
 	destruct : function(){
@@ -167,14 +167,8 @@ qx.Class.define("desk.ThreeContainer",
 		__garbageContainer : new qx.ui.container.Composite(new qx.ui.layout.HBox()),
 		__listenerId : null,
 
-		__appeared : false,
 		__renderFunction : null,
 		__renderingTriggered : false,
-
-		__onAppear : function () {
-			this.__appeared = true;
-			this.__resizeThreeCanvas();
-		},
 
 		__setupFullscreen : function () {
 			var parent, width, height;
@@ -221,9 +215,6 @@ qx.Class.define("desk.ThreeContainer",
 		* requestAnimationFrame())
 		*/
 		render : function (force) {
-			if (!this.__appeared) {
-				return;
-			}
 			if (force) {
 				this.__renderFunction();
 			} else if (!this.__renderingTriggered) {
@@ -233,14 +224,12 @@ qx.Class.define("desk.ThreeContainer",
 		},
 
 		__resizeThreeCanvas : function () {
-			var elementSize = this.__threeCanvas.getInnerSize();
-			if (!elementSize) {
-				return;
-			}
-			this.__renderer.setSize(elementSize.width, elementSize.height);
-			this.__camera.aspect = elementSize.width / elementSize.height;
+			var width = this.__threeCanvas.getCanvasWidth();
+			var height = this.__threeCanvas.getCanvasHeight();
+			this.__renderer.setViewport(0, 0, width, height);
+			this.__camera.aspect = width / height;
 			this.__camera.updateProjectionMatrix();
-			this.__controls.setSize(elementSize.width, elementSize.height);
+			this.__controls.setSize(width, height);
 			this.__controls.update();
 			this.render();
 		},
