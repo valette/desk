@@ -62,7 +62,7 @@ THREE.WireframeHelper = function ( object ) {
 
 		}
 
-	} else if ( object.geometry.offsets ) {
+	} else if ( object.geometry.offsets.length ) {
 
 		var vertices = object.geometry.attributes.position.array;
 		var indices = object.geometry.attributes.index.array;
@@ -132,9 +132,9 @@ THREE.WireframeHelper = function ( object ) {
 		for ( var i = 0, l = numTris; i < l; i ++ ) {
 
 			var index = i * 9;
-			var index2 = 2 * index;
 
 			for ( var j = 0; j < 3; j ++ ) {
+				var index2 = 2 * index + 6 * j;
 
 				var vertex1 = j * 3;
 				var vertex2 = ( ( j + 1 ) % 3 ) * 3;
