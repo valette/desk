@@ -13,7 +13,8 @@
     "pretty-data": ">0.0.0",
     "async": ">0.0.0",
     "winston": ">0.0.0",
-    "formidable": ">0.0.0"
+    "formidable": ">0.0.0",
+    "ms": ">0.0.0"
   },
   "optionalDependencies": {},
   "engines": {

@@ -20,6 +20,7 @@
     "pretty-data": ">0.0.0",
     "async": ">0.0.0",
     "winston": ">0.0.0"
+    "ms": ">0.0.0"
   },
   "bugs": {
     "url": "https://github.com/valette/cl-rpc/issues"

@@ -5,6 +5,7 @@ var fs          = require('fs'),
 	exec        = require('child_process').exec,
 	prettyPrint = require('pretty-data').pd,
 	winston     = require('winston'),
+	ms          = require('ms'),
 	cronJob     = require('cron').CronJob;
 
 var oldConsole = console;
@@ -34,12 +35,10 @@ var dataDirs = {};
 var actionsCounter = 0;
 
 //30 days of maximum life time for cache folders
-var millisecondsInADay = 24 * 60 * 60 * 1000;
-var maximumCacheAge = 30 * millisecondsInADay;
-
+var maximumCacheAge = ms('30d');
 function cleanCache() {
 	console.log('Starting cache cleaning (delete folders older than ' +
-		Math.floor(maximumCacheAge / millisecondsInADay) + ' days)'); 
+		ms(maximumCacheAge, { long: true }) + ')'); 
 
 	var cacheDir = filesRoot + 'cache/';
 	if (!fs.existsSync(cacheDir)) {
@@ -58,8 +57,7 @@ function cleanCache() {
 					var currentTime = new Date().getTime();
 					var age = currentTime - time;
 					if (age > maximumCacheAge) {
-						days = Math.floor(age / millisecondsInADay);
-						console.log('deleting cache ' + file + ' (' + days + ' days old)'); 
+						console.log('deleting cache ' + file + ' (' + ms(age, { long: true }) + ' old)'); 
 						exec('rm -rf ' + file, {cwd : cacheDir}, callback);
 					}
 					else {
