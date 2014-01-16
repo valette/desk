@@ -1693,7 +1693,7 @@ qx.Class.define("desk.SegTools",
 
 			// Create drag indicator
 			var indicator = new qx.ui.core.Widget;
-			indicator.setDecorator(new qx.ui.decoration.Single().set({
+			indicator.setDecorator(new qx.ui.decoration.Decorator().set({
 				top : [ 1, "solid", "#33508D" ]
 			}));
 			indicator.setHeight(0);
@@ -1727,8 +1727,8 @@ qx.Class.define("desk.SegTools",
 					return;
 				}
 
-				var origCoords2 = list.getContainerLocation();
-				var origCoords = orig.getContainerLocation();
+				var origCoords2 = list.getContentLocation();
+				var origCoords = orig.getContentLocation();
 
 				indicator.setWidth(orig.getBounds().width);
 				indicator.setDomPosition(origCoords.left-origCoords2.left,
