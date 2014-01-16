@@ -101,7 +101,7 @@ viewer.addMesh(system);
 viewer.viewAll();
 viewer.render();
 
-viewer.applyAfterEachRendering(animation);
+viewer.addListener("render", animation);
 
 function animation() {
     var numberOfParticules = geometry.attributes.size.numItems;
