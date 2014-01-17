@@ -465,6 +465,7 @@ qx.Class.define("desk.SceneContainer",
 				}
 				geometry.computeFaceNormals();
 				geometry.computeBoundingSphere();
+				geometry.computeBoundingBox();
 				geometry.verticesNeedUpdate = true;
 				this.render(true);
 			}
@@ -564,13 +565,12 @@ qx.Class.define("desk.SceneContainer",
 			var intersection =  ray.intersectObjects(meshes);
 			var closest = null;
 			var distance = 1e10;
-			for (var i = 0; i < intersection.length; i++) {
-				var inter = intersection[i];
+			intersection.forEach(function (inter) {
 				if (inter.distance < distance) {
 					distance = inter.distance;
 					closest = inter;
 				}
-			}
+			});
 			return closest;
 		},
 
