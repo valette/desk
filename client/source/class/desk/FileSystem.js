@@ -173,6 +173,38 @@ qx.Class.define("desk.FileSystem",
 		},
 
 		/**
+		* traverse all files contained in the input directory
+		*
+		* @param directory {String} directory path
+		* @param iterator {Function} iterator applied to each file name
+		* @param callback {Function} callback when done
+		* @param context {Object} optional context for the callback
+		*
+		*/
+		traverse : function (directory, iterator, callback, context) {
+			var crawler = async.queue(function (directory, callback) {
+				desk.FileSystem.readDir(directory, function (files) {
+					files.forEach(function (file) {
+						var fullFile = directory + "/" + file.name;
+						if (file.isDirectory) {
+							crawler.push(fullFile);
+						} else {
+							iterator(fullFile)
+						}
+					});
+					callback();
+				});
+			}, 4);
+
+			crawler.push(directory);
+			crawler.drain = function () {
+				if (typeof callback === "function") {
+					callback.apply(context);
+				};
+			};
+		},
+
+		/**
 		* Returns the URL for a specific action
 		* @param action {String}
 		* 
