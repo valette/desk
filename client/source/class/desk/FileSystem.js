@@ -179,7 +179,7 @@ qx.Class.define("desk.FileSystem",
 		* @param iterator {Function} iterator applied to each file name
 		* @param callback {Function} callback when done
 		* @param context {Object} optional context for the callback
-		*
+		* @ignore (async.queue)
 		*/
 		traverse : function (directory, iterator, callback, context) {
 			var crawler = async.queue(function (directory, callback) {
