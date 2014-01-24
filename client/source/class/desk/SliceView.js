@@ -573,6 +573,8 @@ qx.Class.define("desk.SliceView",
 				this.__drawingMesh.geometry.dispose();
 				this.__drawingMesh.material.map.dispose();
 				this.__drawingMesh.material.dispose();
+				this.removeListenerById(this.__drawingListeners[0]);
+				this.removeListenerById(this.__drawingListeners[1]);
 			}
 			this.__drawingMesh = mesh;
 
@@ -593,16 +595,21 @@ qx.Class.define("desk.SliceView",
 
 			updateTexture.apply(this);
 
-			this.addListener('changeDrawing', function() {
+			var dl1 = this.addListener('changeDrawing', function() {
 				updateTexture.apply(this);
 				this.render();
 			}, this);
 
-			this.addListener("changePaintOpacity", function (event) {
+			var dl2 = this.addListener("changePaintOpacity", function (event) {
 				mesh.material.opacity = event.getData();
 				this.render();
 			}, this);
+
+			this.__drawingListeners = [dl1, dl2];
 		},
+
+		// listeners Ids to get rid of when changing drawing canvas
+		__drawingListeners : null,
 
 		__addSlice : function (volumeSlice, parameters, callback) {
 			var geometry = new THREE.Geometry();
