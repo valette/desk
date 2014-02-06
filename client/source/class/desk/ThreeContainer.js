@@ -336,8 +336,20 @@ qx.Class.define("desk.ThreeContainer",
 		__capture : function () {
 			this.render(true);
 			var strData = this.__renderer.domElement.toDataURL("image/png");
-			var saveData = strData.replace("image/png", "image/octet-stream");
-			document.location.href = saveData;
+			var binary = atob(strData.split(',')[1]);
+			var array = [];
+			for(var i = 0; i < binary.length; i++) {
+				array.push(binary.charCodeAt(i));
+			}
+			var blob =  new Blob([new Uint8Array(array)], {type: 'image/png'});
+			var a = document.createElement('a');
+			a.href = window.URL.createObjectURL(blob);
+			var date = new Date();
+			a.download = "snapshot-"+ date.getFullYear() + "-" +
+				(date.getMonth() + 1) + "-"+ date.getDate() + "_" +
+				date.getHours() + "h" + date.getMinutes() + "mn" +
+				date.getSeconds() + "s" +  ".png";
+			a.click();
 		},
 
 		/**
