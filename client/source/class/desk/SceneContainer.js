@@ -49,7 +49,11 @@ qx.Class.define("desk.SceneContainer",
 		this.add(leftContainer, {left : 0, top : 30});
 		leftContainer.setVisibility("excluded");
 
-		this.__setupInteractions();
+		this.addListener("mousedown", this.__onMouseDown, this);
+		this.addListener("mousemove", this.__onMouseMove, this);
+		this.addListener("mouseup", this.__onMouseUp, this);
+		this.addListener("mousewheel", this.__onMouseWheel, this);
+
 		var button = new qx.ui.form.Button("+").set({opacity : 0.5, width : 30});
 		this.add (button, {left : 0, top : 0});
 		button.addListener("execute", function () {
@@ -593,14 +597,6 @@ qx.Class.define("desk.SceneContainer",
 				var newValue = volumeSlice.getSlice() + delta;
 				volumeSlice.setSlice(Math.max(Math.min(newValue, maximum), 0));
 			}
-		},
-
-		__setupInteractions : function() {
-			var canvas = this.getCanvas()
-			this.addListener("mousedown", this.__onMouseDown, this);
-			this.addListener("mousemove", this.__onMouseMove, this);
-			this.addListener("mouseup", this.__onMouseUp, this);
-			this.addListener("mousewheel", this.__onMouseWheel, this);
 		},
 
 		loadURL : function (parameters, callback) {
