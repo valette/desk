@@ -231,7 +231,6 @@ qx.Class.define("desk.ThreeContainer",
 		__resizeThreeCanvas : function () {
 			var width = this.__threeCanvas.getCanvasWidth();
 			var height = this.__threeCanvas.getCanvasHeight();
-			this.__threeCanvas.set({width : width, height : height});
 			this.__renderer.setViewport(0, 0, width, height);
 			this.__camera.aspect = width / height;
 			this.__camera.updateProjectionMatrix();
@@ -355,13 +354,9 @@ qx.Class.define("desk.ThreeContainer",
 				(date.getMonth() + 1) + "-"+ date.getDate() + "_" +
 				date.getHours() + "h" + date.getMinutes() + "mn" +
 				date.getSeconds() + "s" +  ".png";
-			if (!window.webkitURL) {
-				document.body.appendChild(a);
-				a.click();
-				document.body.removeChild(a);
-			} else {
-				a.click();
-			}
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
 		},
 
 		/**
