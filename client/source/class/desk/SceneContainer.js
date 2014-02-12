@@ -170,9 +170,7 @@ qx.Class.define("desk.SceneContainer",
 			var scene = this.getScene();
 			if (scene) {
 				scene.traverse(function(child){
-					if ((child instanceof THREE.Mesh) ||
-						(child instanceof THREE.ParticleSystem) ||
-						(child instanceof THREE.Line)) {
+					if (child.userData.__customProperties) {
 						meshes.push(child);
 					}
 				});
@@ -472,10 +470,13 @@ qx.Class.define("desk.SceneContainer",
 
 			var listenerId = volumeSlice.addListener('changeImage', updateTexture, this);
             this.addMesh(mesh, {label : 'View ' + (volumeSlice.getOrientation()+1),
-				listenerId : listenerId,
                 volumeSlice : volumeSlice
             });
 			updateTexture.apply(this);
+
+			mesh.addEventListener("removedFromScene", function () {
+				volumeSlice.removeListenerById(listenerId);
+			});
 			return mesh;
 		},
 
@@ -576,14 +577,11 @@ qx.Class.define("desk.SceneContainer",
 
 		__onMouseWheel : function (event) {
 			if (event.getTarget() != this.getCanvas()) return;
-			var tree = this.__meshesTree;
 			var meshes = [];
-			this.getScene().traverse(function (object){
-				var properties = object.userData.__customProperties;
-				if (properties) {
-					if ((properties.volumeSlice) && (object.visible)){
-						meshes.push(object);
-					}
+			this.getMeshes().forEach(function (object){
+				if ((object.userData.__customProperties.volumeSlice) && 
+					(object.visible)){
+					meshes.push(object);
 				}
 			});
 			if (meshes.length === 0) return;
@@ -843,7 +841,7 @@ qx.Class.define("desk.SceneContainer",
             this.__meshesTree.getSelectedNodes().forEach(function (node) {
                 var mesh = self.__getMeshFromNode(node);
                 if (mesh) {
-                    meshes.push(mesh);
+						meshes.push(mesh);
                 }
 			});
             return meshes;
@@ -865,16 +863,14 @@ qx.Class.define("desk.SceneContainer",
 			var keepGeometry = false;
 			var keepMaterial = false;
 
+			this.getScene().remove(mesh);
+
 			if (parameters) {
 				var leaf = parameters.leaf;
 				delete leaf.__customProperties;
 				this.__meshesTree.getDataModel().prune(leaf, true);
 				parameters.mesh = 0;
-				// test if mesh is actually a volume slice
-				var volumeSlice = parameters.volumeSlice;
-				if (volumeSlice) {
-					volumeSlice.removeListenerById(parameters.listenerId);
-				}
+
 				delete mesh.userData.__customProperties;
 				if (!doNotSetData) {
 					this.__setData();
@@ -883,7 +879,6 @@ qx.Class.define("desk.SceneContainer",
 				keepMaterial = parameters.keepMaterial;
 			}
 
-			this.getScene().remove(mesh);
 			if (!keepGeometry) {
 				mesh.geometry.dispose();
 			}
@@ -963,21 +958,26 @@ qx.Class.define("desk.SceneContainer",
 			var edgesButton = new qx.ui.menu.Button("show/hide edges");
 			edgesButton.addListener("execute", function (){
 				var self = this;
+
+				function removeEdges() {
+					var edges = this.userData.edges;
+					self.getScene().remove(edges);
+					edges.geometry.dispose();
+					self._deleteMembers(edges);
+					this.removeEventListener("removedFromScene", removeEdges);
+					delete this.userData.edges;
+				}
+
                 this.getSelectedMeshes().forEach(function (mesh) {
 					var edges = mesh.userData.edges;
 					if (edges) {
-						self.getScene().remove(edges);
-						edges.geometry.dispose();
-						self._deleteMembers(edges);
-						delete mesh.userData.edges;
+						removeEdges.apply(mesh)
 					} else {
 						edges = new THREE.WireframeHelper(mesh);
 						var material = edges.material;
 						material.color.setRGB(0,0,0);
-						material.polygonOffset = true;
-						material.polygonOffsetFactor = 0;
-						material.polygonOffsetUnits = 0;
 						mesh.userData.edges = edges;
+						mesh.addEventListener("removedFromScene", removeEdges);
 						self.getScene().add(edges);
 					}
 				});
