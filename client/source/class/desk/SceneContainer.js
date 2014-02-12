@@ -109,6 +109,7 @@ qx.Class.define("desk.SceneContainer",
 			window.setCaption(file);
 		}
 		this.__addDropSupport();
+		this.__volumeSlices = [];
 	},
 
 	destruct : function(){
@@ -432,6 +433,8 @@ qx.Class.define("desk.SceneContainer",
 			return meshes;
 		},
 
+		__volumeSlices : null,
+
 		/**
 		 * Attaches a set of desk.VolumeSlice to the scene
 		 * @param volumeSlice {desk.VolumeSlice} volume slice to attach;
@@ -474,9 +477,12 @@ qx.Class.define("desk.SceneContainer",
             });
 			updateTexture.apply(this);
 
+			var self = this;
 			mesh.addEventListener("removedFromScene", function () {
 				volumeSlice.removeListenerById(listenerId);
+				self.__volumeSlices = _.without(self.__volumeSlices, mesh);
 			});
+			this.__volumeSlices.push(mesh);
 			return mesh;
 		},
 
@@ -577,25 +583,14 @@ qx.Class.define("desk.SceneContainer",
 
 		__onMouseWheel : function (event) {
 			if (event.getTarget() != this.getCanvas()) return;
-			var meshes = [];
-			this.getMeshes().forEach(function (object){
-				if ((object.userData.__customProperties.volumeSlice) && 
-					(object.visible)){
-					meshes.push(object);
-				}
-			});
-			if (meshes.length === 0) return;
-
-			var intersects = this.__pickMeshes(event, meshes);
+			var intersects = this.__pickMeshes(event, this.__volumeSlices);
 			if (intersects) {
 				var volumeSlice = intersects.object.userData.__customProperties.volumeSlice;
 				var maximum = volumeSlice.getNumberOfSlices() - 1;
 				var delta = 1;
 				if (event.getWheelDelta() < 0) delta = -1;
 				var newValue = volumeSlice.getSlice() + delta;
-				newValue = Math.min(newValue, maximum);
-				newValue = Math.max(newValue, 0);
-				volumeSlice.setSlice(newValue);
+				volumeSlice.setSlice(Math.max(Math.min(newValue, maximum), 0));
 			}
 		},
 
