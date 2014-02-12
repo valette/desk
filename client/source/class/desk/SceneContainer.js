@@ -25,6 +25,7 @@
 * @ignore (async.queue)
 * @ignore (async.each)
 * @ignore (_.throttle)
+* @ignore (_.without)
 */
 qx.Class.define("desk.SceneContainer", 
 {
