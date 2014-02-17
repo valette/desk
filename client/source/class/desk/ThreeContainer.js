@@ -12,6 +12,8 @@
  * @ignore(THREE.Mesh)
  * @ignore(THREE.Box3)
  * @ignore(requestAnimationFrame)
+ * @ignore(Blob)
+ * @ignore(Uint8Array)
 */
 qx.Class.define("desk.ThreeContainer", 
 {
@@ -26,7 +28,6 @@ qx.Class.define("desk.ThreeContainer",
 
 		var threeCanvas = this.__threeCanvas = this.__garbageContainer.getChildren()[0] || new qx.ui.embed.Canvas();
 		threeCanvas.set({syncDimension : true, zIndex : 0});
-		this.add(threeCanvas, {width : "100%", height : "100%"});
 		var canvas = threeCanvas.getContentElement().getCanvas();
 
 		if (!Detector.webgl) Detector.addGetWebGLMessage();
@@ -51,8 +52,8 @@ qx.Class.define("desk.ThreeContainer",
 		this.__initRenderFunction();
 
 		this.__listenerId = threeCanvas.addListener("resize", this.__resizeThreeCanvas, this);
+		this.add(threeCanvas, {width : "100%", height : "100%"});
 		this.__setupFullscreen();
-		this.__resizeThreeCanvas();
 	},
 
 	destruct : function(){
@@ -171,10 +172,11 @@ qx.Class.define("desk.ThreeContainer",
 		__renderingTriggered : false,
 
 		__setupFullscreen : function () {
-			var parent, width, height;
+			var parent, width, height, color, alpha;
 			this.addListener('changeFullscreen', function (e) {
 				if (!e.getData()) {
 					this.set({height : height, width : width});
+					this.__renderer.setClearColor(color, alpha);
 					parent.add(this);
 				} else {
 					height = this.getHeight();
@@ -184,6 +186,9 @@ qx.Class.define("desk.ThreeContainer",
 							height : window.innerHeight,
 							zIndex : 500000});
 					qx.core.Init.getApplication().getRoot().add(this);
+					alpha = this.__renderer.getClearAlpha();
+					color = this.__renderer.getClearColor();
+					this.__renderer.setClearColor(color, 1);
 				}
 			}, this);
 			this.addListener('keydown', function (event) {
@@ -336,8 +341,22 @@ qx.Class.define("desk.ThreeContainer",
 		__capture : function () {
 			this.render(true);
 			var strData = this.__renderer.domElement.toDataURL("image/png");
-			var saveData = strData.replace("image/png", "image/octet-stream");
-			document.location.href = saveData;
+			var binary = atob(strData.split(',')[1]);
+			var array = [];
+			for(var i = 0; i < binary.length; i++) {
+				array.push(binary.charCodeAt(i));
+			}
+			var blob =  new Blob([new Uint8Array(array)], {type: 'image/png'});
+			var a = document.createElement('a');
+			a.href = window.URL.createObjectURL(blob);
+			var date = new Date();
+			a.download = "snapshot-"+ date.getFullYear() + "-" +
+				(date.getMonth() + 1) + "-"+ date.getDate() + "_" +
+				date.getHours() + "h" + date.getMinutes() + "mn" +
+				date.getSeconds() + "s" +  ".png";
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
 		},
 
 		/**
@@ -365,11 +384,7 @@ qx.Class.define("desk.ThreeContainer",
 				this.__camera.aspect = newWidth / newHeight;
 				this.__camera.updateProjectionMatrix();
 				this.__capture();
-
-				canvas.setCanvasWidth(width);
-				canvas.setCanvasHeight(height);
 				this.add(canvas, {width : "100%", height : "100%"});
-				this.__resizeThreeCanvas();
 			}
 		},
 
