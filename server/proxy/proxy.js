@@ -26,8 +26,7 @@ var proxyServer = https.createServer({
 );
 
 var server = http.createServer(function (req, res) {
-	res.writeHead(301,
-		{Location: 'https://desk.creatis.insa-lyon.fr' + req.url});
+	res.writeHead(301, {Location: 'https://' + req.headers.host + req.url});
 	res.end();
 });
 
@@ -63,7 +62,7 @@ function updateRoutes(callback) {
 		// add external proxies
 		var others = routesContent.others || {};
 		Object.keys(others).forEach(function (key) {
-			routes['desk.creatis.insa-lyon.fr/' + key] = others[key];
+			routes[key] = others[key];
 		});
 		proxy.proxyTable.setRoutes(routes);
 		console.log('... done! Routes:');
