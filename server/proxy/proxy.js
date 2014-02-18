@@ -7,6 +7,7 @@ var fs = require('fs'),
 
 var	port = 80,
 	port2 = 443,
+	defaultRoute,
 	routesFile = __dirname + '/routes.json';
 
 var proxy = new httpProxy.RoutingProxy({router : {}});
@@ -17,7 +18,7 @@ var proxyServer = https.createServer({
 	}, function (req, res) {
 		req.socket.setTimeout(36000000);
 		if (req.url === '/') {
-			res.writeHead(301, {Location: 'https://desk.creatis.insa-lyon.fr/demo'});
+			res.writeHead(301, {Location: defaultRoute});
 			res.end();
 			return;
 		}
@@ -64,6 +65,7 @@ function updateRoutes(callback) {
 		Object.keys(others).forEach(function (key) {
 			routes[key] = others[key];
 		});
+		defaultRoute = routesContent.default;
 		proxy.proxyTable.setRoutes(routes);
 		console.log('... done! Routes:');
 		console.log(routes);

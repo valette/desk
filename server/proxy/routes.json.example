@@ -1,9 +1,10 @@
 {
 "users" : [
-"user1",
-"user2"
+	"user1",
+	"user2"
 ],
+"default" : "path/to/default",
 "others" : {
-	"foo" : "http adress"
+	"foo.address/path" : "http adress"
 }
 }
