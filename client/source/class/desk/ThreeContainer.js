@@ -47,7 +47,8 @@ qx.Class.define("desk.ThreeContainer",
 
 		// renderer
 		var renderer = this.__renderer = new THREE.WebGLRenderer({
-			canvas : canvas, antialias: true, alpha : true, premultipliedAlpha : false});
+			canvas : canvas, antialias: true, alpha : true,
+			premultipliedAlpha : false, devicePixelRatio: 1});
 		renderer.setClearColor( 0xffffff, 1 );
 		this.__initRenderFunction();
 
