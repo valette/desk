@@ -118,23 +118,49 @@ THREE.VTKLoader.prototype = {
 
         pattern = /COLOR_SCALARS[\s][\x21-\x7E]+[\s]([\d]+)/g;
 		result = pattern.exec( data );
-		pattern2 = /([\+|\-]?[\d]+[\.]?[\d|\-|e]*)[ ]+([\+|\-]?[\d]+[\.]?[\d|\-|e]*)[ ]+([\+|\-]?[\d]+[\.]?[\d|\-|e]*)/g;
-		pattern2.lastIndex = pattern.lastIndex;
+		if (result) {
+			pattern2 = /([\+|\-]?[\d]+[\.]?[\d|\-|e]*)[ ]+([\+|\-]?[\d]+[\.]?[\d|\-|e]*)[ ]+([\+|\-]?[\d]+[\.]?[\d|\-|e]*)/g;
+			pattern2.lastIndex = pattern.lastIndex;
 
-		if (parseInt(result[1], 10) === 3) {
-			var colors = [];
-			for  (i = 0; i < numV; i++) {
-				result = pattern2.exec( data );
-				var color = new THREE.Color( );
-				color.setRGB(result[1], result[2], result[3]);
-				colors.push(color);
+			if (parseInt(result[1], 10) === 3) {
+				var colors = [];
+				for  (i = 0; i < numV; i++) {
+					result = pattern2.exec( data );
+					var color = new THREE.Color( );
+					color.setRGB(result[1], result[2], result[3]);
+					colors.push(color);
+				}
+
+				geometry.faces.forEach(function (face) {
+					face.vertexColors.push(colors[face.a]);
+					face.vertexColors.push(colors[face.b]);
+					face.vertexColors.push(colors[face.c]);
+				});
 			}
+		}
 
-			geometry.faces.forEach(function (face) {
-				face.vertexColors.push(colors[face.a]);
-				face.vertexColors.push(colors[face.b]);
-				face.vertexColors.push(colors[face.c]);
-			});
+        pattern = /POINT_DATA[\s]([\d]+)/g;
+		result = pattern.exec( data );
+		if (result) {
+            if ( numV === parseInt(result[1], 10)) {
+                pattern2 = /SCALARS[\s][\x21-\x7E]+[\s][\x21-\x7E]+/g;
+                pattern2.lastIndex = pattern.lastIndex;
+                result = pattern2.exec( data );
+                pattern =/LOOKUP_TABLE[\s][\x21-\x7E]+/;
+                pattern.lastIndex = pattern2.lastIndex;
+                result = pattern.exec( data );
+                pattern2 = /[\s]*([\-\+]?[0-9]*[\.]?[0-9]+)/g;
+                pattern2.lastIndex = pattern.lastIndex;
+                
+                var pointData = [];
+                for  (i = 0; i < numV; i++) {
+                    result = pattern2.exec( data );
+                    pointData.push(parseFloat(result[1], 10));
+                }
+
+                geometry.userData = geometry.userData || {};
+                geometry.userData.pointData = pointData;
+            }
 		}
 
 		geometry.computeCentroids();
