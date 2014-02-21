@@ -50,10 +50,10 @@ qx.Class.define("desk.ThreeContainer",
 			canvas : canvas, antialias: true, alpha : true,
 			premultipliedAlpha : false, devicePixelRatio: 1});
 		renderer.setClearColor( 0xffffff, 1 );
-		this.__initRenderFunction();
 
 		this.__listenerId = threeCanvas.addListener("resize", this.__resizeThreeCanvas, this);
 		this.add(threeCanvas, {width : "100%", height : "100%"});
+		this.__resizeThreeCanvas();
 		this.__setupFullscreen();
 	},
 
@@ -169,9 +169,6 @@ qx.Class.define("desk.ThreeContainer",
 		__garbageContainer : new qx.ui.container.Composite(new qx.ui.layout.HBox()),
 		__listenerId : null,
 
-		__renderFunction : null,
-		__renderingTriggered : false,
-
 		__setupFullscreen : function () {
 			var parent, width, height, color, alpha;
 			this.addListener('changeFullscreen', function (e) {
@@ -200,33 +197,13 @@ qx.Class.define("desk.ThreeContainer",
 			}, this);
 		},
 
-		__initRenderFunction : function () {
-			var _this = this;
-			this.__renderFunction =	function () {
-				if (!_this.__renderer) {
-					// there is a race condition :
-					// rendering can be triggered after widget deletion
-					return;
-				}
-				_this.fireEvent("beforeRender");
-				_this.__renderer.render(_this.__scene, _this.__camera);
-				_this.__renderingTriggered = false;
-				_this.fireEvent('render');
-			};
-		},
-
 		/**
 		* Renders the scene
-		* @param force {Boolean} forces display (i.e. does not use
-		* requestAnimationFrame())
 		*/
-		render : function (force) {
-			if (force) {
-				this.__renderFunction();
-			} else if (!this.__renderingTriggered) {
-				this.__renderingTriggered = true;
-				requestAnimationFrame(this.__renderFunction);
-			}
+		render : function () {
+			this.fireEvent("beforeRender");
+			this.__renderer.render(this.__scene, this.__camera);
+			this.fireEvent('render');
 		},
 
 		__resizeThreeCanvas : function () {
@@ -335,12 +312,30 @@ qx.Class.define("desk.ThreeContainer",
 			}
 			camera.near = bbdiaglength /10000;
 			camera.far = bbdiaglength * 1000000;
-			this.__resizeThreeCanvas();
+			this.__controls.update();
 			this.render();
 		},
 
-		__capture : function () {
-			this.render(true);
+		/**
+		* Triggers a snapshot of the scene which will be downloaded by the browser
+		* @param factor {Number} size multiplication factor e.g. when set to 2, the 
+		* image dimensions will be twice the current scene dimensions. Default : 1
+		*/
+		snapshot : function (factor) {
+			factor = factor || 1;
+
+			if (factor !== 1) {
+				var width = this.__threeCanvas.getCanvasWidth();
+				var height = this.__threeCanvas.getCanvasHeight();
+				this.__threeCanvas.setSyncDimension(false);
+				var newHeight = Math.round(height * factor);
+				var newWidth = Math.round(width * factor);
+				this.__renderer.setSize(newWidth, newHeight);
+				this.__camera.aspect = newWidth / newHeight;
+				this.__camera.updateProjectionMatrix();
+			}
+
+			this.render();
 			var strData = this.__renderer.domElement.toDataURL("image/png");
 			var binary = atob(strData.split(',')[1]);
 			var array = [];
@@ -358,34 +353,13 @@ qx.Class.define("desk.ThreeContainer",
 			document.body.appendChild(a);
 			a.click();
 			document.body.removeChild(a);
-		},
 
-		/**
-		* Triggers a snapshot of the scene which will be downloaded by the browser
-		* @param factor {Number} size multiplication factor e.g. when set to 2, the 
-		* image dimensions will be twice the current scene dimensions. Default : 1
-		*/
-		snapshot : function (factor) {
-			factor = factor || 1;
-
-			if (factor === 1) {
-				this.__capture();
-			} else {
-				var canvas = this.__threeCanvas; 
-				var width = canvas.getInnerSize().width;
-				var height = canvas.getInnerSize().height;
-				var newHeight = Math.round(height * factor);
-				var newWidth = Math.round(width * factor);
-				this.remove(canvas);
-
-				canvas.setCanvasWidth(newWidth);
-				canvas.setCanvasHeight(newHeight);
-
-				this.__renderer.setSize(newWidth, newHeight);
-				this.__camera.aspect = newWidth / newHeight;
+			if (factor !== 1) {
+				this.__renderer.setSize(width, height);
+				this.__camera.aspect = width / height;
 				this.__camera.updateProjectionMatrix();
-				this.__capture();
-				this.add(canvas, {width : "100%", height : "100%"});
+				this.__threeCanvas.setSyncDimension(true);
+				this.render();
 			}
 		},
 
