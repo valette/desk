@@ -68,6 +68,7 @@ qx.Class.define("desk.Actions",
 		scripts.push(baseURL + 'ext/underscore-min.js');
 		scripts.push(baseURL + 'ext/operative.min.js');
 		scripts.push(baseURL + 'ext/kdTree-min.js');
+		scripts.push(baseURL + 'ext/numeric-1.2.6.min.js');
 
 
 		var self = this;
