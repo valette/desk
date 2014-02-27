@@ -199,9 +199,10 @@ qx.Class.define("desk.ThreeContainer",
 
 		/**
 		* Renders the scene
+		* @param immediate {Boolean} triggers immediate rendering (without requestAnimationFrame)
 		*/
-		render : function (force) {
-			if (force) {
+		render : function (immediate) {
+			if (immediate) {
 				this.__render();
 				return;
 			}
