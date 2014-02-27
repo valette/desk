@@ -200,8 +200,23 @@ qx.Class.define("desk.ThreeContainer",
 		/**
 		* Renders the scene
 		*/
-		render : function () {
+		render : function (force) {
+			if (force) {
+				this.__render();
+				return;
+			}
+			if (this.__renderingTriggered) return;
+			this.__renderingTriggered = true;
+			var self = this;
+			requestAnimationFrame(function () {self.__render()});
+		},
+
+		__renderingTriggered : null,
+
+		__render : function () {
+			this.__renderingTriggered = false;
 			this.fireEvent("beforeRender");
+			if (!this.__renderer) return;
 			this.__renderer.render(this.__scene, this.__camera);
 			this.fireEvent('render');
 		},
@@ -335,7 +350,7 @@ qx.Class.define("desk.ThreeContainer",
 				this.__camera.updateProjectionMatrix();
 			}
 
-			this.render();
+			this.render(true);
 			var strData = this.__renderer.domElement.toDataURL("image/png");
 			var binary = atob(strData.split(',')[1]);
 			var array = [];
