@@ -6,22 +6,22 @@ var fs      = require('fs'),
     https   = require('https'),
     exec    = require('child_process').exec,
     formidable = require('formidable'),
-    util = require('util'),
+    mkdirp  = require('mkdirp'),
+    util    = require('util'),
     actions = require(__dirname + '/cl-rpc/cl-rpc');
-//	actions = require('cl-rpc');
 
+var separator = "*******************************************************************************";
+console.log(separator);
+console.log(separator);
 var	user = process.env.USER;
-console.log("UID : "+process.getuid());
 
 // user parameters
-var serverPath = fs.realpathSync(__dirname + '/../client/')+'/',
+var clientPath = fs.realpathSync(__dirname + '/../client/')+'/',
     homeURL = '/' + user + '/',
    	port = process.getuid();
 
 // use port 8080 if not running on desk.creatis.insa-lyon.fr
-var hostname = os.hostname();
-console.log('hostname : ' + hostname);
-if (hostname != 'desk.creatis.insa-lyon.fr') {
+if (os.hostname() != 'desk.creatis.insa-lyon.fr') {
 	port = 8080;
     homeURL = '/';
 }
@@ -31,38 +31,18 @@ var	deskPath = '/home/' + user + '/desk/',
 	uploadDir = deskPath + 'upload/',
 	extensionsDir = deskPath + 'extensions/';
 
-// make desk directory if not existent
-if (!fs.existsSync(deskPath)) {
-	fs.mkdirSync(deskPath);
-}
-
-// make upload directory if not existent
-if (!fs.existsSync(uploadDir)) {
-	fs.mkdirSync(uploadDir);
-}
+// make desk and upload directories if not existent
+mkdirp.sync(deskPath);
+mkdirp.sync(uploadDir);
 
 // certificate default file names
 var passwordFile = deskPath + "password.json",
 	privateKeyFile = "privatekey.pem",
 	certificateFile = "certificate.pem";
 
-var separator="*******************************************************************************";
-
-console.log(separator);
-console.log(separator);
 console.log('Welcome to Desk');
 console.log('Running as user : '+user);
 console.log(separator);
-
-// small hack to relaunch the server when needed
-var serverRestartFile = __dirname + '/touchMeToRestart';
-if (fs.existsSync(serverRestartFile)) {
-	console.log('hint : modify the file "touchMeToRestart" to restart server');
-	fs.watchFile(serverRestartFile, function () {
-		// just crash the server, the forever module will restart it
-		crash();
-	});
-}
 
 //configure express server
 var app = express();
@@ -77,16 +57,11 @@ if (!fs.existsSync(passwordFile)) {
 		password : 'password'}));
 }
 
-var identity = require(passwordFile);
-if ( (typeof identity.username !== "string") ||
-	(typeof identity.password !== "string")) {
-	identity = null;
-}
-
 // use basicAuth depending on password.json
-if (identity) {
+var identity = require(passwordFile);
+if (identity.username && identity.password) {
 	app.use(express.basicAuth(function (username, password) {
-		return identity.username === username & identity.password === password
+		return identity.username === username & identity.password === password;
 	}));
 	console.log("Using basic authentication");
 } else {
@@ -94,16 +69,17 @@ if (identity) {
 	console.log("see " + passwordFile + ".example file for an example");
 }
 
+
 // handle body parsing
 app.use(express.json());
 app.use(express.urlencoded());
 
-if (fs.existsSync(serverPath + 'default')) {
+if (fs.existsSync(clientPath + 'default')) {
 	console.log('serving custom default folder');
-	app.use(homeURL ,express.static(serverPath + 'default'));
+	app.use(homeURL, express.static(clientPath + 'default'));
 } else {
 	console.log('serving default folder demo/default/release/');
-	app.use(homeURL ,express.static(serverPath + 'demo/default/release/'));
+	app.use(homeURL, express.static(clientPath + 'demo/default/release/'));
 }
 
 app.use(express.compress());
@@ -112,15 +88,12 @@ app.use(express.compress());
 app.use(homeURL + 'files',express.static(deskPath));
 app.use(homeURL + 'files',express.directory(deskPath));
 
-// enable static file server
-app.use(homeURL, express.static(serverPath));
-
-// display directories
-app.use(homeURL, express.directory(serverPath));
+// serve client code
+app.use(homeURL, express.static(clientPath));
+app.use(homeURL, express.directory(clientPath));
 
 // handle uploads
 app.post(actionsBaseURL + 'upload', function(req, res) {
-
 	var form = new formidable.IncomingForm();
 	form.uploadDir = uploadDir;
 	form.parse(req, function(err, fields, files) {
@@ -225,11 +198,12 @@ console.log(separator);
 
 var server;
 var baseURL;
+
 // run the server in normal or secure mode depending on provided certificate
-if (0) {//fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
+if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	var options = {
-		key: fs.readFileSync('privatekey.pem').toString(),
-		cert: fs.readFileSync('certificate.pem').toString()
+		key: fs.readFileSync(privateKeyFile),
+		cert: fs.readFileSync(certificateFile)
 	};
 	server = https.createServer(options, app);
 	console.log("Using secure https mode");
@@ -247,9 +221,8 @@ else {
 console.log(separator);
 
 // make extensions directory if not present
-if (!fs.existsSync(extensionsDir)) {
-	fs.mkdirSync(extensionsDir);
-}
+mkdirp.sync(extensionsDir);
+
 actions.addDirectory(__dirname + '/includes/');
 actions.addDirectory(extensionsDir);
 actions.setRoot(deskPath);
@@ -265,3 +238,11 @@ actions.update(function () {
 			'", password : "' + identity.password + '"');
 	}
 });
+
+// small hack to relaunch the server when needed
+console.log('hint : modify the file "touchMeToRestart" to restart the server');
+fs.watchFile(__dirname + '/touchMeToRestart', function () {
+	// just crash the server, the forever module will restart it
+	crash();
+});
+

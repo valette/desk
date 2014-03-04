@@ -14,7 +14,8 @@
     "async": ">0.0.0",
     "winston": ">0.0.0",
     "formidable": ">0.0.0",
-    "ms": ">0.0.0"
+    "ms": ">0.0.0",
+    "mkdirp": "^0.3.5"
   },
   "optionalDependencies": {},
   "engines": {

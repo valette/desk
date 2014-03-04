@@ -53,14 +53,13 @@ function cleanCache() {
 					if (err) {
 						callback (err);
 					}
-					var time=stats.mtime.getTime();
+					var time = stats.mtime.getTime();
 					var currentTime = new Date().getTime();
 					var age = currentTime - time;
 					if (age > maximumCacheAge) {
 						console.log('deleting cache ' + file + ' (' + ms(age, { long: true }) + ' old)'); 
 						exec('rm -rf ' + file, {cwd : cacheDir}, callback);
-					}
-					else {
+					} else {
 						callback();
 					}
 				});
@@ -85,8 +84,7 @@ exports.validatePath = function (path, callback) {
 		if (err) {
 			callback(err);
 			return;
-		}
-		else {
+		} else {
 			for (var i = 0; i != directories.length; i++) {
 				var subDir = directories[i];
 				if (realPath.slice(0, subDir.length) == subDir) {
@@ -108,8 +106,7 @@ function includeActionsFile (file, callback) {
 			} else {
 				callback();
 			}
-		}
-		else {
+		} else {
 			console.log("Warning : no file "+file+" found");
 			callback();
 		}
@@ -126,7 +123,7 @@ exports.includeActions = function (file, callback) {
 		async.eachSeries(file, includeActionsFile, afterImport);
 		break;
 	default:
-		callback ("error in actions importations: cannot handle "+file);
+		callback ("error in actions importations: cannot handle " + file);
 		afterImport();
 	}
 
@@ -136,80 +133,70 @@ exports.includeActions = function (file, callback) {
 };
 
 includeActionsJSON = function (file, callback) {
-	var actionsObject;
-	var libraryName = libpath.basename(file, '.json');
-
 	fs.readFile(file, function (err, data) {
 		try {
-			actionsObject = JSON.parse(data); 
+			var libraryName = libpath.basename(file, '.json');
+			var actionsObject = JSON.parse(data); 
+
+			var localActions = actionsObject.actions || [];
+			var path = fs.realpathSync(libpath.dirname(file));
+			var actionsArray = Object.keys(localActions);
+			console.log(actionsArray.length + " actions in " + file);
+
+			actionsArray.forEach(function (actionName) {
+				var action = localActions[actionName];
+				action.lib = libraryName;
+				var attributes = action.attributes;
+				if ( typeof (attributes.js) === 'string' ) {
+					console.log('loaded javascript from ' + attributes.js);
+					attributes.executable = path + '/' + attributes.js + '.js';
+					attributes.module = require(path + '/' + attributes.js);
+					attributes.path = path;
+				} else if ( typeof (attributes.executable) === 'string' ) {
+					attributes.executable = path + '/' + attributes.executable;
+					attributes.path = path;
+				}
+				var existingAction = actions[actionName];
+				if (existingAction) {
+					if (action.priority < existingAction.priority) {
+						return;
+					}
+				}
+				actions[actionName] = action;
+			});
+
+			var dirs = actionsObject.dataDirs || {};
+			Object.keys(dirs).forEach(function (key) {
+				var source = dirs[key];
+				if (source.indexOf('./') === 0) {
+					// source is relative, prepend directory
+					source = libpath.join(libpath.dirname(file), source);
+				}
+				dataDirs[key] = source;
+			});
+
+			var includes = actionsObject.include || [];
+			includes.forEach(function (include) {
+				if (include.charAt(0) != '/') {
+					// the path is relative. Prepend directory
+					includes[i] = libpath.dirname(file) + '/' + include;
+				}
+			});
+
+			if (typeof(actionsObject.permissions) === 'number') {
+				permissions = actionsObject.permissions;
+			}
+
+			exports.includeActions(includes, callback);
 		}
 		catch (error) {
 			console.log('error importing ' + file);
+			console.log(error);
 			actions['import_error_' + libraryName] = {lib : libraryName};
 			if ( typeof(callback) === 'function' ) {
 				callback();
 			}
-			return;
 		}
-		var localActions = actionsObject.actions || [];
-		var path = fs.realpathSync(libpath.dirname(file));
-		var actionsArray = Object.keys(localActions);
-		console.log(actionsArray.length + " actions in " + file);
-
-		for (var i = 0; i < actionsArray.length; i++) {
-			var actionName = actionsArray[i];
-			var action = localActions[actionName];
-			action.lib = libraryName;
-			var attributes = action.attributes;
-			if ( typeof (attributes.js) === 'string' ) {
-				console.log('loaded javascript from ' + attributes.js);
-				attributes.executable = path + '/' + attributes.js + '.js';
-				attributes.module = require(path + '/' + attributes.js);
-				attributes.path = path;
-			}
-			else if ( typeof (attributes.executable) === 'string' ) {
-				attributes.executable = path + '/' + attributes.executable;
-				attributes.path = path;
-			}
-			var existingAction = actions[actionName];
-			if (existingAction) {
-				if (action.priority < existingAction.priority) {
-					continue;
-				}
-			}
-			actions[actionName] = action;
-		}
-
-		var dirs = actionsObject.dataDirs || {};
-		var keys = Object.keys(dirs);
-		for (i = 0; i != keys.length ; i++) {
-			var key = keys[i];
-			var source = dirs[key];
-			if (source.indexOf('./') === 0) {
-				// source is relative, prepend directory
-				source = libpath.join(libpath.dirname(file), source);
-			}
-			dataDirs[key] = source;
-		}	
-
-		var includes = actionsObject.include || [];
-		for (i = 0; i != includes.length; i++) {
-			var include = includes[i];
-			if (include.charAt(0) != '/') {
-				// the path is relative. Prepend directory
-				includes[i] = libpath.dirname(file) + '/' + include;
-			}
-		}
-
-		if (typeof(actionsObject.permissions) === 'number') {
-			permissions = actionsObject.permissions;
-		}
-
-		exports.includeActions(includes, function () {
-			if ( typeof(callback) === 'function' ) {
-				callback();
-			}
-		});
 	});
 };
 
@@ -246,9 +233,7 @@ exports.update = function (callback) {
 		console.log(Object.keys(actions).length + ' actions included');
 
 		// create all data directories and symlinks if they do not exist
-		var keys = Object.keys(dataDirs);
-		for (var i = 0; i!=keys.length; i++) {
-			var key = keys[i];
+		Object.keys(dataDirs).forEach(function (key) {
 			var dir = filesRoot + key;
 			if (!fs.existsSync(dir)) {
 				console.log('Warning : directory ' + dir + ' does not exist. Creating it');
@@ -269,7 +254,7 @@ exports.update = function (callback) {
 			} else {
 				directories.push(fs.realpathSync(dir));
 			}
-		}
+		});
 		cleanCache();
 
 		if (typeof callback === 'function') {
@@ -520,8 +505,7 @@ exports.performAction = function (POST, callback) {
 				fs.mkdir(filesRoot + "/actions/" + index, function (err) {
 					if ( err ) {
 						callback( err.message );
-					}
-					else {
+					} else {
 						fs.writeFile(counterFile, JSON.stringify({value : index}), 
 							function(err) {
 								if (err) {
@@ -546,14 +530,12 @@ exports.performAction = function (POST, callback) {
 					fs.mkdir(filesRoot + outputDirectory, 0777 , function (err) {
 						if (err) {
 							callback(err.message);
-						}
-						else {
+						} else {
 							callback ();
 						}
 					});
 					return;
-				}
-				else {
+				} else {
 					callback ();
 				}
 			});
@@ -686,8 +668,7 @@ exports.performAction = function (POST, callback) {
 						if (err) {throw err;}
 						callback();
 					});
-				}
-				else {
+				} else {
 					callback();
 				}
 			}
