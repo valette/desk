@@ -322,15 +322,20 @@ qx.Class.define("desk.Actions",
 			if (response.error) {
 				var err = response.error;
 				var message = "error for action " + parameters.actionParameters.action + ": \n";
+				var found = false;
 				if (err.signal) {
 					message += "signal : " + err.signal + "\n";
+					found = true;
 				}
 				if (err.code) {
 					message += "code : " + err.code + "\n";
+					found = true;
 				}
 				if (response.stderr) {
 					message += "stderr : " + response.stderr + "\n";
+					found = true;
 				}
+				if (!found)	message += err;
 				alert (message);
 			}
 
