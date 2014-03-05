@@ -46,12 +46,17 @@ console.log(separator);
 
 //configure express server
 var app = express();
+app.use(express.compress());
+
+app.use (function (req, res, next) {
+	res.cookie('homeURL', homeURL);
+next();
+});
 
 // set upload limit to 20 GB
 app.use(express.limit('20000mb'));
 
 // look for correctly formated password.json file.
-var identity = null;
 if (!fs.existsSync(passwordFile)) {
 	fs.writeFileSync(passwordFile, JSON.stringify({username : user,
 		password : 'password'}));
@@ -69,7 +74,6 @@ if (identity.username && identity.password) {
 	console.log("see " + passwordFile + ".example file for an example");
 }
 
-
 // handle body parsing
 app.use(express.json());
 app.use(express.urlencoded());
@@ -81,8 +85,6 @@ if (fs.existsSync(clientPath + 'default')) {
 	console.log('serving default folder demo/default/release/');
 	app.use(homeURL, express.static(clientPath + 'demo/default/release/'));
 }
-
-app.use(express.compress());
 
 // serve data files
 app.use(homeURL + 'files',express.static(deskPath));
@@ -245,4 +247,3 @@ fs.watchFile(__dirname + '/touchMeToRestart', function () {
 	// just crash the server, the forever module will restart it
 	crash();
 });
-

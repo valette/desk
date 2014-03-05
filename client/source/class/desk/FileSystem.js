@@ -8,20 +8,8 @@ qx.Class.define("desk.FileSystem",
 
 	type : "singleton",
 
-	construct : function()
-	{
-		this.base(arguments);
-		var URLparser = document.createElement('a');
-		URLparser.href = document.href;
-
-		// detect whether we are on desk (need to streamline this...)
-		if (URLparser.hostname == 'desk.creatis.insa-lyon.fr') {
-			// there are several servers
-			this.__baseURL = '/' + URLparser.pathname.split("/")[1] + '/';
-		} else {
-			// this is a local unique server
-			this.__baseURL = '/';
-		}
+	construct : function() {
+		this.__baseURL = qx.bom.Cookie.get("homeURL") || '/';
 		this.__actionsURL = this.__baseURL + 'rpc/';
 		this.__filesURL = this.__baseURL + 'files/';
 	},
@@ -338,8 +326,7 @@ qx.Class.define("desk.FileSystem",
 		*
 		* @return {String} directory path
 		*/
-		getSessionDirectory : function (file,sessionType,sessionId)
-		{
+		getSessionDirectory : function (file,sessionType,sessionId) {
 			return file+"."+sessionType+"."+sessionId;
 		},
 
@@ -356,8 +343,7 @@ qx.Class.define("desk.FileSystem",
 		*
 		* the array is the first parameter for the callback function
 		*/ 
-		getFileSessions : function (file, sessionType, callback)
-		{
+		getFileSessions : function (file, sessionType, callback) {
 			if (sessionType === null) {
 				alert('error : no session type asked');
 				return;
@@ -405,8 +391,7 @@ qx.Class.define("desk.FileSystem",
 		*
 		* executes the callback with the new session Id as parameter when finished
 		*/
-		createNewSession : function (file, sessionType, callback)
-		{
+		createNewSession : function (file, sessionType, callback) {
 			this.getFileSessions(file, sessionType, function (sessions) {
 				var maxId = -1;
 				for (var i = 0; i < sessions.length; i++) {
