@@ -3,8 +3,16 @@
 	"user1",
 	"user2"
 ],
-"default" : "path/to/default",
-"others" : {
-	"foo.address/path" : "http adress"
+"defaultRoutes" : {
+	"hostname1" : "url1",
+	"hostname2" : "url2"
+},
+
+"httpAllowed : {
+	"hostname2" : true
+},
+
+"otherRoutes" : {
+	"foo.address/path" : "url3"
 }
 }
