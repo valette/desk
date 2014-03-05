@@ -1,1 +1,1 @@
-forever -a start desk.js
+forever -a start desk.js --multi

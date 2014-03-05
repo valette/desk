@@ -1,29 +1,41 @@
 var fs      = require('fs'),
 	os      = require('os'),
 	libPath = require('path'),
-    express = require('express'),
-    http    = require('http'),
-    https   = require('https'),
-    exec    = require('child_process').exec,
-    formidable = require('formidable'),
-    mkdirp  = require('mkdirp'),
-    util    = require('util'),
-    actions = require(__dirname + '/cl-rpc/cl-rpc');
+	express = require('express'),
+	http    = require('http'),
+	https   = require('https'),
+	formidable = require('formidable'),
+	mkdirp  = require('mkdirp'),
+	argv    = require('yargs').argv,
+	actions = require(__dirname + '/cl-rpc/cl-rpc');
 
 var separator = "*******************************************************************************";
 console.log(separator);
 console.log(separator);
-var	user = process.env.USER;
 
 // user parameters
 var clientPath = fs.realpathSync(__dirname + '/../client/')+'/',
+	port = 8080,
+	homeURL = '/';
+
+// configure express server
+var app = express();
+// set upload limit to 20 GB
+app.use(express.limit('20000mb'));
+app.use(express.compress());
+
+var	user = process.env.USER;
+
+// use custom port and homeURL if in a multi-user configuration
+if (argv.multi) {
     homeURL = '/' + user + '/',
    	port = process.getuid();
 
-// use port 8080 if not running on desk.creatis.insa-lyon.fr
-if (os.hostname() != 'desk.creatis.insa-lyon.fr') {
-	port = 8080;
-    homeURL = '/';
+	// transmit homeURL cookie
+	app.use (function (req, res, next) {
+		res.cookie('homeURL', homeURL);
+		next();
+	});
 }
 
 var	deskPath = '/home/' + user + '/desk/',
@@ -41,20 +53,8 @@ var passwordFile = deskPath + "password.json",
 	certificateFile = "certificate.pem";
 
 console.log('Welcome to Desk');
-console.log('Running as user : '+user);
+console.log('Running as user : ' + user);
 console.log(separator);
-
-//configure express server
-var app = express();
-app.use(express.compress());
-
-app.use (function (req, res, next) {
-	res.cookie('homeURL', homeURL);
-next();
-});
-
-// set upload limit to 20 GB
-app.use(express.limit('20000mb'));
 
 // look for correctly formated password.json file.
 if (!fs.existsSync(passwordFile)) {
@@ -149,12 +149,6 @@ app.post(actionsBaseURL + 'password', function(req, res){
 app.get(actionsBaseURL + ':action', function (req, res) {
 	var action = req.params.action;
 	switch (action) {
-	case 'clearcache' :
-		var dir = action.substring(5);
-		exec("rm -rf *",{cwd : deskPath + dir}, function () {
-			res.send(dir + ' cleared');
-		});
-		break;
 	case 'exists' :
 		var path = req.query.path;
 		fs.exists(deskPath + path, function (exists) {
