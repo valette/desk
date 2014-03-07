@@ -82,8 +82,8 @@ if (fs.existsSync(clientPath + 'default')) {
 	console.log('serving custom default folder');
 	app.use(homeURL, express.static(clientPath + 'default'));
 } else {
-	console.log('serving default folder demo/default/release/');
-	app.use(homeURL, express.static(clientPath + 'demo/default/release/'));
+	console.log('serving default folder application/release/');
+	app.use(homeURL, express.static(clientPath + 'application/release/'));
 }
 
 // serve data files

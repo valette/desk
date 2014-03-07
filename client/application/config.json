@@ -57,7 +57,7 @@
       "library" :
       [
         {
-          "manifest" : "../../Manifest.json"
+          "manifest" : "../Manifest.json"
         },
         {
           "manifest"   : "contrib://UploadMgr/trunk/Manifest.json"
