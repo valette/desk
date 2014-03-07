@@ -5,6 +5,7 @@
  * @asset(desk/desk.png)
  * @asset(desk/desk.png)
  * @asset(qx/icon/${qx.icontheme}/16/categories/system.png) 
+ * @ignore (async)
  * @ignore (async.queue)
  * @lint ignoreDeprecated (alert)
  * @require(desk.LogContainer)
@@ -29,7 +30,9 @@ qx.Class.define("desk.Actions",
 			} else {
 				actions.addListenerOnce("changeReady", callback , context);
 			}
-		}
+		},
+
+		RPC : true
 	},
 
 	/**
@@ -40,13 +43,39 @@ qx.Class.define("desk.Actions",
 	construct : function() {
 		this.base(arguments);
 
+		qx.Class.include(qx.ui.treevirtual.TreeVirtual, qx.ui.treevirtual.MNode);
+
 		// determine base URLs for RPC
 		var baseURL = desk.FileSystem.getInstance().getBaseURL();
 		this.__baseActionsURL = baseURL + 'rpc/';
 
-		this.__ongoingActions = new qx.ui.container.Composite(new qx.ui.layout.VBox());
-		this.__ongoingActions.set ({width : 200, zIndex : 1000000,
-			decorator : "statusbar", backgroundColor : "transparent"});
+		// performance.now polyfill
+		(function(){
+			// prepare base perf object
+			if (typeof window.performance === 'undefined') {
+				window.performance = {};
+			}
+			if (!window.performance.now) {
+				var nowOffset = Date.now();
+				if (performance.timing && performance.timing.navigationStart){
+					nowOffset = performance.timing.navigationStart;
+				}
+				window.performance.now = function now(){
+					return Date.now() - nowOffset;
+				};
+			}
+		})();
+
+		var self = this;
+		function onReady() {
+			self.__ready = true;
+			self.fireEvent('changeReady');
+		}
+
+		if (typeof async != "undefined") {
+			setTimeout(onReady, 10);
+			return;
+		}
 
 		// load external three.js files
 		var threeURL = baseURL + 'ext/three.js/';
@@ -70,34 +99,17 @@ qx.Class.define("desk.Actions",
 		scripts.push(baseURL + 'ext/kdTree-min.js');
 		scripts.push(baseURL + 'ext/numeric-1.2.6.min.js');
 
-
-		var self = this;
 		desk.FileSystem.includeScripts(scripts, function () {
 			self.__actionsQueue = async.queue(self.__launchAction.bind(self), 20);
-			self.__populateActionMenu(function () {
-				self.__ready = true;
-				self.fireEvent('changeReady');
-			});
-		});
-		// hack to include qxjqplot
-		new qxjqplot.Plot();
-
-		// performance.now polyfill
-		(function(){
-		   // prepare base perf object
-		  if (typeof window.performance === 'undefined') {
-			  window.performance = {};
-		  }
-		   if (!window.performance.now){
-			var nowOffset = Date.now();
-			if (performance.timing && performance.timing.navigationStart){
-			  nowOffset = performance.timing.navigationStart;
+			if (desk.Actions.RPC != true) {
+				setTimeout(onReady, 10);
+				return;
 			}
-			window.performance.now = function now(){
-			  return Date.now() - nowOffset;
-			};
-		  }
-		})();
+
+			self.__populateActionMenu(onReady);
+			// hack to include qxjqplot
+		});
+
 	},
 
 	properties : {
@@ -249,6 +261,9 @@ qx.Class.define("desk.Actions",
 		* builds the actions UI
 		*/
 		buildUI : function () {
+			this.__ongoingActions = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+			this.__ongoingActions.set ({width : 200, zIndex : 1000000,
+				decorator : "statusbar", backgroundColor : "transparent"});
 			qx.core.Init.getApplication().getRoot().add(this.__ongoingActions, {top : 0, right : 100});
 		},
 
