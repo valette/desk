@@ -33,7 +33,7 @@ window.onload = function(){
 	addTriangle(0,2, 3);
 
 	geometry.computeFaceNormals();
-	var mesh = view.addGeometry( geometry , {label : "my tetrahedron", color : [0,0,1,1, 0]});
+	var mesh = viewer.addGeometry( geometry , {label : "my tetrahedron", color : [0,0,1,1, 0]});
 	viewer.viewAll();
 
 	function addVertex (x,y,z) {
@@ -52,7 +52,7 @@ window.onload = function(){
 	edges.material.color.set(0,0,0);
 	viewer.addMesh(edges);
 	viewer.viewAll();
-
+}
 </script>
 
 </head>
