@@ -1,32 +1,22 @@
 /* ************************************************************************
 
-   Copyright:
+   Copyright: CNRS, INSERM, INSA-Lyon
 
-   License:
+   License: CeCILL B
 
-   Authors:
-
-************************************************************************ */
-
-/* ************************************************************************
-
-@asset(desk/*)
+   Authors: Sebastien Valette
 
 ************************************************************************ */
 
 /**
  * This is the main application class of your custom application "desk"
+ * @asset(desk/*)
+ * @use(qxjqplot.Plot)
  */
+
 qx.Class.define("desk.demo.Application",
 {
 	extend : qx.application.Standalone,
-	//extend : qx.application.Inline,
-
-	/*
-	*****************************************************************************
-	MEMBERS
-	*****************************************************************************
-	*/
 
 	members :
 	{
@@ -37,8 +27,7 @@ qx.Class.define("desk.demo.Application",
 		* @lint ignoreDeprecated(alert)
 		*/
 
-		main : function()
-		{
+		main : function() {
 			// Call super class
 			this.base(arguments);
 
@@ -51,8 +40,7 @@ qx.Class.define("desk.demo.Application",
 				qx.log.appender.Console;
 			}
 
-			function getParameter( parameterName )
-			{
+			function getParameter( parameterName ) {
 				parameterName = parameterName.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
 				var regexS = "[\\?&]"+parameterName+"=([^&#]*)";
 				var regex = new RegExp( regexS );
@@ -70,13 +58,11 @@ qx.Class.define("desk.demo.Application",
 				desk.FileSystem.exists(initScript, function (exists) {
 					if (exists) {
 						desk.FileSystem.executeScript(initScript);
-					}
-					else {
+					} else {
 						Init();
 					}
 				});
-			}
-			else {
+			} else {
 				Init();
 			}
 
@@ -84,8 +70,7 @@ qx.Class.define("desk.demo.Application",
 				var startupScript = getParameter("script");
 				if (startupScript) {
 					desk.FileSystem.executeScript(startupScript);
-				}
-				else {
+				} else {
 					var actions = desk.Actions.getInstance()
 					actions.buildUI();
 					desk.Actions.init(function () {
