@@ -769,9 +769,14 @@ qx.Class.define("desk.MPRContainer",
 
 			if(this.__standalone) {
 				if (desk.Actions.getInstance().getPermissionsLevel()>0) {
-					var segmentButton = new qx.ui.menu.Button("segment");
+					var segmentButton = new qx.ui.menu.Button("segment(GC)");
 					segmentButton.addListener("execute", function () {
 						new desk.SegTools(this, this.getVolumeFile(volumeListItem));
+					},this);
+					menu.add(segmentButton);
+					var segmentButton = new qx.ui.menu.Button("segment");
+					segmentButton.addListener("execute", function () {
+						new desk.SegTools(this, this.getVolumeFile(volumeListItem), {segmentationMethod : 1});
 					},this);
 					menu.add(segmentButton);
 				}
