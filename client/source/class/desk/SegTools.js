@@ -10,10 +10,14 @@ qx.Class.define("desk.SegTools",
 
 	construct : function(master, globalFile, options)
 	{	
+		this.base(arguments);
+
 		options = options || {};
 
-		this.__segmentationMethod == options.segmentationMethod || 0;
-		this.base(arguments);
+		if (options.segmentationMethod) {
+			this.__segmentationMethod = options.segmentationMethod;
+		}
+
 		this.__master = master;
 		this.__file = globalFile;
 
