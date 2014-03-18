@@ -3,6 +3,7 @@
 * @lint ignoreDeprecated(alert)
 * @lint ignoreDeprecated(confirm)
 * @ignore (async.each)
+* @ignore (_.find)
 */
 
 qx.Class.define("desk.SegTools",
@@ -137,7 +138,7 @@ qx.Class.define("desk.SegTools",
 			var seedsType = this.getSeedsType();
 			var seedsList = sliceView.getUserData(desk.SegTools.seedsListsString)[seedsType];
 			var seedsArray = seedsList.getUserData(desk.SegTools.seedsArrayString);
-			var sliceId=sliceView.getSlice();
+			var sliceId = sliceView.getSlice();
 
 			if (seedsArray[sliceId] != 0) {
 				var imageLoader = new Image();
@@ -148,8 +149,8 @@ qx.Class.define("desk.SegTools",
 					imageLoader.onload = 0;
 				}
 				imageLoader.src = desk.FileSystem.getFileURL(this.getSessionDirectory()) + "/" +
-								this.__getSeedFileName (sliceView, sliceId, seedsType) +
-								"?nocache=" + Math.random();
+					this.__getSeedFileName (sliceView, sliceId, seedsType) +
+					"?nocache=" + Math.random();
 			} else {
 				seedsList.resetSelection();
 				sliceView.fireEvent("changeDrawing");
@@ -1497,13 +1498,21 @@ qx.Class.define("desk.SegTools",
 				}
 			}.bind(this));
 
-			var parameterMap = {
-				action : "write_binary",
-				file_name : "seeds.xml",
-				base64data : qx.util.Base64.encode(element('seeds', xmlContent), true),
-				output_directory : this.getSessionDirectory()};
+			var seeds = element('seeds', xmlContent);
 
-			desk.Actions.getInstance().launchAction(parameterMap, callback);
+			desk.FileSystem.readFile(this.getSessionDirectory() + "/seeds.xml", function (err, result) {
+				if (result === seeds) {
+					if (typeof callback === "function") callback();
+					return;
+				}
+				var parameterMap = {
+					action : "write_binary",
+					file_name : "seeds.xml",
+					base64data : qx.util.Base64.encode(seeds, true),
+					output_directory : this.getSessionDirectory()};
+
+				desk.Actions.getInstance().launchAction(parameterMap, callback);
+			}, this, true);
 		},
 
 		__getSeedsTypeSelectBox : function() {
@@ -1605,26 +1614,31 @@ qx.Class.define("desk.SegTools",
 			var correctionsList = new qx.ui.form.List();
 			var lists = [seedsList, correctionsList];
 
+			function stopPropagation (e) {e.stopPropagation();}
+
 			lists.forEach(function (list) {
-				list.setScrollbarY("off");
-				sliceView.add(list, {top : 50, left : 0});
-				list.setVisibility("excluded");
-				list.setHeight(null);
-				list.setWidth(null);
-				list.addListener("mousedown", function (e) {
-				//	e.stopPropagation();
-				});
+				list.set({scrollbarY : "off", visibility : "excluded",
+					width : null, opacity : 0.5});
+				sliceView.add(list, {top : 40, left : 0});
+				list.addListener("mousedown", stopPropagation);
+				list.addListener("mousewheel", stopPropagation);
 				list.addListener("keypress", keyPressHandler, this);
+				list.addListener("changeSelection", function () {
+					var slice = list.getSelection() && list.getSelection()[0];
+					if (slice) {
+						sliceView.setSlice(slice.getUserData("slice"));
+					}
+				}, this);
 			});
 
 			sliceView.setUserData(desk.SegTools.seedsListsString, lists);
 
 			function keyPressHandler (event) {
-				if(event.getKeyIdentifier()=="Delete") {
+				if(event.getKeyIdentifier() == "Delete") {
 					var seedsType = this.getSeedsType();
-					var list=lists[seedsType];
+					var list = lists[seedsType];
 					var selectedChild = list.getSelection()[0];
-					if (selectedChild!=null) {
+					if (selectedChild) {
 						var sliceId = selectedChild.getUserData("slice");
 
 						////Erase image on the server
@@ -1664,26 +1678,23 @@ qx.Class.define("desk.SegTools",
 
 		__addNewSeedItemToList : function ( sliceView, sliceId, seedsType ) {
 			var seedsList = sliceView.getUserData(desk.SegTools.seedsListsString)[seedsType];
-			var seeds = seedsList.getChildren();
-			var tempPos = 0;
+			var position = 0;
 
-			for(var i = 0; i < seeds.length; i++) {
-				var currentId = seeds[i].getUserData("slice");
-				if(currentId > sliceId) {
-					tempPos++;
-				}
+			if (!_.find(seedsList.getChildren(), function(seed){
+					var id = seed.getUserData("slice");
+					if (id > sliceId) position++;
+					return id == sliceId;
+				})) {
+
+				var sliceItem = new qx.ui.form.ListItem("" + sliceId);
+				sliceItem.setWidth(30);
+				sliceItem.setUserData("slice", sliceId);
+				sliceItem.addListener("mousedown", function(event) {
+					sliceView.setSlice(event.getTarget().getUserData("slice"));
+				});
+				seedsList.addAt(sliceItem, position);
+				seedsList.getUserData(desk.SegTools.seedsArrayString)[sliceId] = sliceItem;
 			}
-
-			var sliceItem = new qx.ui.form.ListItem(""+ sliceId);
-			sliceItem.setWidth(30);
-			sliceItem.setUserData("slice",sliceId);
-			sliceItem.addListener("mousedown", function(event) {
-				sliceView.setSlice(event.getTarget().getUserData("slice"));
-				event.stopPropagation();
-			});
-
-			seedsList.addAt(sliceItem, tempPos);
-			seedsList.getUserData(desk.SegTools.seedsArrayString)[sliceId] = sliceItem;
 		},
 
 		__getSeedFileName : function(sliceView, sliceId, seedType) {			
