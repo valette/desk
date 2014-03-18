@@ -77,8 +77,7 @@ qx.Class.define("desk.SegTools",
 		'</colors>'].join('\n'),
 		defaultColorsFile : null,
 		filePrefixes : ["seed","correction"],
-		seedsListsString : "seedsLists",
-		seedsArrayString : "seedsArray"
+		seedsListsString : "seedsLists"
 	},
 
 	events : {
@@ -136,13 +135,16 @@ qx.Class.define("desk.SegTools",
 			var context = canvas.getContext2d();
 			context.clearRect(0, 0, width, height);
 			var seedsType = this.getSeedsType();
-			var seedsList = sliceView.getUserData(desk.SegTools.seedsListsString)[seedsType];
-			var seedsArray = seedsList.getUserData(desk.SegTools.seedsArrayString);
+			var seedsList = sliceView.getUserData("seeds")[seedsType];
 			var sliceId = sliceView.getSlice();
 
-			if (seedsArray[sliceId] != 0) {
+			var seed = _.find(seedsList.getChildren(), function (seed) {
+				return seed.getUserData("slice") === sliceId;
+			});
+
+			if (seed) {
 				var imageLoader = new Image();
-				seedsList.setSelection([seedsArray[sliceId]]);
+				seedsList.setSelection([seed]);
 				imageLoader.onload = function(){
 					context.drawImage(imageLoader, 0, 0);
 					sliceView.fireEvent("changeDrawing");
@@ -1476,24 +1478,23 @@ qx.Class.define("desk.SegTools",
 				}
 			}
 
-			if (adjArray.length>0) {
-				xmlContent+=element('adjacencies', adjacencies)+"\n";
+			if (adjArray.length > 0) {
+				xmlContent += element('adjacencies', adjacencies) + "\n";
 			}
 
 			this.__master.getViewers().forEach( function (viewer) {
-				var seedsLists = viewer.getUserData(desk.SegTools.seedsListsString);
+				var seedsLists = viewer.getUserData("seeds");
 				var orientation = viewer.getOrientation();
 
 				for (var seedsType = 0; seedsType < 2; seedsType++) {
 					var list = seedsLists[seedsType];
 					var filePrefix = desk.SegTools.filePrefixes[seedsType];
 					var slices = list.getChildren();
-					for (var i = 0; i < slices.length; i++)
-					{
+					for (var i = 0; i < slices.length; i++) {
 						var sliceId = slices[i].getUserData("slice");
 						xmlContent += element(filePrefix,
-								this.__getSeedFileName(viewer, sliceId, seedsType), 
-								{slice: sliceId + "", orientation: orientation + ""}) + '\n';
+							this.__getSeedFileName(viewer, sliceId, seedsType), 
+							{slice: sliceId + "", orientation: orientation + ""}) + '\n';
 					}
 				}
 			}.bind(this));
@@ -1529,7 +1530,7 @@ qx.Class.define("desk.SegTools",
 				var newSeedsType=selectBox.getSelection()[0].getUserData("seedsType");
 				this.setSeedsType(newSeedsType);
 				this.__master.getViewers().forEach(function (viewer) {
-					var seedsLists = viewer.getUserData(desk.SegTools.seedsListsString);
+					var seedsLists = viewer.getUserData("seeds");
 					seedsLists[newSeedsType].setVisibility("visible");
 					seedsLists[1 - newSeedsType].setVisibility("excluded");
 					this.__reloadSeedImage(viewer);
@@ -1631,7 +1632,7 @@ qx.Class.define("desk.SegTools",
 				}, this);
 			});
 
-			sliceView.setUserData(desk.SegTools.seedsListsString, lists);
+			sliceView.setUserData("seeds", lists);
 
 			function keyPressHandler (event) {
 				if(event.getKeyIdentifier() == "Delete") {
@@ -1645,7 +1646,6 @@ qx.Class.define("desk.SegTools",
 						desk.Actions.getInstance().launchAction({action : "delete_file",
 							"file_name" : this.getSessionDirectory()+"/"+
 								this.__getSeedFileName(sliceView, sliceId, seedsType)});
-						list.getUserData("seedsArray")[sliceId] = 0;
 						list.remove(selectedChild);
 						this.__reloadSeedImage( sliceView );
 						this.__saveSeedsXML();
@@ -1662,22 +1662,14 @@ qx.Class.define("desk.SegTools",
 		__clearSeeds : function ( ) {
 			this.__master.getViewers().forEach (function (viewer) {
 				viewer.setUserData("previousSlice", viewer.getSlice());
-				var seedsLists = viewer.getUserData(desk.SegTools.seedsListsString);
-				for (var i = 0; i < 2; i++) {
-					var numberOfSlices = viewer.getFirstSlice().getNumberOfSlices();
-					var seedsArray = [];
-					for (var j = 0;j != numberOfSlices; j++) {
-						seedsArray[j] = 0;
-					}
-					seedsLists[i].removeAll();
-					seedsLists[i].setUserData(desk.SegTools.seedsArrayString, seedsArray);
-				}
+				viewer.getUserData("seeds").
+					forEach(function (list) {list.removeAll();});
 				this.__reloadSeedImage(viewer);
 			}.bind(this));
 		},
 
 		__addNewSeedItemToList : function ( sliceView, sliceId, seedsType ) {
-			var seedsList = sliceView.getUserData(desk.SegTools.seedsListsString)[seedsType];
+			var seedsList = sliceView.getUserData("seeds")[seedsType];
 			var position = 0;
 
 			if (!_.find(seedsList.getChildren(), function(seed){
@@ -1693,7 +1685,6 @@ qx.Class.define("desk.SegTools",
 					sliceView.setSlice(event.getTarget().getUserData("slice"));
 				});
 				seedsList.addAt(sliceItem, position);
-				seedsList.getUserData(desk.SegTools.seedsArrayString)[sliceId] = sliceItem;
 			}
 		},
 
