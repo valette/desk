@@ -67,7 +67,7 @@ qx.Class.define("desk.MPRContainer",
 			qx.util.DisposeUtil.destroyContainer(this.__orientationContainer);
 		}
 
-		this.applyToViewers(function (viewer) {
+		this.getViewers().forEach(function (viewer) {
 			viewer.dispose();
 		});
 
@@ -148,23 +148,6 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		/**
-		* applies the input function to all viewers
-		* @param iterator {Function} iterator to apply to viewers
-		* <pre class="javascript">
-		* example :
-		* myMPRContainer.applyToViewers(function (viewer) {
-		* 	viewer.render();
-		* });
-		* </pre>
-		* */
-		applyToViewers : function (iterator) {
-			var viewers = this.__viewers;
-			for (var i = 0; i < this.__nbUsedOrientations;i ++) {
-				iterator(viewers[i]);
-			}
-		},
-
-		/**
 		 * Returns the container of volume items
 		 * @return {qx.ui.container.Composite} Volumes container
 		 */
@@ -181,7 +164,7 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		__renderAll : function () {
-			this.applyToViewers(function (viewer) {
+			this.getViewers().forEach(function (viewer) {
 				viewer.render();
 			});
 		},
@@ -194,7 +177,7 @@ qx.Class.define("desk.MPRContainer",
                     var slice = slices[j];
                     // slice might not be loaded yet
 					if (slice) {
-						this.applyToViewers(function (viewer) {
+						this.getViewers().forEach(function (viewer) {
 							viewer.setSliceRank(slice, i);
 						});
 					}
@@ -262,7 +245,7 @@ qx.Class.define("desk.MPRContainer",
 		__onChangeCrossPosition : function (e) {
 			var sliceView = e.getTarget();
 			var position = sliceView.getCrossPosition();
-			this.applyToViewers(function (viewer) {
+			this.getViewers().forEach(function (viewer) {
 				viewer.setCrossPosition(position.i, position.j, position.k);
 			});
 		},
@@ -270,7 +253,7 @@ qx.Class.define("desk.MPRContainer",
 		__onChangeCameraZ : function (e) {
 			var sliceView = e.getTarget();
 			var z = e.getData();
-			this.applyToViewers (function (viewer) {
+			this.getViewers().forEach (function (viewer) {
 				if (viewer != sliceView) {
 					var oldZ = viewer.getCameraZ();
 					if (oldZ * z < 0) {
@@ -425,7 +408,7 @@ qx.Class.define("desk.MPRContainer",
 			anamOrButton.setUserData('flipCamera', false);
 			function changeFlipStrategy (e) {
 				var flipCamera = e.getTarget().getUserData('flipCamera');
-				this.applyToViewers(function (viewer) {
+				this.getViewers().forEach(function (viewer) {
 					viewer.applyToLinks(function () {
 						this.setOrientationChangesOperateOnCamera(flipCamera);
 					});
@@ -868,7 +851,7 @@ qx.Class.define("desk.MPRContainer",
 			}
 
 			var slices = this.getVolumeSlices(volume);
-			this.applyToViewers (function (viewer) {
+			this.getViewers().forEach (function (viewer) {
 				viewer.removeVolumes(slices);
 			});
 
@@ -998,7 +981,7 @@ qx.Class.define("desk.MPRContainer",
 			var menu = new qx.ui.menu.Menu();
 			var unLinkButton = new qx.ui.menu.Button("unlink");
 			unLinkButton.addListener("execute", function() {
-				this.applyToViewers (function (viewer) {
+				this.getViewers().forEach (function (viewer) {
 					viewer.unlink();
 				});
 			},this);

@@ -41,7 +41,7 @@ qx.Class.define("desk.SegTools",
 		this.__buildActionsContainers();
 
 		var listenersIds = [];
-		master.applyToViewers(function (viewer) {
+		master.getViewers().forEach(function (viewer) {
 			listenersIds[viewer] = viewer.addListener("changeSlice", function ( event ) {
 				this.__saveCurrentSeeds();
 				this.__reloadSeedImage( viewer );
@@ -49,7 +49,7 @@ qx.Class.define("desk.SegTools",
 		}.bind(this));
 
 		this.addListener("close", function (e) {
-			master.applyToViewers(function (viewer) {
+			master.getViewers().forEach(function (viewer) {
 				viewer.removeListenerById(listenersIds[viewer]);
 				viewer.setPaintMode(false);
 				viewer.setEraseMode(false);
@@ -175,7 +175,7 @@ qx.Class.define("desk.SegTools",
             });
 			
             this.__penSize.addListener("changeValue", function(event) {
-				this.__master.applyToViewers(function (viewer) {
+				this.__master.getViewers().forEach(function (viewer) {
 					viewer.setPaintWidth(event.getData());
 				});
 			}, this);
@@ -188,7 +188,7 @@ qx.Class.define("desk.SegTools",
 			////Create eraser on/off button
             this.__eraserButton = new qx.ui.form.ToggleButton("Eraser");
 			this.__eraserButton.addListener("changeValue", function(e) {
-				this.__master.applyToViewers(function (viewer) {
+				this.__master.getViewers().forEach(function (viewer) {
 					viewer.setEraseMode(e.getData());
 				});
 			}, this);
@@ -234,7 +234,7 @@ qx.Class.define("desk.SegTools",
             var whileDrawingDrwngOpacitySlider = new qx.ui.form.Slider();
 			whileDrawingDrwngOpacitySlider.setValue(100);
 			whileDrawingDrwngOpacitySlider.addListener("changeValue", function(event) {
-				this.__master.applyToViewers(function (viewer) {
+				this.__master.getViewers().forEach(function (viewer) {
 					viewer.setPaintOpacity(event.getData() / 100);
 				});
 			}, this);
@@ -650,7 +650,7 @@ qx.Class.define("desk.SegTools",
 					target.blue=colorSelector.getBlue();
 					target.updateWidget();
 			        colorView.setBackgroundColor(e.getData());
-					this.__master.applyToViewers(function (viewer) {
+					this.__master.getViewers().forEach(function (viewer) {
 						viewer.setPaintColor(colorSelector.getValue());
 					});
 				}
@@ -966,7 +966,7 @@ qx.Class.define("desk.SegTools",
 					}
 				}
 
-				this.__master.applyToViewers(function (viewer) {
+				this.__master.getViewers().forEach(function (viewer) {
 					viewer.setPaintColor(colorBox.getBackgroundColor());
 					viewer.setPaintMode(paint);
 					});
@@ -1076,7 +1076,7 @@ qx.Class.define("desk.SegTools",
 		loadSession : function() {
 			this.__clearSeeds();
 
-			this.__master.applyToViewers (function (viewer) {
+			this.__master.getViewers().forEach(function (viewer) {
 				viewer.setUserData("previousSlice", viewer.getSlice());
 			});
 
@@ -1098,12 +1098,12 @@ qx.Class.define("desk.SegTools",
 							} else {
 								sliceOrientation = 0;
 							}
-							this.__master.applyToViewers (function (viewer) {
+							this.__master.getViewers().forEach (function (viewer) {
 								if(sliceOrientation == viewer.getOrientation())
 									this.__addNewSeedItemToList(viewer, sliceId, k);
 							}.bind(this));
 						}
-						this.__master.applyToViewers(function (viewer) {
+						this.__master.getViewers().forEach(function (viewer) {
 							this.__reloadSeedImage( viewer );
 						}.bind(this));
 					}
@@ -1479,7 +1479,7 @@ qx.Class.define("desk.SegTools",
 				xmlContent+=element('adjacencies', adjacencies)+"\n";
 			}
 
-			this.__master.applyToViewers( function (viewer) {
+			this.__master.getViewers().forEach( function (viewer) {
 				var seedsLists = viewer.getUserData(desk.SegTools.seedsListsString);
 				var orientation = viewer.getOrientation();
 
@@ -1519,7 +1519,7 @@ qx.Class.define("desk.SegTools",
 			var updateSeedsListsVisibility = function (e) {
 				var newSeedsType=selectBox.getSelection()[0].getUserData("seedsType");
 				this.setSeedsType(newSeedsType);
-				this.__master.applyToViewers(function (viewer) {
+				this.__master.getViewers().forEach(function (viewer) {
 					var seedsLists = viewer.getUserData(desk.SegTools.seedsListsString);
 					seedsLists[newSeedsType].setVisibility("visible");
 					seedsLists[1 - newSeedsType].setVisibility("excluded");
@@ -1595,29 +1595,28 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__addSeedsListsToViews : function ( ) {
-			this.__master.applyToViewers (function (viewer) {
+			this.__master.getViewers().forEach (function (viewer) {
 				this.__addSeedsLists (viewer);
 			}.bind(this));
 		},
 
 		__addSeedsLists : function( sliceView ) {
-			// create seeds list
-			var seedsList=new qx.ui.form.List();
-			seedsList.setWidth(30);
-			seedsList.setScrollbarY("off");
-			sliceView.add(seedsList, {bottom : 0, left : 0, height : "80%"});
-			seedsList.setVisibility("excluded");
+			var seedsList = new qx.ui.form.List();
+			var correctionsList = new qx.ui.form.List();
+			var lists = [seedsList, correctionsList];
 
-			// create corrections list
-			var correctionsList=new qx.ui.form.List();
-			correctionsList.setWidth(30);
-			correctionsList.setScrollbarY("off");
-			sliceView.add(correctionsList);
-			correctionsList.setVisibility("excluded");
+			lists.forEach(function (list) {
+				list.setScrollbarY("off");
+				sliceView.add(list, {top : 50, left : 0});
+				list.setVisibility("excluded");
+				list.setHeight(null);
+				list.setWidth(null);
+				list.addListener("mousedown", function (e) {
+				//	e.stopPropagation();
+				});
+				list.addListener("keypress", keyPressHandler, this);
+			});
 
-			var lists=[];
-			lists.push(seedsList);
-			lists.push(correctionsList);
 			sliceView.setUserData(desk.SegTools.seedsListsString, lists);
 
 			function keyPressHandler (event) {
@@ -1630,18 +1629,15 @@ qx.Class.define("desk.SegTools",
 
 						////Erase image on the server
 						desk.Actions.getInstance().launchAction({action : "delete_file",
-										"file_name" : this.getSessionDirectory()+"/"+
-										this.__getSeedFileName(sliceView, sliceId, seedsType)});
-						list.getUserData("seedsArray")[sliceId]=0;
+							"file_name" : this.getSessionDirectory()+"/"+
+								this.__getSeedFileName(sliceView, sliceId, seedsType)});
+						list.getUserData("seedsArray")[sliceId] = 0;
 						list.remove(selectedChild);
 						this.__reloadSeedImage( sliceView );
 						this.__saveSeedsXML();
 					}
 				}
 			}
-
-			seedsList.addListener("keypress", keyPressHandler, this);
-			correctionsList.addListener("keypress", keyPressHandler, this);
 
 			this.addListener("close", function (e) {
 				sliceView.remove(seedsList);
@@ -1650,7 +1646,7 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__clearSeeds : function ( ) {
-			this.__master.applyToViewers (function (viewer) {
+			this.__master.getViewers().forEach (function (viewer) {
 				viewer.setUserData("previousSlice", viewer.getSlice());
 				var seedsLists = viewer.getUserData(desk.SegTools.seedsListsString);
 				for (var i = 0; i < 2; i++) {
@@ -1671,8 +1667,7 @@ qx.Class.define("desk.SegTools",
 			var seeds = seedsList.getChildren();
 			var tempPos = 0;
 
-			for(var i=0; i<seeds.length; i++)
-			{
+			for(var i = 0; i < seeds.length; i++) {
 				var currentId = seeds[i].getUserData("slice");
 				if(currentId > sliceId) {
 					tempPos++;
@@ -1680,9 +1675,11 @@ qx.Class.define("desk.SegTools",
 			}
 
 			var sliceItem = new qx.ui.form.ListItem(""+ sliceId);
+			sliceItem.setWidth(30);
 			sliceItem.setUserData("slice",sliceId);
-			sliceItem.addListener("click", function(event) {
+			sliceItem.addListener("mousedown", function(event) {
 				sliceView.setSlice(event.getTarget().getUserData("slice"));
+				event.stopPropagation();
 			});
 
 			seedsList.addAt(sliceItem, tempPos);
