@@ -46,7 +46,7 @@ qx.Class.define("desk.SegTools",
 			listenersIds[viewer] = viewer.addListener("changeSlice", function ( event ) {
 				this.__saveCurrentSeeds();
 				this.__reloadSeedImage( viewer );
-			}.bind(this), viewer);
+			}, this);
 		}.bind(this));
 
 		this.addListener("close", function (e) {
@@ -1613,25 +1613,9 @@ qx.Class.define("desk.SegTools",
 			var seedsList = new qx.ui.form.List();
 			var correctionsList = new qx.ui.form.List();
 			var lists = [seedsList, correctionsList];
+			sliceView.setUserData("seeds", lists);
 
 			function stopPropagation (e) {e.stopPropagation();}
-
-			lists.forEach(function (list) {
-				list.set({scrollbarY : "off", visibility : "excluded",
-					width : null, opacity : 0.5});
-				sliceView.add(list, {top : 40, left : 0});
-				list.addListener("mousedown", stopPropagation);
-				list.addListener("mousewheel", stopPropagation);
-				list.addListener("keypress", keyPressHandler, this);
-				list.addListener("changeSelection", function () {
-					var slice = list.getSelection() && list.getSelection()[0];
-					if (slice) {
-						sliceView.setSlice(slice.getUserData("slice"));
-					}
-				}, this);
-			});
-
-			sliceView.setUserData("seeds", lists);
 
 			function keyPressHandler (event) {
 				if(event.getKeyIdentifier() == "Delete") {
@@ -1652,10 +1636,24 @@ qx.Class.define("desk.SegTools",
 				}
 			}
 
-			this.addListener("close", function (e) {
-				sliceView.remove(seedsList);
-				sliceView.remove(correctionsList);
-			});
+			lists.forEach(function (list) {
+				list.set({scrollbarY : "off", visibility : "excluded",
+					width : null, opacity : 0.5});
+				sliceView.add(list, {top : 40, left : 0});
+				list.addListener("mousedown", stopPropagation);
+				list.addListener("mousewheel", stopPropagation);
+				list.addListener("keypress", keyPressHandler, this);
+				list.addListener("changeSelection", function () {
+					var slice = list.getSelection() && list.getSelection()[0];
+					if (slice) {
+						sliceView.setSlice(slice.getUserData("slice"));
+					}
+				});
+				this.addListener("close", function (e) {
+					sliceView.remove(list);
+				});
+			}.bind(this));
+
 		},
 
 		__clearSeeds : function ( ) {
