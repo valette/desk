@@ -2,6 +2,7 @@
 * @ignore(Uint8Array)
 * @lint ignoreDeprecated(alert)
 * @lint ignoreDeprecated(confirm)
+* @ignore (async.each)
 */
 
 qx.Class.define("desk.SegTools",
@@ -1355,15 +1356,15 @@ qx.Class.define("desk.SegTools",
 					var sliceId = viewer.getUserData( "previousSlice" );
 					var seedsType = this.getSeedsType();
 
-					this.__addNewSeedItemToList ( viewer, sliceId, seedsType );
-					wasAnySeedModified = true;
+					this.__addNewSeedItemToList (viewer, sliceId, seedsType);
 
 					var parameterMap = {
 						action : "write_binary",
 						file_name : this.__getSeedFileName (viewer, sliceId, seedsType),
 						base64data : base64Img,
-						output_directory : this.getSessionDirectory()};
-						desk.Actions.getInstance().launchAction(parameterMap, callback);
+						output_directory : this.getSessionDirectory()
+					};
+					desk.Actions.getInstance().launchAction(parameterMap, callback);
 				} else {
 					callback();
 				}
