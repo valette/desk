@@ -369,7 +369,6 @@ qx.Class.define("desk.Actions",
 			if (this.isForceUpdate()) {
 				actionParameters.force_update = true;
 			}
-			var that = this;
 			var parameters = {actionFinished :false,
 				callback : callback,
 				actionParameters : actionParameters
@@ -379,16 +378,16 @@ qx.Class.define("desk.Actions",
 				if (!parameters.actionFinished) {
 					var actionItem = parameters.actionItem = new qx.ui.form.ListItem(actionParameters.action);
 					actionItem.set({decorator : "button-hover", opacity : 0.7});
-					that.__ongoingActions.add(actionItem);
+					this.__ongoingActions.add(actionItem);
 					var killButton = new qx.ui.menu.Button('kill');
 					killButton.addListener('execute', function () {
 						this.killAction(actionParameters.handle);
-					}, that);
+					}, this);
 					var menu = new qx.ui.menu.Menu();
 					menu.add(killButton);
 					actionItem.setContextMenu(menu);
 				}
-			}, 1230);
+			}.bind(this), 1230);
 			
 			var req = new qx.io.request.Xhr();
 			req.setUserData('actionDetails', parameters);
@@ -402,7 +401,7 @@ qx.Class.define("desk.Actions",
 				numberOfRetries--;
 				if (numberOfRetries>0) {
 					req = new qx.io.request.Xhr();
-					req.set({url : that.__baseActionsURL + 'actions', 
+					req.set({url : this.__baseActionsURL + 'actions', 
 						method : "POST", async : true, requestData : actionParameters});
 					req.addListener("success", this.__onSuccess, this);
 					req.addListener("error", onError, this);
@@ -427,11 +426,11 @@ qx.Class.define("desk.Actions",
 
 				var actions = this.__actions.actions;
 				this.__actionsObject = actions;
-				var that = this;
+				var self = this;
 
                function launch(e){
                     var action = new desk.Action(this.getLabel());
-					action.setOriginFileBrowser(that.__currentFileBrowser);
+					action.setOriginFileBrowser(self.__currentFileBrowser);
 					action.buildUI();
 				}
 

@@ -210,7 +210,6 @@ qx.Class.define("desk.FileBrowser",
 
 				if (confirm ('Are you sure you want to ' + actionType + ' move these files:\n' +
                         filesString + 'to :\n' + destination)) {
-                    var that = this;
                     async.each(files, function (file, callback) {
                         desk.Actions.getInstance().launchAction({
                                 action : actionType,
@@ -225,8 +224,8 @@ qx.Class.define("desk.FileBrowser",
 								directories.push(browser.__getFileDirectory(files[i]));
 							}
 							directories.push(destination);
-							that.__updateDirectories(directories);
-					});
+							this.__updateDirectories(directories);
+					}.bind(this));
 				}
 			}
 		},
@@ -367,13 +366,12 @@ qx.Class.define("desk.FileBrowser",
 				new desk.VolumeViewer(file);
 				break;
 			case "vol": 
-                            if (desk.Actions.getInstance().getAction("vol_slice") != null)
-                            {
-				new desk.VolumeViewer(file);
+				if (desk.Actions.getInstance().getAction("vol_slice") != null) {
+					new desk.VolumeViewer(file);
+				} else {
+					console.log("vol_slice action does not exist. Skipping this filetype handler.")
+				}
 				break;
-                            }
-                            else
-                                console.log("vol_slice action does not exist. Skipping this filetype handler.")
 			case "json":
 				desk.Action.CREATEFROMFILE(file);
 				break;
@@ -508,8 +506,7 @@ qx.Class.define("desk.FileBrowser",
 			}
 		},
 
-		__createDefaultStaticActions : function ()
-		{
+		__createDefaultStaticActions : function () {
 			this.__virtualTree.setContextMenuFromDataCellsOnly(true);
 			var menu = new qx.ui.menu.Menu();
 

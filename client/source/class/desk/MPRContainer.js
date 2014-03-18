@@ -570,7 +570,6 @@ qx.Class.define("desk.MPRContainer",
             label.setTextAlign("left");
 			labelcontainer.add(label, {flex : 1});
 
-			var _this = this;
 			async.each(this.__viewers,
 				function (viewer, callback) {
 					volumeSlices[viewer.getOrientation()] = viewer.addVolume(
@@ -587,13 +586,13 @@ qx.Class.define("desk.MPRContainer",
 //					updateWindowLevel();
 					volumeListItem.setUserData("loadingInProgress", false);
 					if (volumeListItem.getUserData("toDelete")) {
-						_this.removeVolume(volumeListItem);
+						this.removeVolume(volumeListItem);
 					}
-					_this.__reorderMeshes();
+					this.__reorderMeshes();
 					if (typeof callback === 'function') {
 						callback(volumeListItem);
 					}					
-				}
+				}.bind(this)
 			);
 
 			var settingsContainer = new qx.ui.container.Composite();

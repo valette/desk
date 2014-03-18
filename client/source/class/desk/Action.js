@@ -373,22 +373,21 @@ qx.Class.define("desk.Action",
 		},
 
 		__createSubdirectory : function (callback) {
-			var that = this;
 			if (!this.getOutputSubdirectory()) {
 				callback();
 			} else {
-				desk.FileSystem.exists(that.__outputDirectory + '/' +
-					that.getOutputSubdirectory(), function (exists) {
+				desk.FileSystem.exists(this.__outputDirectory + '/' +
+					this.getOutputSubdirectory(), function (exists) {
 						if (!exists) {
 							desk.Actions.getInstance().launchAction({
 									"action" : "add_subdirectory",
-									"subdirectory_name" : that.getOutputSubdirectory(),
-									"output_directory" : that.__outputDirectory},
+									"subdirectory_name" : this.getOutputSubdirectory(),
+									"output_directory" : this.__outputDirectory},
 							callback);
 						} else {
 							callback();
 						}
-				});
+				}.bind(this));
 			}
 		},
 
