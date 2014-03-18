@@ -40,14 +40,13 @@ qx.Class.define("desk.SegTools",
 
 		this.__buildActionsContainers();
 
-		var _this = this;
 		var listenersIds = [];
 		master.applyToViewers(function (viewer) {
 			listenersIds[viewer] = viewer.addListener("changeSlice", function ( event ) {
-				_this.__saveCurrentSeeds();
-				_this.__reloadSeedImage( viewer );
-			}, viewer);
-		});
+				this.__saveCurrentSeeds();
+				this.__reloadSeedImage( viewer );
+			}.bind(this), viewer);
+		}.bind(this));
 
 		this.addListener("close", function (e) {
 			master.applyToViewers(function (viewer) {
@@ -55,8 +54,7 @@ qx.Class.define("desk.SegTools",
 				viewer.setPaintMode(false);
 				viewer.setEraseMode(false);
 				var canvas = viewer.getDrawingCanvas();
-				canvas.getContext2d().clearRect(0,0,
-							canvas.getCanvasWidth(), canvas.getCanvasHeight());
+				canvas.getContext2d().clearRect(0, 0, canvas.getCanvasWidth(), canvas.getCanvasHeight());
 				viewer.fireEvent("changeDrawing");
 			});
 		});
@@ -130,14 +128,13 @@ qx.Class.define("desk.SegTools",
 		__reloadSeedImage : function (sliceView) {
 			if (this.getSessionDirectory() == null)
 				return;
-			var _this = this;
 			var canvas = sliceView.getDrawingCanvas();
 			var width = canvas.getCanvasWidth()
 			var height = canvas.getCanvasHeight()
 
 			var context = canvas.getContext2d();
 			context.clearRect(0, 0, width, height);
-			var seedsType = _this.getSeedsType();
+			var seedsType = this.getSeedsType();
 			var seedsList = sliceView.getUserData(desk.SegTools.seedsListsString)[seedsType];
 			var seedsArray = seedsList.getUserData(desk.SegTools.seedsArrayString);
 			var sliceId=sliceView.getSlice();
@@ -150,8 +147,8 @@ qx.Class.define("desk.SegTools",
 					sliceView.fireEvent("changeDrawing");
 					imageLoader.onload = 0;
 				}
-				imageLoader.src = desk.FileSystem.getFileURL(_this.getSessionDirectory()) + "/" +
-								_this.__getSeedFileName (sliceView, sliceId, seedsType) +
+				imageLoader.src = desk.FileSystem.getFileURL(this.getSessionDirectory()) + "/" +
+								this.__getSeedFileName (sliceView, sliceId, seedsType) +
 								"?nocache=" + Math.random();
 			} else {
 				seedsList.resetSelection();
@@ -359,8 +356,7 @@ qx.Class.define("desk.SegTools",
 			segmentationAction.buildUI();
 			this.__tabView.addElement('segmentation', segmentationAction.getTabView());
 
-			var medianFilteringAction = new desk.Action(
-				"volume_median_filtering", {standalone : false});
+			var medianFilteringAction = new desk.Action("volume_median_filtering", {standalone : false});
 			medianFilteringAction.setOutputSubdirectory("filtering");
 			medianFilteringAction.connect("input_volume", 
 				segmentationAction, "seg-cvtgcmultiseg.mhd");
@@ -409,7 +405,7 @@ qx.Class.define("desk.SegTools",
 				this.__startSegmentationButton.setEnabled(false);
 				meshingButton.setEnabled(false);
 				meshingAction.executeAction();
-				}, this);
+			}, this);
 			this.__bottomRightContainer.add(meshingButton);
 
 			var segmentationToken = null;
@@ -700,10 +696,8 @@ qx.Class.define("desk.SegTools",
 
 			container2.add(adjacenciesField, {flex : 2});
 
-			var _this=this;
-
-			function __updateAdjacenciesText () {
-				var adjacencies=_this.__targetColorItem.adjacencies;
+			var __updateAdjacenciesText = function () {
+				var adjacencies = this.__targetColorItem.adjacencies;
 				var children=adjacenciesField.getChildren();
 				while (children.length>0) {
 					children[0].destroy();
@@ -715,7 +709,7 @@ qx.Class.define("desk.SegTools",
 					listItem.setUserData("AdjacenciesItem", neighbour);
 					adjacenciesField.add(listItem);
 				}
-			}
+			}.bind(this)
 
 			var removeButton=new qx.ui.form.Button("Remove Selection");
 			removeButton.addListener("execute", function () {
@@ -796,11 +790,8 @@ qx.Class.define("desk.SegTools",
 			}, this);
 			depthContainer.add(meshDepth);
 
-
-
 			this.__editionWindow=window;
 
-			var _this=this;
 			this.__updateEditionWindow=function (e) {
 				var target=this.__targetColorItem;
 				if (target!=null) {
@@ -1089,13 +1080,11 @@ qx.Class.define("desk.SegTools",
 
 		loadSession : function() {
 			this.__clearSeeds();
-			var master = this.__master;
 
-			master.applyToViewers (function (viewer) {
+			this.__master.applyToViewers (function (viewer) {
 				viewer.setUserData("previousSlice", viewer.getSlice());
 			});
 
-			var _this = this;
 			desk.FileSystem.readFile(this.getSessionDirectory()+'/seeds.xml', function (err, response) {
 				if (!err) {
 					for (var k = 0; k < 2; k++) {
@@ -1114,26 +1103,26 @@ qx.Class.define("desk.SegTools",
 							} else {
 								sliceOrientation = 0;
 							}
-							master.applyToViewers (function (viewer) {
+							this.__master.applyToViewers (function (viewer) {
 								if(sliceOrientation == viewer.getOrientation())
-									_this.__addNewSeedItemToList(viewer, sliceId, k);
-							});
+									this.__addNewSeedItemToList(viewer, sliceId, k);
+							}.bind(this));
 						}
-						master.applyToViewers(function (viewer) {
-							_this.__reloadSeedImage( viewer );
-						});
+						this.__master.applyToViewers(function (viewer) {
+							this.__reloadSeedImage( viewer );
+						}.bind(this));
 					}
 					var colors = response.getElementsByTagName("color");
 					var adjacencies = response.getElementsByTagName("adjacency");
 					if (colors.length > 0) {
-						_this.__setColorsFromElements(colors, adjacencies);
+						this.__setColorsFromElements(colors, adjacencies);
 					} else {
-						_this.__loadColors();
+						this.__loadColors();
 					}
 				} else {
-					_this.__loadColors();
+					this.__loadColors();
 				}
-			});
+			}.bind(this));
 		},
 
 		__getSessionsWidget : function()
@@ -1495,7 +1484,6 @@ qx.Class.define("desk.SegTools",
 				xmlContent+=element('adjacencies', adjacencies)+"\n";
 			}
 
-			var _this=this;
 			this.__master.applyToViewers( function (viewer) {
 				var seedsLists = viewer.getUserData(desk.SegTools.seedsListsString);
 				var orientation = viewer.getOrientation();
@@ -1508,11 +1496,11 @@ qx.Class.define("desk.SegTools",
 					{
 						var sliceId = slices[i].getUserData("slice");
 						xmlContent += element(filePrefix,
-								_this.__getSeedFileName(viewer, sliceId, seedsType), 
+								this.__getSeedFileName(viewer, sliceId, seedsType), 
 								{slice: sliceId + "", orientation: orientation + ""}) + '\n';
 					}
 				}
-			});
+			}.bind(this));
 
 			var parameterMap = {
 				action : "write_binary",
@@ -1533,18 +1521,16 @@ qx.Class.define("desk.SegTools",
 			correctionsItem.setUserData("seedsType", 1);
 			selectBox.add(correctionsItem);
 
-			var _this=this;
-
-			function updateSeedsListsVisibility (e) {
+			var updateSeedsListsVisibility = function (e) {
 				var newSeedsType=selectBox.getSelection()[0].getUserData("seedsType");
-				_this.setSeedsType(newSeedsType);
-				_this.__master.applyToViewers(function (viewer) {
+				this.setSeedsType(newSeedsType);
+				this.__master.applyToViewers(function (viewer) {
 					var seedsLists = viewer.getUserData(desk.SegTools.seedsListsString);
 					seedsLists[newSeedsType].setVisibility("visible");
 					seedsLists[1 - newSeedsType].setVisibility("excluded");
-					_this.__reloadSeedImage(viewer);
-					});
-			}
+					this.__reloadSeedImage(viewer);
+				}.bind(this));
+			}.bind(this);
 
 			selectBox.addListener("changeSelection",updateSeedsListsVisibility);
 			updateSeedsListsVisibility();
@@ -1614,10 +1600,9 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__addSeedsListsToViews : function ( ) {
-			var _this=this;
 			this.__master.applyToViewers (function (viewer) {
-				_this.__addSeedsLists (viewer);
-			});
+				this.__addSeedsLists (viewer);
+			}.bind(this));
 		},
 
 		__addSeedsLists : function( sliceView ) {
@@ -1670,7 +1655,6 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__clearSeeds : function ( ) {
-			var self = this;
 			this.__master.applyToViewers (function (viewer) {
 				viewer.setUserData("previousSlice", viewer.getSlice());
 				var seedsLists = viewer.getUserData(desk.SegTools.seedsListsString);
@@ -1683,8 +1667,8 @@ qx.Class.define("desk.SegTools",
 					seedsLists[i].removeAll();
 					seedsLists[i].setUserData(desk.SegTools.seedsArrayString, seedsArray);
 				}
-				self.__reloadSeedImage(viewer);
-			});
+				this.__reloadSeedImage(viewer);
+			}.bind(this));
 		},
 
 		__addNewSeedItemToList : function ( sliceView, sliceId, seedsType ) {

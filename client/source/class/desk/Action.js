@@ -337,7 +337,6 @@ qx.Class.define("desk.Action",
 			}
 			parentActions = _.uniq(parentActions);
 
-			var self = this;
 			async.each(parentActions, 
 				function (action, callback) {
 					action.addListenerOnce("actionUpdated", function (event) {
@@ -356,21 +355,21 @@ qx.Class.define("desk.Action",
 				}
 
 				send.setLabel("Processing...");
-				var out = self.getOutputDirectory();
+				var out = this.getOutputDirectory();
 				if (out) {
 					parameterMap.output_directory = out;
 				}
 
-				if (self.__outputDirectory) {
-					if (self.__outputDirectory.substring(0,6) === "cache/") {
+				if (this.__outputDirectory) {
+					if (this.__outputDirectory.substring(0,6) === "cache/") {
 						parameterMap.output_directory = "cache/";
 					}
 				}
 
-				self.__createSubdirectory(function () {
-					self.__executeAction(parameterMap);
+				this.__createSubdirectory(function () {
+					this.__executeAction(parameterMap);
 				});
-			});
+			}.bind(this));
 		},
 
 		__createSubdirectory : function (callback) {

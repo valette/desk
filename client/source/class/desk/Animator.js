@@ -50,19 +50,18 @@ qx.Class.define("desk.Animator",
 		 */
 		animateFiles : function (files, callback, context) {
 			var viewer = this.__viewer;
-			var self = this;
 			async.map(files, function (file, callback) {
 				viewer.addFile(file, {visible : false}, function (mesh) {
 					callback(null, mesh);
 				});
 			}, function (err, results){
 				for (var i = 0; i != results.length; i++) {
-				 self.addObject(results[i], files[i]);
+				 this.addObject(results[i], files[i]);
 				}
 				if (typeof (callback) === "function") {
 					callback.apply(context);
 				}
-			});
+			}.bind(this));
 		},
 
 		/**

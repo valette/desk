@@ -104,10 +104,9 @@ qx.Class.define("desk.SceneContainer",
 
 		this.__queue= async.queue(this.__urlLoad.bind(this), 10);
 
-		var self = this;
 		this.__setData = _.throttle(function () {
-				self.__meshesTree.getDataModel().setData();
-			}, 500);
+				this.__meshesTree.getDataModel().setData();
+		}.bind(this), 500);
 
 		if (file) {
 			this.addFile(file, parameters, callback, context);
@@ -342,7 +341,6 @@ qx.Class.define("desk.SceneContainer",
 			this.__setData();
 
 			var path = desk.FileSystem.getFileDirectory(file);
-			var self = this;
 			async.each(meshes, function (mesh, callback) {
 				var meshParameters = {parent : leaf};
 				if (mesh.hasAttribute("color")) {
@@ -373,12 +371,8 @@ qx.Class.define("desk.SceneContainer",
 				} else {
 					xmlName = mesh.getAttribute("mesh");
 				}
-				self.__readFile(path + "/" + xmlName, meshParameters, callback);
-			}, function (err, result) {
-				if (typeof callback == "function") {
-					callback();
-				}
-			});
+				this.__readFile(path + "/" + xmlName, meshParameters, callback);
+			}.bind(this), callback);
 		},
 
 		/**
@@ -482,11 +476,10 @@ qx.Class.define("desk.SceneContainer",
             });
 			updateTexture.apply(this);
 
-			var self = this;
 			mesh.addEventListener("removedFromScene", function () {
 				volumeSlice.removeListenerById(listenerId);
-				self.__volumeSlices = _.without(self.__volumeSlices, mesh);
-			});
+				this.__volumeSlices = _.without(this.__volumeSlices, mesh);
+			}.bind(this));
 			this.__volumeSlices.push(mesh);
 			return mesh;
 		},
@@ -643,7 +636,6 @@ qx.Class.define("desk.SceneContainer",
 			var useWorker = true;
 			var useBuffers = true;
 
-			var self = this;
 			if (parameters.useBuffers === false) {
 				useBuffers = false;
 			}
@@ -655,11 +647,11 @@ qx.Class.define("desk.SceneContainer",
 			}
 
 			loader.load (parameters.url + "?nocache=" + parameters.mtime, function (geometry) {
-				var mesh = self.addGeometry(geometry, parameters);
+				var mesh = this.addGeometry(geometry, parameters);
 				if (typeof callback === 'function') {
 					callback(mesh);
 				}
-			}, { useWorker : useWorker, useBuffers : useBuffers});
+			}.bind(this), { useWorker : useWorker, useBuffers : useBuffers});
 		},
 
 		__getSnapshotButton : function () {
@@ -829,13 +821,12 @@ qx.Class.define("desk.SceneContainer",
 
         getSelectedMeshes : function () {
             var meshes = [];
-            var self = this;
             this.__meshesTree.getSelectedNodes().forEach(function (node) {
-                var mesh = self.__getMeshFromNode(node);
+                var mesh = this.__getMeshFromNode(node);
                 if (mesh) {
-						meshes.push(mesh);
+					meshes.push(mesh);
                 }
-			});
+			}.bind(this));
             return meshes;
         },
 

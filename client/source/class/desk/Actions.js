@@ -66,11 +66,10 @@ qx.Class.define("desk.Actions",
 			}
 		})();
 
-		var self = this;
-		function onReady() {
-			self.__ready = true;
-			self.fireEvent('changeReady');
-		}
+		var onReady = function onReady() {
+			this.__ready = true;
+			this.fireEvent('changeReady');
+		}.bind(this);
 
 		if (typeof async != "undefined") {
 			setTimeout(onReady, 10);
@@ -100,15 +99,15 @@ qx.Class.define("desk.Actions",
 		scripts.push(baseURL + 'ext/numeric-1.2.6.min.js');
 
 		desk.FileSystem.includeScripts(scripts, function () {
-			self.__actionsQueue = async.queue(self.__launchAction.bind(self), 20);
+			this.__actionsQueue = async.queue(this.__launchAction.bind(this), 20);
 			if (desk.Actions.RPC != true) {
 				setTimeout(onReady, 10);
 				return;
 			}
 
-			self.__populateActionMenu(onReady);
+			this.__populateActionMenu(onReady);
 			// hack to include qxjqplot
-		});
+		}.bind(this));
 
 	},
 

@@ -900,21 +900,19 @@ qx.Class.define("desk.SliceView",
 				controls.mouseDown(this.__interactionMode,
 					event.getDocumentLeft() - origin.left,
 					event.getDocumentTop() - origin.top);
-			}
-			else if ((event.isMiddlePressed())||(event.isShiftPressed())) {
+			} else if ((event.isMiddlePressed())||(event.isShiftPressed())) {
 				this.__interactionMode = 2;
 				origin = this.getContentLocation();
 				controls.mouseDown(this.__interactionMode,
 					event.getDocumentLeft()-origin.left,
 					event.getDocumentTop()-origin.top);
-			}
-			else if (this.isPaintMode()) {
+			} else if (this.isPaintMode()) {
 				this.__interactionMode = 3;
 				this.__saveDrawingToUndoStack();
-				position=this.getPositionOnSlice(event);
+				position = this.getPositionOnSlice(event);
 				var context = this.__drawingCanvas.getContext2d();
-				var i=position.i + 0.5;
-				var j=position.j + 0.5;
+				var i = position.i + 0.5;
+				var j = position.j + 0.5;
 				var paintColor = this.__paintColor;
 				width = this.__paintWidth;
 				context.lineWidth = 0;
@@ -930,6 +928,7 @@ qx.Class.define("desk.SliceView",
 				context.moveTo(i, j);
 				context.closePath();
 				context.stroke();
+				this.__drawingCanvasModified = true;
 				this.fireEvent("changeDrawing");
 			} else if (this.isEraseMode()) {
 				this.__interactionMode = 4;
@@ -964,7 +963,6 @@ qx.Class.define("desk.SliceView",
 		__onMouseMove : function (event) {
 			this.__viewOn = true;
 			var controls = this.getControls();
-			var self = this;
 			if (this.__rightContainer.getVisibility() === "hidden") {
 				this.__directionOverlays[3].setLayoutProperties({right: 32, top: "45%"});
 				this.__rightContainer.setVisibility("visible");

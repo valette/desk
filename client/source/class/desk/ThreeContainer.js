@@ -208,8 +208,7 @@ qx.Class.define("desk.ThreeContainer",
 			}
 			if (this.__renderingTriggered) return;
 			this.__renderingTriggered = true;
-			var self = this;
-			requestAnimationFrame(function () {self.__render()});
+			requestAnimationFrame(this.__render.bind(this));
 		},
 
 		__renderingTriggered : null,
