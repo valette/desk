@@ -913,9 +913,8 @@ qx.Class.define("desk.SegTools",
 		__labelFocusedBorder : null,
 
 		__addColorItem : function(label, labelName, red, green, blue,
-					meshRed, meshGreen, meshBlue, opacity, depth)
-        {
-		////Function creates one label box
+					meshRed, meshGreen, meshBlue, opacity, depth) {
+			////Function creates one label box
 			var unfocusedBorder = this.__labelUnfocusedBorder;
             var focusedBorder = this.__labelFocusedBorder;
 			var boxWidth = 80;
@@ -942,14 +941,12 @@ qx.Class.define("desk.SegTools",
 				}
 			}, this);
 
-			labelBox.addListener("click", function(e)
-			{
+			labelBox.addListener("click", function(e) {
 				var paint = true;
 				if (this.__selectedLabel === labelBox) {
 					paint = false;
 					this.__selectedLabel = null;
-				}
-				else {
+				} else {
 					this.__selectedLabel = labelBox;
 					this.__eraserButton.setValue(false);
 					paint = true;
@@ -960,13 +957,11 @@ qx.Class.define("desk.SegTools",
 				}
 
 				var children = this.__colorsContainer.getChildren();
-				for(var k = 0;  k < children.length; k++)
-				{
+				for(var k = 0;  k < children.length; k++) {
 					var label = children[k];
 					if(label === this.__selectedLabel) {
 						label.setDecorator(focusedBorder);
-					}
-					else {
+					} else {
 						label.setDecorator(unfocusedBorder);
 					}
 				}
@@ -983,23 +978,22 @@ qx.Class.define("desk.SegTools",
 				e.addType("segmentationLabel");
 			}, this);
 			labelBox.addListener("droprequest", function(e) {
-					var type = e.getCurrentType();
-					switch (type)
-					{
-					case "segmentationLabel":
-						e.addData(type, labelAttributes);
-						break;
-					default :
-						alert ("type "+type+"not supported for labels drag and drop");
-					}
+				var type = e.getCurrentType();
+				switch (type)
+				{
+				case "segmentationLabel":
+					e.addData(type, labelAttributes);
+					break;
+				default :
+					alert ("type "+type+"not supported for labels drag and drop");
+				}
 			}, this);
-
 
 			var boxLabel = new qx.ui.basic.Label().set({alignX:"left"});
 			labelBox.add(boxLabel);
 			labelBox.add(colorBox);
 
-			var labelAttributes={
+			var labelAttributes = {
 				red : red,
 				green : green,
 				blue : blue,
@@ -1020,7 +1014,8 @@ qx.Class.define("desk.SegTools",
 															labelAttributes.blue]));
 					boxLabel.setValue(" "+labelAttributes.label + " : " + labelAttributes.labelName);
 					
-				}};
+				}
+			};
 			labelAttributes.updateWidget();
 
 			this.__labels.push(labelAttributes);
@@ -1035,7 +1030,7 @@ qx.Class.define("desk.SegTools",
 				this.__editionWindow.open();
 				this.__targetColorItem=labelAttributes;
 				this.__updateEditionWindow();
-				},this);
+			},this);
 			menu.add(editButton);
 
 			var reorderButton = new qx.ui.menu.Button("reorder labels");
@@ -1043,28 +1038,28 @@ qx.Class.define("desk.SegTools",
 			menu.add(reorderButton);
 
 			var addButton = new qx.ui.menu.Button("add new label");
-			addButton.addListener("execute", function (){
-				var colors=this.__labels;
-				var maxLabel=0;
-				for (var i=0;i<colors.length;i++) {
-					if (colors[i].label>maxLabel) {
-						maxLabel=colors[i].label;
+			addButton.addListener("execute", function () {
+				var colors = this.__labels;
+				var maxLabel = 0;
+				for (var i = 0; i < colors.length; i++) {
+					if (colors[i].label > maxLabel) {
+						maxLabel = colors[i].label;
 					}
 				}
-				this.__addColorItem (maxLabel+1, "edit me", 100, 100, 100,
-								100, 100, 100, 1, 0)
+				this.__addColorItem (maxLabel + 1, "edit_me", 100, 100, 100,
+					100, 100, 100, 1, 0)
 				this.__rebuildLabelsList();
-				},this);
+			}, this);
 			menu.add(addButton);
 
 			var removeButton = new qx.ui.menu.Button("remove");
-			removeButton.addListener("execute", function (){
+			removeButton.addListener("execute", function () {
 				this.__deleteColorItem(labelAttributes);
-				},this);
+			},this);
 			menu.add(removeButton);
 			labelBox.setContextMenu(menu);
 
-			labelAttributes.dispose=function () {
+			labelAttributes.dispose = function () {
 				labelBox.destroy();
 				unfocusedBorder.dispose();
 				focusedBorder.dispose();
