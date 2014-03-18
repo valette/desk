@@ -368,7 +368,7 @@ qx.Class.define("desk.Action",
 
 				this.__createSubdirectory(function () {
 					this.__executeAction(parameterMap);
-				});
+				}.bind(this));
 			}.bind(this));
 		},
 
