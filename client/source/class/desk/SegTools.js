@@ -168,7 +168,7 @@ qx.Class.define("desk.SegTools",
 
 			var bRCL=new qx.ui.layout.HBox();
 			bRCL.setSpacing(spacing);
-			this.__bottomRightContainer= new qx.ui.container.Composite(bRCL);
+			this.__bottomRightContainer = new qx.ui.container.Composite(bRCL);
 
 			////Create pen size chose widget
             this.__penSize = new qx.ui.form.Spinner().set({
@@ -552,8 +552,7 @@ qx.Class.define("desk.SegTools",
 					this.__setColorsFromElements(xmlDoc.getElementsByTagName("color"),
 								xmlDoc.getElementsByTagName("adjacency"));
 				}
-			}
-			else {
+			} else {
 				desk.FileSystem.readFile(file, function (err, result) {
 					this.__setColorsFromElements(result.getElementsByTagName("color"),
 									result.getElementsByTagName("adjacency"));
