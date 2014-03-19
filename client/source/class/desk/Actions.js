@@ -106,7 +106,6 @@ qx.Class.define("desk.Actions",
 			}
 
 			this.__populateActionMenu(onReady);
-			// hack to include qxjqplot
 		}.bind(this));
 
 	},
@@ -131,12 +130,16 @@ qx.Class.define("desk.Actions",
 
 		__createActionsMenu : function () {
 			var menu = new qx.ui.menu.Menu();
-			var forceButton = new qx.ui.menu.CheckBox("Force Update");
+			var forceButton = new qx.ui.menu.CheckBox("Disable cache");
+			forceButton.setBlockToolTip(false);
+			forceButton.setToolTipText("When active, this options disables actions caching");
 			forceButton.bind('value', this, 'forceUpdate');
 			this.bind('forceUpdate', forceButton, 'value');
 			menu.add(forceButton);
 
-			var reloadButton = new qx.ui.menu.Button('reset');
+			var reloadButton = new qx.ui.menu.Button('Reload Actions');
+			reloadButton.setBlockToolTip(false);
+			reloadButton.setToolTipText("Rebuild actions list on the server");
 			reloadButton.addListener('execute', function () {
 				var req = new qx.io.request.Xhr();
 				req.setUrl(this.__baseActionsURL + 'reset');
@@ -149,7 +152,9 @@ qx.Class.define("desk.Actions",
 			}, this);
 			menu.add(reloadButton);
 
-			var passwordButton = new qx.ui.menu.Button('change password');
+			var passwordButton = new qx.ui.menu.Button('Change password');
+			passwordButton.setBlockToolTip(false);
+			passwordButton.setToolTipText("To change your password");
 			passwordButton.addListener('execute', function () {
 				var password = prompt('Enter new password (more than 4 letters)');
 				var req = new qx.io.request.Xhr(desk.FileSystem.getActionURL('password'));
@@ -164,12 +169,12 @@ qx.Class.define("desk.Actions",
 					}
 					req.dispose();
 				}, this);
-				// Send request
 				req.send();
 			}, this);
 			menu.add(passwordButton);
 
 			var button = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png", menu);
+			button.setToolTipText("Configuration");
 
 			qx.core.Init.getApplication().getRoot().add(button, {top : 0, right : 0});
 
@@ -359,16 +364,13 @@ qx.Class.define("desk.Actions",
 				uiItem.dispose();
 			}
 			var callback = parameters.callback;
-			if (typeof callback === 'function') {
-					callback(response);
-			}
+			if (typeof callback === 'function') callback(response);
 			req.dispose();
 		},
 
 		__launchAction : function (actionParameters, callback) {
-			if (this.isForceUpdate()) {
-				actionParameters.force_update = true;
-			}
+			if (this.isForceUpdate()) actionParameters.force_update = true;
+
 			var parameters = {actionFinished :false,
 				callback : callback,
 				actionParameters : actionParameters
@@ -473,7 +475,6 @@ qx.Class.define("desk.Actions",
 						var actionName = libActions[i];
 						var button = new qx.ui.menu.Button(actionName);
 						var description = actions[actionName].description;
-						// add tooltip when action description exists
 						if (description) {
 							button.setBlockToolTip(false);
 							button.setToolTipText(description);
@@ -484,9 +485,7 @@ qx.Class.define("desk.Actions",
 					this.__actionMenu.add(menubutton);
 				}
 
-				if (typeof callback === "function") {
-					callback();
-				}
+				if (typeof callback === "function") callback();
 			}, this);
 		}
 	}
