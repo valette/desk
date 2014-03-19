@@ -160,7 +160,6 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__buildActionsContainers : function() {	
-			var volFile = this.__file;
 			var spacing = 5;
 			var tRCL = new qx.ui.layout.HBox();
 			tRCL.setSpacing(spacing);
@@ -200,7 +199,7 @@ qx.Class.define("desk.SegTools",
 			////Create labels zone
 			var paintPage = new qx.ui.tabview.Page("paint");
 			var paintPageLayout = new qx.ui.layout.VBox();
-			paintPageLayout.setSpacing(5);
+			paintPageLayout.setSpacing(spacing);
             paintPage.setLayout(paintPageLayout);
 			paintPage.add(this.__topRightContainer);
 
@@ -1055,8 +1054,6 @@ qx.Class.define("desk.SegTools",
 
 			labelAttributes.dispose = function () {
 				labelBox.destroy();
-				unfocusedBorder.dispose();
-				focusedBorder.dispose();
 				labelLayout.dispose();
 				colorBox.destroy();
 				boxLabel.destroy();
@@ -1114,8 +1111,7 @@ qx.Class.define("desk.SegTools",
 			}.bind(this));
 		},
 
-		__getSessionsWidget : function()
-		{	
+		__getSessionsWidget : function() {	
 			var tools = this;
 			var volFile = this.__file;
 			var fileSystem = desk.FileSystem.getInstance();
