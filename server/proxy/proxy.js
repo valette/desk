@@ -12,6 +12,9 @@ var	port      = 80,
 
 var 	defaultRoutes,
 	routesFile = __dirname + '/routes.json',
+	keyFile    = __dirname + '/privatekey.pem',
+	certFile   = __dirname + '/certificate.pem',
+	caFile     = __dirname + '/chain.pem',
 	httpAllowed;
 
 if (cluster.isMaster) {
@@ -26,21 +29,38 @@ if (cluster.isMaster) {
 
 var proxy = new httpProxy.RoutingProxy({router : {}});
 
+var ca = [];
+if (fs.existsSync(caFile)) {
+	var chain = fs.readFileSync (__dirname + '/chain.pem', 'utf8').split ("\n");
+	var cert = [];
+	chain.forEach(function (line) {
+		if (line.length === 0) return;
+
+		cert.push(line);
+
+		if (line.match(/-END CERTIFICATE-/)) {
+			ca.push (cert.join("\n"));
+			cert = [];
+		}
+	});
+}
+
 var proxyServer = https.createServer({
-	key: fs.readFileSync(__dirname+'/privatekey.pem', 'utf8'),
-	cert: fs.readFileSync(__dirname+'/certificate.pem', 'utf8')
-}, performRequest);
+	key: fs.readFileSync(keyFile, 'utf8'),
+	cert: fs.readFileSync(certFile, 'utf8'),
+	ca : ca
+}, processRequest);
 
 var server = http.createServer(function (req, res) {
 	if (httpAllowed[req.headers.host]) {
-		performRequest(req, res);
+		processRequest(req, res);
 	} else {
 		res.writeHead(301, {Location: 'https://' + req.headers.host + req.url});
 		res.end();
 	}
 });
 
-function  performRequest (req, res) {
+function  processRequest (req, res) {
 	req.socket.setTimeout(36000000);
 	if (req.url == "/") {
 		res.writeHead(301, {Location: defaultRoutes[req.headers.host]});
