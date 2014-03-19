@@ -50,19 +50,18 @@ qx.Class.define("desk.Animator",
 		 */
 		animateFiles : function (files, callback, context) {
 			var viewer = this.__viewer;
-			var self = this;
 			async.map(files, function (file, callback) {
 				viewer.addFile(file, {visible : false}, function (mesh) {
 					callback(null, mesh);
 				});
 			}, function (err, results){
 				for (var i = 0; i != results.length; i++) {
-				 self.addObject(results[i], files[i]);
+				 this.addObject(results[i], files[i]);
 				}
 				if (typeof (callback) === "function") {
 					callback.apply(context);
 				}
-			});
+			}.bind(this));
 		},
 
 		/**
@@ -89,23 +88,22 @@ qx.Class.define("desk.Animator",
 			}
 			this.__animate = true;
 
-			var that = this;
-			function animate () {
-				that.__index = (that.__index +1 )% numberOfObjects;
-				that.__showCurrentFrame();
+			var animate  = function () {
+				this.__index = (this.__index +1 )% numberOfObjects;
+				this.__showCurrentFrame();
 
+				if (this.__snapshotCheckBox.getValue()) {
+					setTimeout(snapshot, this.getRefreshTime() / 3);
+				}
+				if (this.__animate) {
+					setTimeout(animate, this.getRefreshTime());
+				}
+			}.bind(this);
 
-				if (that.__snapshotCheckBox.getValue()) {
-					setTimeout(snapshot, that.getRefreshTime()/3);
-				}
-				if (that.__animate) {
-					setTimeout(animate, that.getRefreshTime());
-				}
-			}
 			animate();
-			function snapshot() {
-				that.__viewer.snapshot();
-			}
+			var snapshot = function () {
+				this.__viewer.snapshot();
+			}.bind(this);
 		},
 
 		__showCurrentFrame : function () {

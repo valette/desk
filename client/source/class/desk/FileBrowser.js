@@ -137,14 +137,13 @@ qx.Class.define("desk.FileBrowser",
 			});
 
 			filterBox.add(resetButton);
-			var self = this;
 			dataModel.setFilter(function(node) {
-				if (self.__isNodeLeaf(node)) {
+				if (this.__isNodeLeaf(node)) {
 					var label = node.label;
 					return label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1;
 				}
 				return true;
-			});
+			}.bind(this));
 			if(this.__standAlone) {
 				this.add(filterBox);
 			}
@@ -211,7 +210,6 @@ qx.Class.define("desk.FileBrowser",
 
 				if (confirm ('Are you sure you want to ' + actionType + ' move these files:\n' +
                         filesString + 'to :\n' + destination)) {
-                    var that = this;
                     async.each(files, function (file, callback) {
                         desk.Actions.getInstance().launchAction({
                                 action : actionType,
@@ -226,8 +224,8 @@ qx.Class.define("desk.FileBrowser",
 								directories.push(browser.__getFileDirectory(files[i]));
 							}
 							directories.push(destination);
-							that.__updateDirectories(directories);
-					});
+							this.__updateDirectories(directories);
+					}.bind(this));
 				}
 			}
 		},
@@ -259,7 +257,6 @@ qx.Class.define("desk.FileBrowser",
             var permissions = settings.permissions;
             var dirs = Object.keys(dataDirs);
             dirs.sort();
-            var self = this;
             dirs.forEach(function (dir) {
                 if ((dir === "cache") || 
 					((permissions === 0) && (dir ==="actions"))) {
@@ -269,7 +266,7 @@ qx.Class.define("desk.FileBrowser",
                 var button = new qx.ui.form.Button(dir);
                 button.addListener("execute", function () {
 					this.updateRoot(dir);
-				}, self);
+				}, this);
                 container.add(button, {flex : 1});
                 var menu = new qx.ui.menu.Menu();
                 var openButton = new qx.ui.menu.Button('open in new window');
@@ -279,7 +276,7 @@ qx.Class.define("desk.FileBrowser",
 				})
 				menu.add(openButton);
 				button.setContextMenu(menu);
-            });
+            }.bind(this));
             return container;
 		},
 
@@ -369,13 +366,12 @@ qx.Class.define("desk.FileBrowser",
 				new desk.VolumeViewer(file);
 				break;
 			case "vol": 
-                            if (desk.Actions.getInstance().getAction("vol_slice") != null)
-                            {
-				new desk.VolumeViewer(file);
+				if (desk.Actions.getInstance().getAction("vol_slice") != null) {
+					new desk.VolumeViewer(file);
+				} else {
+					console.log("vol_slice action does not exist. Skipping this filetype handler.")
+				}
 				break;
-                            }
-                            else
-                                console.log("vol_slice action does not exist. Skipping this filetype handler.")
 			case "json":
 				desk.Action.CREATEFROMFILE(file);
 				break;
@@ -417,11 +413,10 @@ qx.Class.define("desk.FileBrowser",
 				nodeId = node.parentNodeId;
 			}
 			var uploader = new desk.Uploader(this.__getNodeFile(nodeId));
-			var self = this;
 			uploader.addListener("upload",
 				_.throttle(function () {
-					self.__expandDirectoryListing(nodeId);
-				}, 2000)
+					this.__expandDirectoryListing(nodeId);
+				}.bind(this), 2000)
 			);
 		},
 
@@ -452,28 +447,27 @@ qx.Class.define("desk.FileBrowser",
 				message +=  file + '\n';
 			}
 			if (confirm(message)) {
-				var self = this;
 				async.each(nodes, function (node, callback) {
-					var file = self.__getNodeFile(node.nodeId);
-					if (self.__isNodeLeaf(node)) {
-						self.__actions.launchAction({
+					var file = this.__getNodeFile(node.nodeId);
+					if (this.__isNodeLeaf(node)) {
+						this.__actions.launchAction({
 							action : 'delete_file',
 							file_name : file},
 							function () {
 								callback(null);
 						});
 					} else {
-						self.__actions.launchAction({
+						this.__actions.launchAction({
 							action : 'delete_directory',
 							directory : file},
 							function () {
 								callback(null);
 						});
 					}
-				}, function (err) {
-					self.__updateDirectories(files);
-					self.__virtualTree.resetSelection();
-				});
+				}.bind(this), function (err) {
+					this.__updateDirectories(files);
+					this.__virtualTree.resetSelection();
+				}.bind(this));
 			}
 		},
 
@@ -497,13 +491,12 @@ qx.Class.define("desk.FileBrowser",
 			var file = this.__getNodeFile(node.nodeId);
 			var baseName = prompt('enter new file name : ', "newFile");
 			if (baseName !== null) {
-				var self = this;
 				desk.FileSystem.writeFile(
 					desk.FileSystem.getFileDirectory(file) + baseName,
 					'',
 					function () {
-						self.__expandDirectoryListing(node.parentNodeId);
-				});
+						this.__expandDirectoryListing(node.parentNodeId);
+				}.bind(this));
 			}
 		},
 
@@ -513,8 +506,7 @@ qx.Class.define("desk.FileBrowser",
 			}
 		},
 
-		__createDefaultStaticActions : function ()
-		{
+		__createDefaultStaticActions : function () {
 			this.__virtualTree.setContextMenuFromDataCellsOnly(true);
 			var menu = new qx.ui.menu.Menu();
 

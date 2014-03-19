@@ -499,10 +499,9 @@ qx.Class.define("desk.VolumeSlice",
 //			var thresholdValue=200.0;
 //			material.baseShader.extraUniforms.push({name : "thresholdlow", type: "f", value: thresholdValue });
 //			this.updateMaterial(material);
-			var self = this;
 			material.addEventListener('dispose', function () {
-				self.__materials = _.without(self.__materials, material);
-			});
+				this.__materials = _.without(this.__materials, material);
+			}, this);
 			return material;
 		},
 
@@ -720,29 +719,27 @@ qx.Class.define("desk.VolumeSlice",
 				this.__updateImage();
 			}, this);
 
-			var _this = this;
-
 			this.__image.onload = function() {
 				clearTimeout(this.__timeOut);
-				_this.__updateInProgress = false;
-				var materials = _this.__materials;
+				this.__updateInProgress = false;
+				var materials = this.__materials;
 				for (var i = 0; i < materials.length; i++){
 					materials[i].uniforms.texture.value.needsUpdate = true;
 				}
-				_this.fireEvent("changeImage");
-			};
+				this.fireEvent("changeImage");
+			}.bind(this);
 
 			this.__image.onerror = function() {
-				_this.__updateTriggered = true;
-				_this.__updateInProgress = false;
-				_this.__updateImage();
-			};
+				this.__updateTriggered = true;
+				this.__updateInProgress = false;
+				this.__updateImage();
+			}.bind(this);
 
 			this.__image.onabort = function() {
-				_this.__updateTriggered = true;
-				_this.__updateInProgress = false;
-				_this.__updateImage();
-			};
+				this.__updateTriggered = true;
+				this.__updateInProgress = false;
+				this.__updateImage();
+			}.bind(this);
 		},
 
 		__timeOut : null,
@@ -753,15 +750,11 @@ qx.Class.define("desk.VolumeSlice",
 				return;
 			}
 			if (this.__updateTriggered) {
-				this.__timeOut = setTimeout(timeOut, 5000);
+				this.__timeOut = setTimeout(function () {
+					this.__updateInProgress = false;
+					this.__updateImage();
+				}.bind(this), 5000);
 				this.__reallyUpdateImage();
-			}
-
-			var _this = this;
-			function timeOut () {
-				_this.__updateInProgress = false;
-				_this.__updateImage();
-				
 			}
 		},
 

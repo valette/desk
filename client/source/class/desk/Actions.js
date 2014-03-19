@@ -5,6 +5,7 @@
  * @asset(desk/desk.png)
  * @asset(desk/desk.png)
  * @asset(qx/icon/${qx.icontheme}/16/categories/system.png) 
+ * @ignore (async)
  * @ignore (async.queue)
  * @lint ignoreDeprecated (alert)
  * @require(desk.LogContainer)
@@ -29,7 +30,9 @@ qx.Class.define("desk.Actions",
 			} else {
 				actions.addListenerOnce("changeReady", callback , context);
 			}
-		}
+		},
+
+		RPC : true
 	},
 
 	/**
@@ -40,13 +43,38 @@ qx.Class.define("desk.Actions",
 	construct : function() {
 		this.base(arguments);
 
+		qx.Class.include(qx.ui.treevirtual.TreeVirtual, qx.ui.treevirtual.MNode);
+
 		// determine base URLs for RPC
 		var baseURL = desk.FileSystem.getInstance().getBaseURL();
 		this.__baseActionsURL = baseURL + 'rpc/';
 
-		this.__ongoingActions = new qx.ui.container.Composite(new qx.ui.layout.VBox());
-		this.__ongoingActions.set ({width : 200, zIndex : 1000000,
-			decorator : "statusbar", backgroundColor : "transparent"});
+		// performance.now polyfill
+		(function(){
+			// prepare base perf object
+			if (typeof window.performance === 'undefined') {
+				window.performance = {};
+			}
+			if (!window.performance.now) {
+				var nowOffset = Date.now();
+				if (performance.timing && performance.timing.navigationStart){
+					nowOffset = performance.timing.navigationStart;
+				}
+				window.performance.now = function now(){
+					return Date.now() - nowOffset;
+				};
+			}
+		})();
+
+		var onReady = function onReady() {
+			this.__ready = true;
+			this.fireEvent('changeReady');
+		}.bind(this);
+
+		if (typeof async != "undefined") {
+			setTimeout(onReady, 10);
+			return;
+		}
 
 		// load external three.js files
 		var threeURL = baseURL + 'ext/three.js/';
@@ -70,34 +98,16 @@ qx.Class.define("desk.Actions",
 		scripts.push(baseURL + 'ext/kdTree-min.js');
 		scripts.push(baseURL + 'ext/numeric-1.2.6.min.js');
 
-
-		var self = this;
 		desk.FileSystem.includeScripts(scripts, function () {
-			self.__actionsQueue = async.queue(self.__launchAction.bind(self), 20);
-			self.__populateActionMenu(function () {
-				self.__ready = true;
-				self.fireEvent('changeReady');
-			});
-		});
-		// hack to include qxjqplot
-		new qxjqplot.Plot();
-
-		// performance.now polyfill
-		(function(){
-		   // prepare base perf object
-		  if (typeof window.performance === 'undefined') {
-			  window.performance = {};
-		  }
-		   if (!window.performance.now){
-			var nowOffset = Date.now();
-			if (performance.timing && performance.timing.navigationStart){
-			  nowOffset = performance.timing.navigationStart;
+			this.__actionsQueue = async.queue(this.__launchAction.bind(this), 20);
+			if (desk.Actions.RPC != true) {
+				setTimeout(onReady, 10);
+				return;
 			}
-			window.performance.now = function now(){
-			  return Date.now() - nowOffset;
-			};
-		  }
-		})();
+
+			this.__populateActionMenu(onReady);
+		}.bind(this));
+
 	},
 
 	properties : {
@@ -120,12 +130,16 @@ qx.Class.define("desk.Actions",
 
 		__createActionsMenu : function () {
 			var menu = new qx.ui.menu.Menu();
-			var forceButton = new qx.ui.menu.CheckBox("Force Update");
+			var forceButton = new qx.ui.menu.CheckBox("Disable cache");
+			forceButton.setBlockToolTip(false);
+			forceButton.setToolTipText("When active, this options disables actions caching");
 			forceButton.bind('value', this, 'forceUpdate');
 			this.bind('forceUpdate', forceButton, 'value');
 			menu.add(forceButton);
 
-			var reloadButton = new qx.ui.menu.Button('reset');
+			var reloadButton = new qx.ui.menu.Button('Reload Actions');
+			reloadButton.setBlockToolTip(false);
+			reloadButton.setToolTipText("Rebuild actions list on the server");
 			reloadButton.addListener('execute', function () {
 				var req = new qx.io.request.Xhr();
 				req.setUrl(this.__baseActionsURL + 'reset');
@@ -138,7 +152,9 @@ qx.Class.define("desk.Actions",
 			}, this);
 			menu.add(reloadButton);
 
-			var passwordButton = new qx.ui.menu.Button('change password');
+			var passwordButton = new qx.ui.menu.Button('Change password');
+			passwordButton.setBlockToolTip(false);
+			passwordButton.setToolTipText("To change your password");
 			passwordButton.addListener('execute', function () {
 				var password = prompt('Enter new password (more than 4 letters)');
 				var req = new qx.io.request.Xhr(desk.FileSystem.getActionURL('password'));
@@ -153,12 +169,12 @@ qx.Class.define("desk.Actions",
 					}
 					req.dispose();
 				}, this);
-				// Send request
 				req.send();
 			}, this);
 			menu.add(passwordButton);
 
 			var button = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png", menu);
+			button.setToolTipText("Configuration");
 
 			qx.core.Init.getApplication().getRoot().add(button, {top : 0, right : 0});
 
@@ -249,6 +265,9 @@ qx.Class.define("desk.Actions",
 		* builds the actions UI
 		*/
 		buildUI : function () {
+			this.__ongoingActions = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+			this.__ongoingActions.set ({width : 200, zIndex : 1000000,
+				decorator : "statusbar", backgroundColor : "transparent"});
 			qx.core.Init.getApplication().getRoot().add(this.__ongoingActions, {top : 0, right : 100});
 		},
 
@@ -322,15 +341,20 @@ qx.Class.define("desk.Actions",
 			if (response.error) {
 				var err = response.error;
 				var message = "error for action " + parameters.actionParameters.action + ": \n";
+				var found = false;
 				if (err.signal) {
 					message += "signal : " + err.signal + "\n";
+					found = true;
 				}
 				if (err.code) {
 					message += "code : " + err.code + "\n";
+					found = true;
 				}
 				if (response.stderr) {
 					message += "stderr : " + response.stderr + "\n";
+					found = true;
 				}
+				if (!found)	message += err;
 				alert (message);
 			}
 
@@ -340,17 +364,13 @@ qx.Class.define("desk.Actions",
 				uiItem.dispose();
 			}
 			var callback = parameters.callback;
-			if (typeof callback === 'function') {
-					callback(response);
-			}
+			if (typeof callback === 'function') callback(response);
 			req.dispose();
 		},
 
 		__launchAction : function (actionParameters, callback) {
-			if (this.isForceUpdate()) {
-				actionParameters.force_update = true;
-			}
-			var that = this;
+			if (this.isForceUpdate()) actionParameters.force_update = true;
+
 			var parameters = {actionFinished :false,
 				callback : callback,
 				actionParameters : actionParameters
@@ -360,16 +380,16 @@ qx.Class.define("desk.Actions",
 				if (!parameters.actionFinished) {
 					var actionItem = parameters.actionItem = new qx.ui.form.ListItem(actionParameters.action);
 					actionItem.set({decorator : "button-hover", opacity : 0.7});
-					that.__ongoingActions.add(actionItem);
+					this.__ongoingActions.add(actionItem);
 					var killButton = new qx.ui.menu.Button('kill');
 					killButton.addListener('execute', function () {
 						this.killAction(actionParameters.handle);
-					}, that);
+					}, this);
 					var menu = new qx.ui.menu.Menu();
 					menu.add(killButton);
 					actionItem.setContextMenu(menu);
 				}
-			}, 1230);
+			}.bind(this), 1230);
 			
 			var req = new qx.io.request.Xhr();
 			req.setUserData('actionDetails', parameters);
@@ -383,7 +403,7 @@ qx.Class.define("desk.Actions",
 				numberOfRetries--;
 				if (numberOfRetries>0) {
 					req = new qx.io.request.Xhr();
-					req.set({url : that.__baseActionsURL + 'actions', 
+					req.set({url : this.__baseActionsURL + 'actions', 
 						method : "POST", async : true, requestData : actionParameters});
 					req.addListener("success", this.__onSuccess, this);
 					req.addListener("error", onError, this);
@@ -408,11 +428,11 @@ qx.Class.define("desk.Actions",
 
 				var actions = this.__actions.actions;
 				this.__actionsObject = actions;
-				var that = this;
+				var self = this;
 
                function launch(e){
                     var action = new desk.Action(this.getLabel());
-					action.setOriginFileBrowser(that.__currentFileBrowser);
+					action.setOriginFileBrowser(self.__currentFileBrowser);
 					action.buildUI();
 				}
 
@@ -455,7 +475,6 @@ qx.Class.define("desk.Actions",
 						var actionName = libActions[i];
 						var button = new qx.ui.menu.Button(actionName);
 						var description = actions[actionName].description;
-						// add tooltip when action description exists
 						if (description) {
 							button.setBlockToolTip(false);
 							button.setToolTipText(description);
@@ -466,9 +485,7 @@ qx.Class.define("desk.Actions",
 					this.__actionMenu.add(menubutton);
 				}
 
-				if (typeof callback === "function") {
-					callback();
-				}
+				if (typeof callback === "function") callback();
 			}, this);
 		}
 	}

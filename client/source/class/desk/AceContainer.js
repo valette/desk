@@ -96,10 +96,9 @@ qx.Class.define("desk.AceContainer", {
 		},
 
 		__onResize : function () {
-			var self = this;
 			setTimeout(function() {
-				self.__ace.resize();
-			}, 0);
+				this.__ace.resize();
+			}.bind(this), 0);
 		},
 
 		/**

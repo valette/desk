@@ -337,7 +337,6 @@ qx.Class.define("desk.Action",
 			}
 			parentActions = _.uniq(parentActions);
 
-			var self = this;
 			async.each(parentActions, 
 				function (action, callback) {
 					action.addListenerOnce("actionUpdated", function (event) {
@@ -356,40 +355,39 @@ qx.Class.define("desk.Action",
 				}
 
 				send.setLabel("Processing...");
-				var out = self.getOutputDirectory();
+				var out = this.getOutputDirectory();
 				if (out) {
 					parameterMap.output_directory = out;
 				}
 
-				if (self.__outputDirectory) {
-					if (self.__outputDirectory.substring(0,6) === "cache/") {
+				if (this.__outputDirectory) {
+					if (this.__outputDirectory.substring(0,6) === "cache/") {
 						parameterMap.output_directory = "cache/";
 					}
 				}
 
-				self.__createSubdirectory(function () {
-					self.__executeAction(parameterMap);
-				});
-			});
+				this.__createSubdirectory(function () {
+					this.__executeAction(parameterMap);
+				}.bind(this));
+			}.bind(this));
 		},
 
 		__createSubdirectory : function (callback) {
-			var that = this;
 			if (!this.getOutputSubdirectory()) {
 				callback();
 			} else {
-				desk.FileSystem.exists(that.__outputDirectory + '/' +
-					that.getOutputSubdirectory(), function (exists) {
+				desk.FileSystem.exists(this.__outputDirectory + '/' +
+					this.getOutputSubdirectory(), function (exists) {
 						if (!exists) {
 							desk.Actions.getInstance().launchAction({
 									"action" : "add_subdirectory",
-									"subdirectory_name" : that.getOutputSubdirectory(),
-									"output_directory" : that.__outputDirectory},
+									"subdirectory_name" : this.getOutputSubdirectory(),
+									"output_directory" : this.__outputDirectory},
 							callback);
 						} else {
 							callback();
 						}
-				});
+				}.bind(this));
 			}
 		},
 

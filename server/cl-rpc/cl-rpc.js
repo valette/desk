@@ -136,7 +136,7 @@ includeActionsJSON = function (file, callback) {
 	fs.readFile(file, function (err, data) {
 		try {
 			var libraryName = libpath.basename(file, '.json');
-			var actionsObject = JSON.parse(data); 
+			var actionsObject = JSON.parse(data);
 
 			var localActions = actionsObject.actions || [];
 			var path = fs.realpathSync(libpath.dirname(file));
@@ -175,12 +175,12 @@ includeActionsJSON = function (file, callback) {
 				dataDirs[key] = source;
 			});
 
-			var includes = actionsObject.include || [];
-			includes.forEach(function (include) {
+			var includes = (actionsObject.include || []).map(function (include) {
 				if (include.charAt(0) != '/') {
 					// the path is relative. Prepend directory
-					includes[i] = libpath.dirname(file) + '/' + include;
+					include = libpath.dirname(file) + '/' + include;
 				}
+				return include;
 			});
 
 			if (typeof(actionsObject.permissions) === 'number') {

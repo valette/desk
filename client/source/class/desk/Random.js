@@ -13,7 +13,7 @@ qx.Class.define("desk.Random",
 	* example : <br>
 	* var rng = new desk.Random();<br>
 	* for (var i = 0; i < 10; i++) {<br>
-	*	console.log(rng.getRandomNumber());<br>
+	*	console.log(rng.random());<br>
 	* }<br>
 	* will display 10 random numbers in the [0,1] range<br>
 	* </pre>
@@ -65,7 +65,7 @@ qx.Class.define("desk.Random",
 		 * Returns a random number in the [0,1] range
 		 * @return{Float} random number
 		 */
-		getRandomNumber : function() {
+		random : function() {
 			var number = 0;
 			var multiplier = 1;
 			for (var i = 0; i < 8; i++) {
