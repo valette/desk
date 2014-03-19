@@ -224,7 +224,11 @@ qx.Class.define("desk.SegTools",
 			tabView.setVisibility("excluded");
 
 			var sessionWdgt = this.__getSessionsWidget();
-			this.__addSeedsListsToViews();
+
+			this.__master.getViewers().forEach (function (viewer) {
+				this.__addSeedsLists (viewer);
+			}.bind(this));
+
 			this.add(sessionWdgt);
 			
 			this.add(this.__mainBottomRightContainer, {flex : 1});
@@ -845,22 +849,16 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__addEdge : function (label1, label2) {
-			if (label1==label2) {
+			if (label1 == label2) {
 				alert ("error : trying to create self-loop adjacency : "+
-						label1.label+"-"+label2.label);
+						label1.label + "-" + label2.label);
 				return;
 			}
-			var adjacencies=label1.adjacencies;
-			var found=false;
-			for (var i=0;i<adjacencies.length;i++) {
-				if (adjacencies[i].label==label2.label) {
-					found=true;
-					break;
-				}
-			}
 
-			if (found) {
-				alert ("Error : adjacency "+label1.label+"-"+label2.label+" already exists");
+			if (_.find(label1.adjacencies, function (adjacency) {
+					return adjacency.label === label2.label
+				})) {
+				alert ("Error : adjacency " + label1.label + "-" + label2.label + " already exists");
 				return;
 			}
 			this.__addAdjacency(label1, label2);
@@ -868,15 +866,9 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__removeEdge : function (label1, label2) {
-			var adjacencies=label1.adjacencies;
-			var found=false;
-			for (var i=0;i<adjacencies.length;i++) {
-				if (adjacencies[i]==label2) {
-					found=true;
-				}
-			}
-
-			if (!found) {
+			if (!_.find(label1.adjacencies, function (adjacency) {
+					return adjacency.label === label2.label
+				})) {
 				alert ("error : adjacency "+label1.label+"-"+label2.label+" does not exist");
 				return;
 			}
@@ -898,10 +890,10 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__removeAdjacency : function (label1,label2) {
-			var adjacencies=label1.adjacencies;
-			for (var i=0;i<adjacencies.length;i++){
-				if (label2==adjacencies[i]) {
-					adjacencies.splice(i,1);
+			var adjacencies = label1.adjacencies;
+			for (var i = 0; i < adjacencies.length; i++){
+				if (label2 === adjacencies[i]) {
+					adjacencies.splice(i, 1);
 					return;
 				}
 			}
@@ -937,7 +929,7 @@ qx.Class.define("desk.SegTools",
                 height: 25,
                 alignX : "center"});
 
-			var listenerId=this.__eraserButton.addListener("changeValue", function (e) {
+			var listenerId = this.__eraserButton.addListener("changeValue", function (e) {
 				if (e.getData()){
 					labelBox.set({decorator: unfocusedBorder});
 				}
@@ -1399,8 +1391,7 @@ qx.Class.define("desk.SegTools",
 					// Prefer the single quote unless forced to use double
 					if (quot_pos != -1 && quot_pos < apos_pos) {
 						use_quote = APOS;
-					}
-					else {
+					} else {
 						use_quote = QUOTE;
 					}
 					// Figure out which kind of quote to escape
@@ -1423,55 +1414,47 @@ qx.Class.define("desk.SegTools",
 				var xml;
 				if (!content){
 					xml='<' + name + att_str + '/>';
-				}
-				else {
+				} else {
 					xml='<' + name + att_str + '>' + content + '</'+name+'>';
 				}
 				return xml;
 			}
 
 			var xmlContent = '\n';
-			var colors="";
+			var colors = "";
 			var lColors = this.__labels;
 			var lColorsNb = lColors.length;
-			
-			for(var i=0; i<lColorsNb; i++)
-			{
-				var labelColor = lColors[i];
-				var meshColor=labelColor.meshRed/255+" "+
-								labelColor.meshGreen/255+" "+
-								labelColor.meshBlue/255+" "+
-								labelColor.opacity+" "+
-								labelColor.depth;
-				colors+=element('color',null, {red : ""+labelColor.red,
-												green: ""+labelColor.green,
-												blue : ""+labelColor.blue,
-												label : ""+labelColor.label,
-												name : ""+labelColor.labelName,
-												meshcolor : meshColor})+"\n";
-			}
-			xmlContent+=element('colors', colors)+"\n";
 
-			var adjacencies="\n";
-			var adjArray=[];
-			for(var i=0; i<lColorsNb; i++)
-			{
-				var label1=lColors[i].label;
-				var adj=lColors[i].adjacencies;
-				for (var j=0;j<adj.length;j++) {
-					var label2=adj[j].label;
-					var found=false;
-					for (var k=0;k<adjArray.length;k++) {
-						var edge=adjArray[k];
-						if (((edge.label1==label1)&&(edge.label2==label2))||
-							((edge.label1==label2)&&(edge.label2==label1))) {
-							found=true;
-							break;
-						}
-					}
-					if (!found) {
-						adjacencies+=element('adjacency',null, 
-							{label1 : ""+label1, label2 : ""+label2})+"\n";
+			for(var i = 0; i < lColorsNb; i++) {
+				var labelColor = lColors[i];
+				var meshColor = labelColor.meshRed/255 + " " +
+								labelColor.meshGreen/255 + " " +
+								labelColor.meshBlue/255 + " " +
+								labelColor.opacity + " " +
+								labelColor.depth;
+				colors+=element('color', null, {red : "" + labelColor.red,
+												green: "" + labelColor.green,
+												blue : "" + labelColor.blue,
+												label : "" + labelColor.label,
+												name : "" + labelColor.labelName,
+												meshcolor : meshColor}) + "\n";
+			}
+			xmlContent += element('colors', colors) + "\n";
+
+			var adjacencies = "\n";
+			var adjArray = [];
+			for(var i = 0; i < lColorsNb; i++) {
+				var label1 = lColors[i].label;
+				var adj = lColors[i].adjacencies;
+				for (var j = 0;j < adj.length; j++) {
+					var label2 = adj[j].label;
+
+					if (!_.find(adjArray, function (edge) {
+						return ((edge.label1 == label1) && (edge.label2 == label2)) ||
+							((edge.label1 == label2) && (edge.label2 == label1))
+						})) {
+						adjacencies += element('adjacency', null, 
+							{label1 : "" + label1, label2 : "" + label2}) + "\n";
 						adjArray.push({label1 : label1, label2 : label2});
 					}
 				}
@@ -1542,33 +1525,32 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__getNewSeedsImage : function ( sliceView ) {
-			if (sliceView.isDrawingCanvasModified()==true) {
-				var canvas=sliceView.getDrawingCanvas();
-				var seedsImageData=canvas.getContext2d().getImageData(0, 0, canvas.getWidth(), canvas.getHeight());
+			if (sliceView.isDrawingCanvasModified() == true) {
+				var canvas = sliceView.getDrawingCanvas();
+				var seedsImageData = canvas.getContext2d().getImageData(0, 0, canvas.getWidth(), canvas.getHeight());
 				var pixels = seedsImageData.data;
 				var isAllBlack = true;
 
-				var redArray=this.__compactLabelsRed;
-				var greenArray=this.__compactLabelsGreen;
-				var blueArray=this.__compactLabelsBlue;
-				var numberOfColors=this.__compactLabelsRed.length;
+				var redArray = this.__compactLabelsRed;
+				var greenArray = this.__compactLabelsGreen;
+				var blueArray = this.__compactLabelsBlue;
+				var numberOfColors = this.__compactLabelsRed.length;
 
-				var numberOfBytes=pixels.length
-				for(var i=0; i<numberOfBytes; i+=4) {
-					if(128<=pixels[i+3])  //  if( color is solid not totally transparent, ie. alpha=0) <-> if( not background )
-					{
+				var numberOfBytes = pixels.length
+				for(var i = 0; i < numberOfBytes; i += 4) {
+					if(128 <= pixels[i + 3]) {
 						var dRed = 0;
 						var dGreen = 0;
 						var dBlue = 0;
 						var distance = 500000;
 						var rightColorIndex = 0;
 
-						for(var j=0; j!=numberOfColors; j++) {
-							dRed = redArray[j]-pixels[i];
-							dGreen = greenArray[j]-pixels[i+1];
-							dBlue = blueArray[j]-pixels[i+2];
-							var testD = dRed*dRed+dGreen*dGreen+dBlue*dBlue;
-							if(testD<distance) {
+						for(var j = 0; j != numberOfColors; j++) {
+							dRed = redArray[j] - pixels[i];
+							dGreen = greenArray[j] - pixels[i + 1];
+							dBlue = blueArray[j] - pixels[i + 2];
+							var testD = dRed * dRed + dGreen * dGreen + dBlue * dBlue;
+							if(testD < distance) {
 								distance = testD;
 								rightColorIndex = j;
 							}
@@ -1578,9 +1560,7 @@ qx.Class.define("desk.SegTools",
 						pixels[i+2] = blueArray[rightColorIndex];
 						pixels[i+3] = 255;
 						isAllBlack = false;
-					}
-					////Comment "else" to send combined image
-					else {
+					} else {
 						pixels[i] = 0;
 						pixels[i+1] = 0;
 						pixels[i+2] = 0;
@@ -1589,24 +1569,17 @@ qx.Class.define("desk.SegTools",
 				}
 
 				if(!isAllBlack) {
-					////Send png image to server
 					seedsImageData.data = pixels;
 
 					canvas.getContext2d().putImageData(seedsImageData, 0, 0);
 					var pngImg = canvas.getContentElement().getCanvas().toDataURL("image/png");
-					var saveData=pngImg.replace("image/png", "image/octet-stream");
-					var commaIndex=pngImg.lastIndexOf(",");
+					var saveData = pngImg.replace("image/png", "image/octet-stream");
+					var commaIndex = pngImg.lastIndexOf(",");
 					var base64Img = pngImg.substring(commaIndex+1,pngImg.length);
 					return base64Img;
 				}
 			}
 			return false;
-		},
-
-		__addSeedsListsToViews : function ( ) {
-			this.__master.getViewers().forEach (function (viewer) {
-				this.__addSeedsLists (viewer);
-			}.bind(this));
 		},
 
 		__addSeedsLists : function( sliceView ) {
@@ -1676,7 +1649,6 @@ qx.Class.define("desk.SegTools",
 				})) {
 
 				var sliceItem = new qx.ui.form.ListItem("" + sliceId);
-				sliceItem.setWidth(30);
 				sliceItem.setUserData("slice", sliceId);
 				sliceItem.addListener("mousedown", function(event) {
 					sliceView.setSlice(event.getTarget().getUserData("slice"));
