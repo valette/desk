@@ -13,7 +13,7 @@ qx.Class.define("desk.SegTools",
 	construct : function(master, globalFile, options)
 	{	
 		this.base(arguments);
-
+		this.setAlwaysOnTop(true)
 		options = options || {};
 
 		if (options.segmentationMethod) {
