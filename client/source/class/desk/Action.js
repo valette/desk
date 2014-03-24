@@ -274,6 +274,7 @@ qx.Class.define("desk.Action",
 				page.setLayout(new qx.ui.layout.HBox());
 				var outputDirectory = this.getOutputDirectory();
 				this.__embededFileBrowser = new desk.FileBrowser( outputDirectory , false );
+				this.__embededFileBrowser.setHeight(null);
 				this.__embededFileBrowser.setUserData( "action" , this );
 				page.add( this.__embededFileBrowser , { flex : 1 } );
 

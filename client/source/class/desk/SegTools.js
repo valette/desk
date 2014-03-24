@@ -1320,25 +1320,25 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__saveCurrentSeeds : function(callback) {
-
+			callback = callback || function () {};
 			if (this.getSessionDirectory() === null) return;
-
+			var modified = false;
 			async.each(this.__master.getViewers(), (function (viewer, callback) {
 				var base64Img = this.__getNewSeedsImage (viewer);
+				var sliceId = viewer.getUserData( "previousSlice" );
 				if (base64Img != false) {
+					modified = true;
 					// save image
-					var sliceId = viewer.getUserData( "previousSlice" );
 					var seedsType = this.getSeedsType();
 
 					this.__addNewSeedItemToList (viewer, sliceId, seedsType);
 
-					var parameterMap = {
+					desk.Actions.getInstance().launchAction({
 						action : "write_binary",
 						file_name : this.__getSeedFileName (viewer, sliceId, seedsType),
 						base64data : base64Img,
 						output_directory : this.getSessionDirectory()
-					};
-					desk.Actions.getInstance().launchAction(parameterMap, callback);
+					}, callback);
 				} else {
 					callback();
 				}
@@ -1347,12 +1347,12 @@ qx.Class.define("desk.SegTools",
 			}).bind(this),
 			
 			(function () {
-				this.__saveSeedsXML(callback);				
+				this.__saveSeedsXML(callback, modified);
 			}).bind(this));
 		},
 
 		////Rewrite xml list of the drawn seeds
-		__saveSeedsXML : function(callback) {
+		__saveSeedsXML : function(callback, force) {
                // XML writer with attributes and smart attribute quote escaping
 			/*
 				Format a dictionary of attributes into a string suitable
@@ -1480,17 +1480,16 @@ qx.Class.define("desk.SegTools",
 			var seeds = element('seeds', xmlContent);
 
 			desk.FileSystem.readFile(this.getSessionDirectory() + "/seeds.xml", function (err, result) {
-				if (result === seeds) {
-					if (typeof callback === "function") callback();
+				if (!force && (result === seeds)) {
+					callback();
 					return;
 				}
-				var parameterMap = {
+				desk.Actions.getInstance().launchAction({
 					action : "write_binary",
 					file_name : "seeds.xml",
 					base64data : qx.util.Base64.encode(seeds, true),
-					output_directory : this.getSessionDirectory()};
-
-				desk.Actions.getInstance().launchAction(parameterMap, callback);
+					output_directory : this.getSessionDirectory()},
+				callback);
 			}, this, true);
 		},
 
@@ -1600,7 +1599,6 @@ qx.Class.define("desk.SegTools",
 								this.__getSeedFileName(sliceView, sliceId, seedsType)});
 						list.remove(selectedChild);
 						this.__reloadSeedImage( sliceView );
-						this.__saveSeedsXML();
 					}
 				}
 			}

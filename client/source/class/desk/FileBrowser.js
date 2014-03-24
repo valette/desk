@@ -46,7 +46,6 @@ qx.Class.define("desk.FileBrowser",
 			{initiallyHiddenColumns : [1, 2]});
 		this.__virtualTree = virtualTree;
 		virtualTree.setSelectionMode(qx.ui.treevirtual.TreeVirtual.SelectionMode.MULTIPLE_INTERVAL);
-//		virtualTree.setUseTreeLines(false);
 
 		virtualTree.set({
 			useTreeLines : false,
