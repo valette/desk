@@ -29,12 +29,7 @@ qx.Class.define("desk.FileBrowser",
 		this.__fileBrowsers.push(this);
 
 		this.setLayout(new qx.ui.layout.VBox(8));
-
-		if (standAlone === false) {
-			this.__standAlone = false;
-		} else {
-            standAlone = true;   
-		}
+		this.__standAlone = standAlone === false ? false : true;
 
 		qx.Class.include(qx.ui.treevirtual.TreeVirtual, qx.ui.treevirtual.MNode);
 
@@ -58,7 +53,7 @@ qx.Class.define("desk.FileBrowser",
 
 		this.__actions = desk.Actions.getInstance();
 
-        if (standAlone) {
+        if (this.__standAlone) {
             this.add(this.__getShortcutsContainer());
         }
 
@@ -85,7 +80,8 @@ qx.Class.define("desk.FileBrowser",
 				layout : new qx.ui.layout.VBox(),
 				caption : this.__baseDir,
 				width : 400,
-				height : 500});
+				height : 500
+			});
 			win.add(this, {flex : 1});
 			win.addListener('close', function () {
 				this.destroy();

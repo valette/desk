@@ -274,17 +274,17 @@ qx.Class.define("desk.Action",
 				page.setLayout(new qx.ui.layout.HBox());
 				var outputDirectory = this.getOutputDirectory();
 				this.__embededFileBrowser = new desk.FileBrowser( outputDirectory , false );
-				this.__embededFileBrowser.setHeight(null);
 				this.__embededFileBrowser.setUserData( "action" , this );
+				this.__embededFileBrowser.setHeight(200);
 				page.add( this.__embededFileBrowser , { flex : 1 } );
 
-				this.addListener( "actionUpdated" , function () {
-					this.__embededFileBrowser.updateRoot(this.getOutputDirectory());
-				} , this );
-				this.addListener("changeOutputDirectory", function () {
-					this.__embededFileBrowser.updateRoot(this.getOutputDirectory());
-				} , this );
+				this.addListener( "actionUpdated" , this.__updateFileBrowser, this );
+				this.addListener("changeOutputDirectory", this.__updateFileBrowser , this );
 			}, this);
+		},
+
+		__updateFileBrowser : function () {
+			this.__embededFileBrowser.updateRoot(this.getOutputDirectory());
 		},
 
 		__updateButton : null,

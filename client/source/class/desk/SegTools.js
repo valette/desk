@@ -10,8 +10,7 @@ qx.Class.define("desk.SegTools",
 {
   extend : qx.ui.window.Window,
 
-	construct : function(master, globalFile, options)
-	{	
+	construct : function(master, globalFile, options) {	
 		this.base(arguments);
 		this.setAlwaysOnTop(true)
 		options = options || {};
@@ -77,7 +76,6 @@ qx.Class.define("desk.SegTools",
 		'</colors>'].join('\n'),
 		defaultColorsFile : null,
 		filePrefixes : ["seed","correction"],
-		seedsListsString : "seedsLists"
 	},
 
 	events : {
@@ -90,16 +88,13 @@ qx.Class.define("desk.SegTools",
 		seedsType : { init : 0, check: "Number", event : "changeSeedsType"}
 	},
 
-	members :
-	{
+	members : {
 		__segmentationMethod : 0,
 		__master : null,
 		__file : null,
-		__topRightContainer : null,
-		__bottomRightContainer : null,
-		__mainBottomRightContainer : null,
+		__paintContainer : null,
+		__bottomContainer : null,
 		__colorsContainer : null,
-		__seedsTypeSelectBox : null,
 
 		__startSegmentationButton : null,
 
@@ -117,7 +112,6 @@ qx.Class.define("desk.SegTools",
 
 		__penSize : null,
 		__eraserButton : null,
-		__eraserCursor : null,
 
 		__meshViewer : null,
 
@@ -163,11 +157,11 @@ qx.Class.define("desk.SegTools",
 			var spacing = 5;
 			var tRCL = new qx.ui.layout.HBox();
 			tRCL.setSpacing(spacing);
-			this.__topRightContainer = new qx.ui.container.Composite(tRCL);
+			this.__paintContainer = new qx.ui.container.Composite(tRCL);
 
 			var bRCL=new qx.ui.layout.HBox();
 			bRCL.setSpacing(spacing);
-			this.__bottomRightContainer = new qx.ui.container.Composite(bRCL);
+			this.__bottomContainer = new qx.ui.container.Composite(bRCL);
 
 			////Create pen size chose widget
             this.__penSize = new qx.ui.form.Spinner().set({
@@ -184,8 +178,8 @@ qx.Class.define("desk.SegTools",
             this.__penSize.setValue(5);
 			
 			var penLabel = new qx.ui.basic.Label("Brush : ");
-			this.__topRightContainer.add(penLabel);
-			this.__topRightContainer.add(this.__penSize);
+			this.__paintContainer.add(penLabel);
+			this.__paintContainer.add(this.__penSize);
 			
 			////Create eraser on/off button
             this.__eraserButton = new qx.ui.form.ToggleButton("Eraser");
@@ -194,14 +188,14 @@ qx.Class.define("desk.SegTools",
 					viewer.setEraseMode(e.getData());
 				});
 			}, this);
-			this.__topRightContainer.add(this.__eraserButton);
+			this.__paintContainer.add(this.__eraserButton);
 
 			////Create labels zone
 			var paintPage = new qx.ui.tabview.Page("paint");
 			var paintPageLayout = new qx.ui.layout.VBox();
 			paintPageLayout.setSpacing(spacing);
             paintPage.setLayout(paintPageLayout);
-			paintPage.add(this.__topRightContainer);
+			paintPage.add(this.__paintContainer);
 
 			this.__colorsContainer = new qx.ui.container.Composite();
             this.__colorsContainer.setLayout(new qx.ui.layout.Grid(1,1));
@@ -213,29 +207,19 @@ qx.Class.define("desk.SegTools",
 			}, this);
 			paintPage.add(this.__colorsContainer);
 
-			var bRCL = new qx.ui.layout.HBox();
-			bRCL.setSpacing(spacing);
-			this.__mainBottomRightContainer = new qx.ui.container.Composite(bRCL);
-			
-			var tabView = new desk.TabView();
-			this.__tabView = tabView;
+			var tabView = this.__tabView = new desk.TabView();;
             tabView.add(paintPage);
 			tabView.setVisibility("excluded");
 
-			var sessionWdgt = this.__getSessionsWidget();
+			this.add(this.__getSessionsWidget());
+			this.add(tabView, {flex : 1});
 
 			this.__master.getViewers().forEach (function (viewer) {
 				this.__addSeedsLists (viewer);
 			}.bind(this));
-
-			this.add(sessionWdgt);
-			
-			this.add(this.__mainBottomRightContainer, {flex : 1});
-
-			this.__mainBottomRightContainer.add(tabView);
 			
 			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
-			this.__topRightContainer.add(whileDrawingDrwngOpacityLabel);
+			this.__paintContainer.add(whileDrawingDrwngOpacityLabel);
 			
             var whileDrawingDrwngOpacitySlider = new qx.ui.form.Slider();
 			whileDrawingDrwngOpacitySlider.setValue(100);
@@ -245,9 +229,9 @@ qx.Class.define("desk.SegTools",
 				});
 			}, this);
 
-            this.__topRightContainer.add(whileDrawingDrwngOpacitySlider, {flex : 1});
+            this.__paintContainer.add(whileDrawingDrwngOpacitySlider, {flex : 1});
 
-			paintPage.add(this.__bottomRightContainer);
+			paintPage.add(this.__bottomContainer);
 
 			if (this.__segmentationMethod) {
 				this.__buildActions();
@@ -255,8 +239,7 @@ qx.Class.define("desk.SegTools",
 				this.__buildActionsGC();
 			}
 
-			this.__seedsTypeSelectBox = this.__getSeedsTypeSelectBox();
-			paintPage.addAt(this.__seedsTypeSelectBox,0);
+			paintPage.addAt(this.__getSeedsTypeSelectBox(), 0);
 		},
 
 		__buildActions : function () {
@@ -296,7 +279,7 @@ qx.Class.define("desk.SegTools",
 					segmentationAction.executeAction();
 				});
 			}, this);
-			this.__bottomRightContainer.add(this.__startSegmentationButton);
+			this.__bottomContainer.add(this.__startSegmentationButton);
 
 			var meshingButton = new qx.ui.form.Button("extract meshes");
 			this.__extractMeshesButton = meshingButton;
@@ -307,7 +290,7 @@ qx.Class.define("desk.SegTools",
 					meshingAction.executeAction();
 				});
 			}, this);
-			this.__bottomRightContainer.add(meshingButton);
+			this.__bottomContainer.add(meshingButton);
 
 			var segmentationToken = null;
 			segmentationAction.addListener("actionUpdated", function () {
@@ -403,7 +386,7 @@ qx.Class.define("desk.SegTools",
 				this.__saveCurrentSeeds(function() {
 							medianFilteringAction.executeAction();});
 			}, this);
-			this.__bottomRightContainer.add(this.__startSegmentationButton);
+			this.__bottomContainer.add(this.__startSegmentationButton);
 
 			var meshingButton = new qx.ui.form.Button("extract meshes");
 			this.__extractMeshesButton = meshingButton;
@@ -412,7 +395,7 @@ qx.Class.define("desk.SegTools",
 				meshingButton.setEnabled(false);
 				meshingAction.executeAction();
 			}, this);
-			this.__bottomRightContainer.add(meshingButton);
+			this.__bottomContainer.add(meshingButton);
 
 			var segmentationToken = null;
 			medianFilteringAction.addListener("actionUpdated", function () {
