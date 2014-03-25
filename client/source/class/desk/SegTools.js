@@ -75,7 +75,7 @@ qx.Class.define("desk.SegTools",
 		'</adjacencies>',
 		'</colors>'].join('\n'),
 		defaultColorsFile : null,
-		filePrefixes : ["seed","correction"],
+		filePrefixes : ["seed","correction"]
 	},
 
 	events : {
