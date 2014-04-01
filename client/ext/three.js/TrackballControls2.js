@@ -1,5 +1,6 @@
 /**
  * @author Eberhard Graether / http://egraether.com/
+ * @author Sebastien Valette
  */
 
 THREE.TrackballControls2 = function ( object ) {
@@ -52,24 +53,27 @@ THREE.TrackballControls2 = function ( object ) {
 
 	// methods
 
-	this.getInternals = function ()
-	{
-		return [ _zoomStart, _zoomEnd, _panStart, _panEnd, _eye];
-	}
+	this.getState = function () {
+		return [ _zoomStart, _zoomEnd, _panStart, _panEnd, _eye, 
+			this.object.up, this.object.position, this.target];
+	};
+
+	this.setState = function (state) {
+		_zoomStart = state[0];
+		_zoomEnd = state[1];
+		_panStart.copy(state[2]);
+		_panEnd.copy(state[3]);
+
+		_eye.copy(state[4]);	
+		this.object.up.copy(state[5]);
+		this.object.position.copy(state[6]);
+		this.target.copy(state[7]);
+		this.update();
+	};
+
 
 	this.copy = function (source) {
-
-		var internals = source.getInternals();
-		_zoomStart = internals[0];
-		_zoomEnd = internals[1];
-		_panStart.copy(internals[2]);
-		_panEnd.copy(internals[3]);
-
-		_eye.copy(internals[4]);	
-		this.object.up.copy(source.object.up);
-		this.object.position.copy(source.object.position);
-		this.target.copy(source.target);
-
+		this.setState(source.getState());
 	};
 
 	this.getMouseOnScreen = function( x, y ) {
