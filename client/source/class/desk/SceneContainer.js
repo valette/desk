@@ -24,6 +24,7 @@
 * @ignore (THREE.Line)
 * @ignore (async.queue)
 * @ignore (async.each)
+* @ignore (async.whilst)
 * @ignore (_.throttle)
 * @ignore (_.without)
 */
@@ -54,6 +55,34 @@ qx.Class.define("desk.SceneContainer",
 		this.addListener("mouseup", this.__onMouseUp, this);
 		this.addListener("mousewheel", this.__onMouseWheel, this);
 
+		this.addListener('keydown', function (event) {
+			if ((event.getTarget() == this.getCanvas()) &&
+                (event.getKeyIdentifier() === 'G')) {
+				var mesh = this.__pickMeshes(this.getMeshes());
+				if (!mesh) return;
+				var controls = this.getControls();
+                var init = controls.target.clone();
+                var fin = mesh.point.clone();
+                var current = init.clone();
+                var count = 0;
+                async.whilst(
+                    function () { return count < 10; },
+                    function (callback) {
+                        controls.target.addVectors(
+                            fin.clone().multiplyScalar(count / 10),
+                            init.clone().multiplyScalar(1 -  (count / 10))
+                            );
+                        controls.update();
+                        this.render();
+                        setTimeout(callback, 100);
+                        count++;
+                    }.bind(this),
+                    function (err) {}
+                );
+			}
+		}, this);
+
+
 		var button = new qx.ui.form.Button("+").set({opacity : 0.5, width : 30});
 		this.add (button, {left : 0, top : 0});
 		button.addListener("execute", function () {
@@ -80,6 +109,7 @@ qx.Class.define("desk.SceneContainer",
 		var buttonsContainer = new qx.ui.container.Composite();
 		buttonsContainer.setLayout(new qx.ui.layout.HBox());
 		buttonsContainer.add(this.__getDragLabel(), {flex : 1});
+		buttonsContainer.add(this.__getSaveViewButton(), {flex : 1});
 		buttonsContainer.add(this.__getResetViewButton(), {flex : 1});
 		buttonsContainer.add(this.__getSnapshotButton());
 		leftContainer.add(buttonsContainer);
@@ -95,7 +125,7 @@ qx.Class.define("desk.SceneContainer",
 		});
 
         leftContainer.add(this.__meshesTree,{flex : 1});
-		leftContainer.add(this.__getFilterContainer());
+//		leftContainer.add(this.__getFilterContainer());
 
 		this.__meshesTree.setContextMenu(this.__getContextMenu());
 
@@ -213,7 +243,9 @@ qx.Class.define("desk.SceneContainer",
 			parameters.mesh = mesh;
 			this.__meshesTree.nodeGet(leaf).__customProperties = parameters;
 			mesh.userData.__customProperties = parameters;
-			this.viewAll();
+			if (parameters.updateCamera !== false) {
+				this.viewAll();
+			}
 		},
 
 		__getFilterContainer : function () {
@@ -413,6 +445,22 @@ qx.Class.define("desk.SceneContainer",
 						this.__parseXMLData(file, result, parameters, callback);
 					}, this);
 					break;
+				case "json" : 
+					desk.FileSystem.readFile(file, function (error, result){
+						if (error) {
+							alert("Error while reading " + file + "\n" + error);
+							throw (error);
+						}
+						if (result.viewpoint) {
+							var controls = this.getControls();
+							controls.setState(result.viewpoint);
+							setTimeout(function () {
+								this.render();
+								this.__propagateLinks();
+							}.bind(this), 50);
+						};
+					}, this);
+					break;
 				default : 
 					alert ("error : meshviewer cannot read extension " + extension);
 					break;
@@ -472,7 +520,7 @@ qx.Class.define("desk.SceneContainer",
 
 			var listenerId = volumeSlice.addListener('changeImage', updateTexture, this);
             this.addMesh(mesh, {label : 'View ' + (volumeSlice.getOrientation()+1),
-                volumeSlice : volumeSlice
+                volumeSlice : volumeSlice, updateCamera : false
             });
 			updateTexture.apply(this);
 
@@ -506,7 +554,7 @@ qx.Class.define("desk.SceneContainer",
 			this.capture();
 			this.__draggingInProgress = true;
 			if (this.isPickMode()) {
-				var mesh = this.__pickMeshes(event, this.getMeshes());
+				var mesh = this.__pickMeshes(this.getMeshes());
 				if (mesh) this.fireDataEvent("pick", mesh);
 				return;
 			}
@@ -529,10 +577,17 @@ qx.Class.define("desk.SceneContainer",
 				event.getDocumentTop() - origin.top);
 		},
 
+        __x : null,
+
+        __y : null,
+
 		__onMouseMove : function (event) {
+			this.__x = event.getDocumentLeft();
+			this.__y = event.getDocumentTop();
+
 			if (this.__draggingInProgress) {
 				if (this.isPickMode()) {
-					var mesh = this.__pickMeshes(event, this.getMeshes());
+					var mesh = this.__pickMeshes(this.getMeshes());
 					if (mesh) this.fireDataEvent("pick", mesh);
 					return;
 				}
@@ -550,10 +605,10 @@ qx.Class.define("desk.SceneContainer",
 			this.getControls().mouseUp();
 		},
 
-		__pickMeshes : function (event, meshes) {
+		__pickMeshes : function (meshes) {
 			var origin = this.getContentLocation();
-			var x = event.getDocumentLeft() - origin.left;
-			var y = event.getDocumentTop() - origin.top;
+			var x = this.__x - origin.left;
+			var y = this.__y - origin.top;
 
 			var elementSize = this.getInnerSize();
 			var x2 = ( x / elementSize.width ) * 2 - 1;
@@ -581,7 +636,7 @@ qx.Class.define("desk.SceneContainer",
 
 		__onMouseWheel : function (event) {
 			if (event.getTarget() != this.getCanvas()) return;
-			var intersects = this.__pickMeshes(event, this.__volumeSlices);
+			var intersects = this.__pickMeshes(this.__volumeSlices);
 			if (intersects) {
 				var volumeSlice = intersects.object.userData.__customProperties.volumeSlice;
 				var maximum = volumeSlice.getNumberOfSlices() - 1;
@@ -678,6 +733,22 @@ qx.Class.define("desk.SceneContainer",
 		__getResetViewButton : function () {
 			var button = new qx.ui.form.Button("reset view");
 			button.addListener("execute", this.resetView, this);
+			return button;
+		},
+
+		__getSaveViewButton : function () {
+			var button = new qx.ui.form.Button("save view");
+			button.addListener("execute", function () {
+				var file = prompt("Enter file name to save camera view poiont", "data/viewpoint.json")
+				if (file != null) {
+					button.setEnabled(false);
+					desk.FileSystem.writeFile(file,
+						JSON.stringify({viewpoint : this.getControls().getState()}), 
+						function () {
+							button.setEnabled(true);
+					});
+				}
+			}, this);
 			return button;
 		},
 
