@@ -34,32 +34,29 @@ qx.Class.define("desk.FileSystem",
 		*});<br>
 		*</pre>
 		*/
-		readFile : function (file, callback, context, forceText) {
-			desk.FileSystem.exists(file, function (exists) {
-				if (exists) {
-					var req = new qx.io.request.Xhr(
-						desk.FileSystem.getFileURL(file)+
-						"?nocache=" + Math.random());
-					req.setAsync(true);
-					req.addListener('load', function () {
-						var response;
-						if (forceText) {
-							response = req.getResponseText()
-						} else {
-							response = req.getResponse()
-						}
-						callback.call(context, null, response);
-						req.dispose();
-					});
-					req.addListener('error', function (e) {
-						callback.call(context, req.getStatusText());
-						req.dispose();
-					});
-					req.send();					
+		readFile : function (file, callback, context, options) {
+			options = options || {};
+			var url = desk.FileSystem.getFileURL(file);
+			if (options.cache !== false) {
+				url += "?nocache=" + Math.random();
+			}
+			var req = new qx.io.request.Xhr(url);
+			req.setAsync(true);
+			req.addListener('load', function () {
+				var response;
+				if (options.forceText) {
+					response = req.getResponseText()
 				} else {
-					callback.call(context, "File does not exist");
+					response = req.getResponse()
 				}
+				callback.call(context, null, response);
+				req.dispose();
 			});
+			req.addListener('error', function (e) {
+				callback.call(context, req.getStatusText());
+				req.dispose();
+			});
+			req.send();					
 		},
 
 		/**
@@ -72,7 +69,7 @@ qx.Class.define("desk.FileSystem",
 		* 
 		* <pre class="javascript">
 		* example : <br>
-		* desk.FileSystem.writeFile ("myFilePath", function () {<br>
+		* desk.FileSystem.writeFile ("myFilePath", myContent, function () {<br>
 		* // here, the file has been written to disk<br>
 		* });<br>
 		* </pre>
