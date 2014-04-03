@@ -252,7 +252,7 @@ qx.Class.define("desk.Action",
 				return this.__tabView;
 			}
 			var tabView = this.__tabView = new qx.ui.tabview.TabView ();
-			var page = new qx.ui.tabview.Page("Input");
+			var page = new qx.ui.tabview.Page("Parameters");
 			page.setLayout(new qx.ui.layout.HBox());
 			page.add(this, {flex : 1});
 			tabView.add(page);
