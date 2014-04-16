@@ -698,27 +698,17 @@ exports.getDirectoryContent = function (path, callback) {
 					return;
 				}
 
-				var realFiles = [];
-				for (var i = 0; i != files.length; i++) {
-					realFiles.push(realDir + files[i]);
-				}
-
-				async.map(realFiles, fs.stat, function(err, results){
-					for (var i = 0; i != files.length; i++) {
-						results[i].name = files[i];
-					}
-					callback (err, results);
-				});
+				async.map(files, function (file, callback) {
+						fs.stat(realDir + file, function (err, stats) {
+							stats.name = file;
+							stats.isDirectory = stats.isDirectory();
+							stats.mtime = stats.mtime.getTime();
+							callback(null, stats);
+						});
+					},
+					callback
+				);
 			});
-		},
-
-		function (files, callback) {
-			for (var i = 0; i != files.length; i++) {
-				var file = files[i];
-				file.isDirectory = file.isDirectory();
-				file.mtime = file.mtime.getTime();
-			}
-			callback(null, files);
 		}],
 		function (error, message) {
 			callback(message);
