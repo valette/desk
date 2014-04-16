@@ -200,15 +200,24 @@ qx.Class.define("desk.ThreeContainer",
 		/**
 		* Renders the scene
 		* @param immediate {Boolean} triggers immediate rendering (without requestAnimationFrame)
+		* @param callback {Function} optional callback when rendering is done
 		*/
-		render : function (immediate) {
-			if (immediate) {
+		render : function (immediate, callback) {
+			var doRender = function () {
 				this.__render();
+				if (typeof callback === "function") {
+					callback();
+				}
+			}.bind(this);
+
+			if (immediate) {
+				doRender();
 				return;
 			}
+
 			if (this.__renderingTriggered) return;
 			this.__renderingTriggered = true;
-			requestAnimationFrame(this.__render.bind(this));
+			requestAnimationFrame(doRender);
 		},
 
 		__renderingTriggered : null,

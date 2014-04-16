@@ -58,6 +58,7 @@ qx.Class.define("desk.SceneContainer",
 		this.addListener('keydown', function (event) {
 			if ((event.getTarget() == this.getCanvas()) &&
                 (event.getKeyIdentifier() === 'G')) {
+
 				var mesh = this.__pickMeshes(this.getMeshes());
 				if (!mesh) return;
 				var controls = this.getControls();
@@ -65,17 +66,19 @@ qx.Class.define("desk.SceneContainer",
                 var fin = mesh.point.clone();
                 var current = init.clone();
                 var count = 0;
+                var numberOfFrames = 30;
                 async.whilst(
-                    function () { return count < 10; },
+                    function () { return count < 30; },
                     function (callback) {
                         controls.target.addVectors(
-                            fin.clone().multiplyScalar(count / 10),
-                            init.clone().multiplyScalar(1 -  (count / 10))
+                            fin.clone().multiplyScalar(count / 30),
+                            init.clone().multiplyScalar(1 - (count / 30))
                             );
                         controls.update();
                         this.render();
-                        setTimeout(callback, 100);
+                        setTimeout(callback, 10);
                         count++;
+                        this.__propagateLinks();
                     }.bind(this),
                     function (err) {}
                 );
@@ -89,7 +92,6 @@ qx.Class.define("desk.SceneContainer",
 			if (leftContainer.getVisibility() === "visible") {
 				leftContainer.setVisibility("excluded");
 				button.setLabel("+");
-				this.render();
 			} else {
 				leftContainer.setVisibility("visible");
 				button.setLabel("-");
@@ -102,7 +104,6 @@ qx.Class.define("desk.SceneContainer",
 				colors.bgcolFocused = "rgba(249, 249, 249, 0.5)";
 				colors.bgcolFocusedSelected = "rgba(60, 100, 170, 0.5)";
 				colors.bgcolSelected = "rgba(51, 94, 168, 0.5)";
-				this.render();
 			}
 		}, this);
 
@@ -135,7 +136,7 @@ qx.Class.define("desk.SceneContainer",
 		this.__queue= async.queue(this.__urlLoad.bind(this), 10);
 
 		this.__setData = _.throttle(function () {
-				this.__meshesTree.getDataModel().setData();
+			this.__meshesTree.getDataModel().setData();
 		}.bind(this), 500);
 
 		if (file) {
@@ -298,9 +299,7 @@ qx.Class.define("desk.SceneContainer",
             var leaf = this.__addLeaf(leafParameters);
             parameters.leaf = leaf;
 
-			var extension = desk.FileSystem.getFileExtension(file);
-			switch (extension)
-			{
+			switch (desk.FileSystem.getFileExtension(file)) {
             case "vtk":
 				if (!this.isConvertVTK()) {
 					this.__loadFile(file, parameters, callback);
@@ -419,22 +418,18 @@ qx.Class.define("desk.SceneContainer",
             this.__files.push(file);
             parameters.file = file;
 
-			function afterLoading(mesh) {
-				if (typeof callback === 'function') {
-					callback.apply(context, [mesh]);
-				}
-			}
-
-            var extension = desk.FileSystem.getFileExtension(file);
-			switch (extension)
-			{
+			switch (desk.FileSystem.getFileExtension(file)) {
 				case "ply":
 				case "obj":
 				case "stl":
 				case "vtk":
 				case "ctm":
 				case "off":
-					this.__readFile (file, parameters, afterLoading);
+					this.__readFile (file, parameters, function (mesh) {
+						if (typeof callback === 'function') {
+							callback.apply(context, [mesh]);
+						}
+					});
 					break;
 				case "xml":
 					desk.FileSystem.readFile(file, function (error, result){
@@ -462,7 +457,7 @@ qx.Class.define("desk.SceneContainer",
 					}, this);
 					break;
 				default : 
-					alert ("error : meshviewer cannot read extension " + extension);
+					alert ("error : meshviewer cannot read " + file);
 					break;
 			}
 		},
