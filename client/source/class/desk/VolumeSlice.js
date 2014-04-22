@@ -565,6 +565,20 @@ qx.Class.define("desk.VolumeSlice",
 							Math.pow(bounds[5] - bounds[4], 2));
 		},
 
+		getZIndex : function () {
+			switch(this.getOrientation()) {
+				// ZY X
+				case 1 :
+					return 0;
+				// XZ Y
+				case 2 :
+					return 1;
+				// XY Z
+				default :
+					return 2;
+			}
+		},
+
 		/**
 		 * returns the dimensions of the slice in the form [dimx, dimy]
 		 * @return {Array} array of dimensions

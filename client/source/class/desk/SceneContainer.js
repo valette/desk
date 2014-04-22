@@ -734,7 +734,7 @@ qx.Class.define("desk.SceneContainer",
 		__getSaveViewButton : function () {
 			var button = new qx.ui.form.Button("save view");
 			button.addListener("execute", function () {
-				var file = prompt("Enter file name to save camera view poiont", "data/viewpoint.json")
+				var file = prompt("Enter file name to save camera view point", "data/viewpoint.json")
 				if (file != null) {
 					button.setEnabled(false);
 					desk.FileSystem.writeFile(file,
