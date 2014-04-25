@@ -170,19 +170,16 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		__reorderMeshes : function () {
-			var volumes = this.__volumes.getChildren();
-			for (var i = 0; i < volumes.length; i++) {
-				var slices = this.getVolumeSlices(volumes[i]);
-				for (var j = 0; j < slices.length; j++){
-                    var slice = slices[j];
+			this.__volumes.getChildren().forEach(function (volume, rank) {
+				this.getVolumeSlices(volume).forEach(function (slice) {
                     // slice might not be loaded yet
 					if (slice) {
 						this.getViewers().forEach(function (viewer) {
-							viewer.setSliceRank(slice, i);
+							viewer.setSliceRank(slice, rank);
 						});
 					}
-				}
-			}
+				}.bind(this));
+			}.bind(this));
 			this.__renderAll();
 		},
 
