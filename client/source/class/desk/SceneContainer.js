@@ -37,8 +37,7 @@ qx.Class.define("desk.SceneContainer",
 	{
         this.base(arguments);
         this.__files = [];
-		qx.Class.include(desk.SceneContainer, qx.ui.treevirtual.MNode);
-
+		qx.Class.include(qx.ui.treevirtual.TreeVirtual, qx.ui.treevirtual.MNode);
         parameters = parameters || {};
 
 		if (parameters.convertVTK !== undefined) {
@@ -225,7 +224,7 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		__getMeshFromNode : function (node) {
-			var leaf = this.nodeGet(node);
+			var leaf = this.__meshesTree.nodeGet(node);
 			if (leaf) {
 				if (leaf.__customProperties) {
 					return leaf.__customProperties.mesh;
@@ -242,7 +241,7 @@ qx.Class.define("desk.SceneContainer",
 				parameters.leaf = leaf = this.__addLeaf(parameters);
 			}
 			parameters.mesh = mesh;
-			this.nodeGet(leaf).__customProperties = parameters;
+			this.__meshesTree.nodeGet(leaf).__customProperties = parameters;
 			mesh.userData.__customProperties = parameters;
 			if (parameters.updateCamera !== false) {
 				this.viewAll();
@@ -1078,7 +1077,7 @@ qx.Class.define("desk.SceneContainer",
 				if (!selNode) {
 					return;
 				}
-				var leaf = this.nodeGet(selNode);
+				var leaf = this.__meshesTree.nodeGet(selNode);
 				var visibility = "visible";
 				if (leaf) {
 					if (leaf.__customProperties) {

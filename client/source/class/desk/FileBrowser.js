@@ -679,17 +679,13 @@ qx.Class.define("desk.FileBrowser",
 
 		__updateDirectories : function (files) {
 			var foldersObject = {};
-			var foldersArray = [];
-			for (var i = 0; i < files.length; i++) {
-				var folder = files[i];
-				if (foldersObject[folder] === undefined) {
+
+			files.forEach(function (folder) {
+				if (!foldersObject[folder]) {
 					foldersObject[folder] = true;
-					foldersArray.push(folder);
+					this.updateDirectory(folder);
 				}
-			}
-			for (i = 0; i < foldersArray.length; i++) {
-				this.updateDirectory(foldersArray[i]);
-			}
+			}.bind(this));
 		},
 
 		__openNode : function (node) {
@@ -697,8 +693,7 @@ qx.Class.define("desk.FileBrowser",
 				if (this.__fileHandler) {
 					this.__fileHandler(this.__getNodeFile(node));
 				}
-			}
-			else {
+			} else {
 				this.__virtualTree.nodeToggleOpened(node);
 			}
 		},
