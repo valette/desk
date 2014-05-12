@@ -96,11 +96,14 @@ CTM.FileBody = function(header){
     (i + v + n + (u * header.uvMapCount) + (a * header.attrMapCount) ) * 4);
 
   this.indices = new Uint32Array(data, 0, i);
+//  this.indices = new THREE.Uint32Attribute(header.triangleCount, 3);
 
   this.vertices = new Float32Array(data, i * 4, v);
+//  this.vertices = new THREE.Float32Attribute(header.vertexCount, 3);
 
   if ( header.hasNormals() ){
     this.normals = new Float32Array(data, (i + v) * 4, n);
+//    this.vertices = new THREE.Float32Attribute(header.vertexCount, 3);
   }
   
   if (header.uvMapCount){
@@ -108,7 +111,8 @@ CTM.FileBody = function(header){
     for (j = 0; j < header.uvMapCount; ++ j){
       this.uvMaps[j] = {uv: new Float32Array(data,
         (i + v + n + (j * u) ) * 4, u) };
-    }
+//      this.uvMaps[j] = {uv: THREE.Float32Attribute(header.vertexCount, 2)};
+   }
   }
   
   if (header.attrMapCount){
@@ -116,6 +120,7 @@ CTM.FileBody = function(header){
     for (j = 0; j < header.attrMapCount; ++ j){
       this.attrMaps[j] = {attr: new Float32Array(data,
         (i + v + n + (u * header.uvMapCount) + (j * a) ) * 4, a) };
+//      this.attrMaps[j] = {attr: new THREE.Float32Attribute(header.vertexCount, 4)};
     }
   }
 };

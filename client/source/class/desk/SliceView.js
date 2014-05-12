@@ -578,7 +578,6 @@ qx.Class.define("desk.SliceView",
 			}
 			this.__drawingMesh = mesh;
 
-			geometry.computeCentroids();
 			geometry.computeFaceNormals();
 			geometry.computeVertexNormals();
 			geometry.computeBoundingSphere();
@@ -639,7 +638,6 @@ qx.Class.define("desk.SliceView",
 			var mesh = new THREE.Mesh(geometry, material);
 			mesh.renderDepth = - this.__slices.length;
 			volumeSlice.setUserData("mesh", mesh);
-			geometry.computeCentroids();
 			geometry.computeFaceNormals();
 			geometry.computeVertexNormals();
 			geometry.computeBoundingSphere();
