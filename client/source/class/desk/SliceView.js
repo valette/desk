@@ -251,9 +251,7 @@ qx.Class.define("desk.SliceView",
 		 * @param slices {Array} array of slices to remove
 		*/
 		removeVolumes : function (slices) {
-			for (var i = 0; i != slices.length; i++) {
-				this.removeVolume(slices[i]);
-			}
+			slices.forEach(this.removeVolume.bind(this));
 		},
 
 		__reorientationContainer : null,
@@ -672,11 +670,7 @@ qx.Class.define("desk.SliceView",
 		__initFromVolume : function (volumeSlice) {
 			this.__initDrawingDone = false;
 			this.__slider.setMaximum(volumeSlice.getNumberOfSlices() - 1);
-			if (volumeSlice.getNumberOfSlices() === 1) {
-				this.__slider.setVisibility("hidden");
-			} else {
-				this.__slider.setVisibility("visible");
-			}
+			this.__slider.setVisibility(volumeSlice.getNumberOfSlices() === 1 ? "hidden" : "visible");
 
 			var camera = this.getCamera();
 			var position = camera.position;
@@ -794,8 +788,7 @@ qx.Class.define("desk.SliceView",
 					v[i] = dimensions[i] - 1;
 				}
 			}
-			switch (this.__orientation)
-			{
+			switch (this.__orientation) {
 			case 0 :
 				i = v[0];
 				j = v[1];
@@ -968,8 +961,7 @@ qx.Class.define("desk.SliceView",
 
 			var brushMesh = this.__brushMesh;
 			var position;
-			switch (this.__interactionMode)
-			{
+			switch (this.__interactionMode) {
 			case -1:
 				if (this.isPaintMode() || this.isEraseMode()) {
 					position = this.getPositionOnSlice(event);

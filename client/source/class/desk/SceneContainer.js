@@ -824,6 +824,7 @@ qx.Class.define("desk.SceneContainer",
 				if (selectedNode.type === qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 					var firstSelectedMesh = this.__getMeshFromNode(selectedNode);
 					var color=firstSelectedMesh.material.color;
+					if (!color) return;
 					colorSelector.setRed(Math.round(ratio*color.r));
 					colorSelector.setGreen(Math.round(ratio*color.g));
 					colorSelector.setBlue(Math.round(ratio*color.b));
@@ -1077,18 +1078,16 @@ qx.Class.define("desk.SceneContainer",
 				if (!selNode) {
 					return;
 				}
+
+				var visibility = "visible"
 				var leaf = this.__meshesTree.nodeGet(selNode);
-				var visibility = "visible";
-				if (leaf) {
-					if (leaf.__customProperties) {
-						if(leaf.__customProperties.volumeSlice) {
-							visibility = "excluded";
-						}
-					}
+				if(leaf && leaf.__customProperties && leaf.__customProperties.volumeSlice) {
+					visibility = "excluded";
 				}
-				for (var i = 0; i < optionalButtons.length; i++) {
-					optionalButtons[i].setVisibility(visibility);
-				}
+
+				optionalButtons.forEach(function (button) {
+					button.setVisibility(visibility);
+				});
 			}, this);
 
 			qx.util.DisposeUtil.disposeTriggeredBy(menu, this);
