@@ -31,8 +31,6 @@ qx.Class.define("desk.FileBrowser",
 		this.setLayout(new qx.ui.layout.VBox(8));
 		this.__standAlone = standAlone === false ? false : true;
 
-		qx.Class.include(qx.ui.treevirtual.TreeVirtual, qx.ui.treevirtual.MNode);
-
 		this.__actionCallbacks = [];
 		this.__actionNames = [];
 

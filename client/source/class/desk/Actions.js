@@ -43,8 +43,6 @@ qx.Class.define("desk.Actions",
 	construct : function() {
 		this.base(arguments);
 
-		qx.Class.include(qx.ui.treevirtual.TreeVirtual, qx.ui.treevirtual.MNode);
-
 		// determine base URLs for RPC
 		var baseURL = desk.FileSystem.getInstance().getBaseURL();
 		this.__baseActionsURL = baseURL + 'rpc/';
