@@ -683,12 +683,6 @@ qx.Class.define("desk.SceneContainer",
         },
 
 		__urlLoad : function (parameters, callback) {
-			var useWorker = true;
-			var useBuffers = true;
-
-			if (parameters.useBuffers === false) {
-				useBuffers = false;
-			}
 			var loader;
 			if (desk.FileSystem.getFileExtension(parameters.url) === "vtk") {
 				loader = this.__vtkLoader;
@@ -701,7 +695,7 @@ qx.Class.define("desk.SceneContainer",
 				if (typeof callback === 'function') {
 					callback(mesh);
 				}
-			}.bind(this), { useWorker : useWorker, useBuffers : useBuffers});
+			}.bind(this), {useWorker : true});
 		},
 
 		__getSnapshotButton : function () {
