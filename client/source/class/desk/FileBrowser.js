@@ -586,12 +586,9 @@ qx.Class.define("desk.FileBrowser",
 		* @return {Array} array of files (strings)
 		*/
 		getSelectedFiles : function () {
-			var selectedNodes = this.__getSelectedNodes();
-			var files = [];
-			for (var i = 0; i < selectedNodes.length; i++) {
-				files.push(this.__getNodeFile(selectedNodes[i]));
-			}
-			return files;
+			return this.__getSelectedNodes().map(function (node) {
+				return this.__getNodeFile(node);
+			}, this);
 		},
 
 		__getNodeMTime : function (node) {
