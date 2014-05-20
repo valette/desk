@@ -269,7 +269,7 @@ qx.Class.define("desk.FileBrowser",
 				})
 				menu.add(openButton);
 				button.setContextMenu(menu);
-            }.bind(this));
+            }, this);
             return container;
 		},
 
@@ -685,7 +685,7 @@ qx.Class.define("desk.FileBrowser",
 					foldersObject[folder] = true;
 					this.updateDirectory(folder);
 				}
-			}.bind(this));
+			}, this);
 		},
 
 		__openNode : function (node) {

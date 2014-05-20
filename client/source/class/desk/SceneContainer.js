@@ -871,7 +871,7 @@ qx.Class.define("desk.SceneContainer",
 			renderDepthSpinner.addListener("changeValue", function(event){
 				if (enableUpdate) {
                     this.getSelectedMeshes().forEach(function (mesh){
-                        mesh.renderDepth=renderDepthSpinner.getValue();
+                        mesh.renderDepth = renderDepthSpinner.getValue();
                     });
 					this.render();
 				}
@@ -886,7 +886,7 @@ qx.Class.define("desk.SceneContainer",
                 if (mesh) {
 					meshes.push(mesh);
                 }
-			}.bind(this));
+			}, this);
             return meshes;
         },
 

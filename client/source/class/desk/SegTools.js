@@ -46,7 +46,7 @@ qx.Class.define("desk.SegTools",
 				this.__saveCurrentSeeds();
 				this.__reloadSeedImage( viewer );
 			}, this);
-		}.bind(this));
+		}, this);
 
 		this.addListener("close", function (e) {
 			master.getViewers().forEach(function (viewer) {
@@ -216,7 +216,7 @@ qx.Class.define("desk.SegTools",
 
 			this.__master.getViewers().forEach (function (viewer) {
 				this.__addSeedsLists (viewer);
-			}.bind(this));
+			}, this);
 			
 			var whileDrawingDrwngOpacityLabel = new qx.ui.basic.Label("Opacity :");
 			this.__paintContainer.add(whileDrawingDrwngOpacityLabel);
@@ -436,20 +436,18 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__rebuildLabelsList : function () {
-			var colors = this.__labels;
 			var row = 0;
 			var column = 0;
 			var numberOfColumns = 4;
 			this.__colorsContainer.removeAll();
-			for (var i=0; i < colors.length; i++) {	
-				var labelBox = colors[i].container;
-				this.__colorsContainer.add(labelBox, {column: column, row: row});
+			this.__labels.forEach(function (label) {
+				this.__colorsContainer.add(label.container, {column: column, row: row});
 				column++;
 				if (column >= numberOfColumns) {
 					column = 0;
 					row++;
 				}
-			}
+			}, this);
 			this.__buildLookupTables();
 		},
 
@@ -1073,13 +1071,14 @@ qx.Class.define("desk.SegTools",
 								sliceOrientation = 0;
 							}
 							this.__master.getViewers().forEach (function (viewer) {
-								if(sliceOrientation == viewer.getOrientation())
+								if(sliceOrientation == viewer.getOrientation()) {
 									this.__addNewSeedItemToList(viewer, sliceId, k);
-							}.bind(this));
+								}
+							}, this);
 						}
 						this.__master.getViewers().forEach(function (viewer) {
 							this.__reloadSeedImage( viewer );
-						}.bind(this));
+						}, this);
 					}
 					var colors = response.getElementsByTagName("color");
 					var adjacencies = response.getElementsByTagName("adjacency");
@@ -1467,7 +1466,7 @@ qx.Class.define("desk.SegTools",
 							{slice: sliceId + "", orientation: orientation + ""}) + '\n';
 					}
 				}
-			}.bind(this));
+			}, this);
 
 			var seeds = element('seeds', xmlContent);
 			desk.Actions.getInstance().launchAction({
@@ -1496,7 +1495,7 @@ qx.Class.define("desk.SegTools",
 					seedsLists[newSeedsType].setVisibility("visible");
 					seedsLists[1 - newSeedsType].setVisibility("excluded");
 					this.__reloadSeedImage(viewer);
-				}.bind(this));
+				}, this);
 			}.bind(this);
 
 			selectBox.addListener("changeSelection",updateSeedsListsVisibility);
@@ -1604,7 +1603,7 @@ qx.Class.define("desk.SegTools",
 				this.addListener("close", function (e) {
 					sliceView.remove(list);
 				});
-			}.bind(this));
+			}, this);
 
 		},
 
@@ -1614,7 +1613,7 @@ qx.Class.define("desk.SegTools",
 				viewer.getUserData("seeds").
 					forEach(function (list) {list.removeAll();});
 				this.__reloadSeedImage(viewer);
-			}.bind(this));
+			}, this);
 		},
 
 		__addNewSeedItemToList : function ( sliceView, sliceId, seedsType ) {

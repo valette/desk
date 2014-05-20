@@ -355,7 +355,7 @@ qx.Class.define("desk.VolumeSlice",
 
 			this.__materials.forEach(function (material) {
 				this.__setLookupTablesToMaterial ( luts , material );
-			}.bind(this));
+			}, this);
 			this.fireEvent("changeImage");
 		},
 
@@ -705,7 +705,7 @@ qx.Class.define("desk.VolumeSlice",
 			// feed shader with constants
 			this.__materials.forEach(function (material) {
 				material.uniforms.imageType.value = this.__availableImageFormat;
-			}.bind(this));
+			}, this);
 
 			if (this.__ready) {
 				this.__updateTriggered = true;

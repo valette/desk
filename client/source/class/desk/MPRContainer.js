@@ -178,8 +178,8 @@ qx.Class.define("desk.MPRContainer",
 							viewer.setSliceRank(slice, rank);
 						});
 					}
-				}.bind(this));
-			}.bind(this));
+				}, this);
+			}, this);
 			this.__renderAll();
 		},
 
@@ -1186,7 +1186,7 @@ qx.Class.define("desk.MPRContainer",
 			if (e.supportsType("fileBrowser")) {
 				e.getData("fileBrowser").getSelectedFiles().forEach(function(file) {
 					this.addVolume(file);
-				}.bind(this));
+				}, this);
 			} else if (e.supportsType("file")) {
 				if (e.supportsType("VolumeViewer")) {
 					if (this == e.getData("VolumeViewer")) {

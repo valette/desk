@@ -194,26 +194,22 @@ qx.Class.define("desk.SliceView",
 		 * Returns 'null' if no slice is present
 		*/
 		getFirstSlice : function () {
-			var slices = this.__slices;
-			for (var i = 0; i != slices.length; i++) {
-				var slice = slices[i];
-				if (!slice.getUserData('toDelete') &&
-					(slice.isReady())) {
+			this.__slices.forEach(function (slice) {
+				if (!slice.getUserData('toDelete') && (slice.isReady())) {
 					return slice;
 				}
-			}
-			return null;
+			});
 		},
 
 		setPaintColor : function (color) {
 			this.__initDrawing();
-			this.__paintColor=color;
+			this.__paintColor = color;
 			this.__updateBrush();
 		},
 
 		setPaintWidth : function (width) {
 			this.__initDrawing();
-			this.__paintWidth=width;
+			this.__paintWidth = width;
 			this.__updateBrush();
 		},
 
@@ -251,7 +247,7 @@ qx.Class.define("desk.SliceView",
 		 * @param slices {Array} array of slices to remove
 		*/
 		removeVolumes : function (slices) {
-			slices.forEach(this.removeVolume.bind(this));
+			slices.forEach(this.removeVolume, this);
 		},
 
 		__reorientationContainer : null,
@@ -762,9 +758,7 @@ qx.Class.define("desk.SliceView",
 		 * @param rank {Int} : rank to apply
 		 **/
 		setSliceRank : function (volumeSlice, rank) {
-			var slices = this.__slices;
-			for (var i = 0; i < slices.length; i++) {
-                var slice = slices[i];
+			this.__slices.forEach(function (slice) {
 				if (slice === volumeSlice) {
 					var mesh = slice.getUserData("mesh");
 					if (mesh) {
@@ -772,7 +766,7 @@ qx.Class.define("desk.SliceView",
 						mesh.renderDepth = - rank;
 					}
 				}
-			}
+			});
 		},
 
 		__setCrossPositionFromEvent : function (event) {
