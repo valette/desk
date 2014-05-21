@@ -1,13 +1,19 @@
-var fs      = require('fs'),
-	os      = require('os'),
-	libPath = require('path'),
-	express = require('express'),
-	http    = require('http'),
-	https   = require('https'),
-	formidable = require('formidable'),
-	mkdirp  = require('mkdirp'),
-	argv    = require('yargs').argv,
-	actions = require(__dirname + '/cl-rpc/cl-rpc');
+var fs           = require('fs'),
+	os           = require('os'),
+	libPath      = require('path'),
+	express      = require('express'),
+	http         = require('http'),
+	https        = require('https'),
+	formidable   = require('formidable'),
+	mkdirp       = require('mkdirp'),
+	argv         = require('yargs').argv,
+	actions      = require(__dirname + '/cl-rpc/cl-rpc'),
+	compress     = require('compression'),
+	auth         = require('basic-auth'),
+	bodyParser   = require('body-parser'),
+	directory    = require('serve-index'),
+	errorhandler = require('errorhandler'),
+	mv           = require('mv');
 
 var separator = "*******************************************************************************";
 console.log(separator);
@@ -20,9 +26,7 @@ var clientPath = fs.realpathSync(__dirname + '/../client/')+'/',
 
 // configure express server
 var app = express();
-// set upload limit to 20 GB
-app.use(express.limit('20000mb'));
-app.use(express.compress());
+app.use(compress());
 
 var	user = process.env.USER;
 
@@ -63,11 +67,19 @@ if (!fs.existsSync(passwordFile)) {
 }
 
 // use basicAuth depending on password.json
-var identity = require(passwordFile);
-if (identity.username && identity.password) {
-	app.use(express.basicAuth(function (username, password) {
-		return identity.username === username & identity.password === password;
-	}));
+var id = require(passwordFile);
+if (id.username && id.password) {
+	app.use(function(req, res, next) {
+		var user = auth(req);
+		if (user && user.name == id.username && user.pass == id.password) {
+			next();
+		} else {
+			res.statusCode = 401;
+			res.setHeader('WWW-Authenticate', 'Basic realm="' +
+				"please enter your login/password" + '"');
+			res.end('Unauthorized');
+		}
+	});
 	console.log("Using basic authentication");
 } else {
 	console.log("No password file " + passwordFile + " provided or incorrect file");
@@ -75,8 +87,7 @@ if (identity.username && identity.password) {
 }
 
 // handle body parsing
-app.use(express.json());
-app.use(express.urlencoded());
+app.use(bodyParser());
 
 if (fs.existsSync(clientPath + 'default')) {
 	console.log('serving custom default folder');
@@ -87,12 +98,12 @@ if (fs.existsSync(clientPath + 'default')) {
 }
 
 // serve data files
-app.use(homeURL + 'files',express.static(deskPath));
-app.use(homeURL + 'files',express.directory(deskPath));
+app.use(homeURL + 'files', express.static(deskPath));
+app.use(homeURL + 'files', directory(deskPath));
 
 // serve client code
 app.use(homeURL, express.static(clientPath));
-app.use(homeURL, express.directory(clientPath));
+app.use(homeURL, directory(clientPath));
 
 // handle uploads
 app.post(actionsBaseURL + 'upload', function(req, res) {
@@ -105,14 +116,10 @@ app.post(actionsBaseURL + 'upload', function(req, res) {
 		console.log("file : " + file.path.toString());
 		var fullName = libPath.join(outputDir, file.name.toString());
 		console.log("uploaded to " +  fullName);
-		fs.rename(file.path.toString(), fullName, function(err) {
+		mv(file.path.toString(), fullName, function(err) {
 			if (err) throw err;
-			// delete the temporary file
-			fs.unlink(file.path.toString(), function() {
-				if (err)  {throw err;}
-			});
+			res.send('file ' + file.name + ' uploaded successfully');
 		});
-		res.send('file ' + file.name + ' uploaded successfully');
 	});
 });
 
@@ -185,7 +192,7 @@ app.get(actionsBaseURL + ':action', function (req, res) {
 });
 
 // handle errors
-app.use(express.errorHandler({
+app.use(errorhandler({
 	dumpExceptions: true, 
 	showStack: true
 }));
@@ -229,9 +236,8 @@ actions.update(function () {
 	console.log(new Date().toLocaleString());
 	console.log ("server running on port " + port);
 	console.log(baseURL + "localhost:" + port + homeURL);
-	if (identity) {
-		console.log('login as : user : "' + identity.username +
-			'", password : "' + identity.password + '"');
+	if (id) {
+		console.log('login as : user : "' + id.username + '", password : "' + id.password + '"');
 	}
 });
 
