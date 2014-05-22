@@ -194,11 +194,13 @@ qx.Class.define("desk.SliceView",
 		 * Returns 'null' if no slice is present
 		*/
 		getFirstSlice : function () {
+			var res = null;
 			this.__slices.forEach(function (slice) {
 				if (!slice.getUserData('toDelete') && (slice.isReady())) {
-					return slice;
+					res = slice;
 				}
 			});
+			return res;
 		},
 
 		setPaintColor : function (color) {
@@ -1200,8 +1202,9 @@ qx.Class.define("desk.SliceView",
 				this.__sliderInUse = false;
 			}, this)
 			slider.addListener("changeValue",function(e){
-				if (!this.getFirstSlice()) return;
-				this.setSlice(this.getFirstSlice().getNumberOfSlices()-1-e.getData());
+				var slice = this.getFirstSlice();
+				if (!slice) return;
+				this.setSlice(slice.getNumberOfSlices() - 1 - e.getData());
 			}, this);
 
 			var rightContainer = this.__rightContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox());
