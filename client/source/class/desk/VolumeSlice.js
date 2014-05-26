@@ -290,12 +290,10 @@ qx.Class.define("desk.VolumeSlice",
 		setBrightnessAndContrast : function (brightness, contrast) {
 			this.__brightness = brightness;
 			this.__contrast = contrast;
-			var materials = this.__materials;
-			for (var i = 0; i < materials.length; i++) {
-				var material = materials[i];
+			this.__materials.forEach(function (material) {
 				material.uniforms.brightness.value = brightness;
 				material.uniforms.contrast.value = contrast;
-			}
+			});
 			this.fireEvent("changeImage");
 		},
 
@@ -304,10 +302,9 @@ qx.Class.define("desk.VolumeSlice",
 		 * @param opacity {Number} opacity in the [0, 1] range
 		 */
 		 setOpacity : function (opacity) {
-			var materials = this.__materials;
-			for (var i = 0; i < materials.length; i++) {
-				materials[i].uniforms.opacity.value = opacity;
-			}
+			this.__materials.forEach(function (material) {
+				material.uniforms.opacity.value = opacity;
+			});
 			this.fireEvent("changeImage");
 		},
 
@@ -356,10 +353,9 @@ qx.Class.define("desk.VolumeSlice",
 			}
 			this.__lookupTables = luts;
 
-			var materials = this.__materials;
-			for (var i = 0; i < materials.length; i++) {
-				this.__setLookupTablesToMaterial ( luts , materials[i] );
-			}
+			this.__materials.forEach(function (material) {
+				this.__setLookupTablesToMaterial ( luts , material );
+			}, this);
 			this.fireEvent("changeImage");
 		},
 
@@ -370,10 +366,9 @@ qx.Class.define("desk.VolumeSlice",
 		removeLookupTables : function () {
 			this.__lookupTables = null;
 
-			var materials = this.__materials;
-			for (var i = 0; i < materials.length; i++) {
-				materials[i].uniforms.useLookupTable.value = 0;
-			}
+			this.__materials.forEach(function (material) {
+				material.uniforms.useLookupTable.value = 0;
+			});
 			this.fireEvent("changeImage");
 		},
 
@@ -423,8 +418,7 @@ qx.Class.define("desk.VolumeSlice",
 			lookupTable.needsUpdate = true;
 
 			var middleShader;
-			switch (this.__scalarType)
-			{
+			switch (this.__scalarType) {
 			case 2 :
 			case 15:
 				//char / signed char
@@ -605,8 +599,7 @@ qx.Class.define("desk.VolumeSlice",
 		 get2DCornersCoordinates : function () {
 			var bounds = this.getBounds();
 
-			switch(this.getOrientation())
-			{
+			switch(this.getOrientation()) {
 				// ZY X
 				case 1 :
 					return [bounds[4], bounds[3],
@@ -633,8 +626,7 @@ qx.Class.define("desk.VolumeSlice",
 		 * @return {Number} number of slices
 		 */
 		 getNumberOfSlices : function () {
-			switch(this.getOrientation())
-			{
+			switch(this.getOrientation()) {
 				// ZY X
 				case 1 :
 					return this.__dimensions[0];
@@ -711,10 +703,9 @@ qx.Class.define("desk.VolumeSlice",
 			this.__path = desk.FileSystem.getFileDirectory(xmlURL);
 
 			// feed shader with constants
-			var materials = this.__materials;
-			for (var i = 0; i < materials.length; i++){
-				materials[i].uniforms.imageType.value = this.__availableImageFormat;
-			}
+			this.__materials.forEach(function (material) {
+				material.uniforms.imageType.value = this.__availableImageFormat;
+			}, this);
 
 			if (this.__ready) {
 				this.__updateTriggered = true;
@@ -736,10 +727,9 @@ qx.Class.define("desk.VolumeSlice",
 			this.__image.onload = function() {
 				clearTimeout(this.__timeOut);
 				this.__updateInProgress = false;
-				var materials = this.__materials;
-				for (var i = 0; i < materials.length; i++){
-					materials[i].uniforms.texture.value.needsUpdate = true;
-				}
+				this.__materials.forEach(function (material) {
+					material.uniforms.texture.value.needsUpdate = true;
+				});
 				this.fireEvent("changeImage");
 			}.bind(this);
 

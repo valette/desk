@@ -163,7 +163,6 @@ THREE.VTKLoader.prototype = {
             }
 		}
 
-		geometry.computeCentroids();
 		geometry.computeFaceNormals();
 		geometry.computeVertexNormals();
 		geometry.computeBoundingSphere();

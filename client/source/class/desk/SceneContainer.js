@@ -38,7 +38,6 @@ qx.Class.define("desk.SceneContainer",
         this.base(arguments);
         this.__files = [];
 		qx.Class.include(qx.ui.treevirtual.TreeVirtual, qx.ui.treevirtual.MNode);
-
         parameters = parameters || {};
 
 		if (parameters.convertVTK !== undefined) {
@@ -683,12 +682,6 @@ qx.Class.define("desk.SceneContainer",
         },
 
 		__urlLoad : function (parameters, callback) {
-			var useWorker = true;
-			var useBuffers = true;
-
-			if (parameters.useBuffers === false) {
-				useBuffers = false;
-			}
 			var loader;
 			if (desk.FileSystem.getFileExtension(parameters.url) === "vtk") {
 				loader = this.__vtkLoader;
@@ -701,7 +694,7 @@ qx.Class.define("desk.SceneContainer",
 				if (typeof callback === 'function') {
 					callback(mesh);
 				}
-			}.bind(this), { useWorker : useWorker, useBuffers : useBuffers});
+			}.bind(this), {useWorker : true});
 		},
 
 		__getSnapshotButton : function () {
@@ -831,6 +824,7 @@ qx.Class.define("desk.SceneContainer",
 				if (selectedNode.type === qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 					var firstSelectedMesh = this.__getMeshFromNode(selectedNode);
 					var color=firstSelectedMesh.material.color;
+					if (!color) return;
 					colorSelector.setRed(Math.round(ratio*color.r));
 					colorSelector.setGreen(Math.round(ratio*color.g));
 					colorSelector.setBlue(Math.round(ratio*color.b));
@@ -877,7 +871,7 @@ qx.Class.define("desk.SceneContainer",
 			renderDepthSpinner.addListener("changeValue", function(event){
 				if (enableUpdate) {
                     this.getSelectedMeshes().forEach(function (mesh){
-                        mesh.renderDepth=renderDepthSpinner.getValue();
+                        mesh.renderDepth = renderDepthSpinner.getValue();
                     });
 					this.render();
 				}
@@ -892,7 +886,7 @@ qx.Class.define("desk.SceneContainer",
                 if (mesh) {
 					meshes.push(mesh);
                 }
-			}.bind(this));
+			}, this);
             return meshes;
         },
 
@@ -1084,18 +1078,16 @@ qx.Class.define("desk.SceneContainer",
 				if (!selNode) {
 					return;
 				}
+
+				var visibility = "visible"
 				var leaf = this.__meshesTree.nodeGet(selNode);
-				var visibility = "visible";
-				if (leaf) {
-					if (leaf.__customProperties) {
-						if(leaf.__customProperties.volumeSlice) {
-							visibility = "excluded";
-						}
-					}
+				if(leaf && leaf.__customProperties && leaf.__customProperties.volumeSlice) {
+					visibility = "excluded";
 				}
-				for (var i = 0; i < optionalButtons.length; i++) {
-					optionalButtons[i].setVisibility(visibility);
-				}
+
+				optionalButtons.forEach(function (button) {
+					button.setVisibility(visibility);
+				});
 			}, this);
 
 			qx.util.DisposeUtil.disposeTriggeredBy(menu, this);

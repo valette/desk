@@ -178,8 +178,8 @@ qx.Class.define("desk.MPRContainer",
 							viewer.setSliceRank(slice, rank);
 						});
 					}
-				}.bind(this));
-			}.bind(this));
+				}, this);
+			}, this);
 			this.__renderAll();
 		},
 
@@ -760,11 +760,18 @@ qx.Class.define("desk.MPRContainer",
 						new desk.SegTools(this, this.getVolumeFile(volumeListItem));
 					},this);
 					menu.add(segmentButton);
-					var segmentButton = new qx.ui.menu.Button("segment");
-					segmentButton.addListener("execute", function () {
+
+					var segmentButtonGC = new qx.ui.menu.Button("segment");
+					segmentButtonGC.addListener("execute", function () {
 						new desk.SegTools(this, this.getVolumeFile(volumeListItem), {segmentationMethod : 1});
 					},this);
-					menu.add(segmentButton);
+					menu.add(segmentButtonGC);
+
+					var editButton = new qx.ui.menu.Button("edit");
+					editButton.addListener("execute", function () {
+						new desk.SegTools(this, this.getVolumeFile(volumeListItem), {segmentationMethod : 2});
+					},this);
+					menu.add(editButton);
 				}
 			}
 
@@ -1186,7 +1193,7 @@ qx.Class.define("desk.MPRContainer",
 			if (e.supportsType("fileBrowser")) {
 				e.getData("fileBrowser").getSelectedFiles().forEach(function(file) {
 					this.addVolume(file);
-				}.bind(this));
+				}, this);
 			} else if (e.supportsType("file")) {
 				if (e.supportsType("VolumeViewer")) {
 					if (this == e.getData("VolumeViewer")) {

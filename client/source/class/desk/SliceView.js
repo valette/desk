@@ -194,26 +194,24 @@ qx.Class.define("desk.SliceView",
 		 * Returns 'null' if no slice is present
 		*/
 		getFirstSlice : function () {
-			var slices = this.__slices;
-			for (var i = 0; i != slices.length; i++) {
-				var slice = slices[i];
-				if (!slice.getUserData('toDelete') &&
-					(slice.isReady())) {
-					return slice;
+			var res = null;
+			this.__slices.forEach(function (slice) {
+				if (!slice.getUserData('toDelete') && (slice.isReady())) {
+					res = slice;
 				}
-			}
-			return null;
+			});
+			return res;
 		},
 
 		setPaintColor : function (color) {
 			this.__initDrawing();
-			this.__paintColor=color;
+			this.__paintColor = color;
 			this.__updateBrush();
 		},
 
 		setPaintWidth : function (width) {
 			this.__initDrawing();
-			this.__paintWidth=width;
+			this.__paintWidth = width;
 			this.__updateBrush();
 		},
 
@@ -251,9 +249,7 @@ qx.Class.define("desk.SliceView",
 		 * @param slices {Array} array of slices to remove
 		*/
 		removeVolumes : function (slices) {
-			for (var i = 0; i != slices.length; i++) {
-				this.removeVolume(slices[i]);
-			}
+			slices.forEach(this.removeVolume, this);
 		},
 
 		__reorientationContainer : null,
@@ -578,7 +574,6 @@ qx.Class.define("desk.SliceView",
 			}
 			this.__drawingMesh = mesh;
 
-			geometry.computeCentroids();
 			geometry.computeFaceNormals();
 			geometry.computeVertexNormals();
 			geometry.computeBoundingSphere();
@@ -639,7 +634,6 @@ qx.Class.define("desk.SliceView",
 			var mesh = new THREE.Mesh(geometry, material);
 			mesh.renderDepth = - this.__slices.length;
 			volumeSlice.setUserData("mesh", mesh);
-			geometry.computeCentroids();
 			geometry.computeFaceNormals();
 			geometry.computeVertexNormals();
 			geometry.computeBoundingSphere();
@@ -674,11 +668,7 @@ qx.Class.define("desk.SliceView",
 		__initFromVolume : function (volumeSlice) {
 			this.__initDrawingDone = false;
 			this.__slider.setMaximum(volumeSlice.getNumberOfSlices() - 1);
-			if (volumeSlice.getNumberOfSlices() === 1) {
-				this.__slider.setVisibility("hidden");
-			} else {
-				this.__slider.setVisibility("visible");
-			}
+			this.__slider.setVisibility(volumeSlice.getNumberOfSlices() === 1 ? "hidden" : "visible");
 
 			var camera = this.getCamera();
 			var position = camera.position;
@@ -770,9 +760,7 @@ qx.Class.define("desk.SliceView",
 		 * @param rank {Int} : rank to apply
 		 **/
 		setSliceRank : function (volumeSlice, rank) {
-			var slices = this.__slices;
-			for (var i = 0; i < slices.length; i++) {
-                var slice = slices[i];
+			this.__slices.forEach(function (slice) {
 				if (slice === volumeSlice) {
 					var mesh = slice.getUserData("mesh");
 					if (mesh) {
@@ -780,7 +768,7 @@ qx.Class.define("desk.SliceView",
 						mesh.renderDepth = - rank;
 					}
 				}
-			}
+			});
 		},
 
 		__setCrossPositionFromEvent : function (event) {
@@ -796,8 +784,7 @@ qx.Class.define("desk.SliceView",
 					v[i] = dimensions[i] - 1;
 				}
 			}
-			switch (this.__orientation)
-			{
+			switch (this.__orientation) {
 			case 0 :
 				i = v[0];
 				j = v[1];
@@ -970,8 +957,7 @@ qx.Class.define("desk.SliceView",
 
 			var brushMesh = this.__brushMesh;
 			var position;
-			switch (this.__interactionMode)
-			{
+			switch (this.__interactionMode) {
 			case -1:
 				if (this.isPaintMode() || this.isEraseMode()) {
 					position = this.getPositionOnSlice(event);
@@ -1216,8 +1202,9 @@ qx.Class.define("desk.SliceView",
 				this.__sliderInUse = false;
 			}, this)
 			slider.addListener("changeValue",function(e){
-				if (!this.getFirstSlice()) return;
-				this.setSlice(this.getFirstSlice().getNumberOfSlices()-1-e.getData());
+				var slice = this.getFirstSlice();
+				if (!slice) return;
+				this.setSlice(slice.getNumberOfSlices() - 1 - e.getData());
 			}, this);
 
 			var rightContainer = this.__rightContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox());

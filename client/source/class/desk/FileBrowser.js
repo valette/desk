@@ -31,8 +31,6 @@ qx.Class.define("desk.FileBrowser",
 		this.setLayout(new qx.ui.layout.VBox(8));
 		this.__standAlone = standAlone === false ? false : true;
 
-		qx.Class.include(qx.ui.treevirtual.TreeVirtual, qx.ui.treevirtual.MNode);
-
 		this.__actionCallbacks = [];
 		this.__actionNames = [];
 
@@ -271,7 +269,7 @@ qx.Class.define("desk.FileBrowser",
 				})
 				menu.add(openButton);
 				button.setContextMenu(menu);
-            }.bind(this));
+            }, this);
             return container;
 		},
 
@@ -588,12 +586,9 @@ qx.Class.define("desk.FileBrowser",
 		* @return {Array} array of files (strings)
 		*/
 		getSelectedFiles : function () {
-			var selectedNodes = this.__getSelectedNodes();
-			var files = [];
-			for (var i = 0; i < selectedNodes.length; i++) {
-				files.push(this.__getNodeFile(selectedNodes[i]));
-			}
-			return files;
+			return this.__getSelectedNodes().map(function (node) {
+				return this.__getNodeFile(node);
+			}, this);
 		},
 
 		__getNodeMTime : function (node) {
@@ -684,17 +679,13 @@ qx.Class.define("desk.FileBrowser",
 
 		__updateDirectories : function (files) {
 			var foldersObject = {};
-			var foldersArray = [];
-			for (var i = 0; i < files.length; i++) {
-				var folder = files[i];
-				if (foldersObject[folder] === undefined) {
+
+			files.forEach(function (folder) {
+				if (!foldersObject[folder]) {
 					foldersObject[folder] = true;
-					foldersArray.push(folder);
+					this.updateDirectory(folder);
 				}
-			}
-			for (i = 0; i < foldersArray.length; i++) {
-				this.updateDirectory(foldersArray[i]);
-			}
+			}, this);
 		},
 
 		__openNode : function (node) {
@@ -702,8 +693,7 @@ qx.Class.define("desk.FileBrowser",
 				if (this.__fileHandler) {
 					this.__fileHandler(this.__getNodeFile(node));
 				}
-			}
-			else {
+			} else {
 				this.__virtualTree.nodeToggleOpened(node);
 			}
 		},

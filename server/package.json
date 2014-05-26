@@ -8,15 +8,21 @@
   "version": "0.0.1",
   "devDependencies": {},
   "dependencies": {
-    "express": "3.x.x",
-    "cron": ">0.0.0",
-    "pretty-data": ">0.0.0",
     "async": ">0.0.0",
-    "winston": ">0.0.0",
+    "basic-auth": ">0.0.0",
+    "body-parser": ">0.0.0",
+    "compression": ">0.0.0",
+    "cron": ">0.0.0",
+    "errorhandler": ">0.0.0",
+    "express": ">0.0.0",
     "formidable": ">0.0.0",
-    "ms": ">0.0.0",
     "mkdirp": ">0.0.0",
-    "yargs" : ">0.0.0"
+    "ms": ">0.0.0",
+    "mv": ">0.0.0",
+    "pretty-data": ">0.0.0",
+    "serve-index": ">0.0.0",
+    "winston": ">0.0.0",
+    "yargs": ">0.0.0"
   },
   "optionalDependencies": {},
   "engines": {
