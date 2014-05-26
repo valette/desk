@@ -27,7 +27,7 @@ if (cluster.isMaster) {
 	return;
 }
 
-var proxy = new httpProxy.RoutingProxy({router : {}});
+var proxy = httpProxy.createProxyServer({});
 
 var ca = [];
 if (fs.existsSync(caFile)) {
@@ -66,10 +66,16 @@ function  processRequest (req, res) {
 		res.writeHead(301, {Location: defaultRoutes[req.headers.host]});
 		res.end();
 	} else {
-		proxy.proxyRequest(req, res);
+		var target = routes[req.headers.host + '/' + req.url.split("/")[1]];
+		if (!target)  {
+			res.end();
+			return;
+		}
+		proxy.web(req, res, target);
 	}
 }
 
+// read routes files and configure routing
 async.series([
 	updateRoutes,
 
@@ -89,37 +95,42 @@ async.series([
 
 
 var routes;
-fs.watchFile(routesFile, updateRoutes);
+var newRoutes;
 
 function updateRoutes(callback) {
-	console.log(new Date());
-	console.log(routesFile + ' modified, updating routes...');
+	console.log(fs.readFileSync(routesFile).toString());
 	var routesContent = JSON.parse(fs.readFileSync(routesFile));
 	var users = routesContent.users;
-	routes = {};
+	newRoutes = {};
 
 	async.forEachSeries(users, addUser, function () {
 		// add external proxies
 		var otherRoutes = routesContent.otherRoutes || {};
 		Object.keys(otherRoutes).forEach(function (key) {
-			routes[key] = otherRoutes[key];
+			newRoutes[key] = {target : otherRoutes[key]};
 		});
 		defaultRoutes = routesContent.defaultRoutes;
 		httpAllowed = routesContent.httpAllowed || {}
-		proxy.proxyTable.setRoutes(routes);
 		console.log('... done! Routes:');
+		routes = newRoutes;
 		console.log(routes);
-		if (typeof callback === "function") callback();
+		callback();
 	});
 }
 
-console.log('Watching file ' + routesFile + ' for routes');
-
 function addUser(user, callback) {
-        exec('id -u ' + user, function (err, stdout) {
-                var UID = parseInt(stdout, 10);
-                routes[os.hostname() + '/' + user] = os.hostname() + ':' + UID + '/' + user;
-                callback();
-        });
+	exec('id -u ' + user, function (err, stdout) {
+		var UID = parseInt(stdout, 10);
+		newRoutes[os.hostname() + '/' + user] = {target : 'http://' + os.hostname() + ':' + UID};
+		callback();
+	});
 }
+
+// watch routes files for auto-update
+fs.watchFile(routesFile, function () {
+	console.log(new Date());
+	console.log(routesFile + ' modified, updating routes...');
+	updateRoutes(function () {});
+});
+console.log('Watching file ' + routesFile + ' for routes');
 
