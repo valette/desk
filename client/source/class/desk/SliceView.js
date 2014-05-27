@@ -814,7 +814,7 @@ qx.Class.define("desk.SliceView",
 			var spacing = this.__volume2DSpacing;
 			var coordinates = this.__2DCornersCoordinates;
 			x = coordinates[0] + (0.5 + x) * spacing[0];
-			y = coordinates[1] + (0.5 + y) * spacing[1];
+			y = coordinates[5] - (0.5 + y) * spacing[1];
 
 			this.__positionI = i;
 			this.__positionJ = j;

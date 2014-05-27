@@ -382,11 +382,11 @@ qx.Class.define("desk.VolumeSlice",
 			addMembers(material.baseShader.baseUniforms, material.uniforms);
 			var extraUniforms = material.baseShader.extraUniforms;
 			material.fragmentShader = "";
-			for (var i = 0; i!= extraUniforms.length; i++) {
-				var name = extraUniforms[i].name;
+			extraUniforms.forEach(function (uniform) {
+				var name = uniform.name;
 				material.fragmentShader += "\n uniform float " + name + ";";
-				material.uniforms[name] = extraUniforms[i];
-			}
+				material.uniforms[name] = uniform;
+			});
 
 			material.fragmentShader += "\n" + material.baseShader.baseShaderBegin;
 			var extraShaders = material.baseShader.extraShaders;

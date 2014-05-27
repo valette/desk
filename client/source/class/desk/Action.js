@@ -162,9 +162,7 @@ qx.Class.define("desk.Action",
 				if (!parameters) {
 					return;
 				}
-				var items = manager.getItems();
-				for (var i = 0; i != items.length; i++) {
-					var item = items[i];
+				manager.getItems().forEach(function (item) {
 					var parameterName = item.getPlaceholder();
 					var parameterValue = parameters[parameterName];
 					if (parameterValue !== undefined) {
@@ -174,8 +172,7 @@ qx.Class.define("desk.Action",
 							item.getUserData("label").setVisibility("excluded");
 						}
 					}
-
-				}
+				});
 			}
 			setUIParameters(this.__loadedParameters, false);
 			setUIParameters(this.__providedParameters, !this.__standalone);
