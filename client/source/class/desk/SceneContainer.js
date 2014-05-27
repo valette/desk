@@ -482,20 +482,7 @@ qx.Class.define("desk.SceneContainer",
 		 * @return {THREE.Mesh} the created mesh;
 		 */
 		attachVolumeSlice : function (volumeSlice) {
-			var geometry = new THREE.Geometry();
-			geometry.dynamic = true;
-			for (var i = 0; i < 4; i++) {
-				geometry.vertices.push(new THREE.Vector3(0, 0, 0));
-			}
-			geometry.faces.push(new THREE.Face3(0, 1, 2));
-			geometry.faces.push(new THREE.Face3(0, 2, 3));
-			var uv0 = 	new THREE.Vector2(0, 0),
-				uv1 = new THREE.Vector2(1, 0),
-				uv2 = new THREE.Vector2(1, 1),
-				uv3 = new THREE.Vector2(0, 1);
-			geometry.faceVertexUvs[0].push([uv0, uv1, uv2]);
-			geometry.faceVertexUvs[0].push([uv0, uv2, uv3]);
-
+			var geometry = new THREE.PlaneGeometry( 1, 1);
 			var material = volumeSlice.getMaterial();
 			material.side = THREE.DoubleSide;
 			var mesh = new THREE.Mesh(geometry,material);
@@ -647,7 +634,6 @@ qx.Class.define("desk.SceneContainer",
 
         addGeometry : function (geometry, parameters) {
             parameters = parameters || {label : 'geometry'};
-			geometry.dynamic = true;
 			geometry.computeBoundingBox();
 
 			var color = parameters.color || [];

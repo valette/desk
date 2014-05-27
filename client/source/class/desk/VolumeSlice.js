@@ -527,24 +527,24 @@ qx.Class.define("desk.VolumeSlice",
 			case 0 :
 			default:
 				var z = this.__origin[2] + (slice + this.__extent[4]) * this.__spacing[2];
-				return [bounds[0], bounds[3], z,
-					bounds[1], bounds[3], z,
+				return [bounds[0], bounds[2], z,
 					bounds[1], bounds[2], z,
-					bounds[0], bounds[2], z];
+					bounds[0], bounds[3], z,
+					bounds[1], bounds[3], z];
 			// ZY X
 			case 1 :
 				var x = this.__origin[0] + (slice + this.__extent[0]) * this.__spacing[0];
-				return [x, bounds[3], bounds[4],
-					x, bounds[3], bounds[5],
+				return [x, bounds[2], bounds[4],
 					x, bounds[2], bounds[5],
-					x, bounds[2], bounds[4]];
+					x, bounds[3], bounds[4],
+					x, bounds[3], bounds[5]];
 			// XZ Y
 			case 2 :
 				var y = this.__origin[1] + (slice + this.__extent[2]) * this.__spacing[1];
-				return [bounds[0], y, bounds[5],
-					bounds[1], y, bounds[5],
+				return [bounds[0], y, bounds[4],
 					bounds[1], y, bounds[4],
-					bounds[0], y, bounds[4]];
+					bounds[0], y, bounds[5],
+					bounds[1], y, bounds[5]];
 			}
 		},
 

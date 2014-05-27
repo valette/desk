@@ -418,29 +418,13 @@ qx.Class.define("desk.SliceView",
 		__brushCanvas : null,
 
 		__createBrushMesh : function (volumeSlice) {
-			var geometry = new THREE.Geometry();
-			geometry.dynamic = true;
+			var geometry = new THREE.PlaneGeometry( 1, 1);
 			var coordinates = volumeSlice.get2DCornersCoordinates();
 			var dimensions = volumeSlice.get2DDimensions();
 
 			this.__coordinatesRatio = 
 				[(coordinates[2] - coordinates[0]) / dimensions[0],
 				(coordinates[5] - coordinates[3]) / dimensions[1]];
-
-			for (var i = 0; i < 4; i++) {
-				geometry.vertices.push(
-					new THREE.Vector3(coordinates[2 * i],
-						coordinates[2 * i + 1], 0));
-			}
-
-			geometry.faces.push(new THREE.Face3(0, 1, 2));
-			geometry.faces.push(new THREE.Face3(0, 2, 3));
-			var uv0 = 	new THREE.Vector2(0, 0),
-				uv1 = new THREE.Vector2(1, 0),
-				uv2 = new THREE.Vector2(1, 1),
-				uv3 = new THREE.Vector2(0, 1);
-			geometry.faceVertexUvs[0].push([uv0, uv1, uv2]);
-			geometry.faceVertexUvs[0].push([uv0, uv2, uv3]);
 
 			var width = 100;
 			var height = 100;
@@ -513,8 +497,8 @@ qx.Class.define("desk.SliceView",
 			var r0 = radius * ratio[0];
 			var r1 = radius * ratio[1];
 			var geometry = this.__brushMesh.geometry;
-			geometry.vertices[0].set(-r0, -r1, 0);
-			geometry.vertices[1].set(r0, -r1, 0);
+			geometry.vertices[0].set(r0, -r1, 0);
+			geometry.vertices[1].set(-r0, -r1, 0);
 			geometry.vertices[2].set(r0, r1, 0);
 			geometry.vertices[3].set(-r0, r1, 0);
 			geometry.verticesNeedUpdate = true;
