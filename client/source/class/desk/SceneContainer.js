@@ -11,6 +11,7 @@
 * @ignore(THREE.Raycaster)
 * @ignore(THREE.VTKLoader)
 * @ignore(THREE.Geometry)
+* @ignore(THREE.PlaneGeometry)
 * @ignore(THREE.MeshPhongMaterial)
 * @ignore(THREE.WireframeHelper)
 * @ignore(THREE.Color)

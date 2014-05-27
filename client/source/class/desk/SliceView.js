@@ -14,6 +14,7 @@
 * @ignore(THREE.DoubleSide)
 * @ignore(THREE.Projector)
 * @ignore(THREE.Geometry)
+* @ignore(THREE.PlaneGeometry)
 * @ignore(Uint8Array)
 * @lint ignoreDeprecated(alert)
 */

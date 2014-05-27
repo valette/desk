@@ -390,7 +390,7 @@ qx.Class.define("desk.VolumeSlice",
 
 			material.fragmentShader += "\n" + material.baseShader.baseShaderBegin;
 			var extraShaders = material.baseShader.extraShaders;
-			for (i = 0; i != extraShaders.length; i++) {
+			for (var i = 0; i != extraShaders.length; i++) {
 				material.fragmentShader += "\n" + extraShaders[i];
 			}
 			material.fragmentShader += "\n" + material.baseShader.baseShaderEnd;
