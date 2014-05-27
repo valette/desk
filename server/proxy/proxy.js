@@ -93,17 +93,21 @@ async.series([
 	process.setuid('dproxy');
 });
 
-
 var routes;
-var newRoutes;
 
 function updateRoutes(callback) {
 	console.log(fs.readFileSync(routesFile).toString());
 	var routesContent = JSON.parse(fs.readFileSync(routesFile));
 	var users = routesContent.users;
-	newRoutes = {};
+	var newRoutes = {};
 
-	async.forEachSeries(users, addUser, function () {
+	async.forEachSeries(users, function (user, callback) {
+		exec('id -u ' + user, function (err, stdout) {
+			newRoutes[os.hostname() + '/' + user] = 
+				{target : 'http://' + os.hostname() + ':' + stdout};
+			callback();
+		});
+	}, function () {
 		// add external proxies
 		var otherRoutes = routesContent.otherRoutes || {};
 		Object.keys(otherRoutes).forEach(function (key) {
@@ -114,14 +118,6 @@ function updateRoutes(callback) {
 		console.log('... done! Routes:');
 		routes = newRoutes;
 		console.log(routes);
-		callback();
-	});
-}
-
-function addUser(user, callback) {
-	exec('id -u ' + user, function (err, stdout) {
-		var UID = parseInt(stdout, 10);
-		newRoutes[os.hostname() + '/' + user] = {target : 'http://' + os.hostname() + ':' + UID};
 		callback();
 	});
 }
