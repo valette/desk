@@ -521,8 +521,7 @@ qx.Class.define("desk.VolumeSlice",
                 slice = this.getSlice();
             }
 			var bounds = this.getBounds();
-			switch (this.getOrientation())
-			{
+			switch (this.getOrientation()) {
 			// XY Z
 			case 0 :
 			default:
@@ -602,22 +601,22 @@ qx.Class.define("desk.VolumeSlice",
 			switch(this.getOrientation()) {
 				// ZY X
 				case 1 :
-					return [bounds[4], bounds[3],
-							bounds[5], bounds[3],
+					return [bounds[4], bounds[2],
 							bounds[5], bounds[2],
-							bounds[4], bounds[2]];
+							bounds[4], bounds[3],
+							bounds[5], bounds[3]];
 				// XZ Y
 				case 2 :
-					return [bounds[0], bounds[5],
-							bounds[1], bounds[5],
+					return [bounds[0], bounds[4],
 							bounds[1], bounds[4],
-							bounds[0], bounds[4]];
+							bounds[0], bounds[5],
+							bounds[1], bounds[5]];
 				// XY Z
 				default :
-					return [bounds[0], bounds[3],
-							bounds[1], bounds[3],
+					return [bounds[0], bounds[2],
 							bounds[1], bounds[2],
-							bounds[0], bounds[2]];
+							bounds[0], bounds[3],
+							bounds[1], bounds[3]];
 			}
 		},
 

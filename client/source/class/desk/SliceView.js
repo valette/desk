@@ -505,21 +505,11 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__setDrawingMesh : function (volumeSlice) {
-			var geometry = new THREE.Geometry();
+			var geometry = new THREE.PlaneGeometry(1, 1);
 			var coordinates = volumeSlice.get2DCornersCoordinates();
 			for (var i = 0; i < 4; i++) {
-				geometry.vertices.push(
-					new THREE.Vector3(coordinates[2 * i],coordinates[2*i + 1], 0));
+				geometry.vertices[i].set(coordinates[2 * i], coordinates[2*i + 1], 0);
 			}
-
-			geometry.faces.push(new THREE.Face3(0, 1, 2));
-			geometry.faces.push(new THREE.Face3(0, 2, 3));
-			var uv0 = 	new THREE.Vector2(0, 0),
-				uv1 = new THREE.Vector2(1, 0),
-				uv2 = new THREE.Vector2(1, 1),
-				uv3 = new THREE.Vector2(0, 1);
-			geometry.faceVertexUvs[0].push([uv0, uv1, uv2]);
-			geometry.faceVertexUvs[0].push([uv0, uv2, uv3]);
 
 			var width = this.__volume2DDimensions[0];
 			var height = this.__volume2DDimensions[1];
@@ -591,21 +581,12 @@ qx.Class.define("desk.SliceView",
 		__drawingListeners : null,
 
 		__addSlice : function (volumeSlice, parameters, callback) {
-			var geometry = new THREE.Geometry();
+			var geometry = new THREE.PlaneGeometry(1, 1);
 			var coordinates = volumeSlice.get2DCornersCoordinates();
 			for (var i = 0; i < 4; i++) {
-				geometry.vertices.push(new THREE.Vector3(coordinates[2 * i],
-					coordinates[2 * i + 1], 0));
+				geometry.vertices[i].set(coordinates[2 * i],
+					coordinates[2 * i + 1], 0);
 			}
-
-			geometry.faces.push(new THREE.Face3(0, 1, 2));
-			geometry.faces.push(new THREE.Face3(0, 2, 3));
-			var uv0 = 	new THREE.Vector2(0, 0),
-				uv1 = new THREE.Vector2(1, 0),
-				uv2 = new THREE.Vector2(1, 1),
-				uv3 = new THREE.Vector2(0, 1);
-			geometry.faceVertexUvs[0].push([uv0, uv1, uv2]);
-			geometry.faceVertexUvs[0].push([uv0, uv2, uv3]);
 
 			var listener = this.addListener("changeSlice", function (e) {
 				volumeSlice.setSlice(e.getData());
@@ -833,7 +814,7 @@ qx.Class.define("desk.SliceView",
 			var spacing = this.__volume2DSpacing;
 			var coordinates = this.__2DCornersCoordinates;
 			x = coordinates[0] + (0.5 + x) * spacing[0];
-			y = coordinates[1] - (0.5 + y) * spacing[1];
+			y = coordinates[1] + (0.5 + y) * spacing[1];
 
 			this.__positionI = i;
 			this.__positionJ = j;
@@ -1115,7 +1096,7 @@ qx.Class.define("desk.SliceView",
 			var yinter = intersection.y;
 
 			var intxc=Math.floor((xinter-coordinates[0])*dimensions[0]/(coordinates[2]-coordinates[0]));
-			var intyc=dimensions[1] - 1- Math.floor((yinter-coordinates[1])*dimensions[1]/(coordinates[5]-coordinates[1]));
+			var intyc=dimensions[1] - 1- Math.floor((yinter-coordinates[5])*dimensions[1]/(coordinates[1]-coordinates[5]));
 			return {i :intxc, j :intyc, x:xinter, y:yinter};
 		},
 
