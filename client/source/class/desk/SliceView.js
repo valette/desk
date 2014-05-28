@@ -701,7 +701,7 @@ qx.Class.define("desk.SliceView",
 				this.__orientation, parameters, function () {
 					if (volumeSlice.getUserData('toDelete')) {
 						// deletion was triggered before slice was completely loaded
-						for (var i = 0; i != slices.length; i++) {
+						for (var i = 0; i < slices.length; i++) {
 							if (slices[i] === volumeSlice) {
 								slices.splice(i, 1);
 							}
