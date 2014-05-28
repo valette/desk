@@ -43,7 +43,7 @@ if (argv.multi) {
 }
 
 var	deskPath = '/home/' + user + '/desk/',
-	actionsBaseURL = homeURL + 'rpc/',
+	actionsBaseURL = homeURL + '/rpc',
 	uploadDir = deskPath + 'upload/',
 	extensionsDir = deskPath + 'extensions/';
 
@@ -89,24 +89,28 @@ if (id.username && id.password) {
 // handle body parsing
 app.use(bodyParser());
 
+var fileServer = express.Router();
+app.use(homeURL, fileServer);
+
 if (fs.existsSync(clientPath + 'default')) {
 	console.log('serving custom default folder');
-	app.use(homeURL, express.static(clientPath + 'default'));
+	fileServer.use('/', express.static(clientPath + 'default'));
 } else {
 	console.log('serving default folder application/release/');
-	app.use(homeURL, express.static(clientPath + 'application/release/'));
+	fileServer.use('/', express.static(clientPath + 'application/release/'));
 }
 
 // serve data files
-app.use(homeURL + 'files', express.static(deskPath));
-app.use(homeURL + 'files', directory(deskPath));
+fileServer.use('/files', express.static(deskPath))
+.use('/files', directory(deskPath))
+.use('/', express.static(clientPath))
+.use('/', directory(clientPath))
 
-// serve client code
-app.use(homeURL, express.static(clientPath));
-app.use(homeURL, directory(clientPath));
+var rpc = express.Router();
+app.use(actionsBaseURL, rpc);
 
 // handle uploads
-app.post(actionsBaseURL + 'upload', function(req, res) {
+rpc.post('/upload', function(req, res) {
 	var form = new formidable.IncomingForm();
 	form.uploadDir = uploadDir;
 	form.parse(req, function(err, fields, files) {
@@ -121,25 +125,19 @@ app.post(actionsBaseURL + 'upload', function(req, res) {
 			res.send('file ' + file.name + ' uploaded successfully');
 		});
 	});
-});
-
-// handle actions
-app.post(actionsBaseURL + 'action', function(req, res){
+})
+.post('/action', function(req, res){
 	res.connection.setTimeout(0);
     actions.performAction(req.body, function (response) {
 		res.json(response);
 	});
-});
-
-// handle actions list reset
-app.post(actionsBaseURL + 'reset', function(req, res){
+})
+.post('/reset', function(req, res){
     actions.update(function (message) {
 		res.send(message);
 	});
-});
-
-// handle password change
-app.post(actionsBaseURL + 'password', function(req, res){
+})
+.post('/password', function(req, res){
 	if (!req.body.password) {
 		res.json({error : 'no password entered!'});
 		return;
@@ -151,10 +149,10 @@ app.post(actionsBaseURL + 'password', function(req, res){
 	} else {
 		res.json({error : 'password too short!'});
 	}
-});
-
-app.get(actionsBaseURL + ':action', function (req, res) {
+})
+.get('/:action', function (req, res) {
 	var action = req.params.action;
+	console.log(action);
 	switch (action) {
 	case 'exists' :
 		var path = req.query.path;
@@ -211,8 +209,7 @@ if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	server = https.createServer(options, app);
 	console.log("Using secure https mode");
 	baseURL = "https://";
-}
-else {
+} else {
 	server = http.createServer(app);
 	console.log("No certificate provided, using non secure mode");
 	console.log("You can generate a certificate with these 3 commands:");
