@@ -106,6 +106,7 @@ fileServer.use('/files', express.static(deskPath))
 .use('/', directory(clientPath))
 
 var rpc = express.Router();
+
 app.use(libPath.join(homeURL, 'rpc'), rpc);
 
 // handle uploads
@@ -127,12 +128,12 @@ rpc.post('/upload', function(req, res) {
 })
 .post('/action', function(req, res){
 	res.connection.setTimeout(0);
-    actions.performAction(req.body, function (response) {
+	actions.performAction(req.body, function (response) {
 		res.json(response);
 	});
 })
 .post('/reset', function(req, res){
-    actions.update(function (message) {
+	actions.update(function (message) {
 		res.send(message);
 	});
 })
@@ -149,42 +150,34 @@ rpc.post('/upload', function(req, res) {
 		res.json({error : 'password too short!'});
 	}
 })
-.get('/:action', function (req, res) {
-	var action = req.params.action;
-	switch (action) {
-	case 'exists' :
-		var path = req.query.path;
-		fs.exists(deskPath + path, function (exists) {
-			console.log('exists : ' + path	+ ' : ' + exists);
-			res.json({exists : exists});
+.get('/exists', function (req, res) {
+	var path = req.query.path;
+	fs.exists(deskPath + path, function (exists) {
+		console.log('exists : ' + path	+ ' : ' + exists);
+		res.json({exists : exists});
+	});
+})
+.get('/ls', function (req, res) {
+	var path = libPath.normalize(req.query.path) + '/';
+	actions.validatePath(path, function (error) {
+		if (error) {
+			res.json({error : error});
+			return;
+		}
+		actions.getDirectoryContent(path, function (message) {
+			res.send(message);
 		});
-		break;
-	case 'ls' :
-		path = libPath.normalize(req.query.path) + '/';
-		actions.validatePath(path, function (error) {
-			if (error) {
-				res.json({error : error});
-				return;
-			}
-			actions.getDirectoryContent(path, function (message) {
-				res.send(message);
-			});
-		});
-		break;
-	case 'download' :
-		var file = req.query.file;
-		actions.validatePath(file, function (error) {
-			if (error) {
-				res.send(error);
-				return;
-			}
-			res.download(deskPath + file);
-		});
-		break;
-	default : 
-		res.send('action not found');
-		break;
-   }
+	});
+})
+.get('/download', function (req, res) {
+	var file = req.query.file;
+	actions.validatePath(file, function (error) {
+		if (error) {
+			res.send(error);
+			return;
+		}
+		res.download(deskPath + file);
+	});
 });
 
 // handle errors
