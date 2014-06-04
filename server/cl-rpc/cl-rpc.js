@@ -40,7 +40,7 @@ function cleanCache() {
 	console.log('Starting cache cleaning (delete folders older than ' +
 		ms(maximumCacheAge, { long: true }) + ')'); 
 
-	var cacheDir = filesRoot + 'cache/';
+	var cacheDir = libpath.join(filesRoot, 'cache');
 	if (!fs.existsSync(cacheDir)) {
 		winston.log ('error' , 'wrong cache directory :' + cacheDir);
 		return;
@@ -49,7 +49,7 @@ function cleanCache() {
 	fs.readdir(cacheDir, function (err, files) {
 		async.eachSeries(files,
 			function (file, callback) {
-				fs.stat( cacheDir + file, function (err, stats) {
+				fs.stat(libpath.join(cacheDir, file), function (err, stats) {
 					if (err) {
 						callback (err);
 					}
@@ -80,7 +80,7 @@ var job = new cronJob({
 });
 
 exports.validatePath = function (path, callback) {
-	fs.realpath(filesRoot + path, function (err, realPath) {
+	fs.realpath(libpath.join(filesRoot, path), function (err, realPath) {
 		if (err) {
 			callback(err);
 			return;
@@ -107,7 +107,7 @@ function includeActionsFile (file, callback) {
 				callback();
 			}
 		} else {
-			console.log("Warning : no file "+file+" found");
+			console.log("Warning : no file " +file + " found");
 			callback();
 		}
 	});
@@ -128,7 +128,7 @@ exports.includeActions = function (file, callback) {
 	}
 
 	function afterImport() {
-		exportActions(filesRoot + "actions.json", callback);
+		exportActions(libpath.join(filesRoot, "actions.json"), callback);
 	}
 };
 
@@ -149,11 +149,11 @@ includeActionsJSON = function (file, callback) {
 				var attributes = action.attributes;
 				if ( typeof (attributes.js) === 'string' ) {
 					console.log('loaded javascript from ' + attributes.js);
-					attributes.executable = path + '/' + attributes.js + '.js';
-					attributes.module = require(path + '/' + attributes.js);
+					attributes.executable = libpath.join(path, attributes.js + '.js');
+					attributes.module = require(libpath.join(path, attributes.js));
 					attributes.path = path;
 				} else if ( typeof (attributes.executable) === 'string' ) {
-					attributes.executable = path + '/' + attributes.executable;
+					attributes.executable = libpath.join(path, attributes.executable);
 					attributes.path = path;
 				}
 				var existingAction = actions[actionName];
@@ -178,7 +178,7 @@ includeActionsJSON = function (file, callback) {
 			var includes = (actionsObject.include || []).map(function (include) {
 				if (include.charAt(0) != '/') {
 					// the path is relative. Prepend directory
-					include = libpath.dirname(file) + '/' + include;
+					include = libpath.join(libpath.dirname(file), include);
 				}
 				return include;
 			});
@@ -225,7 +225,7 @@ exports.update = function (callback) {
 	async.each(actionsDirectories, function (directory, callback) {
 		fs.readdir(directory, function (err, files) {
 			for (var i = 0; i < files.length; i++) {
-				files[i] = directory + files[i];
+				files[i] = libpath.join(directory, files[i]);
 			}
 			exports.includeActions(files, callback);
 		});
@@ -234,7 +234,7 @@ exports.update = function (callback) {
 
 		// create all data directories and symlinks if they do not exist
 		Object.keys(dataDirs).forEach(function (key) {
-			var dir = filesRoot + key;
+			var dir = libpath.join(filesRoot, key);
 			if (!fs.existsSync(dir)) {
 				console.log('Warning : directory ' + dir + ' does not exist. Creating it');
 				var source = dataDirs[key];
@@ -268,7 +268,7 @@ exports.getAction = function (actionName) {
 };
 
 exports.setRoot = function (root) {
-	filesRoot = fs.realpathSync(root) + '/';
+	filesRoot = fs.realpathSync(root);
 };
 
 ongoingActions = {};
@@ -392,26 +392,26 @@ exports.performAction = function (POST, callback) {
 					switch (parameter.type)
 					{
 					case 'file':
-						fs.realpath(filesRoot + parameterValue, function (err, path) {
+						fs.realpath(libpath.join(filesRoot, parameterValue), function (err, path) {
 							if (err) {
 								callback (err);
 								return;
 							}
 							commandLine += path + " ";
-							fs.stat(filesRoot + parameterValue, function (err, stats) {
+							fs.stat(libpath.join(filesRoot, parameterValue), function (err, stats) {
 								inputMTime = Math.max(stats.mtime.getTime(), inputMTime);
 								callback ();
 							});
 						});
 						break;
 					case 'directory':
-						fs.realpath(filesRoot + parameterValue, function (err, path) {
+						fs.realpath(libpath.join(filesRoot, parameterValue), function (err, path) {
 							if (err) {
 								callback (err);
 								return;
 							}
 							commandLine += path + " ";
-							fs.stat(filesRoot + parameterValue, function (err, stats) {
+							fs.stat(libpath.join(filesRoot, parameterValue), function (err, stats) {
 								inputMTime = Math.max(stats.mtime.getTime(), inputMTime);
 								if (!stats.isDirectory()) {
 									callback ("error : " + parameterValue + " is not a directory");
@@ -495,14 +495,14 @@ exports.performAction = function (POST, callback) {
 		switch (outputDirectory) 
 		{
 		case undefined :
-			var counterFile = filesRoot + "/actions/counter.json";
+			var counterFile = libpath.join(filesRoot, "actions/counter.json");
 			fs.readFile(counterFile, function (err, data) {
 				var index = 1;
 				if (!err) {
 					index=JSON.parse(data).value + 1;
 				}
-				outputDirectory = "actions/" + index + "/";
-				fs.mkdir(filesRoot + "/actions/" + index, function (err) {
+				outputDirectory = libpath.join("actions", index);
+				fs.mkdir(libpath.join(filesRoot, "actions", index), function (err) {
 					if ( err ) {
 						callback( err.message );
 					} else {
@@ -523,11 +523,11 @@ exports.performAction = function (POST, callback) {
 		case "cache/" :
 			var shasum = crypto.createHash('sha1');
 			shasum.update(commandLine);
-			outputDirectory = "cache/" + shasum.digest('hex') + "/";
-			fs.stat(filesRoot + outputDirectory, function (err, stats) {
+			outputDirectory = libpath.join("cache", shasum.digest('hex'));
+			fs.stat(libpath.join(filesRoot, outputDirectory), function (err, stats) {
 				if (err) {
 					// directory does not exist, create it
-					fs.mkdir(filesRoot + outputDirectory, 0777 , function (err) {
+					fs.mkdir(libpath.join(filesRoot, outputDirectory), 0777 , function (err) {
 						if (err) {
 							callback(err.message);
 						} else {
@@ -583,7 +583,7 @@ exports.performAction = function (POST, callback) {
 	// execute the action (or not when it is cached)
 	function (callback) {
 		if (action.attributes.voidAction !== "true") {
-			response.outputDirectory = outputDirectory;
+			response.outputDirectory = outputDirectory + "/";
 		}
 
 		if (cachedAction) {
@@ -608,7 +608,7 @@ exports.performAction = function (POST, callback) {
 		var commandOptions = { cwd: filesRoot , maxBuffer: 1080*1920};
 		if ((action.attributes.voidAction !== "true" ||
 				action.attributes.noCache === "true")) {
-			commandOptions.cwd += outputDirectory;
+			commandOptions.cwd = libpath.join(filesRoot, outputDirectory);
 			writeJSON = true;
 		}
 
@@ -642,7 +642,6 @@ exports.performAction = function (POST, callback) {
 			if (logStream) {
 				logStream.end();
 			}
-		//	console.log(err);
 			delete ongoingActions[actionHandle];
 			if (POST.stdout == "true") {
 				response.stdout = stdout;
@@ -664,10 +663,11 @@ exports.performAction = function (POST, callback) {
 				if (writeJSON) {
 					// touch output Directory to avoid automatic deletion
 					exec('touch ' + libpath.join(filesRoot, outputDirectory));
-					fs.writeFile(filesRoot + outputDirectory + "/action.json", JSON.stringify(actionParameters), function (err) {
-						if (err) {throw err;}
-						callback();
-					});
+					fs.writeFile(libpath.join(filesRoot, outputDirectory, "action.json"),
+						JSON.stringify(actionParameters), function (err) {
+							if (err) {throw err;}
+							callback();
+						});
 				} else {
 					callback();
 				}
@@ -691,7 +691,7 @@ exports.getDirectoryContent = function (path, callback) {
 		},
 
 		function (callback) {
-			var realDir = filesRoot + "/" + path + "/";
+			var realDir = libpath.join(filesRoot, path);
 			fs.readdir(realDir, function (err, files) {
 				if (err) {
 					callback (err);
@@ -699,7 +699,7 @@ exports.getDirectoryContent = function (path, callback) {
 				}
 
 				async.map(files, function (file, callback) {
-						fs.stat(realDir + file, function (err, stats) {
+						fs.stat(libpath.join(realDir, file), function (err, stats) {
 							stats.name = file;
 							stats.isDirectory = stats.isDirectory();
 							stats.mtime = stats.mtime.getTime();
@@ -715,4 +715,4 @@ exports.getDirectoryContent = function (path, callback) {
 		}
 	);
 };
-exports.addDirectory(__dirname + '/lib/');
+exports.addDirectory(libpath.join(__dirname,'lib'));

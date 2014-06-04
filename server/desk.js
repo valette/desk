@@ -43,7 +43,6 @@ if (argv.multi) {
 }
 
 var	deskPath = '/home/' + user + '/desk/',
-	actionsBaseURL = homeURL + '/rpc',
 	uploadDir = deskPath + 'upload/',
 	extensionsDir = deskPath + 'extensions/';
 
@@ -107,7 +106,7 @@ fileServer.use('/files', express.static(deskPath))
 .use('/', directory(clientPath))
 
 var rpc = express.Router();
-app.use(actionsBaseURL, rpc);
+app.use(libPath.join(homeURL, 'rpc'), rpc);
 
 // handle uploads
 rpc.post('/upload', function(req, res) {
@@ -152,7 +151,6 @@ rpc.post('/upload', function(req, res) {
 })
 .get('/:action', function (req, res) {
 	var action = req.params.action;
-	console.log(action);
 	switch (action) {
 	case 'exists' :
 		var path = req.query.path;
