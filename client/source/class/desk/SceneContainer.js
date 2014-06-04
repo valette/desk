@@ -354,8 +354,12 @@ qx.Class.define("desk.SceneContainer",
 			});
 		},
 
-		removeAllMeshes : function () {
-			this.removeMeshes(this.getMeshes());
+		/**
+		 * Removes all meshes in the scene
+		 * @param dispose {Boolean} dispose meshes to avoid memory leaks (default : true)
+		 */
+		removeAllMeshes : function (dispose) {
+			this.removeMeshes(this.getMeshes(), dispose);
 		},
 
 		__parseXMLData : function (file, rootDocument, parameters, callback) {
@@ -877,18 +881,28 @@ qx.Class.define("desk.SceneContainer",
             return meshes;
         },
 
-		removeMeshes : function (meshes) {
+		/**
+		 * Removes all meshes in the scene
+		 * @param meshes {Array} Array of meshes to remove
+		 * @param dispose {Boolean} dispose mesh to avoid memory leaks (default : true)
+		 */
+		removeMeshes : function (meshes, dispose) {
 			for (var i = 0; i < meshes.length; i++) {
-				this.__removeMesh(meshes[i], true);
+				this.__removeMesh(meshes[i], true, dispose);
 			}
 			this.__setData();
 		},
 
-		removeMesh : function (mesh) {
-			this.__removeMesh(mesh);
+		/**
+		 * Removes all meshes in the scene
+		 * @param mesh {THREE.Mesh} mesh to remove
+		 * @param dispose {Boolean} dispose mesh to avoid memory leaks (default : true)
+		 */
+		removeMesh : function (mesh, dispose) {
+			this.__removeMesh(mesh, false, dispose);
 		},
 
-		__removeMesh : function (mesh, doNotSetData) {
+		__removeMesh : function (mesh, doNotSetData, dispose) {
 			var parameters = mesh.userData.__customProperties;
 			var keepGeometry = false;
 			var keepMaterial = false;
@@ -909,10 +923,10 @@ qx.Class.define("desk.SceneContainer",
 				keepMaterial = parameters.keepMaterial;
 			}
 
-			if (!keepGeometry) {
+			if (!keepGeometry && dispose !== false) {
 				mesh.geometry.dispose();
 			}
-			if (!keepMaterial) {
+			if (!keepMaterial && dispose !== false) {
 				var map = mesh.material.map;
 				if (map) {
 					map.dispose();
