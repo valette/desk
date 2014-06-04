@@ -88,28 +88,25 @@ if (id.username && id.password) {
 // handle body parsing
 app.use(bodyParser());
 
-var fileServer = express.Router();
-app.use(homeURL, fileServer);
+var router = express.Router();
+app.use(homeURL, router);
+
+var rpc = express.Router();
+router.use('/rpc', rpc);
 
 if (fs.existsSync(clientPath + 'default')) {
 	console.log('serving custom default folder');
-	fileServer.use('/', express.static(clientPath + 'default'));
+	router.use('/', express.static(clientPath + 'default'));
 } else {
 	console.log('serving default folder application/release/');
-	fileServer.use('/', express.static(clientPath + 'application/release/'));
+	router.use('/', express.static(clientPath + 'application/release/'));
 }
 
-// serve data files
-fileServer.use('/files', express.static(deskPath))
+router.use('/files', express.static(deskPath))
 .use('/files', directory(deskPath))
 .use('/', express.static(clientPath))
 .use('/', directory(clientPath))
 
-var rpc = express.Router();
-
-app.use(libPath.join(homeURL, 'rpc'), rpc);
-
-// handle uploads
 rpc.post('/upload', function(req, res) {
 	var form = new formidable.IncomingForm();
 	form.uploadDir = uploadDir;
