@@ -487,7 +487,7 @@ function addVolume(orientation, callback){
     var spacing = slices.getSpacing();
     var origin = slices.getOrigin();
 
-    var geometry = new THREE.Geometry();
+    var geometry = new THREE.PlaneGeometry(1,1);
     var coordinates = slices.getCornersCoordinates();
     var centroid = [0, 0, 0];
     for (var j = 0; j < 3; j++) {
@@ -498,8 +498,8 @@ function addVolume(orientation, callback){
     }
 
     for (j = 0; j < 4; j++) {
-        geometry.vertices.push(new THREE.Vector3(coordinates[3 * j] - centroid[0],
-            coordinates[3 * j + 1] - centroid[1], coordinates[3 * j + 2] - centroid[2]));
+        geometry.vertices[j].set(coordinates[3 * j] - centroid[0],
+            coordinates[3 * j + 1] - centroid[1], coordinates[3 * j + 2] - centroid[2]);
         switch (orientation) {
             case 0 :
                 geometry.vertices[j].z = 0;
@@ -513,14 +513,6 @@ function addVolume(orientation, callback){
         }
     }
 
-	geometry.faces.push(new THREE.Face3(0, 1, 2));
-	geometry.faces.push(new THREE.Face3(0, 2, 3));
-    var uv0 = new THREE.Vector2(0, 0),
-		uv1 = new THREE.Vector2(1, 0),
-		uv2 = new THREE.Vector2(1, 1),
-		uv3 = new THREE.Vector2(0, 1);
-	geometry.faceVertexUvs[0].push([uv0, uv1, uv2]);
-	geometry.faceVertexUvs[0].push([uv0, uv2, uv3]);
 
     var concurrency = 10;
     if (orientation !== 0) {
