@@ -52,7 +52,7 @@ qx.Class.define("desk.FileSystem",
 				callback.call(context, null, response);
 				req.dispose();
 			});
-			req.addListener('error', function (e) {
+			req.addListener('fail', function (e) {
 				callback.call(context, req.getStatusText());
 				req.dispose();
 			});
