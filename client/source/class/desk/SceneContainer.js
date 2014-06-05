@@ -915,7 +915,9 @@ qx.Class.define("desk.SceneContainer",
 				this.__meshesTree.getDataModel().prune(leaf, true);
 				parameters.mesh = 0;
 
-				delete mesh.userData.__customProperties;
+    			if (dispose !== false) {
+	    			delete mesh.userData.__customProperties;
+    			}
 				if (!doNotSetData) {
 					this.__setData();
 				}
@@ -944,7 +946,9 @@ qx.Class.define("desk.SceneContainer",
 			}
 			//mesh.dispose();
 			this.fireDataEvent("meshRemoved", mesh);
-			this._deleteMembers(mesh);
+            if (dispose !== false) {
+                this._deleteMembers(mesh);
+			}
         },
 
 		__animator : null,

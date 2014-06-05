@@ -107,6 +107,7 @@ fileServer.use('/files', express.static(deskPath))
 
 var rpc = express.Router();
 app.use(libPath.join(homeURL, 'rpc'), rpc);
+console.log(libPath.join(homeURL, 'rpc'));
 
 // handle uploads
 rpc.post('/upload', function(req, res) {
