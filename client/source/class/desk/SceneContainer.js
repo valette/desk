@@ -966,7 +966,7 @@ qx.Class.define("desk.SceneContainer",
 				} else {
 					numVertices = geometry.attributes.position.numItems / 3;
 					if (geometry.attributes.index) {
-						numTriangles = geometry.attributes.index.numItems / 3;
+						numTriangles = geometry.attributes.index.array.length / 3;
 					}
 				}
 				alert ("Mesh with " + numVertices + " vertices and " +
