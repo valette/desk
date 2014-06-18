@@ -541,8 +541,10 @@ qx.Class.define("desk.SceneContainer",
 			this.__draggingInProgress = true;
 			if (this.isPickMode()) {
 				var mesh = this.__pickMeshes(this.getMeshes());
-				if (mesh) this.fireDataEvent("pick", mesh);
-				return;
+				if (mesh) {
+					this.fireDataEvent("pick", mesh);
+					return;
+				}
 			}
 			var origin = this.getContentLocation();
 			var button = 0;
@@ -574,8 +576,10 @@ qx.Class.define("desk.SceneContainer",
 			if (this.__draggingInProgress) {
 				if (this.isPickMode()) {
 					var mesh = this.__pickMeshes(this.getMeshes());
-					if (mesh) this.fireDataEvent("pick", mesh);
-					return;
+					if (mesh) {
+						this.fireDataEvent("pick", mesh);
+						return;
+					}
 				}
 				var origin = this.getContentLocation();
 				this.getControls().mouseMove(event.getDocumentLeft() - origin.left,
@@ -915,9 +919,7 @@ qx.Class.define("desk.SceneContainer",
 				this.__meshesTree.getDataModel().prune(leaf, true);
 				parameters.mesh = 0;
 
-    			if (dispose !== false) {
-	    			delete mesh.userData.__customProperties;
-    			}
+				delete mesh.userData.__customProperties;
 				if (!doNotSetData) {
 					this.__setData();
 				}
@@ -946,9 +948,7 @@ qx.Class.define("desk.SceneContainer",
 			}
 			//mesh.dispose();
 			this.fireDataEvent("meshRemoved", mesh);
-            if (dispose !== false) {
-                this._deleteMembers(mesh);
-			}
+			this._deleteMembers(mesh);
         },
 
 		__animator : null,
@@ -970,7 +970,7 @@ qx.Class.define("desk.SceneContainer",
 				} else {
 					numVertices = geometry.attributes.position.numItems / 3;
 					if (geometry.attributes.index) {
-						numTriangles = geometry.attributes.index.numItems / 3;
+						numTriangles = geometry.attributes.index.array.length / 3;
 					}
 				}
 				alert ("Mesh with " + numVertices + " vertices and " +
