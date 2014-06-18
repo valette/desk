@@ -42,16 +42,16 @@ if (argv.multi) {
 	});
 }
 
-var	deskPath = '/home/' + user + '/desk/',
-	uploadDir = deskPath + 'upload/',
-	extensionsDir = deskPath + 'extensions/';
+var	deskPath = libPath.join('/home', user, 'desk') + '/',
+	uploadDir = libPath.join(deskPath, 'upload') + '/',
+	extensionsDir = libPath.join(deskPath, 'extensions') + '/';
 
 // make desk and upload directories if not existent
 mkdirp.sync(deskPath);
 mkdirp.sync(uploadDir);
 
 // certificate default file names
-var passwordFile = deskPath + "password.json",
+var passwordFile = libPath.join(deskPath, "password.json"),
 	privateKeyFile = "privatekey.pem",
 	certificateFile = "certificate.pem";
 
@@ -94,13 +94,14 @@ app.use(homeURL, router);
 var rpc = express.Router();
 router.use('/rpc', rpc);
 
-if (fs.existsSync(clientPath + 'default')) {
-	console.log('serving custom default folder');
-	router.use('/', express.static(clientPath + 'default'));
-} else {
+var rootPath = libPath.join(clientPath, 'default');
+if (!fs.existsSync(rootPath)) {
+	rootPath = libPath.join(clientPath, 'application/release')
 	console.log('serving default folder application/release/');
-	router.use('/', express.static(clientPath + 'application/release/'));
+} else {
+	console.log('serving custom default folder');
 }
+router.use('/', express.static(rootPath));
 
 router.use('/files', express.static(deskPath))
 .use('/files', directory(deskPath))
@@ -113,7 +114,7 @@ rpc.post('/upload', function(req, res) {
 	form.parse(req, function(err, fields, files) {
 		var file = files.file;
 		var outputDir = fields.uploadDir.toString().replace(/%2F/g,'/') || 'upload';
-		outputDir = deskPath + outputDir;
+		outputDir = libPath.join(deskPath, outputDir);
 		console.log("file : " + file.path.toString());
 		var fullName = libPath.join(outputDir, file.name.toString());
 		console.log("uploaded to " +  fullName);
@@ -149,7 +150,7 @@ rpc.post('/upload', function(req, res) {
 })
 .get('/exists', function (req, res) {
 	var path = req.query.path;
-	fs.exists(deskPath + path, function (exists) {
+	fs.exists(libPath.join(deskPath, path), function (exists) {
 		console.log('exists : ' + path	+ ' : ' + exists);
 		res.json({exists : exists});
 	});
@@ -173,7 +174,7 @@ rpc.post('/upload', function(req, res) {
 			res.send(error);
 			return;
 		}
-		res.download(deskPath + file);
+		res.download(libPath.join(deskPath, file));
 	});
 });
 
@@ -211,7 +212,7 @@ console.log(separator);
 // make extensions directory if not present
 mkdirp.sync(extensionsDir);
 
-actions.addDirectory(__dirname + '/includes/');
+actions.addDirectory(libPath.join(__dirname, 'includes'));
 actions.addDirectory(extensionsDir);
 actions.setRoot(deskPath);
 
