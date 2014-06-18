@@ -541,8 +541,10 @@ qx.Class.define("desk.SceneContainer",
 			this.__draggingInProgress = true;
 			if (this.isPickMode()) {
 				var mesh = this.__pickMeshes(this.getMeshes());
-				if (mesh) this.fireDataEvent("pick", mesh);
-				return;
+				if (mesh) {
+					this.fireDataEvent("pick", mesh);
+					return;
+				}
 			}
 			var origin = this.getContentLocation();
 			var button = 0;
@@ -574,8 +576,10 @@ qx.Class.define("desk.SceneContainer",
 			if (this.__draggingInProgress) {
 				if (this.isPickMode()) {
 					var mesh = this.__pickMeshes(this.getMeshes());
-					if (mesh) this.fireDataEvent("pick", mesh);
-					return;
+					if (mesh) {
+						this.fireDataEvent("pick", mesh);
+						return;
+					}
 				}
 				var origin = this.getContentLocation();
 				this.getControls().mouseMove(event.getDocumentLeft() - origin.left,
