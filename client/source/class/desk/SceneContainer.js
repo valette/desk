@@ -948,7 +948,9 @@ qx.Class.define("desk.SceneContainer",
 			}
 			//mesh.dispose();
 			this.fireDataEvent("meshRemoved", mesh);
-			this._deleteMembers(mesh);
+			if (dispose !== false) {
+				this._deleteMembers(mesh);
+			}
         },
 
 		__animator : null,
