@@ -497,10 +497,10 @@ exports.performAction = function (POST, callback) {
 		case undefined :
 			var counterFile = libpath.join(filesRoot, "actions/counter.json");
 			fs.readFile(counterFile, function (err, data) {
-				var index = 1;
+				var index = "1";
 				if (!err) {
-					index=JSON.parse(data).value + 1;
-				}
+					index = (JSON.parse(data).value + 1).toString();
+				} 
 				outputDirectory = libpath.join("actions", index);
 				fs.mkdir(libpath.join(filesRoot, "actions", index), function (err) {
 					if ( err ) {
