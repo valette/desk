@@ -1,4 +1,4 @@
-var fs          = require('fs'),
+var	fs          = require('fs'),
 	libpath     = require('path'),
 	async       = require('async'),
 	crypto      = require('crypto'),
@@ -6,6 +6,7 @@ var fs          = require('fs'),
 	prettyPrint = require('pretty-data').pd,
 	winston     = require('winston'),
 	ms          = require('ms'),
+	os          = require('os'),
 	cronJob     = require('cron').CronJob;
 
 var oldConsole = console;
@@ -425,10 +426,21 @@ function manageActions (POST, callback) {
 	}	
 }
 
+var queue = async.queue(doAction, os.cpus().length);
+
 exports.performAction = function (POST, callback) {
 	if (POST.manage) {
 		manageActions(POST, callback);
-		return;
+	} else {
+		queue.push({POST : POST, callback : callback});
+	}
+};
+function doAction(task, queueCallback) {
+	var POST = task.POST;
+
+	function callback (msg) {
+		task.callback(msg);
+		queueCallback();
 	}
 
 	var inputMTime = -1;

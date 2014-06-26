@@ -339,7 +339,6 @@ qx.Class.define("desk.Actions",
 		},
 
 		__onActionEnd : function (response) {
-			console.log(response);
 			var parameters = this.__runingActions[response.handle];
 			delete this.__runingActions[response.handle];
 			parameters.actionFinished = true;
