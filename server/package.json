@@ -21,6 +21,7 @@
     "mv": ">0.0.0",
     "pretty-data": ">0.0.0",
     "serve-index": ">0.0.0",
+    "socket.io": ">0.0.0",
     "winston": ">0.0.0",
     "yargs": ">0.0.0"
   },

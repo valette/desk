@@ -1,4 +1,4 @@
-var fs          = require('fs'),
+var	fs          = require('fs'),
 	libpath     = require('path'),
 	async       = require('async'),
 	crypto      = require('crypto'),
@@ -6,6 +6,7 @@ var fs          = require('fs'),
 	prettyPrint = require('pretty-data').pd,
 	winston     = require('winston'),
 	ms          = require('ms'),
+	os          = require('os'),
 	cronJob     = require('cron').CronJob;
 
 var oldConsole = console;
@@ -425,10 +426,21 @@ function manageActions (POST, callback) {
 	}	
 }
 
+var queue = async.queue(doAction, os.cpus().length);
+
 exports.performAction = function (POST, callback) {
 	if (POST.manage) {
 		manageActions(POST, callback);
-		return;
+	} else {
+		queue.push({POST : POST, callback : callback});
+	}
+};
+function doAction(task, queueCallback) {
+	var POST = task.POST;
+
+	function callback (msg) {
+		task.callback(msg);
+		queueCallback();
 	}
 
 	var inputMTime = -1;
@@ -440,7 +452,7 @@ exports.performAction = function (POST, callback) {
 	actionsCounter++;
 	var header = "[" + actionsCounter + "] ";
 
-	var response = {};
+	var response = {handle :actionHandle};
 
 	var action = actions[POST.action];
 	if (!action) {
@@ -652,7 +664,6 @@ exports.performAction = function (POST, callback) {
 		var child = handle.childProcess = exec(commandLine, commandOptions, afterExecution);
 
 		ongoingActions[actionHandle] = handle;
-		response.handle = actionHandle;
 
 		if (outputDirectory) {
 			var logStream = fs.createWriteStream(libpath.join(filesRoot, outputDirectory, "action.log"));
