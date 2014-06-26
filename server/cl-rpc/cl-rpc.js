@@ -273,51 +273,164 @@ exports.setRoot = function (root) {
 
 ongoingActions = {};
 
-exports.performAction = function (POST, callback) {
-	if (POST.manage) {
-		switch (POST.manage)
-		{
-		case "kill" :
-			var handle = ongoingActions[POST.handle];
-			if (!handle) {
-				callback ({status : 'not found'});
-				return;
-			}
-			var processToKill = handle.childProcess;
-			if (processToKill) {
-				var pid = processToKill.pid;
-				processToKill.kill();
-				console.log('killed process ' + (pid+1));
-				callback ({status : 'killed'});
-			} else {
-				callback ({status : 'not existent'});
-			}
-			return;
-		case "list" :
-		default:
-			// we need to remove circular dependencies before sending the list
-			var cache = [];
-			var objString = JSON.stringify(ongoingActions,
-				function(key, value) {
-					if (typeof value === 'object' && value !== null) {
-						if (cache.indexOf(value) !== -1) {
-							// Circular reference found, discard key
-							return;
-						}
-						// Store value in our collection
-						cache.push(value);
-					}
-					return value;
-				}
-			);
-			cache = null; 
-			callback(JSON.parse(objString));
-			return;
+
+function validateValue (parameterValue, parameter) {
+	var compare;
+	if (parameter.min) {
+		compare = parseFloat(parameter.min);
+		if (parameterValue < compare) {
+			return ('error : parameter ' + parameter.name +
+				' minimum value is ' + compare);
 		}
 	}
+	if (parameter.max) {
+		compare = parseFloat(parameter.max);
+		if (parameterValue > compare) {
+			return ('error : parameter ' + parameter.name +
+				' maximal value is ' + compare);
+		}
+	}
+	return (null);
+}
 
-	var action;
-	var commandLine = '';
+function parseParameter (commandLine, parameter, callback) {
+	if (parameter.text !== undefined) {
+		// parameter is actually a text anchor
+		commandLine += parameter.text;
+		callback (null, commandLine);
+		return;
+	} else {
+		var parameterValue = parameter.value;
+		var numericValue;
+
+		if (parameterValue === undefined) {
+			if (parameter.required) {
+				callback ("parameter " + parameter.name + " is required!");
+				return;
+			} else {
+				callback(null, commandLine);
+				return;
+			}
+		} else {
+			if (parameter.prefix !== undefined) {
+				commandLine += parameter.prefix;
+			}
+
+			switch (parameter.type) {
+			case 'file':
+				fs.realpath(libpath.join(filesRoot, parameterValue), function (err, path) {
+					if (err) {
+						callback (err);
+						return;
+					}
+					commandLine += path + " ";
+					callback (null, commandLine);
+				});
+				break;
+			case 'directory':
+				fs.realpath(libpath.join(filesRoot, parameterValue), function (err, path) {
+					if (err) {
+						callback (err);
+						return;
+					}
+					commandLine += path + " ";
+					fs.stat(libpath.join(filesRoot, parameterValue), function (err, stats) {
+						if (!stats.isDirectory()) {
+							callback ("error : " + parameterValue + " is not a directory");
+						}
+						callback (null, commandLine);
+					});
+				});
+				break;
+			case 'string':
+				if (parameterValue.indexOf(" ") === -1) {
+					commandLine += parameterValue + " ";
+					callback (null, commandLine);
+				}
+				else {
+					callback ("parameter " + parameter.name + " must not contain spaces");
+				}
+				break;
+			case 'int':
+				numericValue = parseInt(parameterValue, 10);
+				if (isNaN(numericValue)) {
+					callback ("parameter " + parameter.name + " must be an integer value");
+				}
+				else {
+					commandLine += parameterValue + " ";
+					callback (validateValue(numericValue, parameter), commandLine);
+				}
+				break;
+			case 'float':
+				numericValue = parseFloat(parameterValue, 10);
+				if (isNaN(numericValue)) {
+					callback ("parameter " + parameter.name + " must be a floating point value");
+				}
+				else {
+					commandLine += parameterValue + " ";
+					callback (validateValue(numericValue, parameter), commandLine);
+				}
+				break;
+			case 'text':
+			case 'base64data':
+				commandLine += parameterValue + " ";
+				callback (null, commandLine);
+				break;
+			default:
+				callback ("parameter type not handled : " + parameter.type);
+			}
+		}
+	}
+}
+
+function manageActions (POST, callback) {
+	switch (POST.manage)
+	{
+	case "kill" :
+		var handle = ongoingActions[POST.handle];
+		if (!handle) {
+			callback ({status : 'not found'});
+			return;
+		}
+		var processToKill = handle.childProcess;
+		if (processToKill) {
+			var pid = processToKill.pid;
+			processToKill.kill();
+			console.log('killed process ' + (pid+1));
+			callback ({status : 'killed'});
+		} else {
+			callback ({status : 'not existent'});
+		}
+		return;
+	case "list" :
+	default:
+		// we need to remove circular dependencies before sending the list
+		var cache = [];
+		var objString = JSON.stringify(ongoingActions,
+			function(key, value) {
+				if (typeof value === 'object' && value !== null) {
+					if (cache.indexOf(value) !== -1) {
+						// Circular reference found, discard key
+						return;
+					}
+					// Store value in our collection
+					cache.push(value);
+				}
+				return value;
+			}
+		);
+		cache = null; 
+		callback(JSON.parse(objString));
+		return;
+	}	
+}
+
+exports.performAction = function (POST, callback) {
+	if (POST.manage) {
+		manageActions(POST, callback);
+		return;
+	}
+
 	var inputMTime = -1;
 	var actionParameters = {};
 	var outputDirectory;
@@ -329,171 +442,80 @@ exports.performAction = function (POST, callback) {
 
 	var response = {};
 
+	var action = actions[POST.action];
+	if (!action) {
+		callback({error : "action " + POST.action + " not found"});
+		return;
+	};
+
+	var commandLine = (action.attributes.executable ||	action.attributes.command) + ' ';
+	var actionCopy = JSON.parse(JSON.stringify(action));
+
 	async.series([
 
 	// first, parse parameters into actionParameters;
 	function (callback) {
-		var i;
-		var actionName = POST.action;
-		actionParameters.action = actionName;
+		actionParameters.action = POST.action;
+		actionCopy.parameters.forEach(function (parameter) {
+				parameter.value = actionParameters[parameter.name] = POST[parameter.name];
+		});
 
-		action = actions[actionName];
-		if (!action) {
-			callback("action "+actionName+" not found");
-			return;
-		}
+		async.reduce(actionCopy.parameters, commandLine, parseParameter, function(err, cl){
+			commandLine = cl;
+			callback (err);
+		});
+	},
 
-		commandLine += (action.attributes.executable || 
-			action.attributes.command) + ' ';
-
-		function parseParameter (parameter, callback) {
-            function validateValue (parameterValue, parameter) {
-                var compare;
-                if (parameter.min) {
-                    compare = parseFloat(parameter.min);
-                    if (parameterValue < compare) {
-                        return ('error : parameter ' + parameter.name +
-                            ' minimum value is ' + compare);
-                    }
-                }
-                if (parameter.max) {
-                    compare = parseFloat(parameter.max);
-                    if (parameterValue > compare) {
-                        return ('error : parameter ' + parameter.name +
-                            ' maximal value is ' + compare);
-                    }
-                }
-                return (null);
-            }
-
-			if (parameter.text !== undefined) {
-				// parameter is actually a text anchor
-				commandLine += parameter.text;
-				callback ();
-				return;
-			} else {
-				var parameterValue = POST[parameter.name];
-                var numericValue;
-				actionParameters[parameter.name] = parameterValue;
-
-				if (parameterValue === undefined){
-					if (parameter.required === "true") {
-						callback ("parameter " + parameter.name + " is required!");
-						return;
-					} else {
-						callback();
-						return;
-					}
-				} else {
-					if (parameter.prefix !== undefined) {
-						commandLine += parameter.prefix;
-					}
-
-					switch (parameter.type)
-					{
-					case 'file':
-						fs.realpath(libpath.join(filesRoot, parameterValue), function (err, path) {
-							if (err) {
-								callback (err);
-								return;
-							}
-							commandLine += path + " ";
-							fs.stat(libpath.join(filesRoot, parameterValue), function (err, stats) {
-								inputMTime = Math.max(stats.mtime.getTime(), inputMTime);
-								callback ();
-							});
-						});
-						break;
-					case 'directory':
-						fs.realpath(libpath.join(filesRoot, parameterValue), function (err, path) {
-							if (err) {
-								callback (err);
-								return;
-							}
-							commandLine += path + " ";
-							fs.stat(libpath.join(filesRoot, parameterValue), function (err, stats) {
-								inputMTime = Math.max(stats.mtime.getTime(), inputMTime);
-								if (!stats.isDirectory()) {
-									callback ("error : " + parameterValue + " is not a directory");
-								}
-								callback ();
-							});
-						});
-						break;
-					case 'string':
-						if (parameterValue.indexOf(" ") === -1) {
-							commandLine += parameterValue + " ";
-							callback ();
-						}
-						else {
-							callback ("parameter " + parameter.name + " must not contain spaces");
-						}
-						break;
-					case 'int':
-                        numericValue = parseInt(parameterValue, 10);
-						if (isNaN(numericValue)) {
-							callback ("parameter " + parameter.name + " must be an integer value");
-						}
-						else {
-							commandLine += parameterValue + " ";
-							callback (validateValue(numericValue, parameter));
-						}
-						break;
-					case 'float':
-                        numericValue = parseFloat(parameterValue, 10);
-						if (isNaN(numericValue)) {
-							callback ("parameter " + parameter.name + " must be a floating point value");
-						}
-						else {
-							commandLine += parameterValue + " ";
-                            callback (validateValue(numericValue, parameter));
-						}
-						break;
-					case 'text':
-					case 'base64data':
-						commandLine += parameterValue + " ";
-						callback ();
-						break;
-					default:
-						callback ("parameter type not handled : " + parameter.type);
-					}
+	// take into account executable modification time
+	function (callback) {
+		if (action.attributes.executable) {
+			fs.stat(action.attributes.executable, function (err, stats) {
+				if (!err) {
+					inputMTime = Math.max(stats.mtime.getTime(), inputMTime);
 				}
-			}
+				callback (err);
+			});
+		} else {
+			callback ();
 		}
+	},
 
-		var parameters = action.parameters;
-
-		async.eachSeries(parameters, parseParameter, function(err){
-			response.MTime = inputMTime;
-			// take into account executable modification time
-			if (action.attributes.executable) {
-				fs.stat(action.attributes.executable, function (err, stats) {
-					if (!err) {
+	// take into account input files modification time
+	function (callback) {
+		async.each(actionCopy.parameters, function (parameter, callback) {
+			switch (parameter.type) {
+			case "file":
+			case "directory" : 
+				if (parameter.value) {
+					fs.stat(libpath.join(filesRoot, parameter.value), function (err, stats) {
 						inputMTime = Math.max(stats.mtime.getTime(), inputMTime);
-					}
-					callback (err);
-				});
-			} else {
-				callback ();
+						callback (err);
+					});
+				} else {
+					callback();
+				}
+				break;
+			default : 
+				callback();
 			}
+		}, function (err) {
+			callback(err);
 		});
 	},
 
 	// then handle output directory in outputDirectory
 	function (callback) {
-		if (permissions === 0) {
-			POST.output_directory = "cache/";
-		}
-		outputDirectory = POST.output_directory;
-		actionParameters.output_directory = outputDirectory;
+		response.MTime = inputMTime;
 
-		if (action.attributes.voidAction === "true") {
+		if (permissions === 0) {POST.output_directory = "cache/";}
+		outputDirectory = POST.output_directory;
+
+		if (action.attributes.voidAction) {
 			callback();
 			return;
 		}
 
-		switch (outputDirectory) 
-		{
+		switch (outputDirectory) {
 		case undefined :
 			var counterFile = libpath.join(filesRoot, "actions/counter.json");
 			fs.readFile(counterFile, function (err, data) {
@@ -510,8 +532,7 @@ exports.performAction = function (POST, callback) {
 							function(err) {
 								if (err) {
 									callback(err);
-								}
-								else {
+								} else {
 									callback();
 								}
 							}
@@ -541,13 +562,12 @@ exports.performAction = function (POST, callback) {
 			});
 			break;
 		default :
-			exports.validatePath ( outputDirectory, callback );
+			exports.validatePath (outputDirectory, callback);
 		}
 	},
 
 	// log the action and  detect whether the action is already in cache 
-	function (callback) 
-	{
+	function (callback) {
 		actionParameters.output_directory = outputDirectory;
 		console.log (header + 'in : ' + outputDirectory);
 		if (commandLine.length < 500) {
@@ -556,12 +576,9 @@ exports.performAction = function (POST, callback) {
 			console.log (header + commandLine.substr(0,500) + '...[trimmed]');
 		}
 
-		if ((action.attributes.voidAction === "true")||
-        (POST.force_update === "true") ||
-        (action.attributes.noCache === "true")){
+		if (action.attributes.voidAction || POST.force_update || action.attributes.noCache) {
 			callback();
-		}
-		else {
+		} else {
 			// check if action was already performed
 			var actionFile = libpath.join(filesRoot, outputDirectory, "action.json");
 			fs.stat(actionFile, function (err, stats) {
@@ -605,14 +622,15 @@ exports.performAction = function (POST, callback) {
 		var startTime = new Date().getTime();
 
 		var writeJSON = false;
-		var commandOptions = { cwd: filesRoot , maxBuffer: 1080*1920};
-		if ((action.attributes.voidAction !== "true" ||
-				action.attributes.noCache === "true")) {
+
+		var commandOptions = {cwd: filesRoot, maxBuffer : 1e10};
+
+		if ((action.attributes.voidAction !== "true" ||	action.attributes.noCache)) {
 			commandOptions.cwd = libpath.join(filesRoot, outputDirectory);
 			writeJSON = true;
 		}
 
-		if (action.attributes.noCache === "true") {
+		if (action.attributes.noCache) {
 			writeJSON = false;
 		}
 
@@ -625,30 +643,37 @@ exports.performAction = function (POST, callback) {
 			return;
 		}
 
-		var handle = {};
-		handle.POST = JSON.parse(JSON.stringify(POST));
-		handle.childProcess = exec(commandLine, commandOptions, afterExecution);
+		var handle = {POST : JSON.parse(JSON.stringify(POST))};
+
+		var argsArray = commandLine.split(" ");
+		var cmd = argsArray[0];
+		argsArray.shift();
+
+		var child = handle.childProcess = exec(commandLine, commandOptions, afterExecution);
+
 		ongoingActions[actionHandle] = handle;
 		response.handle = actionHandle;
 
-		var logStream;
 		if (outputDirectory) {
-			logStream = fs.createWriteStream(libpath.join(filesRoot, outputDirectory, "action.log"));
-			handle.childProcess.stdout.pipe(logStream);
-			handle.childProcess.stderr.pipe(logStream);
+			var logStream = fs.createWriteStream(libpath.join(filesRoot, outputDirectory, "action.log"));
+			child.stdout.pipe(logStream);
+			child.stderr.pipe(logStream);
 		}
 
 		function afterExecution(err, stdout, stderr) {
 			if (logStream) {
 				logStream.end();
 			}
-			delete ongoingActions[actionHandle];
-			if (POST.stdout == "true") {
+
+			if (POST.stdout) {
 				response.stdout = stdout;
+				response.stderr = stderr;
 			} else {
 				response.stdout = 'stdout and stderr not included. Launch action with parameter stdout="true"';
 			}
-			response.stderr = stderr;
+
+			delete ongoingActions[actionHandle];
+
 			if (err) {
 				if (err.killed) {
 					response.status = "KILLED";
@@ -656,8 +681,6 @@ exports.performAction = function (POST, callback) {
 				} else {
 					callback(err);
 				}
-			} else if (stderr) {
-				callback(stderr);
 			} else {
 				response.status = 'OK (' + (new Date().getTime() - startTime) / 1000 + 's)';
 				if (writeJSON) {
@@ -675,6 +698,7 @@ exports.performAction = function (POST, callback) {
 		}
 	}],
 	function (err) {
+		console.log(text.toString());
 		console.log(header + "done");
 		if (err) {
 			response.status = "ERROR";

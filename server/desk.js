@@ -86,8 +86,7 @@ if (id.username && id.password) {
 }
 
 // handle body parsing
-app.use(bodyParser({limit : '10mb'}));
-
+app.use(bodyParser.urlencoded({limit : '10mb'}));
 
 var router = express.Router();
 app.use(homeURL, router);
