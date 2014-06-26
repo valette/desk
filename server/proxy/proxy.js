@@ -76,6 +76,16 @@ function  processRequest (req, res) {
 	}
 }
 
+proxyServer.on('upgrade', function (req, socket, head) {
+	var target = routes[req.headers.host + '/' + req.url.split("/")[1]];
+	if (!target)  {
+		res.end();
+		return;
+	}
+
+	proxy.ws(req, socket, head, target);
+});
+
 // read routes files and configure routing
 async.series([
 	updateRoutes,
