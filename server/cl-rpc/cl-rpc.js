@@ -698,7 +698,6 @@ exports.performAction = function (POST, callback) {
 		}
 	}],
 	function (err) {
-		console.log(text.toString());
 		console.log(header + "done");
 		if (err) {
 			response.status = "ERROR";
