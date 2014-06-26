@@ -440,7 +440,7 @@ exports.performAction = function (POST, callback) {
 	actionsCounter++;
 	var header = "[" + actionsCounter + "] ";
 
-	var response = {};
+	var response = {handle :actionHandle};
 
 	var action = actions[POST.action];
 	if (!action) {
@@ -652,7 +652,6 @@ exports.performAction = function (POST, callback) {
 		var child = handle.childProcess = exec(commandLine, commandOptions, afterExecution);
 
 		ongoingActions[actionHandle] = handle;
-		response.handle = actionHandle;
 
 		if (outputDirectory) {
 			var logStream = fs.createWriteStream(libpath.join(filesRoot, outputDirectory, "action.log"));

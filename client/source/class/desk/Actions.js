@@ -95,8 +95,13 @@ qx.Class.define("desk.Actions",
 		scripts.push(baseURL + 'ext/operative.min.js');
 		scripts.push(baseURL + 'ext/kdTree-min.js');
 		scripts.push(baseURL + 'ext/numeric-1.2.6.min.js');
+		scripts.push(baseURL + 'socket/socket.io/socket.io.js');
 
 		desk.FileSystem.includeScripts(scripts, function () {
+			this.__socket = io({path : baseURL + 'socket/socket.io'});
+			this.__socket.on("action", function (msg) {
+				this.__onActionEnd(msg);
+			}.bind(this))
 			this.__actionsQueue = async.queue(this.__launchAction.bind(this), 20);
 			if (desk.Actions.RPC != true) {
 				setTimeout(onReady, 10);
@@ -106,6 +111,7 @@ qx.Class.define("desk.Actions",
 			this.__populateActionMenu(onReady);
 		}.bind(this));
 
+		this.__runingActions = [];
 	},
 
 	properties : {
@@ -123,6 +129,8 @@ qx.Class.define("desk.Actions",
 	},
 
 	members : {
+		__socket : null,
+		__runingActions : null,
 		__baseActionsURL : null,
 		__ready : false,
 
@@ -330,12 +338,11 @@ qx.Class.define("desk.Actions",
 			req.send();
 		},
 
-		__onActionSuccess : function (e) {
-			var req = e.getTarget();
-			var parameters = req.getUserData('actionDetails');
-
+		__onActionEnd : function (response) {
+			console.log(response);
+			var parameters = this.__runingActions[response.handle];
+			delete this.__runingActions[response.handle];
 			parameters.actionFinished = true;
-			var response = JSON.parse(req.getResponseText());
 			if (response.error) {
 				console.log(response);
 				var err = response.error;
@@ -364,13 +371,13 @@ qx.Class.define("desk.Actions",
 			}
 			var callback = parameters.callback;
 			if (typeof callback === 'function') callback(response);
-			req.dispose();
 		},
 
 		__launchAction : function (actionParameters, callback) {
 			if (this.isForceUpdate()) actionParameters.force_update = true;
 
-			var parameters = {actionFinished :false,
+			var parameters = {
+				actionFinished :false,
 				callback : callback,
 				actionParameters : actionParameters
 			};
@@ -389,31 +396,10 @@ qx.Class.define("desk.Actions",
 					actionItem.setContextMenu(menu);
 				}
 			}.bind(this), 1230);
-			
-			var req = new qx.io.request.Xhr();
-			req.setUserData('actionDetails', parameters);
-			req.set({url : desk.FileSystem.getActionURL('action'),
-				method : "POST", async : true, requestData : actionParameters});
 
-			var numberOfRetries = 3;
+			this.__socket.emit('action', actionParameters);
 
-			function onError (e){
-				console.log("error : "+numberOfRetries+" chances left...");
-				numberOfRetries--;
-				if (numberOfRetries>0) {
-					req = new qx.io.request.Xhr();
-					req.set({url : this.__baseActionsURL + 'actions', 
-						method : "POST", async : true, requestData : actionParameters});
-					req.addListener("success", this.__onSuccess, this);
-					req.addListener("error", onError, this);
-					req.setUserData('actionDetails', parameters);
-					req.send();
-				}
-			}
-
-			req.addListener("success", this.__onActionSuccess, this);
-			req.addListener("error", onError, this);
-			req.send();
+			this.__runingActions[actionParameters.handle] = parameters;
 		},
 
 		__populateActionMenu : function(callback) {
