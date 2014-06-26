@@ -382,15 +382,15 @@ qx.Class.define("desk.VolumeSlice",
 			addMembers(material.baseShader.baseUniforms, material.uniforms);
 			var extraUniforms = material.baseShader.extraUniforms;
 			material.fragmentShader = "";
-			for (var i = 0; i!= extraUniforms.length; i++) {
-				var name = extraUniforms[i].name;
+			extraUniforms.forEach(function (uniform) {
+				var name = uniform.name;
 				material.fragmentShader += "\n uniform float " + name + ";";
-				material.uniforms[name] = extraUniforms[i];
-			}
+				material.uniforms[name] = uniform;
+			});
 
 			material.fragmentShader += "\n" + material.baseShader.baseShaderBegin;
 			var extraShaders = material.baseShader.extraShaders;
-			for (i = 0; i != extraShaders.length; i++) {
+			for (var i = 0; i != extraShaders.length; i++) {
 				material.fragmentShader += "\n" + extraShaders[i];
 			}
 			material.fragmentShader += "\n" + material.baseShader.baseShaderEnd;
@@ -521,30 +521,29 @@ qx.Class.define("desk.VolumeSlice",
                 slice = this.getSlice();
             }
 			var bounds = this.getBounds();
-			switch (this.getOrientation())
-			{
+			switch (this.getOrientation()) {
 			// XY Z
 			case 0 :
 			default:
 				var z = this.__origin[2] + (slice + this.__extent[4]) * this.__spacing[2];
-				return [bounds[0], bounds[3], z,
-					bounds[1], bounds[3], z,
+				return [bounds[0], bounds[2], z,
 					bounds[1], bounds[2], z,
-					bounds[0], bounds[2], z];
+					bounds[0], bounds[3], z,
+					bounds[1], bounds[3], z];
 			// ZY X
 			case 1 :
 				var x = this.__origin[0] + (slice + this.__extent[0]) * this.__spacing[0];
-				return [x, bounds[3], bounds[4],
-					x, bounds[3], bounds[5],
+				return [x, bounds[2], bounds[4],
 					x, bounds[2], bounds[5],
-					x, bounds[2], bounds[4]];
+					x, bounds[3], bounds[4],
+					x, bounds[3], bounds[5]];
 			// XZ Y
 			case 2 :
 				var y = this.__origin[1] + (slice + this.__extent[2]) * this.__spacing[1];
-				return [bounds[0], y, bounds[5],
-					bounds[1], y, bounds[5],
+				return [bounds[0], y, bounds[4],
 					bounds[1], y, bounds[4],
-					bounds[0], y, bounds[4]];
+					bounds[0], y, bounds[5],
+					bounds[1], y, bounds[5]];
 			}
 		},
 
@@ -602,22 +601,22 @@ qx.Class.define("desk.VolumeSlice",
 			switch(this.getOrientation()) {
 				// ZY X
 				case 1 :
-					return [bounds[4], bounds[3],
-							bounds[5], bounds[3],
+					return [bounds[4], bounds[2],
 							bounds[5], bounds[2],
-							bounds[4], bounds[2]];
+							bounds[4], bounds[3],
+							bounds[5], bounds[3]];
 				// XZ Y
 				case 2 :
-					return [bounds[0], bounds[5],
-							bounds[1], bounds[5],
+					return [bounds[0], bounds[4],
 							bounds[1], bounds[4],
-							bounds[0], bounds[4]];
+							bounds[0], bounds[5],
+							bounds[1], bounds[5]];
 				// XY Z
 				default :
-					return [bounds[0], bounds[3],
-							bounds[1], bounds[3],
+					return [bounds[0], bounds[2],
 							bounds[1], bounds[2],
-							bounds[0], bounds[2]];
+							bounds[0], bounds[3],
+							bounds[1], bounds[3]];
 			}
 		},
 

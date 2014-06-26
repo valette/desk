@@ -42,17 +42,16 @@ if (argv.multi) {
 	});
 }
 
-var	deskPath = '/home/' + user + '/desk/',
-	actionsBaseURL = homeURL + 'rpc/',
-	uploadDir = deskPath + 'upload/',
-	extensionsDir = deskPath + 'extensions/';
+var	deskPath = libPath.join('/home', user, 'desk') + '/',
+	uploadDir = libPath.join(deskPath, 'upload') + '/',
+	extensionsDir = libPath.join(deskPath, 'extensions') + '/';
 
 // make desk and upload directories if not existent
 mkdirp.sync(deskPath);
 mkdirp.sync(uploadDir);
 
 // certificate default file names
-var passwordFile = deskPath + "password.json",
+var passwordFile = libPath.join(deskPath, "password.json"),
 	privateKeyFile = "privatekey.pem",
 	certificateFile = "certificate.pem";
 
@@ -87,32 +86,35 @@ if (id.username && id.password) {
 }
 
 // handle body parsing
-app.use(bodyParser());
+app.use(bodyParser.urlencoded({limit : '10mb'}));
 
-if (fs.existsSync(clientPath + 'default')) {
-	console.log('serving custom default folder');
-	app.use(homeURL, express.static(clientPath + 'default'));
-} else {
+var router = express.Router();
+app.use(homeURL, router);
+
+var rpc = express.Router();
+router.use('/rpc', rpc);
+
+var rootPath = libPath.join(clientPath, 'default');
+if (!fs.existsSync(rootPath)) {
+	rootPath = libPath.join(clientPath, 'application/release')
 	console.log('serving default folder application/release/');
-	app.use(homeURL, express.static(clientPath + 'application/release/'));
+} else {
+	console.log('serving custom default folder');
 }
+router.use('/', express.static(rootPath));
 
-// serve data files
-app.use(homeURL + 'files', express.static(deskPath));
-app.use(homeURL + 'files', directory(deskPath));
+router.use('/files', express.static(deskPath))
+.use('/files', directory(deskPath))
+.use('/', express.static(clientPath))
+.use('/', directory(clientPath))
 
-// serve client code
-app.use(homeURL, express.static(clientPath));
-app.use(homeURL, directory(clientPath));
-
-// handle uploads
-app.post(actionsBaseURL + 'upload', function(req, res) {
+rpc.post('/upload', function(req, res) {
 	var form = new formidable.IncomingForm();
 	form.uploadDir = uploadDir;
 	form.parse(req, function(err, fields, files) {
 		var file = files.file;
 		var outputDir = fields.uploadDir.toString().replace(/%2F/g,'/') || 'upload';
-		outputDir = deskPath + outputDir;
+		outputDir = libPath.join(deskPath, outputDir);
 		console.log("file : " + file.path.toString());
 		var fullName = libPath.join(outputDir, file.name.toString());
 		console.log("uploaded to " +  fullName);
@@ -121,25 +123,19 @@ app.post(actionsBaseURL + 'upload', function(req, res) {
 			res.send('file ' + file.name + ' uploaded successfully');
 		});
 	});
-});
-
-// handle actions
-app.post(actionsBaseURL + 'action', function(req, res){
+})
+.post('/action', function(req, res){
 	res.connection.setTimeout(0);
-    actions.performAction(req.body, function (response) {
+	actions.performAction(req.body, function (response) {
 		res.json(response);
 	});
-});
-
-// handle actions list reset
-app.post(actionsBaseURL + 'reset', function(req, res){
-    actions.update(function (message) {
+})
+.post('/reset', function(req, res){
+	actions.update(function (message) {
 		res.send(message);
 	});
-});
-
-// handle password change
-app.post(actionsBaseURL + 'password', function(req, res){
+})
+.post('/password', function(req, res){
 	if (!req.body.password) {
 		res.json({error : 'no password entered!'});
 		return;
@@ -151,44 +147,35 @@ app.post(actionsBaseURL + 'password', function(req, res){
 	} else {
 		res.json({error : 'password too short!'});
 	}
-});
-
-app.get(actionsBaseURL + ':action', function (req, res) {
-	var action = req.params.action;
-	switch (action) {
-	case 'exists' :
-		var path = req.query.path;
-		fs.exists(deskPath + path, function (exists) {
-			console.log('exists : ' + path	+ ' : ' + exists);
-			res.json({exists : exists});
+})
+.get('/exists', function (req, res) {
+	var path = req.query.path;
+	fs.exists(libPath.join(deskPath, path), function (exists) {
+		console.log('exists : ' + path	+ ' : ' + exists);
+		res.json({exists : exists});
+	});
+})
+.get('/ls', function (req, res) {
+	var path = libPath.normalize(req.query.path) + '/';
+	actions.validatePath(path, function (error) {
+		if (error) {
+			res.json({error : error});
+			return;
+		}
+		actions.getDirectoryContent(path, function (message) {
+			res.send(message);
 		});
-		break;
-	case 'ls' :
-		path = libPath.normalize(req.query.path) + '/';
-		actions.validatePath(path, function (error) {
-			if (error) {
-				res.json({error : error});
-				return;
-			}
-			actions.getDirectoryContent(path, function (message) {
-				res.send(message);
-			});
-		});
-		break;
-	case 'download' :
-		var file = req.query.file;
-		actions.validatePath(file, function (error) {
-			if (error) {
-				res.send(error);
-				return;
-			}
-			res.download(deskPath + file);
-		});
-		break;
-	default : 
-		res.send('action not found');
-		break;
-   }
+	});
+})
+.get('/download', function (req, res) {
+	var file = req.query.file;
+	actions.validatePath(file, function (error) {
+		if (error) {
+			res.send(error);
+			return;
+		}
+		res.download(libPath.join(deskPath, file));
+	});
 });
 
 // handle errors
@@ -211,8 +198,7 @@ if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	server = https.createServer(options, app);
 	console.log("Using secure https mode");
 	baseURL = "https://";
-}
-else {
+} else {
 	server = http.createServer(app);
 	console.log("No certificate provided, using non secure mode");
 	console.log("You can generate a certificate with these 3 commands:");
@@ -226,7 +212,7 @@ console.log(separator);
 // make extensions directory if not present
 mkdirp.sync(extensionsDir);
 
-actions.addDirectory(__dirname + '/includes/');
+actions.addDirectory(libPath.join(__dirname, 'includes'));
 actions.addDirectory(extensionsDir);
 actions.setRoot(deskPath);
 

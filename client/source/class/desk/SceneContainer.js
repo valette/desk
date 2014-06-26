@@ -11,6 +11,7 @@
 * @ignore(THREE.Raycaster)
 * @ignore(THREE.VTKLoader)
 * @ignore(THREE.Geometry)
+* @ignore(THREE.PlaneGeometry)
 * @ignore(THREE.MeshPhongMaterial)
 * @ignore(THREE.WireframeHelper)
 * @ignore(THREE.Color)
@@ -353,8 +354,12 @@ qx.Class.define("desk.SceneContainer",
 			});
 		},
 
-		removeAllMeshes : function () {
-			this.removeMeshes(this.getMeshes());
+		/**
+		 * Removes all meshes in the scene
+		 * @param dispose {Boolean} dispose meshes to avoid memory leaks (default : true)
+		 */
+		removeAllMeshes : function (dispose) {
+			this.removeMeshes(this.getMeshes(), dispose);
 		},
 
 		__parseXMLData : function (file, rootDocument, parameters, callback) {
@@ -482,20 +487,7 @@ qx.Class.define("desk.SceneContainer",
 		 * @return {THREE.Mesh} the created mesh;
 		 */
 		attachVolumeSlice : function (volumeSlice) {
-			var geometry = new THREE.Geometry();
-			geometry.dynamic = true;
-			for (var i = 0; i < 4; i++) {
-				geometry.vertices.push(new THREE.Vector3(0, 0, 0));
-			}
-			geometry.faces.push(new THREE.Face3(0, 1, 2));
-			geometry.faces.push(new THREE.Face3(0, 2, 3));
-			var uv0 = 	new THREE.Vector2(0, 0),
-				uv1 = new THREE.Vector2(1, 0),
-				uv2 = new THREE.Vector2(1, 1),
-				uv3 = new THREE.Vector2(0, 1);
-			geometry.faceVertexUvs[0].push([uv0, uv1, uv2]);
-			geometry.faceVertexUvs[0].push([uv0, uv2, uv3]);
-
+			var geometry = new THREE.PlaneGeometry( 1, 1);
 			var material = volumeSlice.getMaterial();
 			material.side = THREE.DoubleSide;
 			var mesh = new THREE.Mesh(geometry,material);
@@ -549,8 +541,10 @@ qx.Class.define("desk.SceneContainer",
 			this.__draggingInProgress = true;
 			if (this.isPickMode()) {
 				var mesh = this.__pickMeshes(this.getMeshes());
-				if (mesh) this.fireDataEvent("pick", mesh);
-				return;
+				if (mesh) {
+					this.fireDataEvent("pick", mesh);
+					return;
+				}
 			}
 			var origin = this.getContentLocation();
 			var button = 0;
@@ -582,8 +576,10 @@ qx.Class.define("desk.SceneContainer",
 			if (this.__draggingInProgress) {
 				if (this.isPickMode()) {
 					var mesh = this.__pickMeshes(this.getMeshes());
-					if (mesh) this.fireDataEvent("pick", mesh);
-					return;
+					if (mesh) {
+						this.fireDataEvent("pick", mesh);
+						return;
+					}
 				}
 				var origin = this.getContentLocation();
 				this.getControls().mouseMove(event.getDocumentLeft() - origin.left,
@@ -647,7 +643,6 @@ qx.Class.define("desk.SceneContainer",
 
         addGeometry : function (geometry, parameters) {
             parameters = parameters || {label : 'geometry'};
-			geometry.dynamic = true;
 			geometry.computeBoundingBox();
 
 			var color = parameters.color || [];
@@ -890,18 +885,28 @@ qx.Class.define("desk.SceneContainer",
             return meshes;
         },
 
-		removeMeshes : function (meshes) {
+		/**
+		 * Removes all meshes in the scene
+		 * @param meshes {Array} Array of meshes to remove
+		 * @param dispose {Boolean} dispose mesh to avoid memory leaks (default : true)
+		 */
+		removeMeshes : function (meshes, dispose) {
 			for (var i = 0; i < meshes.length; i++) {
-				this.__removeMesh(meshes[i], true);
+				this.__removeMesh(meshes[i], true, dispose);
 			}
 			this.__setData();
 		},
 
-		removeMesh : function (mesh) {
-			this.__removeMesh(mesh);
+		/**
+		 * Removes all meshes in the scene
+		 * @param mesh {THREE.Mesh} mesh to remove
+		 * @param dispose {Boolean} dispose mesh to avoid memory leaks (default : true)
+		 */
+		removeMesh : function (mesh, dispose) {
+			this.__removeMesh(mesh, false, dispose);
 		},
 
-		__removeMesh : function (mesh, doNotSetData) {
+		__removeMesh : function (mesh, doNotSetData, dispose) {
 			var parameters = mesh.userData.__customProperties;
 			var keepGeometry = false;
 			var keepMaterial = false;
@@ -922,10 +927,10 @@ qx.Class.define("desk.SceneContainer",
 				keepMaterial = parameters.keepMaterial;
 			}
 
-			if (!keepGeometry) {
+			if (!keepGeometry && dispose !== false) {
 				mesh.geometry.dispose();
 			}
-			if (!keepMaterial) {
+			if (!keepMaterial && dispose !== false) {
 				var map = mesh.material.map;
 				if (map) {
 					map.dispose();
@@ -943,7 +948,9 @@ qx.Class.define("desk.SceneContainer",
 			}
 			//mesh.dispose();
 			this.fireDataEvent("meshRemoved", mesh);
-			this._deleteMembers(mesh);
+			if (dispose !== false) {
+				this._deleteMembers(mesh);
+			}
         },
 
 		__animator : null,
@@ -965,7 +972,7 @@ qx.Class.define("desk.SceneContainer",
 				} else {
 					numVertices = geometry.attributes.position.numItems / 3;
 					if (geometry.attributes.index) {
-						numTriangles = geometry.attributes.index.numItems / 3;
+						numTriangles = geometry.attributes.index.array.length / 3;
 					}
 				}
 				alert ("Mesh with " + numVertices + " vertices and " +
