@@ -337,6 +337,7 @@ qx.Class.define("desk.Actions",
 			parameters.actionFinished = true;
 			var response = JSON.parse(req.getResponseText());
 			if (response.error) {
+				console.log(response);
 				var err = response.error;
 				var message = "error for action " + parameters.actionParameters.action + ": \n";
 				var found = false;
