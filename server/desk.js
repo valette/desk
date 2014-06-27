@@ -102,12 +102,11 @@ if (!fs.existsSync(rootPath)) {
 } else {
 	console.log('serving custom default folder');
 }
-router.use('/', express.static(rootPath));
-
-router.use('/files', express.static(deskPath))
+router.use('/', express.static(rootPath))
+.use('/files', express.static(deskPath))
 .use('/files', directory(deskPath))
 .use('/', express.static(clientPath))
-.use('/', directory(clientPath))
+.use('/', directory(clientPath));
 
 rpc.post('/upload', function(req, res) {
 	var form = new formidable.IncomingForm();
