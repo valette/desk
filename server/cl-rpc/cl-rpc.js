@@ -385,10 +385,10 @@ function parseParameter (commandLine, parameter, callback) {
 }
 
 function manageActions (POST, callback) {
-	switch (POST.manage)
-	{
+	switch (POST.manage) {
 	case "kill" :
-		var handle = ongoingActions[POST.handle];
+		var handle = ongoingActions[POST.actionHandle];
+		console.log(POST.handle);
 		if (!handle) {
 			callback ({status : 'not found'});
 			return;
@@ -432,17 +432,11 @@ exports.performAction = function (POST, callback) {
 	if (POST.manage) {
 		manageActions(POST, callback);
 	} else {
-		queue.push({POST : POST, callback : callback});
+		queue.push(POST, callback);
 	}
 };
-function doAction(task, queueCallback) {
-	var POST = task.POST;
 
-	function callback (msg) {
-		task.callback(msg);
-		queueCallback();
-	}
-
+function doAction(POST, callback) {
 	var inputMTime = -1;
 	var actionParameters = {};
 	var outputDirectory;

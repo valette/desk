@@ -125,12 +125,6 @@ rpc.post('/upload', function(req, res) {
 		});
 	});
 })
-.post('/action', function(req, res){
-	res.connection.setTimeout(0);
-	actions.performAction(req.body, function (response) {
-		res.json(response);
-	});
-})
 .post('/reset', function(req, res){
 	actions.update(function (message) {
 		res.send(message);
@@ -226,7 +220,7 @@ io.on('connection', function(socket){
 
 	socket.on('action', function(parameters){
 		actions.performAction(parameters, function (response) {
-			io.emit("action", response);
+			io.emit("action finished", response);
 		});
 	});
 });

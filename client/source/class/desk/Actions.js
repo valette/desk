@@ -6,7 +6,7 @@
  * @asset(desk/desk.png)
  * @asset(qx/icon/${qx.icontheme}/16/categories/system.png) 
  * @ignore (async)
- * @ignore (async.queue)
+ * @ignore (io)
  * @lint ignoreDeprecated (alert)
  * @require(desk.LogContainer)
  * @require(desk.Random)
@@ -99,10 +99,10 @@ qx.Class.define("desk.Actions",
 
 		desk.FileSystem.includeScripts(scripts, function () {
 			this.__socket = io({path : baseURL + 'socket/socket.io'});
-			this.__socket.on("action", function (msg) {
+			this.__socket.on("action finished", function (msg) {
 				this.__onActionEnd(msg);
 			}.bind(this))
-			this.__actionsQueue = async.queue(this.__launchAction.bind(this), 20);
+
 			if (desk.Actions.RPC != true) {
 				setTimeout(onReady, 10);
 				return;
@@ -216,9 +216,6 @@ qx.Class.define("desk.Actions",
 
 		__permissionsLevel : 0,
 
-		// an async.queue to queue actions
-		__actionsQueue : null,
-
 		/**
 		* Returns the permission level
 		* @return {Int} the permissions level
@@ -278,45 +275,19 @@ qx.Class.define("desk.Actions",
 		},
 
 		/**
-		* launches an action
-		* @param actionParameters {Object} object containing action aprameters
-		* @param callback {Function} callback for when the action has been performed
-		* @param context {Object} optional context for the callback
-		* @return {String} action handle for managemenent (kill etc...)
-		*/
-		launchAction : function (actionParameters, callback, context) {
-			actionParameters = JSON.parse(JSON.stringify(actionParameters));
-			// add handle
-			var handle = Math.random().toString();
-			actionParameters.handle = handle;
-			this.__actionsQueue.push (actionParameters,
-				function (response) {
-					if (typeof callback === "function") {
-						callback.call(context, response);
-					}
-				}
-			);
-			return handle;
-		},
-
-		/**
 		* kills an action
 		* @param handle {String} action handle to kill
 		* @param callback {Function} callback when the action has been killed
+		* @param context {Object} optional context for the callback
 		*/
 		killAction : function (handle, callback, context) {
-			var req = new qx.io.request.Xhr();
-			req.setUrl(desk.FileSystem.getActionURL('action'));
-			req.setMethod("POST");
-			req.setAsync(true);
-			req.setRequestData({manage : 'kill', handle : handle});
-			req.addListener("success", function (e){
-				if (typeof callback === "function") {
-					callback.call(context, JSON.parse(e.getTarget().getResponseText()));
+			this.launchAction({manage : 'kill', actionHandle : handle},
+				function (res) {
+					if (typeof callback === "function") {
+						callback.call(context, res);
+					}
 				}
-				req.dispose();
-			}, this);
-			req.send();
+			);
 		},
 
 		/**
@@ -326,26 +297,23 @@ qx.Class.define("desk.Actions",
 		* @param context {Object} optional context for the callback
 		*/
 		getOngoingActions : function (callback, context) {
-			var req = new qx.io.request.Xhr();
-			req.setUrl(desk.FileSystem.getActionURL('action'));
-			req.setMethod("POST");
-			req.setAsync(true);
-			req.setRequestData({manage : 'list'});
-			req.addListener("success", function (e){
-				callback.call(context, e.getTarget().getResponse());
-				req.dispose();
-			}, this);
-			req.send();
+			this.launchAction({manage : 'list'}, function (res) {
+				console.log(res);
+				if (typeof callback === "function") {
+					callback.call(context, res);
+				}
+			});
 		},
 
 		__onActionEnd : function (response) {
-			var parameters = this.__runingActions[response.handle];
+			var params = this.__runingActions[response.handle];
+			if (!params) return;
 			delete this.__runingActions[response.handle];
-			parameters.actionFinished = true;
+			params.actionFinished = true;
 			if (response.error) {
 				console.log(response);
 				var err = response.error;
-				var message = "error for action " + parameters.actionParameters.action + ": \n";
+				var message = "error for action " + params.actionParameters.action + ": \n";
 				var found = false;
 				if (err.signal) {
 					message += "signal : " + err.signal + "\n";
@@ -363,21 +331,36 @@ qx.Class.define("desk.Actions",
 				alert (message);
 			}
 
-			var uiItem = parameters.actionItem
+			var uiItem = params.actionItem
 			if (uiItem) {
 				this.__ongoingActions.remove(uiItem);
 				uiItem.dispose();
 			}
-			var callback = parameters.callback;
-			if (typeof callback === 'function') callback(response);
+			var callback = params.callback;
+			if (typeof callback === 'function') {
+				callback.call(params.context, response);
+			}
 		},
 
-		__launchAction : function (actionParameters, callback) {
+		/**
+		* launches an action
+		* @param actionParameters {Object} object containing action aprameters
+		* @param callback {Function} callback for when the action has been performed
+		* @param context {Object} optional context for the callback
+		* @return {String} action handle for managemenent (kill etc...)
+		*/
+		launchAction : function (actionParameters, callback, context) {
+			actionParameters = JSON.parse(JSON.stringify(actionParameters));
+			// add handle
+			var handle = Math.random().toString();
+			actionParameters.handle = handle;
+
 			if (this.isForceUpdate()) actionParameters.force_update = true;
 
 			var parameters = {
 				actionFinished :false,
 				callback : callback,
+				context : context,
 				actionParameters : actionParameters
 			};
 
@@ -399,6 +382,7 @@ qx.Class.define("desk.Actions",
 			this.__socket.emit('action', actionParameters);
 
 			this.__runingActions[actionParameters.handle] = parameters;
+			return handle;
 		},
 
 		__populateActionMenu : function(callback) {
