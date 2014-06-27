@@ -388,7 +388,6 @@ function manageActions (POST, callback) {
 	switch (POST.manage) {
 	case "kill" :
 		var handle = ongoingActions[POST.actionHandle];
-		console.log(POST.handle);
 		if (!handle) {
 			callback ({status : 'not found'});
 			return;
