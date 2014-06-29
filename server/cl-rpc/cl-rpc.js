@@ -1,13 +1,14 @@
-var	fs          = require('fs'),
-	libpath     = require('path'),
-	async       = require('async'),
+var	async       = require('async'),
+	cronJob     = require('cron').CronJob,
 	crypto      = require('crypto'),
 	exec        = require('child_process').exec,
-	prettyPrint = require('pretty-data').pd,
-	winston     = require('winston'),
+	fs          = require('fs'),
+	libpath     = require('path'),
+	mkdirp      = require('mkdirp'),
 	ms          = require('ms'),
 	os          = require('os'),
-	cronJob     = require('cron').CronJob;
+	prettyPrint = require('pretty-data').pd,
+	winston     = require('winston');
 
 var oldConsole = console;
 var console = {
@@ -48,29 +49,34 @@ function cleanCache() {
 	}
 
 	fs.readdir(cacheDir, function (err, files) {
-		async.eachSeries(files,
-			function (file, callback) {
-				fs.stat(libpath.join(cacheDir, file), function (err, stats) {
-					if (err) {
-						callback (err);
-					}
-					var time = stats.mtime.getTime();
-					var currentTime = new Date().getTime();
-					var age = currentTime - time;
-					if (age > maximumCacheAge) {
-						console.log('deleting cache ' + file + ' (' + ms(age, { long: true }) + ' old)'); 
-						exec('rm -rf ' + file, {cwd : cacheDir}, callback);
-					} else {
-						callback();
-					}
-				});
-			},
-			function (err) {
-				if (err) {
-					console.log(err);
-				}
-			}
-		);
+		async.eachSeries(files, function (file, callback) {
+			fs.readdir(libpath.join(cacheDir, file), function (err, files2) {
+				async.eachSeries(files2, function (file2, callback2) {
+					fs.readdir(libpath.join(cacheDir, file, file2), function (err, files3) {
+						async.eachSeries(files3,
+							function (file3, callback3) {
+								var file4 = libpath.join(file, file2, file3);
+								var absoluteFile = libpath.join(cacheDir, file4);
+								fs.stat(absoluteFile, function (err, stats) {
+									if (err) {
+										callback (err);
+									}
+									var time = stats.mtime.getTime();
+									var currentTime = new Date().getTime();
+									var age = currentTime - time;
+									if (age > maximumCacheAge) {
+										console.log('deleting cache ' + file3 + ' (' + ms(age, { long: true }) + ' old)'); 
+										exec('rm -rf ' + file4, {cwd : cacheDir}, callback3);
+									} else {
+										callback3();
+									}
+								});
+							},
+						callback2);
+					});
+				}, callback);
+			});
+		});
 	});
 }
 
@@ -141,10 +147,7 @@ includeActionsJSON = function (file, callback) {
 
 			var localActions = actionsObject.actions || [];
 			var path = fs.realpathSync(libpath.dirname(file));
-			var actionsArray = Object.keys(localActions);
-			console.log(actionsArray.length + " actions in " + file);
-
-			actionsArray.forEach(function (actionName) {
+			Object.keys(localActions).forEach(function (actionName) {
 				var action = localActions[actionName];
 				action.lib = libraryName;
 				var attributes = action.attributes;
@@ -217,7 +220,7 @@ exports.addDirectory = function (directory) {
 	actionsDirectories.push(directory);
 };
 
-exports.update = function (callback) {
+function update (callback) {
 	// clear actions
 	actions = {};
 	dataDirs = {};
@@ -259,7 +262,7 @@ exports.update = function (callback) {
 		cleanCache();
 
 		if (typeof callback === 'function') {
-			callback();
+			callback({});
 		}
 	});
 };
@@ -272,8 +275,7 @@ exports.setRoot = function (root) {
 	filesRoot = fs.realpathSync(root);
 };
 
-ongoingActions = {};
-
+var ongoingActions = {};
 
 function validateValue (parameterValue, parameter) {
 	var compare;
@@ -386,6 +388,9 @@ function parseParameter (commandLine, parameter, callback) {
 
 function manageActions (POST, callback) {
 	switch (POST.manage) {
+	case 'update':
+		update(callback);
+		return;
 	case "kill" :
 		var handle = ongoingActions[POST.actionHandle];
 		if (!handle) {
@@ -406,7 +411,7 @@ function manageActions (POST, callback) {
 	default:
 		// we need to remove circular dependencies before sending the list
 		var cache = [];
-		var objString = JSON.stringify(ongoingActions,
+		var objString = JSON.stringify({ ongoingActions : ongoingActions},
 			function(key, value) {
 				if (typeof value === 'object' && value !== null) {
 					if (cache.indexOf(value) !== -1) {
@@ -428,10 +433,16 @@ function manageActions (POST, callback) {
 var queue = async.queue(doAction, os.cpus().length);
 
 exports.performAction = function (POST, callback) {
+	POST.handle  = POST.handle || Math.random().toString();
 	if (POST.manage) {
-		manageActions(POST, callback);
+		manageActions(POST, finished);
 	} else {
-		queue.push(POST, callback);
+		queue.push(POST, finished);
+	}
+
+	function finished(msg) {
+		msg.handle = POST.handle;
+		callback(msg);
 	}
 };
 
@@ -440,12 +451,11 @@ function doAction(POST, callback) {
 	var actionParameters = {};
 	var outputDirectory;
 	var cachedAction = false;
-	var actionHandle = POST.handle || Math.random().toString();
 
 	actionsCounter++;
 	var header = "[" + actionsCounter + "] ";
 
-	var response = {handle :actionHandle};
+	var response = {};
 
 	var action = actions[POST.action];
 	if (!action) {
@@ -529,7 +539,7 @@ function doAction(POST, callback) {
 					index = JSON.parse(data).value + 1;
 				} 
 				outputDirectory = libpath.join("actions", index + "");
-				fs.mkdir(libpath.join(filesRoot, "actions", index + ""), function (err) {
+				mkdirp(libpath.join(filesRoot, outputDirectory), function (err) {
 					if ( err ) {
 						callback( err.message );
 					} else {
@@ -549,18 +559,12 @@ function doAction(POST, callback) {
 		case "cache/" :
 			var shasum = crypto.createHash('sha1');
 			shasum.update(commandLine);
-			outputDirectory = libpath.join("cache", shasum.digest('hex'));
-			fs.stat(libpath.join(filesRoot, outputDirectory), function (err, stats) {
+			var hash = shasum.digest('hex');
+			outputDirectory = libpath.join("cache",
+				hash.charAt(0), hash.charAt(1), hash);
+			mkdirp(libpath.join(filesRoot, outputDirectory), function (err) {
 				if (err) {
-					// directory does not exist, create it
-					fs.mkdir(libpath.join(filesRoot, outputDirectory), 0777 , function (err) {
-						if (err) {
-							callback(err.message);
-						} else {
-							callback ();
-						}
-					});
-					return;
+					callback(err.message);
 				} else {
 					callback ();
 				}
@@ -656,7 +660,7 @@ function doAction(POST, callback) {
 
 		var child = handle.childProcess = exec(commandLine, commandOptions, afterExecution);
 
-		ongoingActions[actionHandle] = handle;
+		ongoingActions[POST.handle] = handle;
 
 		if (outputDirectory) {
 			var logStream = fs.createWriteStream(libpath.join(filesRoot, outputDirectory, "action.log"));
@@ -676,7 +680,7 @@ function doAction(POST, callback) {
 				response.stdout = 'stdout and stderr not included. Launch action with parameter stdout="true"';
 			}
 
-			delete ongoingActions[actionHandle];
+			delete ongoingActions[POST.handle];
 
 			if (err) {
 				if (err.killed) {

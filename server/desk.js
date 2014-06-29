@@ -124,11 +124,6 @@ rpc.post('/upload', function(req, res) {
 		});
 	});
 })
-.post('/reset', function(req, res){
-	actions.update(function (message) {
-		res.send(message);
-	});
-})
 .post('/password', function(req, res){
 	if (!req.body.password) {
 		res.json({error : 'no password entered!'});
@@ -224,7 +219,7 @@ io.on('connection', function(socket){
 	});
 });
 
-actions.update(function () {
+actions.performAction({manage : "update"}, function () {
 	server.listen(port);
 	console.log(separator);
 	console.log(new Date().toLocaleString());

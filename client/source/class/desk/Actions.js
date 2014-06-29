@@ -3,7 +3,6 @@
  * and display actions in progress
  * @ignore (HackCTMWorkerURL)
  * @asset(desk/desk.png)
- * @asset(desk/desk.png)
  * @asset(qx/icon/${qx.icontheme}/16/categories/system.png) 
  * @ignore (async)
  * @ignore (io)
@@ -47,24 +46,7 @@ qx.Class.define("desk.Actions",
 		var baseURL = desk.FileSystem.getInstance().getBaseURL();
 		this.__baseActionsURL = baseURL + 'rpc/';
 
-		// performance.now polyfill
-		(function(){
-			// prepare base perf object
-			if (typeof window.performance === 'undefined') {
-				window.performance = {};
-			}
-			if (!window.performance.now) {
-				var nowOffset = Date.now();
-				if (performance.timing && performance.timing.navigationStart){
-					nowOffset = performance.timing.navigationStart;
-				}
-				window.performance.now = function now(){
-					return Date.now() - nowOffset;
-				};
-			}
-		})();
-
-		var onReady = function onReady() {
+		var onReady = function () {
 			this.__ready = true;
 			this.fireEvent('changeReady');
 		}.bind(this);
@@ -109,7 +91,7 @@ qx.Class.define("desk.Actions",
 			}
 
 			this.__populateActionMenu(onReady);
-		}.bind(this));
+		}, this);
 
 		this.__runingActions = [];
 	},
@@ -147,14 +129,7 @@ qx.Class.define("desk.Actions",
 			reloadButton.setBlockToolTip(false);
 			reloadButton.setToolTipText("Rebuild actions list on the server");
 			reloadButton.addListener('execute', function () {
-				var req = new qx.io.request.Xhr();
-				req.setUrl(this.__baseActionsURL + 'reset');
-				req.setMethod('POST');
-				req.addListener('success', function () {
-					this.__populateActionMenu();
-					req.dispose();
-				}, this);
-				req.send();
+				this.launchAction({manage:"update"}, this.__populateActionMenu, this);
 			}, this);
 			menu.add(reloadButton);
 
@@ -186,13 +161,11 @@ qx.Class.define("desk.Actions",
 
 			// dislpay list of already running actions
 			this.getOngoingActions(function (actions) {
-				var keys = Object.keys(actions);
-				for (var i = 0; i != keys.length; i++) {
-					var action = actions[keys[i]];
+				Object.keys(actions).forEach(function (action) {
 					var actionItem = new qx.ui.form.ListItem(action.POST.action);
 					actionItem.setUserData('actionParameters', action.POST);
 					this.__ongoingActions.add(actionItem);
-				}
+				}, this);
 			}, this);
 		},
 
@@ -210,7 +183,6 @@ qx.Class.define("desk.Actions",
 		__settingsButton : null,
 
 		__actionsList : null,
-		__actionsObject : null,
 
 		__currentFileBrowser : null,
 
@@ -238,7 +210,7 @@ qx.Class.define("desk.Actions",
 		* @return {Object} action parameters as a JSON object
 		*/	
 		getAction : function (name) {
-			var action = this.__actionsObject[name];
+			var action = this.__actions.actions[name];
 			if (action) {
 				return JSON.parse(JSON.stringify(action));
 			} else {
@@ -293,14 +265,13 @@ qx.Class.define("desk.Actions",
 		/**
 		* gets the list of currently runing actions on the server
 		* @param callback {Function} when the response is available. 
-		* The first function aprameter is a JSON object containing all the actions
+		* The first function parameter is a JSON object containing all the actions
 		* @param context {Object} optional context for the callback
 		*/
 		getOngoingActions : function (callback, context) {
 			this.launchAction({manage : 'list'}, function (res) {
-				console.log(res);
 				if (typeof callback === "function") {
-					callback.call(context, res);
+					callback.call(context, res.ongoingActions);
 				}
 			});
 		},
@@ -331,16 +302,16 @@ qx.Class.define("desk.Actions",
 				alert (message);
 			}
 
-			var uiItem = params.actionItem
-			if (uiItem) {
-				this.__ongoingActions.remove(uiItem);
-				uiItem.dispose();
+			if (params.actionItem) {
+				this.__garbageContainer.add(params.actionItem);
 			}
-			var callback = params.callback;
-			if (typeof callback === 'function') {
-				callback.call(params.context, response);
+
+			if (typeof params.callback === 'function') {
+				params.callback.call(params.context, response);
 			}
 		},
+
+		__garbageContainer : new qx.ui.container.Composite(new qx.ui.layout.HBox()),
 
 		/**
 		* launches an action
@@ -364,25 +335,46 @@ qx.Class.define("desk.Actions",
 				actionParameters : actionParameters
 			};
 
-			setTimeout(function(){
-				if (!parameters.actionFinished) {
-					var actionItem = parameters.actionItem = new qx.ui.form.ListItem(actionParameters.action);
-					actionItem.set({decorator : "button-hover", opacity : 0.7});
-					this.__ongoingActions.add(actionItem);
+			var addWidget = function(){
+				if (parameters.actionFinished) {
+                    return;
+				}
+				if (this.__ongoingActions.getChildren().length > 20) {
+                    setTimeout(addWidget, 2000);
+                    return;
+				}
+				var item = this.__garbageContainer.getChildren()[0];
+				if (!item) {
+					item = new qx.ui.form.ListItem("dummy");
+					item.set({decorator : "button-hover", opacity : 0.7});
 					var killButton = new qx.ui.menu.Button('kill');
 					killButton.addListener('execute', function () {
-						this.killAction(actionParameters.handle);
+						this.killAction(item.getUserData("handle"));
 					}, this);
 					var menu = new qx.ui.menu.Menu();
 					menu.add(killButton);
-					actionItem.setContextMenu(menu);
+					item.setContextMenu(menu);
 				}
-			}.bind(this), 1230);
-
+				item.setLabel(actionParameters.action);
+				parameters.actionItem = item;
+				item.setUserData("handle", handle);
+				this.__ongoingActions.add(item);
+			}.bind(this);
+            setTimeout(addWidget, 1230);
 			this.__socket.emit('action', actionParameters);
 
 			this.__runingActions[actionParameters.handle] = parameters;
 			return handle;
+		},
+
+		__launch : function (e){
+			var action = new desk.Action(e.getTarget().getLabel());
+			action.setOriginFileBrowser(this.__currentFileBrowser);
+			action.buildUI();
+		},
+
+		__myComparator : function (a, b) {
+			return a.toLowerCase().localeCompare(b.toLowerCase());
 		},
 
 		__populateActionMenu : function(callback) {
@@ -395,19 +387,9 @@ qx.Class.define("desk.Actions",
 				}
 
 				var actions = this.__actions.actions;
-				this.__actionsObject = actions;
-				var self = this;
-
-               function launch(e){
-                    var action = new desk.Action(this.getLabel());
-					action.setOriginFileBrowser(self.__currentFileBrowser);
-					action.buildUI();
-				}
 
 				var libs = {};
-				var actionsNames = Object.keys(actions);
-				for (var n = 0; n < actionsNames.length; n++) {
-					var actionName = actionsNames[n];
+				Object.keys(actions).forEach(function (actionName) {
 					var action = actions[actionName];
 					action.attributes = action.attributes || {};
 					var permissionLevel = parseInt(action.attributes.permissions, 10);
@@ -416,42 +398,30 @@ qx.Class.define("desk.Actions",
 					}
 					if (permissions < permissionLevel) {
 						// skip this action as we do not have enough permissions
-						continue;
+						return;
 					}
-					var lib = action.lib;
-					var libArray = libs[lib];
-					if (!libArray) {
-						libArray = libs[lib] = [];
+
+					if (!libs[action.lib]) {
+						libs[action.lib] = [];
 					}
-					libArray.push(actionName);
-				}
+					libs[action.lib].push(actionName);
+				});
 
-				var libNames = Object.keys(libs);
-				function myStringComparator (a, b) {
-					return a.toLowerCase().localeCompare(b.toLowerCase());
-				}
-
-				libNames.sort(myStringComparator);
-
-				for (n = 0; n != libNames.length; n++) {
+				Object.keys(libs).sort(this.__myComparator).forEach(function (lib) {
 					var menu = new qx.ui.menu.Menu();
-					lib = libNames[n];
 					var menubutton = new qx.ui.menu.Button(lib, null, null, menu);
-					var libActions = libs[lib];
-					libActions.sort(myStringComparator);
-					for (var i = 0; i != libActions.length; i++) {
-						var actionName = libActions[i];
+					libs[lib].sort(this.__myComparator).forEach(function (actionName) {
 						var button = new qx.ui.menu.Button(actionName);
 						var description = actions[actionName].description;
 						if (description) {
 							button.setBlockToolTip(false);
 							button.setToolTipText(description);
 						}
-						button.addListener("execute", launch, button);
+						button.addListener("execute", this.__launch, this);
 						menu.add(button);
-					}
+					}, this);
 					this.__actionMenu.add(menubutton);
-				}
+				}, this);
 
 				if (typeof callback === "function") callback();
 			}, this);
