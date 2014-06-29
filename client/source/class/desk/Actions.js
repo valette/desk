@@ -83,7 +83,7 @@ qx.Class.define("desk.Actions",
 			this.__socket = io({path : baseURL + 'socket/socket.io'});
 			this.__socket.on("action finished", function (msg) {
 				this.__onActionEnd(msg);
-			}.bind(this))
+			}.bind(this));
 
 			if (desk.Actions.RPC != true) {
 				setTimeout(onReady, 10);
@@ -340,7 +340,7 @@ qx.Class.define("desk.Actions",
                     return;
 				}
 				if (this.__ongoingActions.getChildren().length > 20) {
-                    setTimeout(addWidget, 2000);
+                    setTimeout(addWidget, 2000 * Math.random());
                     return;
 				}
 				var item = this.__garbageContainer.getChildren()[0];
