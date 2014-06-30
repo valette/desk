@@ -62,7 +62,6 @@ var server = http.createServer(function (req, res) {
 });
 
 function  processRequest (req, res) {
-	req.socket.setTimeout(36000000);
 	if (req.url == "/") {
 		res.writeHead(301, {Location: defaultRoutes[req.headers.host]});
 		res.end();
@@ -82,7 +81,6 @@ proxyServer.on('upgrade', function (req, socket, head) {
 		res.end();
 		return;
 	}
-
 	proxy.ws(req, socket, head, target);
 });
 
