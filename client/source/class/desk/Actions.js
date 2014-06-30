@@ -40,6 +40,8 @@ qx.Class.define("desk.Actions",
 	* @ignore (performance.timing.navigationStart)
 	*/
 	construct : function() {
+		
+
 		this.base(arguments);
 
 		// determine base URLs for RPC

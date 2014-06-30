@@ -50,31 +50,46 @@ function cleanCache() {
 
 	fs.readdir(cacheDir, function (err, files) {
 		async.eachSeries(files, function (file, callback) {
-			fs.readdir(libpath.join(cacheDir, file), function (err, files2) {
-				async.eachSeries(files2, function (file2, callback2) {
-					fs.readdir(libpath.join(cacheDir, file, file2), function (err, files3) {
-						async.eachSeries(files3,
-							function (file3, callback3) {
-								var file4 = libpath.join(file, file2, file3);
-								var absoluteFile = libpath.join(cacheDir, file4);
-								fs.stat(absoluteFile, function (err, stats) {
-									if (err) {
-										callback (err);
-									}
-									var time = stats.mtime.getTime();
-									var currentTime = new Date().getTime();
-									var age = currentTime - time;
-									if (age > maximumCacheAge) {
-										console.log('deleting cache ' + file3 + ' (' + ms(age, { long: true }) + ' old)'); 
-										exec('rm -rf ' + file4, {cwd : cacheDir}, callback3);
-									} else {
-										callback3();
-									}
-								});
-							},
-						callback2);
-					});
-				}, callback);
+			var fullFile = libpath.join(cacheDir, file);
+			fs.stat(fullFile, function (err, stats) {
+				if (!stats.isDirectory()) {
+					callback();
+					return;
+				}
+				fs.readdir(fullFile, function (err, files2) {
+					async.eachSeries(files2, function (file2, callback2) {
+						var fullFile2 = libpath.join(fullFile, file2)
+						fs.stat(fullFile2, function (err, stats) {
+							if (!stats.isDirectory()) {
+								callback();
+								return;
+							}
+							fs.readdir(fullFile2, function (err, files3) {
+								async.eachSeries(files3,
+									function (file3, callback3) {
+										var file4 = libpath.join(file, file2, file3);
+										var absoluteFile = libpath.join(cacheDir, file4);
+										fs.stat(absoluteFile, function (err, stats) {
+											if (!stats.isDirectory()) {
+												callback ();
+												return;
+											}
+											var time = stats.mtime.getTime();
+											var currentTime = new Date().getTime();
+											var age = currentTime - time;
+											if (age > maximumCacheAge) {
+												console.log('deleting cache ' + file3 + ' (' + ms(age, { long: true }) + ' old)'); 
+												exec('rm -rf ' + file4, {cwd : cacheDir}, callback3);
+											} else {
+												callback3();
+											}
+										});
+									},
+								callback2);
+							});
+						});
+					}, callback);
+				});
 			});
 		});
 	});
@@ -613,18 +628,39 @@ function doAction(POST, callback) {
 		}
 
 		if (cachedAction) {
-			exec('touch ' + libpath.join(filesRoot, outputDirectory, "action.json"),
-				function () {
-					fs.readFile(libpath.join(filesRoot, outputDirectory, 'action.log'),
-					function (err, string) {
-						response.status = 'CACHED';
-						response.log = string;
-						// touch output Directory to avoid automatic deletion
-						exec('touch ' + libpath.join(filesRoot, outputDirectory));
+			response.status = 'CACHED';
+			async.parallel([
+				function (callback) {
+					exec('touch ' + libpath.join(filesRoot, outputDirectory, "action.json"), callback);
+				},
 
+				function (callback) {
+					exec('touch ' + libpath.join(filesRoot, outputDirectory), callback);
+				},
+
+				function (callback) {
+					if (POST.stdout) {
+						async.parallel(function (callback) {
+							fs.readFile(libpath.join(filesRoot, outputDirectory, 'action.log'),
+								function (err, string) {
+									response.stdout = string;
+									callback();
+								});
+							},
+							function (callback) {
+							fs.readFile(libpath.join(filesRoot, outputDirectory, 'action.err'),
+								function (err, string) {
+									response.stderr = string;
+									callback();
+								});
+							},
+						callback);	
+					} else {
+						response.stdout = 'stdout and stderr not included. Launch action with parameter stdout="true"';
 						callback();
-				});
-			});
+					}
+				}
+			], callback);
 			return;
 		}
 
@@ -664,13 +700,15 @@ function doAction(POST, callback) {
 
 		if (outputDirectory) {
 			var logStream = fs.createWriteStream(libpath.join(filesRoot, outputDirectory, "action.log"));
+			var logStream2 = fs.createWriteStream(libpath.join(filesRoot, outputDirectory, "action.err"));
 			child.stdout.pipe(logStream);
-			child.stderr.pipe(logStream);
+			child.stderr.pipe(logStream2);
 		}
 
 		function afterExecution(err, stdout, stderr) {
 			if (logStream) {
 				logStream.end();
+				logStream2.end();
 			}
 
 			if (POST.stdout) {
