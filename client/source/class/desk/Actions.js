@@ -334,7 +334,7 @@ qx.Class.define("desk.Actions",
 				POST : params
 			};
 
-            setTimeout(function () {this.__addActionToList(parameters)}.bind(this), 1230);
+            setTimeout(function () {this.__addActionToList(parameters);}.bind(this), 1230);
 
 			this.__socket.emit('action', params);
 
@@ -343,12 +343,13 @@ qx.Class.define("desk.Actions",
 		},
 
 		__addActionToList : function(parameters) {
-			var redo = function () {this.__addWidget(parameters)}.bind(this);
 			if (parameters.actionFinished) {
 				return;
 			}
 			if (this.__ongoingActions.getChildren().length > 20) {
-				setTimeout(redo, 2000 * Math.random());
+				setTimeout(function () {
+					this.__addActionToList(parameters);
+				}.bind(this), 2000 * Math.random());
 				return;
 			}
 			var item = this.__garbageContainer.getChildren()[0];
