@@ -643,14 +643,14 @@ function doAction(POST, callback) {
 						async.parallel([function (callback) {
 								fs.readFile(libpath.join(filesRoot, outputDirectory, 'action.log'),
 									function (err, content) {
-										response.stdout = content.toString();
+										if (content) response.stdout = content.toString();
 										callback();
 								});
 							},
 							function (callback) {
 								fs.readFile(libpath.join(filesRoot, outputDirectory, 'action.err'),
 									function (err, content) {
-										response.stderr = content.toString();
+										if (content) response.stderr = content.toString();
 										callback();
 								});
 							}],
