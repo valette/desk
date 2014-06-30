@@ -210,11 +210,15 @@ qx.Class.define("desk.SegTools",
 			tabView.setVisibility("excluded");
 
 			switch (this.__segmentationMethod) {
+				case 3:
+					this.__buildActionsCVT();
+					this.setCaption("Segmentation tool (CVT + region growing)");
+					this.__sessionType = "gcSegmentation";
+					break;
 				case 2:
 					this.__buildActionsEdit();
 					this.setCaption("Edition Tool");
 					this.__sessionType = "edit";
-
 					break;
 				case 1:
 					this.__buildActions();
@@ -424,6 +428,104 @@ qx.Class.define("desk.SegTools",
 
 				this.fireDataEvent("meshingActionUpdated", this.__meshViewer);
 			}, this);
+		},
+
+		__buildActionsCVT : function() {	
+			var clusteringAction = new desk.Action("cvtseg2", {standalone : false});
+			clusteringAction.setActionParameters({"input_volume" : this.__file});
+			clusteringAction.setOutputSubdirectory("clustering");
+			clusteringAction.buildUI();
+			this.__tabView.addElement('clustering', clusteringAction.getTabView());
+
+			var segmentationAction = new desk.Action("multiseg",
+				{standalone : false});
+			clusteringAction.setActionParameters({"input_volume" : this.__file});
+			segmentationAction.setOutputSubdirectory("segmentation");
+			segmentationAction.connect("clustering", clusteringAction,
+				"clustering-index.mhd");
+			segmentationAction.buildUI();
+			this.__tabView.addElement('segmentation', segmentationAction.getTabView());
+
+			var meshingAction = new desk.Action("extract_meshes", {standalone : false});
+			meshingAction.setOutputSubdirectory("meshes");
+			meshingAction.buildUI();
+			this.__tabView.addElement('meshing', meshingAction.getTabView());
+
+			this.addListener("changeSessionDirectory", function (e) {
+				var directory=e.getData();
+				if (segmentationToken != null) {
+					this.__master.removeVolume(segmentationToken);
+				}
+				clusteringAction.setOutputDirectory(directory);
+				segmentationAction.setOutputDirectory(directory);
+				meshingAction.setOutputDirectory(directory);
+				segmentationAction.setActionParameters({
+					"input_volume" : this.__file,
+					"seeds" : this.getSessionDirectory() + "/seeds.xml"
+				});
+				clusteringAction.setActionParameters({
+					"input_volume" : this.__file
+				});
+				meshingAction.setActionParameters({
+					"input_volume" : this.getSessionDirectory() + "/segmentation/output.mhd",
+					"colors" : this.getSessionDirectory() + "/seeds.xml"
+				});
+			}, this);
+
+			this.__startButton = new qx.ui.form.Button("Start segmentation");
+			this.__startButton.addListener("execute", function () {
+				this.__startButton.setEnabled(false);
+				this.__segmentationInProgress = true;
+				this.__saveCurrentSeeds(function() {
+							segmentationAction.executeAction();});
+			}, this);
+			this.__bottomContainer.add(this.__startButton);
+
+			var meshingButton = new qx.ui.form.Button("extract meshes");
+			this.__extractMeshesButton = meshingButton;
+			meshingButton.addListener("execute", function () {
+				this.__startButton.setEnabled(false);
+				meshingButton.setEnabled(false);
+				meshingAction.executeAction();
+			}, this);
+			this.__bottomContainer.add(meshingButton);
+
+			var segmentationToken = null;
+			segmentationAction.addListener("actionUpdated", function () {
+				this.__startButton.setEnabled(true);
+				if (!segmentationToken) {
+					segmentationToken = this.__master.addVolume(segmentationAction.getOutputDirectory()+"output.mhd",
+								{opacity : 0.5, format : 0,
+								colors : [this.__labelColorsRed, this.__labelColorsGreen, this.__labelColorsBlue]});
+				} else {
+					this.__master.updateVolume(segmentationToken);
+				}
+
+				this.fireEvent("gotSegmentedVolume");
+			}, this);
+
+			this.__master.addListener("removeVolume", function (e) {
+				if (e.getData() == segmentationToken) {
+					segmentationToken = null;
+				}
+			});
+
+			meshingAction.addListener("actionUpdated", function () {
+				meshingButton.setEnabled(true);
+				this.__startButton.setEnabled(true);
+				if (!this.__meshViewer) {
+					this.__meshViewer = new desk.MeshViewer(this.getSessionDirectory() +
+						"/meshes/meshes.xml");
+					this.__meshViewer.addListener("close", function () {
+						this.__meshViewer = null;
+					}, this)
+				} else {
+					this.__meshViewer.update();
+				}
+
+				this.fireDataEvent("meshingActionUpdated", this.__meshViewer);
+			}, this);
+
 		},
 
 		__buildActionsGC : function() {	

@@ -1,19 +1,20 @@
-var fs           = require('fs'),
-	os           = require('os'),
-	libPath      = require('path'),
-	express      = require('express'),
-	http         = require('http'),
-	https        = require('https'),
-	formidable   = require('formidable'),
-	mkdirp       = require('mkdirp'),
+var	actions      = require(__dirname + '/cl-rpc/cl-rpc'),
 	argv         = require('yargs').argv,
-	actions      = require(__dirname + '/cl-rpc/cl-rpc'),
-	compress     = require('compression'),
 	auth         = require('basic-auth'),
 	bodyParser   = require('body-parser'),
+	compress     = require('compression'),
 	directory    = require('serve-index'),
 	errorhandler = require('errorhandler'),
-	mv           = require('mv');
+	express      = require('express'),
+	formidable   = require('formidable'),
+    fs           = require('fs'),
+	http         = require('http'),
+	https        = require('https'),
+	libPath      = require('path'),
+	mkdirp       = require('mkdirp'),
+	mv           = require('mv'),
+	os           = require('os'),
+	socketIO     = require('socket.io');
 
 var separator = "*******************************************************************************";
 console.log(separator);
@@ -34,13 +35,13 @@ var	user = process.env.USER;
 if (argv.multi) {
     homeURL = '/' + user + '/',
    	port = process.getuid();
-
-	// transmit homeURL cookie
-	app.use (function (req, res, next) {
-		res.cookie('homeURL', homeURL);
-		next();
-	});
 }
+
+// transmit homeURL cookie
+app.use (function (req, res, next) {
+	res.cookie('homeURL', homeURL);
+	next();
+});
 
 var	deskPath = libPath.join('/home', user, 'desk') + '/',
 	uploadDir = libPath.join(deskPath, 'upload') + '/',
@@ -101,12 +102,11 @@ if (!fs.existsSync(rootPath)) {
 } else {
 	console.log('serving custom default folder');
 }
-router.use('/', express.static(rootPath));
-
-router.use('/files', express.static(deskPath))
+router.use('/', express.static(rootPath))
+.use('/files', express.static(deskPath))
 .use('/files', directory(deskPath))
 .use('/', express.static(clientPath))
-.use('/', directory(clientPath))
+.use('/', directory(clientPath));
 
 rpc.post('/upload', function(req, res) {
 	var form = new formidable.IncomingForm();
@@ -122,17 +122,6 @@ rpc.post('/upload', function(req, res) {
 			if (err) throw err;
 			res.send('file ' + file.name + ' uploaded successfully');
 		});
-	});
-})
-.post('/action', function(req, res){
-	res.connection.setTimeout(0);
-	actions.performAction(req.body, function (response) {
-		res.json(response);
-	});
-})
-.post('/reset', function(req, res){
-	actions.update(function (message) {
-		res.send(message);
 	});
 })
 .post('/password', function(req, res){
@@ -216,7 +205,21 @@ actions.addDirectory(libPath.join(__dirname, 'includes'));
 actions.addDirectory(extensionsDir);
 actions.setRoot(deskPath);
 
-actions.update(function () {
+var io = socketIO(server, {path : libPath.join(homeURL, "socket/socket.io")});
+io.on('connection', function(socket){
+	console.log('a user connected');
+	socket.on('disconnect', function(){
+		console.log('user disconnected');
+	});
+
+	socket.on('action', function(parameters){
+		actions.performAction(parameters, function (response) {
+			io.emit("action finished", response);
+		});
+	});
+});
+
+actions.performAction({manage : "update"}, function () {
 	server.listen(port);
 	console.log(separator);
 	console.log(new Date().toLocaleString());

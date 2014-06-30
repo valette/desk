@@ -767,6 +767,12 @@ qx.Class.define("desk.MPRContainer",
 					},this);
 					menu.add(segmentButtonGC);
 
+					var segmentButtonCVT = new qx.ui.menu.Button("segment (fast)");
+					segmentButtonCVT.addListener("execute", function () {
+						new desk.SegTools(this, this.getVolumeFile(volumeListItem), {segmentationMethod : 3});
+					},this);
+					menu.add(segmentButtonCVT);
+
 					var editButton = new qx.ui.menu.Button("edit");
 					editButton.addListener("execute", function () {
 						new desk.SegTools(this, this.getVolumeFile(volumeListItem), {segmentationMethod : 2});
