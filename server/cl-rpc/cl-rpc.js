@@ -640,20 +640,20 @@ function doAction(POST, callback) {
 
 				function (callback) {
 					if (POST.stdout) {
-						async.parallel(function (callback) {
-							fs.readFile(libpath.join(filesRoot, outputDirectory, 'action.log'),
-								function (err, string) {
-									response.stdout = string;
-									callback();
+						async.parallel([function (callback) {
+								fs.readFile(libpath.join(filesRoot, outputDirectory, 'action.log'),
+									function (err, content) {
+										response.stdout = content.toString();
+										callback();
 								});
 							},
 							function (callback) {
-							fs.readFile(libpath.join(filesRoot, outputDirectory, 'action.err'),
-								function (err, string) {
-									response.stderr = string;
-									callback();
+								fs.readFile(libpath.join(filesRoot, outputDirectory, 'action.err'),
+									function (err, content) {
+										response.stderr = content.toString();
+										callback();
 								});
-							},
+							}],
 						callback);	
 					} else {
 						response.stdout = 'stdout and stderr not included. Launch action with parameter stdout="true"';
