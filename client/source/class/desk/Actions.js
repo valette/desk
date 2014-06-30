@@ -161,12 +161,11 @@ qx.Class.define("desk.Actions",
 
 			qx.core.Init.getApplication().getRoot().add(button, {top : 0, right : 0});
 
-			// dislpay list of already running actions
+			// add already running actions
 			this.getOngoingActions(function (actions) {
-				Object.keys(actions).forEach(function (action) {
-					var actionItem = new qx.ui.form.ListItem(action.POST.action);
-					actionItem.setUserData('actionParameters', action.POST);
-					this.__ongoingActions.add(actionItem);
+				Object.keys(actions).forEach(function (handle) {
+					this.__addActionToList(actions[handle]);
+					this.__runingActions[handle] = actions[handle];
 				}, this);
 			}, this);
 		},
@@ -286,7 +285,7 @@ qx.Class.define("desk.Actions",
 			if (response.error) {
 				console.log(response);
 				var err = response.error;
-				var message = "error for action " + params.actionParameters.action + ": \n";
+				var message = "error for action " + params.POST.action + ": \n";
 				var found = false;
 				if (err.signal) {
 					message += "signal : " + err.signal + "\n";
@@ -317,56 +316,57 @@ qx.Class.define("desk.Actions",
 
 		/**
 		* launches an action
-		* @param actionParameters {Object} object containing action aprameters
+		* @param params {Object} object containing action aprameters
 		* @param callback {Function} callback for when the action has been performed
 		* @param context {Object} optional context for the callback
 		* @return {String} action handle for managemenent (kill etc...)
 		*/
-		launchAction : function (actionParameters, callback, context) {
-			actionParameters = JSON.parse(JSON.stringify(actionParameters));
-			// add handle
-			var handle = Math.random().toString();
-			actionParameters.handle = handle;
+		launchAction : function (params, callback, context) {
+			params = JSON.parse(JSON.stringify(params));
+			params.handle = Math.random().toString();
 
-			if (this.isForceUpdate()) actionParameters.force_update = true;
+			if (this.isForceUpdate()) params.force_update = true;
 
 			var parameters = {
 				actionFinished :false,
 				callback : callback,
 				context : context,
-				actionParameters : actionParameters
+				POST : params
 			};
 
-			var addWidget = function(){
-				if (parameters.actionFinished) {
-                    return;
-				}
-				if (this.__ongoingActions.getChildren().length > 20) {
-                    setTimeout(addWidget, 2000 * Math.random());
-                    return;
-				}
-				var item = this.__garbageContainer.getChildren()[0];
-				if (!item) {
-					item = new qx.ui.form.ListItem("dummy");
-					item.set({decorator : "button-hover", opacity : 0.7});
-					var killButton = new qx.ui.menu.Button('kill');
-					killButton.addListener('execute', function () {
-						this.killAction(item.getUserData("handle"));
-					}, this);
-					var menu = new qx.ui.menu.Menu();
-					menu.add(killButton);
-					item.setContextMenu(menu);
-				}
-				item.setLabel(actionParameters.action);
-				parameters.actionItem = item;
-				item.setUserData("handle", handle);
-				this.__ongoingActions.add(item);
-			}.bind(this);
-            setTimeout(addWidget, 1230);
-			this.__socket.emit('action', actionParameters);
+            setTimeout(function () {this.__addActionToList(parameters)}.bind(this), 1230);
 
-			this.__runingActions[actionParameters.handle] = parameters;
-			return handle;
+			this.__socket.emit('action', params);
+
+			this.__runingActions[params.handle] = parameters;
+			return params.handle;
+		},
+
+		__addActionToList : function(parameters) {
+			var redo = function () {this.__addWidget(parameters)}.bind(this);
+			if (parameters.actionFinished) {
+				return;
+			}
+			if (this.__ongoingActions.getChildren().length > 20) {
+				setTimeout(redo, 2000 * Math.random());
+				return;
+			}
+			var item = this.__garbageContainer.getChildren()[0];
+			if (!item) {
+				item = new qx.ui.form.ListItem("dummy");
+				item.set({decorator : "button-hover", opacity : 0.7});
+				var killButton = new qx.ui.menu.Button('kill');
+				killButton.addListener('execute', function () {
+					this.killAction(item.getUserData("handle"));
+				}, this);
+				var menu = new qx.ui.menu.Menu();
+				menu.add(killButton);
+				item.setContextMenu(menu);
+			}
+			item.setLabel(parameters.POST.action);
+			parameters.actionItem = item;
+			item.setUserData("handle", parameters.POST.handle);
+			this.__ongoingActions.add(item);
 		},
 
 		__launch : function (e){
