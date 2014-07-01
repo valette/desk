@@ -541,9 +541,15 @@ RPC.prototype.addMTime = function (file, callback) {
 
 RPC.prototype.handleInputMTimes = function (callback) {
 	async.each(this.action.parameters, function (parameter, callback) {
+			if (parameter.value === undefined) {
+				callback();
+				return;
+			}
 			switch (parameter.type) {
 			case "file":
 			case "directory" : 
+				console.log(filesRoot);
+				console.log(parameter);
 				this.addMTime(libpath.join(filesRoot, this.POST[parameter.name]), callback);
 				break;
 			default : 
