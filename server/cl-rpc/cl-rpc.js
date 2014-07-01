@@ -461,6 +461,35 @@ exports.performAction = function (POST, callback) {
 	}
 };
 
+var actionsDirectoriesQueue = async.queue(getNewActionDirectory, 1);
+
+function getNewActionDirectory (task, callback) {
+	var counterFile = libpath.join(filesRoot, "actions/counter.json");
+	fs.readFile(counterFile, function (err, data) {
+		var index = 1;
+		if (!err) {
+			index = JSON.parse(data).value + 1;
+		} 
+		var outputDirectory = libpath.join("actions", index + "");
+		mkdirp(libpath.join(filesRoot, outputDirectory), function (err) {
+			if ( err ) {
+				callback( err.message );
+			} else {
+				fs.writeFile(counterFile, JSON.stringify({value : index}), 
+					function(err) {
+						if (err) {
+							callback(err);
+						} else {
+							callback(null, outputDirectory);
+						}
+					}
+				);
+			}
+		});
+	});
+}
+
+
 function doAction(POST, callback) {
 	var inputMTime = -1;
 	var actionParameters = {};
@@ -547,42 +576,18 @@ function doAction(POST, callback) {
 
 		switch (outputDirectory) {
 		case undefined :
-			var counterFile = libpath.join(filesRoot, "actions/counter.json");
-			fs.readFile(counterFile, function (err, data) {
-				var index = 1;
-				if (!err) {
-					index = JSON.parse(data).value + 1;
-				} 
-				outputDirectory = libpath.join("actions", index + "");
-				mkdirp(libpath.join(filesRoot, outputDirectory), function (err) {
-					if ( err ) {
-						callback( err.message );
-					} else {
-						fs.writeFile(counterFile, JSON.stringify({value : index}), 
-							function(err) {
-								if (err) {
-									callback(err);
-								} else {
-									callback();
-								}
-							}
-						);
-					}
-				});
+			actionsDirectoriesQueue.push({}, function (err, dir) {
+				outputDirectory = dir;
+				callback(err);
 			});
 			break;
 		case "cache/" :
 			var shasum = crypto.createHash('sha1');
 			shasum.update(commandLine);
 			var hash = shasum.digest('hex');
-			outputDirectory = libpath.join("cache",
-				hash.charAt(0), hash.charAt(1), hash);
+			outputDirectory = libpath.join("cache",	hash.charAt(0), hash.charAt(1), hash);
 			mkdirp(libpath.join(filesRoot, outputDirectory), function (err) {
-				if (err) {
-					callback(err.message);
-				} else {
-					callback ();
-				}
+				callback(err);
 			});
 			break;
 		default :
