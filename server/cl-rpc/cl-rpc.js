@@ -311,96 +311,6 @@ function validateValue (parameterValue, parameter) {
 	return (null);
 }
 
-function parseParameter (commandLine, parameter, callback) {
-	if (parameter.text !== undefined) {
-		// parameter is actually a text anchor
-		commandLine += parameter.text;
-		callback (null, commandLine);
-		return;
-	} else {
-		var parameterValue = parameter.value;
-		var numericValue;
-
-		if (parameterValue === undefined) {
-			if (parameter.required) {
-				callback ("parameter " + parameter.name + " is required!");
-				return;
-			} else {
-				callback(null, commandLine);
-				return;
-			}
-		} else {
-			if (parameter.prefix !== undefined) {
-				commandLine += parameter.prefix;
-			}
-
-			switch (parameter.type) {
-			case 'file':
-				fs.realpath(libpath.join(filesRoot, parameterValue), function (err, path) {
-					if (err) {
-						callback (err);
-						return;
-					}
-					commandLine += path + " ";
-					callback (null, commandLine);
-				});
-				break;
-			case 'directory':
-				fs.realpath(libpath.join(filesRoot, parameterValue), function (err, path) {
-					if (err) {
-						callback (err);
-						return;
-					}
-					commandLine += path + " ";
-					fs.stat(libpath.join(filesRoot, parameterValue), function (err, stats) {
-						if (!stats.isDirectory()) {
-							callback ("error : " + parameterValue + " is not a directory");
-						}
-						callback (null, commandLine);
-					});
-				});
-				break;
-			case 'string':
-				if (parameterValue.indexOf(" ") === -1) {
-					commandLine += parameterValue + " ";
-					callback (null, commandLine);
-				}
-				else {
-					callback ("parameter " + parameter.name + " must not contain spaces");
-				}
-				break;
-			case 'int':
-				numericValue = parseInt(parameterValue, 10);
-				if (isNaN(numericValue)) {
-					callback ("parameter " + parameter.name + " must be an integer value");
-				}
-				else {
-					commandLine += parameterValue + " ";
-					callback (validateValue(numericValue, parameter), commandLine);
-				}
-				break;
-			case 'float':
-				numericValue = parseFloat(parameterValue, 10);
-				if (isNaN(numericValue)) {
-					callback ("parameter " + parameter.name + " must be a floating point value");
-				}
-				else {
-					commandLine += parameterValue + " ";
-					callback (validateValue(numericValue, parameter), commandLine);
-				}
-				break;
-			case 'text':
-			case 'base64data':
-				commandLine += parameterValue + " ";
-				callback (null, commandLine);
-				break;
-			default:
-				callback ("parameter type not handled : " + parameter.type);
-			}
-		}
-	}
-}
-
 function manageActions (POST, callback) {
 	switch (POST.manage) {
 	case 'update':
@@ -445,7 +355,9 @@ function manageActions (POST, callback) {
 	}	
 }
 
-var queue = async.queue(doAction, os.cpus().length);
+var queue = async.queue(function (task, callback) {
+	new RPC(task, callback);
+}, os.cpus().length);
 
 exports.performAction = function (POST, callback) {
 	POST.handle  = POST.handle || Math.random().toString();
@@ -455,21 +367,15 @@ exports.performAction = function (POST, callback) {
 		queue.push(POST, finished);
 	}
 
-	function finished(msg) {
-		msg.handle = POST.handle;
-		callback(msg);
-	}
+	function finished(msg) {msg.handle = POST.handle;callback(msg);}
 };
 
-var actionsDirectoriesQueue = async.queue(getNewActionDirectory, 1);
-
-function getNewActionDirectory (task, callback) {
+var actionsDirectoriesQueue = async.queue(function (task, callback) {
 	var counterFile = libpath.join(filesRoot, "actions/counter.json");
 	fs.readFile(counterFile, function (err, data) {
 		var index = 1;
-		if (!err) {
-			index = JSON.parse(data).value + 1;
-		} 
+		if (!err) {index = JSON.parse(data).value + 1;} 
+
 		var outputDirectory = libpath.join("actions", index + "");
 		mkdirp(libpath.join(filesRoot, outputDirectory), function (err) {
 			if ( err ) {
@@ -487,276 +393,369 @@ function getNewActionDirectory (task, callback) {
 			}
 		});
 	});
-}
+}, 1);
 
 
-function doAction(POST, callback) {
-	var inputMTime = -1;
-	var actionParameters = {};
-	var outputDirectory;
-	var cachedAction = false;
-
+function RPC(POST, callback) {
 	actionsCounter++;
-	var header = "[" + actionsCounter + "] ";
 
-	var response = {};
+	this.POST = POST;
+	this.inputMTime = -1;
+	this.outputDirectory = "";
+	this.header = "[" + actionsCounter + "] ";
+	this.response = {};
+	this.action = actions[POST.action];
 
-	var action = actions[POST.action];
-	if (!action) {
+	if (!this.action) {
 		callback({error : "action " + POST.action + " not found"});
 		return;
 	};
 
-	var commandLine = (action.attributes.executable ||	action.attributes.command) + ' ';
-	var actionCopy = JSON.parse(JSON.stringify(action));
+	this.commandLine = (this.action.attributes.executable ||
+		this.action.attributes.command) + ' ';
 
-	async.series([
+	async.waterfall([
+		this.parseParameters.bind(this),
+		this.handleExecutableMTime.bind(this),
+		this.handleInputMTimes.bind(this),
+		this.handleOutputDirectory.bind(this),
+		this.handleLogAndCache.bind(this),
+		this.executeAction.bind(this)
+		],
+		function (err) {
+			console.log(this.header + "done");
+			if (err) {
+				this.response.status = "ERROR";
+				this.response.error = err;
+			}
+			callback(this.response);
+		}.bind(this)
+	);
+};
 
-	// first, parse parameters into actionParameters;
-	function (callback) {
-		actionParameters.action = POST.action;
-		actionCopy.parameters.forEach(function (parameter) {
-				parameter.value = actionParameters[parameter.name] = POST[parameter.name];
-		});
+RPC.prototype.parseParameters = function (callback) {
+	async.eachSeries(this.action.parameters, this.parseParameter.bind(this), callback);
+};
 
-		async.reduce(actionCopy.parameters, commandLine, parseParameter, function(err, cl){
-			commandLine = cl;
-			callback (err);
-		});
-	},
+RPC.prototype.parseParameter = function (parameter, callback) {
+	if (parameter.text !== undefined) {
+		// parameter is actually a text anchor
+		this.commandLine += parameter.text;
+		callback();
+		return;
+	}
 
-	// take into account executable modification time
-	function (callback) {
-		if (action.attributes.executable) {
-			fs.stat(action.attributes.executable, function (err, stats) {
-				if (!err) {
-					inputMTime = Math.max(stats.mtime.getTime(), inputMTime);
-				}
-				callback (err);
-			});
+	var parameterValue = this.POST[parameter.name];
+
+	if (parameterValue === undefined) {
+		if (parameter.required) {
+			callback ("parameter " + parameter.name + " is required!");
 		} else {
-			callback ();
+			callback();
 		}
-	},
+		return;
+	}
 
-	// take into account input files modification time
-	function (callback) {
-		async.each(actionCopy.parameters, function (parameter, callback) {
+	if (parameter.prefix !== undefined) {
+		this.commandLine += parameter.prefix;
+	}
+
+	switch (parameter.type) {
+	case 'file':
+		fs.realpath(libpath.join(filesRoot, parameterValue), function (err, path) {
+			if (err) {
+				callback (err);
+				return;
+			}
+			this.commandLine += path + " ";
+			callback ();
+		}.bind(this));
+		break;
+	case 'directory':
+		fs.realpath(libpath.join(filesRoot, parameterValue), function (err, path) {
+			if (err) {
+				callback (err);
+				return;
+			}
+			this.commandLine += path + " ";
+			fs.stat(libpath.join(filesRoot, parameterValue), function (err, stats) {
+				if (!stats.isDirectory()) {
+					callback ("error : " + parameterValue + " is not a directory");
+				}
+				callback ();
+			});
+		}.bind(this));
+		break;
+	case 'string':
+		if (parameterValue.indexOf(" ") === -1) {
+			this.commandLine += parameterValue + " ";
+			callback ();
+		} else {
+			callback ("parameter " + parameter.name + " must not contain spaces");
+		}
+		break;
+	case 'int':
+		var numericValue = parseInt(parameterValue, 10);
+		if (isNaN(numericValue)) {
+			callback ("parameter " + parameter.name + " must be an integer value");
+		} else {
+			this.commandLine += parameterValue + " ";
+			callback (validateValue(numericValue, parameter));
+		}
+		break;
+	case 'float':
+		numericValue = parseFloat(parameterValue, 10);
+		if (isNaN(numericValue)) {
+			callback ("parameter " + parameter.name + " must be a floating point value");
+		} else {
+			this.commandLine += parameterValue + " ";
+			callback (validateValue(numericValue, parameter));
+		}
+		break;
+	case 'text':
+	case 'base64data':
+		this.commandLine += parameterValue + " ";
+		callback ();
+		break;
+	default:
+		callback ("parameter type not handled : " + parameter.type);
+	}
+
+};
+
+RPC.prototype.handleExecutableMTime = function (callback) {
+	this.addMTime(this.action.attributes.executable, callback);
+};
+
+RPC.prototype.addMTime = function (file, callback) {
+	if (file) {
+		fs.stat(file , function (err, stats) {
+			this.inputMTime = Math.max(stats.mtime.getTime(), this.inputMTime);
+			callback (err);
+		}.bind(this));
+	} else {
+		callback();
+	}
+}
+
+RPC.prototype.handleInputMTimes = function (callback) {
+	async.each(this.action.parameters, function (parameter, callback) {
 			switch (parameter.type) {
 			case "file":
 			case "directory" : 
-				if (parameter.value) {
-					fs.stat(libpath.join(filesRoot, parameter.value), function (err, stats) {
-						inputMTime = Math.max(stats.mtime.getTime(), inputMTime);
-						callback (err);
-					});
-				} else {
-					callback();
-				}
+				this.addMTime(libpath.join(filesRoot, this.POST[parameter.name]), callback);
 				break;
 			default : 
 				callback();
 			}
-		}, function (err) {
+		}.bind(this),
+		function (err) {
+			callback(err);
+		}
+	);
+};
+
+RPC.prototype.handleOutputDirectory = function (callback) {
+	this.response.MTime = this.inputMTime;
+
+	if (permissions === 0) {this.POST.output_directory = "cache/";}
+	this.outputDirectory = this.POST.output_directory;
+
+	if (this.action.attributes.voidAction) {
+		callback();
+		return;
+	}
+
+	switch (this.outputDirectory) {
+	case undefined :
+		actionsDirectoriesQueue.push({}, function (err, dir) {
+			this.outputDirectory = dir;
+			callback(err);
+		}.bind(this));
+		break;
+	case "cache/" :
+		var shasum = crypto.createHash('sha1');
+		shasum.update(this.commandLine);
+		var hash = shasum.digest('hex');
+		this.outputDirectory = libpath.join("cache", hash.charAt(0), hash.charAt(1), hash);
+		mkdirp(libpath.join(filesRoot, this.outputDirectory), function (err) {
 			callback(err);
 		});
-	},
-
-	// then handle output directory in outputDirectory
-	function (callback) {
-		response.MTime = inputMTime;
-
-		if (permissions === 0) {POST.output_directory = "cache/";}
-		outputDirectory = POST.output_directory;
-
-		if (action.attributes.voidAction) {
-			callback();
-			return;
-		}
-
-		switch (outputDirectory) {
-		case undefined :
-			actionsDirectoriesQueue.push({}, function (err, dir) {
-				outputDirectory = dir;
-				callback(err);
-			});
-			break;
-		case "cache/" :
-			var shasum = crypto.createHash('sha1');
-			shasum.update(commandLine);
-			var hash = shasum.digest('hex');
-			outputDirectory = libpath.join("cache",	hash.charAt(0), hash.charAt(1), hash);
-			mkdirp(libpath.join(filesRoot, outputDirectory), function (err) {
-				callback(err);
-			});
-			break;
-		default :
-			exports.validatePath (outputDirectory, callback);
-		}
-	},
-
-	// log the action and  detect whether the action is already in cache 
-	function (callback) {
-		actionParameters.output_directory = outputDirectory;
-		console.log (header + 'in : ' + outputDirectory);
-		if (commandLine.length < 500) {
-			console.log (header + commandLine);
-		} else {
-			console.log (header + commandLine.substr(0,500) + '...[trimmed]');
-		}
-
-		if (action.attributes.voidAction || POST.force_update || action.attributes.noCache) {
-			callback();
-		} else {
-			// check if action was already performed
-			var actionFile = libpath.join(filesRoot, outputDirectory, "action.json");
-			fs.stat(actionFile, function (err, stats) {
-				if ((err)||(stats.mtime.getTime() < inputMTime)) {
-					callback();
-				} else {
-					fs.readFile(actionFile, function (err, data) {
-						if (data == JSON.stringify(actionParameters)) {
-							console.log(header + "cached");
-							cachedAction = true;
-						}
-						callback();
-					});
-				}
-			});
-		}
-	},
-
-	// execute the action (or not when it is cached)
-	function (callback) {
-		if (action.attributes.voidAction !== "true") {
-			response.outputDirectory = outputDirectory + "/";
-		}
-
-		if (cachedAction) {
-			response.status = 'CACHED';
-			async.parallel([
-				function (callback) {
-					exec('touch ' + libpath.join(filesRoot, outputDirectory, "action.json"), callback);
-				},
-
-				function (callback) {
-					exec('touch ' + libpath.join(filesRoot, outputDirectory), callback);
-				},
-
-				function (callback) {
-					if (POST.stdout) {
-						async.parallel([function (callback) {
-								fs.readFile(libpath.join(filesRoot, outputDirectory, 'action.log'),
-									function (err, content) {
-										if (content) response.stdout = content.toString();
-										callback();
-								});
-							},
-							function (callback) {
-								fs.readFile(libpath.join(filesRoot, outputDirectory, 'action.err'),
-									function (err, content) {
-										if (content) response.stderr = content.toString();
-										callback();
-								});
-							}],
-						callback);	
-					} else {
-						response.stdout = 'stdout and stderr not included. Launch action with parameter stdout="true"';
-						callback();
-					}
-				}
-			], callback);
-			return;
-		}
-
-		var startTime = new Date().getTime();
-
-		var writeJSON = false;
-
-		var commandOptions = {cwd: filesRoot, maxBuffer : 1e10};
-
-		if ((action.attributes.voidAction !== "true" ||	action.attributes.noCache)) {
-			commandOptions.cwd = libpath.join(filesRoot, outputDirectory);
-			writeJSON = true;
-		}
-
-		if (action.attributes.noCache) {
-			writeJSON = false;
-		}
-
-		var js = action.attributes.module;
-		if ( typeof (js) === "object" ) {
-			var actionParameters2 = JSON.parse(JSON.stringify(actionParameters));
-			actionParameters2.filesRoot = filesRoot;
-			actionParameters2.HackActionsHandler = exports;
-			js.execute(actionParameters2, afterExecution);
-			return;
-		}
-
-		var handle = {POST : JSON.parse(JSON.stringify(POST))};
-
-		var argsArray = commandLine.split(" ");
-		var cmd = argsArray[0];
-		argsArray.shift();
-
-		var child = handle.childProcess = exec(commandLine, commandOptions, afterExecution);
-
-		ongoingActions[POST.handle] = handle;
-
-		if (outputDirectory) {
-			var logStream = fs.createWriteStream(libpath.join(filesRoot, outputDirectory, "action.log"));
-			var logStream2 = fs.createWriteStream(libpath.join(filesRoot, outputDirectory, "action.err"));
-			child.stdout.pipe(logStream);
-			child.stderr.pipe(logStream2);
-		}
-
-		function afterExecution(err, stdout, stderr) {
-			if (logStream) {
-				logStream.end();
-				logStream2.end();
-			}
-
-			if (POST.stdout) {
-				response.stdout = stdout;
-				response.stderr = stderr;
-			} else {
-				response.stdout = 'stdout and stderr not included. Launch action with parameter stdout="true"';
-			}
-
-			delete ongoingActions[POST.handle];
-
-			if (err) {
-				if (err.killed) {
-					response.status = "KILLED";
-					callback();
-				} else {
-					callback(err);
-				}
-			} else {
-				response.status = 'OK (' + (new Date().getTime() - startTime) / 1000 + 's)';
-				if (writeJSON) {
-					// touch output Directory to avoid automatic deletion
-					exec('touch ' + libpath.join(filesRoot, outputDirectory));
-					fs.writeFile(libpath.join(filesRoot, outputDirectory, "action.json"),
-						JSON.stringify(actionParameters), function (err) {
-							if (err) {throw err;}
-							callback();
-						});
-				} else {
-					callback();
-				}
-			}
-		}
-	}],
-	function (err) {
-		console.log(header + "done");
-		if (err) {
-			response.status = "ERROR";
-			response.error = err;
-		}
-		callback(response);
-	});
+		break;
+	default :
+		exports.validatePath (this.outputDirectory, callback);
+	}
 };
+
+RPC.prototype.handleLogAndCache = function (callback) {
+
+	var actionParameters = {action : this.POST.action};
+	this.action.parameters.forEach(function (parameter) {
+		actionParameters[parameter.name] = this.POST[parameter.name];
+	}.bind(this));
+	actionParameters.output_directory = this.outputDirectory;
+	this.parametersString = JSON.stringify(actionParameters);
+
+	console.log (this.header + 'in : ' + this.outputDirectory);
+
+	if (this.commandLine.length < 500) {
+		console.log (this.header + this.commandLine);
+	} else {
+		console.log (this.header + this.commandLine.substr(0,500) + '...[trimmed]');
+	}
+
+	if (this.action.attributes.voidAction || this.POST.force_update ||
+		this.action.attributes.noCache) {
+			callback(null, false);
+	} else {
+		// check if action was already performed
+		var actionFile = libpath.join(filesRoot, this.outputDirectory, "action.json");
+		fs.stat(actionFile, function (err, stats) {
+			if ((err) || (stats.mtime.getTime() < this.inputMTime)) {
+				callback(null, false);
+			} else {
+				fs.readFile(actionFile, function (err, data) {
+					if (data == this.parametersString) {
+						console.log(this.header + "cached");
+						callback(null, true);
+					} else {
+						callback(null, false);
+					}
+				}.bind(this));
+			}
+		}.bind(this));
+	}
+};
+
+RPC.prototype.executeAction = function (cached, callback) {
+	if (this.action.attributes.voidAction !== "true") {
+		this.response.outputDirectory = this.outputDirectory + "/";
+	}
+
+	if (cached) {
+		this.cacheAction(callback);
+		return;
+	}
+
+	this.startTime = new Date().getTime();
+	this.writeJSON = false;
+
+	var commandOptions = {cwd: filesRoot, maxBuffer : 1e10};
+
+	if ((this.action.attributes.voidAction !== "true" || this.action.attributes.noCache)) {
+		commandOptions.cwd = libpath.join(filesRoot, this.outputDirectory);
+		this.writeJSON = true;
+	}
+
+	if (this.action.attributes.noCache) {
+		this.writeJSON = false;
+	}
+
+	var after = function (err, stdout, stderr) {
+		this.afterExecution(err, stdout, stderr, callback);			
+	}.bind(this);
+
+	var js = this.action.attributes.module;
+	if ( typeof (js) === "object" ) {
+		var actionParameters2 = JSON.parse(this.parametersString);
+		actionParameters2.filesRoot = filesRoot;
+		actionParameters2.HackActionsHandler = exports;
+		js.execute(actionParameters2, after);
+		return;
+	}
+
+	var handle = {POST : JSON.parse(JSON.stringify(this.POST))};
+
+	var argsArray = this.commandLine.split(" ");
+	var cmd = argsArray[0];
+	argsArray.shift();
+
+	var child = handle.childProcess = exec(this.commandLine, commandOptions, after);
+console.log("launched")
+	ongoingActions[this.POST.handle] = handle;
+
+	if (this.outputDirectory) {
+		this.logStream = fs.createWriteStream(libpath.join(filesRoot, this.outputDirectory, "action.log"));
+		this.logStream2 = fs.createWriteStream(libpath.join(filesRoot, this.outputDirectory, "action.err"));
+		child.stdout.pipe(this.logStream);
+		child.stderr.pipe(this.logStream2);
+	}
+};
+
+RPC.prototype.cacheAction = function (callback) {
+	this.response.status = 'CACHED';
+	async.parallel([
+		function (callback) {
+			exec('touch ' + libpath.join(filesRoot, this.outputDirectory, "action.json"), callback);
+		}.bind(this),
+
+		function (callback) {
+			exec('touch ' + libpath.join(filesRoot, this.outputDirectory), callback);
+		}.bind(this),
+
+		function (callback) {
+			if (this.POST.stdout) {
+				async.parallel([function (callback) {
+						fs.readFile(libpath.join(filesRoot, this.outputDirectory, 'action.log'),
+							function (err, content) {
+								if (content) this.response.stdout = content.toString();
+								callback();
+						}.bind(this));
+					}.bind(this),
+					function (callback) {
+						fs.readFile(libpath.join(filesRoot,this. outputDirectory, 'action.err'),
+							function (err, content) {
+								if (content) this.response.stderr = content.toString();
+								callback();
+						}.bind(this));
+					}.bind(this)],
+				callback);
+			} else {
+				this.response.stdout = 'stdout and stderr not included. Launch action with parameter stdout="true"';
+				callback();
+			}
+		}.bind(this)
+	], callback);
+	return;
+};
+
+RPC.prototype.afterExecution = function(err, stdout, stderr, callback) {
+	if (this.logStream) {
+		this.logStream.end();
+		this.logStream2.end();
+	}
+
+	if (this.POST.stdout) {
+		this.response.stdout = stdout;
+		this.response.stderr = stderr;
+	} else {
+		this.response.stdout = 'stdout and stderr not included. Launch action with parameter stdout="true"';
+	}
+
+	delete ongoingActions[this.POST.handle];
+
+	if (err) {
+		if (err.killed) {
+			this.response.status = "KILLED";
+			callback();
+		} else {
+			callback(err);
+		}
+	} else {
+		this.response.status = 'OK (' + (new Date().getTime() - this.startTime) / 1000 + 's)';
+		if (this.writeJSON) {
+			// touch output Directory to avoid automatic deletion
+			exec('touch ' + libpath.join(filesRoot, this.outputDirectory));
+			fs.writeFile(libpath.join(filesRoot, this.outputDirectory, "action.json"),
+				this.parametersString, function (err) {
+					if (err) {throw err;}
+					callback();
+				}.bind(this));
+		} else {
+			callback();
+		}
+	}
+}
 
 exports.getDirectoryContent = function (path, callback) {
 	console.log('listDir : ' + path);
