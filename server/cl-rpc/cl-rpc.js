@@ -413,6 +413,7 @@ function RPC(POST, callback) {
 
 	this.commandLine = (this.action.attributes.executable ||
 		this.action.attributes.command) + ' ';
+	console.log(this.header + "handle : " + this.POST.handle);
 
 	async.waterfall([
 		this.parseParameters.bind(this),

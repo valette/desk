@@ -360,8 +360,13 @@ qx.Class.define("desk.Actions",
 				killButton.addListener('execute', function () {
 					this.killAction(item.getUserData("handle"));
 				}, this);
+				var propertiesButton = new qx.ui.menu.Button('properties');
+				propertiesButton.addListener('execute', function () {
+					console.log(parameters);
+				}, this);
 				var menu = new qx.ui.menu.Menu();
 				menu.add(killButton);
+				menu.add(propertiesButton);
 				item.setContextMenu(menu);
 			}
 			item.setLabel(parameters.POST.action);
