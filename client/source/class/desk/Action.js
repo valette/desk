@@ -166,7 +166,7 @@ qx.Class.define("desk.Action",
 					var parameterName = item.getPlaceholder();
 					var parameterValue = parameters[parameterName];
 					if (parameterValue !== undefined) {
-						item.setValue(parameterValue);
+						item.setValue(parameterValue.toString());
 						if (hide) {
 							item.setVisibility("excluded");
 							item.getUserData("label").setVisibility("excluded");
