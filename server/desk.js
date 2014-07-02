@@ -1,5 +1,4 @@
-var	actions      = require(__dirname + '/cl-rpc/cl-rpc'),
-	argv         = require('yargs').argv,
+var	argv         = require('yargs').argv,
 	auth         = require('basic-auth'),
 	bodyParser   = require('body-parser'),
 	compress     = require('compression'),
@@ -15,6 +14,8 @@ var	actions      = require(__dirname + '/cl-rpc/cl-rpc'),
 	mv           = require('mv'),
 	os           = require('os'),
 	socketIO     = require('socket.io');
+
+var actions      = require(__dirname + '/cl-rpc/cl-rpc');
 
 var separator = "*******************************************************************************";
 console.log(separator);

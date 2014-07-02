@@ -10,12 +10,7 @@ var	async       = require('async'),
 	prettyPrint = require('pretty-data').pd,
 	winston     = require('winston');
 
-var oldConsole = console;
-var console = {
-	log : function (text) {
-		winston.log ('info', text);
-	}
-};
+var cacheCleaner = require('./cacheCleaner.js');
 
 // directory where user can add their own .json action definition files
 var actionsDirectories = [];
@@ -37,62 +32,10 @@ var dataDirs = {};
 var actionsCounter = 0;
 
 //30 days of maximum life time for cache folders
-var maximumCacheAge = ms('30d');
+var maxAge = ms('30d');
+
 function cleanCache() {
-	console.log('Starting cache cleaning (delete folders older than ' +
-		ms(maximumCacheAge, { long: true }) + ')'); 
-
-	var cacheDir = libpath.join(filesRoot, 'cache');
-	if (!fs.existsSync(cacheDir)) {
-		winston.log ('error' , 'wrong cache directory :' + cacheDir);
-		return;
-	}
-
-	fs.readdir(cacheDir, function (err, files) {
-		async.eachSeries(files, function (file, callback) {
-			var fullFile = libpath.join(cacheDir, file);
-			fs.stat(fullFile, function (err, stats) {
-				if (!stats.isDirectory()) {
-					callback();
-					return;
-				}
-				fs.readdir(fullFile, function (err, files2) {
-					async.eachSeries(files2, function (file2, callback2) {
-						var fullFile2 = libpath.join(fullFile, file2)
-						fs.stat(fullFile2, function (err, stats) {
-							if (!stats.isDirectory()) {
-								callback();
-								return;
-							}
-							fs.readdir(fullFile2, function (err, files3) {
-								async.eachSeries(files3,
-									function (file3, callback3) {
-										var file4 = libpath.join(file, file2, file3);
-										var absoluteFile = libpath.join(cacheDir, file4);
-										fs.stat(absoluteFile, function (err, stats) {
-											if (!stats.isDirectory()) {
-												callback ();
-												return;
-											}
-											var time = stats.mtime.getTime();
-											var currentTime = new Date().getTime();
-											var age = currentTime - time;
-											if (age > maximumCacheAge) {
-												console.log('deleting cache ' + file3 + ' (' + ms(age, { long: true }) + ' old)'); 
-												exec('rm -rf ' + file4, {cwd : cacheDir}, callback3);
-											} else {
-												callback3();
-											}
-										});
-									},
-								callback2);
-							});
-						});
-					}, callback);
-				});
-			});
-		});
-	});
+	cacheCleaner.cleanCache(libpath.join(filesRoot, 'cache'), maxAge);
 }
 
 var job = new cronJob({
@@ -136,8 +79,7 @@ function includeActionsFile (file, callback) {
 }
 
 exports.includeActions = function (file, callback) {
-	switch (typeof (file))
-	{
+	switch (typeof (file)) {
 	case "string" :
 		includeActionsFile(file, afterImport);
 		break;
@@ -220,9 +162,8 @@ includeActionsJSON = function (file, callback) {
 };
 
 function exportActions(file, callback) {
-	fs.writeFile(file, prettyPrint.json(JSON.stringify({actions : actions ,
-														permissions : permissions,
-														dataDirs : dataDirs})),
+	fs.writeFile(file, prettyPrint.json(JSON.stringify(
+		{actions : actions , permissions : permissions, dataDirs : dataDirs})),
 		function (err) {
 			if (err) throw err;
 			if (typeof callback === "function") {
@@ -322,11 +263,9 @@ function manageActions (POST, callback) {
 			callback ({status : 'not found'});
 			return;
 		}
-		var processToKill = handle.childProcess;
-		if (processToKill) {
-			var pid = processToKill.pid;
-			processToKill.kill();
-			console.log('killed process ' + (pid+1));
+		if (handle.childProcess) {
+			handle.childProcess.kill();
+			console.log('killed process ' + handle.childProcess.pid);
 			callback ({status : 'killed'});
 		} else {
 			callback ({status : 'not existent'});
@@ -402,7 +341,10 @@ function RPC(POST, callback) {
 	this.POST = POST;
 	this.inputMTime = -1;
 	this.outputDirectory = "";
-	this.header = "[" + actionsCounter + "] ";
+
+	var header = "[" + actionsCounter + "] ";
+	this.log = function (msg) {winston.log('info', header + msg)};
+
 	this.response = {};
 	this.action = actions[POST.action];
 
@@ -411,9 +353,8 @@ function RPC(POST, callback) {
 		return;
 	};
 
-	this.commandLine = (this.action.attributes.executable ||
-		this.action.attributes.command) + ' ';
-	console.log(this.header + "handle : " + this.POST.handle);
+	this.commandLine = (this.action.attributes.executable || this.action.attributes.command) + ' ';
+	this.log("handle : " + this.POST.handle);
 
 	async.waterfall([
 		this.parseParameters.bind(this),
@@ -424,7 +365,7 @@ function RPC(POST, callback) {
 		this.executeAction.bind(this)
 		],
 		function (err) {
-			console.log(this.header + "done");
+			this.log("done");
 			if (err) {
 				this.response.status = "ERROR";
 				this.response.error = err;
@@ -446,9 +387,9 @@ RPC.prototype.parseParameter = function (parameter, callback) {
 		return;
 	}
 
-	var parameterValue = this.POST[parameter.name];
+	var value = this.POST[parameter.name];
 
-	if (parameterValue === undefined) {
+	if (value === undefined) {
 		if (parameter.required) {
 			callback ("parameter " + parameter.name + " is required!");
 		} else {
@@ -463,7 +404,7 @@ RPC.prototype.parseParameter = function (parameter, callback) {
 
 	switch (parameter.type) {
 	case 'file':
-		fs.realpath(libpath.join(filesRoot, parameterValue), function (err, path) {
+		fs.realpath(libpath.join(filesRoot, value), function (err, path) {
 			if (err) {
 				callback (err);
 				return;
@@ -473,49 +414,49 @@ RPC.prototype.parseParameter = function (parameter, callback) {
 		}.bind(this));
 		break;
 	case 'directory':
-		fs.realpath(libpath.join(filesRoot, parameterValue), function (err, path) {
+		fs.realpath(libpath.join(filesRoot, value), function (err, path) {
 			if (err) {
 				callback (err);
 				return;
 			}
 			this.commandLine += path + " ";
-			fs.stat(libpath.join(filesRoot, parameterValue), function (err, stats) {
+			fs.stat(libpath.join(filesRoot, value), function (err, stats) {
 				if (!stats.isDirectory()) {
-					callback ("error : " + parameterValue + " is not a directory");
+					callback ("error : " + value + " is not a directory");
 				}
 				callback ();
 			});
 		}.bind(this));
 		break;
 	case 'string':
-		if (parameterValue.indexOf(" ") === -1) {
-			this.commandLine += parameterValue + " ";
+		if (value.indexOf(" ") === -1) {
+			this.commandLine += value + " ";
 			callback ();
 		} else {
 			callback ("parameter " + parameter.name + " must not contain spaces");
 		}
 		break;
 	case 'int':
-		var numericValue = parseInt(parameterValue, 10);
+		var numericValue = parseInt(value, 10);
 		if (isNaN(numericValue)) {
 			callback ("parameter " + parameter.name + " must be an integer value");
 		} else {
-			this.commandLine += parameterValue + " ";
+			this.commandLine += value + " ";
 			callback (validateValue(numericValue, parameter));
 		}
 		break;
 	case 'float':
-		numericValue = parseFloat(parameterValue, 10);
+		numericValue = parseFloat(value, 10);
 		if (isNaN(numericValue)) {
 			callback ("parameter " + parameter.name + " must be a floating point value");
 		} else {
-			this.commandLine += parameterValue + " ";
+			this.commandLine += value + " ";
 			callback (validateValue(numericValue, parameter));
 		}
 		break;
 	case 'text':
 	case 'base64data':
-		this.commandLine += parameterValue + " ";
+		this.commandLine += value + " ";
 		callback ();
 		break;
 	default:
@@ -541,11 +482,11 @@ RPC.prototype.addMTime = function (file, callback) {
 
 RPC.prototype.handleInputMTimes = function (callback) {
 	async.each(this.action.parameters, function (parameter, callback) {
-			if (parameter.value === undefined) {
-				callback();
-				return;
-			}
-			switch (parameter.type) {
+		if (parameter.value === undefined) {
+			callback();
+			return;
+		}
+		switch (parameter.type) {
 			case "file":
 			case "directory" : 
 				console.log(filesRoot);
@@ -554,7 +495,7 @@ RPC.prototype.handleInputMTimes = function (callback) {
 				break;
 			default : 
 				callback();
-			}
+		}
 		}.bind(this),
 		function (err) {
 			callback(err);
@@ -596,19 +537,19 @@ RPC.prototype.handleOutputDirectory = function (callback) {
 
 RPC.prototype.handleLogAndCache = function (callback) {
 
-	var actionParameters = {action : this.POST.action};
+	var params = {action : this.POST.action};
 	this.action.parameters.forEach(function (parameter) {
-		actionParameters[parameter.name] = this.POST[parameter.name];
-	}.bind(this));
-	actionParameters.output_directory = this.outputDirectory;
-	this.parametersString = JSON.stringify(actionParameters);
+		params[parameter.name] = this.POST[parameter.name];
+	}, this);
+	params.output_directory = this.outputDirectory;
+	this.parametersString = JSON.stringify(params);
 
-	console.log (this.header + 'in : ' + this.outputDirectory);
+	this.log ('in : ' + this.outputDirectory);
 
 	if (this.commandLine.length < 500) {
-		console.log (this.header + this.commandLine);
+		this.log(this.commandLine);
 	} else {
-		console.log (this.header + this.commandLine.substr(0,500) + '...[trimmed]');
+		this.log(this.commandLine.substr(0,500) + '...[trimmed]');
 	}
 
 	if (this.action.attributes.voidAction || this.POST.force_update ||
@@ -623,7 +564,7 @@ RPC.prototype.handleLogAndCache = function (callback) {
 			} else {
 				fs.readFile(actionFile, function (err, data) {
 					if (data == this.parametersString) {
-						console.log(this.header + "cached");
+						this.log("cached");
 						callback(null, true);
 					} else {
 						callback(null, false);
@@ -678,7 +619,6 @@ RPC.prototype.executeAction = function (cached, callback) {
 	argsArray.shift();
 
 	var child = handle.childProcess = exec(this.commandLine, commandOptions, after);
-console.log("launched")
 	ongoingActions[this.POST.handle] = handle;
 
 	if (this.outputDirectory) {
@@ -791,8 +731,8 @@ exports.getDirectoryContent = function (path, callback) {
 				);
 			});
 		}],
-		function (error, message) {
-			callback(message);
+		function (error, files) {
+			callback(files);
 		}
 	);
 };
