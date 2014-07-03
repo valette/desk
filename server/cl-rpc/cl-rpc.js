@@ -81,18 +81,13 @@ function includeActionsFile (file, callback) {
 exports.includeActions = function (file, callback) {
 	switch (typeof (file)) {
 	case "string" :
-		includeActionsFile(file, afterImport);
+		includeActionsFile(file, callback);
 		break;
 	case "object" :
-		async.eachSeries(file, includeActionsFile, afterImport);
+		async.eachSeries(file, includeActionsFile, callback);
 		break;
 	default:
 		callback ("error in actions importations: cannot handle " + file);
-		afterImport();
-	}
-
-	function afterImport() {
-		exportActions(libpath.join(filesRoot, "actions.json"), callback);
 	}
 };
 
@@ -147,8 +142,6 @@ includeActionsJSON = function (file, callback) {
 			if (typeof(actionsObject.permissions) === 'number') {
 				permissions = actionsObject.permissions;
 			}
-
-			exports.includeActions(includes, callback);
 		}
 		catch (error) {
 			console.log('error importing ' + file);
@@ -158,19 +151,9 @@ includeActionsJSON = function (file, callback) {
 				callback();
 			}
 		}
+		exports.includeActions(includes, callback);
 	});
 };
-
-function exportActions(file, callback) {
-	fs.writeFile(file, prettyPrint.json(JSON.stringify(
-		{actions : actions , permissions : permissions, dataDirs : dataDirs})),
-		function (err) {
-			if (err) throw err;
-			if (typeof callback === "function") {
-				callback();
-			}
-	});
-}
 
 exports.addDirectory = function (directory) {
 	actionsDirectories.push(directory);
@@ -184,10 +167,9 @@ function update (callback) {
 
 	async.each(actionsDirectories, function (directory, callback) {
 		fs.readdir(directory, function (err, files) {
-			for (var i = 0; i < files.length; i++) {
-				files[i] = libpath.join(directory, files[i]);
-			}
-			exports.includeActions(files, callback);
+			async.each(files, function(file, callback) {
+				exports.includeActions(libpath.join(directory, file), callback);
+			}, callback);
 		});
 	}, function (err) {
 		console.log(Object.keys(actions).length + ' actions included');
@@ -217,9 +199,16 @@ function update (callback) {
 		});
 		cleanCache();
 
-		if (typeof callback === 'function') {
-			callback({});
-		}
+		// export actions.json
+		fs.writeFile(libpath.join(filesRoot, "actions.json"),
+			prettyPrint.json(JSON.stringify({actions : actions ,
+				permissions : permissions, dataDirs : dataDirs})),
+			function (err) {
+				if (err) throw err;
+				if (typeof callback === "function") {
+					callback({});
+				}
+		});
 	});
 };
 
@@ -288,7 +277,7 @@ function manageActions (POST, callback) {
 				return value;
 			}
 		);
-		cache = null; 
+		cache = null;
 		callback(JSON.parse(objString));
 		return;
 	}	
@@ -306,7 +295,10 @@ exports.performAction = function (POST, callback) {
 		queue.push(POST, finished);
 	}
 
-	function finished(msg) {msg.handle = POST.handle;callback(msg);}
+	function finished(msg) {
+		msg.handle = POST.handle;
+		callback(msg);
+	}
 };
 
 var actionsDirectoriesQueue = async.queue(function (task, callback) {
@@ -398,9 +390,7 @@ RPC.prototype.parseParameter = function (parameter, callback) {
 		return;
 	}
 
-	if (parameter.prefix !== undefined) {
-		this.commandLine += parameter.prefix;
-	}
+	this.commandLine += parameter.prefix || '';
 
 	switch (parameter.type) {
 	case 'file':
@@ -423,6 +413,7 @@ RPC.prototype.parseParameter = function (parameter, callback) {
 			fs.stat(libpath.join(filesRoot, value), function (err, stats) {
 				if (!stats.isDirectory()) {
 					callback ("error : " + value + " is not a directory");
+					return;
 				}
 				callback ();
 			});
