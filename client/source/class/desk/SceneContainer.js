@@ -363,7 +363,6 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		__parseXMLData : function (file, rootDocument, parameters, callback) {
-			var meshes = rootDocument.getElementsByTagName("mesh");
 			var rootElement = rootDocument.childNodes[0];
 			if (rootElement.hasAttribute("timestamp")) {
 				parameters.mtime = parseFloat(rootElement.getAttribute("timestamp"));
@@ -376,37 +375,25 @@ qx.Class.define("desk.SceneContainer",
 			this.__setData();
 
 			var path = desk.FileSystem.getFileDirectory(file);
-			async.each(meshes, function (mesh, callback) {
+			async.each(rootDocument.getElementsByTagName("mesh"), function (mesh, callback) {
 				var meshParameters = {parent : leaf};
 				if (mesh.hasAttribute("color")) {
-					var colorstring = mesh.getAttribute("color");
-					var colors = colorstring.split(" ");
-					var color = [];
-					while (colors.length < 3) {
-						colors.push('1');
-					}
-					if (colors.length < 4) {
-						colors.push('1');
-					}
-					
-					if ( colors.length < 5) {
-						colors.push('0');
-					}
-					
-					for (var j = 0; j < 4; j++) {
-						color[j] = parseFloat(colors[j]);
-					}
-					color[4] = parseInt(colors[4], 10);
+					var color = mesh.getAttribute("color").split(" ").map(
+						function (color) {
+							return parseFloat(color);
+						}
+					);
 					meshParameters.color = color;
+					meshParameters.renderDepth = color[4];
 				}
 
-				var xmlName;
 				if (mesh.hasAttribute("Mesh")) {
-					xmlName = mesh.getAttribute("Mesh");
+					var xmlName = mesh.getAttribute("Mesh");
 				} else {
 					xmlName = mesh.getAttribute("mesh");
 				}
-				this.__readFile(path + "/" + xmlName, meshParameters, callback);
+				this.__readFile(path + "/" + xmlName, meshParameters,
+					function () {callback();});
 			}.bind(this), callback);
 		},
 
@@ -646,24 +633,14 @@ qx.Class.define("desk.SceneContainer",
 			geometry.computeBoundingBox();
 
 			var color = parameters.color || [];
-            for (var i = color.length; i < 3; i++) {
+            for (var i = color.length; i < 4; i++) {
                 color.push(1);
             }
-            if (color.length < 4) {
-                color.push(1);
-            }
-            if (color.length < 5) {
-                color.push(0);
-            }
-			var threecolor = new THREE.Color().setRGB(color[0],color[1],color[2]);
+			var col = new THREE.Color().setRGB(color[0],color[1],color[2]);
 
 			var material =  new THREE.MeshPhongMaterial({
-                color : threecolor.getHex(),
-                opacity : color[3]
-            });
-			var factor = 0.3;
-			material.ambient = new THREE.Color().setRGB(
-				factor*threecolor.r,factor*threecolor.g,factor*threecolor.b);
+				color : col.getHex(), opacity : color[3]});
+			material.ambient = new THREE.Color().copy(col).multiplyScalar(0.3);
 			material.shininess = 5;
 			material.specular = new THREE.Color( 0x303030 );
 			if (color[3] < 0.999) {
@@ -671,21 +648,19 @@ qx.Class.define("desk.SceneContainer",
 			}
             material.side = THREE.DoubleSide;
 			var mesh = new THREE.Mesh(geometry, material );
-			mesh.renderDepth = color[4];
+			mesh.renderDepth = parameters.renderDepth || 0
             this.addMesh( mesh, parameters );
             return mesh;
         },
 
-		__urlLoad : function (parameters, callback) {
-			var loader;
-			if (desk.FileSystem.getFileExtension(parameters.url) === "vtk") {
+		__urlLoad : function (opt, callback) {
+			var loader = this.__ctmLoader;
+			if (desk.FileSystem.getFileExtension(opt.url) === "vtk") {
 				loader = this.__vtkLoader;
-			} else {
-				loader = this.__ctmLoader;
 			}
 
-			loader.load (parameters.url + "?nocache=" + parameters.mtime, function (geometry) {
-				var mesh = this.addGeometry(geometry, parameters);
+			loader.load (opt.url + "?nocache=" + opt.mtime, function (geometry) {
+				var mesh = this.addGeometry(geometry, opt);
 				if (typeof callback === 'function') {
 					callback(mesh);
 				}
@@ -773,7 +748,7 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		__getPropertyWidget : function (parentWindow){
-			var meshesTree=this.__meshesTree;
+			var meshesTree = this.__meshesTree;
 			
 			var mainContainer = new qx.ui.container.Composite();
 			mainContainer.setLayout(new qx.ui.layout.VBox());
@@ -931,20 +906,17 @@ qx.Class.define("desk.SceneContainer",
 				mesh.geometry.dispose();
 			}
 			if (!keepMaterial && dispose !== false) {
-				var map = mesh.material.map;
-				if (map) {
-					map.dispose();
+				if (mesh.material.map) {
+					mesh.material.map.dispose();
 				}
 				mesh.material.dispose();
-				var uniforms = Object.keys(mesh.material.uniforms);
-				for (var i = 0; i != uniforms.length; i++) {
-					var uniform = mesh.material.uniforms[uniforms[i]].value;
-					if (uniform) {
-						if (typeof uniform.dispose === "function") {
-							uniform.dispose();
-						}
+				Object.keys(mesh.material.uniforms || {}).forEach(function (key) {
+					var uniform = mesh.material.uniforms[key].value;
+					var disposeFunction = uniform && uniform.dispose;
+					if (typeof  disposeFunction === "function") {
+						uniform.dispose();
 					}
-				}
+				});
 			}
 			//mesh.dispose();
 			this.fireDataEvent("meshRemoved", mesh);
@@ -1044,15 +1016,13 @@ qx.Class.define("desk.SceneContainer",
 			
 			var analysisButton = new qx.ui.menu.Button("Mesh Tools");
 			analysisButton.addListener("execute", function (){
-				var meshes=this.__meshesTree.getSelectedNodes();
-				for (var i=0;i<meshes.length;i++) {
-					if (meshes[i].type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-						var meshId=meshes[i].nodeId;
-						var mesh=this.getMeshes()[meshId];
-						var meshTools = new desk.MeshTools( {meshViewer:this, specMesh:mesh} );
+				this.__meshesTree.getSelectedNodes().forEach(function (mesh) {
+					if (mesh.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
+						new desk.MeshTools({meshViewer : this,
+							specMesh : (this.getMeshes())[mesh.nodeId]});
 					}
-				}
-			},this);
+				}, this);
+			}, this);
 			menu.add(analysisButton);
 			
 			var animateButton = new qx.ui.menu.Button('animate');
@@ -1065,10 +1035,9 @@ qx.Class.define("desk.SceneContainer",
 					}, this);
 				}
 
-				for (var i = 0; i !=nodes.length; i++) {
-                    var node = nodes[i];
+				nodes.forEach(function (node) {
 					this.__animator.addObject(this.__getMeshFromNode(node), node.label);
-				}
+				}, this);
 			},this);
 			menu.add(animateButton);
 			
@@ -1077,10 +1046,7 @@ qx.Class.define("desk.SceneContainer",
 			
 			//// hide all menu buttons but the "show" and "hide" buttons for the volumeSlices
 			menu.addListener("appear", function() {
-				var nodes = this.__meshesTree.getSelectedNodes();
-				if (!nodes) {
-					return;
-				}
+				var nodes = this.__meshesTree.getSelectedNodes() || [];
 				var selNode = nodes[0];
 				if (!selNode) {
 					return;
