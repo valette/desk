@@ -1,5 +1,5 @@
 var	async       = require('async'),
-	cronJob     = require('cron').CronJob,
+	CronJob     = require('cron').CronJob,
 	crypto      = require('crypto'),
 	exec        = require('child_process').exec,
 	fs          = require('fs'),
@@ -38,7 +38,7 @@ function cleanCache() {
 	cacheCleaner.cleanCache(libpath.join(filesRoot, 'cache'), maxAge);
 }
 
-var job = new cronJob({
+var job = new CronJob({
 	cronTime: '0 0 ' + Math.floor(24 * Math.random()) + ' * * *',
 	onTick: cleanCache,
 	start: true
@@ -49,16 +49,16 @@ exports.validatePath = function (path, callback) {
 		if (err) {
 			callback(err);
 			return;
-		} else {
-			for (var i = 0; i != directories.length; i++) {
-				var subDir = directories[i];
-				if (realPath.slice(0, subDir.length) == subDir) {
-					callback ();
-					return;
-				}
-			}
-			callback("path " + realPath + " not allowed");
 		}
+		var i, subDir;
+		for (i = 0; i !== directories.length; i++) {
+			subDir = directories[i];
+			if (realPath.slice(0, subDir.length) === subDir) {
+				callback ();
+				return;
+			}
+		}
+		callback("path " + realPath + " not allowed");
 	});
 };
 
@@ -79,7 +79,7 @@ function includeActionsFile (file, callback) {
 }
 
 exports.includeActions = function (file, callback) {
-	switch (typeof (file)) {
+	switch (typeof file) {
 	case "string" :
 		includeActionsFile(file, callback);
 		break;

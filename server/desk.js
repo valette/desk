@@ -88,7 +88,7 @@ if (id.username && id.password) {
 }
 
 // handle body parsing
-app.use(bodyParser.urlencoded({limit : '10mb'}));
+app.use(bodyParser.urlencoded({limit : '10mb', extended : true}));
 
 var router = express.Router();
 app.use(homeURL, router);
@@ -207,7 +207,7 @@ actions.addDirectory(extensionsDir);
 actions.setRoot(deskPath);
 
 var io = socketIO(server, {path : libPath.join(homeURL, "socket/socket.io")});
-io.on('connection', function(socket){
+io.on('connection', function(socket) {
 	console.log('a user connected');
 	socket.on('disconnect', function(){
 		console.log('user disconnected');
