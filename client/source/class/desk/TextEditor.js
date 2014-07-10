@@ -45,7 +45,7 @@ qx.Class.define("desk.TextEditor",
 		this.__foldButton = new qx.ui.form.Button("F");
 		this.__foldButton.setToolTipText("Fold all");
 		this.__foldButton.addListener("execute", function () {
-			this.__textArea.getAce().getSession().foldAll();
+			this.__textArea.getAce().getSession().foldAll(null, null, 0);
 		}, this);
 
 		var spinner = this.__spinner = new qx.ui.form.Spinner(5, 14, 50);
