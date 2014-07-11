@@ -83,9 +83,7 @@ qx.Class.define("desk.Actions",
 
 		desk.FileSystem.includeScripts(scripts, function () {
 			this.__socket = io({path : baseURL + 'socket/socket.io'});
-			this.__socket.on("action finished", function (msg) {
-				this.__onActionEnd(msg);
-			}.bind(this));
+			this.__socket.on("action finished", this.__onActionEnd.bind(this));
 
 			if (desk.Actions.RPC != true) {
 				setTimeout(onReady, 10);
@@ -308,7 +306,9 @@ qx.Class.define("desk.Actions",
 			}
 
 			if (typeof params.callback === 'function') {
-				params.callback.call(params.context, response);
+				setTimeout(function () {
+					params.callback.call(params.context, response);
+				}, 1);
 			}
 		},
 
