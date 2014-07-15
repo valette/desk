@@ -29,6 +29,12 @@ if (cluster.isMaster) {
 }
 
 var proxy = httpProxy.createProxyServer({});
+proxy.on('error', function(err, req, res) {
+	console.log(new Date().toString() + ": error");
+	console.log(req.url);
+	console.log(err);
+	res.end(JSON.stringify(err));
+});
 
 var ca = [];
 if (fs.existsSync(caFile)) {
