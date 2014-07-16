@@ -95,7 +95,7 @@ for( var v = 0; v < numParticles; v++ ) {
     values_color[v3  + 1] = myColor.g;
     values_color[v3  + 2] = myColor.b;
 }
-var system = new THREE.ParticleSystem( geometry, shaderMaterial );
+var system = new THREE.PointCloud( geometry, shaderMaterial );
 
 viewer.addMesh(system);
 viewer.viewAll();
