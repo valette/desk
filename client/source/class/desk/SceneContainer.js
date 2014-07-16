@@ -949,10 +949,7 @@ qx.Class.define("desk.SceneContainer",
 			var showButton = new qx.ui.menu.Button("show/hide");
 			showButton.addListener("execute", function (){
                 this.getSelectedMeshes().forEach(function (mesh) {
-					var visible = !mesh.visible;
-					mesh.visible = visible;
-					var edges = mesh.userData.edges;
-					if (edges) edges.visible = visible;
+					mesh.visible = !mesh.visible;
                 });
 				this.render();
 			},this);
@@ -960,13 +957,11 @@ qx.Class.define("desk.SceneContainer",
 
 			var edgesButton = new qx.ui.menu.Button("show/hide edges");
 			edgesButton.addListener("execute", function (){
-				var self = this;
 
 				function removeEdges() {
 					var edges = this.userData.edges;
-					self.getScene().remove(edges);
+					this.remove(edges);
 					edges.geometry.dispose();
-					self._deleteMembers(edges);
 					this.removeEventListener("removedFromScene", removeEdges);
 					delete this.userData.edges;
 				}
@@ -981,7 +976,7 @@ qx.Class.define("desk.SceneContainer",
 						material.color.setRGB(0,0,0);
 						mesh.userData.edges = edges;
 						mesh.addEventListener("removedFromScene", removeEdges);
-						self.getScene().add(edges);
+						mesh.add(edges);
 					}
 				});
 				this.render();
