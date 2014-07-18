@@ -97,7 +97,7 @@ qx.Class.define("desk.FileBrowser",
 		this.__virtualTree.dispose();
 		qx.util.DisposeUtil.destroyContainer(this);
 		var browsers = this.__fileBrowsers;
-		for (var i = 0; i != browsers.length; i++) {
+		for (var i = 0; i < browsers.length; i++) {
 			if (browsers[i] === this) {
 				browsers.splice(i, 1);
 				return;
@@ -212,10 +212,9 @@ qx.Class.define("desk.FileBrowser",
                                 callback(null);
 							});
 						}, function (err) {
-                            var directories = [];
-							for (var i = 0; i != files.length; i++) {
-								directories.push(browser.__getFileDirectory(files[i]));
-							}
+                            var directories = files.map(function (file) {
+								return browser.__getFileDirectory(file);
+							});
 							directories.push(destination);
 							this.__updateDirectories(directories);
 					}.bind(this));
@@ -433,12 +432,11 @@ qx.Class.define("desk.FileBrowser",
 		__deleteAction : function (node) {
 			var nodes = this.__getSelectedNodes();
 			var message = 'Are you shure you want to delete those files/directories? \n';
-			var files = [];
-			for (var i = 0; i < nodes.length; i++) {
-				var file = this.__getNodeFile(nodes[i]);
-				files.push(this.__getFileDirectory(file));
+			var files = nodes.map(function (node) {
+				var file = this.__getNodeFile(node);
 				message +=  file + '\n';
-			}
+				return this.__getFileDirectory(file);
+			});
 			if (confirm(message)) {
 				async.each(nodes, function (node, callback) {
 					var file = this.__getNodeFile(node.nodeId);
@@ -659,14 +657,12 @@ qx.Class.define("desk.FileBrowser",
 		* @param file {String} directory to update
 		*/
 		updateDirectory : function (file) {
-			var browsers = this.__fileBrowsers;
-			for (var i = 0; i != browsers.length; i++) {
-				var browser = browsers[i];
+			this.__fileBrowsers.forEach(function (browser) {
 				var nodeId = browser.__getFileNode(file);
 				if (nodeId) {
 					browser.__expandDirectoryListing(nodeId);
 				}
-			}
+			});
 		},
 
 		__getFileDirectory : function (file) {
@@ -734,11 +730,10 @@ qx.Class.define("desk.FileBrowser",
 				dataModel.addBranch(nodeId , directoriesArray[i]);
 			}
 
-			for (i = 0; i < filesArray.length; i++) {
+			filesArray.forEach(function (file) {
 				var newNode;
 				var image = null;
-				switch (desk.FileSystem.getFileExtension(filesArray[i]))
-				{
+				switch (desk.FileSystem.getFileExtension(file)) {
 				case "vtk":
 				case "ply":
 				case "obj":
@@ -753,10 +748,10 @@ qx.Class.define("desk.FileBrowser",
 				default:
 					break;
 				}
-				newNode = dataModel.addLeaf(nodeId, filesArray[i], image);
-				dataModel.setColumnData(newNode, 1, modificationTimes[filesArray[i]]);
-				dataModel.setColumnData(newNode, 2, sizes[filesArray[i]]);
-			}
+				newNode = dataModel.addLeaf(nodeId, file, image);
+				dataModel.setColumnData(newNode, 1, modificationTimes[file]);
+				dataModel.setColumnData(newNode, 2, sizes[file]);
+			});
 			dataModel.setData();
 		},
 
