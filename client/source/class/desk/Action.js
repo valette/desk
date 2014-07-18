@@ -3,6 +3,7 @@
  * @lint ignoreDeprecated (alert)
  * @ignore (async.each)
  * @ignore (_.uniq)
+ * @ignore (_.find)
  */
 qx.Class.define("desk.Action", 
 {
@@ -218,15 +219,12 @@ qx.Class.define("desk.Action",
 		* @param parameters {Object} parameters as JSON object
 		*/
         setUIParameters : function (parameters) {
-			parameters = JSON.parse(JSON.stringify(parameters));
-            var keys = Object.keys(parameters);
-            for (var i = 0; i < keys.length; i++) {
-                var key = keys[i];
+            Object.keys(parameters).forEach(function (key) {
                 var form = this.getForm(key);
                 if (form) {
                     form.setValue(parameters[key].toString());
                 }
-            }
+            }, this);
         },
 
 		setOriginFileBrowser : function (fileBrowser) {
@@ -307,17 +305,15 @@ qx.Class.define("desk.Action",
 			send.setLabel("Updating Parents...");
 
 			var parameterMap = {"action" : this.__name};
-			var items = manager.getItems();
 			// add all parameters
-			for (var i = 0; i < items.length; i++) {
-				var currentItem = items[i];
-				var value = currentItem.getValue();
+			manager.getItems().forEach(function (item) {
+				var value = item.getValue();
 				if (typeof value === 'string') {
 					if (value.length > 0) {
-						parameterMap[currentItem.getPlaceholder()] = value;
+						parameterMap[item.getPlaceholder()] = value;
 					}
 				}
-			}
+			});
 
 			// add output directory if provided
 			if (this.__outputDirectory != null) {
@@ -329,13 +325,9 @@ qx.Class.define("desk.Action",
 			this.__executionStatus.setValue("Processing...");
 
 			// update parent Actions
-			var parentActions = [];
-			for (i = 0; i < connections.length; i++) {
-				parentActions.push(connections[i].action);
-			}
-			parentActions = _.uniq(parentActions);
-
-			async.each(parentActions, 
+			async.each(_.uniq(connections.map(function (connection) {
+					return connection.action;
+				})), 
 				function (action, callback) {
 					action.addListenerOnce("actionUpdated", function (event) {
 						callback();
@@ -345,12 +337,11 @@ qx.Class.define("desk.Action",
 
 			function (err) {
 				// update parameters from connections
-				for (var i = 0; i < connections.length; i++) {
-					var connection = connections[i];
+				connections.forEach(function (connection) {
 					parameterMap[connection.parameter] =
 						connection.action.getOutputDirectory() +
 							desk.FileSystem.getFileName(connection.file);
-				}
+				});
 
 				send.setLabel("Processing...");
 				var out = this.getOutputDirectory();
@@ -528,15 +519,10 @@ qx.Class.define("desk.Action",
 			for (var i = 0; i < (parameters.length); i++) {
 				var parameter = parameters[i];
 				var parameterName = parameter.name;
-				var found = false;
-				for (var j = 0; j < connections.length; j++) {
-					if (connections[j].parameter == parameterName) {
-						found = true;
-						break;
-					}
-				}
 
-				if (!found) {
+				if (!_.find(connections, function (connection ) {
+						return connection.parameter === parameterName;
+					})) {
                     var parameterTooltip = '';
                     if (parameter.text) {
                         continue;
