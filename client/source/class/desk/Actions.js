@@ -69,7 +69,7 @@ qx.Class.define("desk.Actions",
 			this.__socket = io({path : baseURL + 'socket/socket.io'});
 			this.__socket.on("action finished", this.__onActionEnd.bind(this));
 
-			if (desk.Actions.RPC != true) {
+			if (desk.Actions.RPC !== true) {
 				setTimeout(onReady, 10);
 				return;
 			}
@@ -352,7 +352,7 @@ qx.Class.define("desk.Actions",
 				menu.add(propertiesButton);
 				item.setContextMenu(menu);
 			}
-			item.setLabel(parameters.POST.action);
+			item.setLabel(parameters.POST.action || parameters.POST.manage);
 			parameters.actionItem = item;
 			item.setUserData("handle", parameters.POST.handle);
 			this.__ongoingActions.add(item);

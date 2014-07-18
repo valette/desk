@@ -34,6 +34,7 @@ qx.Class.define("desk.TextEditor",
 				case 'G' :
 					e.preventDefault();
 					this.__textArea.getAce().findNext();
+					break;
 				default :
 					break;
 			}
@@ -121,7 +122,7 @@ qx.Class.define("desk.TextEditor",
 			}
 		},
 
- 		/**
+        /**
 		* Saves content to file
 		*/
 		save : function () {
@@ -138,27 +139,25 @@ qx.Class.define("desk.TextEditor",
 		* @param file {String} the file to edit
 		*/
 		openFile : function (file) {
+			this.__executeButton.setVisibility('excluded');
+			this.__foldButton.setVisibility('visible');
 			switch (desk.FileSystem.getFileExtension(file)) {
+				case "json":
+					this.__textArea.setMode("json");
+					break;
 				case "cxx":
 				case "cpp":
 				case "h":
 				case "txx":
 				case "c":
 					this.__textArea.setMode("c_cpp");
-					this.__textArea.useHighlight(true);
-					this.__executeButton.setVisibility('excluded');
-					this.__foldButton.setVisibility('visible');
 					break;
 				case "js" :
 					this.__executeButton.setVisibility('visible');
 					this.__textArea.setMode("javascript");
-					this.__textArea.useHighlight(true);
-					this.__foldButton.setVisibility('visible');
 					break;
 				default : 
 					this.__foldButton.setVisibility('excluded');
-					this.__executeButton.setVisibility('excluded');
-					this.__textArea.useHighlight(false);
 					break;
 			}
 

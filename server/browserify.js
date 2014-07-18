@@ -17,3 +17,9 @@ require('./../client/ext/numeric-1.2.6.min');
 require('./../client/ext/mhdParse.js');
 
 
+var ace = require('brace');
+require('brace/mode/javascript');
+require('brace/mode/c_cpp');
+require('brace/mode/json');
+require('brace/theme/eclipse');
+require('brace/ext/searchbox');

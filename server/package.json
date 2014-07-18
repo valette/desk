@@ -11,6 +11,7 @@
     "async": ">0.0.0",
     "basic-auth": ">0.0.0",
     "body-parser": ">0.0.0",
+    "brace": "^0.3.0",
     "browserify-middleware": ">0.0.0",
     "compression": ">0.0.0",
     "cron": ">0.0.0",
