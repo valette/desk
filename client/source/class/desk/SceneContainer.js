@@ -38,7 +38,6 @@ qx.Class.define("desk.SceneContainer",
 	construct : function(file, parameters, callback, context)
 	{
         this.base(arguments);
-        this.__files = [];
 		qx.Class.include(qx.ui.treevirtual.TreeVirtual, qx.ui.treevirtual.MNode);
         parameters = parameters || {};
 
@@ -183,9 +182,6 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 	members : {
-		// array containing all loaded meshes
-        __files : null,
-		
 		// a treeVirtual element storing all meshes
 		__meshesTree : null,
 
@@ -330,13 +326,14 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		update : function () {
-            var files = this.__files;
-            this.__files = [];
+			var files = [];
+			this.getMeshes().forEach(function (mesh) {
+				var file = mesh.userData.__customProperties.file;
+				if (file) files.push(file);
+			}, this);
 			this.removeAllMeshes();
-            this.__meshesTree.getDataModel().clearData();
-            for (var i = 0; i < files.length ; i++) {
-                this.addFile(files[i]);
-            }
+			this.__meshesTree.getDataModel().clearData();
+			files.forEach(function (file) {this.addFile(file);}, this);
 		},
 
 		__propagateLinks : function () {
@@ -358,17 +355,16 @@ qx.Class.define("desk.SceneContainer",
 
 		__parseXMLData : function (file, xml, params, callback) {
 			var root = xml.childNodes[0];
-			if (root.hasAttribute("timestamp")) {
-				params.mtime = parseFloat(root.getAttribute("timestamp"));
-			} else {
-				params.mtime = Math.random();
-			}
+			params.mtime = root.hasAttribute("timestamp")?
+				parseFloat(root.getAttribute("timestamp")) : Math.random();
 
 			var dataModel = this.__meshesTree.getDataModel();
 			var leaf = dataModel.addBranch(null, desk.FileSystem.getFileName(file), null);
 			this.__setData();
 			var object = new THREE.Object3D();
-			this.addMesh(object, {leaf : leaf});
+			params.leaf = leaf;
+			params.file = file;
+			this.addMesh(object, params);
 
 			var path = desk.FileSystem.getFileDirectory(file);
 			async.each(xml.getElementsByTagName("mesh"), function (mesh, callback) {
@@ -404,10 +400,9 @@ qx.Class.define("desk.SceneContainer",
 		 */
 		addFile : function (file, parameters, callback, context) {
             parameters = parameters || {};
-            this.__files.push(file);
-            parameters.file = file;
-
 			callback = callback || function () {};
+
+            parameters.file = file;
 
 			function after (mesh) {callback.call(context, mesh);}
 
@@ -505,11 +500,9 @@ qx.Class.define("desk.SceneContainer",
 			this.setDroppable(true);
 			this.addListener("drop", function(e) {
 				if (e.supportsType("fileBrowser")) {
-					e.getData("fileBrowser").getSelectedFiles().forEach(function (file) {
-						this.addFile(file);
-					}, this);
-				}
-				if (e.supportsType("volumeSlices")) {
+					e.getData("fileBrowser").getSelectedFiles().
+						forEach(function (file) {this.addFile(file);}, this);
+				} else if (e.supportsType("volumeSlices")) {
 					this.attachVolumeSlices(e.getData("volumeSlices"));
 				}
 			}, this);
@@ -956,10 +949,7 @@ qx.Class.define("desk.SceneContainer",
 			var showButton = new qx.ui.menu.Button("show/hide");
 			showButton.addListener("execute", function (){
                 this.getSelectedMeshes().forEach(function (mesh) {
-					var visible = !mesh.visible;
-					mesh.visible = visible;
-					var edges = mesh.userData.edges;
-					if (edges) edges.visible = visible;
+					mesh.visible = !mesh.visible;
                 });
 				this.render();
 			},this);
@@ -967,13 +957,11 @@ qx.Class.define("desk.SceneContainer",
 
 			var edgesButton = new qx.ui.menu.Button("show/hide edges");
 			edgesButton.addListener("execute", function (){
-				var self = this;
 
 				function removeEdges() {
 					var edges = this.userData.edges;
-					self.getScene().remove(edges);
+					this.remove(edges);
 					edges.geometry.dispose();
-					self._deleteMembers(edges);
 					this.removeEventListener("removedFromScene", removeEdges);
 					delete this.userData.edges;
 				}
@@ -988,7 +976,7 @@ qx.Class.define("desk.SceneContainer",
 						material.color.setRGB(0,0,0);
 						mesh.userData.edges = edges;
 						mesh.addEventListener("removedFromScene", removeEdges);
-						self.getScene().add(edges);
+						mesh.add(edges);
 					}
 				});
 				this.render();
