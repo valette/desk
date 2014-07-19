@@ -58,12 +58,9 @@ qx.Class.define("desk.Actions",
 		// load external three.js files
 		HackCTMWorkerURL = baseURL + 'ext/three.js/ctm/CTMWorkerMin.js';
 		
-		var scripts = [baseURL + 'ext/three.js/Detector.js'];
-		if (qx.core.Environment.get("qx.debug")) {
-			scripts.push(baseURL + 'js/browserified.js');
-		} else {
-			scripts.push(baseURL + 'js/browserified-min.js');
-		}
+		var scripts = [
+		    baseURL + 'ext/three.js/Detector.js',
+	        baseURL + 'js/browserified.js'];
 
 		desk.FileSystem.includeScripts(scripts, function () {
 			this.__socket = io({path : baseURL + 'socket/socket.io'});
