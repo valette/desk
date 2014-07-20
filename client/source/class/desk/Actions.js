@@ -40,13 +40,10 @@ qx.Class.define("desk.Actions",
 	* @ignore (performance.timing.navigationStart)
 	*/
 	construct : function() {
-		
-
 		this.base(arguments);
 
 		// determine base URLs for RPC
 		var baseURL = desk.FileSystem.getInstance().getBaseURL();
-		this.__baseActionsURL = baseURL + 'rpc/';
 
 		var onReady = function () {
 			this.__ready = true;
@@ -59,33 +56,17 @@ qx.Class.define("desk.Actions",
 		}
 
 		// load external three.js files
-		var threeURL = baseURL + 'ext/three.js/';
-		HackCTMWorkerURL = threeURL + "ctm/CTMWorkerMin.js";
+		HackCTMWorkerURL = baseURL + 'ext/three.js/ctm/CTMWorkerMin.js';
 		
-		var scripts = [];
-		if (qx.core.Environment.get("qx.debug")) {
-			scripts.push(threeURL + 'three.js');
-		} else {
-			scripts.push(threeURL + 'three.min.js');
-		}
-		scripts.push(threeURL + 'Detector.js');
-		scripts.push(threeURL + 'VTKLoader.js');
-		scripts.push(threeURL + 'TrackballControls2.js');
-		scripts.push(threeURL + 'ctm/CTMLoader.js');
-		scripts.push(threeURL + 'ctm/ctm.js');
-		scripts.push(threeURL + 'ctm/lzma.js');
-		scripts.push(baseURL + 'ext/async.min.js');
-		scripts.push(baseURL + 'ext/underscore-min.js');
-		scripts.push(baseURL + 'ext/operative.min.js');
-		scripts.push(baseURL + 'ext/kdTree-min.js');
-		scripts.push(baseURL + 'ext/numeric-1.2.6.min.js');
-		scripts.push(baseURL + 'socket/socket.io/socket.io.js');
+		var scripts = [
+		    baseURL + 'ext/three.js/Detector.js',
+	        baseURL + 'js/browserified.js'];
 
 		desk.FileSystem.includeScripts(scripts, function () {
 			this.__socket = io({path : baseURL + 'socket/socket.io'});
 			this.__socket.on("action finished", this.__onActionEnd.bind(this));
 
-			if (desk.Actions.RPC != true) {
+			if (desk.Actions.RPC !== true) {
 				setTimeout(onReady, 10);
 				return;
 			}
@@ -113,7 +94,6 @@ qx.Class.define("desk.Actions",
 	members : {
 		__socket : null,
 		__runingActions : null,
-		__baseActionsURL : null,
 		__ready : false,
 
 		__createActionsMenu : function () {
@@ -369,7 +349,7 @@ qx.Class.define("desk.Actions",
 				menu.add(propertiesButton);
 				item.setContextMenu(menu);
 			}
-			item.setLabel(parameters.POST.action);
+			item.setLabel(parameters.POST.action || parameters.POST.manage);
 			parameters.actionItem = item;
 			item.setUserData("handle", parameters.POST.handle);
 			this.__ongoingActions.add(item);

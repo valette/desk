@@ -1,6 +1,7 @@
 var	argv         = require('yargs').argv,
 	auth         = require('basic-auth'),
 	bodyParser   = require('body-parser'),
+	browserify   = require('browserify-middleware'),
 	compress     = require('compression'),
 	directory    = require('serve-index'),
 	errorhandler = require('errorhandler'),
@@ -98,7 +99,7 @@ router.use('/rpc', rpc);
 
 var rootPath = libPath.join(clientPath, 'default');
 if (!fs.existsSync(rootPath)) {
-	rootPath = libPath.join(clientPath, 'application/release')
+	rootPath = libPath.join(clientPath, 'application/release');
 	console.log('serving default folder application/release/');
 } else {
 	console.log('serving custom default folder');
@@ -107,7 +108,9 @@ router.use('/', express.static(rootPath))
 .use('/files', express.static(deskPath))
 .use('/files', directory(deskPath))
 .use('/', express.static(clientPath))
-.use('/', directory(clientPath));
+.use('/', directory(clientPath))
+.get('/js/browserified.js', browserify(__dirname + '/browserify.js',
+	browserify.settings[argv.debug ? 'debug' : 'production']));
 
 rpc.post('/upload', function(req, res) {
 	var form = new formidable.IncomingForm();

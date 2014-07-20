@@ -10,11 +10,18 @@
 * @lint ignoreDeprecated(alert)
 */
 
+/*
+ 3 possible orientations : 
+	0 : XY Z
+	1 : ZY X
+	2 : XZ Y
+*/
+
 qx.Class.define("desk.VolumeSlice", 
 {
   extend : qx.core.Object,
 
-	construct : function(file, orientation, parameters, callback, context)
+	construct : function(file, orientation, opts, callback, context)
 	{
 		this.base(arguments);
 
@@ -22,28 +29,21 @@ qx.Class.define("desk.VolumeSlice",
 		this.__materials = [];
 		this.__image = new Image();
 
-		parameters = parameters || {};
+		opts = opts || {};
 
-		if (parameters.format != null) {
-			this.setImageFormat(parameters.format);
-		}
-
-		if (parameters.colors) {
-			this.__lookupTables = parameters.colors;
-		}
-		if (parameters.opacity != null) {
-			this.__opacity = parameters.opacity;
+		if (opts.format != null) {
+			this.setImageFormat(opts.format);
 		}
 
-		if (parameters.convert_to_uchar) {
-			this.__convert_to_uchar = parameters.convert_to_uchar;
+		this.__lookupTables = opts.colors || null;
+
+		if (opts.opacity != null) {
+			this.__opacity = opts.opacity;
 		}
 
-		if (parameters.linearFilter) {
-			this.__textureFilter = THREE.LinearFilter;
-		} else {
-			this.__textureFilter = THREE.NearestFilter;
-		}
+		this.__convert_to_uchar = opts.convert_to_uchar || false;
+
+		this.__textureFilter = opts.linearFilter ? THREE.LinearFilter : THREE.NearestFilter;
 
 		this.__file = file;
 		this.update(callback, context);
@@ -158,6 +158,13 @@ qx.Class.define("desk.VolumeSlice",
 	},
 
 	members : {
+		// indices of x, y and z according to orientation
+		__xIndex : [0, 2, 0],
+		__yIndex : [1, 1, 2],
+		__zIndex : [2, 0, 1],
+
+		__orientationNames : ['XY', 'ZY', 'XZ'],
+
 		__textureFilter : null,
 		__availableImageFormat : 1,
 
@@ -219,17 +226,8 @@ qx.Class.define("desk.VolumeSlice",
 		},
 
 		get2DSpacing : function () {
-			var spacing = this.__spacing;
-			switch (this.getOrientation())
-			{
-				default:
-				case 0 :
-					return [spacing[0], spacing[1]];
-				case 1 :
-					return [spacing[2], spacing[1]];
-				case 2 :
-					return [spacing[0], spacing[2]];
-			}
+			return [this.__spacing[this.__xIndex[this.getOrientation()]],
+				this.__spacing[this.__yIndex[this.getOrientation()]]];
 		},
 
 		getScalarType : function () {
@@ -249,25 +247,24 @@ qx.Class.define("desk.VolumeSlice",
 		},
 
 		update : function (callback, context) {
-		    var extension = desk.FileSystem.getFileExtension(this.__file);
-            var parameterMap = {
+            var params = {
 			    input_volume : this.__file,
 			    output_directory : "cache/",
 			    slice_orientation : this.getOrientation()
 			};
 
 			if (this.__convert_to_uchar) {
-				parameterMap.convert_to_uchar = "1";
+				params.convert_to_uchar = "1";
 			}
 
 			if ((desk.Actions.getInstance().getAction("vol_slice") != null)
-				&& (extension == "vol")) {
-				parameterMap.action = "vol_slice";
+				&& (desk.FileSystem.getFileExtension(this.__file) == "vol")) {
+				params.action = "vol_slice";
 			} else {
-				parameterMap.action = "slice_volume";
-			    parameterMap.format = this.getImageFormat();
+				params.action = "slice_volume";
+			    params.format = this.getImageFormat();
 			}
-		    desk.Actions.getInstance().launchAction(parameterMap,
+		    desk.Actions.getInstance().launchAction(params,
 				function (response) {
 					this.openXMLURL(desk.FileSystem.getFileURL(response.outputDirectory) + "volume.xml",
 						callback, context);
@@ -313,35 +310,20 @@ qx.Class.define("desk.VolumeSlice",
 		},
 
 		__setLookupTablesToMaterial : function ( luts , material ) {
-			var lookupTable = material.uniforms.lookupTable.value;
+			var lut = material.uniforms.lookupTable.value;
 			var numberOfColors = luts[0].length;
 			material.uniforms.lookupTableLength.value = numberOfColors;
 			material.uniforms.useLookupTable.value = 1;
-			lookupTable.needsUpdate = true;
-			var image = lookupTable.image;
+			lut.needsUpdate = true;
+			var image = lut.image;
 			if (image.width != numberOfColors) {
-				image.data = new Uint8Array(numberOfColors*4);
+				image.data = new Uint8Array(numberOfColors * 4);
 				image.width = numberOfColors;
 			}
-			var data = image.data;
-			var lutR = luts[0];
-			var lutG = luts[1];
-			var lutB = luts[2];
-			var lutAlpha = luts[3];
-			var p = 0;
-			if (lutAlpha) {
-				for (var j = 0; j < numberOfColors; j++) {
-					data[p++] = lutR[j];
-					data[p++] = lutG[j];
-					data[p++] = lutB[j];
-					data[p++] = lutAlpha[j];
-				}
-			} else {
-				for (var j = 0; j < numberOfColors; j++) {
-					data[p++] = lutR[j];
-					data[p++] = lutG[j];
-					data[p++] = lutB[j];
-					data[p++] = 255;
+
+			for (var j = 0, p = 0; j < numberOfColors; j++) {
+				for (var k = 0; k < 4; k++) {
+					image.data[p++] = luts[k] ? luts[k][j] : 255;
 				}
 			}
 		},
@@ -373,26 +355,22 @@ qx.Class.define("desk.VolumeSlice",
 		},
 
 		updateMaterial : function (material) {
-			function addMembers(source, dest) {
-				for (var attr in source) {
-					if (source.hasOwnProperty(attr)) dest[attr] = source[attr];
-				}
-			}
 			material.uniforms = {};
-			addMembers(material.baseShader.baseUniforms, material.uniforms);
-			var extraUniforms = material.baseShader.extraUniforms;
+			Object.keys(material.baseShader.baseUniforms).forEach(function (key) {
+				material.uniforms[key] = material.baseShader.baseUniforms[key];
+			});
+
 			material.fragmentShader = "";
-			extraUniforms.forEach(function (uniform) {
-				var name = uniform.name;
-				material.fragmentShader += "\n uniform float " + name + ";";
-				material.uniforms[name] = uniform;
+			material.baseShader.extraUniforms.forEach(function (uniform) {
+				material.fragmentShader += "\n uniform float " + uniform.name + ";";
+				material.uniforms[uniform.name] = uniform;
 			});
 
 			material.fragmentShader += "\n" + material.baseShader.baseShaderBegin;
-			var extraShaders = material.baseShader.extraShaders;
-			for (var i = 0; i != extraShaders.length; i++) {
-				material.fragmentShader += "\n" + extraShaders[i];
-			}
+			material.baseShader.extraShaders.forEach(function (shader) {
+				material.fragmentShader += "\n" + shader;
+			});
+
 			material.fragmentShader += "\n" + material.baseShader.baseShaderEnd;
 			material.needsUpdate = true;
 		},
@@ -462,8 +440,8 @@ qx.Class.define("desk.VolumeSlice",
 				};
 
 			var baseShaderBegin = [desk.VolumeSlice.FRAGMENTSHADERBEGIN,
-						middleShader,
-						desk.VolumeSlice.FRAGMENTSHADEREND].join("\n");
+				middleShader,
+				desk.VolumeSlice.FRAGMENTSHADEREND].join("\n");
 
 			var baseShaderEnd = desk.VolumeSlice.FRAGMENTSHADERFINISH;
 
@@ -482,9 +460,8 @@ qx.Class.define("desk.VolumeSlice",
 				extraShaders : []
 			};
 
-			var luts = this.getLookupTables();
-			if (luts) {
-				this.__setLookupTablesToMaterial (luts , material);
+			if (this.__lookupTables) {
+				this.__setLookupTablesToMaterial (this.__lookupTables , material);
 			}
 
 			this.__materials.push(material);
@@ -517,34 +494,23 @@ qx.Class.define("desk.VolumeSlice",
 		 * @return {Array} array of coordinates
 		 */
 		getCornersCoordinates : function (slice) {
-            if (slice === undefined) {
-                slice = this.getSlice();
-            }
-			var bounds = this.getBounds();
-			switch (this.getOrientation()) {
-			// XY Z
-			case 0 :
-			default:
-				var z = this.__origin[2] + (slice + this.__extent[4]) * this.__spacing[2];
-				return [bounds[0], bounds[2], z,
-					bounds[1], bounds[2], z,
-					bounds[0], bounds[3], z,
-					bounds[1], bounds[3], z];
-			// ZY X
-			case 1 :
-				var x = this.__origin[0] + (slice + this.__extent[0]) * this.__spacing[0];
-				return [x, bounds[2], bounds[4],
-					x, bounds[2], bounds[5],
-					x, bounds[3], bounds[4],
-					x, bounds[3], bounds[5]];
-			// XZ Y
-			case 2 :
-				var y = this.__origin[1] + (slice + this.__extent[2]) * this.__spacing[1];
-				return [bounds[0], y, bounds[4],
-					bounds[1], y, bounds[4],
-					bounds[0], y, bounds[5],
-					bounds[1], y, bounds[5]];
+			if (slice === undefined) {
+				slice = this.getSlice();
 			}
+
+			var bounds = this.getBounds();
+			var coords = [bounds[0], bounds[2], bounds[4],
+				bounds[1], bounds[2], bounds[4],
+				bounds[0], bounds[3], bounds[5],
+				bounds[1], bounds[3], bounds[5]]
+
+			var zi = this.__zIndex[this.getOrientation()];
+			for (var i = 0; i < 4; i++) {
+				coords[3 * i + zi] =  this.__origin[zi] +
+					(slice + this.__extent[2 * zi]) * this.__spacing[zi];
+			}
+
+			return coords;
 		},
 
 		/**
@@ -559,17 +525,7 @@ qx.Class.define("desk.VolumeSlice",
 		},
 
 		getZIndex : function () {
-			switch(this.getOrientation()) {
-				// ZY X
-				case 1 :
-					return 0;
-				// XZ Y
-				case 2 :
-					return 1;
-				// XY Z
-				default :
-					return 2;
-			}
+			return this.__zIndex[this.getOrientation()];
 		},
 
 		/**
@@ -577,18 +533,9 @@ qx.Class.define("desk.VolumeSlice",
 		 * @return {Array} array of dimensions
 		 */
 		 get2DDimensions: function () {
-			switch(this.getOrientation())
-			{
-				// ZY X
-				case 1 :
-					return [this.__dimensions[2], this.__dimensions[1]];
-				// XZ Y
-				case 2 :
-					return [this.__dimensions[0], this.__dimensions[2]];
-				// XY Z
-				default :
-					return [this.__dimensions[0], this.__dimensions[1]];
-			}
+			var o = this.getOrientation();
+			return [this.__dimensions[this.__xIndex[o]],
+				this.__dimensions[this.__yIndex[o]]];
 		},
 
 		/**
@@ -597,27 +544,13 @@ qx.Class.define("desk.VolumeSlice",
 		 */
 		 get2DCornersCoordinates : function () {
 			var bounds = this.getBounds();
+			var xi = 2 * this.__xIndex[this.getOrientation()];
+			var yi = 2 * this.__yIndex[this.getOrientation()];
 
-			switch(this.getOrientation()) {
-				// ZY X
-				case 1 :
-					return [bounds[4], bounds[2],
-							bounds[5], bounds[2],
-							bounds[4], bounds[3],
-							bounds[5], bounds[3]];
-				// XZ Y
-				case 2 :
-					return [bounds[0], bounds[4],
-							bounds[1], bounds[4],
-							bounds[0], bounds[5],
-							bounds[1], bounds[5]];
-				// XY Z
-				default :
-					return [bounds[0], bounds[2],
-							bounds[1], bounds[2],
-							bounds[0], bounds[3],
-							bounds[1], bounds[3]];
-			}
+			return [bounds[xi], bounds[yi],
+					bounds[xi + 1], bounds[yi],
+					bounds[xi], bounds[yi + 1],
+					bounds[xi + 1], bounds[yi + 1]];
 		},
 
 		/**
@@ -625,17 +558,7 @@ qx.Class.define("desk.VolumeSlice",
 		 * @return {Number} number of slices
 		 */
 		 getNumberOfSlices : function () {
-			switch(this.getOrientation()) {
-				// ZY X
-				case 1 :
-					return this.__dimensions[0];
-				// XZ Y
-				case 2 :
-					return this.__dimensions[1];
-				// XY Z
-				default :
-					return this.__dimensions[2];
-			}
+			return this.__dimensions[this.getZIndex()];
 		},
 
 		openXMLURL : function (xmlURL, callback, context) {
@@ -694,9 +617,7 @@ qx.Class.define("desk.VolumeSlice",
 
 			var slices = volume.getElementsByTagName("slicesprefix")[0];
 			this.__offset = parseInt(slices.getAttribute("offset"), 10);
-			this.__timestamp = slices.getAttribute("timestamp");
-			if (this.__timestamp == null)
-				this.__timestamp = Math.random();
+			this.__timestamp = slices.getAttribute("timestamp") || Math.random();
 			this.__prefix = slices.childNodes[0].nodeValue;
 
 			this.__path = desk.FileSystem.getFileDirectory(xmlURL);
@@ -709,9 +630,8 @@ qx.Class.define("desk.VolumeSlice",
 			if (this.__ready) {
 				this.__updateTriggered = true;
 				this.__updateImage();
-			} else {
-				this.__ready = true;
 			}
+			this.__ready = true;
 		},
 
 		__updateTriggered : true,
@@ -761,39 +681,16 @@ qx.Class.define("desk.VolumeSlice",
 			}
 		},
 
-		
 		/**
 		 * returns the full file name for a given slice
 		 * @param slice {Number} slice number
 		 * @return {String} full file name
 		 */
 		getSliceURL : function (slice) {
-			var fileSuffix;
-			if (this.__availableImageFormat === 0) {
-				fileSuffix = ".png";
-			} else {
-				fileSuffix = ".jpg";
-			}
-
-			var orientationString;
-			switch(this.getOrientation()) {
-				// ZY X
-				case 1 :
-					orientationString = "ZY";
-					break;
-				// XZ Y
-				case 2 :
-					orientationString = "XZ";
-					break;
-				// XY Z
-				default :
-					orientationString = "XY";
-					break;
-			}
-
 			return this.__path + this.__prefix +
-				orientationString + (this.__offset + slice) +
-				fileSuffix;
+				this.__orientationNames[this.getOrientation()] +
+				(this.__offset + slice) +
+				(this.__availableImageFormat ? '.jpg' : '.png');
 		},
 
 		__reallyUpdateImage : function() {
