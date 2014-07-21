@@ -1,19 +1,35 @@
-importScripts( "lzma.js", "ctm.js" );
 
-self.onmessage = function( event ) {
+if ( typeof module === 'object' ) {
 
-	var files = [];
+	LZMA = require( "./lzma.js" );
+	CTM = require( "./ctm.js" );
 
-	for ( var i = 0; i < event.data.offsets.length; i ++ ) {
+	module.exports = addListener;
 
-		var stream = new CTM.Stream( event.data.data );
-		stream.offset = event.data.offsets[ i ];
+} else {
 
-		files[ i ] = new CTM.File( stream );
+	importScripts( "lzma.js", "ctm.js" );
+	addListener();
+
+}
+
+function addListener() {
+
+	self.onmessage = function( event ) {
+
+		var files = [];
+
+		for ( var i = 0; i < event.data.offsets.length; i ++ ) {
+
+			var stream = new CTM.Stream( event.data.data );
+			stream.offset = event.data.offsets[ i ];
+
+			files[ i ] = new CTM.File( stream );
+
+		}
+
+		(self.postMessage || postMessage) ( files );
+		self.close();
 
 	}
-
-	self.postMessage( files );
-	self.close();
-
 }

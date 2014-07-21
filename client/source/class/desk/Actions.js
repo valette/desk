@@ -54,15 +54,14 @@ qx.Class.define("desk.Actions",
 			setTimeout(onReady, 10);
 			return;
 		}
-
-		// load external three.js files
-		HackCTMWorkerURL = baseURL + 'ext/three.js/ctm/CTMWorkerMin.js';
 		
 		var scripts = [
 		    baseURL + 'ext/three.js/Detector.js',
 	        baseURL + 'js/browserified.js'];
 
 		desk.FileSystem.includeScripts(scripts, function () {
+		THREE.CTMLoader.workerURL = baseURL + 'ext/three.js/ctm/CTMWorker.js';
+
 			this.__socket = io({path : baseURL + 'socket/socket.io'});
 			this.__socket.on("action finished", this.__onActionEnd.bind(this));
 

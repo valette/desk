@@ -79,6 +79,12 @@ THREE.CTMLoader.prototype.loadParts = function( url, callback, parameters ) {
 
 };
 
+THREE.CTMLoader.workerURL = "js/loaders/ctm/CTMWorker.js";
+
+THREE.CTMLoader.prototype.createWorker = function () {
+	 return new Worker( THREE.CTMLoader.workerURL );
+};
+
 // Load CTMLoader compressed models
 //	- parameters
 //		- url (required)
@@ -97,6 +103,8 @@ THREE.CTMLoader.prototype.load = function( url, callback, parameters ) {
 
 	var length = 0;
 
+	var self = this;
+
 	xhr.onreadystatechange = function() {
 
 		if ( xhr.readyState === 4 ) {
@@ -109,7 +117,7 @@ THREE.CTMLoader.prototype.load = function( url, callback, parameters ) {
 
 				if ( parameters.useWorker ) {
 
-					var worker = new Worker( HackCTMWorkerURL );
+					var worker = self.createWorker();
 
 					worker.onmessage = function( event ) {
 
@@ -128,7 +136,6 @@ THREE.CTMLoader.prototype.load = function( url, callback, parameters ) {
 							console.log( "model load time [worker]: " + (e-e1) + " ms, total: " + (e-s));
 
 						}
-
 
 					};
 

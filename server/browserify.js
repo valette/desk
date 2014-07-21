@@ -1,6 +1,7 @@
 /**
  * Client dependencies injected via browserify
  */
+var work = require('webworkify');
 
 async    = require('async');
 _        = require('underscore');
@@ -11,6 +12,11 @@ THREE = require('./../client/ext/three.js/three.js');
 require('./../client/ext/three.js/VTKLoader.js');
 require('./../client/ext/three.js/TrackballControls2.js');
 require('./../client/ext/three.js/ctm/CTMLoader.js');
+var w = work.createURL(require('./../client/ext/three.js/ctm/CTMWorker.js'));
+
+THREE.CTMLoader.prototype.createWorker = function () {
+	return new Worker(w);
+}
 
 require('./../client/ext/kdTree.js');
 require('./../client/ext/numeric-1.2.6.min');
