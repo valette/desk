@@ -499,13 +499,19 @@ qx.Class.define("desk.VolumeSlice",
 			}
 
 			var bounds = this.getBounds();
-			var coords = [bounds[0], bounds[2], bounds[4],
-				bounds[1], bounds[2], bounds[4],
-				bounds[0], bounds[3], bounds[5],
-				bounds[1], bounds[3], bounds[5]]
+			var coords = [];
 
+			var xi = this.__xIndex[this.getOrientation()];
+			var yi = this.__yIndex[this.getOrientation()];
 			var zi = this.__zIndex[this.getOrientation()];
+
 			for (var i = 0; i < 4; i++) {
+				coords[3 * i + xi] =  this.__origin[xi] +
+					this.__extent[2 * xi + (i % 2)] * this.__spacing[xi];
+
+				coords[3 * i + yi] =  this.__origin[yi] +
+					this.__extent[2 * yi + (i > 1 ? 1 : 0)] * this.__spacing[yi];
+
 				coords[3 * i + zi] =  this.__origin[zi] +
 					(slice + this.__extent[2 * zi]) * this.__spacing[zi];
 			}
