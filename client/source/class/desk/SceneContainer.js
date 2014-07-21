@@ -641,15 +641,27 @@ qx.Class.define("desk.SceneContainer",
             return mesh;
         },
 
-		__urlLoad : function (opt, callback) {
-			var loader = this.__ctmLoader;
-			if (desk.FileSystem.getFileExtension(opt.url) === "vtk") {
-				loader = this.__vtkLoader;
-			}
+		__ctmWorkers : [],
 
-			loader.load (opt.url + "?nocache=" + opt.mtime, function (geometry) {
-				callback (this.addGeometry(geometry, opt));
-			}.bind(this), {useWorker : true});
+		__urlLoad : function (opt, callback) {
+			if (desk.FileSystem.getFileExtension(opt.url) === "vtk") {
+				this.__vtkLoader.load (opt.url + "?nocache=" + opt.mtime,
+					function (geometry) {
+						callback (this.addGeometry(geometry, opt));
+				}.bind(this));
+			} else {
+				if (this.__ctmWorkers.length) {
+					var worker = this.__ctmWorkers[0];
+					this.__ctmWorkers.shift();
+				} else {
+					worker = this.__ctmLoader.createWorker();
+				}
+
+				this.__ctmLoader.load (opt.url + "?nocache=" + opt.mtime, function (geometry) {
+					this.__ctmWorkers.push(worker);
+					callback (this.addGeometry(geometry, opt));
+				}.bind(this), {useWorker : true, worker : worker});
+			}
 		},
 
 		__getSnapshotButton : function () {

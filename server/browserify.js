@@ -8,19 +8,20 @@ _        = require('underscore');
 operative = require('operative');
 io = require('socket.io-client');
 
-THREE = require('./../client/ext/three.js/three.js');
-require('./../client/ext/three.js/VTKLoader.js');
-require('./../client/ext/three.js/TrackballControls2.js');
-require('./../client/ext/three.js/ctm/CTMLoader.js');
-var w = work.createURL(require('./../client/ext/three.js/ctm/CTMWorker.js'));
+THREE = require('../client/ext/three.js/three.js');
+require('../client/ext/three.js/VTKLoader.js');
+require('../client/ext/three.js/TrackballControls2.js');
+require('../client/ext/three.js/ctm/CTMLoader.js');
+require( '../client/ext/three.js/ctm/lzma.js' );
+require( '../client/ext/three.js/ctm/ctm.js' );
 
 THREE.CTMLoader.prototype.createWorker = function () {
-	return new Worker(w);
+	return work(require('../client/ext/three.js/ctm/CTMWorker.js'));
 }
 
-require('./../client/ext/kdTree.js');
-require('./../client/ext/numeric-1.2.6.min');
-require('./../client/ext/mhdParse.js');
+require('../client/ext/kdTree.js');
+require('../client/ext/numeric-1.2.6.min');
+require('../client/ext/mhdParse.js');
 
 
 var ace = require('brace');

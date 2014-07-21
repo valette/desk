@@ -117,7 +117,7 @@ THREE.CTMLoader.prototype.load = function( url, callback, parameters ) {
 
 				if ( parameters.useWorker ) {
 
-					var worker = self.createWorker();
+					var worker = parameters.worker || self.createWorker();
 
 					worker.onmessage = function( event ) {
 

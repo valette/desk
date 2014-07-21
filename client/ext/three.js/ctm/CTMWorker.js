@@ -1,19 +1,7 @@
+LZMA = require( './lzma.js' );
+CTM = require( './ctm.js' );
 
-if ( typeof module === 'object' ) {
-
-	LZMA = require( "./lzma.js" );
-	CTM = require( "./ctm.js" );
-
-	module.exports = addListener;
-
-} else {
-
-	importScripts( "lzma.js", "ctm.js" );
-	addListener();
-
-}
-
-function addListener() {
+module.exports = function () {
 
 	self.onmessage = function( event ) {
 
@@ -28,8 +16,7 @@ function addListener() {
 
 		}
 
-		(self.postMessage || postMessage) ( files );
-		self.close();
+		postMessage ( files );
 
 	}
 }

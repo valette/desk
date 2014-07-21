@@ -60,7 +60,6 @@ qx.Class.define("desk.Actions",
 	        baseURL + 'js/browserified.js'];
 
 		desk.FileSystem.includeScripts(scripts, function () {
-		THREE.CTMLoader.workerURL = baseURL + 'ext/three.js/ctm/CTMWorker.js';
 
 			this.__socket = io({path : baseURL + 'socket/socket.io'});
 			this.__socket.on("action finished", this.__onActionEnd.bind(this));
