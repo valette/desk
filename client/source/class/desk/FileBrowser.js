@@ -436,7 +436,7 @@ qx.Class.define("desk.FileBrowser",
 				var file = this.__getNodeFile(node);
 				message +=  file + '\n';
 				return this.__getFileDirectory(file);
-			});
+			}, this);
 			if (confirm(message)) {
 				async.each(nodes, function (node, callback) {
 					var file = this.__getNodeFile(node.nodeId);
