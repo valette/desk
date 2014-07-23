@@ -1,7 +1,6 @@
 /**
  * Singleton class which stores all available actions, handles launching
  * and display actions in progress
- * @ignore (HackCTMWorkerURL)
  * @asset(desk/desk.png)
  * @asset(qx/icon/${qx.icontheme}/16/categories/system.png) 
  * @ignore (async)
@@ -36,8 +35,6 @@ qx.Class.define("desk.Actions",
 
 	/**
 	* Constructor, never to be used. Use desk.Actions.getInstance() instead
-	* @ignore (performance.timing)
-	* @ignore (performance.timing.navigationStart)
 	*/
 	construct : function() {
 		this.base(arguments);
@@ -50,29 +47,22 @@ qx.Class.define("desk.Actions",
 			this.fireEvent('changeReady');
 		}.bind(this);
 
-		if (typeof async != "undefined") {
+		if (typeof async !== "undefined") {
 			setTimeout(onReady, 10);
 			return;
 		}
 		
-		var scripts = [
-		    baseURL + 'ext/three.js/Detector.js',
-	        baseURL + 'js/browserified.js'];
-
-		desk.FileSystem.includeScripts(scripts, function () {
-
-			this.__socket = io({path : baseURL + 'socket/socket.io'});
-			this.__socket.on("action finished", this.__onActionEnd.bind(this));
-
-			if (desk.Actions.RPC !== true) {
+		desk.FileSystem.includeScripts([baseURL + 'js/browserified.js'], function () {
+			if (!desk.Actions.RPC) {
 				setTimeout(onReady, 10);
 				return;
 			}
 
+			this.__socket = io({path : baseURL + 'socket/socket.io'});
+			this.__socket.on("action finished", this.__onActionEnd.bind(this));
+
 			this.__populateActionMenu(onReady);
 		}, this);
-
-		this.__runingActions = [];
 	},
 
 	properties : {
@@ -91,7 +81,7 @@ qx.Class.define("desk.Actions",
 
 	members : {
 		__socket : null,
-		__runingActions : null,
+		__runingActions : [],
 		__ready : false,
 
 		__createActionsMenu : function () {

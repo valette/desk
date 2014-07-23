@@ -8,6 +8,7 @@ _        = require('underscore');
 operative = require('operative');
 io = require('socket.io-client');
 
+Detector = require('../client/ext/three.js/Detector.js');
 THREE = require('../client/ext/three.js/three.js');
 require('../client/ext/three.js/VTKLoader.js');
 require('../client/ext/three.js/TrackballControls2.js');
