@@ -203,7 +203,7 @@ qx.Class.define("desk.SceneContainer",
 			if (!this.getScene()) return;
 
 			this.getScene().traverse(function(child) {
-				if (child.userData.__customProperties) {
+				if (child.userData.viewerProperties) {
 					meshes.push(child);
 				}
 			});
@@ -222,7 +222,7 @@ qx.Class.define("desk.SceneContainer",
 
 		__getMeshFromNode : function (node) {
 			var leaf = this.__meshesTree.nodeGet(node);
-			return leaf && leaf.__customProperties && leaf.__customProperties.mesh;
+			return leaf && leaf.viewerProperties && leaf.viewerProperties.mesh;
 		},
 
 		addMesh : function (mesh, parameters) {
@@ -233,8 +233,8 @@ qx.Class.define("desk.SceneContainer",
 				parameters.leaf = leaf = this.__addLeaf(parameters);
 			}
 			parameters.mesh = mesh;
-			this.__meshesTree.nodeGet(leaf).__customProperties = parameters;
-			mesh.userData.__customProperties = parameters;
+			this.__meshesTree.nodeGet(leaf).viewerProperties = parameters;
+			mesh.userData.viewerProperties = parameters;
 			if (parameters.updateCamera !== false) {
 				this.viewAll();
 			}
@@ -328,7 +328,7 @@ qx.Class.define("desk.SceneContainer",
 		update : function () {
 			var files = [];
 			this.getMeshes().forEach(function (mesh) {
-				var file = mesh.userData.__customProperties.file;
+				var file = mesh.userData.viewerProperties.file;
 				if (file) files.push(file);
 			}, this);
 			this.removeAllMeshes();
@@ -603,7 +603,7 @@ qx.Class.define("desk.SceneContainer",
 			if (event.getTarget() != this.getCanvas()) return;
 			var intersects = this.__pickMeshes(this.__volumeSlices);
 			if (intersects) {
-				var volumeSlice = intersects.object.userData.__customProperties.volumeSlice;
+				var volumeSlice = intersects.object.userData.viewerProperties.volumeSlice;
 				var maximum = volumeSlice.getNumberOfSlices() - 1;
 				var delta = 1;
 				if (event.getWheelDelta() < 0) delta = -1;
@@ -624,6 +624,11 @@ qx.Class.define("desk.SceneContainer",
             for (var i = color.length; i < 4; i++) {
                 color.push(1);
             }
+ 
+			if (typeof parameters.opacity !== "undefined") {
+				color[3] = parameters.opacity;
+			}
+
 			var col = new THREE.Color().setRGB(color[0],color[1],color[2]);
 
 			var material =  new THREE.MeshPhongMaterial({
@@ -876,7 +881,7 @@ qx.Class.define("desk.SceneContainer",
 		 * @param dispose {Boolean} dispose mesh to avoid memory leaks (default : true)
 		 */
 		removeMesh : function (mesh, dispose) {
-			var parameters = mesh.userData.__customProperties;
+			var parameters = mesh.userData.viewerProperties;
 			var keepGeometry = false;
 			var keepMaterial = false;
 
@@ -884,13 +889,13 @@ qx.Class.define("desk.SceneContainer",
 
 			if (parameters) {
 				var leaf = parameters.leaf;
-				delete leaf.__customProperties;
+				delete leaf.viewerProperties;
 				if (this.__meshesTree.nodeGet(leaf)) {
 					this.__meshesTree.getDataModel().prune(leaf, false);
 				}
 				parameters.mesh = 0;
 
-				delete mesh.userData.__customProperties;
+				delete mesh.userData.viewerProperties;
 				this.__setData();
 				keepGeometry = parameters.keepGeometry;
 				keepMaterial = parameters.keepMaterial;
@@ -1042,7 +1047,7 @@ qx.Class.define("desk.SceneContainer",
 
 				var visibility = "visible"
 				var leaf = this.__meshesTree.nodeGet(selNode);
-				if(leaf && leaf.__customProperties && leaf.__customProperties.volumeSlice) {
+				if(leaf && leaf.viewerProperties && leaf.viewerProperties.volumeSlice) {
 					visibility = "excluded";
 				}
 
