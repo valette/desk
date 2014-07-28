@@ -635,8 +635,8 @@ qx.Class.define("desk.VolumeSlice",
 			var timeout;
 
 			var updateImage = function () {
-				clearTimeout(this.__timeOut);
-				timeOut = setTimeout(updateImage, 5000);
+				clearTimeout(timeout);
+				timeout = setTimeout(updateImage, 5000);
 				this.__image.src = this.getSliceURL(this.getSlice()) + "?nocache=" + this.__timestamp;
 			}.bind(this);
 
