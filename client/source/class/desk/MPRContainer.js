@@ -919,7 +919,6 @@ qx.Class.define("desk.MPRContainer",
 		__getToolBar : function () {
 			var container = new qx.ui.container.Composite();
 			container.setLayout(new qx.ui.layout.HBox());
-//			container.add(this.getUpdateButton(this.updateAll, this));
 			container.add(this.__getLinkButton());
 			container.add(this.__getSaveViewButton());
 			container.add(new qx.ui.core.Spacer(10), {flex: 1});
