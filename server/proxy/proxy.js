@@ -33,7 +33,7 @@ proxy.on('error', function(err, req, res) {
 	console.log(new Date().toString() + ": error");
 	console.log(req.url);
 	console.log(err);
-	res.end(JSON.stringify(err));
+	res.end();
 });
 
 var ca = [];
