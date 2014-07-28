@@ -7,7 +7,6 @@
 qx.Class.define("desk.MPRContainer", 
 {
     extend : qx.ui.container.Composite,
-	include : desk.ActionLinkMixin,
 
 	construct : function(file, options, callback)
 	{
