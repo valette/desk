@@ -39,9 +39,6 @@ qx.Class.define("deskui.Application",
 				// support additional cross-browser console. Press F7 to toggle visibility
 				qx.log.appender.Console;
 			}
-
-			desk.Actions.RPC = false;
-			var actions = desk.Actions.getInstance();
 		}
 	}
 });

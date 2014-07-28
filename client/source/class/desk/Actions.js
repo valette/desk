@@ -15,6 +15,21 @@ qx.Class.define("desk.Actions",
 
 	type : "singleton",
 
+	/**
+	* Constructor, never to be used. Use desk.Actions.getInstance() instead
+	*/
+	construct : function() {
+		this.base(arguments);
+		this.__populateActionMenu();
+
+		var baseURL = desk.FileSystem.getInstance().getBaseURL();
+		desk.FileSystem.includeScripts([baseURL + 'js/browserified.js'], function () {
+			this.__socket = io({path : baseURL + 'socket/socket.io'});
+			this.__socket.on("action finished", this.__onActionEnd.bind(this));
+			if (--this.__remainingInits === 0) this.fireEvent('changeReady');
+		}, this);
+	},
+
 	statics : {
 		/**
 		* Calls callback when the actions list is constructed
@@ -23,46 +38,12 @@ qx.Class.define("desk.Actions",
 		*/
 		init : function (callback, context) {
 			var actions = desk.Actions.getInstance();
-			if (actions.isReady()) {
+			if (actions.__remainingInits === 0) {
 				callback.apply(context);
 			} else {
 				actions.addListenerOnce("changeReady", callback , context);
 			}
-		},
-
-		RPC : true
-	},
-
-	/**
-	* Constructor, never to be used. Use desk.Actions.getInstance() instead
-	*/
-	construct : function() {
-		this.base(arguments);
-
-		// determine base URLs for RPC
-		var baseURL = desk.FileSystem.getInstance().getBaseURL();
-
-		var onReady = function () {
-			this.__ready = true;
-			this.fireEvent('changeReady');
-		}.bind(this);
-
-		if (typeof async !== "undefined") {
-			setTimeout(onReady, 10);
-			return;
 		}
-		
-		desk.FileSystem.includeScripts([baseURL + 'js/browserified.js'], function () {
-			if (!desk.Actions.RPC) {
-				setTimeout(onReady, 10);
-				return;
-			}
-
-			this.__socket = io({path : baseURL + 'socket/socket.io'});
-			this.__socket.on("action finished", this.__onActionEnd.bind(this));
-
-			this.__populateActionMenu(onReady);
-		}, this);
 	},
 
 	properties : {
@@ -82,7 +63,7 @@ qx.Class.define("desk.Actions",
 	members : {
 		__socket : null,
 		__runingActions : [],
-		__ready : false,
+		__remainingInits : 2,
 
 		__createActionsMenu : function () {
 			var menu = new qx.ui.menu.Menu();
@@ -134,14 +115,6 @@ qx.Class.define("desk.Actions",
 					this.__runingActions[handle] = actions[handle];
 				}, this);
 			}, this);
-		},
-
-		/**
-		* To test if the actions list is ready
-		* @return {Boolean}
-		*/	
-		isReady : function () {
-			return this.__ready;
 		},
 
 		__actionMenu : null,
@@ -282,6 +255,8 @@ qx.Class.define("desk.Actions",
 
 		__garbageContainer : new qx.ui.container.Composite(new qx.ui.layout.HBox()),
 
+
+
 		/**
 		* launches an action
 		* @param params {Object} object containing action aprameters
@@ -290,6 +265,12 @@ qx.Class.define("desk.Actions",
 		* @return {String} action handle for managemenent (kill etc...)
 		*/
 		launchAction : function (params, callback, context) {
+			desk.Actions.init(function () {
+				this.__launchAction(params, callback, context);
+			}, this);
+		},
+
+		__launchAction : function (params, callback, context) {
 			params = JSON.parse(JSON.stringify(params));
 			params.handle = Math.random().toString();
 
@@ -399,6 +380,7 @@ qx.Class.define("desk.Actions",
 					this.__actionMenu.add(menubutton);
 				}, this);
 
+				if (--this.__remainingInits === 0) this.fireEvent('changeReady');
 				if (typeof callback === "function") callback();
 			}, this);
 		}

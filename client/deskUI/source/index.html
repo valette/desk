@@ -11,7 +11,7 @@ window.onload = function(){
 	var root = new qx.ui.root.Inline(document.getElementById("visu")); 
 	var viewer = new desk.SceneContainer();
 	viewer.set({width : 500, height : 500});
-	root.add(viewer);
+	root.add(viewer, {flex : 1});
 
 	// hide "+" button
 	viewer.getChildren().forEach(function (widget) {
@@ -57,6 +57,6 @@ window.onload = function(){
 
 </head>
 <body>
-  <div id="visu"></div>
+  <div id="visu" width="100%"></div>
 </body>
 </html>

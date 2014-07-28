@@ -48,7 +48,7 @@
     "QXTHEME"      : "deskui.theme.Theme",
     "API_EXCLUDE"  : ["qx.test.*", "${APPLICATION}.theme.*", "${APPLICATION}.test.*", "${APPLICATION}.simulation.*"],
     "LOCALES"      : [ "en" ],
-    "CACHE"        : "${TMPDIR}/qx${QOOXDOO_VERSION}/cache",
+    "CACHE"        : "../application/cache",
     "ROOT"         : "."
   },
 
