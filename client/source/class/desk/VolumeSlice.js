@@ -21,35 +21,27 @@ qx.Class.define("desk.VolumeSlice",
 {
   extend : qx.core.Object,
 
-	construct : function(file, orientation, opts, callback, context)
-	{
+	construct : function(file, orientation, opts, callback, context) {
 		this.base(arguments);
 
 		this.setOrientation(orientation);
 		this.__materials = [];
-		this.__image = new Image();
 
 		opts = opts || {};
-
 		if (opts.format != null) {
 			this.setImageFormat(opts.format);
 		}
-
 		this.__lookupTables = opts.colors || null;
-
 		if (opts.opacity != null) {
 			this.__opacity = opts.opacity;
 		}
-
 		this.__convert_to_uchar = opts.convert_to_uchar || false;
-
 		this.__textureFilter = opts.linearFilter ? THREE.LinearFilter : THREE.NearestFilter;
-
 		this.__file = file;
+
+		this.__initImageLoader();
+
 		this.update(callback, context);
-
-		this.__initChangeSliceTrigger();
-
 		this.addListener("changeImageFormat", this.update, this);
 	},
 
@@ -634,57 +626,33 @@ qx.Class.define("desk.VolumeSlice",
 			}, this);
 
 			if (this.__ready) {
-				this.__updateTriggered = true;
-				this.__updateImage();
+				this.fireEvent("changeSlice", this.getSlice());
 			}
 			this.__ready = true;
 		},
 
-		__updateTriggered : true,
-		__updateInProgress : false,
+		__initImageLoader : function () {
+			var timeout;
 
-		__initChangeSliceTrigger : function () {
-			this.addListener("changeSlice", function(){
-				this.__updateTriggered = true;
-				this.__updateImage();
-			}, this);
+			var updateImage = function () {
+				clearTimeout(this.__timeOut);
+				timeOut = setTimeout(updateImage, 5000);
+				this.__image.src = this.getSliceURL(this.getSlice()) + "?nocache=" + this.__timestamp;
+			}.bind(this);
+
+			this.__image = new Image();
 
 			this.__image.onload = function() {
-				clearTimeout(this.__timeOut);
-				this.__updateInProgress = false;
+				clearTimeout(timeout);
 				this.__materials.forEach(function (material) {
 					material.uniforms.texture.value.needsUpdate = true;
 				});
 				this.fireEvent("changeImage");
 			}.bind(this);
 
-			this.__image.onerror = function() {
-				this.__updateTriggered = true;
-				this.__updateInProgress = false;
-				this.__updateImage();
-			}.bind(this);
+			this.__image.onerror = this.__image.onabort = updateImage;
 
-			this.__image.onabort = function() {
-				this.__updateTriggered = true;
-				this.__updateInProgress = false;
-				this.__updateImage();
-			}.bind(this);
-		},
-
-		__timeOut : null,
-
-		__updateImage : function () {
-			if (this.__updateInProgress) {
-				this.__updateTriggered = true;
-				return;
-			}
-			if (this.__updateTriggered) {
-				this.__timeOut = setTimeout(function () {
-					this.__updateInProgress = false;
-					this.__updateImage();
-				}.bind(this), 5000);
-				this.__reallyUpdateImage();
-			}
+			this.addListener("changeSlice", updateImage);
 		},
 
 		/**
@@ -697,12 +665,6 @@ qx.Class.define("desk.VolumeSlice",
 				this.__orientationNames[this.getOrientation()] +
 				(this.__offset + slice) +
 				(this.__availableImageFormat ? '.jpg' : '.png');
-		},
-
-		__reallyUpdateImage : function() {
-			this.__updateInProgress = true;
-			this.__updateTriggered = false;
-			this.__image.src = this.getSliceURL(this.getSlice()) + "?nocache=" + this.__timestamp;
 		}
 	}
 });
