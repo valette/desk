@@ -297,46 +297,44 @@ qx.Class.define("desk.ThreeContainer",
 		*/
 		viewAll : function () {
 			var bbox = new THREE.Box3();
-			var found;
+
 			this.__scene.traverse(function(child){
-				if (child.geometry) {
-					var geometry = child.geometry;
+				var geometry = child.geometry;
+				if (geometry) {
 					if (!geometry.boundingBox) {
 						geometry.computeBoundingBox();
 					}
 					bbox.union(geometry.boundingBox.clone().translate(child.position));
-					found = true;
 				}
 			});
-			if (!found) {
+
+			if (bbox.empty()) {
 				return;
 			}
 
-			var min = bbox.min;
-			var max = bbox.max;
-
-			var center = min.clone().add(max).multiplyScalar(0.5);
-			var bbdiaglength = Math.sqrt(max.clone().sub(min).lengthSq());
+			var bbdl = bbox.size().length();
 
 			var camera = this.__camera;
 			var controls = this.__controls;
 
 			if (this.__boudingBoxDiagonalLength === 0) {
-				this.__boudingBoxDiagonalLength = bbdiaglength;
+				var center = bbox.center();
+				this.__boudingBoxDiagonalLength = bbdl;
 				camera.position.copy(center);
-				camera.position.z -= bbdiaglength;
+				camera.position.z -= bbdl;
 				camera.up.set(0,1,0);
 				controls.target.copy(center);
 			} else {
-				var ratio = bbdiaglength / this.__boudingBoxDiagonalLength;
-				this.__boudingBoxDiagonalLength = bbdiaglength;
+				var ratio = bbdl / this.__boudingBoxDiagonalLength;
+				this.__boudingBoxDiagonalLength = bbdl;
 				camera.position.sub(controls.target)
 					.multiplyScalar(ratio)
 					.add(controls.target);
 			}
-			camera.near = bbdiaglength /10000;
-			camera.far = bbdiaglength * 1000000;
-			this.__controls.update();
+
+			camera.near = bbdl / 100;
+			camera.far = bbdl * 100;
+			controls.update();
 			this.render();
 		},
 

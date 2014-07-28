@@ -1,5 +1,6 @@
 /**
  * Mixin for handling links between several objects
+ * @ignore (_.contains)
  */
 qx.Mixin.define("desk.LinkMixin",
 {
@@ -14,14 +15,7 @@ qx.Mixin.define("desk.LinkMixin",
 		*/
 		link : function (source) {
 			function addUnique(object, links) {
-				var found = false;
-				for (var i = 0; i < links.length; i++){
-					if (links[i] === object) {
-						found = true;
-						return;
-					}
-				}
-				if (!found) {
+				if (!_.contains(links, object)) {
 					links.push(object);
 				}
 			}

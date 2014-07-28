@@ -1,19 +1,22 @@
-importScripts( "lzma.js", "ctm.js" );
+LZMA = require( './lzma.js' );
+CTM = require( './ctm.js' );
 
-self.onmessage = function( event ) {
+module.exports = function () {
 
-	var files = [];
+	self.onmessage = function( event ) {
 
-	for ( var i = 0; i < event.data.offsets.length; i ++ ) {
+		var files = [];
 
-		var stream = new CTM.Stream( event.data.data );
-		stream.offset = event.data.offsets[ i ];
+		for ( var i = 0; i < event.data.offsets.length; i ++ ) {
 
-		files[ i ] = new CTM.File( stream );
+			var stream = new CTM.Stream( event.data.data );
+			stream.offset = event.data.offsets[ i ];
+
+			files[ i ] = new CTM.File( stream );
+
+		}
+
+		postMessage ( files );
 
 	}
-
-	self.postMessage( files );
-	self.close();
-
 }

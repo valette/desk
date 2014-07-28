@@ -34,15 +34,9 @@ qx.Class.define("desk.AceContainer", {
 	construct : function() {
 		this.base(arguments);
 		this.setLayout(new qx.ui.layout.VBox());
-
-		// plain text area
-		this.__textarea = new qx.ui.form.TextArea().set({wrap : false});
-		this.add(this.__textarea, {flex : 1});
-
 		this.__editor = new qx.ui.core.Widget();
-		this.__editor.addListenerOnce("appear", this.__loadAce, this);
-		this.__editor.setVisibility("excluded");
 		this.add(this.__editor, {flex : 1});
+        this.__editor.addListener('appear', this.__onAppear, this);
 	},
 
 	members : {
@@ -51,14 +45,21 @@ qx.Class.define("desk.AceContainer", {
 		 * @param mode{String} mode : "javascript" or "c_cpp"
 		 */
 		setMode : function (mode) {
-			this.__mode = mode;
+            this.__mode = mode;
 		},
 
-		__mode : 'javascript',
+		__onAppear : function() {
+			var editor = this.__ace = ace.edit(this.__editor.getContentElement().getDomElement());
+			this.__editor.addListener("resize", this.__onResize, this);
+			if (this.__mode) {
+                this.__ace.getSession().setMode('ace/mode/' + this.__mode);
+			}
+			this.setFontSize(this.__fontSize);
+			this.__onResize();
+		},
 
-		__textarea : null,
-		__highlighted : false,
 		__editor : null,
+		__mode : null,
 		__ace : null,
 		__fontSize : 14,
 
@@ -68,31 +69,6 @@ qx.Class.define("desk.AceContainer", {
 		*/
 		getAce: function() {
 			return this.__ace;
-		},
-
-		__loadAce : function () {
-			var baseURL = desk.FileSystem.getInstance().getBaseURL() + 'ext/ace/';
-			desk.FileSystem.includeScripts([baseURL + 'ace.js',
-			baseURL + 'mode-javascript.js',
-			baseURL + 'mode-c_cpp.js',
-			baseURL + 'theme-eclipse.js'],
-			this.__onReady, this);
-		},
-
-		__onReady : function() {
-			// create the editor
-			var editor = this.__ace = ace.edit(this.__editor.getContentElement().getDomElement());
-
-			var mode = require("ace/mode/" + this.__mode).Mode;
-			editor.getSession().setMode(new mode());
-
-			// configure the editor
-			var session = editor.getSession();
-
-			this.__editor.addListener("resize", this.__onResize, this);
-			this.useHighlight(this.__highlighted);
-			this.setFontSize(this.__fontSize);
-			this.__onResize();
 		},
 
 		__onResize : function () {
@@ -106,11 +82,7 @@ qx.Class.define("desk.AceContainer", {
 		* @return {String} The current set text.
 		*/
 		getCode : function() {
-			if (this.__highlighted && this.__ace) {
-				return this.__ace.getSession().getValue();
-			} else {
-				return this.__textarea.getValue();
-			}
+			return this.__ace.getSession().getValue();
 		},
 
 		/**
@@ -118,15 +90,12 @@ qx.Class.define("desk.AceContainer", {
 		* @param code {String} The new code.
 		*/
 		setCode : function(code) {
-			if (this.__ace) {
-				this.__ace.getSession().setValue(code);
+			this.__ace.getSession().setValue(code);
 
-				// move cursor to start to prevent scrolling to the bottom
-				this.__ace.renderer.scrollToX(0);
-				this.__ace.renderer.scrollToY(0);
-				this.__ace.selection.moveCursorFileStart();
-			}
-			this.__textarea.setValue(code);
+			// move cursor to start to prevent scrolling to the bottom
+			this.__ace.renderer.scrollToX(0);
+			this.__ace.renderer.scrollToY(0);
+			this.__ace.selection.moveCursorFileStart();
 		},
 
 		/**
@@ -135,41 +104,11 @@ qx.Class.define("desk.AceContainer", {
 		*/
 		setFontSize : function (size) {
 			this.__fontSize = size;
-			if (this.__ace) {
-				this.__ace.setFontSize(size);
-			}
-			this.__textarea.setFont(new qx.bom.Font.fromString(size + ' serif'));
-		},
-
-		/**
-		* Switches between the ajax code editor editor and a plain textarea.
-		* @param value {Boolean} True, if the code editor should be used.
-		*/
-		useHighlight : function(value) {
-			if (this.__highlighted = value) {
-				// change the visibility
-				this.__editor.setVisibility("visible");
-				this.__textarea.setVisibility("excluded");
-
-				// copy the value, if the editor already availabe
-				if (this.__ace) {
-					this.__ace.getSession().setValue(this.__textarea.getValue());
-				}
-			} else {
-				// change the visibility
-				this.__editor.setVisibility("excluded");
-				this.__textarea.setVisibility("visible");
-
-				// copy the value, if the editor already availabe
-				if (this.__ace) {
-					this.__textarea.setValue(this.__ace.getSession().getValue());
-				}
-			}
+			this.__ace.setFontSize(size);
 		}
 	},
 
 	destruct : function() {
-		this.__textarea.dispose();
 		this.__editor.dispose();
 		this.__ace = null;
 	}

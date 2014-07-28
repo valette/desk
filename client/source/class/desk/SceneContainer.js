@@ -38,7 +38,6 @@ qx.Class.define("desk.SceneContainer",
 	construct : function(file, parameters, callback, context)
 	{
         this.base(arguments);
-        this.__files = [];
 		qx.Class.include(qx.ui.treevirtual.TreeVirtual, qx.ui.treevirtual.MNode);
         parameters = parameters || {};
 
@@ -183,9 +182,6 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 	members : {
-		// array containing all loaded meshes
-        __files : null,
-		
 		// a treeVirtual element storing all meshes
 		__meshesTree : null,
 
@@ -207,7 +203,7 @@ qx.Class.define("desk.SceneContainer",
 			if (!this.getScene()) return;
 
 			this.getScene().traverse(function(child) {
-				if (child.userData.__customProperties) {
+				if (child.userData.viewerProperties) {
 					meshes.push(child);
 				}
 			});
@@ -226,7 +222,7 @@ qx.Class.define("desk.SceneContainer",
 
 		__getMeshFromNode : function (node) {
 			var leaf = this.__meshesTree.nodeGet(node);
-			return leaf && leaf.__customProperties && leaf.__customProperties.mesh;
+			return leaf && leaf.viewerProperties && leaf.viewerProperties.mesh;
 		},
 
 		addMesh : function (mesh, parameters) {
@@ -237,8 +233,8 @@ qx.Class.define("desk.SceneContainer",
 				parameters.leaf = leaf = this.__addLeaf(parameters);
 			}
 			parameters.mesh = mesh;
-			this.__meshesTree.nodeGet(leaf).__customProperties = parameters;
-			mesh.userData.__customProperties = parameters;
+			this.__meshesTree.nodeGet(leaf).viewerProperties = parameters;
+			mesh.userData.viewerProperties = parameters;
 			if (parameters.updateCamera !== false) {
 				this.viewAll();
 			}
@@ -330,13 +326,14 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		update : function () {
-            var files = this.__files;
-            this.__files = [];
+			var files = [];
+			this.getMeshes().forEach(function (mesh) {
+				var file = mesh.userData.viewerProperties.file;
+				if (file) files.push(file);
+			}, this);
 			this.removeAllMeshes();
-            this.__meshesTree.getDataModel().clearData();
-            for (var i = 0; i < files.length ; i++) {
-                this.addFile(files[i]);
-            }
+			this.__meshesTree.getDataModel().clearData();
+			files.forEach(function (file) {this.addFile(file);}, this);
 		},
 
 		__propagateLinks : function () {
@@ -358,17 +355,16 @@ qx.Class.define("desk.SceneContainer",
 
 		__parseXMLData : function (file, xml, params, callback) {
 			var root = xml.childNodes[0];
-			if (root.hasAttribute("timestamp")) {
-				params.mtime = parseFloat(root.getAttribute("timestamp"));
-			} else {
-				params.mtime = Math.random();
-			}
+			params.mtime = root.hasAttribute("timestamp")?
+				parseFloat(root.getAttribute("timestamp")) : Math.random();
 
 			var dataModel = this.__meshesTree.getDataModel();
 			var leaf = dataModel.addBranch(null, desk.FileSystem.getFileName(file), null);
 			this.__setData();
 			var object = new THREE.Object3D();
-			this.addMesh(object, {leaf : leaf});
+			params.leaf = leaf;
+			params.file = file;
+			this.addMesh(object, params);
 
 			var path = desk.FileSystem.getFileDirectory(file);
 			async.each(xml.getElementsByTagName("mesh"), function (mesh, callback) {
@@ -404,10 +400,9 @@ qx.Class.define("desk.SceneContainer",
 		 */
 		addFile : function (file, parameters, callback, context) {
             parameters = parameters || {};
-            this.__files.push(file);
-            parameters.file = file;
-
 			callback = callback || function () {};
+
+            parameters.file = file;
 
 			function after (mesh) {callback.call(context, mesh);}
 
@@ -505,11 +500,9 @@ qx.Class.define("desk.SceneContainer",
 			this.setDroppable(true);
 			this.addListener("drop", function(e) {
 				if (e.supportsType("fileBrowser")) {
-					e.getData("fileBrowser").getSelectedFiles().forEach(function (file) {
-						this.addFile(file);
-					}, this);
-				}
-				if (e.supportsType("volumeSlices")) {
+					e.getData("fileBrowser").getSelectedFiles().
+						forEach(function (file) {this.addFile(file);}, this);
+				} else if (e.supportsType("volumeSlices")) {
 					this.attachVolumeSlices(e.getData("volumeSlices"));
 				}
 			}, this);
@@ -610,7 +603,7 @@ qx.Class.define("desk.SceneContainer",
 			if (event.getTarget() != this.getCanvas()) return;
 			var intersects = this.__pickMeshes(this.__volumeSlices);
 			if (intersects) {
-				var volumeSlice = intersects.object.userData.__customProperties.volumeSlice;
+				var volumeSlice = intersects.object.userData.viewerProperties.volumeSlice;
 				var maximum = volumeSlice.getNumberOfSlices() - 1;
 				var delta = 1;
 				if (event.getWheelDelta() < 0) delta = -1;
@@ -631,6 +624,11 @@ qx.Class.define("desk.SceneContainer",
             for (var i = color.length; i < 4; i++) {
                 color.push(1);
             }
+ 
+			if (typeof parameters.opacity !== "undefined") {
+				color[3] = parameters.opacity;
+			}
+
 			var col = new THREE.Color().setRGB(color[0],color[1],color[2]);
 
 			var material =  new THREE.MeshPhongMaterial({
@@ -648,15 +646,27 @@ qx.Class.define("desk.SceneContainer",
             return mesh;
         },
 
-		__urlLoad : function (opt, callback) {
-			var loader = this.__ctmLoader;
-			if (desk.FileSystem.getFileExtension(opt.url) === "vtk") {
-				loader = this.__vtkLoader;
-			}
+		__ctmWorkers : [],
 
-			loader.load (opt.url + "?nocache=" + opt.mtime, function (geometry) {
-				callback (this.addGeometry(geometry, opt));
-			}.bind(this), {useWorker : true});
+		__urlLoad : function (opt, callback) {
+			if (desk.FileSystem.getFileExtension(opt.url) === "vtk") {
+				this.__vtkLoader.load (opt.url + "?nocache=" + opt.mtime,
+					function (geometry) {
+						callback (this.addGeometry(geometry, opt));
+				}.bind(this));
+			} else {
+				if (this.__ctmWorkers.length) {
+					var worker = this.__ctmWorkers[0];
+					this.__ctmWorkers.shift();
+				} else {
+					worker = this.__ctmLoader.createWorker();
+				}
+
+				this.__ctmLoader.load (opt.url + "?nocache=" + opt.mtime, function (geometry) {
+					this.__ctmWorkers.push(worker);
+					callback (this.addGeometry(geometry, opt));
+				}.bind(this), {useWorker : true, worker : worker});
+			}
 		},
 
 		__getSnapshotButton : function () {
@@ -871,7 +881,7 @@ qx.Class.define("desk.SceneContainer",
 		 * @param dispose {Boolean} dispose mesh to avoid memory leaks (default : true)
 		 */
 		removeMesh : function (mesh, dispose) {
-			var parameters = mesh.userData.__customProperties;
+			var parameters = mesh.userData.viewerProperties;
 			var keepGeometry = false;
 			var keepMaterial = false;
 
@@ -879,13 +889,13 @@ qx.Class.define("desk.SceneContainer",
 
 			if (parameters) {
 				var leaf = parameters.leaf;
-				delete leaf.__customProperties;
+				delete leaf.viewerProperties;
 				if (this.__meshesTree.nodeGet(leaf)) {
 					this.__meshesTree.getDataModel().prune(leaf, false);
 				}
 				parameters.mesh = 0;
 
-				delete mesh.userData.__customProperties;
+				delete mesh.userData.viewerProperties;
 				this.__setData();
 				keepGeometry = parameters.keepGeometry;
 				keepMaterial = parameters.keepMaterial;
@@ -956,10 +966,7 @@ qx.Class.define("desk.SceneContainer",
 			var showButton = new qx.ui.menu.Button("show/hide");
 			showButton.addListener("execute", function (){
                 this.getSelectedMeshes().forEach(function (mesh) {
-					var visible = !mesh.visible;
-					mesh.visible = visible;
-					var edges = mesh.userData.edges;
-					if (edges) edges.visible = visible;
+					mesh.visible = !mesh.visible;
                 });
 				this.render();
 			},this);
@@ -967,13 +974,11 @@ qx.Class.define("desk.SceneContainer",
 
 			var edgesButton = new qx.ui.menu.Button("show/hide edges");
 			edgesButton.addListener("execute", function (){
-				var self = this;
 
 				function removeEdges() {
 					var edges = this.userData.edges;
-					self.getScene().remove(edges);
+					this.remove(edges);
 					edges.geometry.dispose();
-					self._deleteMembers(edges);
 					this.removeEventListener("removedFromScene", removeEdges);
 					delete this.userData.edges;
 				}
@@ -988,7 +993,7 @@ qx.Class.define("desk.SceneContainer",
 						material.color.setRGB(0,0,0);
 						mesh.userData.edges = edges;
 						mesh.addEventListener("removedFromScene", removeEdges);
-						self.getScene().add(edges);
+						mesh.add(edges);
 					}
 				});
 				this.render();
@@ -1042,7 +1047,7 @@ qx.Class.define("desk.SceneContainer",
 
 				var visibility = "visible"
 				var leaf = this.__meshesTree.nodeGet(selNode);
-				if(leaf && leaf.__customProperties && leaf.__customProperties.volumeSlice) {
+				if(leaf && leaf.viewerProperties && leaf.viewerProperties.volumeSlice) {
 					visibility = "excluded";
 				}
 

@@ -8,7 +8,8 @@ var	async       = require('async'),
 	ms          = require('ms'),
 	os          = require('os'),
 	prettyPrint = require('pretty-data').pd,
-	winston     = require('winston');
+	winston     = require('winston'),
+	_           = require('underscore');
 
 var cacheCleaner = require('./cacheCleaner.js');
 
@@ -34,6 +35,9 @@ var actionsCounter = 0;
 //30 days of maximum life time for cache folders
 var maxAge = ms('30d');
 
+// object stroring all currently running actions
+var ongoingActions = {};
+
 function cleanCache() {
 	cacheCleaner.cleanCache(libpath.join(filesRoot, 'cache'), maxAge);
 }
@@ -50,13 +54,12 @@ exports.validatePath = function (path, callback) {
 			callback(err);
 			return;
 		}
-		var i, subDir;
-		for (i = 0; i !== directories.length; i++) {
-			subDir = directories[i];
-			if (realPath.slice(0, subDir.length) === subDir) {
-				callback ();
-				return;
-			}
+		if (_.find(directories, function (subDir) {
+				return realPath.slice(0, subDir.length) === subDir;
+			}))
+		{
+			callback();
+			return;
 		}
 		callback("path " + realPath + " not allowed");
 	});
@@ -68,13 +71,13 @@ function includeActionsFile (file, callback) {
 			if (libpath.extname(file).toLowerCase() === '.json') {
 				console.log('importing actions from : ' + file);
 				includeActionsJSON(file, callback);
-			} else {
-				callback();
+				return;
 			}
-		} else {
-			console.log("Warning : no file " +file + " found");
 			callback();
+			return;
 		}
+		console.log("Warning : no file " +file + " found");
+		callback();
 	});
 }
 
@@ -220,8 +223,6 @@ exports.setRoot = function (root) {
 	filesRoot = fs.realpathSync(root);
 };
 
-var ongoingActions = {};
-
 function validateValue (parameterValue, parameter) {
 	var compare;
 	if (parameter.min) {
@@ -285,7 +286,7 @@ function manageActions (POST, callback) {
 
 var queue = async.queue(function (task, callback) {
 	new RPC(task, callback);
-}, os.cpus().length);
+}, os.cpus().length * 2);
 
 exports.performAction = function (POST, callback) {
 	POST.handle  = POST.handle || Math.random().toString();
@@ -311,21 +312,20 @@ var actionsDirectoriesQueue = async.queue(function (task, callback) {
 		mkdirp(libpath.join(filesRoot, outputDirectory), function (err) {
 			if ( err ) {
 				callback( err.message );
-			} else {
-				fs.writeFile(counterFile, JSON.stringify({value : index}), 
-					function(err) {
-						if (err) {
-							callback(err);
-						} else {
-							callback(null, outputDirectory);
-						}
-					}
-				);
+				return;
 			}
+			fs.writeFile(counterFile, JSON.stringify({value : index}), 
+				function(err) {
+					if (err) {
+						callback(err);
+						return;
+					}
+					callback(null, outputDirectory);
+				}
+			);
 		});
 	});
 }, 1);
-
 
 function RPC(POST, callback) {
 	actionsCounter++;
@@ -339,6 +339,7 @@ function RPC(POST, callback) {
 
 	this.response = {};
 	this.action = actions[POST.action];
+	this.cached = false;
 
 	if (!this.action) {
 		callback({error : "action " + POST.action + " not found"});
@@ -348,7 +349,7 @@ function RPC(POST, callback) {
 	this.commandLine = (this.action.attributes.executable || this.action.attributes.command) + ' ';
 	this.log("handle : " + this.POST.handle);
 
-	async.waterfall([
+	async.series([
 		this.parseParameters.bind(this),
 		this.handleExecutableMTime.bind(this),
 		this.handleInputMTimes.bind(this),
@@ -368,14 +369,24 @@ function RPC(POST, callback) {
 };
 
 RPC.prototype.parseParameters = function (callback) {
-	async.eachSeries(this.action.parameters, this.parseParameter.bind(this), callback);
+	var scope = this;
+	async.map(this.action.parameters, this.parseParameter.bind(this),
+		function (err, params) {
+			params.forEach(function (param) {
+				if (typeof param === "string") {
+					scope.commandLine += param;
+				}
+			});
+		callback (err);
+	});
 };
 
 RPC.prototype.parseParameter = function (parameter, callback) {
+	var commandLine = '';
+
 	if (parameter.text !== undefined) {
 		// parameter is actually a text anchor
-		this.commandLine += parameter.text;
-		callback();
+		callback(null, parameter.text);
 		return;
 	}
 
@@ -390,7 +401,7 @@ RPC.prototype.parseParameter = function (parameter, callback) {
 		return;
 	}
 
-	this.commandLine += parameter.prefix || '';
+	commandLine += parameter.prefix || '';
 
 	switch (parameter.type) {
 	case 'file':
@@ -399,8 +410,8 @@ RPC.prototype.parseParameter = function (parameter, callback) {
 				callback (err);
 				return;
 			}
-			this.commandLine += path + " ";
-			callback ();
+			commandLine += path + " ";
+			callback (null, commandLine);
 		}.bind(this));
 		break;
 	case 'directory':
@@ -409,20 +420,20 @@ RPC.prototype.parseParameter = function (parameter, callback) {
 				callback (err);
 				return;
 			}
-			this.commandLine += path + " ";
+			commandLine += path + " ";
 			fs.stat(libpath.join(filesRoot, value), function (err, stats) {
 				if (!stats.isDirectory()) {
 					callback ("error : " + value + " is not a directory");
 					return;
 				}
-				callback ();
+				callback (null, commandLine);
 			});
 		}.bind(this));
 		break;
 	case 'string':
 		if (value.indexOf(" ") === -1) {
-			this.commandLine += value + " ";
-			callback ();
+			commandLine += value + " ";
+			callback (null, commandLine);
 		} else {
 			callback ("parameter " + parameter.name + " must not contain spaces");
 		}
@@ -432,8 +443,8 @@ RPC.prototype.parseParameter = function (parameter, callback) {
 		if (isNaN(numericValue)) {
 			callback ("parameter " + parameter.name + " must be an integer value");
 		} else {
-			this.commandLine += value + " ";
-			callback (validateValue(numericValue, parameter));
+			commandLine += value + " ";
+			callback (validateValue(numericValue, parameter), commandLine);
 		}
 		break;
 	case 'float':
@@ -441,14 +452,14 @@ RPC.prototype.parseParameter = function (parameter, callback) {
 		if (isNaN(numericValue)) {
 			callback ("parameter " + parameter.name + " must be a floating point value");
 		} else {
-			this.commandLine += value + " ";
-			callback (validateValue(numericValue, parameter));
+			commandLine += value + " ";
+			callback (validateValue(numericValue, parameter), commandLine);
 		}
 		break;
 	case 'text':
 	case 'base64data':
-		this.commandLine += value + " ";
-		callback ();
+		commandLine += value + " ";
+		callback (null, commandLine);
 		break;
 	default:
 		callback ("parameter type not handled : " + parameter.type);
@@ -466,9 +477,9 @@ RPC.prototype.addMTime = function (file, callback) {
 			this.inputMTime = Math.max(stats.mtime.getTime(), this.inputMTime);
 			callback (err);
 		}.bind(this));
-	} else {
-		callback();
+		return;
 	}
+	callback();
 }
 
 RPC.prototype.handleInputMTimes = function (callback) {
@@ -480,15 +491,13 @@ RPC.prototype.handleInputMTimes = function (callback) {
 		switch (parameter.type) {
 			case "file":
 			case "directory" : 
-				console.log(filesRoot);
-				console.log(parameter);
 				this.addMTime(libpath.join(filesRoot, this.POST[parameter.name]), callback);
 				break;
 			default : 
 				callback();
 		}
-		}.bind(this),
-		function (err) {
+	}.bind(this),
+	function (err) {
 			callback(err);
 		}
 	);
@@ -545,33 +554,34 @@ RPC.prototype.handleLogAndCache = function (callback) {
 
 	if (this.action.attributes.voidAction || this.POST.force_update ||
 		this.action.attributes.noCache) {
-			callback(null, false);
-	} else {
-		// check if action was already performed
-		var actionFile = libpath.join(filesRoot, this.outputDirectory, "action.json");
-		fs.stat(actionFile, function (err, stats) {
-			if ((err) || (stats.mtime.getTime() < this.inputMTime)) {
-				callback(null, false);
-			} else {
-				fs.readFile(actionFile, function (err, data) {
-					if (data == this.parametersString) {
-						this.log("cached");
-						callback(null, true);
-					} else {
-						callback(null, false);
-					}
-				}.bind(this));
-			}
-		}.bind(this));
+			callback();
+			return;
 	}
+
+	// check if action was already performed
+	var actionFile = libpath.join(filesRoot, this.outputDirectory, "action.json");
+	fs.stat(actionFile, function (err, stats) {
+		if ((err) || (stats.mtime.getTime() < this.inputMTime)) {
+			callback();
+			return;
+		}
+		fs.readFile(actionFile, function (err, data) {
+			if (data == this.parametersString) {
+				this.log("cached");
+				this.cached = true;
+			} 
+			callback();
+		}.bind(this));
+	}.bind(this));
+
 };
 
-RPC.prototype.executeAction = function (cached, callback) {
+RPC.prototype.executeAction = function (callback) {
 	if (this.action.attributes.voidAction !== "true") {
 		this.response.outputDirectory = this.outputDirectory + "/";
 	}
 
-	if (cached) {
+	if (this.cached) {
 		this.cacheAction(callback);
 		return;
 	}
@@ -622,13 +632,16 @@ RPC.prototype.executeAction = function (cached, callback) {
 
 RPC.prototype.cacheAction = function (callback) {
 	this.response.status = 'CACHED';
+	var now = new Date();
+
 	async.parallel([
+
 		function (callback) {
-			exec('touch ' + libpath.join(filesRoot, this.outputDirectory, "action.json"), callback);
+			fs.utimes(libpath.join(filesRoot, this.outputDirectory, "action.json"), now, now, callback);
 		}.bind(this),
 
 		function (callback) {
-			exec('touch ' + libpath.join(filesRoot, this.outputDirectory), callback);
+			fs.utimes(libpath.join(filesRoot, this.outputDirectory), now, now, callback);
 		}.bind(this),
 
 		function (callback) {
@@ -654,7 +667,6 @@ RPC.prototype.cacheAction = function (callback) {
 			}
 		}.bind(this)
 	], callback);
-	return;
 };
 
 RPC.prototype.afterExecution = function(err, stdout, stderr, callback) {
@@ -683,7 +695,9 @@ RPC.prototype.afterExecution = function(err, stdout, stderr, callback) {
 		this.response.status = 'OK (' + (new Date().getTime() - this.startTime) / 1000 + 's)';
 		if (this.writeJSON) {
 			// touch output Directory to avoid automatic deletion
-			exec('touch ' + libpath.join(filesRoot, this.outputDirectory));
+			var now = new Date();
+			fs.utimes(libpath.join(filesRoot, this.outputDirectory), now, now);
+
 			fs.writeFile(libpath.join(filesRoot, this.outputDirectory, "action.json"),
 				this.parametersString, function (err) {
 					if (err) {throw err;}

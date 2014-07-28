@@ -160,12 +160,9 @@ qx.Class.define("desk.Animator",
 		 * @return {Array} array of THREE.Object3D
 		 */
 		getObjects : function () {
-			var objects = [];
-			var list = this.__list.getChildren();
-			for (var i = 0; i !=list.length; i++) {
-				objects.push(list[i].getUserData('threeObject'));
-			}
-			return objects;
+			return this.__list.getChildren().map(function (child) {
+				return child.getUserData('threeObject');
+			});
 		},
 
 		__getObject : function (index) {

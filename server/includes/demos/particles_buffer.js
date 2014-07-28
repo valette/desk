@@ -1,20 +1,24 @@
 var numParticles = 100000;
 var particlesSize = 10;
+
+
 var vertexShader = [
     'uniform float amplitude;',
-    'attribute float size;',
+    'uniform float time;',
+    'uniform float size;',
 	'attribute vec3 customColor;',
+	'attribute float id;',
 	'varying vec3 vColor;',
 	'void main() {',
 		'vColor = customColor;',
-		'vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );',
-        'gl_PointSize = size * ( 300.0 / length( mvPosition.xyz ) );',
+		'highp vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );',
+        'gl_PointSize = size * (1.0 + sin( 0.001 * id + time )) * ( 300.0 / length( mvPosition.xyz ) );',
         'gl_Position = projectionMatrix * mvPosition;',
 	'}'].join('\n');
 
 var fragmentShader = [
-	'uniform vec3 color;',
 	'uniform sampler2D texture;',
+	'uniform vec3 color;',
 	'varying vec3 vColor;',
 	'void main() {',
     '	gl_FragColor = vec4( color * vColor, 1.0 );',
@@ -24,93 +28,66 @@ var fragmentShader = [
 var viewer = new desk.MeshViewer();
 var scene = viewer.getScene();
 
-
-var attributes = {
-	size: {	type: 'f', value: null },
-	customColor: { type: 'c', value: null }
-};
-
 var textureURL = desk.FileSystem.getFileURL('demos/spark1.png');
 
-var uniforms = {
-	amplitude: { type: "f", value: 1.0 },
-	color:     { type: "c", value: new THREE.Color( 0xffffff ) },
-	texture:   { type: "t", slot: 0, value: THREE.ImageUtils.loadTexture(textureURL)}
-};
-
-var shaderMaterial = new THREE.ShaderMaterial( {
-    uniforms : uniforms,
-	attributes :     attributes,
+var material = new THREE.ShaderMaterial( {
+    uniforms : {
+        color:     { type: "c", value: new THREE.Color( 0xffffff ) },
+        size:     { type: "f", value: particlesSize },
+        amplitude: { type: "f", value: 1.0 },
+        texture:   { type: "t", slot: 0, value: THREE.ImageUtils.loadTexture(textureURL)},
+        time:      { type: "f", value: 1.0 }
+    },
+    attributes : {
+		id:        { type: 'f', value: null },
+		customColor: { type: 'c', value: null }
+    },
 	vertexShader :   vertexShader,
 	fragmentShader : fragmentShader,
 	depthTest: false,
     transparent:	true
 });
 
+
+var positions = new THREE.BufferAttribute(new Float32Array( numParticles * 3), 3 );
+var colors = new THREE.BufferAttribute(new Float32Array( numParticles * 3), 3 );
+var ids = new THREE.BufferAttribute(new Float32Array( numParticles ), 1);
+
 var radius = 200;
 var geometry = new THREE.BufferGeometry();
-geometry.dynamic = true;
-geometry.attributes = {
-    position: {
-        itemSize: 3,
-        array: new Float32Array( numParticles * 3 ),
-        numItems: numParticles * 3
-    },
-    size: {
-        itemSize: 1,
-        array: new Float32Array( numParticles ),
-        numItems: numParticles
-    },
-    customColor: {
-        itemSize: 3,
-        array: new Float32Array( numParticles * 3 ),
-        numItems: numParticles * 3
-    }
-};
-
-var positions = geometry.attributes.position.array;
-
-for ( var i = 0; i < numParticles; i++ ) {
-    var i3 = i * 3;
-	positions[i3] = radius * (Math.random() * 2 - 1);
-    positions[i3 + 1] = radius * (Math.random() * 2 - 1);
-    positions[i3 + 2] = radius * (Math.random() * 2 - 1);
-}
-
-var vertices = geometry.vertices;
-var values_size = geometry.attributes.size.array;
-var values_color = geometry.attributes.customColor.array;
-
 var myColor = new THREE.Color();
 
-for( var v = 0; v < numParticles; v++ ) {
-	values_size[ v ] = particlesSize;
-    var v3 = 3 * v;
-	if ( positions[ v3 ] < 0 ) {
-        myColor.setHSL(0.5 + 0.1 * ( v3 / values_color.length ), 0.7, 0.5);
-	} else {
-        myColor.setHSL(0.1 * ( v3 / values_color.length ), 0.9, 0.5);
-	}
-	values_color[v3] = myColor.r;
-    values_color[v3  + 1] = myColor.g;
-    values_color[v3  + 2] = myColor.b;
-}
-var system = new THREE.ParticleSystem( geometry, shaderMaterial );
+for ( var i = 0; i < numParticles; i++ ) {
+    positions.setXYZ(i, radius * (Math.random() * 2 - 1),
+        radius * (Math.random() * 2 - 1),
+        radius * (Math.random() * 2 - 1));
 
-viewer.addMesh(system);
+    ids.array[i] = i;
+
+	if ( positions.array[ 3 * i ] < 0 ) {
+        myColor.setHSL(0.5 + 0.1 * ( i / numParticles ), 0.7, 0.5);
+	} else {
+        myColor.setHSL(0.1 * ( i / numParticles ), 0.9, 0.5);
+	}
+	colors.setXYZ(i, myColor.r, myColor.g, myColor.b);
+}
+
+geometry.addAttribute( 'position', positions);
+geometry.addAttribute( 'id', ids );
+geometry.addAttribute( 'customColor', colors);
+
+var points = new THREE.PointCloud( geometry, material );
+
+viewer.addMesh(points);
 viewer.viewAll();
 viewer.render();
 
 viewer.addListener("render", animation);
 
+var begin = new Date().getTime();
 function animation() {
-    var numberOfParticules = geometry.attributes.size.numItems;
-    var values = geometry.attributes.size.array;
-    var time = new Date().getTime() * 0.005;
-	system.rotation.z = 0.01 * time;
-	for(var i = 0; i < numberOfParticules; i++) {
-        values[ i ] = particlesSize * (1 + Math.sin( 0.001 * i + time ));
-	}
-    geometry.attributes.size.needsUpdate = true;
+    var time = (new Date().getTime()  - begin) * 0.005;
+	points.rotation.z = 0.01 * time;
+    material.uniforms.time.value = time;
     viewer.render();
 }
