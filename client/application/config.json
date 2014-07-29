@@ -15,6 +15,7 @@
     "build",
     "clean",
     "distclean",
+    "dependencies",
     "fix",
     "info",
     "inspector",
@@ -25,11 +26,17 @@
     "source",
     "source-all",
     "source-hybrid",
+    "source-server",
+    "source-server-reload",
+    "source-httpd-config",
     "simulation-build",
     "simulation-run",
     "test",
     "test-source",
-    "translation"
+    "translation",
+    "validate-config",
+    "validate-manifest",
+    "watch"
   ],
   
   "default-job" : "source-hybrid",
