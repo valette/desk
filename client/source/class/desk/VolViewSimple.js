@@ -21,8 +21,7 @@ qx.Class.define("desk.VolViewSimple",
 		desk.Actions.getInstance().launchAction({
 			action : "slice_volume",
 			input_volume : file,
-			slice_orientation : 0,				
-			output_directory : "cache\/"},
+			slice_orientation : 0},
 			function (response) {
 				this.openFile(desk.FileSystem.getFileURL(response.outputDirectory + '/volume.xml'));
 		}, this);

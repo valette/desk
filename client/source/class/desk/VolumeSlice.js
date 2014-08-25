@@ -241,7 +241,6 @@ qx.Class.define("desk.VolumeSlice",
 		update : function (callback, context) {
             var params = {
 			    input_volume : this.__file,
-			    output_directory : "cache/",
 			    slice_orientation : this.getOrientation()
 			};
 

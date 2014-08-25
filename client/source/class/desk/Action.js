@@ -134,24 +134,23 @@ qx.Class.define("desk.Action",
             }
             if ((loadJSON === false) || (directory === "cache/")){
 				this.fireEvent("changeOutputDirectory");
-			} else {
-				var jsonFile = this.getOutputDirectory() + 'action.json';
-				desk.FileSystem.exists(jsonFile, function (exists) {
-					if (exists) {
-						desk.FileSystem.readFile(jsonFile,
-							function(err, result) {
-								if (!err) {
-									this.__loadedParameters = result;
-									this.__updateUIParameters();
-									if (this.__tabView) {
-										this.__addOutputTab();
-									}
-								}
-								this.fireEvent("changeOutputDirectory");
-						}, this);
-					}
-				}, this);
+				return;
 			}
+			var jsonFile = this.getOutputDirectory() + 'action.json';
+			desk.FileSystem.exists(jsonFile, function (exists) {
+				if (!exists) return;
+				desk.FileSystem.readFile(jsonFile,
+					function(err, result) {
+						if (!err) {
+							this.__loadedParameters = result;
+							this.__updateUIParameters();
+							if (this.__tabView) {
+								this.__addOutputTab();
+							}
+						}
+						this.fireEvent("changeOutputDirectory");
+				}, this);
+			}, this);
         },
 
 		__updateUIParameters : function () {
@@ -396,7 +395,8 @@ qx.Class.define("desk.Action",
 			send.setLabel("Update");
 			var currentOutputDir = this.getOutputDirectory();
 			if ((currentOutputDir === null) ||
-					(currentOutputDir.substring(0, 6) === "cache/")) {
+					(currentOutputDir.substring(0, 6) === "cache/") ||
+					(currentOutputDir.substring(0, 8) === "actions/")) {
 				this.setOutputDirectory(response.outputDirectory);
 			}
 

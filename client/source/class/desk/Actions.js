@@ -326,6 +326,7 @@ qx.Class.define("desk.Actions",
 
 		__launch : function (e){
 			var action = new desk.Action(e.getTarget().getLabel());
+			action.setOutputDirectory("actions/");
 			action.setOriginFileBrowser(this.__currentFileBrowser);
 			action.buildUI();
 		},

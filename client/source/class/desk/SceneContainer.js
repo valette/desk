@@ -304,8 +304,7 @@ qx.Class.define("desk.SceneContainer",
 			case "off":
 				desk.Actions.getInstance().launchAction({
                     "action" : "mesh2ctm",
-					"input_mesh" : file,
-					"output_directory" : 'cache/'},
+					"input_mesh" : file},
                     function (response) {
                        var outputDir = response.outputDirectory;
                         parameters.mtime = response.MTime;

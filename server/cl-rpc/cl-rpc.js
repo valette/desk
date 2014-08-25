@@ -54,14 +54,12 @@ exports.validatePath = function (path, callback) {
 			callback(err);
 			return;
 		}
-		if (_.find(directories, function (subDir) {
+		if (!_.find(directories, function (subDir) {
 				return realPath.slice(0, subDir.length) === subDir;
-			}))
-		{
-			callback();
-			return;
+			})) {
+			err = "path " + realPath + " not allowed"; 
 		}
-		callback("path " + realPath + " not allowed");
+		callback(err);
 	});
 };
 
@@ -332,7 +330,6 @@ function RPC(POST, callback) {
 
 	this.POST = POST;
 	this.inputMTime = -1;
-	this.outputDirectory = "";
 
 	var header = "[" + actionsCounter + "] ";
 	this.log = function (msg) {winston.log('info', header + msg)};
@@ -346,7 +343,7 @@ function RPC(POST, callback) {
 		return;
 	};
 
-	this.commandLine = (this.action.attributes.executable || this.action.attributes.command) + ' ';
+	this.commandLine = "nice " + (this.action.attributes.executable || this.action.attributes.command) + ' ';
 	this.log("handle : " + this.POST.handle);
 
 	async.series([
@@ -369,16 +366,14 @@ function RPC(POST, callback) {
 };
 
 RPC.prototype.parseParameters = function (callback) {
-	var scope = this;
-	async.map(this.action.parameters, this.parseParameter.bind(this),
-		function (err, params) {
-			params.forEach(function (param) {
-				if (typeof param === "string") {
-					scope.commandLine += param;
-				}
-			});
+	async.map(this.action.parameters, this.parseParameter.bind(this), function (err, params) {
+		params.forEach(function (param) {
+			if (typeof param === "string") {
+				this.commandLine += param;
+			}
+		}.bind(this));
 		callback (err);
-	});
+	}.bind(this));
 };
 
 RPC.prototype.parseParameter = function (parameter, callback) {
@@ -504,10 +499,10 @@ RPC.prototype.handleInputMTimes = function (callback) {
 };
 
 RPC.prototype.handleOutputDirectory = function (callback) {
-	this.response.MTime = this.inputMTime;
-
 	if (permissions === 0) {this.POST.output_directory = "cache/";}
-	this.outputDirectory = this.POST.output_directory;
+
+	this.response.MTime = this.inputMTime;
+	this.outputDirectory = this.POST.output_directory || "";
 
 	if (this.action.attributes.voidAction) {
 		callback();
@@ -515,20 +510,19 @@ RPC.prototype.handleOutputDirectory = function (callback) {
 	}
 
 	switch (this.outputDirectory) {
-	case undefined :
+	case "actions/" :
 		actionsDirectoriesQueue.push({}, function (err, dir) {
 			this.outputDirectory = dir;
 			callback(err);
 		}.bind(this));
 		break;
 	case "cache/" :
+	case "" : 
 		var shasum = crypto.createHash('sha1');
 		shasum.update(this.commandLine);
 		var hash = shasum.digest('hex');
 		this.outputDirectory = libpath.join("cache", hash.charAt(0), hash.charAt(1), hash);
-		mkdirp(libpath.join(filesRoot, this.outputDirectory), function (err) {
-			callback(err);
-		});
+		mkdirp(libpath.join(filesRoot, this.outputDirectory), callback);
 		break;
 	default :
 		exports.validatePath (this.outputDirectory, callback);
@@ -536,12 +530,17 @@ RPC.prototype.handleOutputDirectory = function (callback) {
 };
 
 RPC.prototype.handleLogAndCache = function (callback) {
+	this.outputDirectory = libpath.normalize(this.outputDirectory);
+	if (this.outputDirectory.charAt(this.outputDirectory.length -1) !== "/") {
+		this.outputDirectory += "/";
+	}
 
-	var params = {action : this.POST.action};
+	this.response.outputDirectory = this.outputDirectory;
+
+	var params = {action : this.POST.action, output_directory :  this.outputDirectory};
 	this.action.parameters.forEach(function (parameter) {
 		params[parameter.name] = this.POST[parameter.name];
 	}, this);
-	params.output_directory = this.outputDirectory;
 	this.parametersString = JSON.stringify(params);
 
 	this.log ('in : ' + this.outputDirectory);
@@ -577,10 +576,6 @@ RPC.prototype.handleLogAndCache = function (callback) {
 };
 
 RPC.prototype.executeAction = function (callback) {
-	if (this.action.attributes.voidAction !== "true") {
-		this.response.outputDirectory = this.outputDirectory + "/";
-	}
-
 	if (this.cached) {
 		this.cacheAction(callback);
 		return;
@@ -589,15 +584,10 @@ RPC.prototype.executeAction = function (callback) {
 	this.startTime = new Date().getTime();
 	this.writeJSON = false;
 
-	var commandOptions = {cwd: filesRoot, maxBuffer : 1e10};
+	var commandOptions = {cwd: libpath.join(filesRoot, this.outputDirectory), maxBuffer : 1e10};
 
-	if ((this.action.attributes.voidAction !== "true" || this.action.attributes.noCache)) {
-		commandOptions.cwd = libpath.join(filesRoot, this.outputDirectory);
+	if (!this.action.attributes.voidAction) {
 		this.writeJSON = true;
-	}
-
-	if (this.action.attributes.noCache) {
-		this.writeJSON = false;
 	}
 
 	var after = function (err, stdout, stderr) {
@@ -693,19 +683,19 @@ RPC.prototype.afterExecution = function(err, stdout, stderr, callback) {
 		}
 	} else {
 		this.response.status = 'OK (' + (new Date().getTime() - this.startTime) / 1000 + 's)';
-		if (this.writeJSON) {
-			// touch output Directory to avoid automatic deletion
-			var now = new Date();
-			fs.utimes(libpath.join(filesRoot, this.outputDirectory), now, now);
-
-			fs.writeFile(libpath.join(filesRoot, this.outputDirectory, "action.json"),
-				this.parametersString, function (err) {
-					if (err) {throw err;}
-					callback();
-				}.bind(this));
-		} else {
+		if (!this.writeJSON) {
 			callback();
+			return;
 		}
+		// touch output Directory to avoid automatic deletion
+		var now = new Date();
+		fs.utimes(libpath.join(filesRoot, this.outputDirectory), now, now);
+
+		fs.writeFile(libpath.join(filesRoot, this.outputDirectory, "action.json"),
+			this.parametersString, function (err) {
+			if (err) {throw err;}
+			callback();
+		}.bind(this));
 	}
 }
 
