@@ -10,8 +10,9 @@ numeric = require('numeric');
 kdTree = require ('kdt');
 
 var ace = require('brace');
-require('brace/mode/javascript');
 require('brace/mode/c_cpp');
+require('brace/mode/html');
+require('brace/mode/javascript');
 require('brace/mode/json');
 require('brace/theme/eclipse');
 require('brace/ext/searchbox');

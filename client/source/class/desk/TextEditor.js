@@ -152,6 +152,9 @@ qx.Class.define("desk.TextEditor",
 				case "c":
 					this.__textArea.setMode("c_cpp");
 					break;
+				case "html":
+					this.__textArea.setMode("html");
+					break;
 				case "js" :
 					this.__executeButton.setVisibility('visible');
 					this.__textArea.setMode("javascript");
