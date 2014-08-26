@@ -3,14 +3,14 @@
  */
 MHD = {
     parse : function (content) {
-        function text(key, value) {mhd[key] = value;}
+        function text(value) {return value;}
         
-        function bool(key, value) {mhd[key] = value.toLowerCase() === "true";}
+        function bool(value) {return value.toLowerCase() === "true";}
         
-        function int(key, value) {mhd[key] = parseInt(value, 10);}
+        function int(value) {return parseInt(value, 10);}
         
-        function vec(key, value) {
-            mhd[key] = value.split(" ").map(function(value) {
+        function vec(value) {
+           return value.split(" ").map(function(value) {
                return parseFloat(value); 
             });
         }
@@ -40,7 +40,7 @@ MHD = {
             var key = line.substr(0, index).trim();
             var parser = keys[key];
             if (parser) {
-                parser(key, line.substr(index + 1).trim());
+                mhd[key] = parser(line.substr(index + 1).trim());
             } else {
                 console.warn("key " + key + " unknown");
             }
