@@ -134,8 +134,8 @@ rpc.post('/upload', function(req, res) {
 		return;
 	}
 	if (req.body.password.length > 4) {
-		identity.password = req.body.password;
-		fs.writeFileSync(passwordFile, JSON.stringify(identity));
+		id.password = req.body.password;
+		fs.writeFileSync(passwordFile, JSON.stringify(id));
 		res.json({status : "password changed"});
 	} else {
 		res.json({error : 'password too short!'});
