@@ -2,6 +2,7 @@
 * A widget containing a THREE.scene to visualize 3D meshes
 * 
 * @asset(desk/camera-photo.png)
+* @asset(qx/icon/${qx.icontheme}/16/categories/system.png) 
 * @ignore(THREE.Color)
 * @ignore(THREE.CTMLoader)
 * @ignore(THREE.DoubleSide)
@@ -113,6 +114,7 @@ qx.Class.define("desk.SceneContainer",
 		buttonsContainer.add(this.__getSaveViewButton(), {flex : 1});
 		buttonsContainer.add(this.__getResetViewButton(), {flex : 1});
 		buttonsContainer.add(this.__getSnapshotButton());
+		buttonsContainer.add(this.__getCameraPropertiesButton());
 		leftContainer.add(buttonsContainer);
 
 		this.__meshesTree = new qx.ui.treevirtual.TreeVirtual(["meshes"]);
@@ -709,6 +711,33 @@ qx.Class.define("desk.SceneContainer",
 							button.setEnabled(true);
 					});
 				}
+			}, this);
+			return button;
+		},
+
+		__getCameraPropertiesButton : function () {
+			var button = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png");
+			var scope = this;
+			button.addListener("execute", function () {
+				var win = new qx.ui.window.Window();
+				win.setLayout(new qx.ui.layout.VBox());
+				["near", "far"].forEach(function (field) {
+					var container = new qx.ui.container.Composite(new qx.ui.layout.HBox());
+					container.add(new qx.ui.basic.Label(field));
+					var form = new qx.ui.form.TextField(scope.getCamera()[field].toString());
+					container.add(form);
+					win.add(container);
+					form.addListener("changeValue", function () {
+						scope.getCamera()[field] = parseFloat(form.getValue());
+						scope.getCamera().updateProjectionMatrix();
+						scope.render();
+					});
+				});
+				win.open();
+				win.center();
+				win.addListener('close', function () {
+					win.destroy();
+				});
 			}, this);
 			return button;
 		},
