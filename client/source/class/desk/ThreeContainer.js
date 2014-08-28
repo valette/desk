@@ -336,8 +336,8 @@ qx.Class.define("desk.ThreeContainer",
 					.add(controls.target);
 			}
 
-			camera.near = bbdl / 100;
-			camera.far = bbdl * 100;
+			camera.near = bbdl / 1000;
+			camera.far = bbdl * 10;
 			camera.updateProjectionMatrix();
 			controls.update();
 			this.render();
