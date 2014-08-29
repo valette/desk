@@ -343,7 +343,7 @@ function RPC(POST, callback) {
 		return;
 	};
 
-	this.commandLine = "nice " + (this.action.attributes.executable || this.action.attributes.command) + ' ';
+	this.commandLine = "nice " + (this.action.attributes.executable || this.action.attributes.command);
 	this.log("handle : " + this.POST.handle);
 
 	async.series([
@@ -369,7 +369,7 @@ RPC.prototype.parseParameters = function (callback) {
 	async.map(this.action.parameters, this.parseParameter.bind(this), function (err, params) {
 		params.forEach(function (param) {
 			if (typeof param === "string") {
-				this.commandLine += param;
+				this.commandLine += ' '+ param;
 			}
 		}.bind(this));
 		callback (err);
@@ -377,7 +377,6 @@ RPC.prototype.parseParameters = function (callback) {
 };
 
 RPC.prototype.parseParameter = function (parameter, callback) {
-	var commandLine = '';
 
 	if (parameter.text !== undefined) {
 		// parameter is actually a text anchor
@@ -385,6 +384,7 @@ RPC.prototype.parseParameter = function (parameter, callback) {
 		return;
 	}
 
+	var prefix = parameter.prefix || '';
 	var value = this.POST[parameter.name];
 
 	if (value === undefined) {
@@ -396,18 +396,11 @@ RPC.prototype.parseParameter = function (parameter, callback) {
 		return;
 	}
 
-	commandLine += parameter.prefix || '';
-
 	switch (parameter.type) {
 	case 'file':
 		fs.realpath(libpath.join(filesRoot, value), function (err, path) {
-			if (err) {
-				callback (err);
-				return;
-			}
-			commandLine += path + " ";
-			callback (null, commandLine);
-		}.bind(this));
+			callback (err, prefix + path);
+		});
 		break;
 	case 'directory':
 		fs.realpath(libpath.join(filesRoot, value), function (err, path) {
@@ -415,46 +408,41 @@ RPC.prototype.parseParameter = function (parameter, callback) {
 				callback (err);
 				return;
 			}
-			commandLine += path + " ";
 			fs.stat(libpath.join(filesRoot, value), function (err, stats) {
 				if (!stats.isDirectory()) {
 					callback ("error : " + value + " is not a directory");
 					return;
 				}
-				callback (null, commandLine);
+				callback (null, prefix + path);
 			});
-		}.bind(this));
+		});
 		break;
 	case 'string':
 		if (value.indexOf(" ") === -1) {
-			commandLine += value + " ";
-			callback (null, commandLine);
+			callback (null, prefix + value);
 		} else {
 			callback ("parameter " + parameter.name + " must not contain spaces");
 		}
 		break;
 	case 'int':
-		var numericValue = parseInt(value, 10);
-		if (isNaN(numericValue)) {
+		var number = parseInt(value, 10);
+		if (isNaN(number)) {
 			callback ("parameter " + parameter.name + " must be an integer value");
 		} else {
-			commandLine += value + " ";
-			callback (validateValue(numericValue, parameter), commandLine);
+			callback (validateValue(number, parameter), prefix + value);
 		}
 		break;
 	case 'float':
-		numericValue = parseFloat(value, 10);
-		if (isNaN(numericValue)) {
+		number = parseFloat(value, 10);
+		if (isNaN(number)) {
 			callback ("parameter " + parameter.name + " must be a floating point value");
 		} else {
-			commandLine += value + " ";
-			callback (validateValue(numericValue, parameter), commandLine);
+			callback (validateValue(number, parameter), prefix + value);
 		}
 		break;
 	case 'text':
 	case 'base64data':
-		commandLine += value + " ";
-		callback (null, commandLine);
+		callback (null, prefix + value);
 		break;
 	default:
 		callback ("parameter type not handled : " + parameter.type);
@@ -604,10 +592,6 @@ RPC.prototype.executeAction = function (callback) {
 	}
 
 	var handle = {POST : JSON.parse(JSON.stringify(this.POST))};
-
-	var argsArray = this.commandLine.split(" ");
-	var cmd = argsArray[0];
-	argsArray.shift();
 
 	var child = handle.childProcess = exec(this.commandLine, commandOptions, after);
 	ongoingActions[this.POST.handle] = handle;
