@@ -4,8 +4,11 @@
  */
 qx.Mixin.define("desk.LinkMixin",
 {
-	members:
-	{
+	construct : function () {
+		this.__links = [this];
+	},
+
+	members : {
 		__links : null,
 
 		/**
@@ -14,59 +17,27 @@ qx.Mixin.define("desk.LinkMixin",
 		* @param source {Object} the object to link to
 		*/
 		link : function (source) {
-			function addUnique(object, links) {
-				if (!_.contains(links, object)) {
-					links.push(object);
-				}
-			}
-
-			if (source === this) {
-				return;
-			}
-
-			if (this.__links === null){
-				if (source.__links === null) {
-					this.__links = [];
-					source.__links = this.__links;
-				}
-				else {
-					this.__links = source.__links;
-				}
-			}
-			else {
-				if (source.__links === null) {
-					source.__links = this.__links;
-				}
-				else {
-					for (var i = 0; i < source.__links.length; i++) {
-						addUnique(source.__links[i], this.__links);
-					}
-					for (i = 0; i < source.__links.length; i++) {
-						source.__links[i].__links = this.__links;
-					}
-				}
-			}
-
-			addUnique(this, this.__links);
-			addUnique(source, this.__links);
+			source.__links.forEach(this.__addUnique, this);
+			this.__addUnique(source);
 		},
 
+		__addUnique  : function (object) {
+			if (!_.contains(this.__links, object)) {
+				this.__links.push(object);
+				object.__links = this.__links;
+			}
+		},
 
 		/**
 		* unlink the object
 		*/
-			unlink : function () {
-			var links=this.__links;
-			if (links === null) {
-				return;
-			}
-			for (var i = 0; i < links.length; i++){
-				if (links[i] == this) {
-					links.splice(i,1);
-					break;
+		unlink : function () {
+			this.__links.forEach(function (link, index, links) {
+				if (link == this) {
+					links.splice(index,1);
 				}
-			}
-			this.__links = null;
+			}, this);
+			this.__links = [this];
 		},
 
 		/**
@@ -81,14 +52,9 @@ qx.Mixin.define("desk.LinkMixin",
 		* </pre>
 		*/
 		applyToLinks : function (applyFunction) {
-			var links = this.__links;
-			if (links === null) {
-				applyFunction.apply(this);
-				return;
-			}
-			for (var i = 0; i < links.length; i++) {
-				applyFunction.apply(links[i]);
-			}
+			this.__links.forEach(function (link) {
+				applyFunction.apply(link);
+			});
 		},
 
 		/**
@@ -104,16 +70,11 @@ qx.Mixin.define("desk.LinkMixin",
 		* </pre>
 		*/	
 		applyToOtherLinks : function (applyFunction) {
-			var links = this.__links;
-			if (links === null) {
-				return;
-			}
-			for (var i = 0; i < links.length; i++) {
-				var link = links[i];
+			this.__links.forEach(function (link) {
 				if (link !== this) {
 					applyFunction.call(link, this);
 				}
-			}
+			}, this);
 		}
 	}
 });
