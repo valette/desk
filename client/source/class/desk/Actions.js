@@ -38,7 +38,7 @@ qx.Class.define("desk.Actions",
 		*/
 		init : function (callback, context) {
 			var actions = desk.Actions.getInstance();
-			if (actions.__remainingInits === 0) {
+			if (actions.__remainingInits <= 0) {
 				callback.apply(context);
 			} else {
 				actions.addListenerOnce("changeReady", callback , context);
@@ -286,7 +286,6 @@ qx.Class.define("desk.Actions",
             setTimeout(function () {this.__addActionToList(parameters);}.bind(this), 1230);
 
 			this.__socket.emit('action', params);
-
 			this.__runingActions[params.handle] = parameters;
 			return params.handle;
 		},
