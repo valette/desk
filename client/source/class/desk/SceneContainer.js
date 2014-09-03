@@ -340,12 +340,13 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		__propagateLinks : function () {
-			this.applyToOtherLinks(function (me) {
-				var controls = this.getControls();
-				controls.copy(me.getControls());
+			this.getLinks().forEach(function (link) {
+				if (this === link) return;
+				var controls = link.getControls();
+				controls.copy(this.getControls());
 				controls.update();
-				this.render();
-			});
+				link.render();
+			}, this);
 		},
 
 		/**

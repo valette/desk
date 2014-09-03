@@ -580,29 +580,21 @@ qx.Class.define("desk.VolumeSlice",
 				return;
 
 			// parse extent, dimensions, origin, spacing
-			var XMLextent = volume.getElementsByTagName("extent")[0];
-			this.__extent = new Array(parseInt(XMLextent.getAttribute("x1"), 10),
-				parseInt(XMLextent.getAttribute("x2"), 10),
-				parseInt(XMLextent.getAttribute("y1"), 10),
-				parseInt(XMLextent.getAttribute("y2"), 10),
-				parseInt(XMLextent.getAttribute("z1"), 10),
-				parseInt(XMLextent.getAttribute("z2"), 10));
+			this.__extent = ["x1", "x2", "y1", "y2", "z1", "z2"].map(function (field) {
+				return parseInt(volume.getElementsByTagName("extent")[0].getAttribute(field), 10);
+			});
 
-			var XMLdimensions = volume.getElementsByTagName("dimensions")[0];
+			this.__dimensions = ["x", "y", "z"].map(function (field) {
+				return parseInt(volume.getElementsByTagName("dimensions")[0].getAttribute(field), 10);
+			});
 
-			this.__dimensions = new Array(parseInt(XMLdimensions.getAttribute("x"), 10),
-				parseInt(XMLdimensions.getAttribute("y"), 10),
-				parseInt(XMLdimensions.getAttribute("z"), 10));
+			this.__spacing = ["x", "y", "z"].map(function (field) {
+				return parseFloat(volume.getElementsByTagName("spacing")[0].getAttribute(field));
+			});
 
-			var XMLspacing = volume.getElementsByTagName("spacing")[0];
-			this.__spacing = new Array(parseFloat(XMLspacing.getAttribute("x")),
-				parseFloat(XMLspacing.getAttribute("y")),
-				parseFloat(XMLspacing.getAttribute("z")));
-
-			var XMLorigin = volume.getElementsByTagName("origin")[0];
-			this.__origin = new Array(parseFloat(XMLorigin.getAttribute("x")),
-				parseFloat(XMLorigin.getAttribute("y")),
-				parseFloat(XMLorigin.getAttribute("z")));
+			this.__origin = ["x", "y", "z"].map(function (field) {
+				return parseFloat(volume.getElementsByTagName("origin")[0].getAttribute(field));
+			});
 
 			var XMLscalars = volume.getElementsByTagName("scalars")[0];
 			this.__numberOfScalarComponents = parseInt(XMLscalars.getAttribute("numberOfScalarComponents"),10);
@@ -625,33 +617,32 @@ qx.Class.define("desk.VolumeSlice",
 			}, this);
 
 			if (this.__ready) {
-				this.fireEvent("changeSlice", this.getSlice());
+				this.__updateImage();
 			}
 			this.__ready = true;
 		},
 
+		__timeout : null,
+
+		__updateImage : function () {
+			clearTimeout(this.__timeout);
+			this.__timeout = setTimeout(this.__updateImage.bind(this), 5000);
+			this.__image.src = this.getSliceURL(this.getSlice()) + "?nocache=" + this.__timestamp;
+		},
+
 		__initImageLoader : function () {
-			var timeout;
-
-			var updateImage = function () {
-				clearTimeout(timeout);
-				timeout = setTimeout(updateImage, 5000);
-				this.__image.src = this.getSliceURL(this.getSlice()) + "?nocache=" + this.__timestamp;
-			}.bind(this);
-
 			this.__image = new Image();
 
 			this.__image.onload = function() {
-				clearTimeout(timeout);
+				clearTimeout(this.__timeout);
 				this.__materials.forEach(function (material) {
 					material.uniforms.texture.value.needsUpdate = true;
 				});
 				this.fireEvent("changeImage");
 			}.bind(this);
 
-			this.__image.onerror = this.__image.onabort = updateImage;
-
-			this.addListener("changeSlice", updateImage);
+			this.__image.onerror = this.__image.onabort = this.__updateImage;
+			this.addListener("changeSlice", this.__updateImage, this);
 		},
 
 		/**

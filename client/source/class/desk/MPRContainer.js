@@ -66,7 +66,7 @@ qx.Class.define("desk.MPRContainer",
 			qx.util.DisposeUtil.destroyContainer(this.__orientationContainer);
 		}
 
-		this.getViewers().forEach(function (viewer) {
+		this.__viewers.forEach(function (viewer) {
 			viewer.dispose();
 		});
 
@@ -163,7 +163,7 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		__renderAll : function () {
-			this.getViewers().forEach(function (viewer) {
+			this.__viewers.forEach(function (viewer) {
 				viewer.render();
 			});
 		},
@@ -173,7 +173,7 @@ qx.Class.define("desk.MPRContainer",
 				this.getVolumeSlices(volume).forEach(function (slice) {
                     // slice might not be loaded yet
 					if (slice) {
-						this.getViewers().forEach(function (viewer) {
+						this.__viewers.forEach(function (viewer) {
 							viewer.setSliceRank(slice, rank);
 						});
 					}
@@ -226,9 +226,8 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		__toggleMaximize : function (button) {
-			var sliceView = button.getUserData("sliceView");
 			if (button.getLabel() === "+") {
-				this.maximizeViewer(sliceView.getOrientation());
+				this.maximizeViewer(button.getUserData("sliceView").getOrientation());
 			} else {
 				this.resetMaximize();
 			}			
@@ -239,18 +238,16 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		__onChangeCrossPosition : function (e) {
-			var sliceView = e.getTarget();
-			var position = sliceView.getCrossPosition();
-			this.getViewers().forEach(function (viewer) {
+			var position = e.getTarget().getCrossPosition();
+			this.__viewers.forEach(function (viewer) {
 				viewer.setCrossPosition(position.i, position.j, position.k);
 			});
 		},
 
 		__onChangeCameraZ : function (e) {
-			var sliceView = e.getTarget();
 			var z = e.getData();
-			this.getViewers().forEach (function (viewer) {
-				if (viewer != sliceView) {
+			this.__viewers.forEach (function (viewer) {
+				if (viewer != e.getTarget()) {
 					var oldZ = viewer.getCameraZ();
 					if (oldZ * z < 0) {
 						viewer.setCameraZ(-z);
@@ -320,7 +317,7 @@ qx.Class.define("desk.MPRContainer",
 				currentLabel = tempBoxes[i].getSelection()[0].getLabel();
 				if((currentLabel == selectItemLabel) && (tempBoxes[i] != selectBox)) {
 					var j;
-					//// Swtich direction overlays labels
+					//// Switch direction overlays labels
 					for( j = 0; j < 4; j++ ) {
 						labels2give[j] = tempViewer.getOverLays()[j].getValue();
 					}
@@ -404,9 +401,9 @@ qx.Class.define("desk.MPRContainer",
 			anamOrButton.setUserData('flipCamera', false);
 			function changeFlipStrategy (e) {
 				var flipCamera = e.getTarget().getUserData('flipCamera');
-				this.getViewers().forEach(function (viewer) {
-					viewer.applyToLinks(function () {
-						this.setOrientationChangesOperateOnCamera(flipCamera);
+				this.__viewers.forEach(function (viewer) {
+					viewer.getLinks().forEach(function (link) {
+						link.setOrientationChangesOperateOnCamera(flipCamera);
 					});
 				});
 			}
@@ -865,10 +862,7 @@ qx.Class.define("desk.MPRContainer",
 		 * Reloads all volumes
 		 */
 		updateAll : function () {
-			var volumes = this.__volumes.getChildren();
-			for (var i = 0; i != volumes.length; i++) {
-				this.updateVolume(volumes[i]);
-			}
+			this.__volumes.getChildren().forEach(this.updateVolume, this);
 		},
 
 		/**
@@ -876,10 +870,9 @@ qx.Class.define("desk.MPRContainer",
 		 * @param volume {qx.ui.container.Composite} the volume to reload
 		 */
 		updateVolume : function (volume) {
-			var slices = volume.getUserData("slices");
-			for (var i = 0; i < slices.length; i++) {
-				slices[i].update();
-			}
+			volume.getUserData("slices").forEach(function (slice) {
+				slice.update();
+			});
 		},
 
 		/**
@@ -902,10 +895,9 @@ qx.Class.define("desk.MPRContainer",
 				this.fireDataEvent("removeVolume", volume);
 			}
 
-			var slices = this.getVolumeSlices(volume);
-			this.getViewers().forEach (function (viewer) {
-				viewer.removeVolumes(slices);
-			});
+			this.__viewers.forEach (function (viewer) {
+				viewer.removeVolumes(this.getVolumeSlices(volume));
+			}, this);
 
 			// test if volume is not totally loaded
 			if (volume.getUserData("loadingInProgress")) {
@@ -1005,28 +997,14 @@ qx.Class.define("desk.MPRContainer",
 		 * @param volumeViewer{desk.MPRContainer} viewer to link to
 		 */
 		link : function (volumeViewer) {
-			var viewers = volumeViewer.__viewers;
-			var viewers2 = this.__viewers;
-			if(this.__nbUsedOrientations === viewers2.length) {
-				for (var i = 0; i < this.__nbUsedOrientations; i++) {
-					var viewer = viewers[i];
-					var orientation = viewer.getOrientation();
-					for (var j = 0; j < this.__nbUsedOrientations; j++) {
-						if (viewers2[j].getOrientation() === orientation) {
-							viewer.link(viewers2[j]);
-						}
+			volumeViewer.__viewers.forEach(function (viewer) {
+				this.__viewers.forEach(function (viewer2) {
+					if (viewer.getOrientation() === viewer2.getOrientation()) {
+						viewer.link(viewer2);
+						viewer.propagateCameraToLinks();
 					}
-					var originControls = viewer.getControls()
-					viewer.applyToOtherLinks(function (me) {
-						var controls = this.getControls();
-						controls.copy(originControls);
-						controls.update();
-						this.render();
-					});
-				}
-			} else {
-				alert("Cannot link viewers : number of orientations incoherent");
-			}
+				});
+			}, this);
 		},
 
 		__getSaveViewButton : function () {
@@ -1049,7 +1027,7 @@ qx.Class.define("desk.MPRContainer",
 			var menu = new qx.ui.menu.Menu();
 			var unLinkButton = new qx.ui.menu.Button("unlink");
 			unLinkButton.addListener("execute", function() {
-				this.getViewers().forEach (function (viewer) {
+				this.__viewers.forEach (function (viewer) {
 					viewer.unlink();
 				});
 			},this);
@@ -1092,102 +1070,44 @@ qx.Class.define("desk.MPRContainer",
 				showMinimize : false
 			});
 
-			var colormapGroup = new qx.ui.form.RadioButtonGroup().
-				set({layout : new qx.ui.layout.VBox()});
-			window.add(colormapGroup);
-
-			var noColors = new qx.ui.form.RadioButton("grey levels");
-			colormapGroup.add(noColors);
-
 			var ramp = new Uint8Array(256);
 			var zeros = new Uint8Array(256);
-			var i;
-			for (i = 0; i < 256; i++) {
-				ramp[i] = i;
-				zeros[i] = 0;
-			}
-
-			var redColors = new qx.ui.form.RadioButton("reds");
-			colormapGroup.add(redColors);
-
-			var greenColors = new qx.ui.form.RadioButton("greens");
-			colormapGroup.add(greenColors);
-
-			var blueColors = new qx.ui.form.RadioButton("blues");
-			colormapGroup.add(blueColors);
-
-			var randomRedColors = new qx.ui.form.RadioButton("random reds");
-			colormapGroup.add(randomRedColors);
-
-			var randomGreenColors = new qx.ui.form.RadioButton("random greens");
-			colormapGroup.add(randomGreenColors);
-
-			var randomBlueColors = new qx.ui.form.RadioButton("random blues");
-			colormapGroup.add(randomBlueColors);
-
-			var randomColors = new qx.ui.form.RadioButton("random Colors");
-			colormapGroup.add(randomColors);
 			var randomRed = new Uint8Array(256);
 			var randomGreen = new Uint8Array(256);
 			var randomBlue = new Uint8Array(256);
 
-			for (i = 0; i < 256; i++) {
+			for (var i = 0; i < 256; i++) {
+				ramp[i] = i;
+				zeros[i] = 0;
 				randomRed[i] = Math.floor(Math.random()*255);
 				randomGreen[i] = Math.floor(Math.random()*255);
 				randomBlue[i] = Math.floor(Math.random()*255);
 			}
 
-			var currentColors = slices[0].getLookupTables();
-			var otherColors = null;
+			var group = new qx.ui.form.RadioButtonGroup().set({layout : new qx.ui.layout.VBox()});
+			window.add(group);
 
-			colormapGroup.setSelection([noColors]);
-			if (currentColors) {
-				if (currentColors[0] != null) {
-					otherColors = new qx.ui.form.RadioButton("other");
-					colormapGroup.add(otherColors);
-					colormapGroup.setSelection([otherColors]);
-				}
-			}
+			[{name : "reds", lut : [ramp, zeros, zeros]},
+				{name : "greens", lut : [zeros, ramp, zeros]},
+				{name : "blues", lut : [zeros, zeros, ramp]},
+				{name : "random reds", lut : [randomRed, zeros, zeros]},
+				{name : "random greens", lut : [zeros, randomGreen, zeros]},
+				{name : "random blues", lut : [zeros, zeros, randomBlue]},
+				{name : "random colors", lut : [randomRed, randomGreen, randomBlue]},
+				{name : "grey levels", lut : null},
+				{name : "other colors", lut : slices[0].getLookupTables()}
+			].forEach(function (colors, index) {
+				if (!colors.lut && (index > 7)) return;
+				var button = new qx.ui.form.RadioButton(colors.name);
+				button.setUserData('lut', colors.lut);
+				group.add(button);
+				group.setSelection([button]);
+			});
 
-			colormapGroup.addListener("changeSelection", function (e) {
-				var newColors;
-
-				switch (colormapGroup.getSelection()[0])
-				{
-				case redColors :
-					newColors = [ramp, zeros, zeros];
-					break;
-				case greenColors :
-					newColors = [zeros, ramp, zeros];
-					break;
-				case blueColors :
-					newColors = [zeros, zeros, ramp];
-					break;
-				case randomRedColors :
-					newColors = [randomRed, zeros, zeros];
-					break;
-				case randomGreenColors :
-					newColors = [zeros, randomGreen, zeros];
-					break;
-				case randomBlueColors :
-					newColors = [zeros, zeros, randomBlue];
-					break;
-				case randomColors :
-					newColors = [randomRed, randomGreen, randomBlue];
-					break;
-				case otherColors :
-					newColors = currentColors;
-					break;
-				case noColors :
-					newColors = 0;
-					break;
-				default :
-					newColors = 0;
-					break;
-				}
-				for (var i = 0; i < slices.length; i++) {
-					slices[i].setLookupTables(newColors);
-				}
+			group.addListener("changeSelection", function (e) {
+				slices.forEach(function (slice) {
+					slice.setLookupTables(e.getData()[0].getUserData('lut'));
+				})
 			});
 			window.open();
 			window.center();
@@ -1200,7 +1120,7 @@ qx.Class.define("desk.MPRContainer",
 				}, this);
 			} else if (e.supportsType("file")) {
 				if (e.supportsType("VolumeViewer")) {
-					if (this == e.getData("VolumeViewer")) {
+					if (this === e.getData("VolumeViewer")) {
 						return;
 					}
 				}

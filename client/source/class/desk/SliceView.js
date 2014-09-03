@@ -256,10 +256,10 @@ qx.Class.define("desk.SliceView",
 		__reorientationContainer : null,
 
 		rotateLeft : function () {
-			this.applyToLinks(function () {
-				if(this.isOrientationChangesOperateOnCamera()) {
-					var camera = this.getCamera();
-					var controls = this.getControls(); 
+			this.getLinks().forEach(function (link) {
+				if(link.isOrientationChangesOperateOnCamera()) {
+					var camera = link.getCamera();
+					var controls = link.getControls(); 
 					var direction = controls.target.clone();
 					direction.sub(camera.position);
 					var up = camera.up;
@@ -267,22 +267,22 @@ qx.Class.define("desk.SliceView",
 					up.copy(direction);
 					controls.update();
 				} else {
-					var overlays = this.__directionOverlays;
+					var overlays = link.__directionOverlays;
 					var tempValue = overlays[3].getValue();
 					for (var i = 3; i > 0; i--) {
 						overlays[i].setValue(overlays[i - 1].getValue());
 					}
 					overlays[0].setValue(tempValue);
 				}
-				this.render();
+				link.render();
 			});
 		},
 
 		rotateRight : function () {
-			this.applyToLinks(function () {
-				if(this.isOrientationChangesOperateOnCamera()) {
-					var camera = this.getCamera();
-					var controls = this.getControls(); 
+			this.getLinks().forEach(function (link) {
+				if(link.isOrientationChangesOperateOnCamera()) {
+					var camera = link.getCamera();
+					var controls = link.getControls(); 
 					var direction = controls.target.clone();
 					direction.sub(camera.position);
 					var up = camera.up;
@@ -290,43 +290,43 @@ qx.Class.define("desk.SliceView",
 					up.copy(direction);
 					controls.update();
 				} else {
-					var overlays = this.__directionOverlays;
+					var overlays = link.__directionOverlays;
 					var tempValue = overlays[0].getValue();
 					for (var i = 0; i < 3; i++) {
 						overlays[i].setValue(overlays[i + 1].getValue());
 					}
 					overlays[3].setValue(tempValue);
 				}
-				this.render();
+				link.render();
 			});
 		},
 
 		flipX : function () {
-			this.applyToLinks(function () {
-				if(this.isOrientationChangesOperateOnCamera()) {
-					this.setCameraZ( - this.getCameraZ());
+			this.getLinks().forEach(function (link) {
+				if(link.isOrientationChangesOperateOnCamera()) {
+					link.setCameraZ( - link.getCameraZ());
 				} else {
-					var overlays = this.__directionOverlays;
+					var overlays = link.__directionOverlays;
 					var tempValue = overlays[1].getValue();
 					overlays[1].setValue(overlays[3].getValue());
 					overlays[3].setValue(tempValue);
 				}
-				this.render();
+				link.render();
 			});
 		},
 
 		flipY : function () {
-			this.applyToLinks(function () {
-				if(this.isOrientationChangesOperateOnCamera()) {
-					this.getCamera().up.negate();
-					this.setCameraZ( - this.getCameraZ());
+			this.getLinks().forEach(function (link) {
+				if(link.isOrientationChangesOperateOnCamera()) {
+					link.getCamera().up.negate();
+					link.setCameraZ( - link.getCameraZ());
 				} else {
-					var overlays = this.__directionOverlays;
+					var overlays = link.__directionOverlays;
 					var tempValue = overlays[0].getValue();
 					overlays[0].setValue(overlays[2].getValue());
 					overlays[2].setValue(tempValue);
 				}
-				this.render();
+				link.render();
 			});
 		},
 
@@ -365,13 +365,14 @@ qx.Class.define("desk.SliceView",
 			return gridContainer;
 		},
 
-		__propagateCameraToLinks : function () {
-			this.applyToOtherLinks(function (me) {
-				this.getControls().copy(me.getControls());
-				this.setSlice(me.getSlice());
-				this.setCameraZ(me.getCameraZ());
-				this.render();
-			});
+		propagateCameraToLinks : function () {
+			this.getLinks().forEach(function (link) {
+				if (this === link) return;
+				link.getControls().copy(this.getControls());
+				link.setSlice(this.getSlice());
+				link.setCameraZ(this.getCameraZ());
+				link.render();
+			}, this);
 		},
 
 		__applyCameraZ : function (z) {
@@ -826,9 +827,10 @@ qx.Class.define("desk.SliceView",
 			this.render();
 
 			this.fireEvent("changeCrossPosition");
-			this.applyToOtherLinks (function () {
-				this.setCrossPosition(i, j, k);
-			});
+			this.getLinks().forEach(function (link) {
+				if (link === this) return;
+				link.setCrossPosition(i, j, k);
+			}, this);
 		},
 
 		/**
@@ -943,7 +945,7 @@ qx.Class.define("desk.SliceView",
 
 				var z = this.getCamera().position.z;
 				this.setCameraZ(z);
-				this.__propagateCameraToLinks();
+				this.propagateCameraToLinks();
 				break;
 			case 2 :
 				if (brushMesh) brushMesh.visible = false;
@@ -951,7 +953,7 @@ qx.Class.define("desk.SliceView",
 				controls.mouseMove(event.getDocumentLeft() - origin.left,
 						event.getDocumentTop() - origin.top);
 				this.render();
-				this.__propagateCameraToLinks();
+				this.propagateCameraToLinks();
 				break;
 			case 3 :
 				position = this.getPositionOnSlice(event);
@@ -1214,7 +1216,7 @@ qx.Class.define("desk.SliceView",
 			}
 
 			this.setCrossPosition(i, j, k);
-			this.__propagateCameraToLinks();
+			this.propagateCameraToLinks();
 		},
 
 		__undoData : null,

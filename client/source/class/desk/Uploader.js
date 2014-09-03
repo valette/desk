@@ -3,7 +3,6 @@ qx.Class.define("desk.Uploader",
 	extend : qx.core.Object,
 
 	events : {
-		//~ "upload" : "qx.event.type.Event"
 		"upload" : "qx.event.type.Data"
 	},
 
@@ -24,7 +23,7 @@ qx.Class.define("desk.Uploader",
 			desk.FileSystem.getActionURL('upload'));
   		
   		// Parameter tp be added to all uploads (can be overridden by individual files)
-  	//	uploader.setParam("myGlobalParam", "global123");
+		//	uploader.setParam("myGlobalParam", "global123");
   		
   		// Optionally restrict the max number of simultaneous uploads (default is 5)
   		//uploader.getUploadHandler().setMaxConnections(1);

@@ -40,41 +40,12 @@ qx.Mixin.define("desk.LinkMixin",
 			this.__links = [this];
 		},
 
-		/**
-		* apply the provided function to each linked object as context
-		* @param applyFunction {Function} the function to apply
-		* <pre class="javascript">
-		* example : 
-		* obj1.link(obj2);
-		* obj1.applyToLinks(function() {
-		*	this.doSomething // this will be applied to obj1 and obj2
-		* });
-		* </pre>
-		*/
-		applyToLinks : function (applyFunction) {
-			this.__links.forEach(function (link) {
-				applyFunction.apply(link);
-			});
-		},
 
 		/**
-		* apply the provided function to each linked objects as context
-		* except for the called object
-		* @param applyFunction {Function} the function to apply
-		* <pre class="javascript">
-		* example : 
-		* obj1.link(obj2);
-		* obj1.applyToLinks(function() {
-		*	this.doSomething // this will be applied to only obj2
-		* });
-		* </pre>
-		*/	
-		applyToOtherLinks : function (applyFunction) {
-			this.__links.forEach(function (link) {
-				if (link !== this) {
-					applyFunction.call(link, this);
-				}
-			}, this);
+		* gives the array of all linked object (this included)
+		* @return (Array) the linked objects
+		*/		getLinks : function () {
+			return this.__links;
 		}
 	}
 });

@@ -32,17 +32,16 @@ members : {
 		if (!message) {
 			return;
 		}
-		message = message.toString().replace(' ', '&nbsp');
 		var htmlMessage = '';
-		var lines = message.split('\n');
-		for (var i = 0; i < lines.length; i++) {
-			var line = lines[i] + '<br/>';
+		message.toString().replace(' ', '&nbsp').split('\n').forEach(function (line) {
+			line += '<br/>';
 			if (color) {
 				htmlMessage += '<span style="color:' + color + '">' + line + '</span>';
 			} else {
 				htmlMessage += line;
 			}
-		}
+		});
+
 		if (this.getHtml() === null){
 			this.setHtml(htmlMessage);
 		} else {
