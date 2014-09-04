@@ -10,7 +10,6 @@
 
 /**
  * @asset(desk/*)
- * @use(qxjqplot.Plot)
  */
 
 qx.Class.define("desk.demo.Application",
