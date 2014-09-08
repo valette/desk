@@ -221,28 +221,26 @@ qx.Class.define("desk.SliceView",
 		 * @param slices {desk.VolumeSlice} slice to remove
 		*/
 		removeVolume : function (slice) {
-			var mySlices = this.__slices;
-			for (var j = 0; j < mySlices.length; j++) {
-				if (mySlices[j] == slice) {
-					var mesh = slice.getUserData("mesh");
-					if (mesh) {
-						this.getScene().remove(mesh);
-
-						//release GPU memory
-						mesh.material.uniforms.texture.value.dispose();
-						mesh.material.dispose();
-						mesh.geometry.dispose();
-						this.removeListenerById(slice.getUserData("updateListener"));
-						this.render();
-						slice.dispose();
-						mySlices.splice(j, 1);
-					} else {
-						// the slice has not been loaded yet, postpone deletetion
-						slice.setUserData('toDelete', true);
-					}
-					break;
+			var mesh = slice.getUserData("mesh");
+			this.__slices.forEach(function (sl, index) {
+				if (sl !== slice) {
+					return;
 				}
-			}
+				if (mesh) {
+					this.getScene().remove(mesh);
+					//release GPU memory
+					mesh.material.uniforms.texture.value.dispose();
+					mesh.material.dispose();
+					mesh.geometry.dispose();
+					this.removeListenerById(slice.getUserData("updateListener"));
+					this.render();
+					slice.dispose();
+					this.__slices.splice(index, 1);
+				} else {
+					// the slice has not been loaded yet, postpone deletetion
+					slice.setUserData('toDelete', true);
+				}
+			}, this);
 		},
 
 		/**
@@ -347,21 +345,15 @@ qx.Class.define("desk.SliceView",
 			}
 			gridContainer.set({layout : gridLayout,	decorator : "main"});
 
-			var rotateLeft = new qx.ui.form.Button("Rotate left");
-			rotateLeft.addListener("execute", this.rotateLeft, this);
-			gridContainer.add(rotateLeft, {row: 0, column: 0});
+			[{label : "Rotate left", cb : this},
+				{label : "Rotate right", cb : this},
+				{label : "Flip X", cb : this.flipX},
+				{label : "Flip Y", cb : this.flipY}].forEach(function (params, index) {
+				var button = new qx.ui.form.Button(params.label);
+				button.addListener("execute", params.cb, this);
+				gridContainer.add(button, {row: index > 1 ? 1 : 0, column: index % 2});
+			}, this);
 
-			var rotateRight = new qx.ui.form.Button("Rotate right");
-			rotateRight.addListener("execute", this.rotateRight, this);
-			gridContainer.add(rotateRight, {row: 0, column: 1});
-
-			var flipX = new qx.ui.form.Button("Flip X");
-			flipX.addListener("execute", this.flipX, this);
-			gridContainer.add(flipX, {row: 1, column: 0});
-
-			var flipY = new qx.ui.form.Button("Flip Y");
-			flipY.addListener("execute", this.flipY, this);
-			gridContainer.add(flipY, {row: 1, column: 1});
 			return gridContainer;
 		},
 
@@ -382,38 +374,26 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__createCrossMeshes : function (volumeSlice) {
-			var coordinates = volumeSlice.get2DCornersCoordinates();
-			var material = new THREE.LineBasicMaterial({
-				color : 0x4169FF,
-				linewidth : 2,
-				opacity : 0.5,
-				transparent : true
-			});
+			var coord = volumeSlice.get2DCornersCoordinates();
+			var material = new THREE.LineBasicMaterial({color : 0x4169FF,
+				linewidth : 2, opacity : 0.5, transparent : true});
 
-			var hGeometry = new THREE.Geometry();
-			hGeometry.vertices.push(new THREE.Vector3(coordinates[0], 0, 0),
-				new THREE.Vector3(coordinates[2], 0, 0));
-			var hline = new THREE.Line(hGeometry, material);
-			hline.renderDepth = -900;
-			this.getScene().add(hline);
+            (this.__crossMeshes || []).forEach(function (mesh) {
+				this.getScene().remove(mesh);
+				mesh.geometry.dispose();
+			}, this);
 
-			var vGeometry = new THREE.Geometry();
-			vGeometry.vertices.push(new THREE.Vector3(0, coordinates[1], 0),
-				new THREE.Vector3(0, coordinates[5], 0));
-			var vline = new THREE.Line(vGeometry, material);
-			vline.renderDepth = -900;
-			this.getScene().add(vline);
-
-            var crossMeshes = this.__crossMeshes;
-            if (crossMeshes) {
-                for (var i = 0; i < crossMeshes.length; i++) {
-					var mesh = crossMeshes[i];
-                    this.getScene().remove(mesh);
-                    mesh.geometry.dispose();
-                }
-            }
-			this.__crossMeshes = crossMeshes = [];
-			crossMeshes.push(hline, vline);
+			this.__crossMeshes =  [
+				[new THREE.Vector3(coord[0], 0, 0), new THREE.Vector3(coord[2], 0, 0)],
+				[new THREE.Vector3(0, coord[1], 0), new THREE.Vector3(0, coord[5], 0)]
+				].map(function (coords) {
+					var geometry = new THREE.Geometry();
+					geometry.vertices.push(coords[0], coords[1]);
+					var line = new THREE.Line(geometry, material);
+					line.renderDepth = -900;
+					this.getScene().add(line);
+					return line;
+			}, this);
 		},
 
 		__coordinatesRatio : null,
@@ -658,8 +638,7 @@ qx.Class.define("desk.SliceView",
 
 			this.__createCrossMeshes(volumeSlice);
 
-			switch (this.__orientation)
-			{
+			switch (this.__orientation) {
 				case 0 :
 					this.flipY();
 					break;
@@ -671,16 +650,12 @@ qx.Class.define("desk.SliceView",
 					break;
 			}
 
-			var dimensions = volumeSlice.getDimensions();
-			for (var coordinate = 0; coordinate < 3; coordinate++) {
-				if (dimensions[coordinate] === 1) {
-					dimensions[coordinate] = 0;
-				}
-			}
+			var dims = volumeSlice.getDimensions().map(function (dim) {
+				return dim === 1 ? 0 : Math.round(dim / 2);
+			});
+
 			this.__positionI = undefined; // to force cross position update
-			this.setCrossPosition(Math.round(dimensions[0] / 2),
-				Math.round(dimensions[1] / 2),
-				Math.round(dimensions[2] / 2));
+			this.setCrossPosition(dims[0], dims[1], dims[2]);
 		},
 
 		/** adds a volume to the view
@@ -690,13 +665,11 @@ qx.Class.define("desk.SliceView",
 		 * @return {desk.VolumeSlice} : displayed volume
 		 */
 		addVolume : function (file, parameters, callback) {
-			var firstSlice = true;
 			var slices = this.__slices;
-			for (var i = 0; i != slices.length; i++) {
-				if (slices[i].getUserData('toDelete') !== true) {
-					firstSlice = false;
-				}
-			}
+
+			var firstSlice = slices.every(function (slice) {
+				return slice.getUserData('toDelete') === true;
+			});
 
 			var volumeSlice = new desk.VolumeSlice(file,
 				this.__orientation, parameters, function () {
@@ -716,7 +689,7 @@ qx.Class.define("desk.SliceView",
 					volumeSlice.setSlice(this.getSlice());
 					this.__addSlice(volumeSlice, parameters, callback);
 			}, this);
-			this.__slices.push(volumeSlice);
+			slices.push(volumeSlice);
 			return volumeSlice;
 		},
 
@@ -745,12 +718,9 @@ qx.Class.define("desk.SliceView",
 			var i, j, k;
 
 			for (i = 0; i < 2; i++) {
-				if (v[i] < 0) {
-					v[i] = 0;
-				} else if (v[i] > (dimensions[i] - 1)) {
-					v[i] = dimensions[i] - 1;
-				}
+				v[i] = Math.max(0, Math.min(dimensions[i] - 1, v[i]));
 			}
+
 			switch (this.__orientation) {
 			case 0 :
 				i = v[0];
@@ -783,7 +753,7 @@ qx.Class.define("desk.SliceView",
 					k : this.__positionK};
 		},
 
-		setCrossPosition : function (i,j,k) {
+		setCrossPosition : function (i, j, k) {
 			if ((this.__positionI === i) && (this.__positionJ === j) &&
 				(this.__positionK === k)) {
 					return;
@@ -1010,15 +980,11 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__onMouseWheel : function (event) {
-			var delta = 1;
+			var delta = event.getWheelDelta() < 0 ? -1 : 1;
 			var slider = this.__slider;
-			if (event.getWheelDelta() < 0) {
-				delta = -1;
-			}
-			var newValue = slider.getValue() + delta;
-			newValue = Math.min(newValue, slider.getMaximum());
-			newValue = Math.max(newValue, slider.getMinimum());
-			slider.setValue(newValue);
+
+			slider.setValue(Math.min(slider.getMaximum(), Math.max(
+				slider.getValue() + delta, slider.getMinimum())));
 			this.fireDataEvent("viewMouseWheel",event);
 		},
 
@@ -1049,7 +1015,7 @@ qx.Class.define("desk.SliceView",
 					k : slice,
 					x : coordinates.x,
 					y : coordinates.y,
-					z : this.__volumeOrigin[2] + this.__volumeSpacing[2]*slice
+					z : this.__volumeOrigin[2] + this.__volumeSpacing[2] * slice
 				};
 				
 			case 1 :
@@ -1057,7 +1023,7 @@ qx.Class.define("desk.SliceView",
 					i : slice,
 					j : coordinates.j,
 					k : coordinates.i,
-					x : this.__volumeOrigin[0] + this.__volumeSpacing[0]*slice,
+					x : this.__volumeOrigin[0] + this.__volumeSpacing[0] * slice,
 					y : coordinates.y,
 					z : coordinates.x
 				};
@@ -1068,7 +1034,7 @@ qx.Class.define("desk.SliceView",
 					j : slice,
 					k : coordinates.j,
 					x : coordinates.x,
-					y : this.__volumeOrigin[1] + this.__volumeSpacing[1]*slice,
+					y : this.__volumeOrigin[1] + this.__volumeSpacing[1] * slice,
 					z : coordinates.y
 				};
 			}
@@ -1109,49 +1075,29 @@ qx.Class.define("desk.SliceView",
 			});
 
 			this.getRenderer().setClearColor( 0x000000, 1 );
-
-			var directionOverlays = this.__directionOverlays = [];
+			
 			var font = new qx.bom.Font(16, ["Arial"]);
 			font.setBold(true);
-            var settings = {textColor : this.__textColor,
-                font : font,
-                opacity : 0.5
-            };
-            qx.util.DisposeUtil.disposeTriggeredBy(font, this);
-			var northLabel = new qx.ui.basic.Label("S").set(settings);
-			this.add(northLabel, {left: "50%", top:"1%"});
+			var settings = {textColor : this.__textColor,
+				font : font, opacity : 0.5};
+			qx.util.DisposeUtil.disposeTriggeredBy(font, this);
 
-			var southLabel = new qx.ui.basic.Label("I").set(settings);
-			this.add(southLabel, {left: "50%", bottom:"1%"});
+			var labels = [
+				["A", "P", "L", "R"],
+				["A", "P", "S", "I"],
+				["S", "I", "L", "R"]][this.__orientation];
 
-            var westLabel = new qx.ui.basic.Label("L").set(settings);
-			this.add(westLabel, {left: "1%", top:"45%"});
+			var directionOverlays = this.__directionOverlays = [
+				{left: "50%", top:"1%"},
+				{left: "50%", bottom:"1%"},
+				{left: "1%", top:"45%"},
+				{right: "1%", top:"45%"}
+			].map(function (position, index) {
+				var label = new qx.ui.basic.Label(labels[index]).set(settings);
+				this.add(label, position);
+				return label;
+			}, this);
 
-            var eastLabel = new qx.ui.basic.Label("R").set(settings);
-			this.add(eastLabel, {right: "1%", top:"45%"});
-
-			directionOverlays.push(northLabel, westLabel, southLabel, eastLabel);
-			switch (this.__orientation) {
-			case 0 :
-				northLabel.setValue("A");
-				southLabel.setValue("P");
-				westLabel.setValue("L");
-				eastLabel.setValue("R");
-				break;
-			case 1 :
-				northLabel.setValue("A");
-				southLabel.setValue("P");
-				westLabel.setValue("S");
-				eastLabel.setValue("I");
-				break;
-			case 2 :
-			default:
-				northLabel.setValue("S");
-				southLabel.setValue("I");
-				westLabel.setValue("L");
-				eastLabel.setValue("R");
-				break;
-			}
 
 			var label = this.__sliceLabel = new qx.ui.basic.Label("0");
 			label.set({textAlign: "center", width : 40, font : font,
