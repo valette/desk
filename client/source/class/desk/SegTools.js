@@ -747,47 +747,64 @@ qx.Class.define("desk.SegTools",
 		__updateEditionWindow : null,
 
 		__createEditionWindow : function () {
-			var window=new qx.ui.window.Window();
-			window.setLayout(new qx.ui.layout.VBox());
-			window.setShowClose(true);
-			window.setShowMinimize(false);
-			window.setUseMoveFrame(true);
-			window.setCaption("label editor");
-			window.setResizable(false, false, false, false);
+			var win = this.__editionWindow = new qx.ui.window.Window();
+			win.setLayout(new qx.ui.layout.VBox());
+			win.setShowClose(true);
+			win.setShowMinimize(false);
+			win.setUseMoveFrame(true);
+			win.setCaption("label editor");
+			win.setResizable(false, false, false, false);
 
-			var topContainer=new qx.ui.container.Composite();
+			var topContainer = new qx.ui.container.Composite();
 			topContainer.setLayout(new qx.ui.layout.HBox());
-			window.add(topContainer);
+			win.add(topContainer);
 
-			var topLeftContainer=new qx.ui.container.Composite();
+			var topLeftContainer = new qx.ui.container.Composite();
 			topLeftContainer.setLayout(new qx.ui.layout.VBox());
 			topContainer.add(topLeftContainer);
 			topContainer.add(new qx.ui.core.Spacer(50), {flex: 5});
 
-			var topRightContainer=new qx.ui.container.Composite();
+			var topRightContainer = new qx.ui.container.Composite();
 			topRightContainer.setLayout(new qx.ui.layout.VBox());
 			topContainer.add(topRightContainer);
 
+			var doNotUpdate = false;
 
-			var doNotUpdate=false;
-
-			var labelDisplay=new qx.ui.basic.Label("Label :");
+			var labelDisplay = new qx.ui.basic.Label("Label :");
 			topLeftContainer.add(labelDisplay);
-			var labelValue=new qx.ui.form.TextField();
-			labelValue.addListener("changeValue", function (e) {
-				var target=this.__targetColorItem;
-				if ((target!=null)&&!doNotUpdate)
-				{
-					target.label=parseInt(labelValue.getValue());
+			var labelValue = new qx.ui.form.TextField();
+
+			function onUpdate() {
+				var target = this.__targetColorItem;
+				if ((target != null) && !doNotUpdate) {
+					target.label = parseInt(labelValue.getValue());
+					target.labelName = labelName.getValue();
+					target.red = colorSelector.getRed();
+					target.green = colorSelector.getGreen();
+					target.blue = colorSelector.getBlue();
+					target.opacity=parseFloat(meshOpacity.getValue());
+					target.depth = meshDepth.getValue();
+
+					target.updateWidget();
+			        colorView.setBackgroundColor(colorSelector.getValue());
+					this.__master.getViewers().forEach(function (viewer) {
+						viewer.setPaintColor(colorSelector.getValue());
+					});
+
+					target.meshRed = meshColorSelector.getRed();
+					target.meshGreen = meshColorSelector.getGreen();
+					target.meshBlue = meshColorSelector.getBlue();
+			        meshColorView.setBackgroundColor(meshColorSelector.getValue());
+
 					target.updateWidget();
 				}
-				var count=0;
-				for (var i=0;i<this.__labels.length;i++) {
-					if (this.__labels[i].label==target.label) {
+				var count = 0;
+				for (var i = 0; i < this.__labels.length; i++) {
+					if (this.__labels[i].label == target.label) {
 						count++;
 					}
 				}
-				if (count>1) {
+				if (count > 1) {
 					labelDisplay.setBackgroundColor("red");
 					labelValue.setToolTipText("This label already exists");
 					alert("This label already exists");
@@ -796,54 +813,34 @@ qx.Class.define("desk.SegTools",
 					labelDisplay.setBackgroundColor("transparent");
 					labelValue.resetToolTipText();
 				}
-			}, this);
+			}
+			labelValue.addListener("changeValue", onUpdate, this);
 			topLeftContainer.add(labelValue);
 			topLeftContainer.add(new qx.ui.core.Spacer(), {flex: 5});
 
 
-			var label1=new qx.ui.basic.Label("Name :");
+			var label1 = new qx.ui.basic.Label("Name :");
 			topLeftContainer.add(label1);
-			var labelName=new qx.ui.form.TextField();
-			if (this.__targetColorItem!=null) {
+			var labelName = new qx.ui.form.TextField();
+			if (this.__targetColorItem != null) {
 				labelName.setValue(this.__targetColorItem.labelName);
 			}
 
-			labelName.addListener("changeValue", function (e) {
-				var target=this.__targetColorItem;
-				if ((target!=null)&&!doNotUpdate)
-				{
-					target.labelName=labelName.getValue();
-					target.updateWidget();
-				}
-			}, this);
+			labelName.addListener("changeValue", onUpdate, this);
 			topLeftContainer.add(labelName);
 			topLeftContainer.add(new qx.ui.core.Spacer(), {flex: 5});
 
-			var colorContainer=new qx.ui.container.Composite();
+			var colorContainer = new qx.ui.container.Composite();
 			colorContainer.setLayout(new qx.ui.layout.HBox());
-			window.add(new qx.ui.core.Spacer(0, 30), {flex: 5});
-			window.add(colorContainer);
+			win.add(new qx.ui.core.Spacer(0, 30), {flex: 5});
+			win.add(colorContainer);
 
-			var colorSelector=new qx.ui.control.ColorPopup();
-			colorSelector.addListener("changeValue", function (e) {
-				var target=this.__targetColorItem;
-				if ((target!=null)&&!doNotUpdate)
-				{
-					target.red=colorSelector.getRed();
-					target.green=colorSelector.getGreen();
-					target.blue=colorSelector.getBlue();
-					target.updateWidget();
-			        colorView.setBackgroundColor(e.getData());
-					this.__master.getViewers().forEach(function (viewer) {
-						viewer.setPaintColor(colorSelector.getValue());
-					});
-				}
-			}, this);
+			var colorSelector = new qx.ui.control.ColorPopup();
+			colorSelector.addListener("changeValue", onUpdate, this);
 			colorSelector.exclude();
 
 			var colorButton = new qx.ui.form.Button("Choose color");
-			colorButton.addListener("execute", function(e)
-			{
+			colorButton.addListener("execute", function(e) {
 				colorSelector.placeToWidget(colorButton);
 				colorSelector.show();
 			});
@@ -856,23 +853,22 @@ qx.Class.define("desk.SegTools",
 			colorContainer.add(colorView, {flex : 1});
 			colorContainer.add(colorButton, {flex : 1});
 
-			var label3=new qx.ui.basic.Label("Adjacent labels :");
+			var label3 = new qx.ui.basic.Label("Adjacent labels :");
 			topRightContainer.add(label3);
 
-			var container=new qx.ui.container.Composite();
+			var container = new qx.ui.container.Composite();
 			container.setLayout(new qx.ui.layout.HBox());
 			topRightContainer.add(container);
 
-			var container2=new qx.ui.container.Composite();
+			var container2 = new qx.ui.container.Composite();
 			container2.setLayout(new qx.ui.layout.VBox());
 			container.add(container2);
 
 			var adjacenciesField = new qx.ui.form.List().set(
 				{droppable : true, height : 120, selectionMode : "multi"});
 			adjacenciesField.addListener("drop", function(e) {
-				if (e.supportsType("segmentationLabel"))
-				{
-					var label=e.getData("segmentationLabel");
+				if (e.supportsType("segmentationLabel")) {
+					var label = e.getData("segmentationLabel");
 					this.__addEdge(label, this.__targetColorItem);
 					__updateAdjacenciesText();
 				}
@@ -882,48 +878,39 @@ qx.Class.define("desk.SegTools",
 
 			var __updateAdjacenciesText = function () {
 				var adjacencies = this.__targetColorItem.adjacencies;
-				var children=adjacenciesField.getChildren();
-				while (children.length>0) {
+				var children = adjacenciesField.getChildren();
+				while (children.length > 0) {
 					children[0].destroy();
 				}
 
-				for (var i=0;i<adjacencies.length;i++) {
-					var neighbour=adjacencies[i];
-					var listItem=new qx.ui.form.ListItem(neighbour.label+" : "+neighbour.labelName);
+				for (var i = 0; i < adjacencies.length; i++) {
+					var neighbour = adjacencies[i];
+					var listItem = new qx.ui.form.ListItem(
+						neighbour.label + " : " + neighbour.labelName);
 					listItem.setUserData("AdjacenciesItem", neighbour);
 					adjacenciesField.add(listItem);
 				}
 			}.bind(this)
 
-			var removeButton=new qx.ui.form.Button("Remove Selection");
+			var removeButton = new qx.ui.form.Button("Remove Selection");
 			removeButton.addListener("execute", function () {
-				var selection=adjacenciesField.getSelection();
-				for (var i=0;i<selection.length;i++) {
+				var selection = adjacenciesField.getSelection();
+				for (var i = 0; i < selection.length; i++) {
 					this.__removeEdge(selection[i].getUserData("AdjacenciesItem"), this.__targetColorItem);
 				}
 				__updateAdjacenciesText();
 			}, this);
 			container2.add(removeButton);
 
-			var meshColorContainer=new qx.ui.container.Composite();
+			var meshColorContainer = new qx.ui.container.Composite();
 			meshColorContainer.setLayout(new qx.ui.layout.HBox());
 
-			var meshColorSelector=new qx.ui.control.ColorPopup();
-			meshColorSelector.addListener("changeValue", function (e) {
-				var target=this.__targetColorItem;
-				if ((target!=null)&&!doNotUpdate)
-				{
-					target.meshRed=meshColorSelector.getRed();
-					target.meshGreen=meshColorSelector.getGreen();
-					target.meshBlue=meshColorSelector.getBlue();
-			        meshColorView.setBackgroundColor(e.getData());
-				}
-			}, this);
+			var meshColorSelector = new qx.ui.control.ColorPopup();
+			meshColorSelector.addListener("changeValue", onUpdate, this);
 			colorSelector.exclude();
 
 			var meshColorButton = new qx.ui.form.Button("Choose color");
-			meshColorButton.addListener("execute", function(e)
-			{
+			meshColorButton.addListener("execute", function(e) {
 				meshColorSelector.placeToWidget(meshColorButton);
 				meshColorSelector.show();
 			});
@@ -936,94 +923,74 @@ qx.Class.define("desk.SegTools",
 			meshColorContainer.add(meshColorView, {flex : 1});
 			meshColorContainer.add(meshColorButton, {flex : 1});
 
-			window.add(new qx.ui.core.Spacer(0, 30), {flex: 5});
-			window.add(meshColorContainer);
+			win.add(new qx.ui.core.Spacer(0, 30), {flex: 5});
+			win.add(meshColorContainer);
 
 			var meshPropertiesContainer=new qx.ui.container.Composite();
 			meshPropertiesContainer.setLayout(new qx.ui.layout.HBox());
-			window.add(meshPropertiesContainer);
+			win.add(meshPropertiesContainer);
 
-			var opacityContainer=new qx.ui.container.Composite();
+			var opacityContainer = new qx.ui.container.Composite();
 			opacityContainer.setLayout(new qx.ui.layout.VBox());
 			meshPropertiesContainer.add(opacityContainer);
 			meshPropertiesContainer.add(new qx.ui.core.Spacer(50), {flex: 5});
-			var depthContainer=new qx.ui.container.Composite();
+			var depthContainer = new qx.ui.container.Composite();
 			depthContainer.setLayout(new qx.ui.layout.VBox());
 			meshPropertiesContainer.add(depthContainer);
 
 			opacityContainer.add(new qx.ui.basic.Label("Mesh opacity :"));
-			var meshOpacity=new qx.ui.form.TextField("1");
-			meshOpacity.addListener("changeValue", function (e) {
-				var target=this.__targetColorItem;
-				if ((target!=null)&&!doNotUpdate)
-				{
-					target.opacity=parseFloat(meshOpacity.getValue());
-				}
-			}, this);
+			var meshOpacity = new qx.ui.form.TextField("1");
+			meshOpacity.addListener("changeValue", onUpdate, this);
 			opacityContainer.add(meshOpacity);
 
 			depthContainer.add(new qx.ui.basic.Label("Mesh depth :"));
-			var meshDepth=new qx.ui.form.Spinner(-100, 0, 100);
+			var meshDepth = new qx.ui.form.Spinner(-100, 0, 100);
 			meshDepth.setToolTipText("change this field to solve problems with transparency");
-			meshDepth.addListener("changeValue", function (e) {
-				var target=this.__targetColorItem;
-				if ((target!=null)&&!doNotUpdate)
-				{
-					target.depth=meshDepth.getValue();
-				}
-			}, this);
+			meshDepth.addListener("changeValue", onUpdate, this);
 			depthContainer.add(meshDepth);
 
-			this.__editionWindow=window;
-
-			this.__updateEditionWindow=function (e) {
-				var target=this.__targetColorItem;
-				if (target!=null) {
-					doNotUpdate=true;
-					labelValue.setValue(target.label+"");
-					labelName.setValue(target.labelName);
-					colorSelector.setRed(target.red);
-					colorSelector.setGreen(target.green);
-					colorSelector.setBlue(target.blue);
-					colorView.setBackgroundColor(qx.util.ColorUtil.rgbToHexString
-							([target.red, target.green, target.blue]));
-					meshColorSelector.setRed(target.meshRed);
-					meshColorSelector.setGreen(target.meshGreen);
-					meshColorSelector.setBlue(target.meshBlue);
-					meshColorView.setBackgroundColor(qx.util.ColorUtil.rgbToHexString
-							([target.meshRed, target.meshGreen, target.meshBlue]));
-					meshOpacity.setValue(target.opacity+"");
-					meshDepth.setValue(target.depth);
-					this.__buildLookupTables();
-					doNotUpdate=false;
-					__updateAdjacenciesText();
+			this.__updateEditionWindow = function (e) {
+				var target = this.__targetColorItem;
+				if (!target) {
+					return;
 				}
+				doNotUpdate = true;
+				labelValue.setValue(target.label + "");
+				labelName.setValue(target.labelName);
+				colorSelector.setRed(target.red);
+				colorSelector.setGreen(target.green);
+				colorSelector.setBlue(target.blue);
+				colorView.setBackgroundColor(qx.util.ColorUtil.rgbToHexString
+						([target.red, target.green, target.blue]));
+				meshColorSelector.setRed(target.meshRed);
+				meshColorSelector.setGreen(target.meshGreen);
+				meshColorSelector.setBlue(target.meshBlue);
+				meshColorView.setBackgroundColor(qx.util.ColorUtil.rgbToHexString
+						([target.meshRed, target.meshGreen, target.meshBlue]));
+				meshOpacity.setValue(target.opacity+"");
+				meshDepth.setValue(target.depth);
+				this.__buildLookupTables();
+				doNotUpdate = false;
+				__updateAdjacenciesText();
 			}
 		},
 
 		__getLabel : function (label) {
-			var intLabel=parseInt(label);
-			var labels=this.__labels;
-			for (var i=0;i<labels.length;i++) {
-				if (labels[i].label==intLabel) {
-					return (labels[i]);
-				}
-			}
-			alert("error : label "+label+" does not exist!");				
-			return (false);
+			return _.find(this.__labels, function (l) {
+				return l.label == parseInt(label, 10);
+			});
 		},
 
 		__deleteColorItem : function (item) {
-			var colors=this.__labels;
-			for (var i=0;i<colors.length;i++) {
-				if (colors[i]==item) {
-					colors.splice(i,1);
-					this.__rebuildLabelsList();
-					item.dispose();
-					this.__eraserButton.removeListenerById(item.listenerId);
+			this.__labels.forEach(function (color, i) {
+				if (color !== item) {
 					return;
 				}
-			}
+				this.__labels.splice(i, 1);
+				this.__rebuildLabelsList();
+				item.dispose();
+				this.__eraserButton.removeListenerById(item.listenerId);
+			}, this);
 		},
 
 		__addEdge : function (label1, label2) {
@@ -1056,11 +1023,11 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__addAdjacency : function (label1,label2) {
-			var adjacencies=label1.adjacencies;
-			var label=label2.label;
-			for (var i=0;i<adjacencies.length;i++){
-				if (label<adjacencies[i].label) {
-					adjacencies.splice(i,0,label2);
+			var adjacencies = label1.adjacencies;
+			var label = label2.label;
+			for (var i = 0; i < adjacencies.length; i++){
+				if (label < adjacencies[i].label) {
+					adjacencies.splice(i, 0, label2);
 					return;
 				}
 			}
@@ -1068,14 +1035,11 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__removeAdjacency : function (label1,label2) {
-			var adjacencies = label1.adjacencies;
-			for (var i = 0; i < adjacencies.length; i++){
-				if (label2 === adjacencies[i]) {
-					adjacencies.splice(i, 1);
-					return;
+			label1.adjacencies.forEach(function (adj, index) {
+				if (label2 === adj) {
+					label1.adjacencies.splice(index, 1);
 				}
-			}
-			alert ("error : adjacency to remove not found...");
+			});
 		},
 
 		__selectedLabel : null,
@@ -1125,18 +1089,16 @@ qx.Class.define("desk.SegTools",
 				}
 				this.__targetColorItem = labelAttributes;
 				if (this.__editionWindow != null) {
-						this.__updateEditionWindow();
+					this.__updateEditionWindow();
 				}
 
-				var children = this.__colorsContainer.getChildren();
-				for(var k = 0;  k < children.length; k++) {
-					var label = children[k];
+				this.__colorsContainer.getChildren().forEach(function (label) {
 					if(label === this.__selectedLabel) {
 						label.setDecorator(focusedBorder);
 					} else {
 						label.setDecorator(unfocusedBorder);
 					}
-				}
+				}, this);
 
 				this.__master.getViewers().forEach(function (viewer) {
 					viewer.setPaintColor(colorBox.getBackgroundColor());
@@ -1196,11 +1158,11 @@ qx.Class.define("desk.SegTools",
 			var menu = new qx.ui.menu.Menu;
 			var editButton = new qx.ui.menu.Button("edit");
 			editButton.addListener("execute", function () {
-				if (this.__editionWindow==null) {
+				if (this.__editionWindow == null) {
 					this.__createEditionWindow();
 				}
 				this.__editionWindow.open();
-				this.__targetColorItem=labelAttributes;
+				this.__targetColorItem = labelAttributes;
 				this.__updateEditionWindow();
 			},this);
 			menu.add(editButton);
@@ -1606,34 +1568,28 @@ qx.Class.define("desk.SegTools",
 				return xml;
 			}
 
-			var xmlContent = '\n';
-			var colors = "";
-			var lColors = this.__labels;
-			var lColorsNb = lColors.length;
-
-			for(var i = 0; i < lColorsNb; i++) {
-				var labelColor = lColors[i];
-				var meshColor = labelColor.meshRed/255 + " " +
-								labelColor.meshGreen/255 + " " +
-								labelColor.meshBlue/255 + " " +
+			var colors = this.__labels.reduce(function (colors, labelColor) {
+				var meshColor = labelColor.meshRed / 255 + " " +
+								labelColor.meshGreen / 255 + " " +
+								labelColor.meshBlue / 255 + " " +
 								labelColor.opacity + " " +
 								labelColor.depth;
-				colors+=element('color', null, {red : "" + labelColor.red,
+				return colors + element('color', null, {red : "" + labelColor.red,
 												green: "" + labelColor.green,
 												blue : "" + labelColor.blue,
 												label : "" + labelColor.label,
 												name : "" + labelColor.labelName,
 												meshcolor : meshColor}) + "\n";
-			}
-			xmlContent += element('colors', colors) + "\n";
+			}, "");
+
+			var xmlContent = element('colors', colors) + "\n";
 
 			var adjacencies = "\n";
 			var adjArray = [];
-			for(var i = 0; i < lColorsNb; i++) {
-				var label1 = lColors[i].label;
-				var adj = lColors[i].adjacencies;
-				for (var j = 0;j < adj.length; j++) {
-					var label2 = adj[j].label;
+			this.__labels.forEach(function (lab) {
+				var label1 = lab.label;
+				lab.adjacencies.forEach(function (adj) {
+					var label2 = adj.label;
 
 					if (!_.find(adjArray, function (edge) {
 						return ((edge.label1 == label1) && (edge.label2 == label2)) ||
@@ -1643,28 +1599,23 @@ qx.Class.define("desk.SegTools",
 							{label1 : "" + label1, label2 : "" + label2}) + "\n";
 						adjArray.push({label1 : label1, label2 : label2});
 					}
-				}
-			}
+				});
+			});
 
 			if (adjArray.length > 0) {
 				xmlContent += element('adjacencies', adjacencies) + "\n";
 			}
 
-			this.__master.getViewers().forEach( function (viewer) {
-				var seedsLists = viewer.getUserData("seeds");
-				var orientation = viewer.getOrientation();
-
-				for (var seedsType = 0; seedsType < 2; seedsType++) {
-					var list = seedsLists[seedsType];
-					var filePrefix = desk.SegTools.filePrefixes[seedsType];
-					var slices = list.getChildren();
-					for (var i = 0; i < slices.length; i++) {
-						var sliceId = slices[i].getUserData("slice");
-						xmlContent += element(filePrefix,
-							this.__getSeedFileName(viewer, sliceId, seedsType), 
-							{slice: sliceId + "", orientation: orientation + ""}) + '\n';
-					}
-				}
+			this.__master.getViewers().forEach(function (viewer) {
+				viewer.getUserData("seeds").forEach(function (list, type) {
+					list.getChildren().forEach(function (slice) {
+						var sliceId = slice.getUserData("slice");
+						xmlContent += element(desk.SegTools.filePrefixes[type],
+							this.__getSeedFileName(viewer, sliceId, type), 
+							{slice: sliceId + "",
+							orientation: viewer.getOrientation() + ""}) + '\n';
+					}, this);
+				}, this)
 			}, this);
 
 			var seeds = element('seeds', xmlContent);
@@ -1678,92 +1629,89 @@ qx.Class.define("desk.SegTools",
 
 		__getSeedsTypeSelectBox : function() {
 			var selectBox = new qx.ui.form.SelectBox();
-			var seedsItem = new qx.ui.form.ListItem("seeds");
-			seedsItem.setUserData("seedsType", 0);
-			selectBox.add(seedsItem);
 
-			var correctionsItem = new qx.ui.form.ListItem("corrections");
-			correctionsItem.setUserData("seedsType", 1);
-			selectBox.add(correctionsItem);
+			["seeds", "corrections"].forEach(function (type, index) {
+				var item = new qx.ui.form.ListItem(type);
+				item.setUserData("seedsType", index);
+				selectBox.add(item);
+			});
 
-			var updateSeedsListsVisibility = function (e) {
-				var newSeedsType=selectBox.getSelection()[0].getUserData("seedsType");
-				this.setSeedsType(newSeedsType);
+			var update = function () {
+				var type = selectBox.getSelection()[0].getUserData("seedsType");
+				this.setSeedsType(type);
 				this.__master.getViewers().forEach(function (viewer) {
-					var seedsLists = viewer.getUserData("seeds");
-					seedsLists[newSeedsType].setVisibility("visible");
-					seedsLists[1 - newSeedsType].setVisibility("excluded");
+					viewer.getUserData("seeds").forEach(function (seedList, index) {
+						seedList.setVisibility(index === type ?	"visible" : "excluded");
+					});
 					this.__reloadSeedImage(viewer);
 				}, this);
-			}.bind(this);
+			};
 
-			selectBox.addListener("changeSelection",updateSeedsListsVisibility);
-			updateSeedsListsVisibility();
+			selectBox.addListener("changeSelection", update, this);
+			update.apply(this);
 			return selectBox;
 		},
 
 		__getNewSeedsImage : function ( sliceView ) {
-			if (sliceView.isDrawingCanvasModified() == true) {
-				var canvas = sliceView.getDrawingCanvas();
-				var seedsImageData = canvas.getContext2d().getImageData(0, 0, canvas.getWidth(), canvas.getHeight());
-				var pixels = seedsImageData.data;
-				var isAllBlack = true;
+			if (!sliceView.isDrawingCanvasModified()) {
+				return false;
+			}
+			var canvas = sliceView.getDrawingCanvas();
+			var seedsImageData = canvas.getContext2d().getImageData(0, 0, canvas.getWidth(), canvas.getHeight());
+			var pixels = seedsImageData.data;
+			var isAllBlack = true;
 
-				var redArray = this.__compactLabelsRed;
-				var greenArray = this.__compactLabelsGreen;
-				var blueArray = this.__compactLabelsBlue;
-				var numberOfColors = this.__compactLabelsRed.length;
+			var redArray = this.__compactLabelsRed;
+			var greenArray = this.__compactLabelsGreen;
+			var blueArray = this.__compactLabelsBlue;
+			var numberOfColors = this.__compactLabelsRed.length;
 
-				var numberOfBytes = pixels.length
-				for(var i = 0; i < numberOfBytes; i += 4) {
-					if(128 <= pixels[i + 3]) {
-						var dRed = 0;
-						var dGreen = 0;
-						var dBlue = 0;
-						var distance = 500000;
-						var rightColorIndex = 0;
+			var numberOfBytes = pixels.length
+			for(var i = 0; i < numberOfBytes; i += 4) {
+				if(128 <= pixels[i + 3]) {
+					var dRed = 0;
+					var dGreen = 0;
+					var dBlue = 0;
+					var distance = 500000;
+					var rightColorIndex = 0;
 
-						for(var j = 0; j != numberOfColors; j++) {
-							dRed = redArray[j] - pixels[i];
-							dGreen = greenArray[j] - pixels[i + 1];
-							dBlue = blueArray[j] - pixels[i + 2];
-							var testD = dRed * dRed + dGreen * dGreen + dBlue * dBlue;
-							if(testD < distance) {
-								distance = testD;
-								rightColorIndex = j;
-							}
+					for(var j = 0; j != numberOfColors; j++) {
+						dRed = redArray[j] - pixels[i];
+						dGreen = greenArray[j] - pixels[i + 1];
+						dBlue = blueArray[j] - pixels[i + 2];
+						var testD = dRed * dRed + dGreen * dGreen + dBlue * dBlue;
+						if(testD < distance) {
+							distance = testD;
+							rightColorIndex = j;
 						}
-						pixels[i] = redArray[rightColorIndex];
-						pixels[i+1] = greenArray[rightColorIndex];
-						pixels[i+2] = blueArray[rightColorIndex];
-						pixels[i+3] = 255;
-						isAllBlack = false;
-					} else {
-						pixels[i] = 0;
-						pixels[i+1] = 0;
-						pixels[i+2] = 0;
-						pixels[i+3] = 0;
 					}
+					pixels[i] = redArray[rightColorIndex];
+					pixels[i+1] = greenArray[rightColorIndex];
+					pixels[i+2] = blueArray[rightColorIndex];
+					pixels[i+3] = 255;
+					isAllBlack = false;
+				} else {
+					pixels[i] = 0;
+					pixels[i+1] = 0;
+					pixels[i+2] = 0;
+					pixels[i+3] = 0;
 				}
+			}
 
-				if(!isAllBlack) {
-					seedsImageData.data = pixels;
-
-					canvas.getContext2d().putImageData(seedsImageData, 0, 0);
-					var pngImg = canvas.getContentElement().getCanvas().toDataURL("image/png");
-					var saveData = pngImg.replace("image/png", "image/octet-stream");
-					var commaIndex = pngImg.lastIndexOf(",");
-					var base64Img = pngImg.substring(commaIndex+1,pngImg.length);
-					return base64Img;
-				}
+			if(!isAllBlack) {
+				seedsImageData.data = pixels;
+				canvas.getContext2d().putImageData(seedsImageData, 0, 0);
+				var pngImg = canvas.getContentElement().getCanvas().toDataURL("image/png");
+				var saveData = pngImg.replace("image/png", "image/octet-stream");
+				var commaIndex = pngImg.lastIndexOf(",");
+				var base64Img = pngImg.substring(commaIndex+1,pngImg.length);
+				return base64Img;
 			}
 			return false;
 		},
 
 		__addSeedsLists : function( sliceView ) {
-			var seedsList = new qx.ui.form.List();
-			var correctionsList = new qx.ui.form.List();
-			var lists = [seedsList, correctionsList];
+			var lists = [new qx.ui.form.List(), new qx.ui.form.List()];
 			sliceView.setUserData("seeds", lists);
 
 			function stopPropagation (e) {e.stopPropagation();}
@@ -1835,74 +1783,40 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__getSeedFileName : function(sliceView, sliceId, seedType) {			
-			var filePrefix;
-			if (seedType == 0) {
-				filePrefix = "seed";
-			} else {
-				filePrefix = "correction";
-			}
-
-			var sliceLetters;
-			switch(sliceView.getOrientation())
-			{
-				// ZY X
-				case 1 :
-					sliceLetters = "ZY";
-					break;
-				// XZ Y
-				case 2 :
-					sliceLetters = "XZ";
-					break;
-				// XY Z
-				default :
-					sliceLetters = "XY";
-			}
-			return filePrefix + sliceLetters + 
-				(sliceView.getFirstSlice().getSlicesIdOffset() +
-				sliceId) + ".png";
+			return (seedType == 0 ? "seed" : "correction") +
+				["XY", "ZY", "XZ"][sliceView.getOrientation()] + 
+				(sliceView.getFirstSlice().getSlicesIdOffset() + sliceId) +
+				".png";
 		},
 
 		__createReorderingWindow : function () {
-			var list;
 			var currentListItem;
-			var myWindow = new qx.ui.window.Window();
 
-			myWindow.set({
-				layout : new qx.ui.layout.VBox(),
-				width : 400,
-				showMinimize: false,
-				showMaximize: false,
-				allowMaximize: false,
-				showClose: true,
-				resizable: false,
-				movable : true,
-				caption : "reorder labels"
-			});
+			var win = new qx.ui.window.Window();
+			win.set({layout : new qx.ui.layout.VBox(), width : 400,
+				showMinimize: false, showMaximize: false, 
+				allowMaximize: false, showClose: true, resizable: false,
+				movable : true, caption : "reorder labels"});
 
-			var list = new qx.ui.form.List;
-			list.setDraggable(true);
-			list.setDroppable(true);
-			list.setSelectionMode("multi");
-			myWindow.add(list);
+			var list = new qx.ui.form.List().set({draggable : true,
+				droppable : true, selectionMode : "multi"});
+			win.add(list);
 
-			for (var i = 0; i < this.__labels.length; i++) {
-				var label = this.__labels[i];
-				var item = new qx.ui.form.ListItem(label.label+"-"+label.labelName);
+			this.__labels.forEach(function (label) {
+				var item = new qx.ui.form.ListItem(label.label + "-" + label.labelName);
 				item.setUserData("label", label);
 				list.add(item);
-			}
+			});
 
 			// Create drag indicator
-			var indicator = new qx.ui.core.Widget;
-			indicator.setDecorator(new qx.ui.decoration.Decorator().set({
-				top : [ 1, "solid", "#33508D" ]
-			}));
-			indicator.setHeight(0);
-			indicator.setOpacity(0.5);
-			indicator.setZIndex(100);
-			indicator.setLayoutProperties({left: -1000, top: -1000});
-			indicator.setDroppable(true);
-			myWindow.add(indicator);
+			var indicator = new qx.ui.core.Widget();
+
+			indicator.set({layoutProperties : {left: -1000, top: -1000},
+				height : 0, opacity : 0.5, zIndex : 100, droppable : true,
+				decorator : new qx.ui.decoration.Decorator().set({
+					top : [ 1, "solid", "#33508D" ]})
+			});
+			win.add(indicator);
 
 			// Just add a move action
 			list.addListener("dragstart", function(e) {
@@ -1924,7 +1838,7 @@ qx.Class.define("desk.SegTools",
 				if (orig instanceof qx.ui.form.ListItem) {
 					currentListItem = orig;
 				}
-				if (!qx.ui.core.Widget.contains(myWindow, orig) && orig != indicator) {
+				if (!qx.ui.core.Widget.contains(win, orig) && orig != indicator) {
 					return;
 				}
 
@@ -1957,25 +1871,20 @@ qx.Class.define("desk.SegTools",
 					return ;
 				}
 
-				var sel = list.getSortedSelection();
-
-				for (var i =0, l = sel.length; i < l; i++) {
-					list.addBefore(sel[i], listItem);
-
+				var sel = list.getSortedSelection().forEach(function (el) {
+					list.addBefore(el, listItem);
 				// recover selection as it get lost during child move
-					list.addToSelection(sel[i]);
-				}
+					list.addToSelection(el);
+				});
 			}
-			myWindow.open();
-			myWindow.addListener("close", function () {
-				this.__labels = [];
-				var labels = list.getChildren();
-				for (var i = 0; i < labels.length; i++) {
-					this.__labels.push(labels[i].getUserData("label"));
-				}
+			win.open();
+			win.addListener("close", function () {
+				this.__labels = list.getChildren().map(function (item) {
+					return item.getUserData("label");
+				});
 				list.destroy();
 				indicator.destroy();
-				myWindow.destroy();
+				win.destroy();
 				this.__rebuildLabelsList();
 			}, this);
 		}
