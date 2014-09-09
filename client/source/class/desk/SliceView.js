@@ -51,10 +51,10 @@ qx.Class.define("desk.SliceView",
 
 		this.__intersection = null;
 		this.__2DCornersCoordinates = null;
-		this.__volume2DDimensions = null;
-		this.__volume2DSpacing = null;
-		this.__volumeOrigin = null;
-		this.__volumeSpacing = null;
+		this.__2DDimensions = null;
+		this.__2DSpacing = null;
+		this.__origin = null;
+		this.__spacing = null;
 		this.__projector = null;
 	},
 
@@ -136,7 +136,7 @@ qx.Class.define("desk.SliceView",
 
 		__brushMesh : null,
 
-		__crossMeshes : null,
+		__crossMeshes : [],
 		
 		__drawingCanvasModified : false,
 
@@ -155,11 +155,11 @@ qx.Class.define("desk.SliceView",
 		},
 
 		getVolume2DDimensions : function() {
-			return this.__volume2DDimensions;
+			return this.__2DDimensions;
 		},
 		
 		getVolume2DSpacing : function() {
-			return this.__volume2DSpacing;
+			return this.__2DSpacing;
 		},
 		
 		get2DCornersCoordinates : function() {
@@ -306,7 +306,8 @@ qx.Class.define("desk.SliceView",
 				return this.__reorientationContainer;
 			}
 			
-			var gridContainer = this.__reorientationContainer = new qx.ui.container.Composite();
+			var gridContainer = this.__reorientationContainer =
+				new qx.ui.container.Composite();
 			var gridLayout = new qx.ui.layout.Grid(3, 3);
 			for (var i = 0; i < 2; i++) {
 				gridLayout.setRowFlex(i, 1);
@@ -348,21 +349,22 @@ qx.Class.define("desk.SliceView",
 			var material = new THREE.LineBasicMaterial({color : 0x4169FF,
 				linewidth : 2, opacity : 0.5, transparent : true});
 
-            (this.__crossMeshes || []).forEach(function (mesh) {
+			this.__crossMeshes.forEach(function (mesh) {
 				this.getScene().remove(mesh);
 				mesh.geometry.dispose();
 			}, this);
 
+			function v(x,y,z) {return new THREE.Vector3(x,y,z)}
 			this.__crossMeshes =  [
-				[new THREE.Vector3(coord[0], 0, 0), new THREE.Vector3(coord[2], 0, 0)],
-				[new THREE.Vector3(0, coord[1], 0), new THREE.Vector3(0, coord[5], 0)]
-				].map(function (coords) {
-					var geometry = new THREE.Geometry();
-					geometry.vertices.push(coords[0], coords[1]);
-					var line = new THREE.Line(geometry, material);
-					line.renderDepth = -900;
-					this.getScene().add(line);
-					return line;
+				[v(coord[0], 0, 0), v(coord[2], 0, 0)],
+				[v(0, coord[1], 0), v(0, coord[5], 0)]
+			].map(function (coords) {
+				var geometry = new THREE.Geometry();
+				geometry.vertices.push(coords[0], coords[1]);
+				var line = new THREE.Line(geometry, material);
+				line.renderDepth = -900;
+				this.getScene().add(line);
+				return line;
 			}, this);
 		},
 
@@ -381,16 +383,11 @@ qx.Class.define("desk.SliceView",
 			var width = 100;
 			var height = 100;
 
-			var canvas = this.__brushCanvas;
-			if (!canvas) {
-				this.__brushCanvas = canvas = new qx.ui.embed.Canvas().set({
-					syncDimension: true,
-					canvasWidth: width,
-					canvasHeight: height,
-					width: width,
-					height: height
-				});
-			}
+			var canvas = this.__brushCanvas = this.__brushCanvas ||
+				new qx.ui.embed.Canvas().set({syncDimension: true,
+					canvasWidth: width,	canvasHeight: height,
+					width: width,	height: height
+			});
 
 			var texture = new THREE.DataTexture(new Uint8Array(width * height * 4),
 				width, height, THREE.RGBAFormat);
@@ -412,30 +409,30 @@ qx.Class.define("desk.SliceView",
 
 		__updateBrush : function() {
 			var canvas = this.__brushCanvas;
-			var context = canvas.getContext2d();
+			var ctx = canvas.getContext2d();
 			var width = canvas.getCanvasWidth();
 			var height = canvas.getCanvasHeight();
 
 			// recreate brush image
 			if (this.isEraseMode()) {
-				context.fillStyle = "white";
-				context.fillRect (0, 0, width, height);
-				context.fillStyle = "black";
-				context.fillRect (10, 10, width-20, height-20);
+				ctx.fillStyle = "white";
+				ctx.fillRect (0, 0, width, height);
+				ctx.fillStyle = "black";
+				ctx.fillRect (10, 10, width-20, height-20);
 			} else {
-				context.clearRect (0, 0, width, height);
-				context.lineWidth = 0;
-				context.strokeStyle = context.fillStyle = this.__paintColor;
-				context.beginPath();
-				context.arc(width / 2, height / 2, width/2,
+				ctx.clearRect (0, 0, width, height);
+				ctx.lineWidth = 0;
+				ctx.strokeStyle = ctx.fillStyle = this.__paintColor;
+				ctx.beginPath();
+				ctx.arc(width / 2, height / 2, width/2,
 					0, 2 * Math.PI, false);
-				context.closePath();
-				context.fill();
+				ctx.closePath();
+				ctx.fill();
 			}
 
 			// upload image to texture
 			var length = width * height * 4;
-			var data = context.getImageData(0, 0, width, height).data;
+			var data = ctx.getImageData(0, 0, width, height).data;
 			var material = this.__brushMesh.material;
 			var brushData = material.map.image.data;
 			for (var i = length; i--;) {
@@ -458,24 +455,20 @@ qx.Class.define("desk.SliceView",
 
 		__setDrawingMesh : function (volumeSlice) {
 			var geometry = new THREE.PlaneGeometry(1, 1);
-			var coordinates = volumeSlice.get2DCornersCoordinates();
-			for (var i = 0; i < 4; i++) {
-				geometry.vertices[i].set(coordinates[2 * i], coordinates[2*i + 1], 0);
-			}
+			var coords = volumeSlice.get2DCornersCoordinates();
+			geometry.vertices.forEach(function (vertex, i) {
+				vertex.set(coords[2 * i], coords[2 * i + 1], 0);
+			});
 
-			var width = this.__volume2DDimensions[0];
-			var height = this.__volume2DDimensions[1];
+			var width = this.__2DDimensions[0];
+			var height = this.__2DDimensions[1];
 
-			this.__drawingCanvas.set({
-				canvasWidth: width,
-				canvasHeight: height,
-				width: width,
-				height: height
+			this.__drawingCanvas.set({canvasWidth: width,
+				canvasHeight: height, width: width,	height: height
 			});
 			this.__drawingCanvas.getContext2d().clearRect(0, 0, width, height);
 
-			var length = width * height * 4;
-			var dataColor = new Uint8Array( length);
+			var dataColor = new Uint8Array( width * height * 4);
 
 			var texture = new THREE.DataTexture(dataColor, width, height, THREE.RGBAFormat);
 			texture.generateMipmaps = false;
@@ -507,7 +500,7 @@ qx.Class.define("desk.SliceView",
 			function updateTexture() {
 				var data = this.__drawingCanvas.getContext2d().getImageData(
 					0, 0, width, height).data;
-				for (var i = length; i--;) {
+				for (var i = width * height * 4; i--;) {
 					dataColor[i] = data[i];
 				}
 				texture.needsUpdate = true;
@@ -534,11 +527,10 @@ qx.Class.define("desk.SliceView",
 
 		__addSlice : function (volumeSlice, parameters, callback) {
 			var geometry = new THREE.PlaneGeometry(1, 1);
-			var coordinates = volumeSlice.get2DCornersCoordinates();
-			for (var i = 0; i < 4; i++) {
-				geometry.vertices[i].set(coordinates[2 * i],
-					coordinates[2 * i + 1], 0);
-			}
+			var coords = volumeSlice.get2DCornersCoordinates();
+			geometry.vertices.forEach(function (vertex, i) {
+				vertex.set(coords[2 * i], coords[2 * i + 1], 0);
+			});
 
 			var listener = this.addListener("changeSlice", function (e) {
 				volumeSlice.setSlice(e.getData());
@@ -582,31 +574,31 @@ qx.Class.define("desk.SliceView",
 			this.__initDrawingDone = true;
 		},
 
-		__initFromVolume : function (volumeSlice) {
+		__initFromVolume : function (slice) {
 			this.__initDrawingDone = false;
-			this.__slider.setMaximum(volumeSlice.getNumberOfSlices() - 1);
-			this.__slider.setVisibility(volumeSlice.getNumberOfSlices() === 1 ? "hidden" : "visible");
+			this.__slider.setMaximum(slice.getNumberOfSlices() - 1);
+			this.__slider.setVisibility(slice.getNumberOfSlices() === 1 ? "hidden" : "visible");
 
 			var camera = this.getCamera();
 			var position = camera.position;
 			camera.up.set(0, 1, 0);
-			var coordinates = volumeSlice.get2DCornersCoordinates();
+			var coordinates = slice.get2DCornersCoordinates();
 
 			position.set(0.5 * (coordinates[0] + coordinates[2]),
 				0.5 * (coordinates[3] + coordinates[5]), 0);
 			this.getControls().target.copy(position);
-			position.z = volumeSlice.getBoundingBoxDiagonalLength() * 0.6;
-			this.setCameraZ(volumeSlice.getBoundingBoxDiagonalLength() * 0.6);
+			position.z = slice.getBoundingBoxDiagonalLength() * 0.6;
+			this.setCameraZ(slice.getBoundingBoxDiagonalLength() * 0.6);
 
 			this.__projector = new THREE.Projector();
 			this.__intersection = new THREE.Vector3();
 			this.__2DCornersCoordinates = coordinates;
-			this.__volume2DSpacing = volumeSlice.get2DSpacing();
-			this.__volume2DDimensions = volumeSlice.get2DDimensions();
-			this.__volumeOrigin = volumeSlice.getOrigin();
-			this.__volumeSpacing = volumeSlice.getSpacing();
+			this.__2DSpacing = slice.get2DSpacing();
+			this.__2DDimensions = slice.get2DDimensions();
+			this.__origin = slice.getOrigin();
+			this.__spacing = slice.getSpacing();
 
-			this.__createCrossMeshes(volumeSlice);
+			this.__createCrossMeshes(slice);
 
 			if (this.__orientation < 2) {
 				this.flip(1);
@@ -616,12 +608,10 @@ qx.Class.define("desk.SliceView",
 				this.flip(0);
 			}
 
-			var dims = volumeSlice.getDimensions().map(function (dim) {
+			this.__position[0] = undefined; // to force cross position update
+			this.setCrossPosition(slice.getDimensions().map(function (dim) {
 				return dim === 1 ? 0 : Math.round(dim / 2);
-			});
-
-			this.__positionI = undefined; // to force cross position update
-			this.setCrossPosition(dims[0], dims[1], dims[2]);
+			}));
 		},
 
 		/** adds a volume to the view
@@ -677,60 +667,51 @@ qx.Class.define("desk.SliceView",
 
 		__setCrossPositionFromEvent : function (event) {
 			var position = this.getPositionOnSlice(event);
-			var dims = this.__volume2DDimensions;
 
 			var v = [position.i, position.j].map(function (v, index) {
-				return Math.max(0, Math.min(dims[index] - 1, v));
-			});
+				return Math.max(0, Math.min(this.__2DDimensions[index] - 1, v));
+			}, this);
 
-			this.setCrossPosition(
+			this.setCrossPosition([
 				[v[0], this.getSlice(), v[0]][this.__orientation],
 				[v[1], v[1], this.getSlice()][this.__orientation],
-				[this.getSlice(), v[0], v[1]][this.__orientation]);
+				[this.getSlice(), v[0], v[1]][this.__orientation]]);
 		},
 
-		__positionI : null,
-		__positionJ : null,
-		__positionK : null,
+		__position : [],
 
 		getCrossPosition : function () {
-			return {i : this.__positionI,
-					j : this.__positionJ,
-					k : this.__positionK};
+			return this.__position;
 		},
 
-		setCrossPosition : function (i, j, k) {
-			if ((this.__positionI === i) && (this.__positionJ === j) &&
-				(this.__positionK === k)) {
+		setCrossPosition : function (pos) {
+			if ((this.__position[0] === pos[0]) &&
+				(this.__position[1] === pos[1]) &&
+				(this.__position[2] === pos[2])) {
 					return;
 			}
-			var dimensions = this.__volume2DDimensions;
-			if (!dimensions) {
+			this.__position = pos;
+
+			if (!this.__2DDimensions) {
 				// dimensions might not exist if the volume is not ready yet
 				return;
 			}
 
-			var x, y;
-			x = [i, k, i][this.__orientation];
-			y = dimensions[1] - 1 - [j, j, k][this.__orientation];
+			var x = pos[[0, 2, 0][this.__orientation]];
+			var y = this.__2DDimensions[1] - 1 - pos[[1, 1, 2][this.__orientation]];
 
-			var spacing = this.__volume2DSpacing;
-			var coordinates = this.__2DCornersCoordinates;
-			x = coordinates[0] + (0.5 + x) * spacing[0];
-			y = coordinates[5] - (0.5 + y) * spacing[1];
+			x = this.__2DCornersCoordinates[0] + (0.5 + x) * this.__2DSpacing[0];
+			y = this.__2DCornersCoordinates[5] - (0.5 + y) * this.__2DSpacing[1];
 
-			this.__positionI = i;
-			this.__positionJ = j;
-			this.__positionK = k;
 			this.__crossMeshes[0].position.setY(y);
 			this.__crossMeshes[1].position.setX(x);
-			this.setSlice([k, i, j][this.__orientation]);
+			this.setSlice(pos[[2, 0, 1][this.__orientation]]);
 			this.render();
 
 			this.fireEvent("changeCrossPosition");
 			this.getLinks().forEach(function (link) {
 				if (link === this) return;
-				link.setCrossPosition(i, j, k);
+				link.setCrossPosition(pos);
 			}, this);
 		},
 
@@ -745,51 +726,51 @@ qx.Class.define("desk.SliceView",
 		* */
 		__interactionMode : -1,
 
-		__onMouseDown : function (event) {
+		__onMouseDown : function (e) {
 			this.capture();
 			var controls = this.getControls();
 			this.__interactionMode = 0;
 			var origin, position, width;
-			if (event.isRightPressed() || event.isCtrlPressed()) {
+			if (e.isRightPressed() || e.isCtrlPressed()) {
 				this.__interactionMode = 1;
 				origin = this.getContentLocation();
 				controls.mouseDown(this.__interactionMode,
-					event.getDocumentLeft() - origin.left,
-					event.getDocumentTop() - origin.top);
-			} else if ((event.isMiddlePressed())||(event.isShiftPressed())) {
+					e.getDocumentLeft() - origin.left,
+					e.getDocumentTop() - origin.top);
+			} else if ((e.isMiddlePressed())||(e.isShiftPressed())) {
 				this.__interactionMode = 2;
 				origin = this.getContentLocation();
 				controls.mouseDown(this.__interactionMode,
-					event.getDocumentLeft()-origin.left,
-					event.getDocumentTop()-origin.top);
+					e.getDocumentLeft()-origin.left,
+					e.getDocumentTop()-origin.top);
 			} else if (this.isPaintMode()) {
 				this.__interactionMode = 3;
 				this.__saveDrawingToUndoStack();
-				position = this.getPositionOnSlice(event);
-				var context = this.__drawingCanvas.getContext2d();
+				position = this.getPositionOnSlice(e);
+				var ctx = this.__drawingCanvas.getContext2d();
 				var i = position.i + 0.5;
 				var j = position.j + 0.5;
 				var paintColor = this.__paintColor;
 				width = this.__paintWidth;
-				context.lineWidth = 0;
-				context.strokeStyle = paintColor;
-				context.fillStyle = paintColor;
-				context.beginPath();
-				context.arc(i, j, width/2, 0, 2*Math.PI, false);
-				context.closePath();
-				context.fill();
-				context.lineJoin = "round";
-				context.lineWidth = width;
-				context.beginPath();
-				context.moveTo(i, j);
-				context.closePath();
-				context.stroke();
+				ctx.lineWidth = 0;
+				ctx.strokeStyle = paintColor;
+				ctx.fillStyle = paintColor;
+				ctx.beginPath();
+				ctx.arc(i, j, width/2, 0, 2*Math.PI, false);
+				ctx.closePath();
+				ctx.fill();
+				ctx.lineJoin = "round";
+				ctx.lineWidth = width;
+				ctx.beginPath();
+				ctx.moveTo(i, j);
+				ctx.closePath();
+				ctx.stroke();
 				this.__drawingCanvasModified = true;
 				this.fireEvent("changeDrawing");
 			} else if (this.isEraseMode()) {
 				this.__interactionMode = 4;
 				this.__saveDrawingToUndoStack();
-				position = this.getPositionOnSlice(event);
+				position = this.getPositionOnSlice(e);
 				var x = Math.round(position.i) + 0.5;
 				var y = Math.round(position.j) + 0.5;
 				width = this.__paintWidth;
@@ -799,9 +780,9 @@ qx.Class.define("desk.SliceView",
 				this.__drawingCanvasModified = true;
 				this.fireEvent("changeDrawing");
 			} else {
-				this.__setCrossPositionFromEvent(event);
+				this.__setCrossPositionFromEvent(e);
 			}
-			this.fireDataEvent("viewMouseDown",event);
+			this.fireDataEvent("viewMouseDown", e);
 		},
 
 		__onMouseOut : function (event) {
@@ -860,9 +841,9 @@ qx.Class.define("desk.SliceView",
 				position = this.getPositionOnSlice(event);
 				brushMesh.visible = true;
 				brushMesh.position.set(position.x, position.y, 0);
-				var context = this.__drawingCanvas.getContext2d();
-				context.lineTo(position.i + 0.5, position.j + 0.5);
-				context.stroke();
+				var ctx = this.__drawingCanvas.getContext2d();
+				ctx.lineTo(position.i + 0.5, position.j + 0.5);
+				ctx.stroke();
 				this.fireEvent("changeDrawing");
 				this.__drawingCanvasModified = true;
 				break;
@@ -889,21 +870,16 @@ qx.Class.define("desk.SliceView",
 			this.releaseCapture();
 			this.getControls().mouseUp();
 			if ((this.isPaintMode()) && (this.__interactionMode == 3)) {
-				var context = this.__drawingCanvas.getContext2d();
+				var ctx = this.__drawingCanvas.getContext2d();
 				var position = this.getPositionOnSlice(event);
 
-				var i = position.i + 0.5;
-				var j = position.j + 0.5;
-
-				var paintColor = this.__paintColor;
-				var width = this.__paintWidth;
-				context.lineWidth = 0;
-				context.strokeStyle = paintColor;
-				context.fillStyle = paintColor;
-				context.beginPath();
-				context.arc(i, j, width / 2, 0, 2 * Math.PI, false);
-				context.closePath();
-				context.fill();
+				ctx.lineWidth = 0;
+				ctx.strokeStyle = ctx.fillStyle = this.__paintColor;
+				ctx.beginPath();
+				ctx.arc(position.i + 0.5, position.j + 0.5,
+					this.__paintWidth / 2, 0, 2 * Math.PI, false);
+				ctx.closePath();
+				ctx.fill();
 				this.fireEvent("changeDrawing");
 			}
 			this.__interactionMode = -1;
@@ -929,10 +905,10 @@ qx.Class.define("desk.SliceView",
 
 		__intersection : null,
 		__2DCornersCoordinates : null,
-		__volume2DDimensions : null,
-		__volume2DSpacing : null,
-		__volumeOrigin : null,
-		__volumeSpacing : null,
+		__2DDimensions : null,
+		__2DSpacing : null,
+		__origin : null,
+		__spacing : null,
 		__projector : null,
 		
 		get3DPosition : function (event) {
@@ -946,7 +922,7 @@ qx.Class.define("desk.SliceView",
 					k : slice,
 					x : coordinates.x,
 					y : coordinates.y,
-					z : this.__volumeOrigin[2] + this.__volumeSpacing[2] * slice
+					z : this.__origin[2] + this.__spacing[2] * slice
 				};
 				
 			case 1 :
@@ -954,7 +930,7 @@ qx.Class.define("desk.SliceView",
 					i : slice,
 					j : coordinates.j,
 					k : coordinates.i,
-					x : this.__volumeOrigin[0] + this.__volumeSpacing[0] * slice,
+					x : this.__origin[0] + this.__spacing[0] * slice,
 					y : coordinates.y,
 					z : coordinates.x
 				};
@@ -965,7 +941,7 @@ qx.Class.define("desk.SliceView",
 					j : slice,
 					k : coordinates.j,
 					x : coordinates.x,
-					y : this.__volumeOrigin[1] + this.__volumeSpacing[1] * slice,
+					y : this.__origin[1] + this.__spacing[1] * slice,
 					z : coordinates.y
 				};
 			}
@@ -983,7 +959,7 @@ qx.Class.define("desk.SliceView",
 			var projector = this.__projector;
 			var intersection = this.__intersection.set( x2, y2, 0);
 			var coordinates = this.__2DCornersCoordinates;
-			var dimensions = this.__volume2DDimensions;
+			var dimensions = this.__2DDimensions;
 
 			var camera = this.getCamera();
 			projector.unprojectVector( intersection, camera );
@@ -1075,10 +1051,9 @@ qx.Class.define("desk.SliceView",
 			this.__slider.setValue(Math.max(this.__slider.getMinimum(),
 				Math.min(value, this.__slider.getMaximum())));
 
-			var pos = [this.__positionI, this.__positionJ, this.__positionK];
+			var pos = this.__position.slice();
 			pos[[2, 0, 1][this.__orientation]] = sliceId;
-
-			this.setCrossPosition(pos[0], pos[1], pos[2]);
+			this.setCrossPosition(pos);
 			this.propagateCameraToLinks();
 		},
 
@@ -1095,13 +1070,13 @@ qx.Class.define("desk.SliceView",
 				this.__saveDrawingToUndoStack();
 			}
 			var canvas = this.__drawingCanvas;
-			var context = canvas.getContext2d();
+			var ctx = canvas.getContext2d();
 			var image = canvas.getContext2d().getImageData(
 				0, 0, canvas.getWidth(), canvas.getHeight());
-			context.clearRect(0, 0, canvas.getCanvasWidth(),
+			ctx.clearRect(0, 0, canvas.getCanvasWidth(),
 				canvas.getCanvasHeight());
 			var currData = undoData[doingIndex];
-			context.putImageData(currData, 0, 0);
+			ctx.putImageData(currData, 0, 0);
 			this.__doingIndex = doingIndex - 1;
 			this.fireEvent("changeDrawing");
 		},
@@ -1113,11 +1088,11 @@ qx.Class.define("desk.SliceView",
 			this.__doingIndex++;
 			if (this.__doingIndex + 1 < undoData.length) {
 				var canvas = this.__drawingCanvas;
-				var context = canvas.getContext2d();
-				context.clearRect(0, 0,
+				var ctx = canvas.getContext2d();
+				ctx.clearRect(0, 0,
 					canvas.getCanvasWidth(),canvas.getCanvasHeight());
 				var currData = undoData[this.__doingIndex + 1];
-				context.putImageData(currData, 0, 0);
+				ctx.putImageData(currData, 0, 0);
 				if(this.__doingIndex === undoData.length-1)
 					undoData.pop();
 				this.fireEvent("changeDrawing");

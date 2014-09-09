@@ -238,9 +238,8 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		__onChangeCrossPosition : function (e) {
-			var position = e.getTarget().getCrossPosition();
 			this.__viewers.forEach(function (viewer) {
-				viewer.setCrossPosition(position.i, position.j, position.k);
+				viewer.setCrossPosition(e.getTarget().getCrossPosition());
 			});
 		},
 
