@@ -16,7 +16,7 @@
 * @ignore(THREE.Geometry)
 * @ignore(THREE.PlaneGeometry)
 * @ignore(Uint8Array)
-* @lint ignoreDeprecated(alert)
+* @ignore(_.find)
 */
 
 qx.Class.define("desk.SliceView", 
@@ -195,13 +195,9 @@ qx.Class.define("desk.SliceView",
 		 * Returns 'null' if no slice is present
 		*/
 		getFirstSlice : function () {
-			var res = null;
-			this.__slices.forEach(function (slice) {
-				if (!slice.getUserData('toDelete') && (slice.isReady())) {
-					res = slice;
-				}
+			return _.find(this.__slices, function (sl) {
+				return !sl.getUserData('toDelete') && (sl.isReady());
 			});
-			return res;
 		},
 
 		setPaintColor : function (color) {
@@ -253,78 +249,51 @@ qx.Class.define("desk.SliceView",
 
 		__reorientationContainer : null,
 
-		rotateLeft : function () {
+		rotate : function (direction) {
 			this.getLinks().forEach(function (link) {
 				if(link.isOrientationChangesOperateOnCamera()) {
 					var camera = link.getCamera();
 					var controls = link.getControls(); 
-					var direction = controls.target.clone();
-					direction.sub(camera.position);
+					var dir = controls.target.clone();
+					dir.sub(camera.position);
 					var up = camera.up;
-					direction.cross(up).normalize();
-					up.copy(direction);
+					dir.cross(up).normalize().multiplyScalar(direction);
+					up.copy(dir);
 					controls.update();
+					link.render();
 				} else {
 					var overlays = link.__directionOverlays;
-					var tempValue = overlays[3].getValue();
-					for (var i = 3; i > 0; i--) {
-						overlays[i].setValue(overlays[i - 1].getValue());
+					if (direction < 0) {
+						var tempValue = overlays[0].getValue();
+						for (var i = 0; i < 3; i++) {
+							overlays[i].setValue(overlays[i + 1].getValue());
+						}
+						overlays[3].setValue(tempValue);
+					} else {
+						tempValue = overlays[3].getValue();
+						for (var i = 3; i > 0; i--) {
+							overlays[i].setValue(overlays[i - 1].getValue());
+						}
+						overlays[0].setValue(tempValue);
 					}
-					overlays[0].setValue(tempValue);
 				}
-				link.render();
 			});
 		},
 
-		rotateRight : function () {
+		flip : function (orientation) {
 			this.getLinks().forEach(function (link) {
 				if(link.isOrientationChangesOperateOnCamera()) {
-					var camera = link.getCamera();
-					var controls = link.getControls(); 
-					var direction = controls.target.clone();
-					direction.sub(camera.position);
-					var up = camera.up;
-					direction.cross(up).normalize().negate();
-					up.copy(direction);
-					controls.update();
-				} else {
-					var overlays = link.__directionOverlays;
-					var tempValue = overlays[0].getValue();
-					for (var i = 0; i < 3; i++) {
-						overlays[i].setValue(overlays[i + 1].getValue());
+					if (orientation) {
+						link.getCamera().up.negate();
 					}
-					overlays[3].setValue(tempValue);
-				}
-				link.render();
-			});
-		},
-
-		flipX : function () {
-			this.getLinks().forEach(function (link) {
-				if(link.isOrientationChangesOperateOnCamera()) {
 					link.setCameraZ( - link.getCameraZ());
+					link.render();
 				} else {
 					var overlays = link.__directionOverlays;
-					var tempValue = overlays[1].getValue();
-					overlays[1].setValue(overlays[3].getValue());
-					overlays[3].setValue(tempValue);
+					var tempValue = overlays[1 - orientation].getValue();
+					overlays[1 - orientation].setValue(overlays[3 - orientation].getValue());
+					overlays[3 - orientation].setValue(tempValue);
 				}
-				link.render();
-			});
-		},
-
-		flipY : function () {
-			this.getLinks().forEach(function (link) {
-				if(link.isOrientationChangesOperateOnCamera()) {
-					link.getCamera().up.negate();
-					link.setCameraZ( - link.getCameraZ());
-				} else {
-					var overlays = link.__directionOverlays;
-					var tempValue = overlays[0].getValue();
-					overlays[0].setValue(overlays[2].getValue());
-					overlays[2].setValue(tempValue);
-				}
-				link.render();
 			});
 		},
 
@@ -339,16 +308,17 @@ qx.Class.define("desk.SliceView",
 			
 			var gridContainer = this.__reorientationContainer = new qx.ui.container.Composite();
 			var gridLayout = new qx.ui.layout.Grid(3, 3);
-			for (var i=0;i<2;i++) {
+			for (var i = 0; i < 2; i++) {
 				gridLayout.setRowFlex(i, 1);
 				gridLayout.setColumnFlex(i, 1);
 			}
 			gridContainer.set({layout : gridLayout,	decorator : "main"});
 
-			[{label : "Rotate left", cb : this},
-				{label : "Rotate right", cb : this},
-				{label : "Flip X", cb : this.flipX},
-				{label : "Flip Y", cb : this.flipY}].forEach(function (params, index) {
+			[{label : "Rotate left", cb : function () {this.rotate(1);}},
+				{label : "Rotate right", cb : function () {this.rotate(-1);}},
+				{label : "Flip X", cb : function () {this.flip(0);}},
+				{label : "Flip Y", cb : function () {this.flip(0);}}
+			].forEach(function (params, index) {
 				var button = new qx.ui.form.Button(params.label);
 				button.addListener("execute", params.cb, this);
 				gridContainer.add(button, {row: index > 1 ? 1 : 0, column: index % 2});
@@ -638,16 +608,12 @@ qx.Class.define("desk.SliceView",
 
 			this.__createCrossMeshes(volumeSlice);
 
-			switch (this.__orientation) {
-				case 0 :
-					this.flipY();
-					break;
-				case 1 :
-					this.flipX();
-					this.flipY();
-					break;
-				default:
-					break;
+			if (this.__orientation < 2) {
+				this.flip(1);
+			}
+
+			if (this.__orientation == 1) {
+				this.flip(0);
 			}
 
 			var dims = volumeSlice.getDimensions().map(function (dim) {
@@ -665,9 +631,7 @@ qx.Class.define("desk.SliceView",
 		 * @return {desk.VolumeSlice} : displayed volume
 		 */
 		addVolume : function (file, parameters, callback) {
-			var slices = this.__slices;
-
-			var firstSlice = slices.every(function (slice) {
+			var firstSlice = this.__slices.every(function (slice) {
 				return slice.getUserData('toDelete') === true;
 			});
 
@@ -675,9 +639,9 @@ qx.Class.define("desk.SliceView",
 				this.__orientation, parameters, function () {
 					if (volumeSlice.getUserData('toDelete')) {
 						// deletion was triggered before slice was completely loaded
-						for (var i = 0; i < slices.length; i++) {
-							if (slices[i] === volumeSlice) {
-								slices.splice(i, 1);
+						for (var i = 0; i < this.__slices.length; i++) {
+							if (this.__slices[i] === volumeSlice) {
+								this.__slices.splice(i, 1);
 							}
 						}
 						volumeSlice.dispose();
@@ -689,7 +653,7 @@ qx.Class.define("desk.SliceView",
 					volumeSlice.setSlice(this.getSlice());
 					this.__addSlice(volumeSlice, parameters, callback);
 			}, this);
-			slices.push(volumeSlice);
+			this.__slices.push(volumeSlice);
 			return volumeSlice;
 		},
 
@@ -713,34 +677,16 @@ qx.Class.define("desk.SliceView",
 
 		__setCrossPositionFromEvent : function (event) {
 			var position = this.getPositionOnSlice(event);
-			var v = [position.i, position.j];
-			var dimensions = this.__volume2DDimensions;
-			var i, j, k;
+			var dims = this.__volume2DDimensions;
 
-			for (i = 0; i < 2; i++) {
-				v[i] = Math.max(0, Math.min(dimensions[i] - 1, v[i]));
-			}
+			var v = [position.i, position.j].map(function (v, index) {
+				return Math.max(0, Math.min(dims[index] - 1, v));
+			});
 
-			switch (this.__orientation) {
-			case 0 :
-				i = v[0];
-				j = v[1];
-				k = this.getSlice();
-				break;
-			case 1 :
-				i = this.getSlice();
-				j = v[1];
-				k = v[0];
-				break;
-			case 2 :
-			default :
-				i = v[0];
-				j = this.getSlice();
-				k = v[1];
-				break;
-			}
-
-			this.setCrossPosition(i, j, k);
+			this.setCrossPosition(
+				[v[0], this.getSlice(), v[0]][this.__orientation],
+				[v[1], v[1], this.getSlice()][this.__orientation],
+				[this.getSlice(), v[0], v[1]][this.__orientation]);
 		},
 
 		__positionI : null,
@@ -758,30 +704,15 @@ qx.Class.define("desk.SliceView",
 				(this.__positionK === k)) {
 					return;
 			}
-			var slice, x, y;
 			var dimensions = this.__volume2DDimensions;
 			if (!dimensions) {
 				// dimensions might not exist if the volume is not ready yet
 				return;
 			}
-			switch (this.__orientation) {
-			case 0 :
-				x = i;
-				y = dimensions[1] - 1 -j;
-				slice = k;
-				break;
-			case 1 :
-				x = k;
-				y = dimensions[1]- 1 - j;
-				slice = i;
-				break;
-			case 2 :
-			default :
-				x = i;
-				y = dimensions[1]- 1 - k;
-				slice = j;
-				break;
-			}
+
+			var x, y;
+			x = [i, k, i][this.__orientation];
+			y = dimensions[1] - 1 - [j, j, k][this.__orientation];
 
 			var spacing = this.__volume2DSpacing;
 			var coordinates = this.__2DCornersCoordinates;
@@ -793,7 +724,7 @@ qx.Class.define("desk.SliceView",
 			this.__positionK = k;
 			this.__crossMeshes[0].position.setY(y);
 			this.__crossMeshes[1].position.setX(x);
-			this.setSlice(slice);
+			this.setSlice([k, i, j][this.__orientation]);
 			this.render();
 
 			this.fireEvent("changeCrossPosition");
@@ -1083,14 +1014,14 @@ qx.Class.define("desk.SliceView",
 			qx.util.DisposeUtil.disposeTriggeredBy(font, this);
 
 			var labels = [
-				["A", "P", "L", "R"],
-				["A", "P", "S", "I"],
-				["S", "I", "L", "R"]][this.__orientation];
+				["A", "L", "P", "R"],
+				["A", "S", "P", "I"],
+				["S", "L", "I", "R"]][this.__orientation];
 
 			var directionOverlays = this.__directionOverlays = [
 				{left: "50%", top:"1%"},
-				{left: "50%", bottom:"1%"},
 				{left: "1%", top:"45%"},
+				{left: "50%", bottom:"1%"},
 				{right: "1%", top:"45%"}
 			].map(function (position, index) {
 				var label = new qx.ui.basic.Label(labels[index]).set(settings);
@@ -1098,16 +1029,15 @@ qx.Class.define("desk.SliceView",
 				return label;
 			}, this);
 
-
 			var label = this.__sliceLabel = new qx.ui.basic.Label("0");
 			label.set({textAlign: "center", width : 40, font : font,
 				textColor : this.__textColor});
 			this.add(label, {top :0, left :0});
 
 			var slider = this.__slider = new qx.ui.form.Slider().set (
-				{minimum : 0, maximum : 100, value : 0,
-				width :30, opacity : 0.5, backgroundColor : "transparent",
-				orientation : "vertical", zIndex : 1000
+				{minimum : 0, maximum : 100, value : 0,	width :30,
+					opacity : 0.5, backgroundColor : "transparent",
+					orientation : "vertical", zIndex : 1000
 			});
 			slider.addListener('mousedown', function () {
 				this.__sliderInUse = true;
@@ -1121,10 +1051,11 @@ qx.Class.define("desk.SliceView",
 				this.setSlice(slice.getNumberOfSlices() - 1 - e.getData());
 			}, this);
 
-			var rightContainer = this.__rightContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox());
-			rightContainer.add(slider, {flex : 1});
-			rightContainer.setVisibility("hidden");
-			this.add(rightContainer, {right : 0, top : 0, height : "100%"});
+			var container = this.__rightContainer = 
+				new qx.ui.container.Composite(new qx.ui.layout.VBox());
+			container.add(slider, {flex : 1});
+			container.setVisibility("hidden");
+			this.add(container, {right : 0, top : 0, height : "100%"});
 		},
 
 		// this member is true only when user is manipulating the slider
@@ -1139,29 +1070,15 @@ qx.Class.define("desk.SliceView",
 			if (!slice) {
 				return;
 			}
-			var sliderValue = slice.getNumberOfSlices() - 1 - sliceId;
-			sliderValue = Math.max(sliderValue, this.__slider.getMinimum());
-			sliderValue = Math.min(sliderValue, this.__slider.getMaximum());
-			this.__slider.setValue(sliderValue);
 
-			var i = this.__positionI;
-			var j = this.__positionJ;
-			var k = this.__positionK;
+			var value = slice.getNumberOfSlices() - 1 - sliceId;
+			this.__slider.setValue(Math.max(this.__slider.getMinimum(),
+				Math.min(value, this.__slider.getMaximum())));
 
-			switch (this.__orientation) {
-				case 0 :
-					k = sliceId;
-					break;
-				case 1 :
-					i = sliceId;
-					break;
-				case 2 :
-				default :
-					j = sliceId;
-					break;
-			}
+			var pos = [this.__positionI, this.__positionJ, this.__positionK];
+			pos[[2, 0, 1][this.__orientation]] = sliceId;
 
-			this.setCrossPosition(i, j, k);
+			this.setCrossPosition(pos[0], pos[1], pos[2]);
 			this.propagateCameraToLinks();
 		},
 
