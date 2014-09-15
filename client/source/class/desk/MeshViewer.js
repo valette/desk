@@ -11,7 +11,7 @@ qx.Class.define("desk.MeshViewer",
 		var minSize = Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.85);
 
 		var win = new qx.ui.window.Window();
-		win.set({layout : new qx.ui.layout.VBox(), showMinimize : false,
+		win.set({layout : new qx.ui.layout.HBox(), showMinimize : false,
 			width : minSize, height : minSize});
 
         win.add(this, {flex : 1});
