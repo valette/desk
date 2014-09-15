@@ -41,13 +41,9 @@ qx.Class.define("desk.SliceView",
 		//clean the scene
 		qx.util.DisposeUtil.destroyContainer(this.__rightContainer);
 		
-		if (this.__drawingCanvas) {
-			this.__drawingCanvas.dispose();
-		}
+		if (this.__drawingCanvas) {this.__drawingCanvas.dispose();}
 
-		if (this.__brushCanvas) {
-			this.__brushCanvas.dispose();
-		}
+		if (this.__brushCanvas) {this.__brushCanvas.dispose();}
 
 		this.__intersection = null;
 		this.__2DCornersCoordinates = null;
@@ -219,9 +215,8 @@ qx.Class.define("desk.SliceView",
 		removeVolume : function (slice) {
 			var mesh = slice.getUserData("mesh");
 			this.__slices.forEach(function (sl, index) {
-				if (sl !== slice) {
-					return;
-				}
+				if (sl !== slice) {return;}
+
 				if (mesh) {
 					this.getScene().remove(mesh);
 					//release GPU memory
@@ -249,7 +244,11 @@ qx.Class.define("desk.SliceView",
 
 		__reorientationContainer : null,
 
-		rotate : function (direction) {
+		/**
+		 * rotates the camera/directions overlays
+		 * @param direction {Number} direction (-1 : clockwise, 1 : trigonometric)
+		 **/
+		 rotate : function (direction) {
 			this.getLinks().forEach(function (link) {
 				if(link.isOrientationChangesOperateOnCamera()) {
 					var camera = link.getCamera();
@@ -280,6 +279,10 @@ qx.Class.define("desk.SliceView",
 			});
 		},
 
+		/**
+		 * flips the camera/directions overlays
+		 * @param orientation {Number} orientation (0 : x, 1 : y)
+		 **/
 		flip : function (orientation) {
 			this.getLinks().forEach(function (link) {
 				if(link.isOrientationChangesOperateOnCamera()) {
@@ -497,20 +500,13 @@ qx.Class.define("desk.SliceView",
 			geometry.computeVertexNormals();
 			geometry.computeBoundingSphere();
 
-			function updateTexture() {
+			var dl1 = this.addListener('changeDrawing', function() {
 				var data = this.__drawingCanvas.getContext2d().getImageData(
 					0, 0, width, height).data;
 				for (var i = width * height * 4; i--;) {
 					dataColor[i] = data[i];
 				}
 				texture.needsUpdate = true;
-				this.render();
-			}
-
-			updateTexture.apply(this);
-
-			var dl1 = this.addListener('changeDrawing', function() {
-				updateTexture.apply(this);
 				this.render();
 			}, this);
 
@@ -532,11 +528,10 @@ qx.Class.define("desk.SliceView",
 				vertex.set(coords[2 * i], coords[2 * i + 1], 0);
 			});
 
-			var listener = this.addListener("changeSlice", function (e) {
-				volumeSlice.setSlice(e.getData());
-			});
-
-			volumeSlice.setUserData("updateListener", listener);
+			volumeSlice.setUserData("updateListener", this.addListener(
+				"changeSlice", function (e) {
+					volumeSlice.setSlice(e.getData());
+			}));
 
 			var material = volumeSlice.getMaterial();
 			material.side = THREE.DoubleSide;
@@ -600,13 +595,8 @@ qx.Class.define("desk.SliceView",
 
 			this.__createCrossMeshes(slice);
 
-			if (this.__orientation < 2) {
-				this.flip(1);
-			}
-
-			if (this.__orientation == 1) {
-				this.flip(0);
-			}
+			if (this.__orientation < 2) {this.flip(1);}
+			if (this.__orientation == 1) {this.flip(0);}
 
 			this.__position[0] = undefined; // to force cross position update
 			this.setCrossPosition(slice.getDimensions().map(function (dim) {
@@ -625,42 +615,37 @@ qx.Class.define("desk.SliceView",
 				return slice.getUserData('toDelete') === true;
 			});
 
-			var volumeSlice = new desk.VolumeSlice(file,
+			var slice = new desk.VolumeSlice(file,
 				this.__orientation, parameters, function () {
-					if (volumeSlice.getUserData('toDelete')) {
+					if (slice.getUserData('toDelete')) {
 						// deletion was triggered before slice was completely loaded
 						for (var i = 0; i < this.__slices.length; i++) {
-							if (this.__slices[i] === volumeSlice) {
+							if (this.__slices[i] === slice) {
 								this.__slices.splice(i, 1);
 							}
 						}
-						volumeSlice.dispose();
+						slice.dispose();
 						return;
 					}
-					if (firstSlice) {
-						this.__initFromVolume(volumeSlice);
-					}
-					volumeSlice.setSlice(this.getSlice());
-					this.__addSlice(volumeSlice, parameters, callback);
+					if (firstSlice) {this.__initFromVolume(slice);}
+					slice.setSlice(this.getSlice());
+					this.__addSlice(slice, parameters, callback);
 			}, this);
-			this.__slices.push(volumeSlice);
-			return volumeSlice;
+			this.__slices.push(slice);
+			return slice;
 		},
 
 		/**
-		 changes the display rank of the volume. Higher rank values are
+		 * changes the display rank of the volume. Higher rank values are
 		 * rendered last
-		 * @param volumeSlice {desk.volumeSlice} : volumeSlice to alter
+		 * @param volumeSlice {desk.VolumeSlice} : volumeSlice to alter
 		 * @param rank {Int} : rank to apply
 		 **/
 		setSliceRank : function (volumeSlice, rank) {
 			this.__slices.forEach(function (slice) {
 				if (slice === volumeSlice) {
 					var mesh = slice.getUserData("mesh");
-					if (mesh) {
-						// the mesh may not exist if no slice has been loaded yet
-						mesh.renderDepth = - rank;
-					}
+					if (mesh) {mesh.renderDepth = - rank;}
 				}
 			});
 		},
@@ -692,10 +677,7 @@ qx.Class.define("desk.SliceView",
 			}
 			this.__position = pos;
 
-			if (!this.__2DDimensions) {
-				// dimensions might not exist if the volume is not ready yet
-				return;
-			}
+			if (!this.__2DDimensions) {return;}
 
 			var x = pos[[0, 2, 0][this.__orientation]];
 			var y = this.__2DDimensions[1] - 1 - pos[[1, 1, 2][this.__orientation]];
@@ -710,7 +692,7 @@ qx.Class.define("desk.SliceView",
 
 			this.fireEvent("changeCrossPosition");
 			this.getLinks().forEach(function (link) {
-				if (link === this) return;
+				if (link === this) {return};
 				link.setCrossPosition(pos);
 			}, this);
 		},
@@ -786,9 +768,7 @@ qx.Class.define("desk.SliceView",
 		},
 
 		__onMouseOut : function (event) {
-			if (this.__sliderInUse) {
-				return;
-			}
+			if (this.__sliderInUse) {return;}
 			this.__viewOn = false;
 			this.__rightContainer.setVisibility("hidden");
 			this.__directionOverlays[3].setLayoutProperties({right: 1, top:"45%"});
@@ -948,6 +928,7 @@ qx.Class.define("desk.SliceView",
 		},
 		
 		getPositionOnSlice : function (event) {
+			if (!this.__intersection) {return;}
 			var origin = this.getContentLocation();
 			var x = event.getDocumentLeft() - origin.left;
 			var y = event.getDocumentTop() - origin.top;
@@ -1097,9 +1078,7 @@ qx.Class.define("desk.SliceView",
 					undoData.pop();
 				this.fireEvent("changeDrawing");
 			}
-			else {
-				this.__doingIndex--;
-			}
+			else {this.__doingIndex--;}
 		},
 
 		__initUndo : function () {
@@ -1122,9 +1101,7 @@ qx.Class.define("desk.SliceView",
 			var image = canvas.getContext2d().getImageData(
 				0, 0, canvas.getWidth(), canvas.getHeight());
 			var undoData = this.__undoData;
-			if (undoData.length === 10) {
-				undoData.shift();
-			}
+			if (undoData.length === 10) {undoData.shift();}
 			undoData.push(image);
 			var redos2Discard = undoData.length -2 - this.__doingIndex; // -1 because it is about indexes, -1 to have the length before the saving
 			for(var i = 0; i < redos2Discard; i++) // discard unused redo data

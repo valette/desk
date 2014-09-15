@@ -62,6 +62,8 @@ qx.Class.define("desk.SceneContainer",
 
 				var mesh = this.__pickMeshes(this.getMeshes());
 				if (!mesh) return;
+				console.log("picked mesh : ");
+				console.log(mesh);
 				var controls = this.getControls();
                 var init = controls.target.clone();
                 var fin = mesh.point.clone();

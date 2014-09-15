@@ -146,15 +146,15 @@ qx.Class.define("desk.VolumeSlice",
 				"gl_FragColor=(texture2D( texture, vUv )+brightness)*contrast;",
 				"gl_FragColor[3]=opacity;",
 			"}"
-		].join("\n")
+		].join("\n"),
+
+		// indices of x, y and z according to orientation
+		indices : {
+			x: [0, 2, 0], y : [1, 1, 2], z: [2, 0, 1]
+		}
 	},
 
 	members : {
-		// indices of x, y and z according to orientation
-		__xIndex : [0, 2, 0],
-		__yIndex : [1, 1, 2],
-		__zIndex : [2, 0, 1],
-
 		__orientationNames : ['XY', 'ZY', 'XZ'],
 
 		__textureFilter : null,
@@ -218,8 +218,9 @@ qx.Class.define("desk.VolumeSlice",
 		},
 
 		get2DSpacing : function () {
-			return [this.__spacing[this.__xIndex[this.getOrientation()]],
-				this.__spacing[this.__yIndex[this.getOrientation()]]];
+			var o = this.getOrientation();
+			return [this.__spacing[desk.VolumeSlice.indices.x[o]],
+				this.__spacing[desk.VolumeSlice.indices.y[o]]];
 		},
 
 		getScalarType : function () {
@@ -489,12 +490,14 @@ qx.Class.define("desk.VolumeSlice",
 				slice = this.getSlice();
 			}
 
-			var bounds = this.getBounds();
-			var coords = [];
+			var bounds = this.getBounds(),
+				coords = [],
+				indices = desk.VolumeSlice.indices,
+				orientation = this.getOrientation();
 
-			var xi = this.__xIndex[this.getOrientation()];
-			var yi = this.__yIndex[this.getOrientation()];
-			var zi = this.__zIndex[this.getOrientation()];
+			var xi = indices.x[orientation];
+			var yi = indices.y[orientation];
+			var zi = indices.z[orientation];
 
 			for (var i = 0; i < 4; i++) {
 				coords[3 * i + xi] =  this.__origin[xi] +
@@ -522,7 +525,7 @@ qx.Class.define("desk.VolumeSlice",
 		},
 
 		getZIndex : function () {
-			return this.__zIndex[this.getOrientation()];
+			return desk.VolumeSlice.indices.z[this.getOrientation()];
 		},
 
 		/**
@@ -531,8 +534,8 @@ qx.Class.define("desk.VolumeSlice",
 		 */
 		 get2DDimensions: function () {
 			var o = this.getOrientation();
-			return [this.__dimensions[this.__xIndex[o]],
-				this.__dimensions[this.__yIndex[o]]];
+			return [this.__dimensions[desk.VolumeSlice.indices.x[o]],
+				this.__dimensions[desk.VolumeSlice.indices.y[o]]];
 		},
 
 		/**
@@ -541,8 +544,8 @@ qx.Class.define("desk.VolumeSlice",
 		 */
 		 get2DCornersCoordinates : function () {
 			var bounds = this.getBounds();
-			var xi = 2 * this.__xIndex[this.getOrientation()];
-			var yi = 2 * this.__yIndex[this.getOrientation()];
+			var xi = 2 * desk.VolumeSlice.indices.x[this.getOrientation()];
+			var yi = 2 * desk.VolumeSlice.indices.y[this.getOrientation()];
 
 			return [bounds[xi], bounds[yi],
 					bounds[xi + 1], bounds[yi],

@@ -16,13 +16,13 @@ qx.Class.define("desk.TextEditor",
 		this.set({layout : new qx.ui.layout.VBox(), 
 			height :400, width : 500, showMinimize : false});
 
-		this.__reloadButton = new qx.ui.form.Button("Reload");
-		this.__reloadButton.addListener("execute", function(e) {
+		this.__reload = new qx.ui.form.Button("Reload");
+		this.__reload.addListener("execute", function(e) {
 			this.openFile(this.__file);
 		}, this);
 
-		var saveButton = this.__saveButton = new qx.ui.form.Button("Save");
-		saveButton.addListener("execute", this.save, this);
+		var save = this.__save = new qx.ui.form.Button("Save");
+		save.addListener("execute", this.save, this);
 
         this.addListener('keydown', function (e) {
             if (!e.isCtrlPressed()) return;
@@ -33,42 +33,42 @@ qx.Class.define("desk.TextEditor",
 					break;
 				case 'G' :
 					e.preventDefault();
-					this.__textArea.getAce().findNext();
+					this.__text.getAce().findNext();
 					break;
 				default :
 					break;
 			}
         }, this);
 
-		this.__executeButton = new qx.ui.form.Button("execute");
-		this.__executeButton.addListener("execute", this.__onExecute, this);
+		this.__execute = new qx.ui.form.Button("execute");
+		this.__execute.addListener("execute", this.__onExecute, this);
 
-		this.__foldButton = new qx.ui.form.Button("F");
-		this.__foldButton.setToolTipText("Fold all");
-		this.__foldButton.addListener("execute", function () {
-			this.__textArea.getAce().getSession().foldAll(null, null, 0);
+		this.__fold = new qx.ui.form.Button("F");
+		this.__fold.setToolTipText("Fold all");
+		this.__fold.addListener("execute", function () {
+			this.__text.getAce().getSession().foldAll(null, null, 0);
 		}, this);
 
 		var spinner = this.__spinner = new qx.ui.form.Spinner(5, 14, 50);
 		spinner.addListener('changeValue', function (e) {
-            this.__textArea.setFontSize(e.getData());
+            this.__text.setFontSize(e.getData());
         }, this);
 
-		var buttonsContainer = this.__buttonsContainer = new qx.ui.container.Composite();
-		buttonsContainer.setLayout(new qx.ui.layout.HBox());
-		buttonsContainer.add(this.__executeButton, {flex : 1});
-		buttonsContainer.add(this.__reloadButton, {flex : 1});
-		buttonsContainer.add(this.__foldButton);
-		buttonsContainer.add(saveButton, {flex : 1});
-        buttonsContainer.add(spinner);
-		this.add(buttonsContainer);
+		var container = this.__buttons = new qx.ui.container.Composite();
+		container.setLayout(new qx.ui.layout.HBox());
+		container.add(this.__execute, {flex : 1});
+		container.add(this.__reload, {flex : 1});
+		container.add(this.__fold);
+		container.add(save, {flex : 1});
+        container.add(spinner);
+		this.add(container);
 
-		var textArea = this.__textArea = new desk.AceContainer();
+		this.__text = new desk.AceContainer();
 		if (file) {
 			this.openFile(file);
 		}
 
-        this.add(textArea, {flex : 1});
+        this.add(this.__text, {flex : 1});
 		this.open();
 		this.center();
         this.addListener('close', this.destroy, this);
@@ -76,8 +76,8 @@ qx.Class.define("desk.TextEditor",
 
 	destruct : function(file) {
 		this.__removeScript();
-		qx.util.DisposeUtil.destroyContainer(this.__buttonsContainer);
-		this.__textArea.dispose();
+		qx.util.DisposeUtil.destroyContainer(this.__buttons);
+		this.__text.dispose();
 	},
 
 	statics : {
@@ -86,34 +86,36 @@ qx.Class.define("desk.TextEditor",
 	},
 
 	members : {
-		__textArea : null,
+		__text : null,
 		__file : null,
-		__reloadButton : null,
-		__executeButton : null,
-        __saveButton : null,
-		__scriptContainer : null,
-		__buttonsContainer : null,
-		__foldButton : null,
+
+		//buttons
+		__reload : null,
+		__execute : null,
+		__save : null,
+		__fold : null,
+
+		__buttons : null,
+		__script : null,
 
 		__removeScript : function () {
-			var scriptContainer = this.__scriptContainer;
-			if (scriptContainer) {
-				document.getElementsByTagName('body')[0].removeChild(scriptContainer);
+			if (this.__script) {
+				document.getElementsByTagName('body')[0].removeChild(this.__script);
 			}
 		},
 
 		__onExecute : function() {
 			desk.TextEditor.codeInTextEditor = null;
 			this.__removeScript();
-			var bodyContainer = document.getElementsByTagName('body')[0];
-			var scriptContainer = this.__scriptContainer = document.createElement('script');
-			scriptContainer.setAttribute('type','text/javascript');
-			scriptContainer.text = 'desk.TextEditor.codeInTextEditor = function(){' +
-				this.__textArea.getCode() + '\n};' + '\n//@ sourceURL=v' +
+			var body = document.getElementsByTagName('body')[0];
+			this.__script = document.createElement('script');
+			this.__script.setAttribute('type','text/javascript');
+			this.__script.text = 'desk.TextEditor.codeInTextEditor = function(){' +
+				this.__text.getCode() + '\n};' + '\n//@ sourceURL=v' +
 				desk.TextEditor.codeVersion + '-' +
 				desk.FileSystem.getFileName(this.__file);
 			desk.TextEditor.codeVersion++;
-			bodyContainer.appendChild(scriptContainer);
+			body.appendChild(this.__script);
 
 			if (desk.TextEditor.codeInTextEditor) {
 				desk.TextEditor.codeInTextEditor();
@@ -126,9 +128,9 @@ qx.Class.define("desk.TextEditor",
 		* Saves content to file
 		*/
 		save : function () {
-            this.__saveButton.setEnabled(false);
-            desk.FileSystem.writeFile(this.__file, this.__textArea.getCode(), function () {
-                this.__saveButton.setEnabled(true);
+            this.__save.setEnabled(false);
+            desk.FileSystem.writeFile(this.__file, this.__text.getCode(), function () {
+                this.__save.setEnabled(true);
                 console.log('file saved');
             }, this);
         },
@@ -139,37 +141,37 @@ qx.Class.define("desk.TextEditor",
 		* @param file {String} the file to edit
 		*/
 		openFile : function (file) {
-			this.__executeButton.setVisibility('excluded');
-			this.__foldButton.setVisibility('visible');
+			this.__execute.setVisibility('excluded');
+			this.__fold.setVisibility('visible');
 			switch (desk.FileSystem.getFileExtension(file)) {
 				case "json":
-					this.__textArea.setMode("json");
+					this.__text.setMode("json");
 					break;
 				case "cxx":
 				case "cpp":
 				case "h":
 				case "txx":
 				case "c":
-					this.__textArea.setMode("c_cpp");
+					this.__text.setMode("c_cpp");
 					break;
 				case "html":
-					this.__textArea.setMode("html");
+					this.__text.setMode("html");
 					break;
 				case "js" :
-					this.__executeButton.setVisibility('visible');
-					this.__textArea.setMode("javascript");
+					this.__execute.setVisibility('visible');
+					this.__text.setMode("javascript");
 					break;
 				default : 
-					this.__foldButton.setVisibility('excluded');
+					this.__fold.setVisibility('excluded');
 					break;
 			}
 
 			this.__file = file;
-			this.__reloadButton.setEnabled(false);
+			this.__reload.setEnabled(false);
 			desk.FileSystem.readFile(file, function (error, result) {
-				this.__textArea.setCode(result);
+				this.__text.setCode(result);
 				this.setCaption(file);
-				this.__reloadButton.setEnabled(true);
+				this.__reload.setEnabled(true);
 			}, this, {forceText : true});
 		}
 	}

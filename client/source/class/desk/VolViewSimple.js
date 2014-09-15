@@ -6,8 +6,7 @@ qx.Class.define("desk.VolViewSimple",
 {
   extend : qx.ui.window.Window,
 
-	construct : function(file)
-	{
+	construct : function(file) {
 		this.base(arguments);
 
 		this.setLayout(new qx.ui.layout.HBox(5));
