@@ -32,4 +32,8 @@ THREE.CTMLoader.prototype.createWorker = function () {
 	return work(require('../client/ext/three.js/ctm/CTMWorker.js'));
 }
 
+THREE.VTKLoader.prototype.createWorker = function () {
+	return work(require('../client/ext/three.js/VTKWorker.js'));
+}
+
 require('../client/ext/mhdParse.js');

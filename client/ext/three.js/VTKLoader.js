@@ -1,127 +1,269 @@
 /**
+ * Loader for VTK encoded models
+ *
  * @author mrdoob / http://mrdoob.com/
+ * @author alteredq / http://alteredqualia.com/
  */
 
-THREE.VTKLoader = function () {};
+THREE.VTKLoader = function ( showStatus ) {
 
-THREE.VTKLoader.prototype = {
-	addEventListener: THREE.EventDispatcher.prototype.addEventListener,
-	hasEventListener: THREE.EventDispatcher.prototype.hasEventListener,
-	removeEventListener: THREE.EventDispatcher.prototype.removeEventListener,
-	dispatchEvent: THREE.EventDispatcher.prototype.dispatchEvent,
+	THREE.Loader.call( this, showStatus );
 
-	constructor: THREE.VTKLoader,
+};
 
-	load: function ( url, callback ) {
+THREE.VTKLoader.prototype = Object.create( THREE.Loader.prototype );
 
-		var scope = this;
-		var request = new XMLHttpRequest();
+THREE.VTKLoader.prototype.workers = [];
 
-		request.addEventListener( 'load', function ( event ) {
+THREE.VTKLoader.prototype.createWorker = function () {
 
-			var geometry = scope.parse( event.target.responseText );
+	return new Worker( "js/loaders/VTKWorker.js" )
 
-			scope.dispatchEvent( { type: 'load', content: geometry } );
+}
 
-			if ( callback ) callback( geometry );
+// Load VTK models
+//	- parameters
+//		- url (required)
+//		- callback (required)
+THREE.VTKLoader.prototype.load = function( url, callback, parameters ) {
 
-		}, false );
+	parameters = parameters || {};
 
-		request.addEventListener( 'progress', function ( event ) {
+	var scope = this;
 
-			scope.dispatchEvent( { type: 'progress', loaded: event.loaded, total: event.total } );
+	var offsets = parameters.offsets !== undefined ? parameters.offsets : [ 0 ];
 
-		}, false );
+	var xhr = new XMLHttpRequest(),
+		callbackProgress = null;
 
-		request.addEventListener( 'error', function () {
+	var length = 0;
 
-			scope.dispatchEvent( { type: 'error', message: 'Couldn\'t load URL [' + url + ']' } );
+	xhr.onreadystatechange = function() {
 
-		}, false );
+		if ( xhr.readyState === 4 ) {
 
-		request.open( 'GET', url, true );
-		request.send( null );
+			if ( xhr.status === 200 || xhr.status === 0 ) {
 
-	},
+				var binaryData = new Uint8Array(xhr.response);
 
-	parse: function ( data ) {
+				var s = Date.now();
 
-		var i, pattern, pattern2, result, nV, numV, numP;
-		var geometry = new THREE.BufferGeometry();
+				if ( parameters.useWorker != false ) {
 
-		pattern = /POINTS[\s]+([\d]+)/g;
-		result = pattern.exec( data );
-		numV = parseInt(result[1], 10);
-		// float/int  float/int  float/int
-		pattern2 = /([\+|\-]?[\d]+[\.]?[\d|\-|e]*)[ ]+([\+|\-]?[\d]+[\.]?[\d|\-|e]*)[ ]+([\+|\-]?[\d]+[\.]?[\d|\-|e]*)/g;
-		pattern2.lastIndex = pattern.lastIndex;
+					var worker = scope.workers.shift() || scope.createWorker();
 
-		var positions = new Float32Array( numV * 3 );
+					worker.onmessage = function( event ) {
 
-		nV = numV;
-		i = 0;
-		while ( nV--) {
-			result = pattern2.exec( data );
-			positions[i++] = parseFloat( result[ 1 ] );
-			positions[i++] = parseFloat( result[ 2 ] );
-			positions[i++] = parseFloat( result[ 3 ] );
-		}
+						var e1 = Date.now();
+//						console.log( "VTK data parse time [worker]: " + (e1-s) + " ms" );
 
-		pattern = /POLYGONS[\s]+([\d]+)[\s]([\d]+)/g;
-		result = pattern.exec( data );
-		numP = parseInt(result[1], 10);
+						scope.createModel( event.data, callback );
 
-		// 3 int int int
-		pattern2 = /3[ ]+([\d]+)[ ]+([\d]+)[ ]+([\d]+)/g;
-		pattern2.lastIndex = pattern.lastIndex;
+						var e = Date.now();
+//						console.log( "model load time [worker]: " + (e-e1) + " ms, total: " + (e-s));
 
-		var indices = new Uint32Array( numP * 3 );
+						scope.workers.push(worker);
 
-		var j = 0;
-		for (i = 0; i < numP; i++) {
-			// ["3 1 2 3", "1", "2", "3"]
-			result = pattern2.exec( data );
-			indices[j++] = parseInt( result[ 1 ] );
-			indices[j++] = parseInt( result[ 2 ] );
-			indices[j++] = parseInt( result[ 3 ] );
-		}
+					};
 
-        pattern = /POINT_DATA[\s]([\d]+)/g;
-		result = pattern.exec( data );
-		if (result) {
+					worker.postMessage(xhr.responseText);
 
-            if ( numV !== parseInt(result[1], 10)) {
-				return;
+				} else {
+
+					scope.createModel(scope.parse(xhr.response), callback);
+
+				}
+
+			} else {
+
+				console.error( "Couldn't load [" + url + "] [" + xhr.status + "]" );
+
 			}
 
-			pattern2 = /SCALARS[\s][\x21-\x7E]+[\s][\x21-\x7E]+/g;
-			pattern2.lastIndex = pattern.lastIndex;
-			result = pattern2.exec( data );
+		} else if ( xhr.readyState === 3 ) {
 
-			pattern =/LOOKUP_TABLE[\s][\x21-\x7E]+/;
-			pattern.lastIndex = pattern2.lastIndex;
-			result = pattern.exec( data );
+			if ( callbackProgress ) {
 
-			pattern2 = /[\s]*([\-\+]?[0-9]*[\.]?[0-9]+)/g;
-			pattern2.lastIndex = pattern.lastIndex;
-			
-			var pointData = new Float32Array(numV);
-			for  (i = 0; i < numV; i++) {
-				result = pattern2.exec( data );
-				pointData[i] = parseFloat(result[1], 10);
+				if ( length === 0 ) {
+
+					length = xhr.getResponseHeader( "Content-Length" );
+
+				}
+
+				callbackProgress( { total: length, loaded: xhr.responseText.length } );
+
 			}
 
-			geometry.userData = geometry.userData || {};
-			geometry.userData.pointData = pointData;
+		} else if ( xhr.readyState === 2 ) {
+
+			length = xhr.getResponseHeader( "Content-Length" );
 
 		}
 
-		geometry.addAttribute( 'index', new THREE.BufferAttribute( indices, 1 ) );
-		geometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+	}
+
+	xhr.open( "GET", url, true );
+
+	xhr.send( null );
+
+};
+
+
+THREE.VTKLoader.prototype.createModel = function ( data, callback ) {
+
+	var Model = function () {
+
+		THREE.BufferGeometry.call( this );
+
+		var indices = data.indices,
+		positions = data.positions,
+		normals = data.normals;
+
+		var uvs, colors;
+
+		var uvMaps = data.uvMaps;
+
+		if ( uvMaps !== undefined && uvMaps.length > 0 ) {
+
+			uvs = uvMaps[ 0 ].uv;
+
+		}
+
+		var attrMaps = data.attrMaps;
+
+		if ( attrMaps !== undefined && attrMaps.length > 0 && attrMaps[ 0 ].name === 'Color' ) {
+
+			colors = attrMaps[ 0 ].attr;
+
+		}
+
+		this.addAttribute( 'index', new THREE.BufferAttribute( indices, 1 ) );
+		this.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+
+		if ( normals !== undefined ) {
+
+			this.addAttribute( 'normal', new THREE.BufferAttribute( normals, 3 ) );
+
+		}
+
+		if ( uvs !== undefined ) {
+
+			this.addAttribute( 'uv', new THREE.BufferAttribute( uvs, 2 ) );
+
+		}
+
+		if ( colors !== undefined ) {
+
+			this.addAttribute( 'color', new THREE.BufferAttribute( colors, 4 ) );
+
+		}
+
+	}
+
+	Model.prototype = Object.create( THREE.BufferGeometry.prototype );
+
+	var geometry = new Model();
+
+	// compute vertex normals if not present in the model
+	if ( geometry.attributes[ "normal" ] === undefined ) {
 
 		geometry.computeVertexNormals();
 
-		return geometry ;
 	}
 
+	if (data.pointData) {
+
+		geometry.userData = {pointData : data.pointData};
+
+	}
+
+	callback( geometry );
+
 };
+
+
+THREE.VTKLoader.prototype.parse = function ( data ) {
+	var payload = {};
+
+	var i, pattern, pattern2, result, nV, numV, numP;
+
+	pattern = /POINTS[\s]+([\d]+)/g;
+	result = pattern.exec( data );
+	numV = parseInt(result[1], 10);
+	// float/int  float/int  float/int
+	pattern2 = /([\+|\-]?[\d]+[\.]?[\d|\-|e]*)[ ]+([\+|\-]?[\d]+[\.]?[\d|\-|e]*)[ ]+([\+|\-]?[\d]+[\.]?[\d|\-|e]*)/g;
+	pattern2.lastIndex = pattern.lastIndex;
+
+	var positions = payload.positions = new Float32Array( numV * 3 );
+
+	nV = numV;
+	i = 0;
+
+	while ( nV--) {
+
+		result = pattern2.exec( data );
+		positions[i++] = parseFloat( result[ 1 ] );
+		positions[i++] = parseFloat( result[ 2 ] );
+		positions[i++] = parseFloat( result[ 3 ] );
+
+	}
+
+	pattern = /POLYGONS[\s]+([\d]+)[\s]([\d]+)/g;
+	result = pattern.exec( data );
+	numP = parseInt(result[1], 10);
+
+	// 3 int int int
+	pattern2 = /3[ ]+([\d]+)[ ]+([\d]+)[ ]+([\d]+)/g;
+	pattern2.lastIndex = pattern.lastIndex;
+
+	var indices = payload.insices = new Uint32Array( numP * 3 );
+
+	var j = 0;
+
+	for (i = 0; i < numP; i++) {
+
+		// ["3 1 2 3", "1", "2", "3"]
+		result = pattern2.exec( data );
+		indices[j++] = parseInt( result[ 1 ] );
+		indices[j++] = parseInt( result[ 2 ] );
+		indices[j++] = parseInt( result[ 3 ] );
+
+	}
+
+	pattern = /POINT_DATA[\s]([\d]+)/g;
+	result = pattern.exec( data );
+	if (result) {
+
+		if ( numV !== parseInt(result[1], 10)) {
+
+			return;
+
+		}
+
+		pattern2 = /SCALARS[\s][\x21-\x7E]+[\s][\x21-\x7E]+/g;
+		pattern2.lastIndex = pattern.lastIndex;
+		result = pattern2.exec( data );
+
+		pattern =/LOOKUP_TABLE[\s][\x21-\x7E]+/;
+		pattern.lastIndex = pattern2.lastIndex;
+		result = pattern.exec( data );
+
+		pattern2 = /[\s]*([\-\+]?[0-9]*[\.]?[0-9]+)/g;
+		pattern2.lastIndex = pattern.lastIndex;
+		
+		var pointData = new Float32Array(numV);
+
+		for  (i = 0; i < numV; i++) {
+
+			result = pattern2.exec( data );
+			pointData[i] = parseFloat(result[1], 10);
+
+		}
+
+		geometry.userData = geometry.userData || {};
+		geometry.userData.pointData = pointData;
+
+	}
+
+	return (payload);
+}

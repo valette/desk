@@ -11,10 +11,10 @@ THREE.TrackballControls2 = function ( object ) {
 
 	this.enabled = true;
 
-	this.setSize = function(width, height)
-	{
-		this.screen = { width: width, height: height};
-		this.radius = ( this.screen.width + this.screen.height );
+	this.setSize = function(width, height) {
+		this.width = width;
+		this.height = height;
+		this.radius = width height;
 	}
 
 	this.setSize();
@@ -35,15 +35,15 @@ THREE.TrackballControls2 = function ( object ) {
 	this.target = new THREE.Vector3( 0, 0, 0 );
 
 	var _keyPressed = false,
-	_state = STATE.NONE,
+		_state = STATE.NONE,
 
-	_eye = new THREE.Vector3(),
+		_eye = new THREE.Vector3(),
 
-	_zoomStart = 0,
-	_zoomEnd = 0,
+		_zoomStart = 0,
+		_zoomEnd = 0,
 
-	_panStart = new THREE.Vector2(),
-	_panEnd = new THREE.Vector2();
+		_panStart = new THREE.Vector2(),
+		_panEnd = new THREE.Vector2();
 
 	this._dx = 0;
 	this._dy = 0;
@@ -250,8 +250,8 @@ THREE.TrackballControls2 = function ( object ) {
 
 		} else if ( _state === STATE.ROTATE && !this.noRotate ) {
 
-			this._dx=+x-this._xinit;
-			this._dy=+y-this._yinit;
+			this._dx= +x - this._xinit;
+			this._dy= +y - this._yinit;
 
 		} else if ( _state === STATE.ZOOM && !this.noZoom ) {
 
@@ -263,28 +263,28 @@ THREE.TrackballControls2 = function ( object ) {
 
 		} else if ( _state === STATE.ROTATE_Z ) {
 
-			var p1 = new THREE.Vector2( x - 0.5 * this.screen.width,
-								y - 0.5 * this.screen.height);
-			var p2 = new THREE.Vector2( this._xinit - 0.5 * this.screen.width,
-								this._yinit - 0.5 * this.screen.height);
+			var p1 = new THREE.Vector2( x - 0.5 * this.width,
+								y - 0.5 * this.height);
+			var p2 = new THREE.Vector2( this._xinit - 0.5 * this.width,
+								this._yinit - 0.5 * this.height);
 
 			var n1 = p1.length();
 			var n2 = p2.length();
 			var n12 = n1 * n2;
 
-			if ( n12 > 0 )
-			{
-				var alpha=0;
+			if ( n12 > 0 ) {
+
+				var alpha = 0;
 				var cosAlpha = p1.dot( p2 ) / n12;
 				var sinAlpha = p2.y * p1.x - p2.x * p1.y;
 
-				if ( cosAlpha < 1 )
-				{
+				if ( cosAlpha < 1 ){
 					alpha = Math.acos( cosAlpha );
 				}
 				if ( sinAlpha > 0 )
-					alpha = -alpha;
-				this._alpha=alpha;
+					alpha = - alpha;
+				this._alpha = alpha;
+
 			}
 		}
 
