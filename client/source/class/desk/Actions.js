@@ -22,6 +22,8 @@ qx.Class.define("desk.Actions",
 		this.base(arguments);
 		this.__populateActionMenu();
 
+		this.__ongoingActions = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+
 		var baseURL = desk.FileSystem.getInstance().getBaseURL();
 		desk.FileSystem.includeScripts([baseURL + 'js/browserified.js'], function () {
 			this.__socket = io({path : baseURL + 'socket/socket.io'});
@@ -180,7 +182,6 @@ qx.Class.define("desk.Actions",
 		* builds the actions UI
 		*/
 		buildUI : function () {
-			this.__ongoingActions = new qx.ui.container.Composite(new qx.ui.layout.VBox());
 			this.__ongoingActions.set ({width : 200, zIndex : 1000000,
 				decorator : "statusbar", backgroundColor : "transparent"});
 			qx.core.Init.getApplication().getRoot().add(this.__ongoingActions, {top : 0, right : 100});
