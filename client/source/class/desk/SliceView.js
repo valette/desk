@@ -17,6 +17,8 @@
 * @ignore(THREE.PlaneGeometry)
 * @ignore(Uint8Array)
 * @ignore(_.find)
+* @ignore(_.contains)
+* @ignore(_.without)
 */
 
 qx.Class.define("desk.SliceView", 
@@ -139,15 +141,9 @@ qx.Class.define("desk.SliceView",
 		__textColor : null,
 
 		projectOnSlice : function (x, y, z) {
-			switch (this.__orientation) {
-				case 0:
-					return {x: x, y:y};
-				case 1:
-					return {x: z, y:y};
-				case 2:
-				default:
-					return {x: x, y:z};
-			}
+			var indices = desk.VolumeSlice.indices;
+			return {x : indices.x[this.__orientation],
+				y : indices.y[this.__orientation]};
 		},
 
 		getVolume2DDimensions : function() {
@@ -191,8 +187,8 @@ qx.Class.define("desk.SliceView",
 		 * Returns 'null' if no slice is present
 		*/
 		getFirstSlice : function () {
-			return _.find(this.__slices, function (sl) {
-				return !sl.getUserData('toDelete') && (sl.isReady());
+			return _.find(this.__slices, function (slice) {
+				return !slice.getUserData('toDelete') && (slice.isReady());
 			});
 		},
 
@@ -213,25 +209,24 @@ qx.Class.define("desk.SliceView",
 		 * @param slices {desk.VolumeSlice} slice to remove
 		*/
 		removeVolume : function (slice) {
-			var mesh = slice.getUserData("mesh");
-			this.__slices.forEach(function (sl, index) {
-				if (sl !== slice) {return;}
+			if (!_.contains(this.__slices, slice)) return;
 
-				if (mesh) {
-					this.getScene().remove(mesh);
-					//release GPU memory
-					mesh.material.uniforms.texture.value.dispose();
-					mesh.material.dispose();
-					mesh.geometry.dispose();
-					this.removeListenerById(slice.getUserData("updateListener"));
-					this.render();
-					slice.dispose();
-					this.__slices.splice(index, 1);
-				} else {
-					// the slice has not been loaded yet, postpone deletetion
-					slice.setUserData('toDelete', true);
-				}
-			}, this);
+			var mesh = slice.getUserData("mesh");
+
+			if (mesh) {
+				this.getScene().remove(mesh);
+				//release GPU memory
+				mesh.material.uniforms.texture.value.dispose();
+				mesh.material.dispose();
+				mesh.geometry.dispose();
+				this.removeListenerById(slice.getUserData("updateListener"));
+				this.render();
+				slice.dispose();
+				this.__slices = _.without(this.__slices, slice);
+			} else {
+				// the slice has not been loaded yet, postpone deletetion
+				slice.setUserData('toDelete', true);
+			}
 		},
 
 		/**
@@ -308,27 +303,27 @@ qx.Class.define("desk.SliceView",
 			if (this.__reorientationContainer) {
 				return this.__reorientationContainer;
 			}
-			
-			var gridContainer = this.__reorientationContainer =
+
+			var container = this.__reorientationContainer =
 				new qx.ui.container.Composite();
 			var gridLayout = new qx.ui.layout.Grid(3, 3);
 			for (var i = 0; i < 2; i++) {
 				gridLayout.setRowFlex(i, 1);
 				gridLayout.setColumnFlex(i, 1);
 			}
-			gridContainer.set({layout : gridLayout,	decorator : "main"});
+			container.set({layout : gridLayout,	decorator : "main"});
 
 			[{label : "Rotate left", cb : function () {this.rotate(1);}},
 				{label : "Rotate right", cb : function () {this.rotate(-1);}},
 				{label : "Flip X", cb : function () {this.flip(0);}},
-				{label : "Flip Y", cb : function () {this.flip(0);}}
+				{label : "Flip Y", cb : function () {this.flip(1);}}
 			].forEach(function (params, index) {
 				var button = new qx.ui.form.Button(params.label);
 				button.addListener("execute", params.cb, this);
-				gridContainer.add(button, {row: index > 1 ? 1 : 0, column: index % 2});
+				container.add(button, {row: index > 1 ? 1 : 0, column: index % 2});
 			}, this);
 
-			return gridContainer;
+			return container;
 		},
 
 		propagateCameraToLinks : function () {
@@ -618,12 +613,7 @@ qx.Class.define("desk.SliceView",
 			var slice = new desk.VolumeSlice(file,
 				this.__orientation, parameters, function () {
 					if (slice.getUserData('toDelete')) {
-						// deletion was triggered before slice was completely loaded
-						for (var i = 0; i < this.__slices.length; i++) {
-							if (this.__slices[i] === slice) {
-								this.__slices.splice(i, 1);
-							}
-						}
+						this.__slices = _.without(this.__slices, slice);
 						slice.dispose();
 						return;
 					}
@@ -633,21 +623,6 @@ qx.Class.define("desk.SliceView",
 			}, this);
 			this.__slices.push(slice);
 			return slice;
-		},
-
-		/**
-		 * changes the display rank of the volume. Higher rank values are
-		 * rendered last
-		 * @param volumeSlice {desk.VolumeSlice} : volumeSlice to alter
-		 * @param rank {Int} : rank to apply
-		 **/
-		setSliceRank : function (volumeSlice, rank) {
-			this.__slices.forEach(function (slice) {
-				if (slice === volumeSlice) {
-					var mesh = slice.getUserData("mesh");
-					if (mesh) {mesh.renderDepth = - rank;}
-				}
-			});
 		},
 
 		__setCrossPositionFromEvent : function (event) {

@@ -172,12 +172,12 @@ qx.Class.define("desk.MPRContainer",
 			this.__volumes.getChildren().forEach(function (volume, rank) {
 				this.getVolumeSlices(volume).forEach(function (slice) {
                     // slice might not be loaded yet
-					if (slice) {
-						this.__viewers.forEach(function (viewer) {
-							viewer.setSliceRank(slice, rank);
-						});
+					if (!slice) { return }
+					var mesh = slice.getUserData("mesh");
+					if (mesh) {
+						mesh.renderDepth = - rank;
 					}
-				}, this);
+				});
 			}, this);
 			this.__renderAll();
 		},
