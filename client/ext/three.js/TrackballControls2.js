@@ -14,7 +14,7 @@ THREE.TrackballControls2 = function ( object ) {
 	this.setSize = function(width, height) {
 		this.width = width;
 		this.height = height;
-		this.radius = width height;
+		this.radius = width  + height;
 	}
 
 	this.setSize();
