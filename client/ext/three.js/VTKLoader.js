@@ -44,8 +44,6 @@ THREE.VTKLoader.prototype.load = function( url, callback, parameters ) {
 
 			if ( xhr.status === 200 || xhr.status === 0 ) {
 
-				var binaryData = new Uint8Array(xhr.response);
-
 				var s = Date.now();
 
 				if ( parameters.useWorker != false ) {
