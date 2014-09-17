@@ -3,33 +3,14 @@
 * 
 * @asset(desk/camera-photo.png)
 * @asset(qx/icon/${qx.icontheme}/16/categories/system.png) 
-* @ignore(THREE.Color)
-* @ignore(THREE.CTMLoader)
-* @ignore(THREE.DoubleSide)
-* @ignore(THREE.Face3)
-* @ignore(THREE.Geometry)
-* @ignore(THREE.Line)
-* @ignore(THREE.Mesh)
-* @ignore(THREE.MeshPhongMaterial)
-* @ignore(THREE.Object3D)
-* @ignore(THREE.ParticleSystem)
-* @ignore(THREE.PlaneGeometry)
-* @ignore(THREE.Projector)
-* @ignore(THREE.Raycaster)
-* @ignore(THREE.Vector2)
-* @ignore(THREE.Vector3)
-* @ignore(THREE.VTKLoader)
-* @ignore(THREE.WireframeHelper)
+* @ignore(THREE.*)
 * @ignore(requestAnimationFrame)
 * @ignore(Detector)
 * @ignore(Uint8Array)
 * @lint ignoreDeprecated(alert)
 * @ignore(desk.MeshTools)
-* @ignore (async.each)
-* @ignore (async.queue)
-* @ignore (async.whilst)
-* @ignore (_.throttle)
-* @ignore (_.without)
+* @ignore (async.*)
+* @ignore (_.*)
 */
 qx.Class.define("desk.SceneContainer", 
 {
@@ -63,7 +44,7 @@ qx.Class.define("desk.SceneContainer",
 			}
 
 			var mesh = this.__pickMeshes(this.getMeshes());
-			if (!mesh) return;
+			if (mesh === Infinity) return;
 			console.log("picked mesh : ");
 			console.log(mesh);
 			var controls = this.getControls();
@@ -331,11 +312,9 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		update : function () {
-			var files = [];
-			this.getMeshes().forEach(function (mesh) {
-				var file = mesh.userData.viewerProperties.file;
-				if (file) files.push(file);
-			}, this);
+			var files = _.filter(this.getMeshes(), function (mesh) {
+				return mesh.userData.viewerProperties.file != undefined;
+			});
 			this.removeAllMeshes();
 			this.__meshes.getDataModel().clearData();
 			files.forEach(function (file) {this.addFile(file);}, this);
@@ -478,9 +457,9 @@ qx.Class.define("desk.SceneContainer",
 
 			function updateTexture() {
 				var coords = volumeSlice.getCornersCoordinates();
-				for (var i = 0; i < 4; i++) {
-					geometry.vertices[i].set(coords[3*i], coords[3*i+1], coords[3*i+2]);
-				}
+				geometry.vertices.forEach(function (vertex, i) {
+					vertex.set(coords[3*i], coords[3*i+1], coords[3*i+2]);
+				});
 				geometry.computeFaceNormals();
 				geometry.computeBoundingSphere();
 				geometry.computeBoundingBox();
@@ -594,27 +573,20 @@ qx.Class.define("desk.SceneContainer",
 				vector.sub(camera.position).normalize());
 
 			var intersection =  ray.intersectObjects(meshes);
-			var closest = null;
-			var distance = 1e10;
-			intersection.forEach(function (inter) {
-				if (inter.distance < distance) {
-					distance = inter.distance;
-					closest = inter;
-				}
+			return _.min(intersection, function (inter) {
+				return inter.distance;
 			});
-			return closest;
 		},
 
 		__onMouseWheel : function (event) {
 			if (event.getTarget() != this.getCanvas()) return;
 			var intersects = this.__pickMeshes(this.__volumeSlices);
 			if (intersects) {
-				var volumeSlice = intersects.object.userData.viewerProperties.volumeSlice;
-				var maximum = volumeSlice.getNumberOfSlices() - 1;
-				var delta = 1;
-				if (event.getWheelDelta() < 0) delta = -1;
-				var newValue = volumeSlice.getSlice() + delta;
-				volumeSlice.setSlice(Math.max(Math.min(newValue, maximum), 0));
+				var slice = intersects.object.userData.viewerProperties.volumeSlice;
+				var maximum = slice.getNumberOfSlices() - 1;
+				var delta = event.getWheelDelta() > 0 ? 1 : -1;
+				var newValue = slice.getSlice() + delta;
+				slice.setSlice(Math.max(Math.min(newValue, maximum), 0));
 			}
 		},
 
@@ -627,9 +599,9 @@ qx.Class.define("desk.SceneContainer",
 			geometry.computeBoundingBox();
 
 			var color = parameters.color || [];
-            for (var i = color.length; i < 4; i++) {
-                color.push(1);
-            }
+			while (color.length < 4) {
+				color.push(1);
+			}
  
 			if (typeof parameters.opacity !== "undefined") {
 				color[3] = parameters.opacity;
@@ -645,8 +617,12 @@ qx.Class.define("desk.SceneContainer",
 			if (color[3] < 0.999) {
 				material.transparent = true;
 			}
-            material.side = THREE.DoubleSide;
+			material.side = THREE.DoubleSide;
+
 			var mesh = new THREE.Mesh(geometry, material );
+			if (geometry.attributes && geometry.attributes.color) {
+				mesh.material.vertexColors = THREE.VertexColors;
+			}
 			mesh.renderDepth = parameters.renderDepth || 0
             this.addMesh( mesh, parameters );
             return mesh;
@@ -706,14 +682,13 @@ qx.Class.define("desk.SceneContainer",
 			var button = new qx.ui.form.Button("save view");
 			button.addListener("execute", function () {
 				var file = prompt("Enter file name to save camera view point", "data/viewpoint.json")
-				if (file != null) {
-					button.setEnabled(false);
-					desk.FileSystem.writeFile(file,
-						JSON.stringify({viewpoint : this.getControls().getState()}), 
-						function () {
-							button.setEnabled(true);
-					});
-				}
+				if (!file) {return;}
+				button.setEnabled(false);
+				desk.FileSystem.writeFile(file,
+					JSON.stringify({viewpoint : this.getControls().getState()}), 
+					function () {
+						button.setEnabled(true);
+				});
 			}, this);
 			return button;
 		},
@@ -746,16 +721,16 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		__getDragLabel : function () {
-			var dragLabel = new qx.ui.basic.Label("Link").set({
+			var label = new qx.ui.basic.Label("Link").set({
                 decorator: "button-box", width : 30, height : 30});
 			// drag and drop support
-			dragLabel.setDraggable(true);
-			dragLabel.addListener("dragstart", function(e) {
+			label.setDraggable(true);
+			label.addListener("dragstart", function(e) {
 				e.addAction("alias");
 				e.addType("meshView");
 				});
 
-			dragLabel.addListener("droprequest", function(e) {
+			label.addListener("droprequest", function(e) {
 					var type = e.getCurrentType();
 					if (type === "meshView") {
 						e.addData(type, this);
@@ -765,11 +740,10 @@ qx.Class.define("desk.SceneContainer",
 			// enable linking between viewers by drag and drop
 			this.setDroppable(true);
 			this.addListener("drop", function(e) {
-				if (e.supportsType("meshView")) {
-					var meshView=e.getData("meshView");
-					this.link(meshView);
-					meshView.__propagateLinks();
-				}
+				if (!e.supportsType("meshView")) {return}
+				var meshView = e.getData("meshView");
+				this.link(meshView);
+				meshView.__propagateLinks();
 			},this);
 
 			var menu = new qx.ui.menu.Menu();
@@ -777,9 +751,9 @@ qx.Class.define("desk.SceneContainer",
 			var unlinkButton = new qx.ui.menu.Button("unlink");
 			unlinkButton.addListener("execute", this.unlink, this);
 			menu.add(unlinkButton);
-			dragLabel.setContextMenu(menu);
+			label.setContextMenu(menu);
 			qx.util.DisposeUtil.disposeTriggeredBy(menu, this);
-			return dragLabel;
+			return label;
 		},
 
 		__getPropertyWidget : function (parentWindow){
@@ -961,8 +935,8 @@ qx.Class.define("desk.SceneContainer",
 			//context menu to edit meshes appearance
 			var menu = new qx.ui.menu.Menu();
 
-			var propertiesButton = new qx.ui.menu.Button("properties");
-			propertiesButton.addListener("execute", function (){
+			var properties = new qx.ui.menu.Button("properties");
+			properties.addListener("execute", function (){
 				var node = this.__meshes.getSelectedNodes()[0];
 				var mesh = this.__getMeshFromNode(node);
 				console.log(mesh);
@@ -981,20 +955,20 @@ qx.Class.define("desk.SceneContainer",
 				}
 				alert ("Mesh with " + nV + " vertices and " + nT + " triangles");
 			}, this);
-			menu.add(propertiesButton);
+			menu.add(properties);
 
-			var appearanceButton = new qx.ui.menu.Button("appearance");
-			appearanceButton.addListener("execute", function (){
-				var propertyWindow = new qx.ui.window.Window();
-				propertyWindow.setLayout(new qx.ui.layout.HBox());
-				propertyWindow.add(this.__getPropertyWidget(propertyWindow));
-				propertyWindow.open();
-				propertyWindow.addListener('close', function () {
-					qx.util.DisposeUtil.destroyContainer(propertyWindow.getChildren()[0]);
-					propertyWindow.destroy();
+			var appearance = new qx.ui.menu.Button("appearance");
+			appearance.addListener("execute", function (){
+				var win = new qx.ui.window.Window();
+				win.setLayout(new qx.ui.layout.HBox());
+				win.add(this.__getPropertyWidget(win));
+				win.open();
+				win.addListener('close', function () {
+					qx.util.DisposeUtil.destroyContainer(win.getChildren()[0]);
+					win.destroy();
 				});
 			}, this);
-			menu.add(appearanceButton);
+			menu.add(appearance);
 
 			var showButton = new qx.ui.menu.Button("show/hide");
 			showButton.addListener("execute", function (){
@@ -1009,9 +983,8 @@ qx.Class.define("desk.SceneContainer",
 			edgesButton.addListener("execute", function (){
 
 				function removeEdges() {
-					var edges = this.userData.edges;
-					this.remove(edges);
-					edges.geometry.dispose();
+					this.remove(this.userData.edges);
+					this.userData.edges.geometry.dispose();
 					this.removeEventListener("removedFromScene", removeEdges);
 					delete this.userData.edges;
 				}
@@ -1022,8 +995,7 @@ qx.Class.define("desk.SceneContainer",
 						removeEdges.apply(mesh)
 					} else {
 						edges = new THREE.WireframeHelper(mesh);
-						var material = edges.material;
-						material.color.setRGB(0,0,0);
+						edges.material.color.setRGB(0,0,0);
 						mesh.userData.edges = edges;
 						mesh.addEventListener("removedFromScene", removeEdges);
 						mesh.add(edges);
@@ -1040,8 +1012,8 @@ qx.Class.define("desk.SceneContainer",
 			},this);
 			menu.add(removeButton);
 			
-			var analysisButton = new qx.ui.menu.Button("Mesh Tools");
-			analysisButton.addListener("execute", function (){
+			var analysis = new qx.ui.menu.Button("Mesh Tools");
+			analysis.addListener("execute", function (){
 				this.__meshes.getSelectedNodes().forEach(function (mesh) {
 					if (mesh.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 						new desk.MeshTools({meshViewer : this,
@@ -1049,10 +1021,10 @@ qx.Class.define("desk.SceneContainer",
 					}
 				}, this);
 			}, this);
-			menu.add(analysisButton);
+			menu.add(analysis);
 			
-			var animateButton = new qx.ui.menu.Button('animate');
-			animateButton.addListener('execute', function () {
+			var animate = new qx.ui.menu.Button('animate');
+			animate.addListener('execute', function () {
 				var nodes = this.__meshes.getSelectedNodes();
 				if (!this.__animator) {
 					this.__animator = new desk.Animator(this);
@@ -1065,10 +1037,7 @@ qx.Class.define("desk.SceneContainer",
 					this.__animator.addObject(this.__getMeshFromNode(node), node.label);
 				}, this);
 			},this);
-			menu.add(animateButton);
-			
-			var optionalButtons = [propertiesButton, appearanceButton,
-				analysisButton, animateButton];
+			menu.add(animate);
 			
 			//// hide all menu buttons but the "show" and "hide" buttons for the volumeSlices
 			menu.addListener("appear", function() {
@@ -1084,7 +1053,7 @@ qx.Class.define("desk.SceneContainer",
 					visibility = "excluded";
 				}
 
-				optionalButtons.forEach(function (button) {
+				[properties, appearance, analysis, animate].forEach(function (button) {
 					button.setVisibility(visibility);
 				});
 			}, this);
