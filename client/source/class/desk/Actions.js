@@ -3,7 +3,6 @@
  * and display actions in progress
  * @asset(desk/desk.png)
  * @asset(qx/icon/${qx.icontheme}/16/categories/system.png) 
- * @ignore (async)
  * @ignore (io)
  * @lint ignoreDeprecated (alert)
  * @require(desk.LogContainer)

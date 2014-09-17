@@ -1,24 +1,9 @@
 /**
 * A container used to display volume slices.
 * 
-* @ignore(THREE.Mesh)
-* @ignore(THREE.Vector2)
-* @ignore(THREE.Line)
-* @ignore(THREE.DataTexture)
-* @ignore(THREE.RGBAFormat)
-* @ignore(THREE.NearestFilter)
-* @ignore(THREE.MeshBasicMaterial)
-* @ignore(THREE.LineBasicMaterial)
-* @ignore(THREE.Vector3)
-* @ignore(THREE.Face3)
-* @ignore(THREE.DoubleSide)
-* @ignore(THREE.Projector)
-* @ignore(THREE.Geometry)
-* @ignore(THREE.PlaneGeometry)
+* @ignore(THREE.*)
 * @ignore(Uint8Array)
-* @ignore(_.find)
-* @ignore(_.contains)
-* @ignore(_.without)
+* @ignore(_.*)
 */
 
 qx.Class.define("desk.SliceView", 

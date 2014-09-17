@@ -1,16 +1,7 @@
 /**
 * A container which includes a THREE.js scene, camera, controls and renderer
- * @ignore(THREE.Scene)
- * @ignore(THREE.PerspectiveCamera)
- * @ignore(THREE.TrackballControls2)
- * @ignore(THREE.DirectionalLight)
- * @ignore(THREE.AmbientLight)
- * @ignore(THREE.WebGLRenderer)
- * @ignore(Detector.webgl)
- * @ignore(Detector.addGetWebGLMessage)
- * @ignore(THREE.Vector3)
- * @ignore(THREE.Mesh)
- * @ignore(THREE.Box3)
+ * @ignore(THREE.*)
+ * @ignore(Detector.*)
  * @ignore(requestAnimationFrame)
  * @ignore(Blob)
  * @ignore(Uint8Array)

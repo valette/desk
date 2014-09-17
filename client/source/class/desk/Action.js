@@ -2,8 +2,7 @@
  * A container to launch RPC actions and edit parameters
  * @lint ignoreDeprecated (alert)
  * @ignore (async.each)
- * @ignore (_.uniq)
- * @ignore (_.find)
+ * @ignore (_.*)
  */
 qx.Class.define("desk.Action", 
 {
