@@ -501,7 +501,7 @@ qx.Class.define("desk.SceneContainer",
 			this.__draggingInProgress = true;
 			if (this.isPickMode()) {
 				var mesh = this.__pickMeshes(this.getMeshes());
-				if (mesh) {
+				if (mesh !== Infinity) {
 					this.fireDataEvent("pick", mesh);
 					return;
 				}
@@ -536,7 +536,7 @@ qx.Class.define("desk.SceneContainer",
 			if (this.__draggingInProgress) {
 				if (this.isPickMode()) {
 					var mesh = this.__pickMeshes(this.getMeshes());
-					if (mesh) {
+					if (mesh !== Infinity) {
 						this.fireDataEvent("pick", mesh);
 						return;
 					}
@@ -581,7 +581,7 @@ qx.Class.define("desk.SceneContainer",
 		__onMouseWheel : function (event) {
 			if (event.getTarget() != this.getCanvas()) return;
 			var intersects = this.__pickMeshes(this.__volumeSlices);
-			if (intersects) {
+			if (intersects != Infinity) {
 				var slice = intersects.object.userData.viewerProperties.volumeSlice;
 				var maximum = slice.getNumberOfSlices() - 1;
 				var delta = event.getWheelDelta() > 0 ? 1 : -1;
@@ -695,22 +695,21 @@ qx.Class.define("desk.SceneContainer",
 
 		__getCameraPropertiesButton : function () {
 			var button = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png");
-			var scope = this;
 			button.addListener("execute", function () {
 				var win = new qx.ui.window.Window();
 				win.setLayout(new qx.ui.layout.VBox());
 				["near", "far"].forEach(function (field) {
 					var container = new qx.ui.container.Composite(new qx.ui.layout.HBox());
 					container.add(new qx.ui.basic.Label(field));
-					var form = new qx.ui.form.TextField(scope.getCamera()[field].toString());
+					var form = new qx.ui.form.TextField(this.getCamera()[field].toString());
 					container.add(form);
 					win.add(container);
 					form.addListener("changeValue", function () {
-						scope.getCamera()[field] = parseFloat(form.getValue());
-						scope.getCamera().updateProjectionMatrix();
-						scope.render();
-					});
-				});
+						this.getCamera()[field] = parseFloat(form.getValue());
+						this.getCamera().updateProjectionMatrix();
+						this.render();
+					}, this);
+				}, this);
 				win.open();
 				win.center();
 				win.addListener('close', function () {
