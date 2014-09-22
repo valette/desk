@@ -212,9 +212,14 @@ THREE.CTMLoader.prototype.createModel = function ( file, callback ) {
 
 		var attrMaps = file.body.attrMaps;
 
-		if ( attrMaps !== undefined && attrMaps.length > 0 && attrMaps[ 0 ].name === 'Color' ) {
+		if ( attrMaps ) {
 
-			colors = attrMaps[ 0 ].attr;
+			attrMaps.forEach(function (attrMap) {
+				var name = attrMap.name === 'Color' ? 'color' : attrMap.name;
+
+				this.addAttribute( name, new THREE.BufferAttribute( attrMap.attr, 4 ) );
+
+			}, this);
 
 		}
 
@@ -235,7 +240,6 @@ THREE.CTMLoader.prototype.createModel = function ( file, callback ) {
 
 		if ( colors !== undefined ) {
 
-			this.addAttribute( 'color', new THREE.BufferAttribute( colors, 4 ) );
 
 		}
 
