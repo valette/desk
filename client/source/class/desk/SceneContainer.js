@@ -197,12 +197,12 @@ qx.Class.define("desk.SceneContainer",
 			return meshes;
 		},
 
-        __addLeaf : function (parameters) {
-			parameters = parameters || {};
+        __addLeaf : function (opt) {
+			opt = opt || {};
 			var dataModel = this.__meshes.getDataModel();
-			parameters.label = parameters.label || "mesh";
-			var parent = parameters.parent;
-			var leaf = dataModel.addLeaf(parent, parameters.label, null);
+			opt.label = opt.label || "mesh";
+			var parent = opt.parent;
+			var leaf = dataModel.addLeaf(parent, opt.label, null);
 			this.__setData();
 			return leaf;
 		},
@@ -212,17 +212,14 @@ qx.Class.define("desk.SceneContainer",
 			return leaf && leaf.viewerProperties && leaf.viewerProperties.mesh;
 		},
 
-		addMesh : function (mesh, parameters) {
-			parameters = parameters || {};
-			(parameters.parentObject || this.getScene()).add(mesh);
-			var leaf = parameters.leaf;
-			if (leaf === undefined) {
-				parameters.leaf = leaf = this.__addLeaf(parameters);
-			}
-			parameters.mesh = mesh;
-			this.__meshes.nodeGet(leaf).viewerProperties = parameters;
-			mesh.userData.viewerProperties = parameters;
-			if (parameters.updateCamera !== false) {
+		addMesh : function (mesh, opt) {
+			opt = opt || {};
+			(opt.parentObject || this.getScene()).add(mesh);
+			var leaf = opt.leaf = opt.leaf || this.__addLeaf(opt);
+			opt.mesh = mesh;
+			this.__meshes.nodeGet(leaf).viewerProperties = opt;
+			mesh.userData.viewerProperties = opt;
+			if (opt.updateCamera !== false) {
 				this.viewAll();
 			}
 		},
@@ -269,18 +266,15 @@ qx.Class.define("desk.SceneContainer",
 			return container;
 		},
 
-		__readFile : function (file, parameters, callback) {
-            parameters = parameters || {};
-			var label = parameters.label || desk.FileSystem.getFileName(file);
-			var leafParameters = {label : label};
-			leafParameters.parent = parameters.parent;
-            var leaf = this.__addLeaf(leafParameters);
-            parameters.leaf = leaf;
+		__readFile : function (file, opt, callback) {
+            opt = opt || {};
+			var label = opt.label || desk.FileSystem.getFileName(file);
+            opt.leaf = this.__addLeaf({label : label, parent : opt.parent});
 
 			switch (desk.FileSystem.getFileExtension(file)) {
             case "vtk":
-				if (!this.isConvertVTK() || parameters.convert === false) {
-					this.__loadFile(file, parameters, callback);
+				if (!this.isConvertVTK() || opt.convert === false) {
+					this.__loadFile(file, opt, callback);
 					break;
 				}
 			case "ply":
@@ -292,23 +286,23 @@ qx.Class.define("desk.SceneContainer",
 					"input_mesh" : file},
                     function (response) {
                        var outputDir = response.outputDirectory;
-                        parameters.mtime = response.MTime;
-                        this.__loadFile(outputDir + '/mesh.ctm', parameters, callback);
+                        opt.mtime = response.MTime;
+                        this.__loadFile(outputDir + '/mesh.ctm', opt, callback);
 				}, this);
 				break;
 
 			case "ctm":
-				this.__loadFile(file, parameters, callback);
+				this.__loadFile(file, opt, callback);
 				break;
 			default : 
 				alert("error : file " + file + " cannot be displayed by mesh viewer");
 			}
 		},
 
-		__loadFile : function (file, parameters, callback) {
-			parameters.mtime = parameters.mtime || Math.random();
-			parameters.url = desk.FileSystem.getFileURL(file);
-			this.loadURL(parameters, callback);
+		__loadFile : function (file, opt, callback) {
+			opt.mtime = opt.mtime || Math.random();
+			opt.url = desk.FileSystem.getFileURL(file);
+			this.loadURL(opt, callback);
 		},
 
 		update : function () {
@@ -581,12 +575,18 @@ qx.Class.define("desk.SceneContainer",
 		__onMouseWheel : function (event) {
 			if (event.getTarget() != this.getCanvas()) return;
 			var intersects = this.__pickMeshes(this.__volumeSlices);
+			var delta = event.getWheelDelta() > 0 ? 1 : -1;
 			if (intersects != Infinity) {
 				var slice = intersects.object.userData.viewerProperties.volumeSlice;
 				var maximum = slice.getNumberOfSlices() - 1;
-				var delta = event.getWheelDelta() > 0 ? 1 : -1;
 				var newValue = slice.getSlice() + delta;
 				slice.setSlice(Math.max(Math.min(newValue, maximum), 0));
+			} else {
+				var controls = this.getControls();
+				controls.mouseDown(1, 0, 0);
+				controls.mouseMove(0, 0.05 * delta * this.getInnerSize().height);
+				controls.mouseUp();
+				this.render();
 			}
 		},
 
@@ -598,19 +598,16 @@ qx.Class.define("desk.SceneContainer",
             parameters = parameters || {label : 'geometry'};
 			geometry.computeBoundingBox();
 
-			var color = parameters.color || [];
-			while (color.length < 4) {
-				color.push(1);
-			}
+			var color = parameters.color || [1, 1, 1, 1];
  
 			if (typeof parameters.opacity !== "undefined") {
 				color[3] = parameters.opacity;
 			}
 
-			var col = new THREE.Color().setRGB(color[0],color[1],color[2]);
+			var col = new THREE.Color(color[0], color[1], color[2]);
 
 			var material =  new THREE.MeshPhongMaterial({
-				color : col.getHex(), opacity : color[3]});
+				color : col.getHex(), opacity : color[3] || 1});
 			material.ambient = new THREE.Color().copy(col).multiplyScalar(0.3);
 			material.shininess = 5;
 			material.specular = new THREE.Color( 0x303030 );
@@ -768,10 +765,10 @@ qx.Class.define("desk.SceneContainer",
 			mainContainer.add(topBox);
 			mainContainer.add(bottomBox);
 
-			var colorSelector=new qx.ui.control.ColorSelector();
+			var colorSelector = new qx.ui.control.ColorSelector();
 			bottomBox.add(colorSelector);//, {flex:1});
 
-			var renderDepthLabel=new qx.ui.basic.Label("Render Depth");
+			var renderDepthLabel = new qx.ui.basic.Label("Render Depth");
 			topBox.add(renderDepthLabel);
 
 			var renderDepthSpinner=new qx.ui.form.Spinner(-100, 0,100);
@@ -779,7 +776,7 @@ qx.Class.define("desk.SceneContainer",
 
 			topBox.add(new qx.ui.core.Spacer(10, 20),{flex:1});
 			if (parentWindow) {
-				var alwaysOnTopCheckBox=new qx.ui.form.CheckBox("this window always on top");
+				var alwaysOnTopCheckBox = new qx.ui.form.CheckBox("this window always on top");
 				alwaysOnTopCheckBox.setValue(true);
 				parentWindow.setAlwaysOnTop(true);
 				alwaysOnTopCheckBox.addListener('changeValue',function (e){
@@ -787,8 +784,8 @@ qx.Class.define("desk.SceneContainer",
 					});
 				topBox.add(alwaysOnTopCheckBox);
 			}
-			var ratio=255;
-			var opacitySlider=new qx.ui.form.Slider();
+			var ratio = 255;
+			var opacitySlider = new qx.ui.form.Slider();
 			opacitySlider.setMinimum(0);
 			opacitySlider.setMaximum(ratio);
 			opacitySlider.setWidth(30);
