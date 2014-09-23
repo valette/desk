@@ -334,28 +334,34 @@ qx.Class.define("desk.ThreeContainer",
 			this.render();
 		},
 
+		__multiplyDimensions : function (ratio) {
+			this.__scene.traverse(function (object) {
+				if (object.material && object.material.wireframe) {
+					object.material.wireframeLinewidth *= ratio;
+				} else if (object.userData.edges) {
+					object.userData.edges.material.linewidth *= ratio;
+				}
+			});
+			if (ratio < 1) {ratio = 1};
+			var size = this.__threeCanvas.getInnerSize();
+			this.__renderer.setSize(Math.round(size.width * ratio), Math.round(size.height * ratio));
+			this.__camera.aspect = size.width / size.height;
+			this.__camera.updateProjectionMatrix();
+		},
+
 		/**
 		* Triggers a snapshot of the scene which will be downloaded by the browser
-		* @param factor {Number} size multiplication factor e.g. when set to 2, the 
+		* @param ratio {Number} size multiplication ratio e.g. when set to 2, the 
 		* image dimensions will be twice the current scene dimensions. Default : 1
 		*/
-		snapshot : function (factor) {
-			factor = factor || 1;
+		snapshot : function (ratio) {
+			ratio = ratio || 1;
 
-			if (factor !== 1) {
-				var width = this.__threeCanvas.getCanvasWidth();
-				var height = this.__threeCanvas.getCanvasHeight();
-				this.__threeCanvas.setSyncDimension(false);
-				var newHeight = Math.round(height * factor);
-				var newWidth = Math.round(width * factor);
-				this.__renderer.setSize(newWidth, newHeight);
-				this.__camera.aspect = newWidth / newHeight;
-				this.__camera.updateProjectionMatrix();
-			}
+			this.__threeCanvas.setSyncDimension(false);
+			this.__multiplyDimensions(ratio);
 
 			this.render(true);
-			var strData = this.__renderer.domElement.toDataURL("image/png");
-			var binary = atob(strData.split(',')[1]);
+			var binary = atob(this.__renderer.domElement.toDataURL("image/png").split(',')[1]);
 			var array = [];
 			for(var i = 0; i < binary.length; i++) {
 				array.push(binary.charCodeAt(i));
@@ -372,13 +378,10 @@ qx.Class.define("desk.ThreeContainer",
 			a.click();
 			document.body.removeChild(a);
 
-			if (factor !== 1) {
-				this.__renderer.setSize(width, height);
-				this.__camera.aspect = width / height;
-				this.__camera.updateProjectionMatrix();
-				this.__threeCanvas.setSyncDimension(true);
-				this.render();
-			}
+			// restore wireframe width : 
+			this.__multiplyDimensions(1.0 / ratio);
+			this.__threeCanvas.setSyncDimension(true);
+			this.render();
 		},
 
 		__threeCanvas : null,

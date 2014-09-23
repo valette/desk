@@ -983,7 +983,9 @@ qx.Class.define("desk.SceneContainer",
 
 				function removeEdges() {
 					this.remove(this.userData.edges);
-					this.userData.edges.geometry.dispose();
+					if (this.userData.edges) {
+						this.userData.edges.geometry.dispose();
+					}
 					this.removeEventListener("removedFromScene", removeEdges);
 					delete this.userData.edges;
 				}
@@ -996,6 +998,9 @@ qx.Class.define("desk.SceneContainer",
 						edges = new THREE.WireframeHelper(mesh);
 						edges.material.color.setRGB(0,0,0);
 						mesh.userData.edges = edges;
+						mesh.material.polygonOffset = true;
+						mesh.material.polygonOffsetFactor = 1;
+						mesh.material.polygonOffsetUnits = 1;
 						mesh.addEventListener("removedFromScene", removeEdges);
 						mesh.add(edges);
 					}
