@@ -268,8 +268,8 @@ qx.Class.define("desk.SceneContainer",
 
 		__readFile : function (file, opt, callback) {
             opt = opt || {};
-			var label = opt.label || desk.FileSystem.getFileName(file);
-            opt.leaf = this.__addLeaf({label : label, parent : opt.parent});
+            opt.leaf = this.__addLeaf({parent : opt.parent,
+				label : opt.label || desk.FileSystem.getFileName(file)});
 
 			switch (desk.FileSystem.getFileExtension(file)) {
             case "vtk":
@@ -891,13 +891,12 @@ qx.Class.define("desk.SceneContainer",
 			mesh.parent.remove(mesh);
 
 			if (parameters) {
-				var leaf = parameters.leaf;
-				delete leaf.viewerProperties;
-				if (this.__meshes.nodeGet(leaf)) {
-					this.__meshes.getDataModel().prune(leaf, false);
+				var leaf = this.__meshes.nodeGet(parameters.leaf)
+				if (leaf) {
+					delete leaf.viewerProperties;
+					this.__meshes.getDataModel().prune(leaf.nodeId, true);
 				}
 				parameters.mesh = 0;
-
 				delete mesh.userData.viewerProperties;
 				this.__setData();
 				keepGeometry = parameters.keepGeometry;
