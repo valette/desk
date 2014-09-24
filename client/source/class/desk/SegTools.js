@@ -468,7 +468,7 @@ qx.Class.define("desk.SegTools",
 				this.__startButton.setEnabled(false);
 				this.__segmentationInProgress = true;
 				this.__saveCurrentSeeds(function() {
-							segmentation.executeAction();});
+					segmentation.executeAction();});
 			}, this);
 			this.__bottomContainer.add(this.__startButton);
 
@@ -486,8 +486,8 @@ qx.Class.define("desk.SegTools",
 				this.__startButton.setEnabled(true);
 				if (!segmentationToken) {
 					segmentationToken = this.__master.addVolume(segmentation.getOutputDirectory()+"output.mhd",
-								{opacity : 0.5, format : 0,
-								colors : [this.__labelColorsRed, this.__labelColorsGreen, this.__labelColorsBlue]});
+						{opacity : 0.5, format : 0,
+						colors : [this.__labelColorsRed, this.__labelColorsGreen, this.__labelColorsBlue]});
 				} else {
 					this.__master.updateVolume(segmentationToken);
 				}
