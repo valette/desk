@@ -607,7 +607,7 @@ qx.Class.define("desk.SceneContainer",
 			var col = new THREE.Color(color[0], color[1], color[2]);
 
 			var material =  new THREE.MeshPhongMaterial({
-				color : col.getHex(), opacity : color[3] || 1});
+				color : col.getHex(), opacity : color[3]});
 			material.ambient = new THREE.Color().copy(col).multiplyScalar(0.3);
 			material.shininess = 5;
 			material.specular = new THREE.Color( 0x303030 );
