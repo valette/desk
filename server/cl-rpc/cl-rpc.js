@@ -455,19 +455,19 @@ RPC.prototype.handleExecutableMTime = function (callback) {
 };
 
 RPC.prototype.addMTime = function (file, callback) {
-	if (file) {
-		fs.stat(file , function (err, stats) {
-			this.inputMTime = Math.max(stats.mtime.getTime(), this.inputMTime);
-			callback (err);
-		}.bind(this));
+	if (!file) {
+		callback();
 		return;
 	}
-	callback();
+	fs.stat(file , function (err, stats) {
+		this.inputMTime = Math.max(stats.mtime.getTime(), this.inputMTime);
+		callback (err);
+	}.bind(this));
 }
 
 RPC.prototype.handleInputMTimes = function (callback) {
 	async.each(this.action.parameters, function (parameter, callback) {
-		if (parameter.value === undefined) {
+		if (this.POST[parameter.name] === undefined) {
 			callback();
 			return;
 		}
