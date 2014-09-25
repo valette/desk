@@ -50,18 +50,17 @@ var job = new CronJob({
 
 exports.validatePath = function (path, callback) {
 	fs.realpath(libpath.join(filesRoot, path), function (err, realPath) {
-		if (err) {
-			callback(err);
-			return;
-		}
-		if (!_.find(directories, function (subDir) {
-				return realPath.slice(0, subDir.length) === subDir;
-			})) {
-			err = "path " + realPath + " not allowed"; 
-		}
-		callback(err);
+		callback(err || validatePath(realPath));
 	});
 };
+
+function validatePath (path) {
+	if (!_.some(directories, function (subDir) {
+			return path.slice(0, subDir.length) === subDir;
+		})) {
+		return "path " + path + " not allowed"; 
+	}
+}
 
 function includeActionsFile (file, callback) {
 	fs.exists(file, function (exists) {
@@ -399,7 +398,7 @@ RPC.prototype.parseParameter = function (parameter, callback) {
 	switch (parameter.type) {
 	case 'file':
 		fs.realpath(libpath.join(filesRoot, value), function (err, path) {
-			callback (err, prefix + path);
+			callback (err, prefix + path.split(" ").join("\\ "));
 		});
 		break;
 	case 'directory':
@@ -413,7 +412,7 @@ RPC.prototype.parseParameter = function (parameter, callback) {
 					callback ("error : " + value + " is not a directory");
 					return;
 				}
-				callback (null, prefix + path);
+				callback (null, prefix + path.split(" ").join("\\ "));
 			});
 		});
 		break;
@@ -513,7 +512,12 @@ RPC.prototype.handleOutputDirectory = function (callback) {
 		mkdirp(libpath.join(filesRoot, this.outputDirectory), callback);
 		break;
 	default :
-		exports.validatePath (this.outputDirectory, callback);
+		var invalid = validatePath (libpath.join(filesRoot, this.outputDirectory));
+		if (invalid) {
+			callback(invalid);
+		} else {
+			mkdirp(libpath.join(filesRoot, this.outputDirectory), callback);
+		}
 	}
 };
 
@@ -684,7 +688,7 @@ RPC.prototype.afterExecution = function(err, stdout, stderr, callback) {
 }
 
 exports.getDirectoryContent = function (path, callback) {
-	console.log('listDir : ' + path);
+	winston.log('info', 'listDir : ' + path)
 	async.waterfall([
 		function (callback) {
 			exports.validatePath(path, callback);
@@ -700,10 +704,10 @@ exports.getDirectoryContent = function (path, callback) {
 
 				async.map(files, function (file, callback) {
 						fs.stat(libpath.join(realDir, file), function (err, stats) {
-							stats.name = file;
-							stats.isDirectory = stats.isDirectory();
-							stats.mtime = stats.mtime.getTime();
-							callback(null, stats);
+							callback(null, {name : file, size : stats.size,
+								isDirectory : stats.isDirectory(),
+								mtime : stats.mtime.getTime()}
+							);
 						});
 					},
 					callback

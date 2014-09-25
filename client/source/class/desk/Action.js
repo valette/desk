@@ -583,10 +583,10 @@ qx.Class.define("desk.Action",
 								this.connect(parameterForm.getPlaceholder(), parentAction, file);
 							}
 						}
-						manager.add(parameterForm, this.__stringValidator, parameter);
+						manager.add(parameterForm, this.__dummyValidator, parameter);
 						break;
 					case "directory":
-						manager.add(parameterForm, this.__stringValidator, parameter);
+						manager.add(parameterForm, this.__dummyValidator, parameter);
 						break;
 					case "xmlcontent":
 						manager.add(parameterForm, this.__dummyValidator, parameter);
