@@ -50,17 +50,15 @@ var job = new CronJob({
 
 exports.validatePath = function (path, callback) {
 	fs.realpath(libpath.join(filesRoot, path), function (err, realPath) {
-		callback(err || validatePath(realPath));
+		if (!err && !_.some(directories, function (subDir) {
+				return realPath.slice(0, subDir.length) === subDir;
+			})) {
+			err = "path " + path + " not allowed"; 
+		}
+
+		callback (err);
 	});
 };
-
-function validatePath (path) {
-	if (!_.some(directories, function (subDir) {
-			return path.slice(0, subDir.length) === subDir;
-		})) {
-		return "path " + path + " not allowed"; 
-	}
-}
 
 function includeActionsFile (file, callback) {
 	fs.exists(file, function (exists) {
@@ -512,12 +510,13 @@ RPC.prototype.handleOutputDirectory = function (callback) {
 		mkdirp(libpath.join(filesRoot, this.outputDirectory), callback);
 		break;
 	default :
-		var invalid = validatePath (libpath.join(filesRoot, this.outputDirectory));
-		if (invalid) {
-			callback(invalid);
-		} else {
+		exports.validatePath (libpath.normalize(this.outputDirectory).split("/")[0], function (err) {
+			if (err) {
+				callback(err);
+				return;
+			}
 			mkdirp(libpath.join(filesRoot, this.outputDirectory), callback);
-		}
+		}.bind(this));
 	}
 };
 
