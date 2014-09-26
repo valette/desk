@@ -250,12 +250,10 @@ qx.Class.define("desk.SegTools",
 		__buildActionsEdit : function () {
 			var applySeedsAction = new desk.Action("applyseeds", {standalone : false});
 			applySeedsAction.setActionParameters({"input_volume" : this.__file});
-			applySeedsAction.setOutputSubdirectory("edit");
 			applySeedsAction.buildUI();
 			this.__tabView.addElement('edit', applySeedsAction.getTabView());
 
 			var meshing = new desk.Action("extract_meshes", {standalone : false});
-			meshing.setOutputSubdirectory("meshes");
 			meshing.buildUI();
 			this.__tabView.addElement('meshing', meshing.getTabView());
 
@@ -264,8 +262,8 @@ qx.Class.define("desk.SegTools",
 				if (segmentationToken != null) {
 					this.__master.removeVolume(segmentationToken);
 				}
-				applySeedsAction.setOutputDirectory(directory);
-				meshing.setOutputDirectory(directory);
+				applySeedsAction.setOutputDirectory(directory + "/edit");
+				meshing.setOutputDirectory(directory + "/meshes");
 				applySeedsAction.setActionParameters({
 					"input_volume" : this.__file,
 					"seeds" : this.getSessionDirectory() + "/seeds.xml"
@@ -337,12 +335,10 @@ qx.Class.define("desk.SegTools",
 		__buildActions : function () {
 			var segmentation = new desk.Action("multiseg", {standalone : false});
 			segmentation.setActionParameters({"input_volume" : this.__file});
-			segmentation.setOutputSubdirectory("segmentation");
 			segmentation.buildUI();
 			this.__tabView.addElement('segmentation', segmentation.getTabView());
 
 			var meshing = new desk.Action("extract_meshes", {standalone : false});
-			meshing.setOutputSubdirectory("meshes");
 			meshing.buildUI();
 			this.__tabView.addElement('meshing', meshing.getTabView());
 
@@ -351,8 +347,8 @@ qx.Class.define("desk.SegTools",
 				if (segmentationToken != null) {
 					this.__master.removeVolume(segmentationToken);
 				}
-				segmentation.setOutputDirectory(directory);
-				meshing.setOutputDirectory(directory);
+				segmentation.setOutputDirectory(directory + "/segmentation");
+				meshing.setOutputDirectory(directory + "/meshes");
 				segmentation.setActionParameters({
 					"input_volume" : this.__file,
 					"seeds" : this.getSessionDirectory() + "/seeds.xml"
@@ -424,21 +420,18 @@ qx.Class.define("desk.SegTools",
 		__buildActionsCVT : function() {	
 			var clusteringAction = new desk.Action("cvtseg2", {standalone : false});
 			clusteringAction.setActionParameters({"input_volume" : this.__file});
-			clusteringAction.setOutputSubdirectory("clustering");
 			clusteringAction.buildUI();
 			this.__tabView.addElement('clustering', clusteringAction.getTabView());
 
 			var segmentation = new desk.Action("multiseg",
 				{standalone : false});
 			clusteringAction.setActionParameters({"input_volume" : this.__file});
-			segmentation.setOutputSubdirectory("segmentation");
 			segmentation.connect("clustering", clusteringAction,
 				"clustering-index.mhd");
 			segmentation.buildUI();
 			this.__tabView.addElement('segmentation', segmentation.getTabView());
 
 			var meshing = new desk.Action("extract_meshes", {standalone : false});
-			meshing.setOutputSubdirectory("meshes");
 			meshing.buildUI();
 			this.__tabView.addElement('meshing', meshing.getTabView());
 
@@ -447,9 +440,9 @@ qx.Class.define("desk.SegTools",
 				if (segmentationToken != null) {
 					this.__master.removeVolume(segmentationToken);
 				}
-				clusteringAction.setOutputDirectory(directory);
-				segmentation.setOutputDirectory(directory);
-				meshing.setOutputDirectory(directory);
+				clusteringAction.setOutputDirectory(directory + "/clustering");
+				segmentation.setOutputDirectory(directory+ "/segmentation");
+				meshing.setOutputDirectory(directory + "/meshes");
 				segmentation.setActionParameters({
 					"input_volume" : this.__file,
 					"seeds" : this.getSessionDirectory() + "/seeds.xml"
@@ -522,40 +515,36 @@ qx.Class.define("desk.SegTools",
 		__buildActionsGC : function() {	
 			var clusteringAction = new desk.Action("cvtseg2", {standalone : false});
 			clusteringAction.setActionParameters({"input_volume" : this.__file});
-			clusteringAction.setOutputSubdirectory("clustering");
 			clusteringAction.buildUI();
 			this.__tabView.addElement('clustering', clusteringAction.getTabView());
 
 			var segmentation = new desk.Action("cvtgcmultiseg",
 				{standalone : false});
 			clusteringAction.setActionParameters({"input_volume" : this.__file});
-			segmentation.setOutputSubdirectory("segmentation");
 			segmentation.connect("clustering", clusteringAction,
 				"clustering-index.mhd");
 			segmentation.buildUI();
 			this.__tabView.addElement('segmentation', segmentation.getTabView());
 
 			var medianFilteringAction = new desk.Action("volume_median_filtering", {standalone : false});
-			medianFilteringAction.setOutputSubdirectory("filtering");
 			medianFilteringAction.connect("input_volume", 
 				segmentation, "seg-cvtgcmultiseg.mhd");
 			medianFilteringAction.buildUI();
 			this.__tabView.addElement('cleaning', medianFilteringAction.getTabView());
 
 			var meshing = new desk.Action("extract_meshes", {standalone : false});
-			meshing.setOutputSubdirectory("meshes");
 			meshing.buildUI();
 			this.__tabView.addElement('meshing', meshing.getTabView());
 
 			this.addListener("changeSessionDirectory", function (e) {
 				var directory=e.getData();
-				medianFilteringAction.setOutputDirectory(directory);
+				medianFilteringAction.setOutputDirectory(directory + "/filtering");
 				if (segmentationToken != null) {
 					this.__master.removeVolume(segmentationToken);
 				}
-				clusteringAction.setOutputDirectory(directory);
-				segmentation.setOutputDirectory(directory);
-				meshing.setOutputDirectory(directory);
+				clusteringAction.setOutputDirectory(directory + "clustering");
+				segmentation.setOutputDirectory(directory + "/segmentation");
+				meshing.setOutputDirectory(directory + "/meshing");
 				segmentation.setActionParameters({
 					"input_volume" : this.__file,
 					"seeds" : this.getSessionDirectory() + "/seeds.xml"

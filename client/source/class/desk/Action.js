@@ -27,11 +27,6 @@ qx.Class.define("desk.Action",
 	},
 
 	properties : {
-		/**
-		* Contains the output sub-directory.
-		*/
-		outputSubdirectory : {init : null},
-
 		/** disable caching*/
 		forceUpdate : { init : false, check: "Boolean", event : "changeForceUpdate"}
 	},
@@ -122,15 +117,13 @@ qx.Class.define("desk.Action",
 
 		/**
 		* Defines the output directory for the action
-		* @param directory {String} target subdirectory
+		* @param directory {String} target directory
  		* @param loadJSON {bool} determines whether saved json 
  		* parameters file will be loaded from the output directory (default : true)
 		*/
 		setOutputDirectory : function (directory, loadJSON) {
 			this.__outputDirectory = directory;
-            if (!this.getOutputSubdirectory()) {
-                return;
-            }
+
             if ((loadJSON === false) || (directory === "cache/")){
 				this.fireEvent("changeOutputDirectory");
 				return;
@@ -179,17 +172,12 @@ qx.Class.define("desk.Action",
 
 		/**
 		* Returns the action output directory
-		* @return {String} output subdirectory
+		* @return {String} output directory
 		*/
 		getOutputDirectory : function () {
 			var directory = this.__outputDirectory;
 			if (directory == null) {
 				return null;
-			}
-
-			var subDir=this.getOutputSubdirectory();
-			if ( subDir != null ) {
-				directory += '/' + subDir;
 			}
 
 			if ( directory.charAt( directory.length - 1 ) != '/' ) {
@@ -353,29 +341,8 @@ qx.Class.define("desk.Action",
 					}
 				}
 
-				this.__createSubdirectory(function () {
-					this.__executeAction(parameterMap);
-				}.bind(this));
+				this.__executeAction(parameterMap);
 			}.bind(this));
-		},
-
-		__createSubdirectory : function (callback) {
-			if (!this.getOutputSubdirectory()) {
-				callback();
-			} else {
-				desk.FileSystem.exists(this.__outputDirectory + '/' +
-					this.getOutputSubdirectory(), function (exists) {
-						if (!exists) {
-							desk.Actions.getInstance().launchAction({
-									"action" : "add_subdirectory",
-									"subdirectory_name" : this.getOutputSubdirectory(),
-									"output_directory" : this.__outputDirectory},
-							callback);
-						} else {
-							callback();
-						}
-				}.bind(this));
-			}
 		},
 
 		__executeAction : function (parameterMap) {
