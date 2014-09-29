@@ -15,11 +15,10 @@ qx.Class.define("desk.Action",
 	* embedded in a window or not (default : true).
 	*/
 	construct : function (name, parameters) {
-        parameters = parameters || {};
 		this.base(arguments);
 		this.__action = desk.Actions.getInstance().getAction(name);
 		this.__name = name;
-		if (parameters.standalone === false) {
+		if (parameters && parameters.standalone === false) {
 			this.__standalone = false;
 		}
 
@@ -31,8 +30,7 @@ qx.Class.define("desk.Action",
 		forceUpdate : { init : false, check: "Boolean", event : "changeForceUpdate"}
 	},
 
-	statics :
-	{
+	statics : {
 		/**
 		* Creates a new container, with parameters contained in a JSON file
 		* @param file {String} .JSON file to get settings from
@@ -58,7 +56,7 @@ qx.Class.define("desk.Action",
 		"actionUpdated" : "qx.event.type.Data",
 
 		/**
-		* Fired whenever the action has been completed
+		* Fired whenever the action has been triggered
 		*/
 		"actionTriggered" : "qx.event.type.Data"
 	},
@@ -66,13 +64,13 @@ qx.Class.define("desk.Action",
 	members : {
 		__actionsCounter : 0,
 
-        __controlsContainer : null,
+        __controls : null,
 
         __tabView : null,
 
 		__connections : null,
 
-		__outputDirectory : null,
+		__outputDir : null,
 
 		__action : null,
 
@@ -82,18 +80,16 @@ qx.Class.define("desk.Action",
 
 		__loadedParameters : null,
 
-		__fileBrowser : null,
-
 		__standalone : true,
 
 		__window : null,
 
-		__validationManager : null,
+		__manager : null,
 
-		__embededFileBrowser : null,
+		__fileBrowser : null,
 
         getControlsContainer : function () {
-            return this.__controlsContainer;
+            return this.__controls;
         },
 
 		/**
@@ -103,16 +99,11 @@ qx.Class.define("desk.Action",
 		* @param fileName {string} name of the output file from parentAction
 		*/
 		connect : function (parameterName, parentAction, fileName) {
-			if (parentAction == this) {
-				console.log("error : trying to connect to myself...");
-				return;
+			if (parentAction !== this) {
+				this.__connections.push({action : parentAction,
+					parameter : parameterName, file : fileName			
+				});
 			}
-				
-			this.__connections.push({
-					action : parentAction,
-					parameter : parameterName,
-					file : fileName			
-			});
 		},
 
 		/**
@@ -122,7 +113,11 @@ qx.Class.define("desk.Action",
  		* parameters file will be loaded from the output directory (default : true)
 		*/
 		setOutputDirectory : function (directory, loadJSON) {
-			this.__outputDirectory = directory;
+			if ( directory.charAt( directory.length - 1 ) != '/' ) {
+				directory += '/';
+			}
+
+			this.__outputDir = directory;
 
             if ((loadJSON === false) || (directory === "cache/")){
 				this.fireEvent("changeOutputDirectory");
@@ -146,7 +141,7 @@ qx.Class.define("desk.Action",
         },
 
 		__updateUIParameters : function () {
-			var manager = this.__validationManager;
+			var manager = this.__manager;
 			if (!manager) {
 				return;
 			}
@@ -175,15 +170,7 @@ qx.Class.define("desk.Action",
 		* @return {String} output directory
 		*/
 		getOutputDirectory : function () {
-			var directory = this.__outputDirectory;
-			if (directory == null) {
-				return null;
-			}
-
-			if ( directory.charAt( directory.length - 1 ) != '/' ) {
-				directory += '/';
-			}
-			return directory;
+			return this.__outputDir;
 		},
 
 		/**
@@ -195,7 +182,7 @@ qx.Class.define("desk.Action",
 			this.__providedParameters = parameters;
 			var outputDirectory = parameters.output_directory;
 			if (typeof outputDirectory === "string")	{
-				this.__outputDirectory = outputDirectory;
+				this.__outputDir = outputDirectory;
 			}
 			this.__updateUIParameters();
 		},
@@ -213,15 +200,11 @@ qx.Class.define("desk.Action",
             }, this);
         },
 
-		setOriginFileBrowser : function (fileBrowser) {
-			this.__fileBrowser = fileBrowser;
-		},
-
 		/**
 		* Triggers the action execution
 		*/
 		executeAction : function() {
-			this.__validationManager.validate();
+			this.__manager.validate();
 		},
 
 		/**
@@ -229,23 +212,22 @@ qx.Class.define("desk.Action",
 		* @return {qx.ui.tabview.TabView} the tabViex container
 		*/
 		getTabView : function () {
-			if (this.__tabView) {
-				return this.__tabView;
+			if (!this.__tabView) {
+				this.__tabView = new qx.ui.tabview.TabView ();
+				var page = new qx.ui.tabview.Page("Parameters");
+				page.setLayout(new qx.ui.layout.HBox());
+				page.add(this, {flex : 1});
+				this.__tabView.add(page);
+				this.addListenerOnce("actionUpdated", this.__addOutputTab, this);
 			}
-			var tabView = this.__tabView = new qx.ui.tabview.TabView ();
-			var page = new qx.ui.tabview.Page("Parameters");
-			page.setLayout(new qx.ui.layout.HBox());
-			page.add(this, {flex : 1});
-			tabView.add(page);
-			this.addListenerOnce("actionUpdated", this.__addOutputTab, this);
-			return tabView;
+			return this.__tabView;
 		},
 
 		__outputTabTriggered : false,
 
 		__addOutputTab : function () {
 			if ((this.__action.attributes.voidAction == "true") ||
-					this.__embededFileBrowser || this.__outputTabTriggered) {
+					this.__fileBrowser || this.__outputTabTriggered) {
 				return;
 			}
 			this.__outputTabTriggered = true;
@@ -253,32 +235,31 @@ qx.Class.define("desk.Action",
 			this.__tabView.add( page );
 			page.addListenerOnce('appear', function () {
 				page.setLayout(new qx.ui.layout.HBox());
-				var outputDirectory = this.getOutputDirectory();
-				this.__embededFileBrowser = new desk.FileBrowser( outputDirectory , false );
-				this.__embededFileBrowser.setUserData( "action" , this );
-				this.__embededFileBrowser.setHeight(200);
-				page.add( this.__embededFileBrowser , { flex : 1 } );
+				this.__fileBrowser = new desk.FileBrowser( this.__outputDir , false );
+				this.__fileBrowser.setUserData( "action" , this );
+				this.__fileBrowser.setHeight(200);
+				page.add( this.__fileBrowser , { flex : 1 } );
 
-				this.addListener( "actionUpdated" , this.__updateFileBrowser, this );
-				this.addListener("changeOutputDirectory", this.__updateFileBrowser , this );
+				this.addListener( "actionUpdated", this.__updateFileBrowser, this );
+				this.addListener( "changeOutputDirectory", this.__updateFileBrowser , this );
 			}, this);
 		},
 
 		__updateFileBrowser : function () {
-			this.__embededFileBrowser.updateRoot(this.getOutputDirectory());
+			this.__fileBrowser.updateRoot(this.getOutputDirectory());
 		},
 
-		__updateButton : null,
+		__update : null,
 
-		__forceUpdateCheckBox : null,
+		__forceUpdate : null,
 
 		__executionStatus : null,
 
 		__showLogButton : null,
 
 		__afterValidation : function () {
-			var manager = this.__validationManager;
-			var send = this.__updateButton;
+			var manager = this.__manager;
+			var send = this.__update;
 			var connections = this.__connections;
 
 			// check the validation status
@@ -294,26 +275,26 @@ qx.Class.define("desk.Action",
 			// add all parameters
 			manager.getItems().forEach(function (item) {
 				var value = item.getValue();
-				if (typeof value === 'string') {
-					if (value.length > 0) {
-						parameterMap[item.getPlaceholder()] = value;
-					}
+				if ((typeof value === 'string') && value.length) {
+					parameterMap[item.getPlaceholder()] = value;
 				}
 			});
 
 			// add output directory if provided
-			if (this.__outputDirectory != null) {
-				parameterMap.output_directory = this.__outputDirectory;
+			if (this.__outputDir != null) {
+				parameterMap.output_directory = this.__outputDir;
 			}
 
 			// add the value of the "force update" checkbox
-			parameterMap.force_update = this.__forceUpdateCheckBox.getValue();
+			parameterMap.force_update = this.__forceUpdate.getValue();
 			this.__executionStatus.setValue("Processing...");
 
 			// update parent Actions
-			async.each(_.uniq(connections.map(function (connection) {
+			async.each(
+				_.uniq(connections.map(function (connection) {
 					return connection.action;
-				})), 
+				})),
+ 
 				function (action, callback) {
 					action.addListenerOnce("actionUpdated", function (event) {
 						callback();
@@ -321,28 +302,29 @@ qx.Class.define("desk.Action",
 					action.executeAction();
 				},
 
-			function (err) {
-				// update parameters from connections
-				connections.forEach(function (connection) {
-					parameterMap[connection.parameter] =
-						connection.action.getOutputDirectory() +
-							desk.FileSystem.getFileName(connection.file);
-				});
+				function (err) {
+					// update parameters from connections
+					connections.forEach(function (connection) {
+						parameterMap[connection.parameter] =
+							connection.action.getOutputDirectory() +
+								desk.FileSystem.getFileName(connection.file);
+					});
 
-				send.setLabel("Processing...");
-				var out = this.getOutputDirectory();
-				if (out) {
-					parameterMap.output_directory = out;
-				}
-
-				if (this.__outputDirectory) {
-					if (this.__outputDirectory.substring(0,6) === "cache/") {
-						parameterMap.output_directory = "cache/";
+					send.setLabel("Processing...");
+					var out = this.getOutputDirectory();
+					if (out) {
+						parameterMap.output_directory = out;
 					}
-				}
 
-				this.__executeAction(parameterMap);
-			}.bind(this));
+					if (this.__outputDir) {
+						if (this.__outputDir.substring(0,6) === "cache/") {
+							parameterMap.output_directory = "cache/";
+						}
+					}
+
+					this.__executeAction(parameterMap);
+				}.bind(this)
+			);
 		},
 
 		__executeAction : function (parameterMap) {
@@ -356,13 +338,11 @@ qx.Class.define("desk.Action",
 		},
 
 		__afterExecute : function (actionId, response) {
-			var send = this.__updateButton;
-			send.setEnabled(true);
-			send.setLabel("Update");
-			var currentOutputDir = this.getOutputDirectory();
-			if ((currentOutputDir === null) ||
-					(currentOutputDir.substring(0, 6) === "cache/") ||
-					(currentOutputDir.substring(0, 8) === "actions/")) {
+			this.__update.setEnabled(true);
+			this.__update.setLabel("Update");
+			if ((this.__outputDir === null) ||
+					(this.__outputDir.substring(0, 6) === "cache/") ||
+					(this.__outputDir.substring(0, 8) === "actions/")) {
 				this.setOutputDirectory(response.outputDirectory);
 			}
 
@@ -373,12 +353,10 @@ qx.Class.define("desk.Action",
 			this.fireDataEvent("actionUpdated", actionId);
 		},
 
-        __forms : null,
-
         getForm : function (parameterName) {
-            if (this.__forms) {
-                return this.__forms[parameterName];
-            }
+			return _.find(this.__manager.getItems(), function (item) {
+				return item.getUserData("name") === parameterName;
+			});
         },
 
         __intValidator : function(value, item) {
@@ -433,13 +411,14 @@ qx.Class.define("desk.Action",
 		/**
 		* Builds the UI
 		*/
-		buildUI : function () {
+		buildUI : function (opt) {
+			opt = opt || {};
 			var action = this.__action;
 			this.setLayout(new qx.ui.layout.VBox(5));
 
 			var scroll = new qx.ui.container.Scroll();
-			var parametersContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
-			scroll.add(parametersContainer, {flex : 1});
+			var container = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
+			scroll.add(container, {flex : 1});
 			this.add(scroll, {flex : 1});
 
 			if (this.__standalone) {
@@ -472,131 +451,99 @@ qx.Class.define("desk.Action",
 			}
 
 			// create the form manager
-			var manager = new qx.ui.form.validation.Manager();
-			this.__validationManager = manager;
+			var manager = this.__manager = new qx.ui.form.validation.Manager();
 
-			var fileAlreadyPickedFromBrowser = false;
-
-			var parameters = action.parameters;
-
-            this.__forms = {};
-
-			var connections = this.__connections;
-			for (var i = 0; i < (parameters.length); i++) {
-				var parameter = parameters[i];
-				var parameterName = parameter.name;
-
-				if (!_.find(connections, function (connection ) {
-						return connection.parameter === parameterName;
+			action.parameters.forEach(function (parameter) {
+				if (parameter.text || _.find(this.__connections, function (connection ) {
+						return connection.parameter === parameter.name;
 					})) {
-                    var parameterTooltip = '';
-                    if (parameter.text) {
-                        continue;
-                    }
-                    if (parameter.info) {
-                        parameterTooltip += parameter.info + '<br>';
-                    }
-                    if (parameter.min) {
-                        parameterTooltip += 'min : ' + parameter.min + '<br>';
-                    }
-                    if (parameter.max) {
-                        parameterTooltip += 'max : ' + parameter.max + '<br>';
-                    }
-                    if (parameter.defaultValue) {
-                        parameterTooltip += 'default : ' + parameter.defaultValue + '<br>';
-                    }
-
-                    var label = new qx.ui.basic.Label(parameterName);
-					parametersContainer.add(label);
-					var parameterForm; 
-                    var parameterType = parameter.type;
-                    switch (parameterType)
-                    {
-					case "file":
-                    case "directory":
-                        parameterForm = new desk.FileField();
-                        break;
-                    default :
-                        parameterForm = new qx.ui.form.TextField();
-                    break;
-					}
-                    this.__forms[parameterName] = parameterForm;
-					parameterForm.setUserData("label", label);
-                    if (parameterTooltip.length) {
-                        parameterForm.setToolTipText(parameterTooltip);
-                        label.setToolTipText(parameterTooltip);
-                    }
-					parameterForm.setPlaceholder(parameterName);
-					parametersContainer.add(parameterForm);
-
-					switch (parameterType)
-					{
-					case "int":
-						manager.add(parameterForm, this.__intValidator, parameter);
-						break;
-					case "string":
-						manager.add(parameterForm, this.__stringValidator, parameter);
-						break;
-					case "float":
-						manager.add(parameterForm, this.__floatValidator, parameter);
-						break;
-					case "file":
-						if ( !fileAlreadyPickedFromBrowser && (this.__fileBrowser!=null)) {
-							fileAlreadyPickedFromBrowser=true;
-							var file = this.__fileBrowser.getSelectedFiles()[0];
-							parameterForm.setValue(file);
-							var parentAction = this.__fileBrowser.getUserData("action");
-							if (parentAction) {
-								this.connect(parameterForm.getPlaceholder(), parentAction, file);
-							}
-						}
-						manager.add(parameterForm, this.__dummyValidator, parameter);
-						break;
-					case "directory":
-						manager.add(parameterForm, this.__dummyValidator, parameter);
-						break;
-					case "xmlcontent":
-						manager.add(parameterForm, this.__dummyValidator, parameter);
-						break;
-					default :
-						alert("no validator implemented for type : "+parameterType);
-					}
-
-					//use default value if provided
-					var defaultValue = parameter.defaultValue;
-					if (defaultValue)  {
-						parameterForm.setValue(defaultValue);
-					}
-
-					parameterForm.addListener("input", function(e) {
-						this.setInvalidMessage('');
-					}, parameterForm);
+					return;
 				}
-			}
+
+				var parameterTooltip = '';
+				["info", "min", "max", "defaultValue"].forEach(function (field) {
+					if (parameter[field]) {
+						parameterTooltip += field + ' : ' + parameter[field] + '<br>';
+					}
+				});
+
+				var label = new qx.ui.basic.Label(parameter.name);
+				container.add(label);
+				var form; 
+				switch (parameter.type) {
+				case "file":
+				case "directory":
+					form = new desk.FileField();
+					break;
+				default :
+					form = new qx.ui.form.TextField();
+				break;
+				}
+
+				form.setUserData("label", label);
+				form.setUserData("name", parameter.name);
+				if (parameterTooltip.length) {
+					form.setToolTipText(parameterTooltip);
+					label.setToolTipText(parameterTooltip);
+				}
+				form.setPlaceholder(parameter.name);
+				container.add(form);
+
+				var validators = {
+					"int" : this.__intValidator,
+					"string" : this.__stringValidator,
+					"float" : this.__floatValidator,
+					"file" : this.__dummyValidator,
+					"directory" : this.__dummyValidator,
+					"xmlcontent" : this.__dummyValidator
+				};
+
+				var validator = validators[parameter.type];
+				if (validator) {
+					manager.add(form, validator, parameter);				
+				} else {
+					alert("no validator implemented for type : "+ parameter.type);
+				}
+
+				if ((parameter.type === "file") && opt.fileBrowser) {
+					var file = opt.fileBrowser.getSelectedFiles()[0];
+					form.setValue(file);
+					var parentAction = opt.fileBrowser.getUserData("action");
+					if (parentAction) {
+						this.connect(form.getPlaceholder(), parentAction, file);
+					}
+					opt.fileBrowser = undefined;
+				}
+
+				//use default value if provided
+				if (parameter.defaultValue)  {
+					form.setValue(parameter.defaultValue);
+				}
+
+				form.addListener("input", function(e) {
+					this.setInvalidMessage('');
+				}, form);
+			}, this);
 
 			this.__updateUIParameters();
 
-			var executeBox = this.__controlsContainer = new qx.ui.container.Composite();
-			executeBox.setLayout(new qx.ui.layout.HBox(10));
-			this.add(executeBox);
+			this.__controls = new qx.ui.container.Composite();
+			this.__controls.setLayout(new qx.ui.layout.HBox(10));
+			this.add(this.__controls);
 
-			var send = new qx.ui.form.Button("Process");
-			this.__updateButton = send;
-			executeBox.add(send, {flex : 1});
-			send.addListener("execute", function() {
-				manager.validate();
-			}, this);
+			this.__update = new qx.ui.form.Button("Process");
+			this.__controls.add(this.__update, {flex : 1});
+			this.__update.addListener("execute", manager.validate, manager);
 
-			var forceUpdateCheckBox = new qx.ui.form.CheckBox("force");
-			this.__forceUpdateCheckBox = forceUpdateCheckBox;
-			this.bind("forceUpdate", forceUpdateCheckBox, "value");
-			forceUpdateCheckBox.bind("value", this, "forceUpdate");
+			this.__forceUpdate = new qx.ui.form.CheckBox("force");
+			this.bind("forceUpdate", this.__forceUpdate, "value");
+			this.__forceUpdate.bind("value", this, "forceUpdate");
 
 			this.__executionStatus = new qx.ui.form.TextField().set({
 				readOnly: true});
 
-			executeBox.add(forceUpdateCheckBox, {flex : 1});
-			executeBox.add(this.__executionStatus, {flex : 1});
+			this.__controls.add(this.__forceUpdate, {flex : 1});
+			this.__controls.add(this.__executionStatus, {flex : 1});
 			this.add(showLogButton);
 
 			// add a listener to the form manager for the validation complete

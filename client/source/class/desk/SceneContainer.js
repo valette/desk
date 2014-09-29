@@ -128,7 +128,6 @@ qx.Class.define("desk.SceneContainer",
 
 		if (file) {
 			this.addFile(file, parameters, callback, context);
-			window.setCaption(file);
 		}
 		this.__addDropSupport();
 		this.__volumeSlices = [];
