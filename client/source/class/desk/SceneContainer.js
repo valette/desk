@@ -130,7 +130,6 @@ qx.Class.define("desk.SceneContainer",
 			this.addFile(file, parameters, callback, context);
 		}
 		this.__addDropSupport();
-		this.__volumeSlices = [];
 	},
 
 	destruct : function(){
@@ -187,7 +186,6 @@ qx.Class.define("desk.SceneContainer",
 		getMeshes : function() {
 			var meshes = [];
 			if (!this.getScene()) return;
-
 			this.getScene().traverse(function(child) {
 				if (child.userData.viewerProperties) {
 					meshes.push(child);
@@ -305,8 +303,11 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		update : function () {
-			var files = _.filter(this.getMeshes(), function (mesh) {
-				return mesh.userData.viewerProperties.file != undefined;
+			var files = [];
+			this.getMeshes().forEach(function (mesh) {
+				if (mesh.userData.viewerProperties.file) {
+					files.push(mesh.userData.viewerProperties.file);
+				}
 			});
 			this.removeAllMeshes();
 			this.__meshes.getDataModel().clearData();
@@ -435,8 +436,6 @@ qx.Class.define("desk.SceneContainer",
 			}, this);
 		},
 
-		__volumeSlices : null,
-
 		/**
 		 * Attaches a set of desk.VolumeSlice to the scene
 		 * @param volumeSlice {desk.VolumeSlice} volume slice to attach;
@@ -448,7 +447,7 @@ qx.Class.define("desk.SceneContainer",
 			material.side = THREE.DoubleSide;
 			var mesh = new THREE.Mesh(geometry,material);
 
-			function updateTexture() {
+			var listenerId = volumeSlice.addListener('changeImage', function () {
 				var coords = volumeSlice.getCornersCoordinates();
 				geometry.vertices.forEach(function (vertex, i) {
 					vertex.set(coords[3*i], coords[3*i+1], coords[3*i+2]);
@@ -458,19 +457,17 @@ qx.Class.define("desk.SceneContainer",
 				geometry.computeBoundingBox();
 				geometry.verticesNeedUpdate = true;
 				this.render(true);
-			}
+			}, this);
 
-			var listenerId = volumeSlice.addListener('changeImage', updateTexture, this);
             this.addMesh(mesh, {label : 'View ' + (volumeSlice.getOrientation()+1),
                 volumeSlice : volumeSlice, updateCamera : false
             });
-			updateTexture.apply(this);
+
+			volumeSlice.fireEvent('changeImage');
 
 			mesh.addEventListener("removedFromScene", function () {
 				volumeSlice.removeListenerById(listenerId);
-				this.__volumeSlices = _.without(this.__volumeSlices, mesh);
 			}.bind(this));
-			this.__volumeSlices.push(mesh);
 			return mesh;
 		},
 
@@ -573,7 +570,13 @@ qx.Class.define("desk.SceneContainer",
 
 		__onMouseWheel : function (event) {
 			if (event.getTarget() != this.getCanvas()) return;
-			var intersects = this.__pickMeshes(this.__volumeSlices);
+			var slices = [];
+			this.getScene().traverse(function (mesh) {
+				if (mesh.userData && mesh.volumeSlice) {
+					slices.push(mesh);
+				}
+			});
+			var intersects = this.__pickMeshes(slices);
 			var delta = event.getWheelDelta() > 0 ? 1 : -1;
 			if (intersects != Infinity) {
 				var slice = intersects.object.userData.viewerProperties.volumeSlice;

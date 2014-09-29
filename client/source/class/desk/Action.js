@@ -17,8 +17,10 @@ qx.Class.define("desk.Action",
 	construct : function (name, opt) {
 		opt = opt || {};
 		this.base(arguments);
+
 		this.__action = desk.Actions.getInstance().getAction(name);
 		this.__name = name;
+
 		if (opt.standalone === false) {
 			this.__standalone = false;
 		}
@@ -237,9 +239,9 @@ qx.Class.define("desk.Action",
 
 		__forceUpdate : null,
 
-		__executionStatus : null,
+		__status : null,
 
-		__showLogButton : null,
+		__showLog : null,
 
 		__afterValidation : function () {
 			// check the validation status
@@ -247,29 +249,20 @@ qx.Class.define("desk.Action",
 				alert(this.__manager.getInvalidMessages().join("\n"));
 				return;
 			}
-			// configure the send button
-			this.__update.setEnabled(false);
-			this.__update.setLabel("Updating Parents...");
 
-			var parameterMap = {"action" : this.__name};
+			var params = {"action" : this.__name};
 			// add all parameters
 			this.__manager.getItems().forEach(function (item) {
 				var value = item.getValue();
 				if ((typeof value === 'string') && value.length) {
-					parameterMap[item.getPlaceholder()] = value;
+					params[item.getUserData("name")] = value;
 				}
 			});
 
-			// add output directory if provided
-			if (this.__outputDir != null) {
-				parameterMap.output_directory = this.__outputDir;
-			}
-
-			// add the value of the "force update" checkbox
-			parameterMap.force_update = this.__forceUpdate.getValue();
-			this.__executionStatus.setValue("Processing...");
-
 			// update parent Actions
+			this.__update.setEnabled(false);
+			this.__update.setLabel("Updating Parents...");
+
 			async.each(
 				_.uniq(this.__connections.map(function (connection) {
 					return connection.action;
@@ -285,32 +278,33 @@ qx.Class.define("desk.Action",
 				function (err) {
 					// update parameters from connections
 					this.__connections.forEach(function (connection) {
-						parameterMap[connection.parameter] =
+						params[connection.parameter] =
 							connection.action.getOutputDirectory() +
 								desk.FileSystem.getFileName(connection.file);
 					});
 
 					this.__update.setLabel("Processing...");
-					var out = this.getOutputDirectory();
-					if (out) {
-						parameterMap.output_directory = out;
-					}
 
 					if (this.__outputDir) {
+						params.output_directory = this.__outputDir;
 						if (this.__outputDir.substring(0,6) === "cache/") {
-							parameterMap.output_directory = "cache/";
+							params.output_directory = "cache/";
 						}
 					}
 
-					this.__executeAction(parameterMap);
+					// add the value of the "force update" checkbox
+					params.force_update = this.__forceUpdate.getValue();
+					this.__status.setValue("Processing...");
+
+					this.__executeAction(params);
 				}.bind(this)
 			);
 		},
 
-		__executeAction : function (parameterMap) {
+		__executeAction : function (params) {
 			var actionId = this.__actionsCounter;
 			this.__actionsCounter++;
-			desk.Actions.getInstance().launchAction (parameterMap,
+			desk.Actions.getInstance().launchAction (params,
 				function (response) {
 					this.__afterExecute(actionId, response);
 			}, this);
@@ -326,9 +320,9 @@ qx.Class.define("desk.Action",
 				this.setOutputDirectory(response.outputDirectory);
 			}
 
-			this.__executionStatus.setValue(response.status);
+			this.__status.setValue(response.status);
 			if (!this.__action.attributes.voidAction) {
-				this.__showLogButton.setVisibility("visible");
+				this.__showLog.setVisibility("visible");
 			}
 			this.fireDataEvent("actionUpdated", actionId);
 		},
@@ -346,8 +340,7 @@ qx.Class.define("desk.Action",
 					item.setInvalidMessage('"' + parameterName + '" is empty');
 					return (false);
 				}
-			}
-			else if ((parseInt(value, 10) != parseFloat(value)) || isNaN(value)) {
+			} else if ((parseInt(value, 10) != parseFloat(value)) || isNaN(value)) {
 				item.setInvalidMessage('"' + parameterName + '" should be an integer');
 				return (false);
 			}
@@ -361,8 +354,7 @@ qx.Class.define("desk.Action",
 					item.setInvalidMessage('"' + parameterName + '" is empty');
 					return (false);
 				}
-			}
-			else if (value.split(" ").length != 1){
+			} else if (value.split(" ").length != 1){
 				item.setInvalidMessage('"' + parameterName + '" should contain no space characters');
 				return (false);
 			}
@@ -376,8 +368,7 @@ qx.Class.define("desk.Action",
 					item.setInvalidMessage('"' + parameterName + '" is empty');
 					return (false);
 				}
-			}
-			else if (isNaN(value)){
+			} else if (isNaN(value)){
 				item.setInvalidMessage('"' + parameterName + '" should be a number');
 				return (false);
 			}
@@ -397,7 +388,6 @@ qx.Class.define("desk.Action",
 		* Builds the UI
 		*/
 		__buildUI : function (fileBrowser) {
-			var action = this.__action;
 			this.setLayout(new qx.ui.layout.VBox(5));
 
 			var scroll = new qx.ui.container.Scroll();
@@ -405,35 +395,10 @@ qx.Class.define("desk.Action",
 			scroll.add(container, {flex : 1});
 			this.add(scroll, {flex : 1});
 
-			if (this.__standalone) {
-				this.__window = new qx.ui.window.Window();
-				this.__window.set({ layout : new qx.ui.layout.HBox(),
-					width : 300,
-					showClose :true,
-					showMinimize : false,
-					useMoveFrame : true,
-					caption : this.__name});
-				this.__window.add(this.getTabView(), {flex : 1});
-			}
-
-			var showLogButton = new qx.ui.form.Button("Show console log");
-			this.__showLogButton = showLogButton;
-			showLogButton.addListener("execute",function () {
-				new desk.TextEditor(this.getOutputDirectory() + "action.log");
-			}, this);
-			showLogButton.setVisibility("excluded");
-
-			if (this.__providedParameters && this.__providedParameters.output_directory) {
-				if (this.__standalone) {
-					this.__addOutputTab();
-				}
-				showLogButton.setVisibility("visible");
-			}
-
 			// create the form manager
-			var manager = this.__manager = new qx.ui.form.validation.Manager();
+			this.__manager = new qx.ui.form.validation.Manager();
 
-			action.parameters.forEach(function (parameter) {
+			this.__action.parameters.forEach(function (parameter) {
 				if (parameter.text || _.find(this.__connections, function (connection ) {
 						return connection.parameter === parameter.name;
 					})) {
@@ -479,7 +444,7 @@ qx.Class.define("desk.Action",
 				}[parameter.type];
 
 				if (validator) {
-					manager.add(form, validator, parameter);				
+					this.__manager.add(form, validator, parameter);				
 				} else {
 					alert("no validator implemented for type : "+ parameter.type);
 				}
@@ -511,24 +476,36 @@ qx.Class.define("desk.Action",
 			this.add(this.__controls);
 
 			this.__update = new qx.ui.form.Button("Process");
+			this.__update.addListener("execute", this.__manager.validate, this.__manager);
 			this.__controls.add(this.__update, {flex : 1});
-			this.__update.addListener("execute", manager.validate, manager);
 
 			this.__forceUpdate = new qx.ui.form.CheckBox("force");
 			this.bind("forceUpdate", this.__forceUpdate, "value");
 			this.__forceUpdate.bind("value", this, "forceUpdate");
-
-			this.__executionStatus = new qx.ui.form.TextField().set({
-				readOnly: true});
-
 			this.__controls.add(this.__forceUpdate, {flex : 1});
-			this.__controls.add(this.__executionStatus, {flex : 1});
-			this.add(showLogButton);
+
+			this.__status = new qx.ui.form.TextField().set({readOnly: true});
+			this.__controls.add(this.__status, {flex : 1});
+
+			this.__showLog = new qx.ui.form.Button("Show console log");
+			this.__showLog.addListener("execute",function () {
+				new desk.TextEditor(this.getOutputDirectory() + "action.log");
+			}, this);
+			this.__showLog.setVisibility("excluded");
+			this.add(this.__showLog);
 
 			// add a listener to the form manager for the validation complete
-			manager.addListener("complete", this.__afterValidation, this);
+			this.__manager.addListener("complete", this.__afterValidation, this);
 
             if (this.__standalone) {
+				this.__window = new qx.ui.window.Window();
+				this.__window.set({ layout : new qx.ui.layout.HBox(),
+					width : 300,
+					showClose :true,
+					showMinimize : false,
+					useMoveFrame : true,
+					caption : this.__name});
+				this.__window.add(this.getTabView(), {flex : 1});
 				this.__window.open();
                 this.__window.center();
 			}
