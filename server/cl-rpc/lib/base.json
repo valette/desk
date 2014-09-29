@@ -12,7 +12,7 @@
 		        {
 		            "name":"output_zip",
 		            "type":"string",
-		            "required":"true"
+		            "required":true
 		        },
 		        {
 		            "text":"-rj "
@@ -20,13 +20,13 @@
 		        {
 		            "name":"input_file_list",
 		            "type":"string",
-		            "required":"true"
+		            "required":true
 		        }
 		    ],
 		    "attributes":
 		    {
 		        "command":"zip",
-		        "voidAction":"true"
+		        "voidAction":true
 		    }
 		},
 		"pwd" : {
@@ -45,7 +45,7 @@
 		        {
 		            "name":"directory",
 		            "type":"file",
-		            "required":"true"
+		            "required":true
 		        },
 		        {
 		            "text":"-R"
@@ -54,7 +54,7 @@
 		    "attributes":
 		    {
 		        "executable":"chmod g+rw",
-		        "voidAction":"true"
+		        "voidAction":true
 		    }
 		},
 		"sleep" :{
@@ -63,13 +63,13 @@
 		            "name":"time_in_seconds",
 		            "type":"int",
 		            "defaultValue":"2",
-		            "required":"true"
+		            "required":true
 		        }
 		    ],
 		    "attributes":
 		    {
 		        "command":"sleep",
-		        "voidAction":"true"
+		        "voidAction":true
 		    }
 		},
 		"delete_file" : {
@@ -77,13 +77,13 @@
 		        {
 		            "name":"file_name",
 		            "type":"file",
-		            "required":"true"
+		            "required":true
 		        }
 		    ],
 		    "attributes":
 		    {
 		        "command":"rm",
-		        "voidAction": "true"
+		        "voidAction": true
 		    }
 		},
 		"add_subdirectory" :{
@@ -91,14 +91,14 @@
 		        {
 		            "name":"subdirectory_name",
 		            "type":"string",
-		            "required":"true"
+		            "required":true
 		        }
 		    ],
 		    "attributes":
 		    {
 		        "command":"mkdir",
-		        "voidAction" : "true",
-		        "noCache" : "true"
+		        "voidAction" : true,
+		        "noCache" : true
 		    }
 		},
 		"delete_directory" :{
@@ -106,13 +106,13 @@
 		        {
 		            "name":"directory",
 		            "type":"file",
-		            "required":"true"
+		            "required":true
 		        }
 		    ],
 		    "attributes":
 		    {
 		        "command":"rm -rf",
-		        "voidAction":"true"
+		        "voidAction":true
 		    }
 		},
 		"move" : {
@@ -120,18 +120,18 @@
 				{
 					"name":"source",
 					"type":"file",
-					"required":"true"
+					"required":true
 				},
 				{
 					"name":"destination",
 					"type":"string",
-					"required":"true"
+					"required":true
 				}
 		    ],
 		    "attributes":
 		    {
 		        "command":"mv",
-		        "voidAction":"true"
+		        "voidAction":true
 		    }
 		},
 		"copy" :{
@@ -139,18 +139,18 @@
 				{
 					"name":"source",
 					"type":"string",
-					"required":"true"
+					"required":true
 				},
 				{
 					"name":"destination",
 					"type":"string",
-					"required":"true"
+					"required":true
 				}
 		    ],
 		    "attributes":
 		    {
 		        "command":"cp",
-		        "voidAction":"true"
+		        "voidAction":true
 		    }
 		},
 		"create_directory" :{
@@ -158,13 +158,13 @@
 		        {
 		            "name":"directory",
 		            "type":"string",
-		            "required":"true"
+		            "required":true
 		        }
 		    ],
 		    "attributes":
 		    {
 		        "command":"mkdir",
-		        "voidAction":"true"
+		        "voidAction":true
 		    }
 		},
 		"write_binary" :{
@@ -172,18 +172,18 @@
 		        {
 		            "name":"file_name",
 		            "type":"string",
-		            "required":"true"
+		            "required":true
 		        },
 		        {
 		            "name":"base64data",
 		            "type":"string",
-		            "required":"true"
+		            "required":true
 		        }
 		    ],
 		    "attributes":
 		    {
 		        "js":"write_binary",
-		        "voidAction" : "true"
+		        "voidAction" : true
 		    }
 		},
 		"unzip_file" : {
@@ -191,20 +191,20 @@
 		        {
 		            "name":"input_file",
 		            "type":"file",
-		            "required":"true"
+		            "required":true
 		        },
 		        {
 					"name":"destination",
 					"type":"string",
 					"prefix":"-d ",
-					"required":"true"
+					"required":true
 				}
 
 		    ],
 		    "attributes":
 		    {
 		        "command":"unzip",
-		        "voidAction":"true"
+		        "voidAction":true
 		    }
 		},
 		"qooxdoo_generator" : {
@@ -212,13 +212,13 @@
 			  {
 				"name" : "job",
 				"type" : "string",
-				"required" : "true"
+				"required" : true
 			  }
 			],
 			"attributes": {
 				"command": "./generate.py",
-				"noCache" : "true",
-				"hidden" : "true"
+				"noCache" : true,
+				"hidden" : true
 			}
 		}
 	}

@@ -639,7 +639,7 @@ RPC.prototype.cacheAction = function (callback) {
 					}.bind(this)],
 				callback);
 			} else {
-				this.response.stdout = 'stdout and stderr not included. Launch action with parameter stdout="true"';
+				this.response.stdout = 'stdout and stderr not included. Launch action with parameter stdout=true';
 				callback();
 			}
 		}.bind(this)
@@ -656,7 +656,7 @@ RPC.prototype.afterExecution = function(err, stdout, stderr, callback) {
 		this.response.stdout = stdout;
 		this.response.stderr = stderr;
 	} else {
-		this.response.stdout = 'stdout and stderr not included. Launch action with parameter stdout="true"';
+		this.response.stdout = 'stdout and stderr not included. Launch action with parameter stdout=true';
 	}
 
 	delete ongoingActions[this.POST.handle];

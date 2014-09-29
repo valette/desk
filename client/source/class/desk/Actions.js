@@ -255,8 +255,6 @@ qx.Class.define("desk.Actions",
 
 		__garbageContainer : new qx.ui.container.Composite(new qx.ui.layout.HBox()),
 
-
-
 		/**
 		* launches an action
 		* @param params {Object} object containing action aprameters
@@ -324,9 +322,7 @@ qx.Class.define("desk.Actions",
 		},
 
 		__launch : function (e){
-			var action = new desk.Action(e.getTarget().getLabel());
-			action.setOutputDirectory("actions/");
-			action.buildUI({fileBrowser : this.__currentFileBrowser});
+			new desk.Action(e.getTarget().getLabel(), {fileBrowser : this.__currentFileBrowser});
 		},
 
 		__myComparator : function (a, b) {

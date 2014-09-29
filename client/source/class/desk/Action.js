@@ -14,15 +14,17 @@ qx.Class.define("desk.Action",
     * standalone (boolean): defines whether the container should be
 	* embedded in a window or not (default : true).
 	*/
-	construct : function (name, parameters) {
+	construct : function (name, opt) {
+		opt = opt || {};
 		this.base(arguments);
 		this.__action = desk.Actions.getInstance().getAction(name);
 		this.__name = name;
-		if (parameters && parameters.standalone === false) {
+		if (opt.standalone === false) {
 			this.__standalone = false;
 		}
 
-        this.__connections = [];
+		this.__connections = [];
+		this.__buildUI(opt.fileBrowser);
 	},
 
 	properties : {
@@ -39,7 +41,6 @@ qx.Class.define("desk.Action",
 			desk.FileSystem.readFile(file, function (err, parameters) {
 				var action = new desk.Action (parameters.action);
 				action.setActionParameters(parameters);
-				action.buildUI();
 			});
 		}
 	},
@@ -76,9 +77,9 @@ qx.Class.define("desk.Action",
 
 		__name : null,
 
-		__providedParameters : null,
+		__providedParameters : {},
 
-		__loadedParameters : null,
+		__loadedParameters : {},
 
 		__standalone : true,
 
@@ -141,28 +142,8 @@ qx.Class.define("desk.Action",
         },
 
 		__updateUIParameters : function () {
-			var manager = this.__manager;
-			if (!manager) {
-				return;
-			}
-			function setUIParameters(parameters, hide) {
-				if (!parameters) {
-					return;
-				}
-				manager.getItems().forEach(function (item) {
-					var parameterName = item.getPlaceholder();
-					var parameterValue = parameters[parameterName];
-					if (parameterValue !== undefined) {
-						item.setValue(parameterValue.toString());
-						if (hide) {
-							item.setVisibility("excluded");
-							item.getUserData("label").setVisibility("excluded");
-						}
-					}
-				});
-			}
-			setUIParameters(this.__loadedParameters, false);
-			setUIParameters(this.__providedParameters, !this.__standalone);
+			this.setUIParameters(this.__loadedParameters, false);
+			this.setUIParameters(this.__providedParameters, !this.__standalone);
 		},
 
 		/**
@@ -180,9 +161,8 @@ qx.Class.define("desk.Action",
 		*/
 		setActionParameters : function (parameters) {
 			this.__providedParameters = parameters;
-			var outputDirectory = parameters.output_directory;
-			if (typeof outputDirectory === "string")	{
-				this.__outputDir = outputDirectory;
+			if (typeof parameters.output_directory === "string") {
+				this.__outputDir = parameters.output_directory;
 			}
 			this.__updateUIParameters();
 		},
@@ -190,12 +170,17 @@ qx.Class.define("desk.Action",
         /**
 		* Defines UI input parameters for the action
 		* @param parameters {Object} parameters as JSON object
+		* @param hide {Boolean} hide/don't hide provided parameter forms
 		*/
-        setUIParameters : function (parameters) {
+        setUIParameters : function (parameters, hide) {
             Object.keys(parameters).forEach(function (key) {
                 var form = this.getForm(key);
                 if (form) {
                     form.setValue(parameters[key].toString());
+					if (hide) {
+						form.setVisibility("excluded");
+						form.getUserData("label").setVisibility("excluded");
+					}
                 }
             }, this);
         },
@@ -226,8 +211,7 @@ qx.Class.define("desk.Action",
 		__outputTabTriggered : false,
 
 		__addOutputTab : function () {
-			if ((this.__action.attributes.voidAction == "true") ||
-					this.__fileBrowser || this.__outputTabTriggered) {
+			if (this.__action.attributes.voidAction || this.__outputTabTriggered) {
 				return;
 			}
 			this.__outputTabTriggered = true;
@@ -258,22 +242,18 @@ qx.Class.define("desk.Action",
 		__showLogButton : null,
 
 		__afterValidation : function () {
-			var manager = this.__manager;
-			var send = this.__update;
-			var connections = this.__connections;
-
 			// check the validation status
-			if (!manager.getValid()) {
-				alert(manager.getInvalidMessages().join("\n"));
+			if (!this.__manager.getValid()) {
+				alert(this.__manager.getInvalidMessages().join("\n"));
 				return;
 			}
-				// configure the send button
-			send.setEnabled(false);
-			send.setLabel("Updating Parents...");
+			// configure the send button
+			this.__update.setEnabled(false);
+			this.__update.setLabel("Updating Parents...");
 
 			var parameterMap = {"action" : this.__name};
 			// add all parameters
-			manager.getItems().forEach(function (item) {
+			this.__manager.getItems().forEach(function (item) {
 				var value = item.getValue();
 				if ((typeof value === 'string') && value.length) {
 					parameterMap[item.getPlaceholder()] = value;
@@ -291,7 +271,7 @@ qx.Class.define("desk.Action",
 
 			// update parent Actions
 			async.each(
-				_.uniq(connections.map(function (connection) {
+				_.uniq(this.__connections.map(function (connection) {
 					return connection.action;
 				})),
  
@@ -304,13 +284,13 @@ qx.Class.define("desk.Action",
 
 				function (err) {
 					// update parameters from connections
-					connections.forEach(function (connection) {
+					this.__connections.forEach(function (connection) {
 						parameterMap[connection.parameter] =
 							connection.action.getOutputDirectory() +
 								desk.FileSystem.getFileName(connection.file);
 					});
 
-					send.setLabel("Processing...");
+					this.__update.setLabel("Processing...");
 					var out = this.getOutputDirectory();
 					if (out) {
 						parameterMap.output_directory = out;
@@ -347,7 +327,7 @@ qx.Class.define("desk.Action",
 			}
 
 			this.__executionStatus.setValue(response.status);
-			if (this.__action.attributes.voidAction != "true" ) {
+			if (!this.__action.attributes.voidAction) {
 				this.__showLogButton.setVisibility("visible");
 			}
 			this.fireDataEvent("actionUpdated", actionId);
@@ -362,7 +342,7 @@ qx.Class.define("desk.Action",
         __intValidator : function(value, item) {
 			var parameterName = this.name;
 			if ((value == null) || (value == '')) {
-				if (this.required == "true") {
+				if (this.required) {
 					item.setInvalidMessage('"' + parameterName + '" is empty');
 					return (false);
 				}
@@ -377,7 +357,7 @@ qx.Class.define("desk.Action",
 		__stringValidator : function(value, item) {
 			var parameterName = this.name;
 			if ((value == null) || (value == '')) {
-				if (this.required == "true") {
+				if (this.required) {
 					item.setInvalidMessage('"' + parameterName + '" is empty');
 					return (false);
 				}
@@ -392,7 +372,7 @@ qx.Class.define("desk.Action",
 		__floatValidator : function(value, item) {
 			var parameterName = this.name;
 			if ((value == null) || (value == '')) {
-				if (this.required =="true") {
+				if (this.required) {
 					item.setInvalidMessage('"' + parameterName + '" is empty');
 					return (false);
 				}
@@ -408,11 +388,15 @@ qx.Class.define("desk.Action",
             return (true);
         },
 
+		buildUI : function () {
+			console.log("deprecated call : desk.Action.buildUI()");
+			console.log(new Error().stack);
+		},
+
 		/**
 		* Builds the UI
 		*/
-		buildUI : function (opt) {
-			opt = opt || {};
+		__buildUI : function (fileBrowser) {
 			var action = this.__action;
 			this.setLayout(new qx.ui.layout.VBox(5));
 
@@ -439,15 +423,11 @@ qx.Class.define("desk.Action",
 			}, this);
 			showLogButton.setVisibility("excluded");
 
-			var outputDirectory = null;
-			if (this.__providedParameters) {
-				outputDirectory = this.__providedParameters.output_directory;
-				if (outputDirectory) {
-					if (this.__standalone) {
-						this.__addOutputTab();
-					}
-					showLogButton.setVisibility("visible");
+			if (this.__providedParameters && this.__providedParameters.output_directory) {
+				if (this.__standalone) {
+					this.__addOutputTab();
 				}
+				showLogButton.setVisibility("visible");
 			}
 
 			// create the form manager
@@ -460,16 +440,16 @@ qx.Class.define("desk.Action",
 					return;
 				}
 
-				var parameterTooltip = '';
+				var toolTip = '';
 				["info", "min", "max", "defaultValue"].forEach(function (field) {
 					if (parameter[field]) {
-						parameterTooltip += field + ' : ' + parameter[field] + '<br>';
+						toolTip += field + ' : ' + parameter[field] + '<br>';
 					}
 				});
 
 				var label = new qx.ui.basic.Label(parameter.name);
 				container.add(label);
-				var form; 
+				var form;
 				switch (parameter.type) {
 				case "file":
 				case "directory":
@@ -482,37 +462,36 @@ qx.Class.define("desk.Action",
 
 				form.setUserData("label", label);
 				form.setUserData("name", parameter.name);
-				if (parameterTooltip.length) {
-					form.setToolTipText(parameterTooltip);
-					label.setToolTipText(parameterTooltip);
+				if (toolTip.length) {
+					form.setToolTipText(toolTip);
+					label.setToolTipText(toolTip);
 				}
 				form.setPlaceholder(parameter.name);
 				container.add(form);
 
-				var validators = {
+				var validator = {
 					"int" : this.__intValidator,
 					"string" : this.__stringValidator,
 					"float" : this.__floatValidator,
 					"file" : this.__dummyValidator,
 					"directory" : this.__dummyValidator,
 					"xmlcontent" : this.__dummyValidator
-				};
+				}[parameter.type];
 
-				var validator = validators[parameter.type];
 				if (validator) {
 					manager.add(form, validator, parameter);				
 				} else {
 					alert("no validator implemented for type : "+ parameter.type);
 				}
 
-				if ((parameter.type === "file") && opt.fileBrowser) {
-					var file = opt.fileBrowser.getSelectedFiles()[0];
+				if ((parameter.type === "file") && fileBrowser) {
+					var file = fileBrowser.getSelectedFiles()[0];
 					form.setValue(file);
-					var parentAction = opt.fileBrowser.getUserData("action");
+					var parentAction = fileBrowser.getUserData("action");
 					if (parentAction) {
 						this.connect(form.getPlaceholder(), parentAction, file);
 					}
-					opt.fileBrowser = undefined;
+					fileBrowser = undefined;
 				}
 
 				//use default value if provided
