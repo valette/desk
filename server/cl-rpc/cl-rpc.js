@@ -457,7 +457,9 @@ RPC.prototype.addMTime = function (file, callback) {
 		return;
 	}
 	fs.stat(file , function (err, stats) {
-		this.inputMTime = Math.max(stats.mtime.getTime(), this.inputMTime);
+		if (!err) {
+			this.inputMTime = Math.max(stats.mtime.getTime(), this.inputMTime);
+		}
 		callback (err);
 	}.bind(this));
 }
