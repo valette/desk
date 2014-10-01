@@ -76,12 +76,12 @@ qx.Class.define("desk.demo.Application",
 				Object.keys(dataDirs).sort().forEach(function (dir) {
 					var button = new qx.ui.menu.Button(dir);
 					button.addListener("execute", function (e) {
-						new desk.FileBrowser(e.getTarget().getLabel());
+						new desk.FileBrowser(e.getTarget().getLabel(), {standalone : true});
 					});
 					menu.add(button);
 				});
 
-				new desk.FileBrowser(getParameter("rootDir"));
+				new desk.FileBrowser(getParameter("rootDir"), {standalone : true});
 			}
 		}
 	}

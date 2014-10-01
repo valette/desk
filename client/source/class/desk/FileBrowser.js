@@ -16,7 +16,7 @@ qx.Class.define("desk.FileBrowser",
 	* Creates a new file browser
 	* @param baseDir {String} directory to browse. Defaluts to "data"
 	* @param standAlone {bool} defines whether the container should be
-	* embedded in a window or not (default : true).
+	* embedded in a window or not (default : false).
 	* 
 	*/
 	construct : function(baseDir, standAlone) {
@@ -30,7 +30,7 @@ qx.Class.define("desk.FileBrowser",
 		this.__fileBrowsers.push(this);
 
 		this.setLayout(new qx.ui.layout.VBox(8));
-		this.__standAlone = standAlone === false ? false : true;
+		this.__standAlone = standAlone || false;
 
 		this.__actionCallbacks = [];
 		this.__actionNames = [];
@@ -213,7 +213,7 @@ qx.Class.define("desk.FileBrowser",
 
 		// defines whether the file browser is a standalone one
 		// i.e. whether it needs to create a window
-		__standAlone : true,
+		__standAlone : false,
 
 		// the window containing the widget when in standalone mode
 		__window : null,
