@@ -3,7 +3,7 @@ desk
 
 #### Remote desktop for medical imaging ####
 
-The aim of the project is to create a remote desktop for visualization and processing of medical images. Only works under linux, but patches are welcome!
+The aim of the project is to create a remote desktop for visualization and processing of medical images. Only works under linux or Mac OS, but patches are welcome!
 
 ### Infos and live demo ###
 
@@ -20,6 +20,7 @@ Copyright (c) CNRS, INSA-Lyon, UCBL, INSERM
 
 ### Dependencies ###
 To install desk on your computer, you need:
+* git
 * node.js
 * vtk + headers
 * cmake
@@ -29,13 +30,7 @@ To install desk on your computer, you need:
 	git clone http://github.com/valette/desk.git
 	cd desk/server
 	npm install
-	./build-linux.sh
-
-or
-
-        ./build-macosx.sh
-
-on MacOS X.
+	./build.sh
 
 ### Usage ###
 
@@ -57,7 +52,4 @@ This software benefits from several open-source contributions:
 * [OpenCTM](http://openctm.sourceforge.net/)
 * [ACVD](http://github.com/valette/ACVD.git)
 
-### Change log ###
-
-2013 02 15 - initial release
 
