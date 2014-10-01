@@ -148,6 +148,7 @@ includeActionsJSON = function (file, callback) {
 			if ( typeof(callback) === 'function' ) {
 				callback();
 			}
+			return;
 		}
 		exports.includeActions(includes, callback);
 	});
