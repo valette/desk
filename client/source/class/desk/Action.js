@@ -12,7 +12,7 @@ qx.Class.define("desk.Action",
 	* @param name {String} name of the action to create
 	* @param parameters {Object} settings object. Available settings:
     * standalone (boolean): defines whether the container should be
-	* embedded in a window or not (default : true).
+	* embedded in a window or not (default : false).
 	*/
 	construct : function (name, opt) {
 		opt = opt || {};
@@ -21,8 +21,8 @@ qx.Class.define("desk.Action",
 		this.__action = desk.Actions.getInstance().getAction(name);
 		this.__name = name;
 
-		if (opt.standalone === false) {
-			this.__standalone = false;
+		if (opt.standalone) {
+			this.__standalone = true;
 		}
 
 		this.__connections = [];
@@ -83,7 +83,7 @@ qx.Class.define("desk.Action",
 
 		__loadedParameters : {},
 
-		__standalone : true,
+		__standalone : false,
 
 		__window : null,
 
