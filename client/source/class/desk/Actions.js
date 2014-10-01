@@ -322,7 +322,8 @@ qx.Class.define("desk.Actions",
 		},
 
 		__launch : function (e){
-			new desk.Action(e.getTarget().getLabel(), {fileBrowser : this.__currentFileBrowser});
+			var action = new desk.Action(e.getTarget().getLabel(), {fileBrowser : this.__currentFileBrowser});
+			action.setOutputDirectory("actions/");
 		},
 
 		__myComparator : function (a, b) {
