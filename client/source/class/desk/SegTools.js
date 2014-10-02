@@ -52,6 +52,7 @@ qx.Class.define("desk.SegTools",
 				viewer.setPaintMode(false);
 				viewer.setEraseMode(false);
 				var canvas = viewer.getDrawingCanvas();
+				if (canvas.isDisposed()) return;
 				canvas.getContext2d().clearRect(0, 0, canvas.getCanvasWidth(), canvas.getCanvasHeight());
 				viewer.fireEvent("changeDrawing");
 			});
@@ -118,14 +119,10 @@ qx.Class.define("desk.SegTools",
 		},
 		
 		__reloadSeedImage : function (sliceView) {
-			if (this.getSessionDirectory() == null)
-				return;
+			if (!this.getSessionDirectory()) {return;}
 			var canvas = sliceView.getDrawingCanvas();
-			var width = canvas.getCanvasWidth()
-			var height = canvas.getCanvasHeight()
-
 			var context = canvas.getContext2d();
-			context.clearRect(0, 0, width, height);
+			context.clearRect(0, 0, canvas.getCanvasWidth(), canvas.getCanvasHeight());
 			var seedsType = this.getSeedsType();
 			var seedsList = sliceView.getUserData("seeds")[seedsType];
 			var sliceId = sliceView.getSlice();
@@ -137,7 +134,7 @@ qx.Class.define("desk.SegTools",
 			if (seed) {
 				var imageLoader = new Image();
 				seedsList.setSelection([seed]);
-				imageLoader.onload = function(){
+				imageLoader.onload = function() {
 					context.drawImage(imageLoader, 0, 0);
 					sliceView.fireEvent("changeDrawing");
 					imageLoader.onload = 0;
@@ -414,13 +411,13 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__buildActionsCVT : function() {	
-			var clusteringAction = new desk.Action("cvtseg2");
-			clusteringAction.setActionParameters({"input_volume" : this.__file});
-			this.__tabView.addElement('clustering', clusteringAction.getTabView());
+			var clustering = new desk.Action("cvtseg2");
+			clustering.setActionParameters({"input_volume" : this.__file});
+			this.__tabView.addElement('clustering', clustering.getTabView());
 
 			var segmentation = new desk.Action("multiseg");
-			clusteringAction.setActionParameters({"input_volume" : this.__file});
-			segmentation.connect("clustering", clusteringAction,
+			clustering.setActionParameters({"input_volume" : this.__file});
+			segmentation.connect("clustering", clustering,
 				"clustering-index.mhd");
 			this.__tabView.addElement('segmentation', segmentation.getTabView());
 
@@ -432,14 +429,14 @@ qx.Class.define("desk.SegTools",
 				if (segmentationToken != null) {
 					this.__master.removeVolume(segmentationToken);
 				}
-				clusteringAction.setOutputDirectory(directory + "/clustering");
+				clustering.setOutputDirectory(directory + "/clustering");
 				segmentation.setOutputDirectory(directory+ "/segmentation");
 				meshing.setOutputDirectory(directory + "/meshes");
 				segmentation.setActionParameters({
 					"input_volume" : this.__file,
 					"seeds" : this.getSessionDirectory() + "/seeds.xml"
 				});
-				clusteringAction.setActionParameters({
+				clustering.setActionParameters({
 					"input_volume" : this.__file
 				});
 				meshing.setActionParameters({
@@ -505,13 +502,13 @@ qx.Class.define("desk.SegTools",
 		},
 
 		__buildActionsGC : function() {	
-			var clusteringAction = new desk.Action("cvtseg2");
-			clusteringAction.setActionParameters({"input_volume" : this.__file});
-			this.__tabView.addElement('clustering', clusteringAction.getTabView());
+			var clustering = new desk.Action("cvtseg2");
+			clustering.setActionParameters({"input_volume" : this.__file});
+			this.__tabView.addElement('clustering', clustering.getTabView());
 
 			var segmentation = new desk.Action("cvtgcmultiseg");
-			clusteringAction.setActionParameters({"input_volume" : this.__file});
-			segmentation.connect("clustering", clusteringAction,
+			clustering.setActionParameters({"input_volume" : this.__file});
+			segmentation.connect("clustering", clustering,
 				"clustering-index.mhd");
 			this.__tabView.addElement('segmentation', segmentation.getTabView());
 
@@ -529,14 +526,14 @@ qx.Class.define("desk.SegTools",
 				if (segmentationToken != null) {
 					this.__master.removeVolume(segmentationToken);
 				}
-				clusteringAction.setOutputDirectory(directory + "clustering");
+				clustering.setOutputDirectory(directory + "clustering");
 				segmentation.setOutputDirectory(directory + "/segmentation");
 				meshing.setOutputDirectory(directory + "/meshing");
 				segmentation.setActionParameters({
 					"input_volume" : this.__file,
 					"seeds" : this.getSessionDirectory() + "/seeds.xml"
 				});
-				clusteringAction.setActionParameters({
+				clustering.setActionParameters({
 					"input_volume" : this.__file
 				});
 				meshing.setActionParameters({
@@ -1710,7 +1707,7 @@ qx.Class.define("desk.SegTools",
 					}
 				});
 				this.addListener("close", function (e) {
-					sliceView.remove(list);
+					list.destroy();
 				});
 			}, this);
 
