@@ -248,7 +248,7 @@ qx.Class.define("desk.FileBrowser",
                 var menu = new qx.ui.menu.Menu();
                 var openButton = new qx.ui.menu.Button('open in new window');
                 openButton.addListener('execute', function (e) {
-					var browser = new desk.FileBrowser(dir);
+					var browser = new desk.FileBrowser(dir, true);
 					browser.getWindow().center();
 				})
 				menu.add(openButton);

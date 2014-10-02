@@ -41,7 +41,7 @@ qx.Class.define("desk.Action",
 		*/
 		CREATEFROMFILE : function (file) {
 			desk.FileSystem.readFile(file, function (err, parameters) {
-				var action = new desk.Action (parameters.action);
+				var action = new desk.Action (parameters.action, {standalone : true});
 				action.setActionParameters(parameters);
 			});
 		}
@@ -221,7 +221,7 @@ qx.Class.define("desk.Action",
 			this.__tabView.add( page );
 			page.addListenerOnce('appear', function () {
 				page.setLayout(new qx.ui.layout.HBox());
-				this.__fileBrowser = new desk.FileBrowser( this.__outputDir , false );
+				this.__fileBrowser = new desk.FileBrowser( this.__outputDir );
 				this.__fileBrowser.setUserData( "action" , this );
 				this.__fileBrowser.setHeight(200);
 				page.add( this.__fileBrowser , { flex : 1 } );
