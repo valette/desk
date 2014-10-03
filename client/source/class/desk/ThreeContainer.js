@@ -21,7 +21,7 @@ qx.Class.define("desk.ThreeContainer",
 		threeCanvas.set({syncDimension : true, zIndex : 0});
 		var canvas = threeCanvas.getContentElement().getCanvas();
 
-		if (!Detector.webgl) Detector.addGetWebGLMessage();
+		if (!Detector.webgl) alert("Error! : webGL is not available! Check your configuration");
 
 		var scene = this.__scene = new THREE.Scene();
 		var camera = this.__camera = new THREE.PerspectiveCamera(60,1, 0.01, 1e10);
