@@ -74,6 +74,7 @@ THREE.TrackballControls2 = function ( object ) {
 
 	this.copy = function (source) {
 		this.setState(source.getState());
+		this.update();
 	};
 
 	this.getMouseOnScreen = function( x, y ) {

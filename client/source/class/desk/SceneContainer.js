@@ -316,10 +316,8 @@ qx.Class.define("desk.SceneContainer",
 
 		__propagateLinks : function () {
 			this.getLinks().forEach(function (link) {
-				if (this === link) return;
-				var controls = link.getControls();
-				controls.copy(this.getControls());
-				controls.update();
+				if (this === link) {return;}
+				link.getControls().copy(this.getControls());
 				link.render();
 			}, this);
 		},
@@ -572,7 +570,8 @@ qx.Class.define("desk.SceneContainer",
 			if (event.getTarget() != this.getCanvas()) return;
 			var slices = [];
 			this.getScene().traverse(function (mesh) {
-				if (mesh.userData && mesh.volumeSlice) {
+				if (mesh.userData && mesh.userData.viewerProperties
+					&& mesh.userData.viewerProperties.volumeSlice) {
 					slices.push(mesh);
 				}
 			});
@@ -589,6 +588,7 @@ qx.Class.define("desk.SceneContainer",
 				controls.mouseMove(0, 0.05 * delta * this.getInnerSize().height);
 				controls.mouseUp();
 				this.render();
+				this.__propagateLinks();
 			}
 		},
 
