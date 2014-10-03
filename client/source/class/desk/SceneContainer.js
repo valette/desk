@@ -886,31 +886,30 @@ qx.Class.define("desk.SceneContainer",
 		 * @param dispose {Boolean} dispose mesh to avoid memory leaks (default : true)
 		 */
 		removeMesh : function (mesh, dispose) {
-			var parameters = mesh.userData.viewerProperties;
-			var keepGeometry = false;
-			var keepMaterial = false;
+			var params = mesh && mesh.userData && mesh.userData.viewerProperties;
+			if (!params) {
+				console.warn("Trying to remove a mesh not part of the scene");
+				return;
+			}
 
 			mesh.parent.remove(mesh);
 
-			if (parameters) {
-				var leaf = this.__meshes.nodeGet(parameters.leaf)
-				if (leaf) {
-					delete leaf.viewerProperties;
-					this.__meshes.getDataModel().prune(leaf.nodeId, true);
-				}
-				parameters.mesh = 0;
-				delete mesh.userData.viewerProperties;
-				this.__setData();
-				keepGeometry = parameters.keepGeometry;
-				keepMaterial = parameters.keepMaterial;
-			}
+			var leaf = this.__meshes.nodeGet(params.leaf);
+			delete leaf.viewerProperties;
+			this.__meshes.getDataModel().prune(leaf.nodeId, true);
+
+			delete params.mesh;
+			delete mesh.userData.viewerProperties;
+			this.__setData();
 
 			this.fireDataEvent("meshRemoved", mesh);
 			if (dispose === false) return;
 
-			if (!keepGeometry && mesh.geometry) mesh.geometry.dispose();
+			if (!params.keepGeometry && mesh.geometry) {
+				mesh.geometry.dispose();
+			}
 
-			if (!keepMaterial && mesh.material) {
+			if (!params.keepMaterial && mesh.material) {
 				if (mesh.material.map) {
 					mesh.material.map.dispose();
 				}
