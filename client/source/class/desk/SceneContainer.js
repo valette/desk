@@ -895,8 +895,10 @@ qx.Class.define("desk.SceneContainer",
 			mesh.parent.remove(mesh);
 
 			var leaf = this.__meshes.nodeGet(params.leaf);
-			delete leaf.viewerProperties;
-			this.__meshes.getDataModel().prune(leaf.nodeId, true);
+			if (leaf) {
+				delete leaf.viewerProperties;
+				this.__meshes.getDataModel().prune(leaf.nodeId, true);
+			}
 
 			delete params.mesh;
 			delete mesh.userData.viewerProperties;
