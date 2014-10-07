@@ -18,26 +18,30 @@ var	argv         = require('yargs').argv,
 
 var actions      = require(__dirname + '/cl-rpc/cl-rpc');
 
+var homeURL = '/',
+	port = 8080,
+	user = process.env.USER;
+
+if (argv.user || argv.multi) {
+	if (argv.user) {
+		process.setuid(argv.user);
+		user = argv.user;
+	}
+	homeURL = '/' + user + '/';
+	port = process.getuid();
+}
+
 var separator = "*******************************************************************************";
 console.log(separator);
 console.log(separator);
 
 // user parameters
-var clientPath = fs.realpathSync(__dirname + '/../client/')+'/',
-	port = 8080,
-	homeURL = '/';
+var clientPath = fs.realpathSync(__dirname + '/../client/') + '/';
 
 // configure express server
 var app = express();
 app.use(compress());
 
-var	user = process.env.USER;
-
-// use custom port and homeURL if in a multi-user configuration
-if (argv.multi) {
-    homeURL = '/' + user + '/',
-   	port = process.getuid();
-}
 
 // transmit homeURL cookie
 app.use (function (req, res, next) {
