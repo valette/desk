@@ -544,6 +544,9 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		__pickMeshes : function (meshes) {
+			meshes = _.filter(meshes, function (mesh) {
+				return mesh.visible;
+			});
 			var origin = this.getContentLocation();
 			var x = this.__x - origin.left;
 			var y = this.__y - origin.top;
