@@ -10,11 +10,11 @@ var	fs        = require('fs'),
 var	port      = 80,
 	port2     = 443;
 
-var 	defaultRoutes,
-	routesFile = __dirname + '/routes.json',
-	keyFile    = __dirname + '/privatekey.pem',
-	certFile   = __dirname + '/certificate.pem',
-	caFile     = __dirname + '/chain.pem',
+var defaultRoutes,
+	config = __dirname + '/config.json',
+	keyFile    = __dirname + '/cert/privatekey.pem',
+	certFile   = __dirname + '/cert/certificate.pem',
+	caFile     = __dirname + '/cert/chain.pem',
 	httpAllowed;
 
 if (cluster.isMaster) {
@@ -30,15 +30,13 @@ if (cluster.isMaster) {
 
 var proxy = httpProxy.createProxyServer({});
 proxy.on('error', function(err, req, res) {
-	console.log(new Date().toString() + ": error");
-	console.log(req.url);
-	console.log(err);
+	//just end the request
 	res.end();
 });
 
 var ca = [];
 if (fs.existsSync(caFile)) {
-	var chain = fs.readFileSync (__dirname + '/chain.pem', 'utf8').split ("\n");
+	var chain = fs.readFileSync (caFile, 'utf8').split ("\n");
 	var cert = [];
 	chain.forEach(function (line) {
 		if (line.length === 0) return;
@@ -111,8 +109,8 @@ async.series([
 var routes;
 
 function updateRoutes(callback) {
-	console.log(fs.readFileSync(routesFile).toString());
-	var routesContent = JSON.parse(fs.readFileSync(routesFile));
+	console.log(fs.readFileSync(config).toString());
+	var routesContent = JSON.parse(fs.readFileSync(config));
 	var users = routesContent.users;
 	var newRoutes = {};
 
@@ -138,10 +136,13 @@ function updateRoutes(callback) {
 }
 
 // watch routes files for auto-update
-fs.watchFile(routesFile, function () {
-	console.log(new Date());
-	console.log(routesFile + ' modified, updating routes...');
-	updateRoutes(function () {});
+fs.watchFile(config, function (curr, prev) {
+	if (curr.mtime > prev.mtime) {
+		console.log(new Date().toDateString() + " " + new Date().toTimeString());
+		console.log(config + ' modified, updating routes...');
+		updateRoutes(function () {});
+	}
 });
-console.log('Watching file ' + routesFile + ' for routes');
+
+console.log('Watching file ' + config + ' for routes');
 

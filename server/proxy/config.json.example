@@ -1,0 +1,21 @@
+{
+	"users" : [
+		"user1",
+		"user2"
+	],
+
+	"defaultFile" : "/full/path/to/desk.js",
+
+	"defaultRoutes" : {
+		"hostname1" : "url1",
+		"hostname2" : "url2"
+	},
+
+	"httpAllowed : {
+		"hostname2" : true
+	},
+
+	"otherRoutes" : {
+		"foo.address/path" : "url3"
+	}
+}
