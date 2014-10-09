@@ -397,7 +397,7 @@ RPC.prototype.parseParameter = function (parameter, callback) {
 	switch (parameter.type) {
 	case 'file':
 		fs.realpath(libpath.join(filesRoot, value), function (err, path) {
-			callback (err, prefix + path.split(" ").join("\\ "));
+			callback (err, err ? null : prefix + path.split(" ").join("\\ "));
 		});
 		break;
 	case 'directory':

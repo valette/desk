@@ -1,6 +1,7 @@
 /**
  * Singleton helper class for file system operations : path->URL conversion, session management etc...
  * @lint ignoreDeprecated(alert)
+ * @ignore (_.*)
  */
 qx.Class.define("desk.FileSystem", 
 {
@@ -98,8 +99,7 @@ qx.Class.define("desk.FileSystem",
 			var slashIndex = file.lastIndexOf('/');
 			if (slashIndex >= 0) {
 				return file.substring(0, slashIndex+1);
-			}
-			else {
+			} else {
 				return '/';
 			}
 		},
@@ -119,8 +119,7 @@ qx.Class.define("desk.FileSystem",
 			var dotIndex = file.lastIndexOf('.');
 			if (dotIndex >= 0) {
 				return file.substring(dotIndex + 1);
-			}
-			else {
+			} else {
 				return '';
 			}
 		},
@@ -139,9 +138,8 @@ qx.Class.define("desk.FileSystem",
 		getFileName  : function (file) {
 			var slashIndex = file.lastIndexOf('/');
 			if (slashIndex >= 0) {
-				return file.substring(slashIndex+1, file.length);
-			}
-			else {
+				return file.substring(slashIndex + 1, file.length);
+			} else {
 				return file;
 			}
 		},
@@ -323,7 +321,7 @@ qx.Class.define("desk.FileSystem",
 		* @return {String} directory path
 		*/
 		getSessionDirectory : function (file,sessionType,sessionId) {
-			return file+"."+sessionType+"."+sessionId;
+			return file + "." + sessionType + "." + sessionId;
 		},
 
 		/**
@@ -348,28 +346,24 @@ qx.Class.define("desk.FileSystem",
 			var directory = desk.FileSystem.getFileDirectory(file);
 			var shortFileName = desk.FileSystem.getFileName(file);
 			desk.FileSystem.readDir(directory, function (files) {
-				var sessions=[];
-				for (var i = 0; i != files.length; i++) {
-					var child = files[i];
+				var sessions = [];
+				files.forEach(function (child) {
 					var childName = child.name;
-					if (child.isDirectory) {
-						//first, test if the directory begins like the file
-						if (childName.substring(0, shortFileName.length + 1) == (shortFileName + ".")) {
-							var remaining = childName.substring(shortFileName.length + 1);
-							var childSession = remaining.substring(0, sessionType.length + 1);
-							if (childSession == (sessionType + ".")) {
-								var sessionId = parseInt(remaining.substring(childSession.length), 10);
-								sessions.push(sessionId);
-							}
-						}
+					if (!child.isDirectory) {
+						return;
 					}
-				}
+					//test if the directory begins like the file
+					if (childName.substring(0, shortFileName.length + 1) !== (shortFileName + ".")) {
+						return;
+					}
+					var remaining = childName.substring(shortFileName.length + 1);
+					var session = remaining.substring(0, sessionType.length + 1);
+					if (session == (sessionType + ".")) {
+						sessions.push(parseInt(remaining.substring(session.length), 10));
+					}
+				});
 				// we need to tweak the .sort() method so that it generates correct output for ints
-				function sortNumber(a,b)
-				{
-					return b - a;
-				}
-				sessions.sort(sortNumber);
+				sessions.sort(function (a,b) {return b - a;});
 				callback(sessions);
 			});
 		},
@@ -389,20 +383,14 @@ qx.Class.define("desk.FileSystem",
 		*/
 		createNewSession : function (file, sessionType, callback) {
 			this.getFileSessions(file, sessionType, function (sessions) {
-				var maxId = -1;
-				for (var i = 0; i < sessions.length; i++) {
-					var sessionId = sessions[i];
-					if (sessionId > maxId)
-						maxId = sessionId;
-				}
-				var newSessionId = maxId + 1;
+				var newSessionId = sessions.length ? _.max(sessions) + 1 : 0;
 				var lastSlash = file.lastIndexOf("/");
 				var subdir = file.substring(lastSlash+1) + "." + sessionType + "." + newSessionId;
 
 				desk.Actions.getInstance().launchAction({
-					"action" : "add_subdirectory",
-					"subdirectory_name" : subdir,
-					"output_directory" : file.substring(0,lastSlash)},
+					action : "add_subdirectory",
+					subdirectory_name : subdir,
+					output_directory : file.substring(0,lastSlash)},
 					function () {
 						callback(newSessionId);
 				});

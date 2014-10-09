@@ -3,6 +3,7 @@
 * @lint ignoreDeprecated(alert)
 * @asset(desk/Contrast_Logo_petit.PNG)
 * @ignore (async.eachSeries)
+* @ignore (_.indexOf)
 */
 qx.Class.define("desk.MPRContainer", 
 {
@@ -14,14 +15,13 @@ qx.Class.define("desk.MPRContainer",
         this.setLayout(new qx.ui.layout.VBox());
 
 		options = options || {};
-		this.__windowsInGridCoord = options.inGridCoord || {
+		this.__gridCoords = options.inGridCoord || {
 			viewers : [{column : 0, row : 0},
 						{column : 1, row : 0},
 						{column : 0, row : 1}],
 			volList : {column : 1, row : 1}
 		};
 
-        this.__viewsNames = ["Axial", "Sagittal", "Coronal"];
 		this.__nbUsedOrientations = options.nbOrientations || 3;
 
 		var gridLayout = new qx.ui.layout.Grid(2,2);
@@ -71,8 +71,7 @@ qx.Class.define("desk.MPRContainer",
 		});
 
 		this.__volumes.dispose();
-		this.__windowsInGridCoord = null;
-		this.__viewsNames = null;
+		this.__gridCoords = null;
 	},
 
 	events : {
@@ -91,8 +90,8 @@ qx.Class.define("desk.MPRContainer",
 		__gridContainer : null,
 		__volumes : null,
 		__viewers : null,
-		__windowsInGridCoord :null,
-		__viewsNames : null,
+		__gridCoords :null,
+		__viewsNames : ["Axial", "Sagittal", "Coronal"],
 		__nbUsedOrientations : null,
 
         /**
@@ -140,7 +139,7 @@ qx.Class.define("desk.MPRContainer",
 		},
 		
 		getVolListGridContainer : function() {
-			var gridCoor = this.__windowsInGridCoord.volList;
+			var gridCoor = this.__gridCoords.volList;
 			this.__gridContainer.setUserData("freeRow", gridCoor.row);
 			this.__gridContainer.setUserData("freeColumn", gridCoor.column);
 			return this.__gridContainer;
@@ -182,20 +181,20 @@ qx.Class.define("desk.MPRContainer",
 			this.__renderAll();
 		},
 
-        __volumesScroll : null,
+        __scroll : null,
+
 		__createVolumesList : function () {
-            var scroll = this.__volumesScroll  = new qx.ui.container.Scroll();
-            var container = new qx.ui.container.Composite();
-			container.setLayout(new qx.ui.layout.VBox(5));
-            container.add( this.__getToolBar() );
-			var volumes = this.__volumes = new qx.ui.container.Composite();
-			volumes.setLayout(new qx.ui.layout.VBox(1));
-            this.addListener('resize', function () {
-                scroll.setWidth(Math.round(this.getWidth() / 2));
-                scroll.setHeight(Math.round(this.getHeight() / 2));
-            }, this);
-            container.add(volumes);
-            scroll.add(container);
+			this.__scroll  = new qx.ui.container.Scroll();
+			var container = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
+			container.add(this.__getToolBar());
+			this.__volumes = new qx.ui.container.Composite();
+			this.__volumes.setLayout(new qx.ui.layout.VBox(1));
+			this.addListener('resize', function () {
+				this.__scroll.setWidth(Math.round(this.getWidth() / 2));
+				this.__scroll.setHeight(Math.round(this.getHeight() / 2));
+			}, this);
+			container.add(this.__volumes);
+			this.__scroll.add(container);
 		},
 
 		__addViewers : function (options) {
@@ -212,7 +211,7 @@ qx.Class.define("desk.MPRContainer",
 				sliceView.setUserData("maximizeButton", button);
 				button.addListener("execute", this.__onMaximizeButtonClick, this);
 				sliceView.getRightContainer().add(button);
-				this.__maximizeButtons[i] = button;
+				this.__maximizeButtons.push(button);
 				qx.util.DisposeUtil.disposeTriggeredBy(button, sliceView);
 			}
 		},
@@ -258,34 +257,24 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		__applyViewsLayout : function (layout) {
-			var viewers = this.__viewers;
-			var gridContainer = this.__gridContainer;
-			var orientationContainer = this.__orientationContainer;
-			gridContainer.removeAll();
-			if (orientationContainer) {
-				orientationContainer.removeAll();
+			this.__gridContainer.removeAll();
+			if (this.__orientationContainer) {
+				this.__orientationContainer.removeAll();
 			}
 
 			var layout = this.getViewsLayout();
 
-			for (var i = 0; i < this.__nbUsedOrientations; i++) {
-				//// Use  layout.charAt(i)-1  since layout uses 1,2,3  but  __layoutSelectBoxes  goes from 0 to 2 !
-				var letter = layout.charAt(i);
-				for (var j = 0; j < this.__nbUsedOrientations; j++) {
-					var viewer = viewers[j];
-					if ( ('' + (viewer.getOrientation() + 1)) === letter) {
-						break;
-					}
+			this.__viewers.forEach(function (viewer) {
+				var position = layout.indexOf('' + (viewer.getOrientation() + 1));
+				var coords = this.__gridCoords.viewers[position];
+				if (this.__orientationContainer) {
+					this.__orientationContainer.add(viewer.getReorientationContainer(), coords);
 				}
-				var coords = this.__windowsInGridCoord.viewers[i];
-				gridContainer.add (viewer, coords);
-				if (orientationContainer) {
-					orientationContainer.add(viewer.getReorientationContainer(), coords);
-				}
-			}
+				this.__gridContainer.add (viewer, coords);
+			}.bind(this));
+
             if (this.__standalone) {
-				this.__gridContainer.add(this.__volumesScroll,
-					this.__windowsInGridCoord.volList);
+				this.__gridContainer.add(this.__scroll, this.__gridCoords.volList);
             }
 		},
 
@@ -295,65 +284,45 @@ qx.Class.define("desk.MPRContainer",
 		__layoutSelectBoxes : null,
 
 		__onChangeSelect : function(event) {
-			var nbUsedOrientations = this.__nbUsedOrientations;
-			var selectedItem = event.getData()[0];
-			var selectItemLabel = selectedItem.getLabel();
-			var selectBox = event.getTarget();
-			var tempBoxes = this.__layoutSelectBoxes;
-			var currentLabel;
-			var doubledBox;
-			var viewers = this.__viewers;
-			var tempViewer;
-			var labels2give = [];
-			var dirOverLays2get;
-			var index = 0;
-			while( tempBoxes[index] != selectBox ) {
-				index++;
-			}
-			tempViewer = viewers[index];
-			tempViewer.setOrientPlane(selectItemLabel);
-			for(var i = 0; i < nbUsedOrientations; i++) {
-				currentLabel = tempBoxes[i].getSelection()[0].getLabel();
-				if((currentLabel == selectItemLabel) && (tempBoxes[i] != selectBox)) {
-					var j;
-					//// Switch direction overlays labels
-					for( j = 0; j < 4; j++ ) {
-						labels2give[j] = tempViewer.getOverLays()[j].getValue();
-					}
-					dirOverLays2get = viewers[i].getOverLays();
-					for( j = 0; j < 4; j++ ) {
-						tempViewer.getOverLays()[j].setValue(dirOverLays2get[j].getValue());
-					}
-					tempViewer.render();
-					for( j = 0; j < 4; j++) {
-						viewers[i].getOverLays()[j].setValue(labels2give[j]);
-					}
-					viewers[i].render();
-					//// Update "prevousSelect" field
-					doubledBox = tempBoxes[i];
-					var tempSelectables = doubledBox.getSelectables();
-					var tempLabelPreviousSel = selectBox.getUserData("previousSelect");
-					selectBox.setUserData("previousSelect",selectItemLabel);
-					for( j = 0; j < nbUsedOrientations; j++ ) {
-						if(tempSelectables[j].getLabel() == tempLabelPreviousSel) {
-							doubledBox.setUserData("previousSelect",tempLabelPreviousSel);
-							doubledBox.setSelection([tempSelectables[j]]);
-							break;
-						}
-					}
-					break;
-				}
-			}
-		},
+			var label = event.getData()[0].getLabel();
+			var box = event.getTarget();
+			var boxes = this.__layoutSelectBoxes;
 
-		// Define function to load items on selectBox
-		__setBox : function (inSelectBox, startItemID) {
+			var viewer = this.__viewers[_.indexOf(boxes, box)];
+			viewer.setOrientPlane(label);
+
 			for(var i = 0; i < this.__nbUsedOrientations; i++) {
-				var tempItem = new qx.ui.form.ListItem(this.__viewsNames[i]);
-				inSelectBox.add(tempItem);
-				if(i === startItemID) {
-					inSelectBox.setSelection([tempItem]);
-					inSelectBox.setUserData("previousSelect", this.__viewsNames[startItemID]);
+				if((boxes[i].getSelection()[0].getLabel() === label)
+					&& (boxes[i] !== box)) {
+						break;
+				}
+			};
+
+			if (i > 2) return;
+
+			//// Switch direction overlays labels
+			var labels2give = viewer.getOverLays().map(function (overlay) {
+				return overlay.getValue();
+			});
+
+			var dirOverLays2get = this.__viewers[i].getOverLays();
+			for( var j = 0; j < 4; j++ ) {
+				viewer.getOverLays()[j].setValue(dirOverLays2get[j].getValue());
+			}
+			for( j = 0; j < 4; j++) {
+				this.__viewers[i].getOverLays()[j].setValue(labels2give[j]);
+			}
+
+			//// Update "prevousSelect" field
+			var doubledBox = boxes[i];
+			var tempSelectables = doubledBox.getSelectables();
+			var tempLabelPreviousSel = box.getUserData("previousSelect");
+			box.setUserData("previousSelect", label);
+			for( j = 0; j < this.__nbUsedOrientations; j++ ) {
+				if(tempSelectables[j].getLabel() == tempLabelPreviousSel) {
+					doubledBox.setUserData("previousSelect",tempLabelPreviousSel);
+					doubledBox.setSelection([tempSelectables[j]]);
+					break;
 				}
 			}
 		},
@@ -366,31 +335,37 @@ qx.Class.define("desk.MPRContainer",
 			if (this.__orientationWindow) {
 				return this.__orientationWindow;
 			}
-			var window = this.__orientationWindow = 
-				new qx.ui.window.Window()
-				.set({caption : "Layout and Orientation",
-					layout : new qx.ui.layout.VBox()});
+			var win = this.__orientationWindow = new qx.ui.window.Window()
+				.set({caption : "Layout and Orientation", layout : new qx.ui.layout.VBox()});
 
-			window.add (new qx.ui.basic.Label("Windows layout :"));
-			var planesContainer = new qx.ui.container.Composite();
-			planesContainer.setLayout(new qx.ui.layout.HBox(5));
+			win.add (new qx.ui.basic.Label("Windows layout :"));
+			var planesContainer = new qx.ui.container.Composite(new qx.ui.layout.HBox(5));
 			
-			var layoutSelectBoxes = this.__layoutSelectBoxes = [];
+			this.__layoutSelectBoxes = [];
 			// Create selectBoxes
 			for (var i = 0; i < this.__nbUsedOrientations; i++) {
 				planesContainer.add ( new qx.ui.basic.Label( (i+1) + " : ") );
 				var selectBox = new qx.ui.form.SelectBox();
-				layoutSelectBoxes[i] = selectBox;
-				this.__setBox( selectBox, i );
+				this.__layoutSelectBoxes.push(selectBox);
+
+				this.__viewsNames.forEach(function (name, index) {
+					var item = new qx.ui.form.ListItem(name);
+					selectBox.add(item);
+					if(i === index) {
+						selectBox.setSelection([item]);
+						selectBox.setUserData("previousSelect", name);
+					}
+				});
+
 				selectBox.addListener( "changeSelection", this.__onChangeSelect, this);
 				planesContainer.add( selectBox, { flex:1 } );
 			}
 
-			window.add(planesContainer);
-			window.add(new qx.ui.core.Spacer(5,10), {flex: 3});
-			window.add(this.__getChangeLayoutContainer(), {flex: 10});
-			window.add(new qx.ui.core.Spacer(5,15), {flex: 5});
-			window.add (new qx.ui.basic.Label("Orientations :"));
+			win.add(planesContainer);
+			win.add(new qx.ui.core.Spacer(5,10), {flex: 3});
+			win.add(this.__getChangeLayoutContainer(), {flex: 10});
+			win.add(new qx.ui.core.Spacer(5,15), {flex: 5});
+			win.add (new qx.ui.basic.Label("Orientations :"));
 			
 			var orientsButtonGroupHBox = new qx.ui.form.RadioButtonGroup();
 			orientsButtonGroupHBox.setLayout(new qx.ui.layout.HBox(10));
@@ -415,7 +390,7 @@ qx.Class.define("desk.MPRContainer",
 			var orientsContainer = new qx.ui.container.Composite();
 			orientsContainer.setLayout(new qx.ui.layout.HBox());
 			orientsContainer.add(this.__orientationButtonGroup);
-			window.add(orientsContainer);
+			win.add(orientsContainer);
 			
 			var gridContainer = new qx.ui.container.Composite();
 			var gridLayout = new qx.ui.layout.Grid();
@@ -423,12 +398,12 @@ qx.Class.define("desk.MPRContainer",
 				gridLayout.setRowFlex(i, 1);
 				gridLayout.setColumnFlex(i, 1);
 			}
-			window.add(gridContainer);
+			win.add(gridContainer);
 
 			gridContainer.setLayout(gridLayout);
 			this.__orientationContainer = gridContainer;
 			this.__applyViewsLayout(this.getViewsLayout());
-			return window;
+			return win;
 		},
 
 		__maximizeButtons : null,
@@ -934,7 +909,7 @@ qx.Class.define("desk.MPRContainer",
 			}
 			gridContainer.setLayout(gridLayout);
 			
-			var viewGridCoor = this.__windowsInGridCoord;
+			var viewGridCoor = this.__gridCoords;
 			for(i = 0; i < this.__nbUsedOrientations; i++) {
 				var labelsContainer = new qx.ui.container.Composite();
 				labelsContainer.set({draggable : true,

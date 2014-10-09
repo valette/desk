@@ -316,10 +316,8 @@ qx.Class.define("desk.SceneContainer",
 
 		__propagateLinks : function () {
 			this.getLinks().forEach(function (link) {
-				if (this === link) return;
-				var controls = link.getControls();
-				controls.copy(this.getControls());
-				controls.update();
+				if (this === link) {return;}
+				link.getControls().copy(this.getControls());
 				link.render();
 			}, this);
 		},
@@ -546,6 +544,9 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		__pickMeshes : function (meshes) {
+			meshes = _.filter(meshes, function (mesh) {
+				return mesh.visible;
+			});
 			var origin = this.getContentLocation();
 			var x = this.__x - origin.left;
 			var y = this.__y - origin.top;
@@ -572,7 +573,8 @@ qx.Class.define("desk.SceneContainer",
 			if (event.getTarget() != this.getCanvas()) return;
 			var slices = [];
 			this.getScene().traverse(function (mesh) {
-				if (mesh.userData && mesh.volumeSlice) {
+				if (mesh.userData && mesh.userData.viewerProperties
+					&& mesh.userData.viewerProperties.volumeSlice) {
 					slices.push(mesh);
 				}
 			});
@@ -589,6 +591,7 @@ qx.Class.define("desk.SceneContainer",
 				controls.mouseMove(0, 0.05 * delta * this.getInnerSize().height);
 				controls.mouseUp();
 				this.render();
+				this.__propagateLinks();
 			}
 		},
 
@@ -886,31 +889,32 @@ qx.Class.define("desk.SceneContainer",
 		 * @param dispose {Boolean} dispose mesh to avoid memory leaks (default : true)
 		 */
 		removeMesh : function (mesh, dispose) {
-			var parameters = mesh.userData.viewerProperties;
-			var keepGeometry = false;
-			var keepMaterial = false;
+			var params = mesh && mesh.userData && mesh.userData.viewerProperties;
+			if (!params) {
+				console.warn("Trying to remove a mesh not part of the scene");
+				return;
+			}
 
 			mesh.parent.remove(mesh);
 
-			if (parameters) {
-				var leaf = this.__meshes.nodeGet(parameters.leaf)
-				if (leaf) {
-					delete leaf.viewerProperties;
-					this.__meshes.getDataModel().prune(leaf.nodeId, true);
-				}
-				parameters.mesh = 0;
-				delete mesh.userData.viewerProperties;
-				this.__setData();
-				keepGeometry = parameters.keepGeometry;
-				keepMaterial = parameters.keepMaterial;
+			var leaf = this.__meshes.nodeGet(params.leaf);
+			if (leaf) {
+				delete leaf.viewerProperties;
+				this.__meshes.getDataModel().prune(leaf.nodeId, true);
 			}
+
+			delete params.mesh;
+			delete mesh.userData.viewerProperties;
+			this.__setData();
 
 			this.fireDataEvent("meshRemoved", mesh);
 			if (dispose === false) return;
 
-			if (!keepGeometry && mesh.geometry) mesh.geometry.dispose();
+			if (!params.keepGeometry && mesh.geometry) {
+				mesh.geometry.dispose();
+			}
 
-			if (!keepMaterial && mesh.material) {
+			if (!params.keepMaterial && mesh.material) {
 				if (mesh.material.map) {
 					mesh.material.map.dispose();
 				}
