@@ -1,11 +1,12 @@
-var	fs        = require('fs'),
+var	async     = require('async'),
+	cluster   = require('cluster'),
+	exec      = require('child_process').exec,
+	fs        = require('fs'),
 	http      = require('http'),
 	https     = require('https'),
 	httpProxy = require('http-proxy'),
-	exec      = require('child_process').exec,
-	async     = require('async'),
 	os        = require('os'),
-	cluster   = require('cluster');
+	userid    = require ("userid");
 
 var	port      = 80,
 	port2     = 443;
@@ -16,6 +17,9 @@ var defaultRoutes,
 	certFile   = __dirname + '/cert/certificate.pem',
 	caFile     = __dirname + '/cert/chain.pem',
 	httpAllowed;
+
+var routes, // main routing object
+	ca = []; // certificate chain
 
 if (cluster.isMaster) {
 	for (var i = 0; i < 4; i++) {
@@ -34,7 +38,6 @@ proxy.on('error', function(err, req, res) {
 	res.end();
 });
 
-var ca = [];
 if (fs.existsSync(caFile)) {
 	var chain = fs.readFileSync (caFile, 'utf8').split ("\n");
 	var cert = [];
@@ -88,10 +91,10 @@ proxyServer.on('upgrade', function (req, socket, head) {
 	proxy.ws(req, socket, head, target);
 });
 
-// read routes files and configure routing
-async.series([
-	updateRoutes,
+updateRoutes();
 
+// start proxies
+async.series([
 	function (callback) {
 		server.listen(port, callback)
 	},
@@ -106,33 +109,30 @@ async.series([
 	process.setuid('dproxy');
 });
 
-var routes;
+function updateRoutes() {
+	try{
+		var routesContent = JSON.parse(fs.readFileSync(config));
+		var users = routesContent.users;
+		routes = {};
 
-function updateRoutes(callback) {
-	console.log(fs.readFileSync(config).toString());
-	var routesContent = JSON.parse(fs.readFileSync(config));
-	var users = routesContent.users;
-	var newRoutes = {};
-
-	async.forEachSeries(users, function (user, callback) {
-		exec('id -u ' + user, function (err, stdout) {
-			newRoutes[os.hostname() + '/' + user] = 
-				{target : 'http://' + os.hostname() + ':' + stdout};
-			callback();
+		users.forEach(function (user) {
+			routes[os.hostname() + '/' + user] = 
+				{target : 'http://' + os.hostname() + ':' + userid.uid(user)};
 		});
-	}, function () {
+
 		// add external proxies
 		var otherRoutes = routesContent.otherRoutes || {};
 		Object.keys(otherRoutes).forEach(function (key) {
-			newRoutes[key] = {target : otherRoutes[key]};
+			routes[key] = {target : otherRoutes[key]};
 		});
 		defaultRoutes = routesContent.defaultRoutes;
 		httpAllowed = routesContent.httpAllowed || {}
 		console.log('... done! Routes:');
-		routes = newRoutes;
 		console.log(routes);
-		callback();
-	});
+	} catch (err) {
+		console.log("error updating routes : ");
+		console.log(err);
+	}
 }
 
 // watch routes files for auto-update
@@ -140,7 +140,7 @@ fs.watchFile(config, function (curr, prev) {
 	if (curr.mtime > prev.mtime) {
 		console.log(new Date().toDateString() + " " + new Date().toTimeString());
 		console.log(config + ' modified, updating routes...');
-		updateRoutes(function () {});
+		updateRoutes();
 	}
 });
 

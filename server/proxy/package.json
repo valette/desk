@@ -12,8 +12,10 @@
   "dependencies": {
     "async" : ">0.0.0",
     "forever" : ">0.0.0",
+    "mkdirp" : ">0.0.0",
     "http-proxy" : ">0.0.0",
-    "underscore" : ">0.0.0"
+    "underscore" : ">0.0.0",
+    "userid" : ">0.0.0"
   },
   "optionalDependencies": {},
   "engines": {

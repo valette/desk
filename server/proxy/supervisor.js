@@ -1,10 +1,13 @@
 var	forever   = require('forever'),
 	fs        = require('fs'),
+	mkdirp    = require('mkdirp'),
 	path      = require('path'),
 	_         = require('underscore');
+	userid    = require ("userid");
 
 var config = __dirname + '/config.json';
 var defaultFile;
+var uidPrefix = 'desk-';
 
 var tasks;
 var fileWatchers = {};
@@ -14,31 +17,36 @@ var separator = "#####################################################"
 function updateTasks(callback) {
 	console.log(separator);
 	forever.list(false, function (err, result) {
-		tasks = result || [];
-		console.log(tasks.length + " already running forever tasks");
+		try {
+			tasks = result || [];
+			console.log(tasks.length + " already running forever tasks");
 
-		var content = JSON.parse(fs.readFileSync(config))
-		var users = _.uniq(content.users);
-		defaultFile = content.defaultFile;
+			var content = JSON.parse(fs.readFileSync(config))
+			var users = _.uniq(content.users);
+			defaultFile = path.resolve(__dirname + "/../desk.js");
 
-		console.log(users.length + " users");
-		users.forEach(update);
+			console.log(users.length + " users");
+			users.forEach(update);
 
-		console.log(separator);
-		// shutdown not wanted tasks
-		tasks.forEach(function (task, index) {
-			if (task.uid.slice(0,5) !== "desk-") {
-				return;
-			}
-			if (!_.some(users, function (user) {
-				return task.uid === getUID(user);
-			})) {
-				console.log("stop task " + task.uid);
-				forever.stop(index);
-				var user = task.uid.substr(5);
-				fs.unwatchFile(getUserConfigFile(user), fileWatchers[user]);
-			}
-		});
+			console.log(separator);
+			// shutdown not wanted tasks
+			tasks.forEach(function (task, index) {
+				if (task.uid.indexOf(uidPrefix) !== 0) {
+					return;
+				}
+				if (!_.some(users, function (user) {
+					return task.uid === getUID(user);
+				})) {
+					console.log("stop task " + task.uid);
+					forever.stop(index);
+					var user = task.uid.substr(5);
+					fs.unwatchFile(getUserConfigFile(user), fileWatchers[user]);
+				}
+			});
+		} catch (err) {
+			console.log("error while updating, check" + config + " : ");
+			console.log(err);
+		}
 	});
 }
 
@@ -47,10 +55,14 @@ function getUserConfigFile (user) {
 }
 
 function getUID(user) {
-	return 'desk-' + user;
+	return uidPrefix + user;
 }
 
 function update (user) {
+	var deskPath = path.join('/home/', user, 'desk');
+	mkdirp.sync(deskPath);
+	fs.chownSync(deskPath, userid.uid(user), userid.gid(user));
+
 	var show = false;
 	var message = '';
 	message += "*** " + user + " ***";
@@ -112,7 +124,7 @@ function update (user) {
 		return;
 	}
 
-	var logFile = path.join('/home/', user, 'desk', 'log.txt');
+	var logFile = path.join(deskPath, 'log.txt');
 
 	forever.startDaemon (file, {
 		silent : true,
