@@ -454,6 +454,7 @@ qx.Class.define("desk.SceneContainer",
 				geometry.computeBoundingSphere();
 				geometry.computeBoundingBox();
 				geometry.verticesNeedUpdate = true;
+				lineGeometry.verticesNeedUpdate = true;
 				this.render(true);
 			}, this);
 
@@ -461,11 +462,23 @@ qx.Class.define("desk.SceneContainer",
                 volumeSlice : volumeSlice, updateCamera : false
             });
 
+			var lineMaterial = new THREE.LineBasicMaterial({linewidth: 3,
+				color: desk.VolumeSlice.COLORS[volumeSlice.getOrientation()]});
+
+			var lineGeometry = new THREE.Geometry();
+			lineGeometry.vertices.push(geometry.vertices[0],
+				geometry.vertices[1], geometry.vertices[3],
+				geometry.vertices[2], geometry.vertices[0]);
+			var line = new THREE.Line ( lineGeometry, lineMaterial );
+			mesh.add(line);
+
 			volumeSlice.fireEvent('changeImage');
 
 			mesh.addEventListener("removedFromScene", function () {
 				volumeSlice.removeListenerById(listenerId);
-			}.bind(this));
+				lineGeometry.dispose();
+				lineMaterial.dispose();
+			});
 			return mesh;
 		},
 

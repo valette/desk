@@ -20,6 +20,8 @@ qx.Class.define("desk.SliceView",
 		this.__createUI();
 		this.__initUndo();
 		this.__setupInteractionEvents();
+		this.setDecorator(new qx.ui.decoration.Decorator().set({
+			color : desk.VolumeSlice.COLORS[orientation], width : 3}));
 	},
 
 	destruct : function(){
