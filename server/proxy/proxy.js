@@ -1,21 +1,25 @@
-var	fs        = require('fs'),
+var	async     = require('async'),
+	cluster   = require('cluster'),
+	exec      = require('child_process').exec,
+	fs        = require('fs'),
 	http      = require('http'),
 	https     = require('https'),
 	httpProxy = require('http-proxy'),
-	exec      = require('child_process').exec,
-	async     = require('async'),
 	os        = require('os'),
-	cluster   = require('cluster');
+	userid    = require ("userid");
 
 var	port      = 80,
 	port2     = 443;
 
-var 	defaultRoutes,
-	routesFile = __dirname + '/routes.json',
-	keyFile    = __dirname + '/privatekey.pem',
-	certFile   = __dirname + '/certificate.pem',
-	caFile     = __dirname + '/chain.pem',
+var defaultRoutes,
+	config = __dirname + '/config.json',
+	keyFile    = __dirname + '/cert/privatekey.pem',
+	certFile   = __dirname + '/cert/certificate.pem',
+	caFile     = __dirname + '/cert/chain.pem',
 	httpAllowed;
+
+var routes, // main routing object
+	ca = []; // certificate chain
 
 if (cluster.isMaster) {
 	for (var i = 0; i < 4; i++) {
@@ -30,15 +34,12 @@ if (cluster.isMaster) {
 
 var proxy = httpProxy.createProxyServer({});
 proxy.on('error', function(err, req, res) {
-	console.log(new Date().toString() + ": error");
-	console.log(req.url);
-	console.log(err);
+	//just end the request
 	res.end();
 });
 
-var ca = [];
 if (fs.existsSync(caFile)) {
-	var chain = fs.readFileSync (__dirname + '/chain.pem', 'utf8').split ("\n");
+	var chain = fs.readFileSync (caFile, 'utf8').split ("\n");
 	var cert = [];
 	chain.forEach(function (line) {
 		if (line.length === 0) return;
@@ -90,10 +91,10 @@ proxyServer.on('upgrade', function (req, socket, head) {
 	proxy.ws(req, socket, head, target);
 });
 
-// read routes files and configure routing
-async.series([
-	updateRoutes,
+updateRoutes();
 
+// start proxies
+async.series([
 	function (callback) {
 		server.listen(port, callback)
 	},
@@ -108,40 +109,40 @@ async.series([
 	process.setuid('dproxy');
 });
 
-var routes;
+function updateRoutes() {
+	try{
+		var routesContent = JSON.parse(fs.readFileSync(config));
+		var users = routesContent.users;
+		routes = {};
 
-function updateRoutes(callback) {
-	console.log(fs.readFileSync(routesFile).toString());
-	var routesContent = JSON.parse(fs.readFileSync(routesFile));
-	var users = routesContent.users;
-	var newRoutes = {};
-
-	async.forEachSeries(users, function (user, callback) {
-		exec('id -u ' + user, function (err, stdout) {
-			newRoutes[os.hostname() + '/' + user] = 
-				{target : 'http://' + os.hostname() + ':' + stdout};
-			callback();
+		users.forEach(function (user) {
+			routes[os.hostname() + '/' + user] = 
+				{target : 'http://' + os.hostname() + ':' + userid.uid(user)};
 		});
-	}, function () {
+
 		// add external proxies
 		var otherRoutes = routesContent.otherRoutes || {};
 		Object.keys(otherRoutes).forEach(function (key) {
-			newRoutes[key] = {target : otherRoutes[key]};
+			routes[key] = {target : otherRoutes[key]};
 		});
 		defaultRoutes = routesContent.defaultRoutes;
 		httpAllowed = routesContent.httpAllowed || {}
 		console.log('... done! Routes:');
-		routes = newRoutes;
 		console.log(routes);
-		callback();
-	});
+	} catch (err) {
+		console.log("error updating routes : ");
+		console.log(err);
+	}
 }
 
 // watch routes files for auto-update
-fs.watchFile(routesFile, function () {
-	console.log(new Date());
-	console.log(routesFile + ' modified, updating routes...');
-	updateRoutes(function () {});
+fs.watchFile(config, function (curr, prev) {
+	if (curr.mtime > prev.mtime) {
+		console.log(new Date().toDateString() + " " + new Date().toTimeString());
+		console.log(config + ' modified, updating routes...');
+		updateRoutes();
+	}
 });
-console.log('Watching file ' + routesFile + ' for routes');
+
+console.log('Watching file ' + config + ' for routes');
 
