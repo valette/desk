@@ -42,7 +42,7 @@ qx.Class.define("desk.Action",
 		CREATEFROMFILE : function (file) {
 			desk.FileSystem.readFile(file, function (err, parameters) {
 				var action = new desk.Action (parameters.action, {standalone : true});
-				action.setActionParameters(parameters);
+				action.setParameters(parameters);
 			});
 		}
 	},
@@ -78,10 +78,6 @@ qx.Class.define("desk.Action",
 		__action : null,
 
 		__name : null,
-
-		__providedParameters : {},
-
-		__loadedParameters : {},
 
 		__standalone : false,
 
@@ -131,22 +127,17 @@ qx.Class.define("desk.Action",
 				if (!exists) return;
 				desk.FileSystem.readFile(jsonFile,
 					function(err, result) {
-						if (!err) {
-							this.__loadedParameters = result;
-							this.__updateUIParameters();
-							if (this.__tabView) {
-								this.__addOutputTab();
-							}
+						if (err) {
+							return;
+						}
+						this.setParameters(result);
+						if (this.__tabView) {
+							this.__addOutputTab();
 						}
 						this.fireEvent("changeOutputDirectory");
 				}, this);
 			}, this);
         },
-
-		__updateUIParameters : function () {
-			this.setUIParameters(this.__loadedParameters, false);
-			this.setUIParameters(this.__providedParameters, !this.__standalone);
-		},
 
 		/**
 		* Returns the action output directory
@@ -156,34 +147,36 @@ qx.Class.define("desk.Action",
 			return this.__outputDir;
 		},
 
-		/**
-		* Defines input parameters for the action, which will
-        * be hidden in the UI
-		* @param parameters {Object} parameters as JSON object
-		*/
 		setActionParameters : function (parameters) {
-			this.__providedParameters = parameters;
-			if (typeof parameters.output_directory === "string") {
-				this.__outputDir = parameters.output_directory;
-			}
-			this.__updateUIParameters();
+			console.log("desk.Action.setActionParameters() is deprecated, use setParameters")
+			console.log(new Error().stack);
+			this.setParameters(parameters, !this.__standalone);
 		},
 
+        setUIParameters : function (parameters, hide) {
+			console.log("desk.Action.setUIParameters() is deprecated, use setParameters")
+			console.log(new Error().stack);
+			this.setParameters(parameters, hide);
+		},
+		
         /**
 		* Defines UI input parameters for the action
 		* @param parameters {Object} parameters as JSON object
 		* @param hide {Boolean} hide/don't hide provided parameter forms
 		*/
-        setUIParameters : function (parameters, hide) {
+		setParameters : function (parameters, hide) {
+			if (typeof parameters.output_directory === "string") {
+				this.__outputDir = parameters.output_directory;
+			}
             Object.keys(parameters).forEach(function (key) {
                 var form = this.getForm(key);
-                if (form) {
-                    form.setValue(parameters[key].toString());
-					if (hide) {
-						form.setVisibility("excluded");
-						form.getUserData("label").setVisibility("excluded");
-					}
-                }
+                if (!form) {
+					return
+				}
+				form.setValue(parameters[key].toString());
+				var visibility = hide ? "excluded" : "visible"
+				form.setVisibility(visibility);
+				form.getUserData("label").setVisibility(visibility);
             }, this);
         },
 
@@ -468,8 +461,6 @@ qx.Class.define("desk.Action",
 					this.setInvalidMessage('');
 				}, form);
 			}, this);
-
-			this.__updateUIParameters();
 
 			this.__controls = new qx.ui.container.Composite();
 			this.__controls.setLayout(new qx.ui.layout.HBox(10));
