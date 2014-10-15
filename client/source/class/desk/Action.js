@@ -26,7 +26,7 @@ qx.Class.define("desk.Action",
 		}
 
 		this.__connections = [];
-		this.__buildUI(opt.fileBrowser);
+		this.__buildUI();
 	},
 
 	properties : {
@@ -320,11 +320,16 @@ qx.Class.define("desk.Action",
 			this.fireDataEvent("actionUpdated", actionId);
 		},
 
-        getForm : function (parameterName) {
+		/**
+		* Returns the form containing the desired parameter
+		* @param  parameter {String} the parameter name
+		* @return {qx.ui.form.TextField} the input form
+		*/
+		getForm : function (parameter) {
 			return _.find(this.__manager.getItems(), function (item) {
-				return item.getUserData("name") === parameterName;
+				return item.getUserData("name") === parameter;
 			});
-        },
+		},
 
         __intValidator : function(value, item) {
 			var parameterName = this.name;
@@ -380,7 +385,7 @@ qx.Class.define("desk.Action",
 		/**
 		* Builds the UI
 		*/
-		__buildUI : function (fileBrowser) {
+		__buildUI : function () {
 			this.setLayout(new qx.ui.layout.VBox(5));
 
 			var scroll = new qx.ui.container.Scroll();
@@ -440,16 +445,6 @@ qx.Class.define("desk.Action",
 					this.__manager.add(form, validator, parameter);				
 				} else {
 					alert("no validator implemented for type : "+ parameter.type);
-				}
-
-				if ((parameter.type === "file") && fileBrowser) {
-					var file = fileBrowser.getSelectedFiles()[0];
-					form.setValue(file);
-					var parentAction = fileBrowser.getUserData("action");
-					if (parentAction) {
-						this.connect(form.getPlaceholder(), parentAction, file);
-					}
-					fileBrowser = undefined;
 				}
 
 				//use default value if provided

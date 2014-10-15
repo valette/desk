@@ -321,9 +321,18 @@ qx.Class.define("desk.Actions",
 			this.__ongoingActions.add(item);
 		},
 
-		__launch : function (e){
-			var action = new desk.Action(e.getTarget().getLabel(), 
-				{fileBrowser : this.__currentFileBrowser, standalone : true});
+		__launch : function (e) {
+			var name = e.getTarget().getLabel();
+			var action = new desk.Action(name, {standalone : true});
+			_.some(this.__actions.actions[name].parameters, function (param) {
+				if ((param.type !== "file") && (param.type !== "directory")) {
+					return false;
+				}
+				var parameters = {};
+				parameters[param.name] = this.__currentFileBrowser.getSelectedFiles()[0];
+				action.setParameters(parameters);
+				return true;
+			}, this);
 			action.setOutputDirectory("actions/");
 		},
 
