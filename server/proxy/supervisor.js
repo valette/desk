@@ -14,7 +14,7 @@ var fileWatchers = {};
 
 var separator = "#####################################################"
 
-function updateTasks(callback) {
+function updateTasks() {
 	console.log(separator);
 	forever.list(false, function (err, result) {
 		try {
@@ -40,7 +40,8 @@ function updateTasks(callback) {
 					console.log("stop task " + task.uid);
 					forever.stop(index);
 					var user = task.uid.substr(5);
-					fs.unwatchFile(getUserConfigFile(user), fileWatchers[user]);
+					fs.unwatchFile(getUserConfigFile(user), onModification);
+					delete fileWatchers[user];
 				}
 			});
 		} catch (err) {
@@ -63,36 +64,34 @@ function update (user) {
 	mkdirp.sync(deskPath);
 	fs.chownSync(deskPath, userid.uid(user), userid.gid(user));
 
-	var show = false;
-	var message = '';
-	message += "*** " + user + " ***";
-
-	var uid  = getUID(user),
+	var show = false,
+		message = "*** " + user + " ***",
+		uid  = getUID(user),
 	    file = defaultFile,
-	    config = getUserConfigFile(user);
+	    userConfig = getUserConfigFile(user),
+	    options = [];
 
-	function onFileChange (curr, prev) {
-		if ((curr.mtime > prev.mtime) || (curr.dev === 0)) {
-			console.log(config + " modified, updating user " + user);
-			update(user);
-		}
-	}
-
-	if (fs.existsSync(config)) {
+	if (fs.existsSync(userConfig)) {
 		try {
-			file = JSON.parse(fs.readFileSync(config)).boot;
+			var boot = JSON.parse(fs.readFileSync(userConfig)).boot;
+			options = boot.split(" ");
+			file = options.shift();
 			if (file) {
-				message += "\nusing custom js file : " + file;
+				message += "\nusing custom command : " + boot;
 			}
 		} catch (err) {
-			message += '\nerror while reading ' + config;
+			message += '\nerror while reading ' + userConfig;
 			file = undefined;
 		}
 	}
 
-	if (fileWatchers[user] === undefined) {
-		fs.watchFile(config, onFileChange);
-		fileWatchers[user] = onFileChange;
+	if (file === defaultFile) {
+		options.push('--user=' + user);
+	}
+
+	if (!fileWatchers[user]) {
+		fs.watchFile(userConfig, onModification);
+		fileWatchers[user] = true;
 	}
 
 	var previousTask = _.find(tasks, function (task) {
@@ -101,7 +100,8 @@ function update (user) {
 
 	if (previousTask) {
 		// server is already up
-		if (previousTask.file === file) {
+		if (previousTask.file  + " " + previousTask.options.join(" ") === 
+			file + " " + options.join(" ")) {
 			return;
 		}
 		console.log(message);
@@ -128,23 +128,26 @@ function update (user) {
 
 	forever.startDaemon (file, {
 		silent : true,
-		options: ['--user=' + user],
+		options: options,
 		cwd : path.dirname(file),
 		outFile : logFile,
 		errFile : logFile,
+		logFile : logFile,
 		uid : uid
 	});
 }
 
 
 // watch routes files for auto-update
-fs.watchFile(config, function (curr, prev) {
+fs.watchFile(config, onModification);
+
+function onModification(curr, prev) {
 	if (curr.mtime > prev.mtime) {
 		console.log(new Date().toDateString() + " " + new Date().toTimeString());
-		console.log(config + ' modified, updating...');
+		console.log('Updating...');
 		updateTasks();
 	}
-});
+}
 
 updateTasks();
 console.log('Watching file ' + config + ' for tasks');
