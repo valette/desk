@@ -4,6 +4,7 @@
  * @asset(desk/desk.png)
  * @asset(qx/icon/${qx.icontheme}/16/categories/system.png) 
  * @ignore (io)
+ * @ignore (_.some)
  * @lint ignoreDeprecated (alert)
  * @require(desk.LogContainer)
  * @require(desk.Random)
