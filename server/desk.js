@@ -3,6 +3,7 @@ var	argv         = require('yargs').argv,
 	bodyParser   = require('body-parser'),
 	browserify   = require('browserify-middleware'),
 	compress     = require('compression'),
+	crypto      = require('crypto'),
 	directory    = require('serve-index'),
 	errorhandler = require('errorhandler'),
 	express      = require('express'),
@@ -66,25 +67,35 @@ console.log('Welcome to Desk');
 console.log('Running as user : ' + user);
 console.log(separator);
 
+var id = {username : user, password : "password"};
 // look for correctly formated password.json file.
-if (!fs.existsSync(passwordFile)) {
-	fs.writeFileSync(passwordFile, JSON.stringify({username : user,
-		password : 'password'}));
+if (fs.existsSync(passwordFile)) {
+	// use basicAuth depending on password.json
+	id = require(passwordFile);
 }
 
-// use basicAuth depending on password.json
-var id = require(passwordFile);
-if (id.username && id.password) {
+if (id.password) {
+	// convert to more secure format
+	var shasum = crypto.createHash('sha1');
+	shasum.update(id.password);
+	id.sha = shasum.digest('hex');
+	delete id.password;
+	fs.writeFileSync(passwordFile, JSON.stringify(id));
+}
+
+if (id.username && id.sha) {
 	app.use(function(req, res, next) {
-		var user = auth(req);
-		if (user && user.name == id.username && user.pass == id.password) {
+		var user = auth(req) || {};
+		var shasum = crypto.createHash('sha1');
+		shasum.update(user.pass || '');
+		if (user && user.name === id.username && shasum.digest('hex') === id.sha) {
 			next();
-		} else {
-			res.statusCode = 401;
-			res.setHeader('WWW-Authenticate', 'Basic realm="' +
-				"please enter your login/password" + '"');
-			res.end('Unauthorized');
+			return;
 		}
+		res.statusCode = 401;
+		res.setHeader('WWW-Authenticate', 'Basic realm="' +
+			"please enter your login/password" + '"');
+		res.end('Unauthorized');
 	});
 	console.log("Using basic authentication");
 } else {
@@ -138,7 +149,9 @@ rpc.post('/upload', function(req, res) {
 		return;
 	}
 	if (req.body.password.length > 4) {
-		id.password = req.body.password;
+		var shasum = crypto.createHash('sha1');
+		shasum.update(req.body.password);
+		id.sha = shasum.digest('hex');
 		fs.writeFileSync(passwordFile, JSON.stringify(id));
 		res.json({status : "password changed"});
 	} else {
