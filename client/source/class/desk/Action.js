@@ -174,7 +174,10 @@ qx.Class.define("desk.Action",
 					return
 				}
 				form.setValue(parameters[key].toString());
-				var visibility = hide ? "excluded" : "visible"
+				if (hide === undefined) {
+					return;
+				}
+				var visibility = hide ? "excluded" : "visible";
 				form.setVisibility(visibility);
 				form.getUserData("label").setVisibility(visibility);
             }, this);
