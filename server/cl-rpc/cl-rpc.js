@@ -235,7 +235,7 @@ function validateValue (parameterValue, parameter) {
 				' maximal value is ' + compare);
 		}
 	}
-	return (null);
+	return;
 }
 
 function manageActions (POST, callback) {
@@ -274,7 +274,6 @@ function manageActions (POST, callback) {
 				return value;
 			}
 		);
-		cache = null;
 		callback(JSON.parse(objString));
 		return;
 	}	

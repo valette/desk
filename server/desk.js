@@ -50,16 +50,17 @@ app.use (function (req, res, next) {
 	next();
 });
 
-var	deskPath = libPath.join('/home', user, 'desk') + '/',
-	uploadDir = libPath.join(deskPath, 'upload') + '/',
-	extensionsDir = libPath.join(deskPath, 'extensions') + '/';
+var	homeDir = process.platform === "darwin" ? '/Users' : '/home',
+	deskDir = libPath.join(homeDir, user, 'desk') + '/',
+	uploadDir = libPath.join(deskDir, 'upload') + '/',
+	extensionsDir = libPath.join(deskDir, 'extensions') + '/';
 
 // make desk and upload directories if not existent
-mkdirp.sync(deskPath);
+mkdirp.sync(deskDir);
 mkdirp.sync(uploadDir);
 
 // certificate default file names
-var passwordFile = libPath.join(deskPath, "password.json"),
+var passwordFile = libPath.join(deskDir, "password.json"),
 	privateKeyFile = "privatekey.pem",
 	certificateFile = "certificate.pem";
 
@@ -120,8 +121,8 @@ if (!fs.existsSync(rootPath)) {
 	console.log('serving custom default folder');
 }
 router.use('/', express.static(rootPath))
-.use('/files', express.static(deskPath))
-.use('/files', directory(deskPath))
+.use('/files', express.static(deskDir))
+.use('/files', directory(deskDir))
 .use('/', express.static(clientPath))
 .use('/', directory(clientPath))
 .get('/js/browserified.js', browserify(__dirname + '/browserify.js',
@@ -133,7 +134,7 @@ rpc.post('/upload', function(req, res) {
 	form.parse(req, function(err, fields, files) {
 		var file = files.file;
 		var outputDir = fields.uploadDir.toString().replace(/%2F/g,'/') || 'upload';
-		outputDir = libPath.join(deskPath, outputDir);
+		outputDir = libPath.join(deskDir, outputDir);
 		console.log("file : " + file.path.toString());
 		var fullName = libPath.join(outputDir, file.name.toString());
 		console.log("uploaded to " +  fullName);
@@ -160,7 +161,7 @@ rpc.post('/upload', function(req, res) {
 })
 .get('/exists', function (req, res) {
 	var path = req.query.path;
-	fs.exists(libPath.join(deskPath, path), function (exists) {
+	fs.exists(libPath.join(deskDir, path), function (exists) {
 		console.log('exists : ' + path	+ ' : ' + exists);
 		res.json({exists : exists});
 	});
@@ -184,7 +185,7 @@ rpc.post('/upload', function(req, res) {
 			res.send(error);
 			return;
 		}
-		res.download(libPath.join(deskPath, file));
+		res.download(libPath.join(deskDir, file));
 	});
 });
 
@@ -224,7 +225,7 @@ mkdirp.sync(extensionsDir);
 
 actions.addDirectory(libPath.join(__dirname, 'includes'));
 actions.addDirectory(extensionsDir);
-actions.setRoot(deskPath);
+actions.setRoot(deskDir);
 
 var io = socketIO(server, {path : libPath.join(homeURL, "socket/socket.io")});
 io.on('connection', function(socket) {
