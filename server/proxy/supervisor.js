@@ -140,8 +140,7 @@ function update (user) {
 fs.watchFile(config, onModification);
 
 function onModification(curr, prev) {
-	if (curr.mtime > prev.mtime) {
-		console.log(new Date().toDateString() + " " + new Date().toTimeString());
+	if ((curr.mtime > prev.mtime) || (curr.dev === 0)) {
 		console.log('Updating...');
 		updateTasks();
 	}
