@@ -3,7 +3,7 @@ var	argv         = require('yargs').argv,
 	bodyParser   = require('body-parser'),
 	browserify   = require('browserify-middleware'),
 	compress     = require('compression'),
-	crypto      = require('crypto'),
+	crypto       = require('crypto'),
 	directory    = require('serve-index'),
 	errorhandler = require('errorhandler'),
 	express      = require('express'),
@@ -23,11 +23,7 @@ var homeURL = '/',
 	port = 8080,
 	user = process.env.USER;
 
-if (argv.user || argv.multi) {
-	if (argv.user) {
-		process.setuid(argv.user);
-		user = argv.user;
-	}
+if (argv.multi) {
 	homeURL = '/' + user + '/';
 	port = process.getuid();
 }
@@ -43,13 +39,11 @@ var clientPath = fs.realpathSync(__dirname + '/../client/') + '/';
 var app = express();
 app.use(compress());
 
-
 // transmit homeURL cookie
 app.use (function (req, res, next) {
 	res.cookie('homeURL', homeURL);
 	next();
 });
-
 var	homeDir = process.platform === "darwin" ? '/Users' : '/home',
 	deskDir = libPath.join(homeDir, user, 'desk') + '/',
 	uploadDir = libPath.join(deskDir, 'upload') + '/',
@@ -202,11 +196,10 @@ var baseURL;
 
 // run the server in normal or secure mode depending on provided certificate
 if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
-	var options = {
+	server = https.createServer({
 		key: fs.readFileSync(privateKeyFile),
 		cert: fs.readFileSync(certificateFile)
-	};
-	server = https.createServer(options, app);
+	}, app);
 	console.log("Using secure https mode");
 	baseURL = "https://";
 } else {
@@ -248,7 +241,7 @@ actions.performAction({manage : "update"}, function () {
 	console.log ("server running on port " + port);
 	console.log(baseURL + "localhost:" + port + homeURL);
 	if (id) {
-		console.log('login as : user : "' + id.username + '", password : "' + id.password + '"');
+		console.log('login as : user : "' + id.username);
 	}
 });
 
