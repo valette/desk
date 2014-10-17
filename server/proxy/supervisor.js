@@ -5,12 +5,13 @@ var	forever   = require('forever'),
 	_         = require('underscore');
 	userid    = require ("userid");
 
-var config = __dirname + '/config.json';
-var defaultFile;
-var uidPrefix = 'desk-';
+var config = __dirname + '/config.json',
+	uidPrefix = 'desk-';
 
-var tasks;
-var fileWatchers = {};
+var fileWatchers = {},
+	start,
+	tasks,
+	rootUsers;
 
 var separator = "#####################################################"
 
@@ -23,7 +24,8 @@ function updateTasks() {
 
 			var content = JSON.parse(fs.readFileSync(config))
 			var users = _.uniq(content.users);
-			defaultFile = path.resolve(__dirname + "/../desk.js");
+			start = content.start;
+			rootUsers = content.rootUsers || [];
 
 			console.log(users.length + " users");
 			users.forEach(update);
@@ -35,7 +37,7 @@ function updateTasks() {
 					return;
 				}
 				if (!_.some(users, function (user) {
-					return task.uid === getUID(user);
+					return task.uid === getForeverUID(user);
 				})) {
 					console.log("stop task " + task.uid);
 					forever.stop(index);
@@ -55,7 +57,7 @@ function getUserConfigFile (user) {
 	return path.join('/home/', user, 'desk/config.json');
 }
 
-function getUID(user) {
+function getForeverUID(user) {
 	return uidPrefix + user;
 }
 
@@ -66,10 +68,10 @@ function update (user) {
 
 	var show = false,
 		message = "*** " + user + " ***",
-		uid  = getUID(user),
-	    file = defaultFile,
-	    userConfig = getUserConfigFile(user),
-	    options = [];
+		foreverUID  = getForeverUID(user),
+	    options = start.split(' '),
+	    file = options.shift(),
+	    userConfig = getUserConfigFile(user);
 
 	if (fs.existsSync(userConfig)) {
 		try {
@@ -85,17 +87,13 @@ function update (user) {
 		}
 	}
 
-	if (file === defaultFile) {
-		options.push('--user=' + user);
-	}
-
 	if (!fileWatchers[user]) {
 		fs.watchFile(userConfig, onModification);
 		fileWatchers[user] = true;
 	}
 
 	var previousTask = _.find(tasks, function (task) {
-		return task.uid === uid;
+		return task.uid === foreverUID;
 	});
 
 	if (previousTask) {
@@ -127,16 +125,16 @@ function update (user) {
 	var logFile = path.join(deskPath, 'log.txt');
 
 	forever.startDaemon (file, {
-		silent : true,
 		options: options,
 		cwd : path.dirname(file),
+		env : {USER : user},
 		outFile : logFile,
 		errFile : logFile,
 		logFile : logFile,
-		uid : uid
+		spawnWith : _.indexOf(rootUsers, user) < 0? {uid : userid.uid(user), gid : userid.gid(user)} : {},
+		uid : foreverUID
 	});
 }
-
 
 // watch routes files for auto-update
 fs.watchFile(config, onModification);
