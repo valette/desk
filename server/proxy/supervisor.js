@@ -6,12 +6,12 @@ var	forever   = require('forever'),
 	userid    = require ("userid");
 
 var config = __dirname + '/config.json',
-	uidPrefix = 'desk-';
+	uidPrefix = 'desk-',
+	proxyUser = 'dproxy';
 
 var fileWatchers = {},
 	start,
-	tasks,
-	rootUsers;
+	tasks;
 
 var separator = "#####################################################"
 
@@ -23,8 +23,9 @@ function updateTasks() {
 			console.log(tasks.length + " already running forever tasks");
 
 			var content = JSON.parse(fs.readFileSync(config))
-			var users = _.uniq(content.users);
-			start = content.start;
+			var users = content.users;
+			users.push(proxyUser);
+			users = _.uniq(users);
 			rootUsers = content.rootUsers || [];
 
 			console.log(users.length + " users");
@@ -66,30 +67,39 @@ function update (user) {
 	mkdirp.sync(deskPath);
 	fs.chownSync(deskPath, userid.uid(user), userid.gid(user));
 
-	var show = false,
-		message = "*** " + user + " ***",
-		foreverUID  = getForeverUID(user),
-	    options = start.split(' '),
-	    file = options.shift(),
+	var message = "*** " + user + " ***",
+	    foreverUID  = getForeverUID(user),
+	    options = [],
+	    spawnWith = {},
+	    env = {},
 	    userConfig = getUserConfigFile(user);
 
-	if (fs.existsSync(userConfig)) {
-		try {
-			var boot = JSON.parse(fs.readFileSync(userConfig)).boot;
-			options = boot.split(" ");
-			file = options.shift();
-			if (file) {
-				message += "\nusing custom command : " + boot;
-			}
-		} catch (err) {
-			message += '\nerror while reading ' + userConfig;
-			file = undefined;
-		}
-	}
+	if (user === proxyUser) {
+		file = path.join(__dirname, "proxy.js");
+	} else {
+		file = path.join(__dirname, "../desk.js");
+		options.push ("--multi");
+		env.USER = user;
+		spawnWith = {uid : userid.uid(user), gid : userid.gid(user)};
 
-	if (!fileWatchers[user]) {
-		fs.watchFile(userConfig, onModification);
-		fileWatchers[user] = true;
+		if (fs.existsSync(userConfig)) {
+			try {
+				var boot = JSON.parse(fs.readFileSync(userConfig)).boot;
+				options = boot.split(" ");
+				file = options.shift();
+				if (file) {
+					message += "\nusing custom command : " + boot;
+				}
+			} catch (err) {
+				message += '\nerror while reading ' + userConfig;
+				file = undefined;
+			}
+		}
+	
+		if (!fileWatchers[user]) {
+			fs.watchFile(userConfig, onModification);
+			fileWatchers[user] = true;
+		}
 	}
 
 	var previousTask = _.find(tasks, function (task) {
@@ -97,7 +107,7 @@ function update (user) {
 	});
 
 	if (previousTask) {
-		// server is already up
+			// server is already up
 		if (previousTask.file  + " " + previousTask.options.join(" ") === 
 			file + " " + options.join(" ")) {
 			return;
@@ -127,11 +137,11 @@ function update (user) {
 	forever.startDaemon (file, {
 		options: options,
 		cwd : path.dirname(file),
-		env : {USER : user},
 		outFile : logFile,
 		errFile : logFile,
 		logFile : logFile,
-		spawnWith : _.indexOf(rootUsers, user) < 0? {uid : userid.uid(user), gid : userid.gid(user)} : {},
+		spawnWith : spawnWith,
+		env : env,
 		uid : foreverUID
 	});
 }
