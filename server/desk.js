@@ -124,7 +124,7 @@ router.use('/', express.static(rootPath))
 var cacheExists,
 	browserGet,
 	jsFiles = libPath.join(__dirname, 'cache', 'browserified.js'),
-	serveCache = express.static(libPath.join(__dirname, 'js'));
+	serveCache = express.static(libPath.join(__dirname, 'cache'));
 
 function testCache() {
 	cacheExists = fs.existsSync(jsFiles);
