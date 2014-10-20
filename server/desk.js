@@ -263,9 +263,3 @@ actions.performAction({manage : "update"}, function () {
 	}
 });
 
-// small hack to relaunch the server when needed
-console.log('hint : modify the file "touchMeToRestart" to restart the server');
-fs.watchFile(__dirname + '/touchMeToRestart', function () {
-	// just crash the server, the forever module will restart it
-	crash();
-});
