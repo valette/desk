@@ -118,9 +118,27 @@ router.use('/', express.static(rootPath))
 .use('/files', express.static(deskDir))
 .use('/files', directory(deskDir))
 .use('/', express.static(clientPath))
-.use('/', directory(clientPath))
-.get('/js/browserified.js', browserify(__dirname + '/browserify.js',
-	browserify.settings[argv.debug ? 'debug' : 'production']));
+.use('/', directory(clientPath));
+
+// handle third part js libraries compilation
+var cacheExists,
+	browserGet,
+	jsFiles = libPath.join(__dirname, 'cache', 'browserified.js'),
+	serveCache = express.static(libPath.join(__dirname, 'js'));
+
+function testCache() {
+	cacheExists = fs.existsSync(jsFiles);
+	if (!cacheExists && !browserGet) {
+		browserGet = browserify(__dirname + '/browserify.js', 
+			browserify.settings[argv.debug ? 'debug' : 'production']);
+	}
+}
+
+testCache();
+fs.watchFile(jsFiles, testCache);
+router.use('/js', function (req, res, next) {
+	(cacheExists ? serveCache : browserGet) (req, res, next);
+});
 
 rpc.post('/upload', function(req, res) {
 	var form = new formidable.IncomingForm();
