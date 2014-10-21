@@ -317,6 +317,9 @@ qx.Class.define("desk.FileBrowser",
 				break;
 			case 'log':
 			case 'txt':
+			case 'cpp':
+			case 'cxx':
+			case 'h':
 				new desk.TextEditor (file);
 				break;
 			case "vtk":
