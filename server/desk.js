@@ -259,7 +259,7 @@ actions.performAction({manage : "update"}, function () {
 	console.log ("server running on port " + port);
 	console.log(baseURL + "localhost:" + port + homeURL);
 	if (id) {
-		console.log('login as : user : "' + id.username);
+		console.log('login as : user : ' + id.username);
 	}
 });
 
