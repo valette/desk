@@ -79,7 +79,8 @@ function update (user) {
 	} else {
 		file = path.join(__dirname, "../desk.js");
 		options.push ("--multi");
-		env.USER = user;
+		env = {USER : user, CCACHE_DIR : "/home/" + user + "/.ccache",
+			HOME : "/home/" + user, LOGNAME : user};
 		spawnWith = {uid : userid.uid(user), gid : userid.gid(user)};
 
 		if (fs.existsSync(userConfig)) {
