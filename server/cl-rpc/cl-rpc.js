@@ -352,10 +352,14 @@ function RPC(POST, callback) {
 		this.executeAction.bind(this)
 		],
 		function (err) {
-			this.log("done");
 			if (err) {
 				this.response.status = "ERROR";
 				this.response.error = err;
+				this.log("error for:");
+				this.log(this.commandLine);
+				this.log(err);
+			} else {
+				this.log("done");
 			}
 			callback(this.response);
 		}.bind(this)
@@ -373,7 +377,14 @@ RPC.prototype.parseParameters = function (callback) {
 	}.bind(this));
 };
 
-RPC.prototype.parseParameter = function (parameter, callback) {
+RPC.prototype.parseParameter = function (parameter, cb) {
+
+	function callback (err, value) {
+		if (err) {
+			err = "error for parameter " + parameter.name + " : " + err;
+		}
+		cb (err, value);
+	}
 
 	if (parameter.text !== undefined) {
 		// parameter is actually a text anchor
