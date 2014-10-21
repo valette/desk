@@ -38,6 +38,14 @@ var maxAge = ms('30d');
 // object stroring all currently running actions
 var ongoingActions = {};
 
+var configFiles = [];
+
+function listen(curr, prev) {
+	if ((curr.mtime > prev.mtime) || (curr.dev === 0)) {
+		update(exports.onUpdate);
+	}
+}
+
 function cleanCache() {
 	cacheCleaner.cleanCache(libpath.join(filesRoot, 'cache'), maxAge);
 }
@@ -90,6 +98,8 @@ exports.includeActions = function (file, callback) {
 };
 
 includeActionsJSON = function (file, callback) {
+	fs.watchFile(file, listen);
+	configFiles.push(file);
 	fs.readFile(file, function (err, data) {
 		try {
 			var libraryName = libpath.basename(file, '.json');
@@ -148,6 +158,7 @@ includeActionsJSON = function (file, callback) {
 			if ( typeof(callback) === 'function' ) {
 				callback();
 			}
+			exports.onUpdate();
 			return;
 		}
 		exports.includeActions(includes, callback);
@@ -158,11 +169,19 @@ exports.addDirectory = function (directory) {
 	actionsDirectories.push(directory);
 };
 
+exports.onUpdate = function () {};
+
 function update (callback) {
+	console.log("updating actions:");
 	// clear actions
 	actions = {};
 	dataDirs = {};
 	permissions = 1;
+	configFiles.forEach(function (file) {
+		fs.unwatchFile(file, listen);
+	});
+
+	configFiles.length = 0;
 
 	async.each(actionsDirectories, function (directory, callback) {
 		fs.readdir(directory, function (err, files) {

@@ -250,6 +250,10 @@ io.on('connection', function(socket) {
 			io.emit("action finished", response);
 		});
 	});
+
+	actions.onUpdate = function () {
+		io.emit("actions updated");
+	};
 });
 
 actions.performAction({manage : "update"}, function () {

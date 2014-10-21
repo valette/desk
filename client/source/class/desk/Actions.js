@@ -28,6 +28,7 @@ qx.Class.define("desk.Actions",
 		desk.FileSystem.includeScripts([baseURL + 'js/browserified.js'], function () {
 			this.__socket = io({path : baseURL + 'socket/socket.io'});
 			this.__socket.on("action finished", this.__onActionEnd.bind(this));
+			this.__socket.on("actions updated", this.__populateActionMenu.bind(this));
 			if (--this.__remainingInits === 0) this.fireEvent('changeReady');
 		}, this);
 	},
@@ -75,14 +76,6 @@ qx.Class.define("desk.Actions",
 			forceButton.bind('value', this, 'forceUpdate');
 			this.bind('forceUpdate', forceButton, 'value');
 			menu.add(forceButton);
-
-			var reloadButton = new qx.ui.menu.Button('Reload Actions');
-			reloadButton.setBlockToolTip(false);
-			reloadButton.setToolTipText("Rebuild actions list on the server");
-			reloadButton.addListener('execute', function () {
-				this.launchAction({manage:"update"}, this.__populateActionMenu, this);
-			}, this);
-			menu.add(reloadButton);
 
 			var passwordButton = new qx.ui.menu.Button('Change password');
 			passwordButton.setBlockToolTip(false);
@@ -224,22 +217,8 @@ qx.Class.define("desk.Actions",
 			params.actionFinished = true;
 			if (response.error) {
 				console.log(response);
-				var err = response.error;
 				var message = "error for action " + params.POST.action + ": \n";
-				var found = false;
-				if (err.signal) {
-					message += "signal : " + err.signal + "\n";
-					found = true;
-				}
-				if (err.code) {
-					message += "code : " + err.code + "\n";
-					found = true;
-				}
-				if (response.stderr) {
-					message += "stderr : " + response.stderr + "\n";
-					found = true;
-				}
-				if (!found)	message += err;
+				message += JSON.stringify(response.error);
 				alert (message);
 			}
 
@@ -342,8 +321,8 @@ qx.Class.define("desk.Actions",
 		},
 
 		__populateActionMenu : function(callback) {
-			this.__actionMenu = new qx.ui.menu.Menu();
 			desk.FileSystem.readFile('actions.json', function (error, settings) {
+				this.__actionMenu = new qx.ui.menu.Menu();
 				this.__actions = settings;
 				var permissions = this.__permissionsLevel = parseInt(settings.permissions, 10);
 				if (permissions) {
