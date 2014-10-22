@@ -3,24 +3,29 @@
  */
 qx.Class.define("desk.LogContainer", 
 {
-  extend : qx.ui.embed.Html,
+	extend : qx.ui.container.Scroll,
 
 	construct : function (message) {
 		this.base(arguments);
-		this.set({overflowY : 'auto',
-			overflowX : 'auto',
+		this.__html = new qx.ui.embed.Html('').set({
+			decorator : "main",
+			backgroundColor : "black",
 			font : "monospace",
-			padding: 3
+			padding: 3,
+			overflowX : "auto",
+			overflowY : "auto"
 		});
+		this.add(this.__html);
 	},
 
 members : {
+	__html : null,
 
     /**
     * Clears the log contents
     */
     clear : function () {
-		this.setHtml('');
+		this.__html.setHtml('');
 	},
 
     /**
@@ -32,22 +37,14 @@ members : {
 		if (!message) {
 			return;
 		}
-		var htmlMessage = '';
-		message.toString().replace(' ', '&nbsp').split('\n').forEach(function (line) {
-			line += '<br/>';
-			if (color) {
-				htmlMessage += '<span style="color:' + color + '">' + line + '</span>';
-			} else {
-				htmlMessage += line;
-			}
-		});
+		color = color || "black";
 
-		if (this.getHtml() === null){
-			this.setHtml(htmlMessage);
-		} else {
-			this.setHtml(this.getHtml() + htmlMessage);        
-		}
-		this.getContentElement().scrollToY(1000000, true); 
+		this.__html.setHtml(message.toString().replace(' ', '&nbsp')
+		    .split('\n').reduce(function (lines, line) {
+			    return lines + '<span style="color:' + color + '">' + line + '<br/></span>';
+		    }, this.__html.getHtml())
+		);
+		this.__html.getContentElement().scrollToY(1000000, true); 
 	}
 }
 });
