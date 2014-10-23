@@ -19,6 +19,7 @@ qx.Class.define("desk.Action",
 		this.base(arguments);
 
 		this.__action = desk.Actions.getInstance().getAction(name);
+		qx.core.Assert.assert(_.isObject(this.__action), 'action "' + name +  '" not found');
 		this.__name = name;
 
 		if (opt.standalone) {
@@ -381,8 +382,7 @@ qx.Class.define("desk.Action",
         },
 
 		buildUI : function () {
-			console.log("deprecated call : desk.Action.buildUI()");
-			console.log(new Error().stack);
+			qx.core.Assert.assert(false, "useless call : desk.Action.buildUI()");
 		},
 
 		/**
