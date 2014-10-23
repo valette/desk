@@ -8,8 +8,6 @@ qx.Class.define("desk.LogContainer",
 	construct : function (message) {
 		this.base(arguments);
 		this.__html = new qx.ui.embed.Html('').set({
-			decorator : "main",
-			backgroundColor : "black",
 			font : "monospace",
 			padding: 3,
 			overflowX : "auto",
