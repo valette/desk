@@ -15,7 +15,9 @@ var	argv         = require('yargs').argv,
 	mkdirp       = require('mkdirp'),
 	mv           = require('mv'),
 	os           = require('os'),
-	socketIO     = require('socket.io');
+	socketIO     = require('socket.io'),
+	Tail         = require('always-tail');
+
 
 var actions      = require(__dirname + '/cl-rpc/cl-rpc');
 
@@ -254,6 +256,12 @@ io.on('connection', function(socket) {
 	actions.onUpdate = function () {
 		io.emit("actions updated");
 	};
+});
+
+var tail = new Tail(libPath.join(deskDir, 'log.txt'), "\n", {interval : 500});
+tail.watch();
+tail.on('line', function(data) {
+	io.emit("log", data);
 });
 
 actions.performAction({manage : "update"}, function () {

@@ -77,10 +77,28 @@ qx.Class.define("desk.Actions",
 			this.bind('forceUpdate', forceButton, 'value');
 			menu.add(forceButton);
 
-			var passwordButton = new qx.ui.menu.Button('Change password');
-			passwordButton.setBlockToolTip(false);
-			passwordButton.setToolTipText("To change your password");
-			passwordButton.addListener('execute', function () {
+			menu.add(this.__getPasswordButton());
+			menu.add(this.__getLogButton());
+
+			var button = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png", menu);
+			button.setToolTipText("Configuration");
+
+			qx.core.Init.getApplication().getRoot().add(button, {top : 0, right : 0});
+
+			// add already running actions
+			this.getOngoingActions(function (actions) {
+				Object.keys(actions).forEach(function (handle) {
+					this.__addActionToList(actions[handle]);
+					this.__runingActions[handle] = actions[handle];
+				}, this);
+			}, this);
+		},
+
+		__getPasswordButton : function () {
+			var button = new qx.ui.menu.Button('Change password');
+			button.setBlockToolTip(false);
+			button.setToolTipText("To change your password");
+			button.addListener('execute', function () {
 				var password = prompt('Enter new password (more than 4 letters)');
 				var req = new qx.io.request.Xhr(desk.FileSystem.getActionURL('password'));
 				req.setMethod('POST');
@@ -96,20 +114,29 @@ qx.Class.define("desk.Actions",
 				}, this);
 				req.send();
 			}, this);
-			menu.add(passwordButton);
+			return button;
+		},
 
-			var button = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png", menu);
-			button.setToolTipText("Configuration");
-
-			qx.core.Init.getApplication().getRoot().add(button, {top : 0, right : 0});
-
-			// add already running actions
-			this.getOngoingActions(function (actions) {
-				Object.keys(actions).forEach(function (handle) {
-					this.__addActionToList(actions[handle]);
-					this.__runingActions[handle] = actions[handle];
+		__getLogButton : function () {
+			var button = new qx.ui.menu.Button('Server log');
+			button.setBlockToolTip(false);
+			button.setToolTipText("To display server logs");
+			button.addListener('execute', function () {
+				function dislpayLog(data) {
+					log.log(data, 'yellow');
+				}
+				var win = new qx.ui.window.Window('Server log');
+				win.setLayout(new qx.ui.layout.HBox());
+				var log = new desk.LogContainer().set({backgroundColor : 'black'});
+				win.add(log, {flex : 1});
+				win.set({width : 600, height : 500});
+				this.__socket.on("log", dislpayLog);
+				win.addListener('close', function () {
+					this.__socket.removeListener('log', dislpayLog);
 				}, this);
+				win.open();
 			}, this);
+			return button;
 		},
 
 		__actionMenu : null,
