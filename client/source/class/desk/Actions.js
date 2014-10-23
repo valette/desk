@@ -122,7 +122,7 @@ qx.Class.define("desk.Actions",
 			button.setBlockToolTip(false);
 			button.setToolTipText("To display server logs");
 			button.addListener('execute', function () {
-				function dislpayLog(data) {
+				function displayLog(data) {
 					log.log(data, 'yellow');
 				}
 				var win = new qx.ui.window.Window('Server log');
@@ -130,11 +130,12 @@ qx.Class.define("desk.Actions",
 				var log = new desk.LogContainer().set({backgroundColor : 'black'});
 				win.add(log, {flex : 1});
 				win.set({width : 600, height : 500});
-				this.__socket.on("log", dislpayLog);
+				this.__socket.on("log", displayLog);
 				win.addListener('close', function () {
-					this.__socket.removeListener('log', dislpayLog);
+					this.__socket.removeListener('log', displayLog);
 				}, this);
 				win.open();
+				win.center();
 			}, this);
 			return button;
 		},
