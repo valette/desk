@@ -8,7 +8,6 @@
   "version": "0.0.1",
   "devDependencies": {},
   "dependencies": {
-    "always-tail": ">0.0.0",
     "async": ">0.0.0",
     "basic-auth": ">0.0.0",
     "body-parser": ">0.0.0",

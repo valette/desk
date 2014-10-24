@@ -20,20 +20,20 @@ require('brace/ext/searchbox');
 
 var work = require('webworkify');
 
-Detector = require('../client/ext/three.js/Detector.js');
-THREE = require('../client/ext/three.js/three.js');
-require('../client/ext/three.js/VTKLoader.js');
-require('../client/ext/three.js/TrackballControls2.js');
-require('../client/ext/three.js/ctm/CTMLoader.js');
-require('../client/ext/three.js/ctm/lzma.js');
-require('../client/ext/three.js/ctm/ctm.js');
+Detector = require('../../client/ext/three.js/Detector.js');
+THREE = require('../../client/ext/three.js/three.js');
+require('../../client/ext/three.js/VTKLoader.js');
+require('../../client/ext/three.js/TrackballControls2.js');
+require('../../client/ext/three.js/ctm/CTMLoader.js');
+require('../../client/ext/three.js/ctm/lzma.js');
+require('../../client/ext/three.js/ctm/ctm.js');
 
 THREE.CTMLoader.prototype.createWorker = function () {
-	return work(require('../client/ext/three.js/ctm/CTMWorker.js'));
+	return work(require('../../client/ext/three.js/ctm/CTMWorker.js'));
 }
 
 THREE.VTKLoader.prototype.createWorker = function () {
-	return work(require('../client/ext/three.js/VTKWorker.js'));
+	return work(require('../../client/ext/three.js/VTKWorker.js'));
 }
 
-require('../client/ext/mhdParse.js');
+require('../../client/ext/mhdParse.js');

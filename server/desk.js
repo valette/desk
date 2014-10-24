@@ -1,4 +1,5 @@
-var	argv         = require('yargs').argv,
+var	actions      = require(__dirname + '/lib/cl-rpc');
+	argv         = require('yargs').argv,
 	auth         = require('basic-auth'),
 	bodyParser   = require('body-parser'),
 	browserify   = require('browserify-middleware'),
@@ -18,9 +19,6 @@ var	argv         = require('yargs').argv,
 	socketIO     = require('socket.io'),
 	Tail         = require('always-tail');
 
-
-var actions      = require(__dirname + '/cl-rpc/cl-rpc');
-
 var homeURL = '/',
 	port = 8080,
 	user = process.env.USER;
@@ -28,6 +26,13 @@ var homeURL = '/',
 if (argv.multi) {
 	homeURL = '/' + user + '/';
 	port = process.getuid();
+}
+
+// hijack console.log
+var oldConsolelog = console.log;
+console.log = function (message) {
+	if (io) {io.emit("log", message);}
+	oldConsolelog(message);
 }
 
 var separator = "*******************************************************************************";
@@ -46,6 +51,7 @@ app.use (function (req, res, next) {
 	res.cookie('homeURL', homeURL);
 	next();
 });
+
 var	homeDir = process.platform === "darwin" ? '/Users' : '/home',
 	deskDir = libPath.join(homeDir, user, 'desk') + '/',
 	uploadDir = libPath.join(deskDir, 'upload') + '/',
@@ -67,7 +73,6 @@ console.log(separator);
 var id = {username : user, password : "password"};
 // look for correctly formated password.json file.
 if (fs.existsSync(passwordFile)) {
-	// use basicAuth depending on password.json
 	id = require(passwordFile);
 }
 
@@ -203,12 +208,6 @@ rpc.post('/upload', function(req, res) {
 	});
 });
 
-// handle errors
-app.use(errorhandler({
-	dumpExceptions: true, 
-	showStack: true
-}));
-
 console.log(separator);
 
 var server;
@@ -235,43 +234,30 @@ console.log(separator);
 
 // make extensions directory if not present
 mkdirp.sync(extensionsDir);
+actions.setRoot(deskDir);
 
 actions.addDirectory(libPath.join(__dirname, 'includes'));
 actions.addDirectory(extensionsDir);
-actions.setRoot(deskDir);
 
 var io = socketIO(server, {path : libPath.join(homeURL, "socket/socket.io")});
 io.on('connection', function(socket) {
 	console.log('a user connected');
-	socket.on('disconnect', function(){
-		console.log('user disconnected');
-	});
-
+	socket.on('disconnect', function(){console.log('user disconnected');});
 	socket.on('action', function(parameters){
 		actions.performAction(parameters, function (response) {
 			io.emit("action finished", response);
 		});
 	});
-
-	actions.onUpdate = function () {
-		io.emit("actions updated");
-	};
 });
 
-var tail = new Tail(libPath.join(deskDir, 'log.txt'), "\n", {interval : 500});
-tail.watch();
-tail.on('line', function(data) {
-	io.emit("log", data);
-});
+actions.on("actionsUpdated", function () {io.emit("actions updated");});
+actions.on("log", function (message) {io.emit("log", message);});
 
-actions.performAction({manage : "update"}, function () {
-	server.listen(port);
-	console.log(separator);
-	console.log(new Date().toLocaleString());
-	console.log ("server running on port " + port);
-	console.log(baseURL + "localhost:" + port + homeURL);
-	if (id) {
-		console.log('login as : user : ' + id.username);
-	}
-});
-
+server.listen(port);
+console.log(separator);
+console.log(new Date().toLocaleString());
+console.log ("server running on port " + port);
+console.log(baseURL + "localhost:" + port + homeURL);
+if (id) {
+	console.log('login as : user : ' + id.username);
+}
