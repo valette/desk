@@ -6,7 +6,6 @@ var	actions      = require(__dirname + '/lib/cl-rpc');
 	compress     = require('compression'),
 	crypto       = require('crypto'),
 	directory    = require('serve-index'),
-	errorhandler = require('errorhandler'),
 	express      = require('express'),
 	formidable   = require('formidable'),
     fs           = require('fs'),
@@ -16,8 +15,7 @@ var	actions      = require(__dirname + '/lib/cl-rpc');
 	mkdirp       = require('mkdirp'),
 	mv           = require('mv'),
 	os           = require('os'),
-	socketIO     = require('socket.io'),
-	Tail         = require('always-tail');
+	socketIO     = require('socket.io');
 
 var homeURL = '/',
 	port = 8080,
@@ -45,6 +43,7 @@ var clientPath = fs.realpathSync(__dirname + '/../client/') + '/';
 // configure express server
 var app = express();
 app.use(compress());
+app.set('trust proxy', true);
 
 // transmit homeURL cookie
 app.use (function (req, res, next) {
@@ -238,11 +237,18 @@ actions.setRoot(deskDir);
 
 actions.addDirectory(libPath.join(__dirname, 'includes'));
 actions.addDirectory(extensionsDir);
-
+var dns = require("dns");
 var io = socketIO(server, {path : libPath.join(homeURL, "socket/socket.io")});
 io.on('connection', function(socket) {
-	console.log('a user connected');
-	socket.on('disconnect', function(){console.log('user disconnected');});
+	var client;
+	dns.reverse(socket.client.conn.request.headers['x-forwarded-for'] 
+			|| socket.handshake.address, function (err, domains) {
+		client = domains.join(" ");
+		console.log('a user connected : ' + client);
+	});
+	socket.on('disconnect', function(){
+		console.log('user ' + client + ' disconnected');
+	});
 	socket.on('action', function(parameters){
 		actions.performAction(parameters, function (response) {
 			io.emit("action finished", response);
