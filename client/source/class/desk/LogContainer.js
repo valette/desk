@@ -3,27 +3,30 @@
  */
 qx.Class.define("desk.LogContainer", 
 {
-	extend : qx.ui.container.Scroll,
+	extend : qx.ui.embed.Html,
 
 	construct : function (message) {
 		this.base(arguments);
-		this.__html = new qx.ui.embed.Html('').set({
+		this.set({
 			font : "monospace",
 			padding: 3,
 			overflowX : "auto",
 			overflowY : "auto"
 		});
-		this.add(this.__html);
+        this.addListener("mousewheel", function (e){
+            // this is to avoid this bug : http://tinyurl.com/pmqurpn
+            var element = this.getContentElement();
+            element.scrollToY(element.getScrollY() + 30 * e.getWheelDelta());
+        }, this);
 	},
 
 members : {
-	__html : null,
 
     /**
     * Clears the log contents
     */
     clear : function () {
-		this.__html.setHtml('');
+		this.setHtml('');
 	},
 
     /**
@@ -37,12 +40,12 @@ members : {
 		}
 		color = color || "black";
 
-		this.__html.setHtml(message.toString().replace(' ', '&nbsp')
+		this.setHtml(message.toString().replace(' ', '&nbsp')
 		    .split('\n').reduce(function (lines, line) {
 			    return lines + '<span style="color:' + color + '">' + line + '<br/></span>';
-		    }, this.__html.getHtml())
+		    }, this.getHtml())
 		);
-		this.__html.getContentElement().scrollToY(1000000, true); 
+		this.getContentElement().scrollToY(1000000, true); 
 	}
 }
 });
