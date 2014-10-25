@@ -92,15 +92,23 @@ exports.includeActions = function (file) {
 		Object.keys(localActions).forEach(function (actionName) {
 			var action = localActions[actionName];
 			action.lib = libraryName;
-			var attributes = action.attributes;
-			if ( typeof (attributes.js) === 'string' ) {
-				myLog('loaded javascript from ' + attributes.js);
-				attributes.executable = libpath.join(path, attributes.js + '.js');
-				attributes.module = require(libpath.join(path, attributes.js));
-				attributes.path = path;
-			} else if ( typeof (attributes.executable) === 'string' ) {
-				attributes.executable = libpath.join(path, attributes.executable);
-				attributes.path = path;
+
+            // backwards compatibility
+            if (action.attributes) {
+                Object.keys(action.attributes).forEach(function (key) {
+                    action[key] = action.attributes[key];
+                });
+                delete action.attributes;
+            }
+
+			if ( typeof (action.js) === 'string' ) {
+				myLog('loaded javascript from ' + action.js);
+				action.executable = libpath.join(path, action.js + '.js');
+				action.module = require(libpath.join(path, action.js));
+				action.path = path;
+			} else if ( typeof (action.executable) === 'string' ) {
+				action.executable = libpath.join(path, action.executable);
+				action.path = path;
 			}
 			var existingAction = actions[actionName];
 			if (existingAction) {
@@ -327,7 +335,7 @@ function RPC(POST, callback) {
 		return;
 	};
 
-	this.commandLine = "nice " + (this.action.attributes.executable || this.action.attributes.command);
+	this.commandLine = "nice " + (this.action.executable || this.action.command);
 	this.log("handle : " + this.POST.handle);
 
 	async.series([
@@ -435,7 +443,7 @@ RPC.prototype.parseParameter = function (parameter, callback) {
 };
 
 RPC.prototype.handleExecutableMTime = function (callback) {
-	this.addMTime(this.action.attributes.executable, callback);
+	this.addMTime(this.action.executable, callback);
 };
 
 RPC.prototype.addMTime = function (file, callback) {
@@ -478,7 +486,7 @@ RPC.prototype.handleOutputDirectory = function (callback) {
 	this.response.MTime = this.inputMTime;
 	this.outputDirectory = this.POST.output_directory || "";
 
-	if (this.action.attributes.voidAction) {
+	if (this.action.voidAction) {
 		callback();
 		return;
 	}
@@ -531,8 +539,8 @@ RPC.prototype.handleLogAndCache = function (callback) {
 		this.log(this.commandLine.substr(0,500) + '...[trimmed]');
 	}
 
-	if (this.action.attributes.voidAction || this.POST.force_update ||
-		this.action.attributes.noCache) {
+	if (this.action.voidAction || this.POST.force_update ||
+		this.action.noCache) {
 			callback();
 			return;
 	}
@@ -566,7 +574,7 @@ RPC.prototype.executeAction = function (callback) {
 
 	var commandOptions = {cwd: libpath.join(filesRoot, this.outputDirectory), maxBuffer : 1e10};
 
-	if (!this.action.attributes.voidAction) {
+	if (!this.action.voidAction) {
 		this.writeJSON = true;
 	}
 
@@ -574,7 +582,7 @@ RPC.prototype.executeAction = function (callback) {
 		this.afterExecution(err, stdout, stderr, callback);			
 	}.bind(this);
 
-	var js = this.action.attributes.module;
+	var js = this.action.module;
 	if ( typeof (js) === "object" ) {
 		var actionParameters2 = JSON.parse(this.parametersString);
 		actionParameters2.filesRoot = filesRoot;

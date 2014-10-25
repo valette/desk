@@ -210,7 +210,7 @@ qx.Class.define("desk.Action",
 		__outputTabTriggered : false,
 
 		__addOutputTab : function () {
-			if (this.__action.attributes.voidAction || this.__outputTabTriggered) {
+			if (this.__action.voidAction || this.__outputTabTriggered) {
 				return;
 			}
 			this.__outputTabTriggered = true;
@@ -318,7 +318,7 @@ qx.Class.define("desk.Action",
 			}
 
 			this.__status.setValue(response.status);
-			if (!this.__action.attributes.voidAction) {
+			if (!this.__action.voidAction) {
 				this.__showLog.setVisibility("visible");
 			}
 			this.fireDataEvent("actionUpdated", actionId);
