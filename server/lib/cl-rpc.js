@@ -39,6 +39,7 @@ var maxAge = ms('30d');
 // object stroring all currently running actions
 var ongoingActions = {};
 
+// one watcher for each json configuration file or directory
 var watchers = [];
 
 exports = module.exports = new EventEmitter();
@@ -70,30 +71,17 @@ exports.validatePath = function (path, callback) {
 	});
 };
 
-function includeActionsFile (file) {
+exports.includeActions = function (file) {
 	if (!fs.existsSync(file)) {
 		myLog("Warning : no file " +file + " found");
 		return;
-	} else if (libpath.extname(file).toLowerCase() === '.json') {
-		myLog('importing actions from : ' + file);
-		includeActionsJSON(file);
-	}
-}
+	} 
+    if (libpath.extname(file).toLowerCase() !== '.json') {
+        return;
+    }
 
-exports.includeActions = function (file) {
-	switch (typeof file) {
-	case "string" :
-		includeActionsFile(file);
-		break;
-	case "object" :
-		file.forEach(includeActionsFile);
-		break;
-	default:
-		myLog ("error in actions importations: cannot handle " + file);
-	}
-};
+	myLog('importing ' + file);
 
-includeActionsJSON = function (file) {
 	watchers.push(fs.watch(file, update));
 	try {
 		var libraryName = libpath.basename(file, '.json');
@@ -132,25 +120,22 @@ includeActionsJSON = function (file) {
 			}
 			dataDirs[key] = source;
 		});
-
-		var includes = (actionsObject.include || []).map(function (include) {
+	    (actionsObject.include || []).forEach(function (include) {
 			if (include.charAt(0) != '/') {
 				// the path is relative. Prepend directory
 				include = libpath.join(libpath.dirname(file), include);
 			}
-			return include;
+			exports.includeActions(include);
 		});
 
 		if (typeof(actionsObject.permissions) === 'number') {
 			permissions = actionsObject.permissions;
 		}
-	}
-	catch (error) {
+	} catch (error) {
 		myLog('error importing ' + file);
 		myLog(error);
 		actions['import_error_' + libraryName] = {lib : libraryName};
 	}
-	exports.includeActions(includes);
 };
 
 exports.addDirectory = function (directory) {
@@ -181,26 +166,30 @@ function updateReal() {
 
 	// create all data directories and symlinks if they do not exist
 	Object.keys(dataDirs).forEach(function (key) {
+	
 		var dir = libpath.join(filesRoot, key);
-		if (!fs.existsSync(dir)) {
-			myLog('Warning : directory ' + dir + ' does not exist. Creating it');
-			var source = dataDirs[key];
-			if (source === key) {
+		var source = dataDirs[key];
+		if (source === key) {
+			if (!fs.existsSync(dir)) {
 				fs.mkdirSync(dir);
 				myLog('directory ' + dir + ' created');
-				directories.push(fs.realpathSync(dir));
-			} else {
-				if (fs.existsSync(source)) {
+			}
+		} else {
+			if (!fs.existsSync(dir) || !(fs.readlinkSync(dir) === source)) {
+                try {
+                    fs.unlinkSync(dir);
+                    myLog("removed wrong symbolic link " + dir);
+                } catch (e) {}
+
+        		if (fs.existsSync(source)) {
 					fs.symlinkSync(source, dir, 'dir');
 					myLog('directory ' + dir + ' created as a symlink to ' + source);
-					directories.push(fs.realpathSync(dir));
 				} else {
 					myLog('ERROR : Cannot create directory ' + dir + ' as source directory ' + source + ' does not exist');
 				}
 			}
-		} else {
-			directories.push(fs.realpathSync(dir));
 		}
+		directories.push(fs.realpathSync(dir));
 	});
 	cleanCache();
 
@@ -718,4 +707,4 @@ exports.getDirectoryContent = function (path, callback) {
 		}
 	);
 };
-exports.addDirectory(libpath.join(__dirname,'lib'));
+exports.addDirectory(libpath.join(__dirname,'includes'));

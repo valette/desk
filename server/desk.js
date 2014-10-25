@@ -135,7 +135,7 @@ var cacheExists,
 function testCache() {
 	cacheExists = fs.existsSync(jsFiles);
 	if (!cacheExists && !browserGet) {
-		browserGet = browserify(__dirname + '/browserify.js', 
+		browserGet = browserify(__dirname + '/lib/browserify.js', 
 			browserify.settings[argv.debug ? 'debug' : 'production']);
 	}
 }
@@ -231,12 +231,12 @@ if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 }
 console.log(separator);
 
-// make extensions directory if not present
-mkdirp.sync(extensionsDir);
 actions.setRoot(deskDir);
 
-actions.addDirectory(libPath.join(__dirname, 'includes'));
+// make extensions directory if not present
+mkdirp.sync(extensionsDir);
 actions.addDirectory(extensionsDir);
+
 var dns = require("dns");
 var io = socketIO(server, {path : libPath.join(homeURL, "socket/socket.io")});
 io.on('connection', function(socket) {
