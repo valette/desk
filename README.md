@@ -30,7 +30,9 @@ To install desk on your computer, you need:
 	git clone http://github.com/valette/desk.git
 	cd desk/server
 	npm install
-	./build.sh
+
+to install binary addons for 3D data visualization : 
+	tools/build.sh
 
 ### Usage ###
 
