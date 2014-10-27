@@ -6,6 +6,7 @@ var	actions      = require(__dirname + '/lib/cl-rpc');
 	compress     = require('compression'),
 	crypto       = require('crypto'),
 	directory    = require('serve-index'),
+	dns          = require("dns"),
 	express      = require('express'),
 	formidable   = require('formidable'),
     fs           = require('fs'),
@@ -29,9 +30,9 @@ if (argv.multi) {
 // hijack console.log
 var oldConsolelog = console.log;
 console.log = function (message) {
+	oldConsolelog.apply(console, arguments);
 	if (io) {io.emit("log", message);}
-	oldConsolelog(message);
-}
+};
 
 var separator = "*******************************************************************************";
 console.log(separator);
@@ -237,7 +238,6 @@ actions.setRoot(deskDir);
 mkdirp.sync(extensionsDir);
 actions.addDirectory(extensionsDir);
 
-var dns = require("dns");
 var io = socketIO(server, {path : libPath.join(homeURL, "socket/socket.io")});
 io.on('connection', function(socket) {
 	var client;
