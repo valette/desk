@@ -36,7 +36,7 @@ var actionsCounter = 0;
 //30 days of maximum life time for cache folders
 var maxAge = ms('30d');
 
-// object stroring all currently running actions
+// object storing all currently running actions
 var ongoingActions = {};
 
 // one watcher for each json configuration file or directory
@@ -45,7 +45,7 @@ var watchers = [];
 exports = module.exports = new EventEmitter();
 
 function myLog(message) {
-	winston.log('info', message);
+	winston.log('info', message.toString());
 	exports.emit("log", message);
 }
 
@@ -59,12 +59,12 @@ var job = new CronJob({
 	start: true
 });
 
-exports.validatePath = function (path, callback) {
-	fs.realpath(libpath.join(filesRoot, path), function (err, realPath) {
+exports.validatePath = function (dir, callback) {
+	fs.realpath(libpath.join(filesRoot, dir), function (err, realPath) {
 		if (!err && !_.some(directories, function (subDir) {
 				return realPath.slice(0, subDir.length) === subDir;
 			})) {
-			err = "path " + path + " not allowed"; 
+			err = "path " + dir + " not allowed"; 
 		}
 
 		callback (err);
@@ -84,14 +84,14 @@ includeFile = function (file) {
 
 	watchers.push(fs.watch(file, update));
 	try {
-		var libraryName = libpath.basename(file, '.json');
+		var lib = libpath.basename(file, '.json');
 		var actionsObject = JSON.parse(fs.readFileSync(file));
 
 		var localActions = actionsObject.actions || [];
-		var path = fs.realpathSync(libpath.dirname(file));
-		Object.keys(localActions).forEach(function (actionName) {
-			var action = localActions[actionName];
-			action.lib = libraryName;
+		var dir = fs.realpathSync(libpath.dirname(file));
+		Object.keys(localActions).forEach(function (name) {
+			var action = localActions[name];
+			action.lib = lib;
 
             // backwards compatibility
             if (action.attributes) {
@@ -103,20 +103,20 @@ includeFile = function (file) {
 
 			if ( typeof (action.js) === 'string' ) {
 				myLog('loaded javascript from ' + action.js);
-				action.executable = libpath.join(path, action.js + '.js');
-				action.module = require(libpath.join(path, action.js));
-				action.path = path;
+				action.executable = libpath.join(dir, action.js + '.js');
+				action.module = require(libpath.join(dir, action.js));
 			} else if ( typeof (action.executable) === 'string' ) {
-				action.executable = libpath.join(path, action.executable);
-				action.path = path;
+				if (action.executable.charAt(0) !== '/') {
+					action.executable = libpath.join(dir, action.executable);
+				}
 			}
-			var existingAction = actions[actionName];
-			if (existingAction) {
-				if (action.priority < existingAction.priority) {
+
+			if (actions[name]) {
+				if (action.priority < actions[name].priority) {
 					return;
 				}
 			}
-			actions[actionName] = action;
+			actions[name] = action;
 		});
 
 		var dirs = actionsObject.dataDirs || {};
@@ -129,7 +129,7 @@ includeFile = function (file) {
 			dataDirs[key] = source;
 		});
 	    (actionsObject.include || []).forEach(function (include) {
-			if (include.charAt(0) != '/') {
+			if (include.charAt(0) !== '/') {
 				// the path is relative. Prepend directory
 				include = libpath.join(libpath.dirname(file), include);
 			}
@@ -141,8 +141,8 @@ includeFile = function (file) {
 		}
 	} catch (error) {
 		myLog('error importing ' + file);
-		myLog(error);
-		actions['import_error_' + libraryName] = {lib : libraryName};
+		myLog(error.toString());
+		actions['import_error_' + lib] = {lib : lib};
 	}
 };
 
@@ -174,7 +174,6 @@ function updateSync() {
 
 	// create all data directories and symlinks if they do not exist
 	Object.keys(dataDirs).forEach(function (key) {
-	
 		var dir = libpath.join(filesRoot, key);
 		var source = dataDirs[key];
 		if (source === key) {
@@ -217,23 +216,15 @@ exports.setRoot = function (root) {
 	filesRoot = fs.realpathSync(root);
 };
 
-function validateValue (parameterValue, parameter) {
-	var compare;
-	if (parameter.min) {
-		compare = parseFloat(parameter.min);
-		if (parameterValue < compare) {
-			return ('error : parameter ' + parameter.name +
-				' minimum value is ' + compare);
+function validateValue (value, parameter) {
+	['min', 'max'].forEach(function (bound) {
+		if (!parameter[bound]) {return;}
+		var compare = parseFloat(parameter[bound]);
+		if (bound === 'min' ? value > compare : value < compare) {
+			return ('error for parameter ' + parameter.name +
+				' : ' + bound + ' value is ' + compare)
 		}
-	}
-	if (parameter.max) {
-		compare = parseFloat(parameter.max);
-		if (parameterValue > compare) {
-			return ('error : parameter ' + parameter.name +
-				' maximal value is ' + compare);
-		}
-	}
-	return;
+	});
 }
 
 function manageActions (POST, callback) {
