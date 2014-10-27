@@ -19,6 +19,7 @@ qx.Class.define("desk.Action",
 		this.base(arguments);
 
 		this.__action = desk.Actions.getInstance().getAction(name);
+		qx.core.Assert.assert(_.isObject(this.__action), 'action "' + name +  '" not found');
 		this.__name = name;
 
 		if (opt.standalone) {
@@ -209,7 +210,7 @@ qx.Class.define("desk.Action",
 		__outputTabTriggered : false,
 
 		__addOutputTab : function () {
-			if (this.__action.attributes.voidAction || this.__outputTabTriggered) {
+			if (this.__action.voidAction || this.__outputTabTriggered) {
 				return;
 			}
 			this.__outputTabTriggered = true;
@@ -317,7 +318,7 @@ qx.Class.define("desk.Action",
 			}
 
 			this.__status.setValue(response.status);
-			if (!this.__action.attributes.voidAction) {
+			if (!this.__action.voidAction) {
 				this.__showLog.setVisibility("visible");
 			}
 			this.fireDataEvent("actionUpdated", actionId);
@@ -381,8 +382,7 @@ qx.Class.define("desk.Action",
         },
 
 		buildUI : function () {
-			console.log("deprecated call : desk.Action.buildUI()");
-			console.log(new Error().stack);
+			qx.core.Assert.assert(false, "useless call : desk.Action.buildUI()");
 		},
 
 		/**

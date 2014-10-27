@@ -204,14 +204,15 @@ qx.Class.define("desk.FileSystem",
 		* @param context {Object} optional context for the callback
 		*/
 		executeScript : function (file, callback, context) {
-			var req = new qx.bom.request.Script();
-			req.onload = function() {
-				if (typeof callback == 'function') {
-					callback.call(context);
-				}
-			};
-			req.open("GET", desk.FileSystem.getFileURL(file));
-			req.send();
+			desk.FileSystem.readFile(file, function (err, content) {
+				var script = document.createElement('script');
+				script.setAttribute('type','text/javascript');
+				script.text = '(function () {' + content + '\n})()\n//@ sourceURL=' + file;
+				document.getElementsByTagName('body')[0].appendChild(script);
+				if (typeof callback === "function") {
+					callback.apply(context);
+				};
+			});
 		},
 
 		/**

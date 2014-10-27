@@ -28,6 +28,7 @@ qx.Class.define("desk.Actions",
 		desk.FileSystem.includeScripts([baseURL + 'js/browserified.js'], function () {
 			this.__socket = io({path : baseURL + 'socket/socket.io'});
 			this.__socket.on("action finished", this.__onActionEnd.bind(this));
+			this.__socket.on("actions updated", this.__populateActionMenu.bind(this));
 			if (--this.__remainingInits === 0) this.fireEvent('changeReady');
 		}, this);
 	},
@@ -76,18 +77,28 @@ qx.Class.define("desk.Actions",
 			this.bind('forceUpdate', forceButton, 'value');
 			menu.add(forceButton);
 
-			var reloadButton = new qx.ui.menu.Button('Reload Actions');
-			reloadButton.setBlockToolTip(false);
-			reloadButton.setToolTipText("Rebuild actions list on the server");
-			reloadButton.addListener('execute', function () {
-				this.launchAction({manage:"update"}, this.__populateActionMenu, this);
-			}, this);
-			menu.add(reloadButton);
+			menu.add(this.__getPasswordButton());
+			menu.add(this.__getLogButton());
 
-			var passwordButton = new qx.ui.menu.Button('Change password');
-			passwordButton.setBlockToolTip(false);
-			passwordButton.setToolTipText("To change your password");
-			passwordButton.addListener('execute', function () {
+			var button = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png", menu);
+			button.setToolTipText("Configuration");
+
+			qx.core.Init.getApplication().getRoot().add(button, {top : 0, right : 0});
+
+			// add already running actions
+			this.getOngoingActions(function (actions) {
+				Object.keys(actions).forEach(function (handle) {
+					this.__addActionToList(actions[handle]);
+					this.__runingActions[handle] = actions[handle];
+				}, this);
+			}, this);
+		},
+
+		__getPasswordButton : function () {
+			var button = new qx.ui.menu.Button('Change password');
+			button.setBlockToolTip(false);
+			button.setToolTipText("To change your password");
+			button.addListener('execute', function () {
 				var password = prompt('Enter new password (more than 4 letters)');
 				var req = new qx.io.request.Xhr(desk.FileSystem.getActionURL('password'));
 				req.setMethod('POST');
@@ -103,20 +114,30 @@ qx.Class.define("desk.Actions",
 				}, this);
 				req.send();
 			}, this);
-			menu.add(passwordButton);
+			return button;
+		},
 
-			var button = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png", menu);
-			button.setToolTipText("Configuration");
-
-			qx.core.Init.getApplication().getRoot().add(button, {top : 0, right : 0});
-
-			// add already running actions
-			this.getOngoingActions(function (actions) {
-				Object.keys(actions).forEach(function (handle) {
-					this.__addActionToList(actions[handle]);
-					this.__runingActions[handle] = actions[handle];
+		__getLogButton : function () {
+			var button = new qx.ui.menu.Button('Server log');
+			button.setBlockToolTip(false);
+			button.setToolTipText("To display server logs");
+			button.addListener('execute', function () {
+				function displayLog(data) {
+					log.log(data, 'yellow');
+				}
+				var win = new qx.ui.window.Window('Server log');
+				win.setLayout(new qx.ui.layout.HBox());
+				var log = new desk.LogContainer().set({backgroundColor : 'black'});
+				win.add(log, {flex : 1});
+				win.set({width : 600, height : 500});
+				this.__socket.on("log", displayLog);
+				win.addListener('close', function () {
+					this.__socket.removeListener('log', displayLog);
 				}, this);
+				win.open();
+				win.center();
 			}, this);
+			return button;
 		},
 
 		__actionMenu : null,
@@ -224,22 +245,8 @@ qx.Class.define("desk.Actions",
 			params.actionFinished = true;
 			if (response.error) {
 				console.log(response);
-				var err = response.error;
 				var message = "error for action " + params.POST.action + ": \n";
-				var found = false;
-				if (err.signal) {
-					message += "signal : " + err.signal + "\n";
-					found = true;
-				}
-				if (err.code) {
-					message += "code : " + err.code + "\n";
-					found = true;
-				}
-				if (response.stderr) {
-					message += "stderr : " + response.stderr + "\n";
-					found = true;
-				}
-				if (!found)	message += err;
+				message += JSON.stringify(response.error);
 				alert (message);
 			}
 
@@ -342,8 +349,8 @@ qx.Class.define("desk.Actions",
 		},
 
 		__populateActionMenu : function(callback) {
-			this.__actionMenu = new qx.ui.menu.Menu();
 			desk.FileSystem.readFile('actions.json', function (error, settings) {
+				this.__actionMenu = new qx.ui.menu.Menu();
 				this.__actions = settings;
 				var permissions = this.__permissionsLevel = parseInt(settings.permissions, 10);
 				if (permissions) {

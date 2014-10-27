@@ -48,6 +48,10 @@ qx.Class.define("desk.FileBrowser",
 			selectionMode : qx.ui.treevirtual.TreeVirtual.SelectionMode.MULTIPLE_INTERVAL
 		});
 
+		this.addListener("mousedown", function () {
+			this.__focusedRow = this.__files.getFocusedRow();
+		}, this);
+		
         if (this.__standAlone) {
             this.add(this.__getShortcutsContainer());
         }
@@ -61,7 +65,7 @@ qx.Class.define("desk.FileBrowser",
 		this.setFileHandler(this.__defaultFileHandler);
 		desk.Actions.init(this.__createDefaultStaticActions, this);
 
-		this.__files.addListener("cellDblclick", this.__onCellDblclick, this);
+		this.__files.addListener("cellDbltap", this.__onCellDbltap, this);
 		this.__files.addListener("treeOpenWhileEmpty", this.__onTreeOpen, this);
 		this.__files.addListener("treeOpenWithContent", this.__onTreeOpen, this);
 		this.__files.addListener("dragstart", this.__onDragstart);
@@ -103,6 +107,8 @@ qx.Class.define("desk.FileBrowser",
 	},
 
 	members : {
+		__focusedRow : null,
+
 		__createFilter : function () {
 			// create the filter bar
 			var filterBox = new qx.ui.container.Composite();
@@ -139,7 +145,7 @@ qx.Class.define("desk.FileBrowser",
 			}
 		},
 
-		__onCellDblclick :  function (e) {
+		__onCellDbltap :  function (e) {
 			var node = this.__files.getDataModel().getNodeFromRow(e.getRow());
 			this.__openNode(node);
 		},
@@ -156,14 +162,15 @@ qx.Class.define("desk.FileBrowser",
 		__onDragstart : function(e) {
 			e.addAction("move");
 			e.addType("fileBrowser");
-			e.addType("text");
+			e.addType("file");
 		},
 
 		__onDropRequest : function(e) {
 			var type = e.getCurrentType();
 			switch (type) {
-			case "text":
-				e.addData(type, this.getSelectedFiles()[0]);
+			case "file":
+				e.addData(type, this.__getNodeFile(
+					this.__files.getDataModel().getNodeFromRow(this.__focusedRow)));
 				break;
 			case "fileBrowser":
 				e.addData(type, this);
@@ -241,7 +248,7 @@ qx.Class.define("desk.FileBrowser",
 				}
 
                 var button = new qx.ui.form.Button(dir);
-                button.addListener("execute", function () {
+                button.addListener("click", function () {
 					this.updateRoot(dir);
 				}, this);
                 container.add(button, {flex : 1});

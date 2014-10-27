@@ -3,15 +3,21 @@
  */
 qx.Class.define("desk.LogContainer", 
 {
-  extend : qx.ui.embed.Html,
+	extend : qx.ui.embed.Html,
 
 	construct : function (message) {
 		this.base(arguments);
-		this.set({overflowY : 'auto',
-			overflowX : 'auto',
+		this.set({
 			font : "monospace",
-			padding: 3
+			padding: 3,
+			overflowX : "auto",
+			overflowY : "auto"
 		});
+        this.addListener("mousewheel", function (e){
+            // this is to avoid this bug : http://tinyurl.com/pmqurpn
+            var element = this.getContentElement();
+            element.scrollToY(element.getScrollY() + 30 * e.getWheelDelta());
+        }, this);
 	},
 
 members : {
@@ -32,21 +38,13 @@ members : {
 		if (!message) {
 			return;
 		}
-		var htmlMessage = '';
-		message.toString().replace(' ', '&nbsp').split('\n').forEach(function (line) {
-			line += '<br/>';
-			if (color) {
-				htmlMessage += '<span style="color:' + color + '">' + line + '</span>';
-			} else {
-				htmlMessage += line;
-			}
-		});
+		color = color || "black";
 
-		if (this.getHtml() === null){
-			this.setHtml(htmlMessage);
-		} else {
-			this.setHtml(this.getHtml() + htmlMessage);        
-		}
+		this.setHtml(message.toString().replace(' ', '&nbsp')
+		    .split('\n').reduce(function (lines, line) {
+			    return lines + '<span style="color:' + color + '">' + line + '<br/></span>';
+		    }, this.getHtml())
+		);
 		this.getContentElement().scrollToY(1000000, true); 
 	}
 }

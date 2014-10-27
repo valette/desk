@@ -32,7 +32,7 @@ if (cluster.isMaster) {
 	return;
 }
 
-var proxy = httpProxy.createProxyServer({});
+var proxy = httpProxy.createProxyServer({xfwd : true});
 proxy.on('error', function(err, req, res) {
 	//just end the request
 	res.end();

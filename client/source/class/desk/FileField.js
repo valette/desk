@@ -12,9 +12,8 @@ qx.Class.define("desk.FileField",
 		}
 		this.setDroppable(true);
 		this.addListener("drop", function(e) {
-			if (e.supportsType("fileBrowser")) {
-				var originFileBrowser = e.getData("fileBrowser");
-				this.setValue(originFileBrowser.getSelectedFiles()[0]);
+			if (e.supportsType("file")) {
+				this.setValue(e.getData("file"));
 			}
 		}, this);
 		this.setDraggable(true);

@@ -956,7 +956,7 @@ qx.Class.define("desk.SliceView",
 			var slider = this.__slider = new qx.ui.form.Slider().set (
 				{minimum : 0, maximum : 100, value : 0,	width :30,
 					opacity : 0.5, backgroundColor : "transparent",
-					orientation : "vertical", zIndex : 1000
+					orientation : "vertical"
 			});
 			slider.addListener('mousedown', function () {
 				this.__sliderInUse = true;
@@ -974,6 +974,9 @@ qx.Class.define("desk.SliceView",
 				new qx.ui.container.Composite(new qx.ui.layout.VBox());
 			container.add(slider, {flex : 1});
 			container.setVisibility("hidden");
+			container.addListener('mousedown', function (event) {
+				event.stopPropagation();
+			}, this);
 			this.add(container, {right : 0, top : 0, height : "100%"});
 		},
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ncores=$(grep -c ^processor /proc/cpuinfo)
-cd libs
+cd lib
 
 # compile ACVD
 rm -rf ACVD
@@ -21,4 +21,4 @@ cd ..
 
 cd ..
 # create links to libs
-cp includes/includes.json.example includes/base.json
+cp lib/includes/includes.json.example lib/includes/includes.json

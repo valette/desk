@@ -1,11 +1,12 @@
-var	argv         = require('yargs').argv,
+var	actions      = require(__dirname + '/lib/cl-rpc');
+	argv         = require('yargs').argv,
 	auth         = require('basic-auth'),
 	bodyParser   = require('body-parser'),
 	browserify   = require('browserify-middleware'),
 	compress     = require('compression'),
 	crypto       = require('crypto'),
 	directory    = require('serve-index'),
-	errorhandler = require('errorhandler'),
+	dns          = require("dns"),
 	express      = require('express'),
 	formidable   = require('formidable'),
     fs           = require('fs'),
@@ -17,8 +18,6 @@ var	argv         = require('yargs').argv,
 	os           = require('os'),
 	socketIO     = require('socket.io');
 
-var actions      = require(__dirname + '/cl-rpc/cl-rpc');
-
 var homeURL = '/',
 	port = 8080,
 	user = process.env.USER;
@@ -27,6 +26,13 @@ if (argv.multi) {
 	homeURL = '/' + user + '/';
 	port = process.getuid();
 }
+
+// hijack console.log
+var oldConsolelog = console.log;
+console.log = function (message) {
+	oldConsolelog.apply(console, arguments);
+	if (io) {io.emit("log", message);}
+};
 
 var separator = "*******************************************************************************";
 console.log(separator);
@@ -38,12 +44,14 @@ var clientPath = fs.realpathSync(__dirname + '/../client/') + '/';
 // configure express server
 var app = express();
 app.use(compress());
+app.set('trust proxy', true);
 
 // transmit homeURL cookie
 app.use (function (req, res, next) {
 	res.cookie('homeURL', homeURL);
 	next();
 });
+
 var	homeDir = process.platform === "darwin" ? '/Users' : '/home',
 	deskDir = libPath.join(homeDir, user, 'desk') + '/',
 	uploadDir = libPath.join(deskDir, 'upload') + '/',
@@ -65,7 +73,6 @@ console.log(separator);
 var id = {username : user, password : "password"};
 // look for correctly formated password.json file.
 if (fs.existsSync(passwordFile)) {
-	// use basicAuth depending on password.json
 	id = require(passwordFile);
 }
 
@@ -129,7 +136,7 @@ var cacheExists,
 function testCache() {
 	cacheExists = fs.existsSync(jsFiles);
 	if (!cacheExists && !browserGet) {
-		browserGet = browserify(__dirname + '/browserify.js', 
+		browserGet = browserify(__dirname + '/lib/browserify.js', 
 			browserify.settings[argv.debug ? 'debug' : 'production']);
 	}
 }
@@ -201,12 +208,6 @@ rpc.post('/upload', function(req, res) {
 	});
 });
 
-// handle errors
-app.use(errorhandler({
-	dumpExceptions: true, 
-	showStack: true
-}));
-
 console.log(separator);
 
 var server;
@@ -231,20 +232,23 @@ if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 }
 console.log(separator);
 
+actions.setRoot(deskDir);
+
 // make extensions directory if not present
 mkdirp.sync(extensionsDir);
-
-actions.addDirectory(libPath.join(__dirname, 'includes'));
-actions.addDirectory(extensionsDir);
-actions.setRoot(deskDir);
+actions.includeDirectory(extensionsDir);
 
 var io = socketIO(server, {path : libPath.join(homeURL, "socket/socket.io")});
 io.on('connection', function(socket) {
-	console.log('a user connected');
-	socket.on('disconnect', function(){
-		console.log('user disconnected');
+	var client;
+	dns.reverse(socket.client.conn.request.headers['x-forwarded-for'] 
+			|| socket.handshake.address, function (err, domains) {
+		client = domains.join(" ");
+		console.log('a user connected : ' + client);
 	});
-
+	socket.on('disconnect', function(){
+		console.log('user ' + client + ' disconnected');
+	});
 	socket.on('action', function(parameters){
 		actions.performAction(parameters, function (response) {
 			io.emit("action finished", response);
@@ -252,14 +256,14 @@ io.on('connection', function(socket) {
 	});
 });
 
-actions.performAction({manage : "update"}, function () {
-	server.listen(port);
-	console.log(separator);
-	console.log(new Date().toLocaleString());
-	console.log ("server running on port " + port);
-	console.log(baseURL + "localhost:" + port + homeURL);
-	if (id) {
-		console.log('login as : user : "' + id.username);
-	}
-});
+actions.on("actionsUpdated", function () {io.emit("actions updated");});
+actions.on("log", function (message) {io.emit("log", message);});
 
+server.listen(port);
+console.log(separator);
+console.log(new Date().toLocaleString());
+console.log ("server running on port " + port);
+console.log(baseURL + "localhost:" + port + homeURL);
+if (id) {
+	console.log('login as : user : ' + id.username);
+}

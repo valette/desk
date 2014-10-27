@@ -1,0 +1,6 @@
+{
+	"include" : [
+	"../ACVD/bin/ACVD.json",
+	"../OpenCTM/OpenCTM.json"
+    ]
+}

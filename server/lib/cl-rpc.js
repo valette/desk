@@ -2,6 +2,7 @@ var	async       = require('async'),
 	CronJob     = require('cron').CronJob,
 	crypto      = require('crypto'),
 	exec        = require('child_process').exec,
+	EventEmitter= require('events').EventEmitter,
 	fs          = require('fs'),
 	libpath     = require('path'),
 	mkdirp      = require('mkdirp'),
@@ -13,8 +14,8 @@ var	async       = require('async'),
 
 var cacheCleaner = require('./cacheCleaner.js');
 
-// directory where user can add their own .json action definition files
-var actionsDirectories = [];
+// directories where user can add their own .json action definition files
+var includeDirectories = [];
 
 // object storing all the actions
 var actions;
@@ -38,6 +39,16 @@ var maxAge = ms('30d');
 // object stroring all currently running actions
 var ongoingActions = {};
 
+// one watcher for each json configuration file or directory
+var watchers = [];
+
+exports = module.exports = new EventEmitter();
+
+function myLog(message) {
+	winston.log('info', message);
+	exports.emit("log", message);
+}
+
 function cleanCache() {
 	cacheCleaner.cleanCache(libpath.join(filesRoot, 'cache'), maxAge);
 }
@@ -60,155 +71,142 @@ exports.validatePath = function (path, callback) {
 	});
 };
 
-function includeActionsFile (file, callback) {
-	fs.exists(file, function (exists) {
-		if (exists) {
-			if (libpath.extname(file).toLowerCase() === '.json') {
-				console.log('importing actions from : ' + file);
-				includeActionsJSON(file, callback);
-				return;
-			}
-			callback();
-			return;
-		}
-		console.log("Warning : no file " +file + " found");
-		callback();
-	});
-}
+includeFile = function (file) {
+	if (!fs.existsSync(file)) {
+		myLog("Warning : no file " +file + " found");
+		return;
+	} 
+    if (libpath.extname(file).toLowerCase() !== '.json') {
+        return;
+    }
 
-exports.includeActions = function (file, callback) {
-	switch (typeof file) {
-	case "string" :
-		includeActionsFile(file, callback);
-		break;
-	case "object" :
-		async.eachSeries(file, includeActionsFile, callback);
-		break;
-	default:
-		callback ("error in actions importations: cannot handle " + file);
+	myLog('importing ' + file);
+
+	watchers.push(fs.watch(file, update));
+	try {
+		var libraryName = libpath.basename(file, '.json');
+		var actionsObject = JSON.parse(fs.readFileSync(file));
+
+		var localActions = actionsObject.actions || [];
+		var path = fs.realpathSync(libpath.dirname(file));
+		Object.keys(localActions).forEach(function (actionName) {
+			var action = localActions[actionName];
+			action.lib = libraryName;
+
+            // backwards compatibility
+            if (action.attributes) {
+                Object.keys(action.attributes).forEach(function (key) {
+                    action[key] = action.attributes[key];
+                });
+                delete action.attributes;
+            }
+
+			if ( typeof (action.js) === 'string' ) {
+				myLog('loaded javascript from ' + action.js);
+				action.executable = libpath.join(path, action.js + '.js');
+				action.module = require(libpath.join(path, action.js));
+				action.path = path;
+			} else if ( typeof (action.executable) === 'string' ) {
+				action.executable = libpath.join(path, action.executable);
+				action.path = path;
+			}
+			var existingAction = actions[actionName];
+			if (existingAction) {
+				if (action.priority < existingAction.priority) {
+					return;
+				}
+			}
+			actions[actionName] = action;
+		});
+
+		var dirs = actionsObject.dataDirs || {};
+		Object.keys(dirs).forEach(function (key) {
+			var source = dirs[key];
+			if (source.indexOf('./') === 0) {
+				// source is relative, prepend directory
+				source = libpath.join(libpath.dirname(file), source);
+			}
+			dataDirs[key] = source;
+		});
+	    (actionsObject.include || []).forEach(function (include) {
+			if (include.charAt(0) != '/') {
+				// the path is relative. Prepend directory
+				include = libpath.join(libpath.dirname(file), include);
+			}
+			includeFile(include);
+		});
+
+		if (typeof(actionsObject.permissions) === 'number') {
+			permissions = actionsObject.permissions;
+		}
+	} catch (error) {
+		myLog('error importing ' + file);
+		myLog(error);
+		actions['import_error_' + libraryName] = {lib : libraryName};
 	}
 };
 
-includeActionsJSON = function (file, callback) {
-	fs.readFile(file, function (err, data) {
-		try {
-			var libraryName = libpath.basename(file, '.json');
-			var actionsObject = JSON.parse(data);
-
-			var localActions = actionsObject.actions || [];
-			var path = fs.realpathSync(libpath.dirname(file));
-			Object.keys(localActions).forEach(function (actionName) {
-				var action = localActions[actionName];
-				action.lib = libraryName;
-				var attributes = action.attributes;
-				if ( typeof (attributes.js) === 'string' ) {
-					console.log('loaded javascript from ' + attributes.js);
-					attributes.executable = libpath.join(path, attributes.js + '.js');
-					attributes.module = require(libpath.join(path, attributes.js));
-					attributes.path = path;
-				} else if ( typeof (attributes.executable) === 'string' ) {
-					attributes.executable = libpath.join(path, attributes.executable);
-					attributes.path = path;
-				}
-				var existingAction = actions[actionName];
-				if (existingAction) {
-					if (action.priority < existingAction.priority) {
-						return;
-					}
-				}
-				actions[actionName] = action;
-			});
-
-			var dirs = actionsObject.dataDirs || {};
-			Object.keys(dirs).forEach(function (key) {
-				var source = dirs[key];
-				if (source.indexOf('./') === 0) {
-					// source is relative, prepend directory
-					source = libpath.join(libpath.dirname(file), source);
-				}
-				dataDirs[key] = source;
-			});
-
-			var includes = (actionsObject.include || []).map(function (include) {
-				if (include.charAt(0) != '/') {
-					// the path is relative. Prepend directory
-					include = libpath.join(libpath.dirname(file), include);
-				}
-				return include;
-			});
-
-			if (typeof(actionsObject.permissions) === 'number') {
-				permissions = actionsObject.permissions;
-			}
-		}
-		catch (error) {
-			console.log('error importing ' + file);
-			console.log(error);
-			actions['import_error_' + libraryName] = {lib : libraryName};
-			if ( typeof(callback) === 'function' ) {
-				callback();
-			}
-			return;
-		}
-		exports.includeActions(includes, callback);
-	});
+exports.includeDirectory = function (directory) {
+	includeDirectories.push(directory);
+	if (filesRoot) {
+		update();
+	}
 };
 
-exports.addDirectory = function (directory) {
-	actionsDirectories.push(directory);
-};
+var update = _.throttle(updateSync, 1000, {leading: false});
 
-function update (callback) {
+function updateSync() {
+	myLog("updating actions:");
 	// clear actions
 	actions = {};
 	dataDirs = {};
 	permissions = 1;
+	watchers.forEach(function (watcher) {watcher.close();});
+	watchers.length = 0;
 
-	async.each(actionsDirectories, function (directory, callback) {
-		fs.readdir(directory, function (err, files) {
-			async.each(files, function(file, callback) {
-				exports.includeActions(libpath.join(directory, file), callback);
-			}, callback);
-		});
-	}, function (err) {
-		console.log(Object.keys(actions).length + ' actions included');
-
-		// create all data directories and symlinks if they do not exist
-		Object.keys(dataDirs).forEach(function (key) {
-			var dir = libpath.join(filesRoot, key);
-			if (!fs.existsSync(dir)) {
-				console.log('Warning : directory ' + dir + ' does not exist. Creating it');
-				var source = dataDirs[key];
-				if (source === key) {
-					fs.mkdirSync(dir);
-					console.log('directory ' + dir + ' created');
-					directories.push(fs.realpathSync(dir));
-				} else {
-					if (fs.existsSync(source)) {
-						fs.symlinkSync(source, dir, 'dir');
-						console.log('directory ' + dir + ' created as a symlink to ' + source);
-						directories.push(fs.realpathSync(dir));
-					} else {
-						console.log('ERROR : Cannot create directory ' + dir + ' as source directory ' + source + ' does not exist');
-					}
-				}
-			} else {
-				directories.push(fs.realpathSync(dir));
-			}
-		});
-		cleanCache();
-
-		// export actions.json
-		fs.writeFile(libpath.join(filesRoot, "actions.json"),
-			prettyPrint.json(JSON.stringify({actions : actions ,
-				permissions : permissions, dataDirs : dataDirs})),
-			function (err) {
-				if (err) throw err;
-				if (typeof callback === "function") {
-					callback({});
-				}
+	includeDirectories.forEach(function (directory) {
+		watchers.push(fs.watch(directory, update));
+		fs.readdirSync(directory).forEach(function(file) {
+			includeFile(libpath.join(directory, file));
 		});
 	});
+	myLog(Object.keys(actions).length + ' actions included');
+
+	// create all data directories and symlinks if they do not exist
+	Object.keys(dataDirs).forEach(function (key) {
+	
+		var dir = libpath.join(filesRoot, key);
+		var source = dataDirs[key];
+		if (source === key) {
+			if (!fs.existsSync(dir)) {
+				fs.mkdirSync(dir);
+				myLog('directory ' + dir + ' created');
+			}
+		} else {
+			if (!fs.existsSync(dir) || !(fs.readlinkSync(dir) === source)) {
+                try {
+                    fs.unlinkSync(dir);
+                    myLog("removed wrong symbolic link " + dir);
+                } catch (e) {}
+
+        		if (fs.existsSync(source)) {
+					fs.symlinkSync(source, dir, 'dir');
+					myLog('directory ' + dir + ' created as a symlink to ' + source);
+				} else {
+					myLog('ERROR : Cannot create directory ' + dir + ' as source directory ' + source + ' does not exist');
+				}
+			}
+		}
+		directories.push(fs.realpathSync(dir));
+	});
+	cleanCache();
+
+	// export actions.json
+	fs.writeFileSync(libpath.join(filesRoot, "actions.json"),
+		prettyPrint.json(JSON.stringify({actions : actions ,
+		permissions : permissions, dataDirs : dataDirs})));
+
+	exports.emit("actionsUpdated");
 };
 
 exports.getAction = function (actionName) {
@@ -240,9 +238,6 @@ function validateValue (parameterValue, parameter) {
 
 function manageActions (POST, callback) {
 	switch (POST.manage) {
-	case 'update':
-		update(callback);
-		return;
 	case "kill" :
 		var handle = ongoingActions[POST.actionHandle];
 		if (!handle) {
@@ -251,7 +246,7 @@ function manageActions (POST, callback) {
 		}
 		if (handle.childProcess) {
 			handle.childProcess.kill();
-			console.log('killed process ' + handle.childProcess.pid);
+			myLog('killed process ' + handle.childProcess.pid);
 			callback ({status : 'killed'});
 		} else {
 			callback ({status : 'not existent'});
@@ -329,7 +324,7 @@ function RPC(POST, callback) {
 	this.inputMTime = -1;
 
 	var header = "[" + actionsCounter + "] ";
-	this.log = function (msg) {winston.log('info', header + msg)};
+	this.log = function (msg) {myLog(header + msg)};
 
 	this.response = {};
 	this.action = actions[POST.action];
@@ -340,7 +335,7 @@ function RPC(POST, callback) {
 		return;
 	};
 
-	this.commandLine = "nice " + (this.action.attributes.executable || this.action.attributes.command);
+	this.commandLine = "nice " + (this.action.executable || this.action.command);
 	this.log("handle : " + this.POST.handle);
 
 	async.series([
@@ -459,7 +454,7 @@ RPC.prototype.parseParameter = function (parameter, cb) {
 };
 
 RPC.prototype.handleExecutableMTime = function (callback) {
-	this.addMTime(this.action.attributes.executable, callback);
+	this.addMTime(this.action.executable, callback);
 };
 
 RPC.prototype.addMTime = function (file, callback) {
@@ -502,7 +497,7 @@ RPC.prototype.handleOutputDirectory = function (callback) {
 	this.response.MTime = this.inputMTime;
 	this.outputDirectory = this.POST.output_directory || "";
 
-	if (this.action.attributes.voidAction) {
+	if (this.action.voidAction) {
 		callback();
 		return;
 	}
@@ -555,8 +550,8 @@ RPC.prototype.handleLogAndCache = function (callback) {
 		this.log(this.commandLine.substr(0,500) + '...[trimmed]');
 	}
 
-	if (this.action.attributes.voidAction || this.POST.force_update ||
-		this.action.attributes.noCache) {
+	if (this.action.voidAction || this.POST.force_update ||
+		this.action.noCache) {
 			callback();
 			return;
 	}
@@ -590,7 +585,7 @@ RPC.prototype.executeAction = function (callback) {
 
 	var commandOptions = {cwd: libpath.join(filesRoot, this.outputDirectory), maxBuffer : 1e10};
 
-	if (!this.action.attributes.voidAction) {
+	if (!this.action.voidAction) {
 		this.writeJSON = true;
 	}
 
@@ -598,7 +593,7 @@ RPC.prototype.executeAction = function (callback) {
 		this.afterExecution(err, stdout, stderr, callback);			
 	}.bind(this);
 
-	var js = this.action.attributes.module;
+	var js = this.action.module;
 	if ( typeof (js) === "object" ) {
 		var actionParameters2 = JSON.parse(this.parametersString);
 		actionParameters2.filesRoot = filesRoot;
@@ -700,7 +695,7 @@ RPC.prototype.afterExecution = function(err, stdout, stderr, callback) {
 }
 
 exports.getDirectoryContent = function (path, callback) {
-	winston.log('info', 'listDir : ' + path)
+	myLog('listDir : ' + path);
 	async.waterfall([
 		function (callback) {
 			exports.validatePath(path, callback);
@@ -731,4 +726,4 @@ exports.getDirectoryContent = function (path, callback) {
 		}
 	);
 };
-exports.addDirectory(libpath.join(__dirname,'lib'));
+exports.includeDirectory(libpath.join(__dirname,'includes'));
