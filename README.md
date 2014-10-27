@@ -31,7 +31,8 @@ To install desk on your computer, you need:
 	cd desk/server
 	npm install
 
-to install binary addons for 3D data visualization : 
+to install binary addons for 3D data visualization :
+
 	tools/build.sh
 
 ### Usage ###
