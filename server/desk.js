@@ -236,7 +236,7 @@ actions.setRoot(deskDir);
 
 // make extensions directory if not present
 mkdirp.sync(extensionsDir);
-actions.addDirectory(extensionsDir);
+actions.includeDirectory(extensionsDir);
 
 var io = socketIO(server, {path : libPath.join(homeURL, "socket/socket.io")});
 io.on('connection', function(socket) {

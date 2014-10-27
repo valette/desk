@@ -14,8 +14,8 @@ var	async       = require('async'),
 
 var cacheCleaner = require('./cacheCleaner.js');
 
-// directory where user can add their own .json action definition files
-var actionsDirectories = [];
+// directories where user can add their own .json action definition files
+var includeDirectories = [];
 
 // object storing all the actions
 var actions;
@@ -71,7 +71,7 @@ exports.validatePath = function (path, callback) {
 	});
 };
 
-exports.includeActions = function (file) {
+includeFile = function (file) {
 	if (!fs.existsSync(file)) {
 		myLog("Warning : no file " +file + " found");
 		return;
@@ -133,7 +133,7 @@ exports.includeActions = function (file) {
 				// the path is relative. Prepend directory
 				include = libpath.join(libpath.dirname(file), include);
 			}
-			exports.includeActions(include);
+			includeFile(include);
 		});
 
 		if (typeof(actionsObject.permissions) === 'number') {
@@ -146,16 +146,16 @@ exports.includeActions = function (file) {
 	}
 };
 
-exports.addDirectory = function (directory) {
-	actionsDirectories.push(directory);
+exports.includeDirectory = function (directory) {
+	includeDirectories.push(directory);
 	if (filesRoot) {
 		update();
 	}
 };
 
-var update = _.throttle(updateReal, 1000, {leading: false});
+var update = _.throttle(updateSync, 1000, {leading: false});
 
-function updateReal() {
+function updateSync() {
 	myLog("updating actions:");
 	// clear actions
 	actions = {};
@@ -164,10 +164,10 @@ function updateReal() {
 	watchers.forEach(function (watcher) {watcher.close();});
 	watchers.length = 0;
 
-	actionsDirectories.forEach(function (directory) {
+	includeDirectories.forEach(function (directory) {
 		watchers.push(fs.watch(directory, update));
 		fs.readdirSync(directory).forEach(function(file) {
-			exports.includeActions(libpath.join(directory, file));
+			includeFile(libpath.join(directory, file));
 		});
 	});
 	myLog(Object.keys(actions).length + ' actions included');
@@ -715,4 +715,4 @@ exports.getDirectoryContent = function (path, callback) {
 		}
 	);
 };
-exports.addDirectory(libpath.join(__dirname,'includes'));
+exports.includeDirectory(libpath.join(__dirname,'includes'));
