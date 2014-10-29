@@ -137,7 +137,7 @@ includeFile = function (file) {
 		});
 
 		if (typeof(actionsObject.permissions) === 'number') {
-			permissions = actionsObject.permissions;
+			permissions = Math.min(permissions, actionsObject.permissions);
 		}
 	} catch (error) {
 		myLog('error importing ' + file);
