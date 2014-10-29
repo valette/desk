@@ -78,7 +78,8 @@ qx.Class.define("desk.Actions",
 			menu.add(forceButton);
 
 			menu.add(this.__getPasswordButton());
-			menu.add(this.__getLogButton());
+			menu.add(this.__getConsoleLogButton());
+			menu.add(this.__getServerLogButton());
 
 			var button = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png", menu);
 			button.setToolTipText("Configuration");
@@ -117,7 +118,7 @@ qx.Class.define("desk.Actions",
 			return button;
 		},
 
-		__getLogButton : function () {
+		__getServerLogButton : function () {
 			var button = new qx.ui.menu.Button('Server log');
 			button.setBlockToolTip(false);
 			button.setToolTipText("To display server logs");
@@ -134,6 +135,30 @@ qx.Class.define("desk.Actions",
 				win.addListener('close', function () {
 					this.__socket.removeListener('log', displayLog);
 				}, this);
+				win.open();
+				win.center();
+			}, this);
+			return button;
+		},
+
+		__getConsoleLogButton : function () {
+			var button = new qx.ui.menu.Button('Console log');
+			button.setBlockToolTip(false);
+			button.setToolTipText("To display console logs");
+			button.addListener('execute', function () {
+				var oldConsoleLog = console.log;
+				console.log = function (message) {
+					oldConsoleLog.apply(console, arguments);
+					log.log(message.toString());
+				};
+				var win = new qx.ui.window.Window('Console log');
+				win.setLayout(new qx.ui.layout.HBox());
+				var log = new desk.LogContainer();
+				win.add(log, {flex : 1});
+				win.set({width : 600, height : 300});
+				win.addListener('close', function () {
+					console.log = oldConsoleLog;
+				});
 				win.open();
 				win.center();
 			}, this);

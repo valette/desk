@@ -13,11 +13,12 @@ qx.Class.define("desk.LogContainer",
 			overflowX : "auto",
 			overflowY : "auto"
 		});
-        this.addListener("mousewheel", function (e){
-            // this is to avoid this bug : http://tinyurl.com/pmqurpn
-            var element = this.getContentElement();
-            element.scrollToY(element.getScrollY() + 30 * e.getWheelDelta());
-        }, this);
+		this.clear();
+		this.addListener("mousewheel", function (e) {
+			// this is to avoid this bug : http://tinyurl.com/pmqurpn
+			var element = this.getContentElement();
+			element.scrollToY(element.getScrollY() + 30 * e.getWheelDelta());
+		}, this);
 	},
 
 members : {
