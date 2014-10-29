@@ -377,8 +377,8 @@ qx.Class.define("desk.Actions",
 			desk.FileSystem.readFile('actions.json', function (error, settings) {
 				this.__actionMenu = new qx.ui.menu.Menu();
 				this.__actions = settings;
-				var permissions = this.__permissionsLevel = parseInt(settings.permissions, 10);
-				if (permissions) {
+				this.__permissionsLevel = parseInt(settings.permissions, 10);
+				if (this.__permissionsLevel) {
 					this.__createActionsMenu();
 				}
 
@@ -387,12 +387,11 @@ qx.Class.define("desk.Actions",
 				var libs = {};
 				Object.keys(actions).forEach(function (actionName) {
 					var action = actions[actionName];
-					action.attributes = action.attributes || {};
-					var permissionLevel = parseInt(action.attributes.permissions, 10);
+					var permissionLevel = parseInt(action.permissions, 10);
 					if (permissionLevel !== 0) {
 						permissionLevel = 1;
 					}
-					if (permissions < permissionLevel) {
+					if (this.__permissionsLevel < permissionLevel) {
 						// skip this action as we do not have enough permissions
 						return;
 					}
