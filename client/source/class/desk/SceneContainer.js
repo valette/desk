@@ -11,6 +11,7 @@
 * @ignore(desk.MeshTools)
 * @ignore (async.*)
 * @ignore (_.*)
+* @ignore (Float32Array)
 */
 qx.Class.define("desk.SceneContainer", 
 {
@@ -440,21 +441,26 @@ qx.Class.define("desk.SceneContainer",
 		 * @return {THREE.Mesh} the created mesh;
 		 */
 		attachVolumeSlice : function (volumeSlice) {
-			var geometry = new THREE.PlaneGeometry( 1, 1);
+			var geometry = new THREE.PlaneBufferGeometry( 1, 1);
 			var material = volumeSlice.getMaterial();
 			material.side = THREE.DoubleSide;
 			var mesh = new THREE.Mesh(geometry,material);
 
 			var listenerId = volumeSlice.addListener('changeImage', function () {
 				var coords = volumeSlice.getCornersCoordinates();
-				geometry.vertices.forEach(function (vertex, i) {
-					vertex.set(coords[3*i], coords[3*i+1], coords[3*i+2]);
+				var vertices = geometry.attributes.position;
+				for (var i = 0; i < 4 * 3; i++) {
+					vertices.array[i] = coords[i];
+				}
+				var vertices2 = lineGeometry.attributes.position;
+				[0, 1, 3, 2, 0].forEach(function (i, j) {
+					vertices2.copyAt(j, vertices, i);
 				});
+				vertices2.needsUpdate = true;
+				vertices.needsUpdate = true;
+				geometry.computeBoundingBox();
 				geometry.computeFaceNormals();
 				geometry.computeBoundingSphere();
-				geometry.computeBoundingBox();
-				geometry.verticesNeedUpdate = true;
-				lineGeometry.verticesNeedUpdate = true;
 				this.render(true);
 			}, this);
 
@@ -465,10 +471,9 @@ qx.Class.define("desk.SceneContainer",
 			var lineMaterial = new THREE.LineBasicMaterial({linewidth: 3,
 				color: desk.VolumeSlice.COLORS[volumeSlice.getOrientation()]});
 
-			var lineGeometry = new THREE.Geometry();
-			lineGeometry.vertices.push(geometry.vertices[0],
-				geometry.vertices[1], geometry.vertices[3],
-				geometry.vertices[2], geometry.vertices[0]);
+			var lineGeometry = new THREE.BufferGeometry();
+			var positions = new Float32Array( 5 * 3 );
+			lineGeometry.addAttribute('position', new THREE.BufferAttribute( positions, 3 ) );
 			var line = new THREE.Line ( lineGeometry, lineMaterial );
 			mesh.add(line);
 
@@ -560,6 +565,7 @@ qx.Class.define("desk.SceneContainer",
 			meshes = _.filter(meshes, function (mesh) {
 				return mesh.visible;
 			});
+			
 			var origin = this.getContentLocation();
 			var x = this.__x - origin.left;
 			var y = this.__y - origin.top;
@@ -568,10 +574,9 @@ qx.Class.define("desk.SceneContainer",
 			var x2 = ( x / elementSize.width ) * 2 - 1;
 			var y2 = - ( y / elementSize.height ) * 2 + 1;
 
-			var projector = new THREE.Projector();
-			var vector = new THREE.Vector3( x2, y2, 0.5 );
+			var vector = new THREE.Vector3().set( x2, y2, 0.5 );
 			var camera = this.getCamera();
-			projector.unprojectVector(vector, camera);
+			vector.unproject(camera);
 
 			var ray = new THREE.Raycaster(camera.position,
 				vector.sub(camera.position).normalize());

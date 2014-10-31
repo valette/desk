@@ -40,7 +40,6 @@ qx.Class.define("desk.SliceView",
 		this.__2DSpacing = null;
 		this.__origin = null;
 		this.__spacing = null;
-		this.__projector = null;
 	},
 
 	properties : {
@@ -357,7 +356,7 @@ qx.Class.define("desk.SliceView",
 		__brushCanvas : null,
 
 		__createBrushMesh : function (volumeSlice) {
-			var geometry = new THREE.PlaneGeometry( 1, 1);
+			var geometry = new THREE.PlaneBufferGeometry( 1, 1);
 			var coordinates = volumeSlice.get2DCornersCoordinates();
 			var dimensions = volumeSlice.get2DDimensions();
 
@@ -430,20 +429,21 @@ qx.Class.define("desk.SliceView",
 			var ratio = this.__coordinatesRatio;
 			var r0 = radius * ratio[0];
 			var r1 = radius * ratio[1];
-			var geometry = this.__brushMesh.geometry;
-			geometry.vertices[0].set(r0, -r1, 0);
-			geometry.vertices[1].set(-r0, -r1, 0);
-			geometry.vertices[2].set(r0, r1, 0);
-			geometry.vertices[3].set(-r0, r1, 0);
-			geometry.verticesNeedUpdate = true;
+			var positions = this.__brushMesh.geometry.attributes.position;
+			positions.setXYZ(0, -r0, -r1, 0);
+			positions.setXYZ(1, r0, -r1, 0);
+			positions.setXYZ(2, -r0, r1, 0);
+			positions.setXYZ(3, r0, r1, 0);
+			positions.needsUpdate = true;
 		},
 
 		__setDrawingMesh : function (volumeSlice) {
-			var geometry = new THREE.PlaneGeometry(1, 1);
+			var geometry = new THREE.PlaneBufferGeometry(1, 1);
 			var coords = volumeSlice.get2DCornersCoordinates();
-			geometry.vertices.forEach(function (vertex, i) {
-				vertex.set(coords[2 * i], coords[2 * i + 1], 0);
-			});
+			var vertices = geometry.attributes.position;
+			for (var i = 0; i < 4; i++) {
+				vertices.setXYZ(i, coords[2 * i], coords[2 * i + 1], 0);
+			}
 
 			var width = this.__2DDimensions[0];
 			var height = this.__2DDimensions[1];
@@ -504,11 +504,12 @@ qx.Class.define("desk.SliceView",
 		__drawingListeners : null,
 
 		__addSlice : function (volumeSlice, parameters, callback) {
-			var geometry = new THREE.PlaneGeometry(1, 1);
+			var geometry = new THREE.PlaneBufferGeometry(1, 1);
 			var coords = volumeSlice.get2DCornersCoordinates();
-			geometry.vertices.forEach(function (vertex, i) {
-				vertex.set(coords[2 * i], coords[2 * i + 1], 0);
-			});
+			var vertices = geometry.attributes.position;
+			for (var i = 0; i < 4; i++) {
+				vertices.setXYZ(i, coords[2 * i], coords[2 * i + 1], 0);
+			}
 
 			volumeSlice.setUserData("updateListener", this.addListener(
 				"changeSlice", function (e) {
@@ -567,7 +568,6 @@ qx.Class.define("desk.SliceView",
 			position.z = slice.getBoundingBoxDiagonalLength() * 0.6;
 			this.setCameraZ(slice.getBoundingBoxDiagonalLength() * 0.6);
 
-			this.__projector = new THREE.Projector();
 			this.__intersection = new THREE.Vector3();
 			this.__2DCornersCoordinates = coordinates;
 			this.__2DSpacing = slice.get2DSpacing();
@@ -851,7 +851,6 @@ qx.Class.define("desk.SliceView",
 		__2DSpacing : null,
 		__origin : null,
 		__spacing : null,
-		__projector : null,
 		
 		get3DPosition : function (event) {
 			var coordinates = this.getPositionOnSlice(event);
@@ -899,15 +898,12 @@ qx.Class.define("desk.SliceView",
 			var x2 = ( x / elementSize.width ) * 2 - 1;
 			var y2 = - ( y / elementSize.height ) * 2 + 1;
 
-			var projector = this.__projector;
 			var intersection = this.__intersection.set( x2, y2, 0);
 			var coordinates = this.__2DCornersCoordinates;
 			var dimensions = this.__2DDimensions;
+			intersection.unproject(this.getCamera());
 
-			var camera = this.getCamera();
-			projector.unprojectVector( intersection, camera );
-
-			var cameraPosition = camera.position;
+			var cameraPosition = this.getCamera().position;
 			intersection.sub(cameraPosition).
 				multiplyScalar(-cameraPosition.z/intersection.z).
 				add( cameraPosition );

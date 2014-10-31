@@ -67,7 +67,7 @@ for( var v = 0; v < vertices.length; v++ ) {
 	else
 		values_color[ v ].setHSL( 0.0 + 0.1 * ( v / vertices.length ), 0.9, 0.5 );
 }
-var system = new THREE.ParticleSystem( geometry, shaderMaterial );
+var system = new THREE.PointCloud( geometry, shaderMaterial );
 system.dynamic = true;
 system.sortParticles = true;
 

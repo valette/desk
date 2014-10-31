@@ -487,7 +487,7 @@ function addVolume(orientation, callback){
     var spacing = slices.getSpacing();
     var origin = slices.getOrigin();
 
-    var geometry = new THREE.PlaneGeometry(1,1);
+    var geometry = new THREE.PlaneBufferGeometry(1,1);
     var coordinates = slices.getCornersCoordinates();
     var centroid = [0, 0, 0];
     for (var j = 0; j < 3; j++) {
@@ -496,19 +496,20 @@ function addVolume(orientation, callback){
         }
         centroid[j] /= 4;
     }
-
+    var positions = geometry.attributes.position.array;
     for (j = 0; j < 4; j++) {
-        geometry.vertices[j].set(coordinates[3 * j] - centroid[0],
-            coordinates[3 * j + 1] - centroid[1], coordinates[3 * j + 2] - centroid[2]);
+        for (var k = 0; k < 3; k++) {
+            positions[3 * j + k] = coordinates[3 * j + k] - centroid[k];
+        }
         switch (orientation) {
             case 0 :
-                geometry.vertices[j].z = 0;
+                positions[3 * j + 2] = 0;
                 break;
             case 1 :
-                geometry.vertices[j].x = 0;
+                positions[3 * j] = 0;
                 break;
             case 2 :
-                geometry.vertices[j].y = 0;
+                positions[3 * j + 1] = 0;
                 break;
         }
     }
@@ -713,7 +714,6 @@ viewer.addListener('close', function () {
         volumeSlice.dispose();
     }
     voxels = 0;
-    console.log(imgs.length);
     imgs.length = 0;
 
     brightnessSlider.dispose();
