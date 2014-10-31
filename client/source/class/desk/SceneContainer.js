@@ -683,7 +683,7 @@ qx.Class.define("desk.SceneContainer",
 			});
 
 			var button = new qx.ui.form.Button(null, "desk/camera-photo.png");
-			button.addListener("execute", function(e) {
+			button.addListener("click", function(e) {
 				this.snapshot(factor);
 			}, this);
 
@@ -694,13 +694,13 @@ qx.Class.define("desk.SceneContainer",
 
 		__getResetViewButton : function () {
 			var button = new qx.ui.form.Button("reset view");
-			button.addListener("execute", this.resetView, this);
+			button.addListener("click", this.resetView, this);
 			return button;
 		},
 
 		__getSaveViewButton : function () {
 			var button = new qx.ui.form.Button("save view");
-			button.addListener("execute", function () {
+			button.addListener("click", function () {
 				var file = prompt("Enter file name to save camera view point", "data/viewpoint.json")
 				if (!file) {return;}
 				button.setEnabled(false);
