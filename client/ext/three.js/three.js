@@ -34298,7 +34298,7 @@ THREE.WireframeHelper = function ( object, hex ) {
 
 			var vertices = object.geometry.attributes.position.array;
 			var indices = object.geometry.attributes.index.array;
-			var drawcalls = object.geometry.drawcalls;
+			var drawcalls = object.geometry.offsets || object.geometry.drawcalls;
 			var numEdges = 0;
 
 			if ( drawcalls.length === 0 ) {
