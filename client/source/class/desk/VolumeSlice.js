@@ -255,6 +255,10 @@ qx.Class.define("desk.VolumeSlice",
 			}
 		    desk.Actions.getInstance().launchAction(params,
 				function (response) {
+					if (response.error) {
+						console.log("error while slicing volume : ");
+						console.log(response.error);
+					}
 					this.openXMLURL(desk.FileSystem.getFileURL(response.outputDirectory) + "volume.xml",
 						callback, context);
 			}, this);

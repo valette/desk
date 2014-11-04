@@ -197,10 +197,12 @@ qx.Class.define("desk.SceneContainer",
 
         __addLeaf : function (opt) {
 			opt = opt || {};
-			var dataModel = this.__meshes.getDataModel();
 			opt.label = opt.label || "mesh";
-			var parent = opt.parent;
-			var leaf = dataModel.addLeaf(parent, opt.label, null);
+			if (opt.parent) {
+				var parent = opt.parent.userData.viewerProperties.leaf;
+			}
+			var func = opt.branch ? "addBranch" : "addLeaf";
+			var leaf = this.__meshes.getDataModel()[func](parent, opt.label, null);
 			this.__setData();
 			return leaf;
 		},
@@ -212,7 +214,7 @@ qx.Class.define("desk.SceneContainer",
 
 		addMesh : function (mesh, opt) {
 			opt = opt || {};
-			(opt.parentObject || this.getScene()).add(mesh);
+			(opt.parent || this.getScene()).add(mesh);
 			var leaf = opt.leaf = opt.leaf || this.__addLeaf(opt);
 			opt.mesh = mesh;
 			this.__meshes.nodeGet(leaf).viewerProperties = opt;
@@ -346,7 +348,7 @@ qx.Class.define("desk.SceneContainer",
 
 			var path = desk.FileSystem.getFileDirectory(file);
 			async.each(xml.getElementsByTagName("mesh"), function (mesh, callback) {
-				var meshParameters = {parent : leaf, parentObject : object};
+				var meshParameters = {parent : object};
 				if (mesh.hasAttribute("color")) {
 					var color = mesh.getAttribute("color").split(" ").map(
 						function (color) {
@@ -438,9 +440,11 @@ qx.Class.define("desk.SceneContainer",
 		/**
 		 * Attaches a set of desk.VolumeSlice to the scene
 		 * @param volumeSlice {desk.VolumeSlice} volume slice to attach;
+		 * @param opt {Object} options;
 		 * @return {THREE.Mesh} the created mesh;
 		 */
-		attachVolumeSlice : function (volumeSlice) {
+		attachVolumeSlice : function (volumeSlice, opt) {
+			opt = opt || {};
 			var geometry = new THREE.PlaneBufferGeometry( 1, 1);
 			var material = volumeSlice.getMaterial();
 			material.side = THREE.DoubleSide;
@@ -452,21 +456,21 @@ qx.Class.define("desk.SceneContainer",
 				for (var i = 0; i < 4 * 3; i++) {
 					vertices.array[i] = coords[i];
 				}
+				vertices.needsUpdate = true;
+				geometry.computeBoundingBox();
+				geometry.computeFaceNormals();
+				geometry.computeBoundingSphere();
 				var vertices2 = lineGeometry.attributes.position;
 				[0, 1, 3, 2, 0].forEach(function (i, j) {
 					vertices2.copyAt(j, vertices, i);
 				});
 				vertices2.needsUpdate = true;
-				vertices.needsUpdate = true;
-				geometry.computeBoundingBox();
-				geometry.computeFaceNormals();
-				geometry.computeBoundingSphere();
 				this.render(true);
 			}, this);
 
-            this.addMesh(mesh, {label : 'View ' + (volumeSlice.getOrientation()+1),
-                volumeSlice : volumeSlice, updateCamera : false
-            });
+			this.addMesh(mesh, {label : 'View ' + (volumeSlice.getOrientation()+1),
+				volumeSlice : volumeSlice, updateCamera : false, parent : opt.parent
+			});
 
 			var lineMaterial = new THREE.LineBasicMaterial({linewidth: 3,
 				color: desk.VolumeSlice.COLORS[volumeSlice.getOrientation()]});
