@@ -160,22 +160,40 @@ qx.Class.define("desk.FileSystem",
 		*
 		* @param directory {String} directory path
 		* @param iterator {Function} iterator applied to each file name
+		* @param async {Boolean} boolean to specify whether the iterator is an async one
 		* @param callback {Function} callback when done
 		* @param context {Object} optional context for the callback
 		* @ignore (async.queue)
 		*/
-		traverse : function (directory, iterator, callback, context) {
+		traverse : function (directory, iterator, asynchronous, callback, context) {
+			if (typeof asynchronous === "function") {
+				context = callback;
+				callback = asynchronous;
+				asynchronous = false;
+			}
+
 			var crawler = async.queue(function (directory, callback) {
-				desk.FileSystem.readDir(directory, function (files) {
-					files.forEach(function (file) {
-						var fullFile = directory + "/" + file.name;
-						if (file.isDirectory) {
-							crawler.push(fullFile);
-						} else {
-							iterator(fullFile)
-						}
-					});
-					callback();
+				desk.FileSystem.readDir(directory, function (err, files) {
+					if (err) {
+						console.warn("error while traversing directory " + directory);
+						console.warn(err);
+						
+					} else {
+						files.forEach(function (file) {
+							var fullFile = directory + "/" + file.name;
+							if (file.isDirectory) {
+								crawler.push(fullFile);
+								if (asynchronous) {
+									callback();
+								}
+							} else {
+								iterator(fullFile, callback)
+							}
+						});
+					}
+					if (!asynchronous) {
+						callback();
+					}
 				});
 			}, 4);
 
@@ -222,9 +240,7 @@ qx.Class.define("desk.FileSystem",
 		* @param context {Object} optional context for the callback
 		*/
 		exists : function (path, callback, context) {
-			desk.FileSystem.get('exists', {path : path}, function (result) {
-				callback.call(context, result.exists);
-			});
+			desk.FileSystem.get('exists', {path : path}, callback, context);
 		},
 
 		/**
@@ -276,9 +292,11 @@ qx.Class.define("desk.FileSystem",
 		},
 
 		get : function (action, params, callback, context) {
-			desk.FileSystem.__xhr('GET', action, params, function (request) {
-				callback.call(context, JSON.parse(request.getResponseText()));
-			});		
+			desk.FileSystem.__xhr('GET', action, params, function (err, request) {
+				try { var obj = JSON.parse(request.getResponseText());}
+				catch(e) {err = e;}
+				callback.call(context, err, obj);
+			});
 		},
 
 		__xhr : function (method, action, requestData, callback, context) {
@@ -289,7 +307,11 @@ qx.Class.define("desk.FileSystem",
 			req.setMethod(method);
 			req.setAsync(true);
 			req.addListener('load', function (e) {
-				callback.call(context, e.getTarget());
+				callback.call(context, null, e.getTarget());
+				req.dispose();
+			});
+			req.addListener('error', function (e) {
+				callback.call(context, req.getResponse());
 				req.dispose();
 			});
 			req.send();

@@ -729,7 +729,7 @@ qx.Class.define("desk.FileBrowser",
 
 		__expandDirectoryListing : function(nodeId) {
 			var directory = this.__getNodeFile(nodeId);
-			desk.FileSystem.readDir(directory, function (files) {
+			desk.FileSystem.readDir(directory, function (err, files) {
 				this.__readFileList(files, directory);
 			}, this);
 		}

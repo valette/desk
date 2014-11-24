@@ -1,7 +1,7 @@
 /**
 * @ignore(THREE.*)
 * @ignore(Uint8Array)
-* @ignore (_.without)
+* @ignore (_.*)
 * @lint ignoreDeprecated(alert)
 */
 
@@ -14,15 +14,29 @@
 
 qx.Class.define("desk.VolumeSlice", 
 {
-  extend : qx.core.Object,
+	extend : qx.core.Object,
 
+	/**
+	 * Constructor
+	 * @param file {String} volume to slice
+	 * @param orientation {Number} orienation, equals to 0, 1 or 2
+	 * @param opts {Object} optional additional options
+	 * @param callback {Function} callback when slicing is finished
+	 * @param context {Objext} optional context for the callback
+	 */
 	construct : function(file, orientation, opts, callback, context) {
 		this.base(arguments);
+
+		if (typeof(opts) == "function") {
+			context = callback;
+			callback = opts;
+			opts = {};
+		}
 
 		this.setOrientation(orientation);
 		this.__materials = [];
 
-		opts = opts || {};
+		this.__opts = opts = opts || {};
 		if (opts.format != null) {
 			this.setImageFormat(opts.format);
 		}
@@ -152,6 +166,7 @@ qx.Class.define("desk.VolumeSlice",
 	},
 
 	members : {
+		__opts : null,
 		__orientationNames : ['XY', 'ZY', 'XZ'],
 
 		__textureFilter : null,
@@ -242,6 +257,8 @@ qx.Class.define("desk.VolumeSlice",
 			    slice_orientation : this.getOrientation()
 			};
 
+			_.extend(params, this.__opts.sliceWith || {});
+
 			if (this.__convert_to_uchar) {
 				params.convert_to_uchar = "1";
 			}
@@ -256,8 +273,8 @@ qx.Class.define("desk.VolumeSlice",
 		    desk.Actions.getInstance().launchAction(params,
 				function (response) {
 					if (response.error) {
-						console.log("error while slicing volume : ");
-						console.log(response.error);
+						callback("Error while slicing volume : " + response.error);
+						return;
 					}
 					this.openXMLURL(desk.FileSystem.getFileURL(response.outputDirectory) + "volume.xml",
 						callback, context);
@@ -567,13 +584,20 @@ qx.Class.define("desk.VolumeSlice",
 			req.setAsync(true);
 
 			req.addListener("success", function(e) {
-				this.__parseXMLresponse(e.getTarget().getResponse(), xmlURL);
-				req.dispose();
+				var error;
+				try {
+					this.__parseXMLresponse(e.getTarget().getResponse(), xmlURL);
+					req.dispose();
+				} catch (err) {
+					error = err;
+				}
 				if (typeof callback === 'function') {
-					callback.apply(context);
+					callback.call(context, error);
 				}
 			}, this);
-
+			req.addListener("fail", function (e) {
+				callback.apply(context, req.getStatusText())
+			});
 			req.send();
 		},
 
@@ -645,7 +669,7 @@ qx.Class.define("desk.VolumeSlice",
 				this.fireEvent("changeImage");
 			}.bind(this);
 
-			this.__image.onerror = this.__image.onabort = this.__updateImage;
+			this.__image.onerror = this.__image.onabort = this.__updateImage.bind(this);
 			this.addListener("changeSlice", this.__updateImage, this);
 		},
 
