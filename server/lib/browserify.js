@@ -9,6 +9,7 @@ io = require('socket.io-client');
 numeric = require('numeric');
 kdTree = require ('kdt');
 c3 = require ('c3');
+Heap = require('heap');
 
 var ace = require('brace');
 require('brace/mode/c_cpp');
