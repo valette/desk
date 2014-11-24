@@ -491,6 +491,41 @@ qx.Class.define("desk.SceneContainer",
 			return mesh;
 		},
 
+		addVolume : function (file, opts, callback, context) {
+			if (typeof(opts) === "function") {
+				context = callback;
+				callback = opts;
+				opts = {};
+			}
+
+			var error;
+			function cb() {
+				if (typeof(callback) === "function") {
+					callback.call(context, error);
+				}
+			}
+
+			var group = new THREE.Group();
+			this.addMesh(group, {branch : true, label : file});
+			async.eachSeries([0, 1, 2], function (orientation, callback) {
+				var slice = new desk.VolumeSlice(file, orientation,
+					{sliceWith : opts.sliceWith}, function (err) {
+						error = err;
+					if (err) {
+						cb();
+						return;
+					}
+					slice.setSlice(Math.floor(slice.getNumberOfSlices() / 2));
+					slice.addListenerOnce("changeImage", function () {
+						var mesh = this.attachVolumeSlice(slice, {parent : group});
+						group.add(mesh);
+						callback();
+					}, this);
+				}.bind(this));
+			}.bind(this), cb);
+			return group;
+		},
+
 		__addDropSupport : function () {
 			this.setDroppable(true);
 			this.addListener("drop", function(e) {
