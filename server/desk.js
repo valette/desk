@@ -27,11 +27,12 @@ if (argv.multi) {
 	port = process.getuid();
 }
 
+var log = false;
 // hijack console.log
 var oldConsolelog = console.log;
 console.log = function (message) {
 	oldConsolelog.apply(console, arguments);
-	if (io) {io.emit("log", message);}
+	if (io && log) {io.emit("log", message);}
 };
 
 var separator = "*******************************************************************************";
@@ -182,7 +183,7 @@ rpc.post('/upload', function(req, res) {
 	var path = req.query.path;
 	fs.exists(libPath.join(deskDir, path), function (exists) {
 		console.log('exists : ' + path	+ ' : ' + exists);
-		res.json({exists : exists});
+		res.json(exists);
 	});
 })
 .get('/ls', function (req, res) {
@@ -254,6 +255,7 @@ io.on('connection', function(socket) {
 			io.emit("action finished", response);
 		});
 	});
+	socket.on('setLog', function(value){log = value;});
 });
 
 actions.on("actionsUpdated", function () {io.emit("actions updated");});
