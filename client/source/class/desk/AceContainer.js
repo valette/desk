@@ -52,8 +52,13 @@ qx.Class.define("desk.AceContainer", {
 			var editor = this.__ace = ace.edit(this.__editor.getContentElement().getDomElement());
 			this.__editor.addListener("resize", this.__onResize, this);
 			if (this.__mode) {
-                this.__ace.getSession().setMode('ace/mode/' + this.__mode);
+				this.__ace.getSession().setMode('ace/mode/' + this.__mode);
+				this.__ace.setOptions({
+					enableBasicAutocompletion: true,
+					enableLiveAutocompletion: true
+				});
 			}
+
 			this.setFontSize(this.__fontSize);
 			this.__onResize();
 		},

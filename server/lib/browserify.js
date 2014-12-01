@@ -18,6 +18,7 @@ require('brace/mode/javascript');
 require('brace/mode/json');
 require('brace/theme/eclipse');
 require('brace/ext/searchbox');
+require("brace/ext/language_tools");
 
 var work = require('webworkify');
 
