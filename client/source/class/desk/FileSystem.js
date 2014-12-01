@@ -368,7 +368,7 @@ qx.Class.define("desk.FileSystem",
 
 			var directory = desk.FileSystem.getFileDirectory(file);
 			var shortFileName = desk.FileSystem.getFileName(file);
-			desk.FileSystem.readDir(directory, function (files) {
+			desk.FileSystem.readDir(directory, function (err, files) {
 				var sessions = [];
 				files.forEach(function (child) {
 					var childName = child.name;
