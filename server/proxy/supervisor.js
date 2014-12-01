@@ -69,7 +69,7 @@ function update (user) {
 
 	var message = "*** " + user + " ***",
 	    foreverUID  = getForeverUID(user),
-	    options = [],
+	    args = [],
 	    spawnWith = {},
 	    env = {},
 	    userConfig = getUserConfigFile(user);
@@ -78,7 +78,7 @@ function update (user) {
 		file = path.join(__dirname, "proxy.js");
 	} else {
 		file = path.join(__dirname, "../desk.js");
-		options.push ("--multi");
+		args.push ("--multi");
 		env = {USER : user, CCACHE_DIR : "/home/" + user + "/.ccache",
 			HOME : "/home/" + user, LOGNAME : user};
 		spawnWith = {uid : userid.uid(user), gid : userid.gid(user)};
@@ -86,8 +86,8 @@ function update (user) {
 		if (fs.existsSync(userConfig)) {
 			try {
 				var boot = JSON.parse(fs.readFileSync(userConfig)).boot;
-				options = boot.split(" ");
-				file = options.shift();
+				args = boot.split(" ");
+				file = args.shift();
 				if (file) {
 					message += "\nusing custom command : " + boot;
 				}
@@ -108,9 +108,9 @@ function update (user) {
 	});
 
 	if (previousTask) {
-			// server is already up
-		if (previousTask.file  + " " + previousTask.options.join(" ") === 
-			file + " " + options.join(" ")) {
+		// server is already up
+		if (previousTask.file  + " " + previousTask.args.join(" ") === 
+			file + " " + args.join(" ")) {
 			return;
 		}
 		console.log(message);
@@ -136,7 +136,7 @@ function update (user) {
 	var logFile = path.join(deskPath, 'log.txt');
 
 	forever.startDaemon (file, {
-		options: options,
+		args: args,
 		cwd : path.dirname(file),
 		outFile : logFile,
 		errFile : logFile,
