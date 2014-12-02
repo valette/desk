@@ -91,7 +91,7 @@ includeFile = function (file) {
 		var dir = fs.realpathSync(libpath.dirname(file));
 		Object.keys(localActions).forEach(function (name) {
 			var action = localActions[name];
-			action.lib = lib;
+			action.lib = action.lib || lib;
 
             // backwards compatibility
             if (action.attributes) {
