@@ -10,7 +10,7 @@ var	async       = require('async'),
 	os          = require('os'),
 	prettyPrint = require('pretty-data').pd,
 	winston     = require('winston'),
-	_           = require('underscore');
+	_           = require('lodash');
 
 var cacheCleaner = require('./cacheCleaner.js');
 
@@ -685,36 +685,4 @@ RPC.prototype.afterExecution = function(err, stdout, stderr, callback) {
 	}
 }
 
-exports.getDirectoryContent = function (path, callback) {
-	myLog('listDir : ' + path);
-	async.waterfall([
-		function (callback) {
-			exports.validatePath(path, callback);
-		},
-
-		function (callback) {
-			var realDir = libpath.join(filesRoot, path);
-			fs.readdir(realDir, function (err, files) {
-				if (err) {
-					callback (err);
-					return;
-				}
-
-				async.map(files, function (file, callback) {
-						fs.stat(libpath.join(realDir, file), function (err, stats) {
-							callback(null, {name : file, size : stats.size,
-								isDirectory : stats.isDirectory(),
-								mtime : stats.mtime.getTime()}
-							);
-						});
-					},
-					callback
-				);
-			});
-		}],
-		function (error, files) {
-			callback(files);
-		}
-	);
-};
 exports.includeDirectory(libpath.join(__dirname,'includes'));

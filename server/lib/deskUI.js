@@ -5,7 +5,7 @@ require ('../../client/deskUI/build/script/deskui.js')
 window.qx = qx;
 
 async    = require('async');
-_        = require('underscore');
+_        = require('lodash');
 
 Detector = require('../../client/ext/three.js/Detector.js');
 THREE = require('../../client/ext/three.js/three.js');
