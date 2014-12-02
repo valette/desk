@@ -22,7 +22,12 @@ qx.Class.define("desk.SceneContainer",
 	{
         this.base(arguments);
 		qx.Class.include(qx.ui.treevirtual.TreeVirtual, qx.ui.treevirtual.MNode);
-        parameters = parameters || {};
+		if (typeof parameters === "function") {
+			callback = parameters;
+			context = callback;
+			parameters = {};
+		}
+		parameters = parameters || {};
 
 		if (parameters.convertVTK !== undefined) {
 			this.setConvertVTK(parameters.convertVTK);
@@ -379,7 +384,12 @@ qx.Class.define("desk.SceneContainer",
 		 * @param context {Object} optional context for the callback
 		 */
 		addFile : function (file, parameters, callback, context) {
-            parameters = parameters || {};
+			if (typeof parameters === "function") {
+				callback = parameters;
+				context = callback;
+				parameters = {};
+			}
+			parameters = parameters || {};
 			callback = callback || function () {};
 
             parameters.file = file;
