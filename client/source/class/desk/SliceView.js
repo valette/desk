@@ -25,7 +25,7 @@ qx.Class.define("desk.SliceView",
 	},
 
 	destruct : function(){
-		this.removeVolumes(this.__slices);
+		this.removeAllVolumes();
 		this.unlink();
 		//clean the scene
 		qx.util.DisposeUtil.destroyContainer(this.__rightContainer);
@@ -135,15 +135,19 @@ qx.Class.define("desk.SliceView",
 		getVolume2DDimensions : function() {
 			return this.__2DDimensions;
 		},
-		
+
 		getVolume2DSpacing : function() {
 			return this.__2DSpacing;
 		},
-		
+
+		getVolume2DOrigin : function() {
+			return this.__2DCornersCoordinates.slice(0,2);
+		},
+
 		get2DCornersCoordinates : function() {
 			return this.__2DCornersCoordinates;
 		},
-		
+
 		getRightContainer : function () {
 			return this.__rightContainer;
 		},
@@ -158,12 +162,16 @@ qx.Class.define("desk.SliceView",
 			return this.__drawingMesh;
 		},
 
+		updateDrawingCanvas : function () {
+			this.fireEvent("changeDrawing");
+		},
+
 		isDrawingCanvasModified : function () {
 			return this.__drawingCanvasModified;
 		},
 
 		setDrawingCanvasNotModified : function () {
-			this.__drawingCanvasModified=false;
+			this.__drawingCanvasModified = false;
 		},
 
 		/**
@@ -188,6 +196,13 @@ qx.Class.define("desk.SliceView",
 			this.__initDrawing();
 			this.__paintWidth = width;
 			this.__updateBrush();
+		},
+
+		/**
+		 * Removes all volumes from the view.
+		*/
+		removeAllVolumes : function () {
+			this.removeVolumes(this.__slices.map(function (o) {return o;}));
 		},
 
 		/**
@@ -503,7 +518,7 @@ qx.Class.define("desk.SliceView",
 		// listeners Ids to get rid of when changing drawing canvas
 		__drawingListeners : null,
 
-		__addSlice : function (volumeSlice, parameters, callback) {
+		__addSlice : function (volumeSlice, parameters, callback, context) {
 			var geometry = new THREE.PlaneBufferGeometry(1, 1);
 			var coords = volumeSlice.get2DCornersCoordinates();
 			var vertices = geometry.attributes.position;
@@ -527,9 +542,7 @@ qx.Class.define("desk.SliceView",
 
 			volumeSlice.addListenerOnce('changeImage',function () {
 				this.getScene().add(mesh);
-				if (typeof callback === "function") {
-					callback(volumeSlice);
-				}
+				callback.call(context);
 			}, this);
 
 			volumeSlice.addListener('changeImage', function () {
@@ -588,11 +601,19 @@ qx.Class.define("desk.SliceView",
 
 		/** adds a volume to the view
 		 * @param file {String} : file to add
-		 * @param parameters {Object} : parameters
-		 * @param callback {Function} : callback when done
+		 * @param parameters {Object} : optional parameters
+		 * @param callback {Function} : node.js-style callback when done
+		 * @param context {Object} : optional callback context
 		 * @return {desk.VolumeSlice} : displayed volume
 		 */
-		addVolume : function (file, parameters, callback) {
+		addVolume : function (file, parameters, callback, context) {
+			if (typeof parameters === "function") {
+				callback = parameters;
+				context = callback;
+				parameters = {};
+			}
+			callback = callback || function () {};
+
 			var firstSlice = this.__slices.every(function (slice) {
 				return slice.getUserData('toDelete') === true;
 			});
@@ -606,7 +627,7 @@ qx.Class.define("desk.SliceView",
 					}
 					if (firstSlice) {this.__initFromVolume(slice);}
 					slice.setSlice(this.getSlice());
-					this.__addSlice(slice, parameters, callback);
+					this.__addSlice(slice, parameters, callback, context);
 			}, this);
 			this.__slices.push(slice);
 			return slice;
@@ -710,7 +731,7 @@ qx.Class.define("desk.SliceView",
 				ctx.closePath();
 				ctx.stroke();
 				this.__drawingCanvasModified = true;
-				this.fireEvent("changeDrawing");
+				this.updateDrawingCanvas();
 			} else if (this.isEraseMode()) {
 				this.__interactionMode = 4;
 				this.__saveDrawingToUndoStack();
@@ -722,7 +743,7 @@ qx.Class.define("desk.SliceView",
 				this.__drawingCanvas.getContext2d().clearRect(
 					x - radius, y - radius, width, width);
 				this.__drawingCanvasModified = true;
-				this.fireEvent("changeDrawing");
+				this.updateDrawingCanvas();
 			} else {
 				this.__setCrossPositionFromEvent(e);
 			}
@@ -786,7 +807,7 @@ qx.Class.define("desk.SliceView",
 				var ctx = this.__drawingCanvas.getContext2d();
 				ctx.lineTo(position.i + 0.5, position.j + 0.5);
 				ctx.stroke();
-				this.fireEvent("changeDrawing");
+				this.updateDrawingCanvas();
 				this.__drawingCanvasModified = true;
 				break;
 			case 4 :
@@ -801,7 +822,7 @@ qx.Class.define("desk.SliceView",
 				this.__drawingCanvas.getContext2d().clearRect(
 					x - radius, y - radius, width, width);
 				this.__drawingCanvasModified = true;
-				this.fireEvent("changeDrawing");
+				this.updateDrawingCanvas();
 				break;
 			}
 			event.preventDefault(); // Prevent cursor changing to "text" cursor while drawing
@@ -822,7 +843,7 @@ qx.Class.define("desk.SliceView",
 					this.__paintWidth / 2, 0, 2 * Math.PI, false);
 				ctx.closePath();
 				ctx.fill();
-				this.fireEvent("changeDrawing");
+				this.updateDrawingCanvas();
 			}
 			this.__interactionMode = -1;
 			this.fireDataEvent("viewMouseUp",event);
@@ -1020,7 +1041,7 @@ qx.Class.define("desk.SliceView",
 			var currData = undoData[doingIndex];
 			ctx.putImageData(currData, 0, 0);
 			this.__doingIndex = doingIndex - 1;
-			this.fireEvent("changeDrawing");
+			this.updateDrawingCanvas();
 		},
 
 		__onCtrlY : function (event) {
@@ -1037,7 +1058,7 @@ qx.Class.define("desk.SliceView",
 				ctx.putImageData(currData, 0, 0);
 				if(this.__doingIndex === undoData.length-1)
 					undoData.pop();
-				this.fireEvent("changeDrawing");
+				this.updateDrawingCanvas();
 			}
 			else {this.__doingIndex--;}
 		},

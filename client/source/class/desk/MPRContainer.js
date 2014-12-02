@@ -9,7 +9,7 @@ qx.Class.define("desk.MPRContainer",
 {
     extend : qx.ui.container.Composite,
 
-	construct : function(file, options, callback)
+	construct : function(file, options, callback, context)
 	{
         this.base(arguments);
         this.setLayout(new qx.ui.layout.VBox());
@@ -55,7 +55,7 @@ qx.Class.define("desk.MPRContainer",
 
 		this.initViewsLayout();
 		if (file) {
-			this.addVolume(file, options, callback);
+			this.addVolume(file, options, callback, context);
 		}
 	},
 
@@ -94,41 +94,43 @@ qx.Class.define("desk.MPRContainer",
 		__viewsNames : ["Axial", "Sagittal", "Coronal"],
 		__nbUsedOrientations : null,
 
-        /**
-        * visualizes the output of an action whenever it is updated
-        * @param action {desk.Action} : action to watch
-        * @param file {String} : output file to visualize (without path)
-        * @param options {Object} : options object containing settings
-        * such as imageFormat (0 or 1), label (text), visible (bool)
-        */
-        watchAction : function (action, file, options, callback) {
-            var volume;
-            var currentActionId = -1;
-            action.addListener('actionTriggered', function (e) {
+		/**
+		* visualizes the output of an action whenever it is updated
+		* @param action {desk.Action} : action to watch
+		* @param file {String} : output file to visualize (without path)
+		* @param options {Object} : options object containing settings
+		* such as imageFormat (0 or 1), label (text), visible (bool)
+		* @param callback {Function} : callback when updated.
+		* @param context {Object} : optional callback context
+		*/
+		watchAction : function (action, file, options, callback, context) {
+			var volume;
+			var currentActionId = -1;
+			action.addListener('actionTriggered', function (e) {
 				var actionId = e.getData();
 				if (currentActionId < actionId) {
 					currentActionId = actionId;
 				}
-            }, this);
+			}, this);
 
-            action.addListener('actionUpdated', function (e) {
+			action.addListener('actionUpdated', function (e) {
 				var actionId = e.getData();
 				if (currentActionId !== actionId) {
 					// ignore this update as the action has been triggered since
 					return;
 				}
-                if (volume) {
-                    this.removeVolume(volume);
-                }
-                volume = this.addVolume(action.getOutputDirectory() + file, options, callback);
-            }, this);
+				if (volume) {
+					this.removeVolume(volume);
+				}
+				volume = this.addVolume(action.getOutputDirectory() + file, options, callback, context);
+			}, this);
 
-            this.addListener('removeVolume', function (e) {
-                if (e.getData() === volume) {
-                    volume = null;
-                }
-            });
-        },
+			this.addListener('removeVolume', function (e) {
+				if (e.getData() === volume) {
+					volume = null;
+				}
+			});
+		},
 
 		/** Returns the file corresponding to the given volume
 		 * @param volume {qx.ui.container.Composite}  volume
@@ -137,7 +139,7 @@ qx.Class.define("desk.MPRContainer",
 		getVolumeFile : function (volume) {
 			return volume.getUserData('file');
 		},
-		
+
 		getVolListGridContainer : function() {
 			var gridCoor = this.__gridCoords.volList;
 			this.__gridContainer.setUserData("freeRow", gridCoor.row);
@@ -245,13 +247,11 @@ qx.Class.define("desk.MPRContainer",
 		__onChangeCameraZ : function (e) {
 			var z = e.getData();
 			this.__viewers.forEach (function (viewer) {
-				if (viewer != e.getTarget()) {
-					var oldZ = viewer.getCameraZ();
-					if (oldZ * z < 0) {
-						viewer.setCameraZ(-z);
-					} else {
-						viewer.setCameraZ(z);
-					}
+				if (viewer === e.getTarget()) return;
+				if (viewer.getCameraZ() * z < 0) {
+					viewer.setCameraZ(-z);
+				} else {
+					viewer.setCameraZ(z);
 				}
 			});
 		},
@@ -449,9 +449,17 @@ qx.Class.define("desk.MPRContainer",
         * @param options {Object} : options object containing settings
         * such as imageFormat (0 or 1), label (text), visible (bool)
         * @param callback {Function} : callback when loaded.
+        * @param context {Object} : optional callback context
         * @return {qx.ui.container.Composite}  volume item
 		*/
-		addVolume : function (file, options, callback) {
+		addVolume : function (file, options, callback, context) {
+			if (typeof options === "function") {
+				callback = options;
+				options = {};
+				context = callback;
+			}
+			callback = callback || function () {};
+
 			if (desk.FileSystem.getFileExtension(file) === "json") {
 				desk.FileSystem.readFile(file, function (err, viewpoints) {
 					this.setViewPoints(viewpoints.viewpoints);
@@ -530,10 +538,7 @@ qx.Class.define("desk.MPRContainer",
 			async.eachSeries(this.__viewers,
 				function (viewer, callback) {
 					volumeSlices[viewer.getOrientation()] = viewer.addVolume(
-							file,
-							options,
-							function (volumeSlice) {callback();}
-						);
+							file, options, callback);
 				},
 				function (err) {
 					if (options.visible !== undefined) {
@@ -546,9 +551,7 @@ qx.Class.define("desk.MPRContainer",
 						this.removeVolume(volumeListItem);
 					}
 					this.__reorderMeshes();
-					if (typeof callback === 'function') {
-						callback(volumeListItem);
-					}					
+					callback.call(context, err);
 				}.bind(this)
 			);
 

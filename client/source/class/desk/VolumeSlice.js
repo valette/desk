@@ -572,6 +572,14 @@ qx.Class.define("desk.VolumeSlice",
 		},
 
 		/**
+		 * returns the 2D origin [x, y]
+		 * @return {Array} array of coordinates
+		 */
+		 get2DOrigin : function () {
+			 return this.get2DCornersCoordinates().slice(0,2);
+		},
+
+		/**
 		 * returns the total number of slices
 		 * @return {Number} number of slices
 		 */
