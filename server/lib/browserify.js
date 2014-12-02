@@ -3,7 +3,7 @@
  */
 
 async    = require('async');
-_        = require('underscore');
+_        = require('lodash');
 operative = require('operative');
 io = require('socket.io-client');
 numeric = require('numeric');

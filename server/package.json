@@ -21,6 +21,7 @@
     "formidable": ">0.0.0",
     "heap": ">0.0.0",
     "kdt": ">0.0.0",
+    "lodash": ">0.0.0",
     "mkdirp": ">0.0.0",
     "ms": ">0.0.0",
     "mv": ">0.0.0",
@@ -30,7 +31,6 @@
     "serve-index": ">0.0.0",
     "socket.io": ">0.0.0",
     "socket.io-client": ">0.0.0",
-    "underscore": ">0.0.0",
     "webworkify": ">0.0.0",
     "winston": ">0.0.0",
     "yargs": ">0.0.0"
