@@ -1,6 +1,7 @@
 {
   "dataDirs": {
     "data": "data",
+    "code": "code",
     "cache": "cache",
     "actions": "actions"
   },
