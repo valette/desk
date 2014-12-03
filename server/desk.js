@@ -19,14 +19,9 @@ var	actions      = require(__dirname + '/lib/cl-rpc');
 	os           = require('os'),
 	socketIO     = require('socket.io');
 
-var homeURL = '/',
-	port = 8080,
-	user = process.env.USER;
-
-if (argv.multi) {
-	homeURL = '/' + user + '/';
-	port = process.getuid();
-}
+var user = process.env.USER,
+	homeURL = argv.multi ? '/' + user + '/' : '/',
+	port = argv.multi ? process.getuid() : 8080;
 
 var log = false;
 // hijack console.log
@@ -188,27 +183,24 @@ rpc.post('/upload', function(req, res) {
 })
 .get('/ls', function (req, res) {
 	var path = libPath.normalize(req.query.path);
+	var realDir = libPath.join(deskDir, path);
 	async.waterfall([
 		function (callback) {
 			actions.validatePath(path, callback);
 		},
 
 		function (callback) {
-			var realDir = libPath.join(deskDir, path);
-			fs.readdir(realDir, function (err, files) {
-				if (err) {
-					callback (err);
-					return;
-				}
+			fs.readdir(realDir, callback)
+		},
 
-				async.map(files, function (file, callback) {
-					fs.stat(libPath.join(realDir, file), function (err, stats) {
-						callback(null, {name : file, size : stats.size,
-								isDirectory : stats.isDirectory(),
-								mtime : stats.mtime.getTime()});
-					});
-				}, callback);
-			});
+		function (files, callback) {
+			async.map(files, function (file, callback) {
+				fs.stat(libPath.join(realDir, file), function (err, stats) {
+					callback(null, {name : file, size : stats.size,
+							isDirectory : stats.isDirectory(),
+							mtime : stats.mtime.getTime()});
+				});
+			}, callback);
 		}],
 		function (error, files) {
 			res.send(files);
