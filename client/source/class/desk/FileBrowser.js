@@ -6,6 +6,8 @@
  * @lint ignoreDeprecated (confirm)
  * @asset(desk/tris.png)
  * @asset(desk/img.png)
+ * @asset(qx/icon/${qx.icontheme}/22/places/folder.png)
+ * @asset(qx/icon/${qx.icontheme}/22/mimetypes/office-document.png)
  * @ignore (_.*)
 */
 
@@ -20,7 +22,6 @@ qx.Class.define("desk.FileBrowser",
 	* 
 	*/
 	construct : function(baseDir, standAlone) {
-		qx.Class.include(qx.ui.treevirtual.TreeVirtual, qx.ui.treevirtual.MNode);
 		baseDir = baseDir || "data";
 		if(baseDir.substr(-1) === '/') {
 			baseDir = baseDir.substr(0, baseDir.length - 1);
@@ -35,29 +36,77 @@ qx.Class.define("desk.FileBrowser",
 		this.__actionCallbacks = [];
 		this.__actionNames = [];
 
-		this.__files = new qx.ui.treevirtual.TreeVirtual(
-			["files","mTime","size"],
-			{initiallyHiddenColumns : [1, 2]}
-		).set({
-			useTreeLines : false,
-			rowHeight: 22,
-			alwaysShowOpenCloseSymbol : true,
-			columnVisibilityButtonVisible : true,
-			draggable : true,
-			statusBarVisible : false,
-			selectionMode : qx.ui.treevirtual.TreeVirtual.SelectionMode.MULTIPLE_INTERVAL
-		});
+		var that = this;
 
-		this.addListener("mousedown", function () {
-			this.__focusedRow = this.__files.getFocusedRow();
-		}, this);
-		
+		var delegate = {
+			bindItem : function(controller, item, index) {
+				controller.bindDefaultProperties(item, index);
+
+				controller.bindProperty("", "open", {
+					converter : function(value, model, source, target) {
+						var isOpen = target.isOpen();
+						//console.log("open : " + isOpen);
+						if (isOpen && !value.getLoaded()) {
+							value.setLoaded(true);
+
+							value.getChildren().removeAll();
+							console.log("here");
+							that.__expandDirectoryListing(value);
+						}
+						return isOpen;
+					}
+				}, item, index);
+			}
+		};
+
+		this.__files = new qx.ui.tree.VirtualTree(null, "name", "children");
+		//this.__files.setDelegate(delegate);
+	/*	this.__files.setIconPath("icon");
+		this.__files.setIconOptions({
+			converter : function(value, model) {
+				console.log(value);
+				console.log(model);
+				if (value == "default") {
+					if (model.getChildren) {
+						return "icon/22/places/folder.png";
+					} else {
+						var image = "desk/tris.png";//"icon/22/mimetypes/office-document.png";
+						/*switch (desk.FileSystem.getFileExtension(model.getName())) {
+						case "vtk":
+						case "ply":
+						case "obj":
+						case "stl":
+							image = "desk/tris.png";
+							break;
+						case "mhd":
+						case "jpg":
+						case "png":
+							image = "desk/img.png";
+							break;
+						default:
+							break;
+						}*//*
+						return image;
+					}
+				} else {
+					return "icon/22/mimetypes/office-document.png";
+				}
+			}
+		});*/
+		this.__files.set({
+			draggable : true,
+			droppable : true,
+			showTopLevelOpenCloseIcons : true,
+			selectionMode : "multi"
+		});
+		this.__files.addListener("open", this.__onTreeOpen, this);
+
         if (this.__standAlone) {
             this.add(this.__getShortcutsContainer());
         }
 
 		this.add(this.__files, {flex: 1});
-		this.__createFilter();
+	//	this.__createFilter();
 
 		// add root directory
 		this.updateRoot(baseDir);
@@ -65,12 +114,9 @@ qx.Class.define("desk.FileBrowser",
 		this.setFileHandler(this.__defaultFileHandler);
 		desk.Actions.init(this.__createDefaultStaticActions, this);
 
-		this.__files.addListener("cellDbltap", this.__onCellDbltap, this);
-		this.__files.addListener("treeOpenWhileEmpty", this.__onTreeOpen, this);
-		this.__files.addListener("treeOpenWithContent", this.__onTreeOpen, this);
+		this.__files.addListener("dbltap", this.__onDbltap, this);
 		this.__files.addListener("dragstart", this.__onDragstart);
 		this.__files.addListener("droprequest", this.__onDropRequest, this);
-		this.__files.setDroppable(true);
 		this.__files.addListener('drop', this.__onDrop, this);
 
 		if (this.__standAlone) {
@@ -134,7 +180,7 @@ qx.Class.define("desk.FileBrowser",
 
 			filterBox.add(resetButton);
 			dataModel.setFilter(function(node) {
-				if (this.__isNodeLeaf(node)) {
+				if (!node.getChildren) {
 					var label = node.label;
 					return label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1;
 				}
@@ -145,32 +191,34 @@ qx.Class.define("desk.FileBrowser",
 			}
 		},
 
-		__onCellDbltap :  function (e) {
-			var node = this.__files.getDataModel().getNodeFromRow(e.getRow());
-			this.__openNode(node);
+		__onDbltap :  function (e) {
+			var node = e.getTarget();
+			if (node && node.getModel && e.isLeftPressed() && !e.isCtrlOrCommandPressed()) {
+				this.__openNode(node.getModel());
+			}
 		},
 
 		__onTreeOpen : function (e) {
-			// maybe there's a bug in qooxdoo : this event is triggered for any node (leaf or branch)
 			var node = e.getData();
-			if (this.__isNodeLeaf(node)) {
-				return;
-			}
-			this.__expandDirectoryListing(node.nodeId);
+			this.__expandDirectoryListing(node);
 		},
+
+		__savedSelection : null,
 
 		__onDragstart : function(e) {
 			e.addAction("move");
 			e.addType("fileBrowser");
 			e.addType("file");
+	//		console.log(this.getDragSelection());
+			this.__savedSelection = this.getSelection().toArray().slice();
 		},
 
 		__onDropRequest : function(e) {
 			var type = e.getCurrentType();
 			switch (type) {
 			case "file":
-				e.addData(type, this.__getNodeFile(
-					this.__files.getDataModel().getNodeFromRow(this.__focusedRow)));
+				e.addData(type, this.__files.getDragSelection()
+					.getItem(0).getFullName());
 				break;
 			case "fileBrowser":
 				e.addData(type, this);
@@ -186,10 +234,16 @@ qx.Class.define("desk.FileBrowser",
 			}
 
 			var browser = e.getData('fileBrowser');
-			var files = browser.getSelectedFiles();
+			if (browser === this) {
+				return;
+			}
+			var nodes = browser.__savedSelection;
+			console.log(nodes);
+			console.log(this.getFocusTarget());
+			console.log(e.getData());
 			var node = this.__files.getDataModel().getNodeFromRow(this.__files.getFocusedRow());
 
-			var nodeId = this.__isNodeLeaf(node) ? node.parentNodeId : node.nodeId;
+			var nodeId = node.getChildren ? node.parentNodeId : node.nodeId;
 			var destination = this.__getNodeFile(nodeId);
 
 			var actionType = prompt('Copy or move? \n0 : copy,  1 : move', '0');
@@ -226,6 +280,7 @@ qx.Class.define("desk.FileBrowser",
 		__window : null,
 		__fileHandler : null,
 		__baseDir : null,
+		__root : null,
 		__files : null,
 		__rootId : null,
 		__filterField : null,
@@ -295,20 +350,23 @@ qx.Class.define("desk.FileBrowser",
 		* @param newRoot {String} new root
 		*/
 		updateRoot : function (newRoot) {
-            if (newRoot) {
-                this.__baseDir = newRoot;
-                var dataModel = this.__files.getDataModel();
-                dataModel.clearData();
-                this.__rootId = dataModel.addBranch(null, this.__baseDir, true);
-                if (this.__window) {
-                    this.__window.setCaption(newRoot);
-                }
-            }
-			this.__expandDirectoryListing(this.__rootId);
-		},
+			if (newRoot) {
+				this.__baseDir = newRoot;
+			}
 
-		__isNodeLeaf : function (node) {
-			return node.type === qx.ui.treevirtual.MTreePrimitive.Type.LEAF;
+			this.__root = qx.data.marshal.Json.createModel({
+				name: this.__baseDir,
+				fullName : this.__baseDir,
+				children: [{name : "loading"}],
+				icon: "default",
+				loaded: false
+			}, true);
+
+			if (this.__window) {
+				this.__window.setCaption(newRoot);
+			}
+			this.__files.setModel(this.__root);
+			this.__files.openNode(this.__root);
 		},
 
 		__defaultFileHandler : function (file) {
@@ -369,19 +427,19 @@ qx.Class.define("desk.FileBrowser",
 		},
 
 		__volViewSimpleAction : function (node) {
-			if (this.__isNodeLeaf(node)) {
-				new desk.VolViewSimple(this.__getNodeFile(node));
+			if (!node.getChildren) {
+				new desk.VolViewSimple(node.getFullName());
 			} else {
 				alert("Cannot view a directory!");
 			}
 		},
 
 		__downloadAction : function (node) {
-			if (this.__isNodeLeaf(node)) {
+			if (!node.getChildren) {
 				var iframe = qx.bom.Iframe.create({
 					name : "testFrame" + Math.random(),
 					src : desk.FileSystem.getActionURL('download') +
-						'?file=' + this.__getNodeFile(node)
+						'?file=' + node.getFullName()
 				});
 
 				qx.bom.Element.addListener(iframe, "load", function(e) {
@@ -395,109 +453,104 @@ qx.Class.define("desk.FileBrowser",
 		},
 
 		__uploadAction : function (node) {
-			var nodeId = node.nodeId;
-			if (this.__isNodeLeaf(node)) {
-				nodeId = node.parentNodeId;
+			var dir = node.getFullName();
+			if (!node.getChildren) {
+				dir = desk.FileSystem.getFileDirectory(dir);
 			}
-			var uploader = new desk.Uploader(this.__getNodeFile(nodeId));
+			var uploader = new desk.Uploader(dir);
 			uploader.addListener("upload",
 				_.throttle(function () {
-					this.__expandDirectoryListing(nodeId);
+					this.__expandDirectoryListing(node);
 				}.bind(this), 2000)
 			);
 		},
 
 		__newDirectoryAction : function (node) {
-			var nodeId = node.nodeId;
-			if (this.__isNodeLeaf(node)) {
-				nodeId = node.parentNodeId;
+			var dir = node.getFullName();
+			if (!node.getChildren) {
+				dir = desk.FileSystem.getFileDirectory(dir);
+				node = this.__getFileNode(dir);
 			}
-			var dir = prompt('Name of the directory to create','new_dir');
-			if (!dir) return;
+			var newDir = prompt('Name of the directory to create','new_dir');
+			if (!newDir) return;
+			console.log("new dir : " +dir + '/' + newDir);
 			desk.Actions.getInstance().launchAction({
 				"action" : "create_directory",
-				"directory" : this.__getNodeFile(nodeId) + '/' + dir},
+				"directory" : dir + '/' + newDir},
 				function () {
-					this.__expandDirectoryListing(nodeId);
+					this.__expandDirectoryListing(node);
 			}, this);
 		},
 
 		__deleteAction : function (node) {
-			var nodes = this.__getSelectedNodes();
+			var nodes = this.__files.getSelection().toArray();
 			var message = 'Are you shure you want to delete those files/directories? \n';
-			var files = nodes.map(function (node) {
-				var file = this.__getNodeFile(node);
+			var dirs = nodes.map(function (node) {
+				var file = node.getFullName();
 				message +=  file + '\n';
-				return this.__getFileDirectory(file);
+				return desk.FileSystem.getFileDirectory(file);
 			}, this);
 			if (!confirm(message)) return;
 
 			async.each(nodes, function (node, callback) {
-				var file = this.__getNodeFile(node.nodeId);
-				if (this.__isNodeLeaf(node)) {
-					desk.Actions.getInstance().launchAction({
-						action : 'delete_file',
-						file_name : file},
-						function () {
-							callback(null);
-					});
-				} else {
-					desk.Actions.getInstance().launchAction({
-						action : 'delete_directory',
-						directory : file},
-						function () {
-							callback(null);
-					});
-				}
+				desk.Actions.getInstance().launchAction({
+					action : node.getChildren ? 'delete_directory' : 'delete_file',
+					file_name : node.getFullName(),
+					directory : node.getFullName()},
+					callback
+				);
 			}.bind(this), function (err) {
-				this.__updateDirectories(files);
-				this.__files.resetSelection();
+				this.__updateDirectories(dirs);
 			}.bind(this));
 		},
 
 		__renameAction : function (node) {
-			var file = this.__getNodeFile(node.nodeId);
+			var file = node.getFullName();
 			var newFile = prompt('enter new file name : ', desk.FileSystem.getFileName(file));
-			if (newFile !== null) {
-				newFile = desk.FileSystem.getFileDirectory(file) + newFile;
-				desk.Actions.getInstance().launchAction({
-						action : "move",
-						source : file,
-						destination : newFile
-					},
-					function () {
-						this.__expandDirectoryListing(node.parentNodeId);
-				}, this);
+			if (newFile === null) {
+				return;
 			}
+			var dir = desk.FileSystem.getFileDirectory(file);
+			desk.Actions.getInstance().launchAction({
+					action : "move",
+					source : file,
+					destination : dir + newFile
+				},
+				function () {
+					this.updateDirectory(dir);
+			}, this);
 		},
 
 		__newFileAction : function (node) {
-			if (this.__isNodeLeaf(node)) {
-				node = this.__files.nodeGet(node.parentNodeId);
+			var dir = node.getFullName();
+			if (!node.getChildren) {
+				dir = desk.FileSystem.getFileDirectory(dir);
+				node = this.__getFileNode(dir);
 			}
-			var dir = this.__getNodeFile(node);
 			var baseName = prompt('enter new file name : ', "newFile");
 			if (baseName !== null) {
 				desk.FileSystem.writeFile(dir + '/' + baseName, '', function () {
-					this.__expandDirectoryListing(node);
+					this.updateDirectory(dir);
 				}.bind(this));
 			}
 		},
 
 		__viewEditAction : function (node) {
 			if (this.__isNodeLeaf(node)) {
-				new desk.TextEditor(this.__getNodeFile(node));
+				new desk.TextEditor(node.getFullName());;
 			}
 		},
 
 		__createDefaultStaticActions : function () {
-			this.__files.setContextMenuFromDataCellsOnly(true);
+			//this.__files.setContextMenuFromDataCellsOnly(true);
 			var menu = new qx.ui.menu.Menu();
 
 			// the default "open" button
 			var openButton = new qx.ui.menu.Button("Open");
-			openButton.addListener("execute", function (){
-				this.__openNode (this.__getSelectedNodes()[0]);}, this);
+			openButton.addListener("execute", this.__onDbltap, this);
+
+//				console.log(e);
+//				this.__openNode (this.__getSelectedNodes()[0]);}, this);
 			menu.add(openButton);
 			menu.addSeparator();
 
@@ -543,12 +596,11 @@ qx.Class.define("desk.FileBrowser",
 			var button = new qx.ui.menu.Button(actionName);
 			button.setUserData("fileBrowser", this);
 			button.setUserData("actionName", actionName);
-			button.addListener("execute", function () {
-				var buttonFileBrowser = button.getUserData("fileBrowser");
-				var buttonActionName = button.getUserData("actionName");
-				var node = buttonFileBrowser.__getSelectedNodes()[0] ||
-					this.__files.nodeGet(this.__rootId);
-				buttonFileBrowser.__actionCallbacks[buttonActionName].call(context, node);
+			button.addListener("execute", function (e) {
+				var fileBrowser = button.getUserData("fileBrowser");
+				var actionName = button.getUserData("actionName");
+				var node = fileBrowser.__files.getSelection().getItem(0);
+				fileBrowser.__actionCallbacks[actionName].call(context, node);
 			}, this);
 			this.__files.getContextMenu().add(button);
 		},
@@ -569,10 +621,6 @@ qx.Class.define("desk.FileBrowser",
 			return (this.__files);
 		},
 
-		__getSelectedNodes : function () {
-			return this.__files.getSelectedNodes()
-		},
-
 		/**
 		* Returns an array containing currently selected files
 		* @return {Array} array of files (strings)
@@ -591,10 +639,6 @@ qx.Class.define("desk.FileBrowser",
 			return (desk.FileSystem.getFileURL(this.__getNodeFile(node)));
 		},
 
-		__getNodeFile : function (node) {
-			return this.__files.getHierarchy(node).join("\/");
-		},
-
 		/**
 		* Returns the base directory
 		* @return {String} base directory
@@ -609,30 +653,33 @@ qx.Class.define("desk.FileBrowser",
 
 		__getFileNode : function (file) {
 			var baseDir = this.getRootDir();
+			console.log("get node from  : " + file);
 			if (file.indexOf(baseDir) !== 0) {
 				return null;
 			}
 			var inFile = file.substring(baseDir.length + 1);
-			var hierarchy = inFile.length ? inFile.split('/') : [];
-			
-			var data = this.__files.getDataModel().getData();
-			if (!data) {
-				console.log("__getFileNode : data=null file = " + file); 
-				return null;
+			var hierarchy = inFile.length ? inFile.split('/') : [""];
+			if (hierarchy[hierarchy.length - 1].length === 0) {
+				hierarchy.pop();
 			}
-
-			var node = data[this.__rootId];
-			for (var i = 0; i != hierarchy.length; i++) {
-				if (!_.find(node.children, function (child) {
-					if (data[child].label === hierarchy[i]) {
-						node = data[child];
+			console.log(hierarchy);
+			var node = this.__root;
+			for (var i = 0; i < hierarchy.length; i++) {
+				if (!_.find(node.getChildren().toArray(), function (child) {
+					console.log(child.getName() + " **** " + hierarchy[i]);
+					if (child.getName() === hierarchy[i]) {
+						console.log("ok");
+						node = child;
 						return true;
 					}
 					return false;
 				})) {
+					console.log("no");
 					return null;
 				}
 			}
+			console.log("yes");
+			console.log(node);
 			return node;
 		},
 
@@ -641,6 +688,7 @@ qx.Class.define("desk.FileBrowser",
 		* @param file {String} directory to update
 		*/
 		updateDirectory : function (file) {
+			console.log(file);
 			this.__fileBrowsers.forEach(function (browser) {
 				var nodeId = browser.__getFileNode(file);
 				if (nodeId) {
@@ -659,17 +707,13 @@ qx.Class.define("desk.FileBrowser",
 		},
 
 		__openNode : function (node) {
-			if (this.__isNodeLeaf(node)) {
-				if (this.__fileHandler) {
-					this.__fileHandler(this.__getNodeFile(node));
-				}
-			} else {
-				this.__files.nodeToggleOpened(node);
+			if (!node.getChildren && this.__fileHandler) {
+				this.__fileHandler(node.getFullName());
 			}
 		},
 
 		__caseInsensitiveSort : function (a, b) {
-			return a.toLowerCase().localeCompare(b.toLowerCase());
+			return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
 		},
 
 		__readFileList : function (files, directory) {
@@ -727,10 +771,27 @@ qx.Class.define("desk.FileBrowser",
 			dataModel.setData();
 		},
 
-		__expandDirectoryListing : function(nodeId) {
-			var directory = this.__getNodeFile(nodeId);
+		__expandDirectoryListing : function(node) {
+			var directory = node.getFullName();
+			var children = node.getChildren();
+			children.removeAll();
 			desk.FileSystem.readDir(directory, function (err, files) {
-				this.__readFileList(files, directory);
+				files.sort(this.__caseInsensitiveSort)
+				files.forEach(function (file) {
+					file.fullName = directory + "/" + file.name;
+					if (file.isDirectory) {
+						file.children = [{name : "loading"}];
+						file.loaded = false;
+						children.push(qx.data.marshal.Json.createModel(file));
+					}
+				});
+				files.forEach(function (file) {
+					if (!file.isDirectory) {
+						file.loaded = true;
+						children.push(qx.data.marshal.Json.createModel(file));
+					}
+				});
+				this.__files.refresh();
 			}, this);
 		}
 	}
