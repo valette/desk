@@ -1,11 +1,45 @@
 /**
- * Simpe class to animate meshes
- * @ignore (async.map)
+ * 
+ * 
+ * A class to animate an object sequence : all given objects will be
+ * sequentially made visible in the scene.
+ * 
+ * *Example*
+ *
+ * Here is a little example of how to use the widget.
+ * 
+ * <pre class='javascript'>
+ * var viewer = new desk.SceneContainer();
+ * // add your objects to the scene
+ * viewer.addMesh(object1);
+ * viewer.addMesh(object2);
+ * // .....
+ * viewer.addMesh(objectN);
+ * 
+ * var animator = new desk.Animator(viewer.render.bind(viewer),
+ *   {
+ *     visibilityCallback : function (object, visibility) {
+ *       object.visible = visible; // this is what the default callback does
+ *     },
+ *     snapshotCallback : function () {
+ *       viewer.snapshot();
+ *     }
+ *   });
+ * animator.addObject(object1);
+ * animator.addObject(object2);
+ * // .....
+ * animator.addObject(objectN);
+ * 
+ * // now you can control it
+ * animator.startAnimation();
+ * </pre>
+ * 
+ * @ignore (async.*)
  * @asset(qx/icon/${qx.icontheme}/16/actions/media-playback-start.png) 
  * @asset(qx/icon/${qx.icontheme}/16/actions/media-playback-stop.png) 
  * @asset(qx/icon/${qx.icontheme}/16/actions/media-seek-backward.png) 
  * @asset(qx/icon/${qx.icontheme}/16/actions/media-seek-forward.png) 
-*/
+ */
 
 qx.Class.define("desk.Animator", 
 {
@@ -13,64 +47,158 @@ qx.Class.define("desk.Animator",
 
 	/**
 	*  Constructor
-	* 	@param viewer {desk.meshViewer} is the viewer to animate
-	* If no viewer is provided, a desk.MeshViewer will be created
-	* 
+	* @param renderCallback {Function} is the callback to the rendering function
+	* @param opts {Object} : options object which can contain :
 	*/
-	construct : function (viewer) {
+	construct : function (renderCallback, opts) {
+		opts = opts || {};
 		this.base(arguments);
+		this.__render = renderCallback;
 
-		this.__viewer = viewer || new desk.MeshViewer();
-		this.__createUI();
+		if (opts.visibilityCallback) {
+			this.__setVisibility = opts.visibilityCallback;
+		}
+
+		if (opts.snapshotCallback) {
+			this.__snapshot = opts.snapshotCallback;
+		}
+
+		this.setLayout(new qx.ui.layout.VBox());
+
+		if (opts.standalone === true) {
+			this.__standalone = true;
+			var win = new qx.ui.window.Window();
+			win.setLayout(new qx.ui.layout.HBox());
+			win.setWidth(300);
+			win.setShowClose(true);
+			win.setShowMinimize(false);
+			win.setCaption('animate');
+			win.add(this, {flex : 1});
+			win.addListener('close', function () {
+				this.stopAnimation();
+				this.fireEvent('close');
+			}, this);
+			win.open();
+			win.center();
+			qx.util.DisposeUtil.disposeTriggeredBy(win, this);
+		}
+
+		var list = new qx.ui.form.List();
+		list.setDraggable(true);
+		list.setDroppable(true);
+		list.setSelectionMode("multi");
+		this.__list = list;
+		this.add(list, {flex : 1});
+		this.add(this.getControlsContainer());
+		var snapCheckBox = this.__snapshotCheckBox = new qx.ui.form.CheckBox("snapshot");
+		this.add(snapCheckBox);
+
+		// Create drag indicator
+		var indicator = new qx.ui.core.Widget();
+		indicator.setDecorator(new qx.ui.decoration.Decorator().set({
+			top : [ 1, "solid", "#33508D" ]
+		}));
+		indicator.setHeight(0);
+		indicator.setOpacity(0.5);
+		indicator.setZIndex(100);
+		indicator.setLayoutProperties({left: -1000, top: -1000});
+		indicator.setDroppable(true);
+		this.add(indicator);
+
+		// Just add a move action
+		list.addListener("dragstart", function(e) {
+			e.addAction("move");
+		});
+
+		list.addListener("dragend", function(e){
+			// Move indicator away
+			indicator.setDomPosition(-1000, -1000);
+		});
+
+		var currentListItem;
+		list.addListener("drag", function(e) {
+			var orig = e.getOriginalTarget();
+			// store the current listitem - if the user drops on the indicator
+			// we can use this item instead of calculating the position of the
+			// indicator
+			if (orig instanceof qx.ui.form.ListItem) {
+				currentListItem = orig;
+			}
+			if (!qx.ui.core.Widget.contains(window, orig) && orig != indicator) {
+				return;
+			}
+
+			var origCoords2 = list.getContentLocation();
+			var origCoords = orig.getContentLocation();
+
+			indicator.setWidth(orig.getBounds().width);
+			indicator.setDomPosition(origCoords.left-origCoords2.left,
+				origCoords.top-origCoords2.top);
+		});
+
+		list.addListener("dragover", function(e) {
+			// Stop when the dragging comes from outside
+			if (e.getRelatedTarget()) {
+				e.preventDefault();
+			}
+		});
+
+		list.addListener("drop", function(e) {
+			reorderList(e.getOriginalTarget());
+		});
+
+		indicator.addListener("drop", function(e) {
+			reorderList(currentListItem);
+		});
+
+		function reorderList (listItem) {
+			// Only continue if the target is a list item.
+			if (listItem.classname != "qx.ui.form.ListItem") {
+				return ;
+			}
+
+			var sel = list.getSortedSelection();
+			for (var i=0, l=sel.length; i<l; i++)
+			{
+				list.addBefore(sel[i], listItem);
+			// recover selection as it get lost during child move
+				list.addToSelection(sel[i]);
+			}
+		}
+		qx.util.DisposeUtil.disposeTriggeredBy(list, this);
+		qx.util.DisposeUtil.disposeTriggeredBy(indicator, this);
 	},
 
 	properties : {
+		/**
+		 * Defines each frame duration in milliseconds
+		 */
 		refreshTime : { init : 50, check: 'Number'}
 	},
 
-	events : {
-		"close" : "qx.event.type.Event"
-	},
-
 	members : {
-		__viewer : null,
-		__window : null,
 		__list : null,
 		__snapshotCheckBox : null,
 		__animate : false,
+		__standalone : false,
+
+		__controls : null,
 
 		__index : 0,
 		__indexLabel : null,
 
 		/**
-		 * Loads an array of files in the viewer for animation
-		 * @param files {Array} array of files to load
-		 * @param callback {Function} callback when done
-		 * @param context {Object} optional callback context
+		 * Changes the visibility of a given object
+		 * @param obj {Object} the object to modify
+		 * @param visibility {Boolean} visibility (false/true)
 		 */
-		animateFiles : function (files, callback, context) {
-			var viewer = this.__viewer;
-			async.map(files, function (file, callback) {
-				viewer.addFile(file, {visible : false}, function (mesh) {
-					callback(null, mesh);
-				});
-			}, function (err, results){
-				for (var i = 0; i != results.length; i++) {
-				 this.addObject(results[i], files[i]);
-				}
-				if (typeof (callback) === "function") {
-					callback.apply(context);
-				}
-			}.bind(this));
+		__setVisibility : function (obj, visibility) {
+			obj.visible = visibility;
 		},
 
-		/**
-		*Returns the desk.MeshViewer currently in use
-		* @return {desk.MeshViewer} the used viewer
-		*/
-		getViewer : function () {
-			return this.__viewer;
-		},
+		__snapshot : null,
+
+		__render : null,
 
 		/**
 		 * Starts the animation
@@ -83,47 +211,49 @@ qx.Class.define("desk.Animator",
 			for (var i = 0; i != numberOfObjects;i++) {
 				var mesh = this.__getObject(i);
 				if (mesh) {
-					mesh.visible = false;
+					this.__setVisibility(mesh, false);
 				}
 			}
 			this.__animate = true;
 
-			var animate  = function () {
-				this.__index = (this.__index +1 )% numberOfObjects;
-				this.__showCurrentFrame();
+			async.whilst(function () {
+					return this.__animate;
+				}.bind(this),
 
-				if (this.__snapshotCheckBox.getValue()) {
-					setTimeout(snapshot, this.getRefreshTime() / 3);
-				}
-				if (this.__animate) {
-					setTimeout(animate, this.getRefreshTime());
-				}
-			}.bind(this);
+				function (callback) {
+					this.__index = (this.__index +1 )% numberOfObjects;
+					this.__showCurrentFrame();
 
-			animate();
-			var snapshot = function () {
-				this.__viewer.snapshot();
-			}.bind(this);
+					if (this.__snapshotCheckBox.getValue()) {
+						setTimeout(this.__snapshot, this.getRefreshTime() / 3);
+					}
+
+					setTimeout(callback, this.getRefreshTime());
+				}.bind(this)
+			);
 		},
 
-		__showCurrentFrame : function () {
+		/**
+		 * Updates all the objects'visibility and triggers rendering
+		 */
+		 __showCurrentFrame : function () {
 			var index = this.__index;
 			var numberOfObjects = this.__getNumberOfObjects();
 			var mesh = this.__getObject(index);
 			if (mesh) {
-				mesh.visible = true;
+				this.__setVisibility(mesh, true);
 			}
 
 			mesh = this.__getObject((index - 1 + numberOfObjects) % numberOfObjects);
 			if (mesh) {
-				mesh.visible = false;
+				this.__setVisibility(mesh, false);
 			}
 
 			mesh = this.__getObject((index + 1) % numberOfObjects);
 			if (mesh) {
-				mesh.visible = false;
+				this.__setVisibility(mesh, false);
 			}
-			this.__viewer.render(index);
+			this.__render();
 			this.__indexLabel.setValue(index.toString());
 		},
 
@@ -151,6 +281,10 @@ qx.Class.define("desk.Animator",
 			this.__showCurrentFrame();
 		},
 
+		/**
+		 * Returns the number of objects to animate
+		 * @return {Number} number of objects
+		 */
 		__getNumberOfObjects : function () {
 			return this.__list.getChildren().length;
 		},
@@ -165,11 +299,24 @@ qx.Class.define("desk.Animator",
 			});
 		},
 
+		/**
+		 * Returns an the object at given index
+		 * @param index {Number} the object's index
+		 * @return {Object} corresponding object
+		 */
 		__getObject : function (index) {
 			return this.__list.getChildren()[index].getUserData('threeObject');
 		},
 
-		__getControlsContainer : function () {
+		/**
+		 * Returns the container containing playback controls
+		 * @return {qx.ui.container.Composite} playback container
+		 */
+		getControlsContainer : function () {
+			if (this.__controls) {
+				return this.__controls;
+			}
+
 			var indexLabel = this.__indexLabel = new qx.ui.basic.Label("0");
 			indexLabel.setWidth(30);
 
@@ -188,7 +335,7 @@ qx.Class.define("desk.Animator",
 			var spinner = new qx.ui.form.Spinner(5, 50, 5000);
 			spinner.bind('value', this, 'refreshTime');
 
-			var container = new qx.ui.container.Composite();		
+			var container = this.__controls = new qx.ui.container.Composite();		
 			container.setLayout(new qx.ui.layout.HBox());
 			container.add(indexLabel);
 			container.add(startButton, {flex : 1});
@@ -196,7 +343,7 @@ qx.Class.define("desk.Animator",
 			container.add(prevButton, {flex : 1});
 			container.add(nextButton, {flex : 1});
 			container.add(spinner);
-			return (container);
+			return container;
 		},
 
 		/**
@@ -208,114 +355,6 @@ qx.Class.define("desk.Animator",
 			var item = new qx.ui.form.ListItem(label);
 			item.setUserData('threeObject', object);
 			this.__list.add(item);
-		},
-
-		__render : function () {
-			this.__viewer.render();
-		},
-
-		__createUI : function () {
-			this.setLayout(new qx.ui.layout.VBox());
-
-			var window = new qx.ui.window.Window();
-			window.setLayout(new qx.ui.layout.HBox());
-			window.setWidth(300);
-			window.setShowClose(true);
-			window.setShowMinimize(false);
-			window.setCaption('animate');
-			window.add(this, {flex : 1});
-			window.addListener('close', function () {
-				this.stopAnimation();
-				this.fireEvent('close');
-			}, this);
-
-			var list = new qx.ui.form.List();
-			list.setDraggable(true);
-			list.setDroppable(true);
-			list.setSelectionMode("multi");
-			this.__list = list;
-			this.add(list, {flex : 1});
-			this.add(this.__getControlsContainer());
-			var snapCheckBox = this.__snapshotCheckBox = new qx.ui.form.CheckBox("snapshot");
-			this.add(snapCheckBox);
-
-			// Create drag indicator
-			var indicator = new qx.ui.core.Widget();
-			indicator.setDecorator(new qx.ui.decoration.Decorator().set({
-				top : [ 1, "solid", "#33508D" ]
-			}));
-			indicator.setHeight(0);
-			indicator.setOpacity(0.5);
-			indicator.setZIndex(100);
-			indicator.setLayoutProperties({left: -1000, top: -1000});
-			indicator.setDroppable(true);
-			this.add(indicator);
-
-			// Just add a move action
-			list.addListener("dragstart", function(e) {
-				e.addAction("move");
-			});
-
-			list.addListener("dragend", function(e){
-				// Move indicator away
-				indicator.setDomPosition(-1000, -1000);
-			});
-
-			var currentListItem;
-			list.addListener("drag", function(e) {
-				var orig = e.getOriginalTarget();
-				// store the current listitem - if the user drops on the indicator
-				// we can use this item instead of calculating the position of the
-				// indicator
-				if (orig instanceof qx.ui.form.ListItem) {
-					currentListItem = orig;
-				}
-				if (!qx.ui.core.Widget.contains(window, orig) && orig != indicator) {
-					return;
-				}
-
-				var origCoords2 = list.getContentLocation();
-				var origCoords = orig.getContentLocation();
-
-				indicator.setWidth(orig.getBounds().width);
-				indicator.setDomPosition(origCoords.left-origCoords2.left,
-					origCoords.top-origCoords2.top);
-			});
-
-			list.addListener("dragover", function(e) {
-				// Stop when the dragging comes from outside
-				if (e.getRelatedTarget()) {
-					e.preventDefault();
-				}
-			});
-
-			list.addListener("drop", function(e) {
-				reorderList(e.getOriginalTarget());
-			});
-
-			indicator.addListener("drop", function(e) {
-				reorderList(currentListItem);
-			});
-
-			function reorderList (listItem) {
-				// Only continue if the target is a list item.
-				if (listItem.classname != "qx.ui.form.ListItem") {
-					return ;
-				}
-
-				var sel = list.getSortedSelection();
-				for (var i=0, l=sel.length; i<l; i++)
-				{
-					list.addBefore(sel[i], listItem);
-				// recover selection as it get lost during child move
-					list.addToSelection(sel[i]);
-				}
-			}
-			window.open();
-            window.center();
-			qx.util.DisposeUtil.disposeTriggeredBy(window, this);
-			qx.util.DisposeUtil.disposeTriggeredBy(list, this);
-			qx.util.DisposeUtil.disposeTriggeredBy(indicator, this);
 		}
 	}
 });
