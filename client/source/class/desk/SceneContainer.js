@@ -18,19 +18,25 @@ qx.Class.define("desk.SceneContainer",
     extend : desk.ThreeContainer,
 	include : desk.LinkMixin,
 
-	construct : function(file, parameters, callback, context)
-	{
+	/** 
+	 * constructor
+	 * @param file {String} file to open
+	 * @param opts {Object} options, see desk.SceneContainer.addFile()
+	 * @param callback {Function} callback when done
+	 * @param context {Object} optional context for the callback
+	 */
+	construct : function(file, opts, callback, context) {
         this.base(arguments);
 		qx.Class.include(qx.ui.treevirtual.TreeVirtual, qx.ui.treevirtual.MNode);
-		if (typeof parameters === "function") {
-			callback = parameters;
+		if (typeof opts === "function") {
+			callback = opts;
 			context = callback;
-			parameters = {};
+			opts = {};
 		}
-		parameters = parameters || {};
+		opts = opts || {};
 
-		if (parameters.convertVTK !== undefined) {
-			this.setConvertVTK(parameters.convertVTK);
+		if (opts.convertVTK !== undefined) {
+			this.setConvertVTK(opts.convertVTK);
 		}
 
 		var leftContainer = this.__leftContainer = new qx.ui.container.Composite();
@@ -133,7 +139,7 @@ qx.Class.define("desk.SceneContainer",
 			bind(this.__meshes.getDataModel()), 500);
 
 		if (file) {
-			this.addFile(file, parameters, callback, context);
+			this.addFile(file, opts, callback, context);
 		}
 		this.__addDropSupport();
 	},
@@ -161,7 +167,6 @@ qx.Class.define("desk.SceneContainer",
 	},
 
 	events : {
-		"close" : "qx.event.type.Event",
 		/**
 		 * Fired whenever a mesh is removed. Attached data is the removed mesh
 		 */
@@ -189,9 +194,13 @@ qx.Class.define("desk.SceneContainer",
 
 		__leftContainer : null,
 
+		/**
+		 * Returns the objects handled in the scene
+		 * @return {Array} array of objects 
+		 */
 		getMeshes : function() {
 			var meshes = [];
-			if (!this.getScene()) return;
+			if (!this.getScene()) return [];
 			this.getScene().traverse(function(child) {
 				if (child.userData.viewerProperties) {
 					meshes.push(child);
@@ -200,6 +209,12 @@ qx.Class.define("desk.SceneContainer",
 			return meshes;
 		},
 
+		/**
+		 * Creates a leaf in the tree
+		 * @param opt {Object} possible options : parent, branch (true/false)
+		 *  label
+		 * @return {Integer} leaf id
+		 */
         __addLeaf : function (opt) {
 			opt = opt || {};
 			opt.label = opt.label || "mesh";
@@ -212,11 +227,21 @@ qx.Class.define("desk.SceneContainer",
 			return leaf;
 		},
 
+		/**
+		 * Returns the object corresponding to the node
+		 * @param node {Object} node
+		 * @return {THREE.Object3D} object
+		 */
 		__getMeshFromNode : function (node) {
 			var leaf = this.__meshes.nodeGet(node);
 			return leaf && leaf.viewerProperties && leaf.viewerProperties.mesh;
 		},
 
+		/**
+		 * Adds a mesh to the scene
+		 * @param mesh {THREE.Object3D} object to add
+		 * @param opt {Object} options
+		 */
 		addMesh : function (mesh, opt) {
 			opt = opt || {};
 			(opt.parent || this.getScene()).add(mesh);
@@ -229,6 +254,10 @@ qx.Class.define("desk.SceneContainer",
 			}
 		},
 
+		/**
+		 * Creates the filter container
+		 * @return {qx.ui.container.Composite} the container
+		 */
 		__getFilterContainer : function () {
 			var dataModel = this.__meshes.getDataModel();
 			var container = new qx.ui.container.Composite();
@@ -271,6 +300,12 @@ qx.Class.define("desk.SceneContainer",
 			return container;
 		},
 
+		/**
+		 * reads the file
+		 * @param file {String} file to read
+		 * @param opt {Object} options
+		 * @param callback {Function} callback when done
+		 */
 		__readFile : function (file, opt, callback) {
             opt = opt || {};
             opt.leaf = this.__addLeaf({parent : opt.parent,
@@ -304,12 +339,21 @@ qx.Class.define("desk.SceneContainer",
 			}
 		},
 
+		/**
+		 * loads a file
+		 * @param file {String} file to read
+		 * @param opt {Object} options
+		 * @param callback {Function} callback when done
+		 */
 		__loadFile : function (file, opt, callback) {
 			opt.mtime = opt.mtime || Math.random();
 			opt.url = desk.FileSystem.getFileURL(file);
 			this.loadURL(opt, callback);
 		},
 
+		/**
+		 * reloads all loaded objects
+		 */
 		update : function () {
 			var files = [];
 			this.getMeshes().forEach(function (mesh) {
@@ -322,7 +366,10 @@ qx.Class.define("desk.SceneContainer",
 			files.forEach(function (file) {this.addFile(file);}, this);
 		},
 
-		__propagateLinks : function () {
+		/**
+		 * reloads all loaded objects
+		 */
+		 __propagateLinks : function () {
 			this.getLinks().forEach(function (link) {
 				if (this === link) {return;}
 				link.getControls().copy(this.getControls());
@@ -338,18 +385,25 @@ qx.Class.define("desk.SceneContainer",
 			this.removeMeshes(this.getMeshes(), dispose);
 		},
 
-		__parseXMLData : function (file, xml, params, callback) {
+		/**
+		 * parses xml data
+		 * @param file {String} the read file
+		 * @param xml {Element} the xml tree
+		 * @param opts {Object} options
+		 * @param callback {Function} callback when done
+		 */
+		 __parseXMLData : function (file, xml, opts, callback) {
 			var root = xml.childNodes[0];
-			params.mtime = root.hasAttribute("timestamp")?
+			opts.mtime = root.hasAttribute("timestamp")?
 				parseFloat(root.getAttribute("timestamp")) : Math.random();
 
 			var dataModel = this.__meshes.getDataModel();
 			var leaf = dataModel.addBranch(null, desk.FileSystem.getFileName(file), null);
 			this.__setData();
 			var object = new THREE.Object3D();
-			params.leaf = leaf;
-			params.file = file;
-			this.addMesh(object, params);
+			opts.leaf = leaf;
+			opts.file = file;
+			this.addMesh(object, opts);
 
 			var path = desk.FileSystem.getFileDirectory(file);
 			async.each(xml.getElementsByTagName("mesh"), function (mesh, callback) {
@@ -379,20 +433,20 @@ qx.Class.define("desk.SceneContainer",
 		/**
 		 * Loads a file in the scene.
 		 * @param file {String} input file
-		 * @param parameters {Object} optionnal display options
+		 * @param opts {Object} options
 		 * @param callback {Function} callback when done
 		 * @param context {Object} optional context for the callback
 		 */
-		addFile : function (file, parameters, callback, context) {
-			if (typeof parameters === "function") {
-				callback = parameters;
+		addFile : function (file, opts, callback, context) {
+			if (typeof opts === "function") {
+				callback = opts;
 				context = callback;
-				parameters = {};
+				opts = {};
 			}
-			parameters = parameters || {};
+			opts = opts || {};
 			callback = callback || function () {};
 
-            parameters.file = file;
+            opts.file = file;
 
 			function after (mesh) {callback.call(context, mesh);}
 
@@ -403,7 +457,7 @@ qx.Class.define("desk.SceneContainer",
 				case "vtk":
 				case "ctm":
 				case "off":
-					this.__readFile (file, parameters, after);
+					this.__readFile (file, opts, after);
 					break;
 				case "xml":
 					desk.FileSystem.readFile(file, function (error, result){
@@ -411,7 +465,7 @@ qx.Class.define("desk.SceneContainer",
 							alert("Error while reading " + file + "\n" + error);
 							throw (error);
 						}
-						this.__parseXMLData(file, result, parameters, after);
+						this.__parseXMLData(file, result, opts, after);
 					}, this);
 					break;
 				case "json" : 
@@ -450,11 +504,11 @@ qx.Class.define("desk.SceneContainer",
 		/**
 		 * Attaches a set of desk.VolumeSlice to the scene
 		 * @param volumeSlice {desk.VolumeSlice} volume slice to attach;
-		 * @param opt {Object} options;
+		 * @param opts {Object} options;
 		 * @return {THREE.Mesh} the created mesh;
 		 */
-		attachVolumeSlice : function (volumeSlice, opt) {
-			opt = opt || {};
+		attachVolumeSlice : function (volumeSlice, opts) {
+			opts = opts || {};
 			var geometry = new THREE.PlaneBufferGeometry( 1, 1);
 			var material = volumeSlice.getMaterial();
 			material.side = THREE.DoubleSide;
@@ -479,7 +533,7 @@ qx.Class.define("desk.SceneContainer",
 			}, this);
 
 			this.addMesh(mesh, {label : 'View ' + (volumeSlice.getOrientation()+1),
-				volumeSlice : volumeSlice, updateCamera : false, parent : opt.parent
+				volumeSlice : volumeSlice, updateCamera : false, parent : opts.parent
 			});
 
 			var lineMaterial = new THREE.LineBasicMaterial({linewidth: 3,
@@ -501,6 +555,15 @@ qx.Class.define("desk.SceneContainer",
 			return mesh;
 		},
 
+		/**
+		 * Attaches a volume to the scene. The volume wil be represented 
+		 *  by its three orthogonal slices
+		 * @param file {String} volume file
+		 * @param opts {Object} options;
+		 * @param callback {Function} callback when done
+		 * @param context {Object} optional callback context
+		 * @return {THREE.Group} the object;
+		 */
 		addVolume : function (file, opts, callback, context) {
 			if (typeof(opts) === "function") {
 				context = callback;
@@ -536,6 +599,9 @@ qx.Class.define("desk.SceneContainer",
 			return group;
 		},
 
+		/**
+		 * Adds drop support
+		 */
 		__addDropSupport : function () {
 			this.setDroppable(true);
 			this.addListener("drop", function(e) {
@@ -550,6 +616,10 @@ qx.Class.define("desk.SceneContainer",
 
 		__draggingInProgress : false,
 
+		/**
+		 * fired whenever a button is clicked
+		 * @param event {qx.event.type.Event} the event
+		 */
 		__onMouseDown : function (event) {
 			if (event.getTarget() != this.getCanvas()) return;
 			this.capture();
@@ -584,6 +654,10 @@ qx.Class.define("desk.SceneContainer",
 
         __y : null,
 
+		/**
+		 * fired whenever the mouse is moved
+		 * @param event {qx.event.type.Event} the event
+		 */
 		__onMouseMove : function (event) {
 			this.__x = event.getDocumentLeft();
 			this.__y = event.getDocumentTop();
@@ -604,12 +678,21 @@ qx.Class.define("desk.SceneContainer",
 			}
 		},
 
+		/**
+		 * fired whenever a button is released
+		 * @param event {qx.event.type.Event} the event
+		 */
 		__onMouseUp : function (event) {
 			this.releaseCapture();
 			this.__draggingInProgress = false;
 			this.getControls().mouseUp();
 		},
 
+		/**
+		 * computes the intersection between an array of objects and the mouse pointer
+		 * @param meshes {Array} array of THREE objects
+		 * @return {Object} the (possibly empty) intersection
+		 */
 		__pickMeshes : function (meshes) {
 			meshes = _.filter(meshes, function (mesh) {
 				return mesh.visible;
@@ -636,6 +719,10 @@ qx.Class.define("desk.SceneContainer",
 			});
 		},
 
+		/**
+		 * fired whenever the mouse wheel is turned
+		 * @param event {qx.event.type.MouseWheel} the event
+		 */
 		__onMouseWheel : function (event) {
 			if (event.getTarget() != this.getCanvas()) return;
 			var slices = [];
@@ -662,18 +749,29 @@ qx.Class.define("desk.SceneContainer",
 			}
 		},
 
-		loadURL : function (parameters, callback) {
-			this.__queue.push(parameters, callback || function () {});
+		/**
+		 * loads an url
+		 * @param opts {Object} options
+		 * @param callback {Function} callback when done
+		 */
+		loadURL : function (opts, callback) {
+			this.__queue.push(opts, callback || function () {});
 		},
 
-        addGeometry : function (geometry, parameters) {
-            parameters = parameters || {label : 'geometry'};
+		/**
+		 * adds a geometry to the scene
+		 * @param geometry {THREE.Geometry} the input geometry
+		 * @param opts {Object} options
+		 * @return {THREE.Mesh} the mesh containing the geometry
+		 */
+        addGeometry : function (geometry, opts) {
+            opts = opts || {label : 'geometry'};
 			geometry.computeBoundingBox();
 
-			var color = parameters.color || [1, 1, 1, 1];
+			var color = opts.color || [1, 1, 1, 1];
  
-			if (typeof parameters.opacity !== "undefined") {
-				color[3] = parameters.opacity;
+			if (typeof opts.opacity !== "undefined") {
+				color[3] = opts.opacity;
 			}
 
 			var col = new THREE.Color(color[0], color[1], color[2]);
@@ -692,18 +790,23 @@ qx.Class.define("desk.SceneContainer",
 			if (geometry.attributes && geometry.attributes.color) {
 				mesh.material.vertexColors = THREE.VertexColors;
 			}
-			mesh.renderDepth = parameters.renderDepth || 0
-            this.addMesh( mesh, parameters );
+			mesh.renderDepth = opts.renderDepth || 0
+            this.addMesh( mesh, opts );
             return mesh;
         },
 
 		__ctmWorkers : [],
 
-		__urlLoad : function (opt, callback) {
-			if (desk.FileSystem.getFileExtension(opt.url) === "vtk") {
-				this.__vtkLoader.load (opt.url + "?nocache=" + opt.mtime,
+		/**
+		 * (really) loads an url
+		 * @param opts {Object} options
+		 * @param callback {Function} callback when done
+		 */
+		 __urlLoad : function (opts, callback) {
+			if (desk.FileSystem.getFileExtension(opts.url) === "vtk") {
+				this.__vtkLoader.load (opts.url + "?nocache=" + opts.mtime,
 					function (geometry) {
-						callback (this.addGeometry(geometry, opt));
+						callback (this.addGeometry(geometry, opts));
 				}.bind(this));
 			} else {
 				if (this.__ctmWorkers.length) {
@@ -713,13 +816,17 @@ qx.Class.define("desk.SceneContainer",
 					worker = this.__ctmLoader.createWorker();
 				}
 
-				this.__ctmLoader.load (opt.url + "?nocache=" + opt.mtime, function (geometry) {
+				this.__ctmLoader.load (opts.url + "?nocache=" + opts.mtime, function (geometry) {
 					this.__ctmWorkers.push(worker);
-					callback (this.addGeometry(geometry, opt));
+					callback (this.addGeometry(geometry, opts));
 				}.bind(this), {useWorker : true, worker : worker});
 			}
 		},
 
+		/**
+		 * creates the snapshot button
+		 * @return {qx.ui.form.Button} the button
+		 */
 		__getSnapshotButton : function () {
 			var factor = 1;
 			var menu = new qx.ui.menu.Menu();
@@ -741,12 +848,20 @@ qx.Class.define("desk.SceneContainer",
 			return button;
 		},
 
+		/**
+		 * creates the reset view button
+		 * @return {qx.ui.form.Button} the button
+		 */
 		__getResetViewButton : function () {
 			var button = new qx.ui.form.Button("reset view");
 			button.addListener("click", this.resetView, this);
 			return button;
 		},
 
+		/**
+		 * creates the save view button
+		 * @return {qx.ui.form.Button} the button
+		 */
 		__getSaveViewButton : function () {
 			var button = new qx.ui.form.Button("save view");
 			button.addListener("click", function () {
@@ -762,6 +877,10 @@ qx.Class.define("desk.SceneContainer",
 			return button;
 		},
 
+		/**
+		 * creates the camera button
+		 * @return {qx.ui.form.Button} the button
+		 */
 		__getCameraPropertiesButton : function () {
 			var button = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png");
 			button.addListener("execute", function () {
@@ -788,6 +907,10 @@ qx.Class.define("desk.SceneContainer",
 			return button;
 		},
 
+		/**
+		 * creates the drag label
+		 * @return {qx.ui.basic.Label} the label
+		 */
 		__getDragLabel : function () {
 			var label = new qx.ui.basic.Label("Link").set({
                 decorator: "button-box", width : 30, height : 30});
@@ -824,9 +947,12 @@ qx.Class.define("desk.SceneContainer",
 			return label;
 		},
 
-		__getPropertyWidget : function (parentWindow){
-			var meshesTree = this.__meshes;
-			
+		/**
+		 * creates mesh properties edition container
+		 * @param parentWindow {qx.ui.window.Window} optional parent window
+		 * @return {qx.ui.container.Composite} the container
+		 */
+		__getPropertyWidget : function (parentWindow){		
 			var mainContainer = new qx.ui.container.Composite();
 			mainContainer.setLayout(new qx.ui.layout.VBox());
 
@@ -867,7 +993,7 @@ qx.Class.define("desk.SceneContainer",
 			var enableUpdate = true;
 			var updateWidgets = function (event) {
 				enableUpdate = false;
-				var selectedNode = meshesTree.getSelectedNodes()[0];
+				var selectedNode = this.__meshes.getSelectedNodes()[0];
 				if (selectedNode.type === qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
 					var firstSelectedMesh = this.__getMeshFromNode(selectedNode);
 					var color=firstSelectedMesh.material.color;
@@ -887,7 +1013,7 @@ qx.Class.define("desk.SceneContainer",
 			
 			updateWidgets.apply(this);
 
-			meshesTree.addListener("changeSelection",updateWidgets, this);
+			this.__meshes.addListener("changeSelection", updateWidgets, this);
 
 			opacitySlider.addListener("changeValue", function(event){
 				if (enableUpdate) {
@@ -923,7 +1049,7 @@ qx.Class.define("desk.SceneContainer",
 					this.render();
 				}
 			}, this);
-			return (mainContainer);
+			return mainContainer;
 		},
 
 		/**
@@ -999,6 +1125,10 @@ qx.Class.define("desk.SceneContainer",
 
 		__animator : null,
 
+		/**
+		 * creates the context menu
+		 * @return {qx.ui.menu.Menu} the menu
+		 */
 		__getContextMenu : function() {
 			//context menu to edit meshes appearance
 			var menu = new qx.ui.menu.Menu();

@@ -68,6 +68,9 @@ qx.Class.define("desk.Actions",
 		__runingActions : [],
 		__remainingInits : 2,
 
+		/**
+		* Creates the action menu, visible on all file browsers
+		*/
 		__createActionsMenu : function () {
 			var menu = new qx.ui.menu.Menu();
 			var forceButton = new qx.ui.menu.CheckBox("Disable cache");
@@ -95,6 +98,10 @@ qx.Class.define("desk.Actions",
 			}, this);
 		},
 
+		/**
+		* Creates the password change button
+		* @return {qx.ui.menu.Button} the button
+		*/
 		__getPasswordButton : function () {
 			var button = new qx.ui.menu.Button('Change password');
 			button.setBlockToolTip(false);
@@ -118,6 +125,10 @@ qx.Class.define("desk.Actions",
 			return button;
 		},
 
+		/**
+		* Creates the server log button
+		* @return {qx.ui.menu.Button} the button
+		*/
 		__getServerLogButton : function () {
 			var button = new qx.ui.menu.Button('Server log');
 			button.setBlockToolTip(false);
@@ -143,6 +154,10 @@ qx.Class.define("desk.Actions",
 			return button;
 		},
 
+		/**
+		* Creates the console log button
+		* @return {qx.ui.menu.Button} the button
+		*/
 		__getConsoleLogButton : function () {
 			var button = new qx.ui.menu.Button('Console log');
 			button.setBlockToolTip(false);
@@ -265,6 +280,10 @@ qx.Class.define("desk.Actions",
 			});
 		},
 
+		/**
+		* Fired whenever an action is finished
+		* @param response {Object} the server response
+		*/
 		__onActionEnd : function (response) {
 			var params = this.__runingActions[response.handle];
 			if (!params) return;
@@ -295,7 +314,6 @@ qx.Class.define("desk.Actions",
 		* @param params {Object} object containing action aprameters
 		* @param callback {Function} callback for when the action has been performed
 		* @param context {Object} optional context for the callback
-		* @return {String} action handle for managemenent (kill etc...)
 		*/
 		launchAction : function (params, callback, context) {
 			desk.Actions.init(function () {
@@ -303,6 +321,13 @@ qx.Class.define("desk.Actions",
 			}, this);
 		},
 
+		/**
+		* launches an action
+		* @param params {Object} object containing action aprameters
+		* @param callback {Function} callback for when the action has been performed
+		* @param context {Object} optional context for the callback
+		* @return {String} action handle for managemenent (kill etc...)
+		*/
 		__launchAction : function (params, callback, context) {
 			params = JSON.parse(JSON.stringify(params));
 			params.handle = Math.random().toString();
@@ -325,6 +350,10 @@ qx.Class.define("desk.Actions",
 			return params.handle;
 		},
 
+		/**
+		* Adds the action widget to the list of runing actions
+		* @param parameters {Object} action parameters
+		*/
 		__addActionToList : function(parameters) {
 			if (parameters.actionFinished) {
 				return;
@@ -358,6 +387,11 @@ qx.Class.define("desk.Actions",
 			this.__ongoingActions.add(item);
 		},
 
+
+		/**
+		* fired when an action is launched via the action menu
+		* @param e {qx.event.type.Event} button event
+		*/
 		__launch : function (e) {
 			var name = e.getTarget().getLabel();
 			var action = new desk.Action(name, {standalone : true});
@@ -373,10 +407,20 @@ qx.Class.define("desk.Actions",
 			action.setOutputDirectory("actions/");
 		},
 
+		/**
+		* custom comparator for the sort operator
+		* @param a {String} first value to compare
+		* @param b {String} second value to compare
+		* @return {Boolean} true if a < b
+		*/
 		__myComparator : function (a, b) {
 			return a.toLowerCase().localeCompare(b.toLowerCase());
 		},
 
+		/**
+		* Loads actions.json from server and refreshes the action menu
+		* @param callback {function} callback when done
+		*/
 		__populateActionMenu : function(callback) {
 			desk.FileSystem.readFile('actions.json', function (error, settings) {
 				this.__actionMenu = new qx.ui.menu.Menu();
