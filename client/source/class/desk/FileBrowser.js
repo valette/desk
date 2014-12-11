@@ -16,10 +16,9 @@ qx.Class.define("desk.FileBrowser",
 	extend : qx.ui.container.Composite,
 	/**
 	* Creates a new file browser
-	* @param baseDir {String} directory to browse. Defaluts to "data"
+	* @param baseDir {String} directory to browse. Defaults to "data"
 	* @param standAlone {bool} defines whether the container should be
 	* embedded in a window or not (default : false).
-	* 
 	*/
 	construct : function(baseDir, standAlone) {
 		baseDir = baseDir || "data";
@@ -36,79 +35,23 @@ qx.Class.define("desk.FileBrowser",
 		this.__actionCallbacks = [];
 		this.__actionNames = [];
 
-		var that = this;
-
-		var delegate = {
-			bindItem : function(controller, item, index) {
-				controller.bindDefaultProperties(item, index);
-				controller.bindProperty("size", "size", null, item, index);
-				//controller.bindProperty("mtime", "mtime", null, item, index);
-
-		/*		controller.bindProperty("", "open", {
-					converter : function(value, model, source, target) {
-						var isOpen = target.isOpen();
-						//console.log("open : " + isOpen);
-						if (isOpen && !value.getLoaded()) {
-							value.setLoaded(true);
-
-							value.getChildren().removeAll();
-							console.log("here");
-							that.__expandDirectoryListing(value);
-						}
-						return isOpen;
-					}
-				}, item, index);*/
-			}
-		};
-
 		this.__files = new qx.ui.tree.VirtualTree(null, "name", "children");
-	//	this.__files.setDelegate(delegate);
-	/*	this.__files.setIconPath("icon");
-		this.__files.setIconOptions({
-			converter : function(value, model) {
-				console.log(value);
-				console.log(model);
-				if (value == "default") {
-					if (model.getChildren) {
-						return "icon/22/places/folder.png";
-					} else {
-						var image = "desk/tris.png";//"icon/22/mimetypes/office-document.png";
-						/*switch (desk.FileSystem.getFileExtension(model.getName())) {
-						case "vtk":
-						case "ply":
-						case "obj":
-						case "stl":
-							image = "desk/tris.png";
-							break;
-						case "mhd":
-						case "jpg":
-						case "png":
-							image = "desk/img.png";
-							break;
-						default:
-							break;
-						}*//*
-						return image;
-					}
-				} else {
-					return "icon/22/mimetypes/office-document.png";
-				}
-			}
-		});*/
+		this.__files.setIconPath("");
+		this.__files.setIconOptions(this.__iconOptions);
 		this.__files.set({
 			draggable : true,
 			droppable : true,
 			showTopLevelOpenCloseIcons : true,
 			selectionMode : "multi"
 		});
-		this.__files.addListener("open", this.__onTreeOpen, this);
+		this.__files.addListener("open", this.__onOpen, this);
 
         if (this.__standAlone) {
             this.add(this.__getShortcutsContainer());
         }
 
 		this.add(this.__files, {flex: 1});
-	//	this.__createFilter();
+		this.__createFilter();
 
 		// add root directory
 		this.updateRoot(baseDir);
@@ -117,9 +60,15 @@ qx.Class.define("desk.FileBrowser",
 		desk.Actions.init(this.__createDefaultStaticActions, this);
 
 		this.__files.addListener("dbltap", this.__onDbltap, this);
-		this.__files.addListener("dragstart", this.__onDragstart);
+		this.__files.addListener("dragstart", this.__onDragstart, this);
+		this.__files.addListener("dragend", this.__onDragEnd, this);
 		this.__files.addListener("droprequest", this.__onDropRequest, this);
 		this.__files.addListener('drop', this.__onDrop, this);
+
+		// this code is for backwards compatibility, may be removed later
+		this.__files.getSelection().addListener("change", function (e) {
+			this.__files.fireDataEvent("changeSelection", this.__files.getSelection());
+		}, this);
 
 		if (this.__standAlone) {
 			var win = this.__window = new qx.ui.window.Window();
@@ -142,13 +91,11 @@ qx.Class.define("desk.FileBrowser",
 		if (this.__standAlone) {
 			this.__window.destroy();
 		}
-		this.__files.getDataModel().dispose();
 		this.__files.dispose();
 		qx.util.DisposeUtil.destroyContainer(this);
-		var browsers = this.__fileBrowsers;
-		for (var i = 0; i < browsers.length; i++) {
-			if (browsers[i] === this) {
-				browsers.splice(i, 1);
+		for (var i = 0; i < this.__fileBrowsers.length; i++) {
+			if (this.__fileBrowsers[i] === this) {
+				this.__fileBrowsers.splice(i, 1);
 				return;
 			}
 		}
@@ -157,19 +104,41 @@ qx.Class.define("desk.FileBrowser",
 	members : {
 		__focusedRow : null,
 
+		__iconOptions : {
+			converter : function(value, model) {
+				if (model.getChildren) {
+					return "icon/22/places/folder.png";
+				} else {
+					var image = "icon/22/mimetypes/office-document.png";
+					switch (desk.FileSystem.getFileExtension(model.getName())) {
+					case "vtk":
+					case "ply":
+					case "obj":
+					case "stl":
+						image = "desk/tris.png";
+						break;
+					case "mhd":
+					case "jpg":
+					case "png":
+						image = "desk/img.png";
+						break;
+					default:
+						break;
+					}
+					return image;
+				}
+			}
+		},
+
 		__createFilter : function () {
 			// create the filter bar
 			var filterBox = new qx.ui.container.Composite();
 			filterBox.setLayout(new qx.ui.layout.HBox(10));
-			var dataModel = this.__files.getDataModel();
-
 			var filterText = new qx.ui.basic.Label("Filter files :");
 			filterBox.add(filterText);
 			var filterField = new qx.ui.form.TextField();
 			filterField.setValue("");
-			filterField.addListener("input", function() {
-				dataModel.setData();
-			},this);
+			filterField.addListener("input", this.__files.refresh, this.__files);
 			filterBox.add(filterField, {flex:1});
 			this.__filterField = filterField;
 
@@ -177,17 +146,17 @@ qx.Class.define("desk.FileBrowser",
 			resetButton.setAllowGrowY(false);
 			resetButton.addListener("execute",function(e){
 				filterField.setValue("");
-				dataModel.setData();
-			});
+				this.__files.refresh();
+			}, this);
 
 			filterBox.add(resetButton);
-			dataModel.setFilter(function(node) {
-				if (!node.getChildren) {
-					var label = node.label;
-					return label.toLowerCase().indexOf(filterField.getValue().toLowerCase()) != -1;
+			this.__files.setDelegate({
+				filter : function (node) {
+					return node.getChildren || node.getName().toLowerCase()
+						.indexOf(filterField.getValue().toLowerCase()) != -1;
 				}
-				return true;
-			}.bind(this));
+			});
+
 			if(this.__standAlone) {
 				this.add(filterBox);
 			}
@@ -196,30 +165,47 @@ qx.Class.define("desk.FileBrowser",
 		__onDbltap :  function (e) {
 			var node = e.getTarget();
 			if (node && node.getModel && e.isLeftPressed() && !e.isCtrlOrCommandPressed()) {
-				if (!node.getChildren && this.__fileHandler) {
+				if (!node.getModel().getChildren && this.__fileHandler) {
 					this.__fileHandler(node.getModel().getFullName());
 				}
 			}
 		},
 
-		__onTreeOpen : function (e) {
+		__onOpen : function (e) {
 			var node = e.getData();
 			this.__expandDirectoryListing(node);
 		},
 
-		__savedSelection : null,
+		__onClose : function (e) {
+			var node = e.getData();
+			node.getChildren().removeAll();
+			node.getChildren().push(
+				qx.data.marshal.Json.createModel({name: "Loading", loading : false})
+			);
+			this.__files.refresh();
+		},
 
 		__onDragstart : function(e) {
 			e.addAction("move");
 			e.addType("fileBrowser");
 			e.addType("file");
+			var selection = this.getSelectedFiles();
+			var dragged = e.getDragTarget().getModel().getFullName();
+			if (_.indexOf(selection, dragged) < 0) {
+				selection = [dragged];
+			}
+			this.__draggedNodes = selection;
+		},
+
+		__onDragEnd : function(e) {
+			this.__draggedNodes = null;
 		},
 
 		__onDropRequest : function(e) {
 			var type = e.getCurrentType();
 			switch (type) {
 			case "file":
-				e.addData(type, e.getDragTarget().getModel());
+				e.addData(type, e.getDragTarget().getModel().getFullName());
 				break;
 			case "fileBrowser":
 				e.addData(type, this);
@@ -249,12 +235,10 @@ qx.Class.define("desk.FileBrowser",
 			}
 			
 			var target = e.getOriginalTarget().getModel();
-			destination = target.getFullName();
+			var destination = target.getFullName();
 			if (!target.getChildren) {
 				destination = desk.FileSystem.getFileDirectory(destination);
 			}
-console.log(files);
-console.log(destination);
 			var actionType = prompt('Copy or move? \n0 : copy,  1 : move', '0');
 			actionType = actionType === '1' ? 'move' : 'copy'
 
@@ -357,23 +341,23 @@ console.log(destination);
 		* @param newRoot {String} new root
 		*/
 		updateRoot : function (newRoot) {
-			if (newRoot) {
-				this.__baseDir = newRoot;
-			}
+			this.__baseDir = newRoot || this.__baseDir;
 
 			this.__root = qx.data.marshal.Json.createModel({
 				name: this.__baseDir,
 				fullName : this.__baseDir,
-				children: [{name : "loading", size : 0, mtime : 0}],
+				children: [],
 				icon: "default",
-				loaded: false
+				loading: false
 			}, true);
 
 			if (this.__window) {
 				this.__window.setCaption(newRoot);
 			}
+			this.__root.getChildren().push(
+				qx.data.marshal.Json.createModel({name: "Loading", loading : false})
+			);
 			this.__files.setModel(this.__root);
-			this.__files.openNode(this.__root);
 		},
 
 		__defaultFileHandler : function (file) {
@@ -479,7 +463,6 @@ console.log(destination);
 			}
 			var newDir = prompt('Name of the directory to create','new_dir');
 			if (!newDir) return;
-			console.log("new dir : " + dir + '/' + newDir);
 			desk.Actions.getInstance().launchAction({
 				"action" : "create_directory",
 				"directory" : dir + '/' + newDir},
@@ -567,8 +550,9 @@ console.log(destination);
 				actionsButton.setMenu(desk.Actions.getInstance().getActionsMenu(this));
 			}, this);
 
-			if (desk.Actions.getInstance().getPermissionsLevel()<1)
+			if (desk.Actions.getInstance().getPermissionsLevel()<1) {
 				return;
+			}
 
 			this.addAction("VolViewSimple", this.__volViewSimpleAction, this);
 			this.addAction("download", this.__downloadAction, this);
@@ -587,8 +571,7 @@ console.log(destination);
 		* @param context {Object} : optional context for the callback
 		*/
 		addAction : function (actionName, callback, context) {
-			var location = this.__actionNames.indexOf(actionName);
-			if (location == -1) {
+			if (this.__actionNames.indexOf(actionName) == -1) {
 				this.__actionNames.push(actionName);
 			} else {
 				console.log ('Warning : action "' + actionName + '" already exists, is overwritten!');
@@ -621,25 +604,20 @@ console.log(destination);
 		* @return {qx.ui.treevirtual.TreeVirtual} the virtual tree
 		*/
 		getTree : function () {
-			return (this.__files);
+			return this.__files;
 		},
 
+		__draggedNodes : null,
+	
 		/**
 		* Returns an array containing currently selected files
 		* @return {Array} array of files (strings)
 		*/
 		getSelectedFiles : function () {
-			return this.__files.getSelection().toArray().map(function (node) {
-				return node.getFullName();
-			}, this);
-		},
-
-		__getNodeMTime : function (node) {
-			return (this.__files.getDataModel().getColumnData(node.nodeId, 1));
-		},
-
-		__getNodeURL : function (node) {
-			return (desk.FileSystem.getFileURL(this.__getNodeFile(node)));
+			return this.__draggedNodes || this.__files.getSelection()
+				.toArray().map(function(node) {
+					return node.getFullName()
+				});
 		},
 
 		/**
@@ -656,7 +634,6 @@ console.log(destination);
 
 		__getFileNode : function (file) {
 			var baseDir = this.getRootDir();
-			console.log("get node from  : " + file);
 			if (file.indexOf(baseDir) !== 0) {
 				return null;
 			}
@@ -665,24 +642,18 @@ console.log(destination);
 			if (hierarchy[hierarchy.length - 1].length === 0) {
 				hierarchy.pop();
 			}
-			console.log(hierarchy);
 			var node = this.__root;
 			for (var i = 0; i < hierarchy.length; i++) {
 				if (!_.find(node.getChildren().toArray(), function (child) {
-					console.log(child.getName() + " **** " + hierarchy[i]);
 					if (child.getName() === hierarchy[i]) {
-						console.log("ok");
 						node = child;
 						return true;
 					}
 					return false;
 				})) {
-					console.log("no");
 					return null;
 				}
 			}
-			console.log("yes");
-			console.log(node);
 			return node;
 		},
 
@@ -691,7 +662,6 @@ console.log(destination);
 		* @param file {String} directory to update
 		*/
 		updateDirectory : function (file) {
-			console.log(file);
 			this.__fileBrowsers.forEach(function (browser) {
 				var nodeId = browser.__getFileNode(file);
 				if (nodeId) {
@@ -708,78 +678,27 @@ console.log(destination);
 			return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
 		},
 
-		__readFileList : function (files, directory) {
-			var dataModel = this.__files.getDataModel();
-			var filesArray = [];
-			var directoriesArray = [];
-			var modificationTimes = [];
-			var sizes = [];
-			var node = this.__getFileNode(directory);
-			if (node === null) {
-				return;
-			}
-			var nodeId = node.nodeId;
-			dataModel.prune(nodeId,false);
-
-			files.forEach(function (file) {
-				var fileName = file.name;
-
-				if (!file.isDirectory) {
-					filesArray.push(fileName);
-					sizes[fileName] = file.size;
-				} else {
-					directoriesArray.push(fileName);
-				}
-				modificationTimes[fileName] = file.mtime;
-			});
-			directoriesArray.sort(this.__caseInsensitiveSort);
-			filesArray.sort(this.__caseInsensitiveSort);
-
-			directoriesArray.forEach(function (directory) {
-				dataModel.addBranch(nodeId , directory);
-			});
-
-			filesArray.forEach(function (file) {
-				var image = null;
-				switch (desk.FileSystem.getFileExtension(file)) {
-				case "vtk":
-				case "ply":
-				case "obj":
-				case "stl":
-					image = "desk/tris.png";
-					break;
-				case "mhd":
-				case "jpg":
-				case "png":
-					image = "desk/img.png";
-					break;
-				default:
-					break;
-				}
-				var newNode = dataModel.addLeaf(nodeId, file, image);
-				dataModel.setColumnData(newNode, 1, modificationTimes[file]);
-				dataModel.setColumnData(newNode, 2, sizes[file]);
-			});
-			dataModel.setData();
-		},
-
 		__expandDirectoryListing : function(node) {
 			var directory = node.getFullName();
 			var children = node.getChildren();
-			children.removeAll();
 			desk.FileSystem.readDir(directory, function (err, files) {
+				children.removeAll();
 				files.sort(this.__caseInsensitiveSort)
 				files.forEach(function (file) {
 					file.fullName = directory + "/" + file.name;
 					if (file.isDirectory) {
-						file.children = [{name : "loading", size : 0, mtime : 0}];
-						file.loaded = false;
-						children.push(qx.data.marshal.Json.createModel(file));
+						file.children = [];
+						file.loading = false;
+						var model = qx.data.marshal.Json.createModel(file);
+						children.push(model);
+						model.getChildren().push(
+							qx.data.marshal.Json.createModel({name: "Loading", loading : false})
+						);
 					}
 				});
 				files.forEach(function (file) {
 					if (!file.isDirectory) {
-						file.loaded = true;
+						file.loading = false;
 						children.push(qx.data.marshal.Json.createModel(file));
 					}
 				});
