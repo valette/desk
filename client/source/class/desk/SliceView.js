@@ -65,14 +65,7 @@ qx.Class.define("desk.SliceView",
 
 	events : {
 		"changeDrawing" : "qx.event.type.Event",
-		"changeCrossPosition" : "qx.event.type.Event",
-		"viewMouseDown" : "qx.event.type.Event",
-		"viewMouseMove" : "qx.event.type.Event",
-		"viewMouseOver" : "qx.event.type.Event",
-		"viewMouseOut" : "qx.event.type.Event",
-		"viewMouseUp" : "qx.event.type.Event",
-		"viewMouseClick" : "qx.event.type.Event",
-		"viewMouseWheel" : "qx.event.type.Event"
+		"changeCrossPosition" : "qx.event.type.Event"
 	},
 
 	members : {
@@ -748,7 +741,6 @@ qx.Class.define("desk.SliceView",
 			} else {
 				this.__setCrossPositionFromEvent(e);
 			}
-			this.fireDataEvent("viewMouseDown", e);
 		},
 
 		__onMouseOut : function (event) {
@@ -758,7 +750,6 @@ qx.Class.define("desk.SliceView",
 			this.__directionOverlays[3].setLayoutProperties({right: 1, top:"45%"});
 			if (this.__brushMesh) this.__brushMesh.visible = false;
 			this.render();
-			this.fireDataEvent("viewMouseOut",event);
 		},
 
 		__onMouseMove : function (event) {
@@ -827,7 +818,6 @@ qx.Class.define("desk.SliceView",
 				break;
 			}
 			event.preventDefault(); // Prevent cursor changing to "text" cursor while drawing
-			this.fireDataEvent("viewMouseMove",event);
 		},
 
 		__onMouseUp : function (event)	{
@@ -847,7 +837,6 @@ qx.Class.define("desk.SliceView",
 				this.updateDrawingCanvas();
 			}
 			this.__interactionMode = -1;
-			this.fireDataEvent("viewMouseUp",event);
 		},
 
 		__onMouseWheel : function (event) {
@@ -856,7 +845,6 @@ qx.Class.define("desk.SliceView",
 
 			slider.setValue(Math.min(slider.getMaximum(), Math.max(
 				slider.getValue() + delta, slider.getMinimum())));
-			this.fireDataEvent("viewMouseWheel",event);
 		},
 
 		__setupInteractionEvents : function () {
