@@ -21,6 +21,10 @@ qx.Mixin.define("desk.LinkMixin",
 			this.__addUnique(source);
 		},
 
+		/**
+		* adds an object to a lik group. Checks for duplicates
+		* @param object {Object} the object to link to
+		*/
 		__addUnique  : function (object) {
 			if (!_.contains(this.__links, object)) {
 				this.__links.push(object);

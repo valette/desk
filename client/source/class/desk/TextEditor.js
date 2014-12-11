@@ -98,12 +98,18 @@ qx.Class.define("desk.TextEditor",
 		__buttons : null,
 		__script : null,
 
+        /**
+		* Removes the script from the DOM
+		*/
 		__removeScript : function () {
 			if (this.__script) {
 				document.getElementsByTagName('body')[0].removeChild(this.__script);
 			}
 		},
 
+        /**
+		* Callback launched each time the execute button is pressed
+		*/
 		__onExecute : function() {
 			desk.TextEditor.codeInTextEditor = null;
 			this.__removeScript();

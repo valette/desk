@@ -26,10 +26,18 @@ qx.Mixin.define("desk.WindowMixin",
 	members : {
 		__window : null,
 
+		/**
+		 * Returns the container window
+		 * @return {qx.ui.window.Window} the container window
+		 */
 		getWindow : function () {
 			return (this.__window);
 		},
 
+
+		/**
+		 * closes the window
+		 */
 		close : function () {
 			this.__window.close();
 		}

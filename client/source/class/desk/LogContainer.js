@@ -5,7 +5,10 @@ qx.Class.define("desk.LogContainer",
 {
 	extend : qx.ui.embed.Html,
 
-	construct : function (message) {
+    /**
+    * Constructor
+    */
+	construct : function () {
 		this.base(arguments);
 		this.set({
 			font : "monospace",
@@ -33,7 +36,7 @@ members : {
     /**
     * Add log message
     * @param message {String} message to display
-    * @param coloe {String} optional message color
+    * @param color {String} optional message color
     */
     log : function (message, color) {
 		if (!message) {

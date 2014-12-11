@@ -29,6 +29,10 @@ qx.Class.define("desk.Random",
 	},
 
 	members : {
+		/**
+		 * Initializes the seed generator;
+		 * @param seed {String} a seed
+		 */
 		__init : function (seed) {
 			var keySchedule = this.__keySchedule;
 			for (var i = 0; i < 256; i++) {
@@ -49,7 +53,11 @@ qx.Class.define("desk.Random",
 		__keySchedule_i : null,
 		__keySchedule_j : null,
 
-		__getRandomByte : function () {
+		/**
+		 * Returns a random number in the [0, 255] range
+		 * @return {Int} random number
+		 */
+		 __getRandomByte : function () {
 			var keySchedule = this.__keySchedule;
 			this.__keySchedule_i = (this.__keySchedule_i + 1) % 256;
 			this.__keySchedule_j = (this.__keySchedule_j + keySchedule[this.__keySchedule_i]) % 256;
@@ -63,7 +71,7 @@ qx.Class.define("desk.Random",
 
 		/**
 		 * Returns a random number in the [0,1] range
-		 * @return{Float} random number
+		 * @return {Float} random number
 		 */
 		random : function() {
 			var number = 0;

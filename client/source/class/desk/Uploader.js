@@ -1,13 +1,23 @@
+/**
+* A general purpose file uploader
+*/
+
 qx.Class.define("desk.Uploader", 
 {
 	extend : qx.core.Object,
 
 	events : {
+		/**
+		* Fired each time a file is succesfully uploaded
+		*/
 		"upload" : "qx.event.type.Data"
 	},
 
-	construct : function( uploadDir )
-	{
+	/**
+	* Constructor
+	* @param uploadDir {String} upload directory
+	*/
+	construct : function( uploadDir ) {
 		uploadDir = uploadDir || 'data/upload';
 		this.base( arguments );
 
@@ -103,10 +113,13 @@ qx.Class.define("desk.Uploader",
   		this.__window = win;
 	},
 	
-	members :
-	{		
+	members : {		
 		__window : null,
-		
+
+		/**
+		* Returns the window containing the uploader
+		* @return {qx.ui.window.Window} the uploader window
+		*/
 		getWindow : function() {
 			return this.__window;
 		}
