@@ -138,14 +138,22 @@ qx.Class.define("desk.ThreeContainer",
 	},
 
 	events : {
-		// fired before each render
+		/**
+		 * fired before each render
+		 */
 		"beforeRender" : "qx.event.type.Event",
 
-		// fired after each render
+		/**
+		 * fired after each render
+		 */
 		"render" : "qx.event.type.Event"
 	},
 
 	members : {
+		/**
+		 * removes membersin the object
+		 * @param object {Object} object to clean
+		 */
 		_deleteMembers : function (object) {
 			var members = Object.keys(object);
 			for (var i = 0; i < members.length; i++) {
@@ -160,7 +168,10 @@ qx.Class.define("desk.ThreeContainer",
 		__garbageContainer : new qx.ui.container.Composite(new qx.ui.layout.HBox()),
 		__listenerId : null,
 
-		__setupFullscreen : function () {
+		/**
+		 * configures widget for fullscreen
+		 */
+		 __setupFullscreen : function () {
 			var parent, width, height, color, alpha;
 			this.addListener('changeFullscreen', function (e) {
 				if (!e.getData()) {
@@ -213,6 +224,9 @@ qx.Class.define("desk.ThreeContainer",
 
 		__renderingTriggered : null,
 
+		/**
+		 * renders the scene
+		 */
 		__render : function () {
 			this.__renderingTriggered = false;
 			this.fireEvent("beforeRender");
@@ -221,6 +235,9 @@ qx.Class.define("desk.ThreeContainer",
 			this.fireEvent('render');
 		},
 
+		/**
+		 * resize canvas
+		 */
 		__resizeThreeCanvas : function () {
 			var width = this.__threeCanvas.getCanvasWidth();
 			var height = this.__threeCanvas.getCanvasHeight();
@@ -334,6 +351,10 @@ qx.Class.define("desk.ThreeContainer",
 			this.render();
 		},
 
+		/**
+		 * multiply canvas dimensions
+		 * @param ratio {Float} ratio
+		 */
 		__multiplyDimensions : function (ratio) {
 			this.__scene.traverse(function (object) {
 				if (object.material && object.material.wireframe) {

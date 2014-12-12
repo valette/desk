@@ -509,7 +509,8 @@ qx.Class.define("desk.MPRContainer",
 		* @param file {String} : file to load
         * @param options {Object} : options object containing settings
         * such as imageFormat (0 or 1), label (text), visible (bool)
-        * @param callback {Function} : callback when loaded.
+        * @param callback {Function} : callback when loaded. First 
+        *  callback argument is the error, the second is the volume widget
         * @param context {Object} : optional callback context
         * @return {qx.ui.container.Composite}  volume item
 		*/
@@ -612,7 +613,7 @@ qx.Class.define("desk.MPRContainer",
 						this.removeVolume(volumeListItem);
 					}
 					this.__reorderMeshes();
-					callback.call(context, err);
+					callback.call(context, err, volumeListItem);
 				}.bind(this)
 			);
 

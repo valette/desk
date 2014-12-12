@@ -55,13 +55,26 @@ qx.Class.define("desk.VolumeSlice",
 	},
 
 	properties : {
+		/**
+		 * current slice index
+		 */
 		slice : { init : -1, check: "Number", event : "changeSlice"},
+
+		/**
+		 * current orientation
+		 */
 		orientation : { init : 0, check: "Number", event : "changeOrientation"},
+
+		/**
+		 * current Image format
+		 */
 		imageFormat : { init : 1, check: "Number", event : "changeImageFormat"}
 	},
 
 	events : {
-		// the "changeSlice" event is fired whenever the image changes
+		/**
+		 * fired whenever the image changes
+		 */
 		"changeImage" : "qx.event.type.Event"
 	},
 
@@ -205,52 +218,102 @@ qx.Class.define("desk.VolumeSlice",
 
 		__ready : false,
 
+		/**
+		 * informs whether the slice is ready (i.e. loaded);
+		 * @return {Boolean} ready/not ready
+		 */
 		isReady : function () {
 			return this.__ready;
 		},
 
+		/**
+		 * returns the loaded file
+		 * @return {String} the loaded file
+		 */
 		getFileName : function () {
 			return this.__file;
 		},
 
+		
+		/**
+		 * returns the volume dimensions
+		 * @return {Array} array of 3D dimensions
+		 */
 		getDimensions : function () {
 			return this.__dimensions;
 		},
 
+		/**
+		 * returns the volume extent
+		 * @return {Array} array of 3D extent
+		 */
 		getExtent : function () {
 			return this.__extent;
 		},
 
+		/**
+		 * returns the volume origin
+		 * @return {Array} array of origin coordinates
+		 */
 		getOrigin : function () {
 			return this.__origin;
 		},
 
+		/**
+		 * returns the volume spacing
+		 * @return {Array} array of spacings
+		 */
 		getSpacing : function () {
 			return this.__spacing;
 		},
 
-		get2DSpacing : function () {
+		/**
+		 * returns the volume 2D spacing i.e. the spacing in the projected view
+		 * @return {Array} array of spacings
+		 */
+		 get2DSpacing : function () {
 			var o = this.getOrientation();
 			return [this.__spacing[desk.VolumeSlice.indices.x[o]],
 				this.__spacing[desk.VolumeSlice.indices.y[o]]];
 		},
 
+		/**
+		 * returns the volume scalar type
+		 * @return {Int} scalar type (according to VTK definition)
+		 */
 		getScalarType : function () {
 			return this.__scalarType;
 		},
 
+		/**
+		 * returns the volume scalar type as a string
+		 * @return {String} scalar type (according to VTK definition)
+		 */
 		getScalarTypeAsString : function () {
 			return this.__scalarTypeString;
 		},
 
+		/**
+		 * returns the volume scalar size (in bytes)
+		 * @return {Int} scalar size
+		 */
 		getScalarSize : function () {
 			return this.__scalarSize;
 		},
 
+		/**
+		 * returns the volume scalar bounds [min, max]
+		 * @return {Array} bounds
+		 */
 		getScalarBounds : function () {
 			return [this.__scalarMin, this.__scalarMax];
 		},
 
+		/**
+		 * reloads the volume
+		 * @param callback {Function} callback when done
+		 * @param context {Object} optional callback context
+		 */
 		update : function (callback, context) {
             var params = {
 			    input_volume : this.__file,
@@ -281,10 +344,18 @@ qx.Class.define("desk.VolumeSlice",
 			}, this);
 		},
 
+		/**
+		 * returns current brightness
+		 * @return {Float} current brightness
+		 */
 		getBrightness : function () {
 			return this.__brightness;
 		},
 
+		/**
+		 * returns current contrast
+		 * @return {Float} current contrast
+		 */
 		getContrast : function () {
 			return this.__contrast;
 		},
@@ -315,11 +386,20 @@ qx.Class.define("desk.VolumeSlice",
 			this.fireEvent("changeImage");
 		},
 
+		/**
+		 * gets the slices file names offset
+		 * @return {Int} offset
+		 */
 		getSlicesIdOffset : function () {
 			return this.__offset;
 		},
 
-		__setLookupTablesToMaterial : function ( luts , material ) {
+		/**
+		 * attach lookup tables to material
+		 * @param luts {Array} array of luts
+		 * @param material {THREE.Material} material
+		 */
+		 __setLookupTablesToMaterial : function ( luts , material ) {
 			var lut = material.uniforms.lookupTable.value;
 			var numberOfColors = luts[0].length;
 			material.uniforms.lookupTableLength.value = numberOfColors;
@@ -338,6 +418,10 @@ qx.Class.define("desk.VolumeSlice",
 			}
 		},
 
+		/**
+		 * set lookup tables
+		 * @param luts {Array} array of luts
+		 */
 		setLookupTables : function (luts) {
 			if (!luts) {
 				this.removeLookupTables();
@@ -351,10 +435,17 @@ qx.Class.define("desk.VolumeSlice",
 			this.fireEvent("changeImage");
 		},
 
+		/**
+		 * get lookup tables
+		 * @return {Array} array of luts
+		 */
 		getLookupTables : function () {
 			return this.__lookupTables;
 		},
 
+		/**
+		 * remove all lookup tables
+		 */
 		removeLookupTables : function () {
 			this.__lookupTables = null;
 
@@ -364,6 +455,10 @@ qx.Class.define("desk.VolumeSlice",
 			this.fireEvent("changeImage");
 		},
 
+		/**
+		 * updates a material
+		 * @param material {THREE.Material} the material to update
+		 */
 		updateMaterial : function (material) {
 			material.uniforms = {};
 			Object.keys(material.baseShader.baseUniforms).forEach(function (key) {
@@ -542,6 +637,10 @@ qx.Class.define("desk.VolumeSlice",
 							Math.pow(bounds[5] - bounds[4], 2));
 		},
 
+		/**
+		 * returns the index of the z axis in the orientation
+		 * @return {Int} index of the z axis
+		 */
 		getZIndex : function () {
 			return desk.VolumeSlice.indices.z[this.getOrientation()];
 		},
@@ -587,6 +686,12 @@ qx.Class.define("desk.VolumeSlice",
 			return this.__dimensions[this.getZIndex()];
 		},
 
+		/**
+		 * loads slices pointed by an xml file
+		 * @param xmlURL {String} file url
+		 * @param callback {Function} callback when done
+		 * param context {Object} optional callback context
+		 */
 		openXMLURL : function (xmlURL, callback, context) {
 			var req = new qx.io.request.Xhr(xmlURL + "?nocache=" + Math.random());
 			req.setAsync(true);

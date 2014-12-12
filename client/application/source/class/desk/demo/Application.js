@@ -52,7 +52,7 @@ qx.Class.define("desk.demo.Application",
 					return;
 				}
 				var initScript = 'code/init.js';
-				desk.FileSystem.exists(initScript, function (exists) {
+				desk.FileSystem.exists(initScript, function (err, exists) {
 					if (exists) {
 						desk.FileSystem.executeScript(initScript);
 					} else {
