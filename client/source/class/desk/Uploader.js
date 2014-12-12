@@ -23,7 +23,7 @@ qx.Class.define("desk.Uploader",
 
 		var win = new qx.ui.window.Window( 'Upload to '+uploadDir );
 		win.setLayout( new qx.ui.layout.VBox() );
-		win.setWidth( 450 );
+		win.set({width : 450, alwaysOnTop : true});
 
   		var btn = new com.zenesis.qx.upload.UploadButton( "Add File(s)" );
   		var lst = new qx.ui.form.List();
