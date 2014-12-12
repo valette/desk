@@ -130,6 +130,9 @@ qx.Class.define("desk.FileBrowser",
 			}
 		},
 
+		/** 
+		* Creates the filter container
+		*/
 		__createFilter : function () {
 			// create the filter bar
 			var filterBox = new qx.ui.container.Composite();
@@ -162,6 +165,10 @@ qx.Class.define("desk.FileBrowser",
 			}
 		},
 
+		/** 
+		* Fired whenever a file is double-clicked
+		* @param e {qx.event.type.Event}
+		*/
 		__onDbltap :  function (e) {
 			var node = e.getTarget();
 			if (node && node.getModel && e.isLeftPressed() && !e.isCtrlOrCommandPressed()) {
@@ -171,11 +178,19 @@ qx.Class.define("desk.FileBrowser",
 			}
 		},
 
+		/** 
+		* Fired whenever a directory is opened
+		* @param e {qx.event.type.Event}
+		*/
 		__onOpen : function (e) {
 			var node = e.getData();
 			this.__expandDirectoryListing(node);
 		},
 
+		/** 
+		* Fired whenever a directory is closed
+		* @param e {qx.event.type.Event}
+		*/
 		__onClose : function (e) {
 			var node = e.getData();
 			node.getChildren().removeAll();
@@ -185,6 +200,10 @@ qx.Class.define("desk.FileBrowser",
 			this.__files.refresh();
 		},
 
+		/** 
+		* Fired whenever a file drag starts
+		* @param e {qx.event.type.Drag}
+		*/
 		__onDragstart : function(e) {
 			e.addAction("move");
 			e.addType("fileBrowser");
@@ -197,10 +216,18 @@ qx.Class.define("desk.FileBrowser",
 			this.__draggedNodes = selection;
 		},
 
+		/** 
+		* Fired whenever a file drag ends
+		* @param e {qx.event.type.Drag}
+		*/
 		__onDragEnd : function(e) {
 			this.__draggedNodes = null;
 		},
 
+		/** 
+		* Fired at each drop request
+		* @param e {qx.event.type.Drop}
+		*/
 		__onDropRequest : function(e) {
 			var type = e.getCurrentType();
 			switch (type) {
@@ -215,6 +242,10 @@ qx.Class.define("desk.FileBrowser",
 			}
 		},
 
+		/** 
+		* Fired at each drop
+		* @param e {qx.event.type.Drop}
+		*/
 		__onDrop : function (e) {
 			if (!e.supportsType('fileBrowser')) {
 				return;
@@ -279,35 +310,38 @@ qx.Class.define("desk.FileBrowser",
 		__actionNames : null,
 		__actionCallbacks : null,
 
-        __getShortcutsContainer : function() {
-            var container = new qx.ui.container.Composite();
-            container.setLayout(new qx.ui.layout.HBox(5));
-            var settings = desk.Actions.getInstance().getSettings();
-            var dataDirs = settings.dataDirs;
-            var permissions = settings.permissions;
-            var dirs = Object.keys(dataDirs);
-            dirs.sort();
-            dirs.forEach(function (dir) {
-                if ((dir === "cache") || 
-					((permissions === 0) && (dir ==="actions"))) {
+		/** 
+		* Creates the top shortcuts
+		* @return {qx.ui.container.Composite}
+		*/
+		__getShortcutsContainer : function() {
+			var container = new qx.ui.container.Composite();
+			container.setLayout(new qx.ui.layout.HBox(5));
+			var settings = desk.Actions.getInstance().getSettings();
+			var dataDirs = settings.dataDirs;
+			var permissions = settings.permissions;
+			var dirs = Object.keys(dataDirs);
+			dirs.sort();
+			dirs.forEach(function (dir) {
+				if ((dir === "cache") || ((permissions === 0) && (dir ==="actions"))) {
 					return;
 				}
 
-                var button = new qx.ui.form.Button(dir);
-                button.addListener("click", function () {
+				var button = new qx.ui.form.Button(dir);
+				button.addListener("click", function () {
 					this.updateRoot(dir);
 				}, this);
-                container.add(button, {flex : 1});
-                var menu = new qx.ui.menu.Menu();
-                var openButton = new qx.ui.menu.Button('open in new window');
-                openButton.addListener('execute', function (e) {
+				container.add(button, {flex : 1});
+				var menu = new qx.ui.menu.Menu();
+				var openButton = new qx.ui.menu.Button('open in new window');
+				openButton.addListener('execute', function (e) {
 					var browser = new desk.FileBrowser(dir, true);
 					browser.getWindow().center();
-				})
+				});
 				menu.add(openButton);
 				button.setContextMenu(menu);
-            }, this);
-            return container;
+			}, this);
+			return container;
 		},
 
 		/** Returns the window containing the container in standalone mode
@@ -360,6 +394,10 @@ qx.Class.define("desk.FileBrowser",
 			this.__files.setModel(this.__root);
 		},
 
+		/**
+		* Handles file double-click
+		* @param file {String} file to handle
+		*/
 		__defaultFileHandler : function (file) {
 			var extension = desk.FileSystem.getFileExtension(file);
 			switch (extension)
@@ -417,6 +455,10 @@ qx.Class.define("desk.FileBrowser",
 			}				
 		},
 
+		/**
+		* Launches the simple volume viewer
+		* @param node {Objecy} file node
+		*/
 		__volViewSimpleAction : function (node) {
 			if (!node.getChildren) {
 				new desk.VolViewSimple(node.getFullName());
@@ -425,6 +467,10 @@ qx.Class.define("desk.FileBrowser",
 			}
 		},
 
+		/**
+		* Launches the file download
+		* @param node {Objecy} file node
+		*/
 		__downloadAction : function (node) {
 			if (!node.getChildren) {
 				var iframe = qx.bom.Iframe.create({
@@ -443,6 +489,10 @@ qx.Class.define("desk.FileBrowser",
 			}
 		},
 
+		/**
+		* Launches an uploader 
+		* @param node {Objecy} file node
+		*/
 		__uploadAction : function (node) {
 			var dir = node.getFullName();
 			if (!node.getChildren) {
@@ -456,6 +506,10 @@ qx.Class.define("desk.FileBrowser",
 			);
 		},
 
+		/**
+		* Creates a directory
+		* @param node {Objecy} file node
+		*/
 		__newDirectoryAction : function (node) {
 			var dir = node.getFullName();
 			if (!node.getChildren) {
@@ -471,6 +525,10 @@ qx.Class.define("desk.FileBrowser",
 			}, this);
 		},
 
+		/**
+		* Deletes a file/directory
+		* @param node {Objecy} file node
+		*/
 		__deleteAction : function (node) {
 			var nodes = this.__files.getSelection().toArray();
 			var message = 'Are you shure you want to delete those files/directories? \n';
@@ -493,6 +551,10 @@ qx.Class.define("desk.FileBrowser",
 			}.bind(this));
 		},
 
+		/**
+		* Renames file/directory
+		* @param node {Objecy} file node
+		*/
 		__renameAction : function (node) {
 			var file = node.getFullName();
 			var newFile = prompt('enter new file name : ', desk.FileSystem.getFileName(file));
@@ -510,6 +572,10 @@ qx.Class.define("desk.FileBrowser",
 			}, this);
 		},
 
+		/**
+		* Creates a new file
+		* @param node {Objecy} file node
+		*/
 		__newFileAction : function (node) {
 			var dir = node.getFullName();
 			if (!node.getChildren) {
@@ -524,12 +590,19 @@ qx.Class.define("desk.FileBrowser",
 			}
 		},
 
+		/**
+		* Launches the text editor on the file
+		* @param node {Objecy} file node
+		*/
 		__viewEditAction : function (node) {
 			if (!node.getChildren) {
 				new desk.TextEditor(node.getFullName());;
 			}
 		},
 
+		/**
+		* Creates he default menu
+		*/
 		__createDefaultStaticActions : function () {
 			var menu = new qx.ui.menu.Menu();
 
@@ -632,6 +705,11 @@ qx.Class.define("desk.FileBrowser",
 			return baseDir;
 		},
 
+		/**
+		* Returns node matching the file string, null if it does not exist
+		* @param file {String} the file
+		* @return {Object} the file node
+		*/
 		__getFileNode : function (file) {
 			var baseDir = this.getRootDir();
 			if (file.indexOf(baseDir) !== 0) {
@@ -670,14 +748,28 @@ qx.Class.define("desk.FileBrowser",
 			});
 		},
 
+		/**
+		* Updates directories for all matching file browsers
+		* @param files {Array} array of directories/files
+		*/
 		__updateDirectories : function (files) {
 			_.uniq(files).forEach(this.updateDirectory, this);
 		},
 
+		/**
+		* sorting function to
+		* @param a {String} first element to compare
+		* @param b {String} second element to compare
+		* @return {Boolean} returns true if a < b
+		*/
 		__caseInsensitiveSort : function (a, b) {
 			return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
 		},
 
+		/**
+		* populates directory node with contained files
+		* @param node {Object} directory node to populate
+		*/
 		__expandDirectoryListing : function(node) {
 			var directory = node.getFullName();
 			var children = node.getChildren();

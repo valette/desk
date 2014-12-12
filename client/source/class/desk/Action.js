@@ -10,9 +10,13 @@ qx.Class.define("desk.Action",
 	/**
 	* Creates a new container
 	* @param name {String} name of the action to create
-	* @param parameters {Object} settings object. Available settings:
-    * standalone (boolean): defines whether the container should be
-	* embedded in a window or not (default : false).
+	* @param opt {Object} settings object. Available options:
+	* <pre class='javascript'>
+	* { <br>
+	*   standalone : true/false, <br> defines whether the container should be
+	* embedded in a window or not (default : false)
+	* }
+	* </pre>
 	*/
 	construct : function (name, opt) {
 		opt = opt || {};
@@ -88,6 +92,10 @@ qx.Class.define("desk.Action",
 
 		__fileBrowser : null,
 
+		/**
+		* Returns the buttons container
+		* @return {qx.ui.container.Composite} the controls container
+		*/
         getControlsContainer : function () {
             return this.__controls;
         },
@@ -148,12 +156,21 @@ qx.Class.define("desk.Action",
 			return this.__outputDir;
 		},
 
+		/**
+		* DEPRECATED! use desk.Action.setParameters() instead
+		* @param parameters {Object} parameters as JSON object
+		*/
 		setActionParameters : function (parameters) {
 			console.log("desk.Action.setActionParameters() is deprecated, use setParameters")
 			console.log(new Error().stack);
 			this.setParameters(parameters, !this.__standalone);
 		},
 
+		/**
+		* DEPRECATED! use desk.Action.setParameters() instead
+		* @param parameters {Object} parameters as JSON object
+		* @param hide {Boolean} hide parameters
+		*/
         setUIParameters : function (parameters, hide) {
 			console.log("desk.Action.setUIParameters() is deprecated, use setParameters")
 			console.log(new Error().stack);
@@ -209,6 +226,9 @@ qx.Class.define("desk.Action",
 
 		__outputTabTriggered : false,
 
+		/**
+		* Constructs the tab containing the output directory file browser
+		*/
 		__addOutputTab : function () {
 			if (this.__action.voidAction || this.__outputTabTriggered) {
 				return;
@@ -228,6 +248,9 @@ qx.Class.define("desk.Action",
 			}, this);
 		},
 
+		/**
+		* Refreshes the file browser
+		*/
 		__updateFileBrowser : function () {
 			this.__fileBrowser.updateRoot(this.getOutputDirectory());
 		},
@@ -240,6 +263,9 @@ qx.Class.define("desk.Action",
 
 		__showLog : null,
 
+		/**
+		* Fired whenever the execute button has been pressed
+		*/
 		__afterValidation : function () {
 			// check the validation status
 			if (!this.__manager.getValid()) {
@@ -298,6 +324,10 @@ qx.Class.define("desk.Action",
 			);
 		},
 
+		/**
+		* Executes the action
+		* @param params {Object} action parameters
+		*/
 		__executeAction : function (params) {
 			var actionId = this.__actionsCounter;
 			this.__actionsCounter++;
@@ -308,6 +338,11 @@ qx.Class.define("desk.Action",
 			this.fireDataEvent("actionTriggered", actionId);
 		},
 
+		/**
+		* callback launched when the action has been performed
+		* @param actionId {Int} the action id
+		* @param response {Ojbect} action response
+		*/
 		__afterExecute : function (actionId, response) {
 			this.__update.setEnabled(true);
 			this.__update.setLabel("Update");
@@ -335,55 +370,75 @@ qx.Class.define("desk.Action",
 			});
 		},
 
+		/**
+		* Validator for int values
+		* @param value {String} the parameter value
+		* @param item {qx.ui.form.TextField} the parameter UI form
+		* @return {Boolean} true if the aprameter is valid
+		*/
         __intValidator : function(value, item) {
 			var parameterName = this.name;
 			if ((value == null) || (value == '')) {
 				if (this.required) {
 					item.setInvalidMessage('"' + parameterName + '" is empty');
-					return (false);
+					return false;
 				}
 			} else if ((parseInt(value, 10) != parseFloat(value)) || isNaN(value)) {
 				item.setInvalidMessage('"' + parameterName + '" should be an integer');
-				return (false);
+				return false;
 			}
-			return (true);
+			return true;
 		},
 
+		/**
+		* Validator for string values
+		* @param value {String} the parameter value
+		* @param item {qx.ui.form.TextField} the parameter UI form
+		* @return {Boolean} true if the aprameter is valid
+		*/
 		__stringValidator : function(value, item) {
 			var parameterName = this.name;
 			if ((value == null) || (value == '')) {
 				if (this.required) {
 					item.setInvalidMessage('"' + parameterName + '" is empty');
-					return (false);
+					return false;
 				}
 			} else if (value.split(" ").length != 1){
 				item.setInvalidMessage('"' + parameterName + '" should contain no space characters');
-				return (false);
+				return false;
 			}
-			return (true);
+			return true;
 		},
 
+		/**
+		* Validator for floating point values
+		* @param value {String} the parameter value
+		* @param item {qx.ui.form.TextField} the parameter UI form
+		* @return {Boolean} true if the aprameter is valid
+		*/
 		__floatValidator : function(value, item) {
 			var parameterName = this.name;
 			if ((value == null) || (value == '')) {
 				if (this.required) {
 					item.setInvalidMessage('"' + parameterName + '" is empty');
-					return (false);
+					return false;
 				}
 			} else if (isNaN(value)){
 				item.setInvalidMessage('"' + parameterName + '" should be a number');
-				return (false);
+				return false;
 			}
-			return (true);
+			return true;
 		},
 
+		/**
+		* Dummy validator (always returns true)
+		* @param value {String} the parameter value
+		* @param item {qx.ui.form.TextField} the parameter UI form
+		* @return {Boolean} true if the aprameter is valid
+		*/
 		__dummyValidator : function(value, item) {
             return (true);
         },
-
-		buildUI : function () {
-			qx.core.Assert.assert(false, "useless call : desk.Action.buildUI()");
-		},
 
 		/**
 		* Builds the UI
