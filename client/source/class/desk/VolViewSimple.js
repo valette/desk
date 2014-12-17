@@ -6,6 +6,10 @@ qx.Class.define("desk.VolViewSimple",
 {
   extend : qx.ui.window.Window,
 
+	/**
+	 * Constructor
+	 * @param file {String} input volume
+	 */
 	construct : function(file) {
 		this.base(arguments);
 
@@ -55,10 +59,14 @@ qx.Class.define("desk.VolViewSimple",
 	},
 
 	statics : {
+		/**
+		 * The possibly linked window
+		 */
 		LINKEDWINDOW : null
 	},
 
 	properties : {
+		/** defines current slice index */
 		slice : { check : "Number", init : 0 ,  event : "changeSlice"}
 	},
 
@@ -78,28 +86,51 @@ qx.Class.define("desk.VolViewSimple",
 		__spacing : null,
 		__dimensions: null,
 
-		getDimensions : function ()
-		{
+		/**
+		 * Returns the volume dimensions
+		 * @return {Array} dimensions
+		 */
+		getDimensions : function () {
 			return (this.__dimensions);
 		},
 
-		getImage : function(){
+		/**
+		 * Returns current slice as an image
+		 * @return {Image} the image
+		 */
+		getImage : function() {
 			return this.__image;
 		},
 
-		getCanvas : function(){
+		/**
+		 * Returns the canvas
+		 * @return {qx.ui.embed.Canvas} the canvas
+		 */
+		getCanvas : function() {
 			return this.__canvas;
 		},
 
+		/**
+		 * Returns the slider
+		 * @return {qx.ui.form.Slider}
+		 */
 		getSlider : function (){
 			return this.__slider;
 		},
 
+		/**
+		 * Returns the array of image pixels
+		 * @return {Array} pixel array
+		 */
 		getSlicePixels : function (){
 			return this.__canvas.getContext2d().getImageData(0, 0,
 					this.__dimensions[0], this.__dimensions[1]).data;
 		},
 
+		/**
+		 * Returns current slice 3D coordinates
+		 * @return {Array} coordinates
+		 */
 		getCornersCoordinates : function () {
 			var z=this.__origin[2]+(this.__dimensions[2]-this.__slider.getValue()+this.__extent[4])*this.__spacing[2];
 			var xmin=this.__origin[0]+this.__extent[0]*this.__spacing[0];
@@ -122,61 +153,65 @@ qx.Class.define("desk.VolViewSimple",
 			return (coordinates);
 		},
 
+		/**
+		 * Opens a file
+		 * @param file {String} file to visualize
+		 */
 		openFile : function (file) {
 			this.removeAll();
 
-			var xmlDoc;
-			{
-				var xmlhttp=new XMLHttpRequest();
-				xmlhttp.open("GET",file+"?nocache=" + Math.random(),false);
-				xmlhttp.send();
-				xmlDoc=xmlhttp.responseXML;
+			var xmlhttp = new XMLHttpRequest();
+			xmlhttp.open("GET", file + "?nocache=" + Math.random(), false);
+			xmlhttp.send();
+			var xmlDoc = xmlhttp.responseXML;
+
+			var volume = xmlDoc.getElementsByTagName("volume")[0];
+			if (volume == null) {
+				return;
 			}
 
-			var volume=xmlDoc.getElementsByTagName("volume")[0];
-			if (volume==null)
-				return;
-
 			// parse extent, dimensions, origin, spacing
-			var XMLextent=volume.getElementsByTagName("extent")[0];
-			this.__extent=new Array(parseInt(XMLextent.getAttribute("x1")),
+			var XMLextent = volume.getElementsByTagName("extent")[0];
+			this.__extent = new Array(parseInt(XMLextent.getAttribute("x1")),
 							parseInt(XMLextent.getAttribute("x2")),
 							parseInt(XMLextent.getAttribute("y1")),
 							parseInt(XMLextent.getAttribute("y2")),
 							parseInt(XMLextent.getAttribute("z1")),
 							parseInt(XMLextent.getAttribute("z2")));
 
-			var XMLdimensions=volume.getElementsByTagName("dimensions")[0];
-			this.__maxZ=parseInt(XMLdimensions.getAttribute("z"))-1;
-			this.__dimensions=new Array(parseInt(XMLdimensions.getAttribute("x")),
+			var XMLdimensions = volume.getElementsByTagName("dimensions")[0];
+			this.__maxZ = parseInt(XMLdimensions.getAttribute("z"))-1;
+			this.__dimensions = new Array(parseInt(XMLdimensions.getAttribute("x")),
 							parseInt(XMLdimensions.getAttribute("y")),
 							parseInt(XMLdimensions.getAttribute("z")));
 
-			var XMLspacing=volume.getElementsByTagName("spacing")[0];
-			this.__spacing=new Array(parseFloat(XMLspacing.getAttribute("x")),
+			var XMLspacing = volume.getElementsByTagName("spacing")[0];
+			this.__spacing = new Array(parseFloat(XMLspacing.getAttribute("x")),
 							parseFloat(XMLspacing.getAttribute("y")),
 							parseFloat(XMLspacing.getAttribute("z")));
 
-			var XMLorigin=volume.getElementsByTagName("origin")[0];
-			this.__origin=new Array(parseFloat(XMLorigin.getAttribute("x")),
+			var XMLorigin = volume.getElementsByTagName("origin")[0];
+			this.__origin = new Array(parseFloat(XMLorigin.getAttribute("x")),
 							parseFloat(XMLorigin.getAttribute("y")),
 							parseFloat(XMLorigin.getAttribute("z")));
 
-			var slices=volume.getElementsByTagName("slicesprefix")[0];
-			this.__offset=parseInt(slices.getAttribute("offset"));
-			this.__timestamp=slices.getAttribute("timestamp");
-			if (this.__timestamp==null)
-				this.__timestamp=Math.random();
-			this.__prefix=slices.childNodes[0].nodeValue;
+			var slices = volume.getElementsByTagName("slicesprefix")[0];
+			this.__offset = parseInt(slices.getAttribute("offset"));
+			this.__timestamp = slices.getAttribute("timestamp");
+			if (this.__timestamp == null) {
+				this.__timestamp = Math.random();
+			}
+			this.__prefix = slices.childNodes[0].nodeValue;
 
-			var slashIndex=file.lastIndexOf("/");
-			this.__path="";
-			if (slashIndex>0)
+			var slashIndex = file.lastIndexOf("/");
+			this.__path = "";
+			if (slashIndex > 0) {
 				this.__path=file.substring(0,slashIndex)+"\/";
+			}
 
 			var leftContainer = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
 
-			this.__slider=new qx.ui.form.Slider();
+			this.__slider = new qx.ui.form.Slider();
 			this.__slider.setMinimum(0);
 			this.__slider.setMaximum(this.__maxZ);
 			this.__slider.setValue(Math.round(0.5*this.__maxZ));
@@ -185,8 +220,9 @@ qx.Class.define("desk.VolViewSimple",
 			this.__slider.addListener("changeValue", function(event){this.updateImage();},this);
 			
 			// if there is only one slice, do not show the slider...
-			if (this.__maxZ>0)
+			if (this.__maxZ > 0) {
 				leftContainer.add(this.__slider, {flex : 1});
+			}
 
 			this.__fileFormatBox = new qx.ui.form.SelectBox();
 			this.__fileFormatBox.setWidth(30);
@@ -195,11 +231,13 @@ qx.Class.define("desk.VolViewSimple",
 //			var SelectPNG = new qx.ui.form.ListItem("png");
 //			this.__fileFormatBox.add(SelectPNG);
 			leftContainer.add(this.__fileFormatBox);
-			this.__fileFormatBox.addListener("changeSelection", function(event){this.updateImage();},this);
+			this.__fileFormatBox.addListener("changeSelection", function(event){
+				this.updateImage();
+			},this);
 
 			this.add(leftContainer);
 
-			this.__image=new Image();
+			this.__image = new Image();
 			this.__canvas = new qx.ui.embed.Canvas().set({
 				canvasWidth: this.__dimensions[0],
 				canvasHeight: this.__dimensions[1],
@@ -215,30 +253,37 @@ qx.Class.define("desk.VolViewSimple",
 			this.addListener("keypress",
 				function(event) {if (event.getKeyIdentifier()=="S") 
 					desk.VolViewSimple.LINKEDWINDOW=this;},this);
-			this.addListener("click",
-				function(event) {
-					if ((desk.VolViewSimple.LINKEDWINDOW!=null)&&(desk.VolViewSimple.LINKEDWINDOW!=this))
-					{
-						this.__slider.bind("value", desk.VolViewSimple.LINKEDWINDOW.__slider, "value");
-						desk.VolViewSimple.LINKEDWINDOW.__slider.bind("value", this.__slider, "value");
-						desk.VolViewSimple.LINKEDWINDOW=null;
-					}},this);				
+			this.addListener("click", function(event) {
+				if ((desk.VolViewSimple.LINKEDWINDOW!=null)
+					&&(desk.VolViewSimple.LINKEDWINDOW!=this)) {
+					this.__slider.bind("value", desk.VolViewSimple.LINKEDWINDOW.__slider, "value");
+					desk.VolViewSimple.LINKEDWINDOW.__slider.bind("value", this.__slider, "value");
+					desk.VolViewSimple.LINKEDWINDOW=null;
+				}
+			},this);
 		},
 
-		redraw : function()
-		{
+		/**
+		 * trigers redraw
+		 */
+		redraw : function() {
 			this.__canvas.getContext2d().drawImage(this.__image, 0, 0);
 		},
 
+		/**
+		 * triggers image update
+		 */
 		updateImage : function() {
-			var volView=this;
-			var slice=volView.__maxZ-volView.__slider.getValue();
-			this.__image.onload=function(){
+			var volView = this;
+			var slice = volView.__maxZ-volView.__slider.getValue();
+			this.__image.onload = function(){
 				volView.redraw();
 				volView.setSlice(slice);
-				};
-			this.__image.src=this.__path+this.__prefix+"XY"+(this.__offset+this.__maxZ-this.__slider.getValue())
-				+"."+this.__fileFormatBox.getSelection()[0].getLabel()+"?nocache="+this.__timestamp;
+			};
+			this.__image.src = this.__path + this.__prefix 
+				+ "XY" + (this.__offset + this.__maxZ - this.__slider.getValue())
+				+ "." + this.__fileFormatBox.getSelection()[0].getLabel()
+				+ "?nocache=" + this.__timestamp;
 		}
 	}
 });

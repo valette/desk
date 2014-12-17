@@ -10,7 +10,12 @@ qx.Class.define("desk.SegTools",
 {
   extend : qx.ui.window.Window,
 
-	construct : function(master, globalFile, options) {	
+	/** constructor
+	 * @param master {desk.MPRContainer} the MPRContainer to attach to
+	 * @param file {String} file to segment
+	 * @param options {Object} options, like {segmentationMethod : 0}
+	 */
+	construct : function(master, file, options) {
 		this.base(arguments);
 		this.setAlwaysOnTop(true)
 		options = options || {};
@@ -18,7 +23,7 @@ qx.Class.define("desk.SegTools",
 		this.__segmentationMethod = options.segmentationMethod || 0;
 
 		this.__master = master;
-		this.__file = globalFile;
+		this.__file = file;
 
 		this.__labelUnfocusedBorder = new qx.ui.decoration.Decorator().
 			set ({width : 2, style : "solid", color : "black"});
@@ -78,12 +83,18 @@ qx.Class.define("desk.SegTools",
 	},
 
 	events : {
+		/** Fired whenever segmentation is complete */
 		"gotSegmentedVolume" : "qx.event.type.Event",
+
+		/** Fired whenever meshing is complete */
 		"meshingUpdated" : "qx.event.type.Data"
 	},
 
 	properties : {
+		/** contains the directory where all the data is stored*/
 		sessionDirectory : { init : null, event : "changeSessionDirectory"},
+
+		/** defines current seeds drawing type (0 : seeds, 1 : corrections*/
 		seedsType : { init : 0, check: "Number", event : "changeSeedsType"}
 	},
 
@@ -114,10 +125,18 @@ qx.Class.define("desk.SegTools",
 
 		__meshViewer : null,
 
+		/**
+		 * returns the mesh viewer used to visualize meshes
+		 * @return {desk.MeshViewer} the mesh viewer
+		 */
 		getMeshViewer : function() {
 			return this.__meshViewer;
 		},
-		
+
+		/**
+		 * Reloads the seed image for a given viewer
+		 * @param sliceView {desk.SliceView} the viewer to update
+		 */
 		__reloadSeedImage : function (sliceView) {
 			if (!this.getSessionDirectory()) {return;}
 			var canvas = sliceView.getDrawingCanvas();
@@ -148,6 +167,9 @@ qx.Class.define("desk.SegTools",
 			}
 		},
 
+		/**
+		 * Creates the actions containers (segmentation, meshing etc...)
+		 */
 		__buildActionsContainers : function() {
 			var spacing = 5;
 			this.__paintContainer = new qx.ui.container.Composite(
@@ -244,6 +266,9 @@ qx.Class.define("desk.SegTools",
 			paintPage.addAt(this.__getSeedsTypeSelectBox(), 0);
 		},
 
+		/**
+		 * Creates the actions when in edit mode
+		 */
 		__buildActionsEdit : function () {
 			var applySeedsAction = new desk.Action("applyseeds");
 			applySeedsAction.setParameters({"input_volume" : this.__file}, true);
@@ -327,6 +352,9 @@ qx.Class.define("desk.SegTools",
 			}, this);
 		},
 
+		/**
+		 * Creates the actions
+		 */
 		__buildActions : function () {
 			var segmentation = new desk.Action("multiseg");
 			segmentation.setParameters({"input_volume" : this.__file}, true);
@@ -410,6 +438,9 @@ qx.Class.define("desk.SegTools",
 			}, this);
 		},
 
+		/**
+		 * Creates the actions when in CVTSegmentation mode
+		 */
 		__buildActionsCVT : function() {	
 			var clustering = new desk.Action("cvtseg2");
 			clustering.setParameters({"input_volume" : this.__file}, true);
@@ -498,6 +529,9 @@ qx.Class.define("desk.SegTools",
 
 		},
 
+		/**
+		 * Creates the actions when in GCSegmentation mode
+		 */
 		__buildActionsGC : function() {	
 			var clustering = new desk.Action("cvtseg2");
 			clustering.setParameters({"input_volume" : this.__file}, true);
@@ -592,6 +626,9 @@ qx.Class.define("desk.SegTools",
 
 		},
 
+		/**
+		 * Regenerates labels list
+		 */
 		__rebuildLabelsList : function () {
 			var row = 0;
 			var column = 0;
@@ -608,6 +645,9 @@ qx.Class.define("desk.SegTools",
 			this.__buildLookupTables();
 		},
 
+		/**
+		 * Generates lookup tables
+		 */
 		__buildLookupTables : function () {
 			var red = new Uint8Array (256);
 			var green = new Uint8Array (256);
@@ -642,6 +682,11 @@ qx.Class.define("desk.SegTools",
 			}
 		},
 
+		/**
+		 * Defines colors
+		 * @param colors {Array} array of color elements
+		 * @param adjacencies {Array} array of adjacencies
+		 */
 		__setColorsFromElements : function (colors, adjacencies) {
 			if (colors.length == 0) {
 				alert("error : no colors");
@@ -683,6 +728,10 @@ qx.Class.define("desk.SegTools",
 			}
 		},
 
+		/**
+		 * loads the colors from file
+		 * @param file {String} file to load
+		 */
 		__loadColors : function (file) {
 			if (file == null) {
 				file = desk.SegTools.defaultColorsFile;
@@ -704,6 +753,9 @@ qx.Class.define("desk.SegTools",
 		__editionWindow : null,
 		__updateEditionWindow : null,
 
+		/**
+		 * creates the edition window
+		 */
 		__createEditionWindow : function () {
 			var win = this.__editionWindow = new qx.ui.window.Window();
 			win.setLayout(new qx.ui.layout.VBox());
@@ -931,12 +983,21 @@ qx.Class.define("desk.SegTools",
 			}
 		},
 
+		/**
+		 * returns the label with input id
+		 * @param label {String} input label id as a string
+		 * @return {Object} label object
+		 */
 		__getLabel : function (label) {
 			return _.find(this.__labels, function (l) {
 				return l.label == parseInt(label, 10);
 			});
 		},
 
+		/**
+		 * Deletes a color item
+		 * @param item {Object} item to delete
+		 */
 		__deleteColorItem : function (item) {
 			this.__labels.forEach(function (color, i) {
 				if (color !== item) {
@@ -949,6 +1010,11 @@ qx.Class.define("desk.SegTools",
 			}, this);
 		},
 
+		/**
+		 * Adds an edge between label1 and label2
+		 * @param label1 {Object} first label
+		 * @param label2 {Object} second label
+		 */
 		__addEdge : function (label1, label2) {
 			if (label1 == label2) {
 				alert ("error : trying to create self-loop adjacency : "+
@@ -966,6 +1032,11 @@ qx.Class.define("desk.SegTools",
 			this.__addAdjacency(label2, label1);
 		},
 
+		/**
+		 * Removes an edge between labels
+		 * @param label1 {Object} first label
+		 * @param label2 {Object} second label
+		 */
 		__removeEdge : function (label1, label2) {
 			if (!_.find(label1.adjacencies, function (adjacency) {
 					return adjacency.label === label2.label
@@ -978,6 +1049,11 @@ qx.Class.define("desk.SegTools",
 
 		},
 
+		/**
+		 * Adds an adjacency link between two labels
+		 * @param label1 {Object} first label
+		 * @param label2 {Object} second label
+		 */
 		__addAdjacency : function (label1,label2) {
 			var adjacencies = label1.adjacencies;
 			var label = label2.label;
@@ -990,6 +1066,11 @@ qx.Class.define("desk.SegTools",
 			adjacencies.push(label2);
 		},
 
+		/**
+		 * Removes an adjacency link between two labels
+		 * @param label1 {Object} first label
+		 * @param label2 {Object} second label
+		 */
 		__removeAdjacency : function (label1,label2) {
 			label1.adjacencies.forEach(function (adj, index) {
 				if (label2 === adj) {
@@ -1004,6 +1085,19 @@ qx.Class.define("desk.SegTools",
 
 		__labelFocusedBorder : null,
 
+		/** 
+		 * Adds a color item to the list
+		 * @param label {String} label id
+		 * @param labelName {String} label name
+		 * @param red {Float} label red component
+		 * @param green {Float} label green component
+		 * @param blue {Float} label blue component
+		 * @param meshRed {Float} mesh red component
+		 * @param meshGreen {Float} mesh green component
+		 * @param meshBlue {Float} mesh blue component
+		 * @param opacity {Float} opacity
+		 * @param depth {Float} depth
+		 */
 		__addColorItem : function(label, labelName, red, green, blue,
 					meshRed, meshGreen, meshBlue, opacity, depth) {
 			////Function creates one label box
@@ -1161,6 +1255,9 @@ qx.Class.define("desk.SegTools",
 			}
         },
 
+		/**
+		 * Loads current session
+		 */
 		loadSession : function() {
 			this.__clearSeeds();
 
@@ -1169,46 +1266,45 @@ qx.Class.define("desk.SegTools",
 			});
 
 			desk.FileSystem.readFile(this.getSessionDirectory()+'/seeds.xml', function (err, response) {
-				if (!err) {
-					for (var k = 0; k < 2; k++) {
-						var slices;
-						if (k == 0) {
-							slices = response.getElementsByTagName("seed");
-						} else {
-							slices = response.getElementsByTagName("correction");
-						}
+				if (err) {
+					this.__loadColors();
+					return;
+				}
+				["seed", "correction"].forEach(function (tag, index) {
+					var slices = response.getElementsByTagName(tag);
 
-						for(var j = 0; j < slices.length; j++) {
-							var sliceId = parseInt(slices[j].getAttribute("slice"),10);
-							var sliceOrientation;
-							if (slices[j].hasAttribute("orientation")){
-								sliceOrientation = parseInt(slices[j].getAttribute("orientation"),10);
-							} else {
-								sliceOrientation = 0;
-							}
-							this.__master.getViewers().forEach (function (viewer) {
-								if(sliceOrientation == viewer.getOrientation()) {
-									this.__addNewSeedItemToList(viewer, sliceId, k);
-								}
-							}, this);
+					for(var j = 0; j < slices.length; j++) {
+						var sliceId = parseInt(slices[j].getAttribute("slice"),10);
+						var sliceOrientation;
+						if (slices[j].hasAttribute("orientation")){
+							sliceOrientation = parseInt(slices[j].getAttribute("orientation"),10);
+						} else {
+							sliceOrientation = 0;
 						}
-						this.__master.getViewers().forEach(function (viewer) {
-							this.__reloadSeedImage( viewer );
+						this.__master.getViewers().forEach (function (viewer) {
+							if(sliceOrientation == viewer.getOrientation()) {
+								this.__addNewSeedItemToList(viewer, sliceId, index);
+							}
 						}, this);
 					}
-					var colors = response.getElementsByTagName("color");
-					var adjacencies = response.getElementsByTagName("adjacency");
-					if (colors.length > 0) {
-						this.__setColorsFromElements(colors, adjacencies);
-					} else {
-						this.__loadColors();
-					}
+					this.__master.getViewers().forEach(function (viewer) {
+						this.__reloadSeedImage( viewer );
+					}, this);
+				}, this);
+				var colors = response.getElementsByTagName("color");
+				var adjacencies = response.getElementsByTagName("adjacency");
+				if (colors.length > 0) {
+					this.__setColorsFromElements(colors, adjacencies);
 				} else {
 					this.__loadColors();
 				}
 			}.bind(this));
 		},
 
+		/**
+		 * Creates the session loading widget
+		 * @return {qx.ui.container.Composite} the session container
+		 */
 		__getSessionsWidget : function() {	
 			var tools = this;
 			var volFile = this.__file;
@@ -1418,6 +1514,10 @@ qx.Class.define("desk.SegTools",
 			return sessionToolsContainer;
 		},
 
+		/**
+		 * Saves the seeds
+		 * @param callback {Function} callback when done
+		 */
 		__saveCurrentSeeds : function(callback) {
 			callback = callback || function () {};
 			if (this.getSessionDirectory() === null) return;
@@ -1459,7 +1559,10 @@ qx.Class.define("desk.SegTools",
 			}).bind(this));
 		},
 
-		////Rewrite xml list of the drawn seeds
+		/**
+		 * Saves the seeds in an xml file
+		 * @param callback {Function} callback when done
+		 */
 		__saveSeedsXML : function(callback) {
                // XML writer with attributes and smart attribute quote escaping
 			/*
@@ -1583,6 +1686,10 @@ qx.Class.define("desk.SegTools",
 			callback);
 		},
 
+		/**
+		 * Creates the sedds selection box
+		 * @return {qx.ui.form.SelectBox} the seeds type selection box
+		 */
 		__getSeedsTypeSelectBox : function() {
 			var selectBox = new qx.ui.form.SelectBox();
 			selectBox.addListener("changeSelection", function () {
@@ -1605,6 +1712,12 @@ qx.Class.define("desk.SegTools",
 			return selectBox;
 		},
 
+		/**
+		 * Returns the seeds image. Returns false if no modification 
+		 * was performed or if the image is empty
+		 * @param sliceView {desk.SliceView} the slice to get the image from
+		 * @return {String} base64 encoding of the image or false
+		 */
 		__getNewSeedsImage : function ( sliceView ) {
 			if (!sliceView.isDrawingCanvasModified()) {
 				return false;
@@ -1663,6 +1776,10 @@ qx.Class.define("desk.SegTools",
 			return false;
 		},
 
+		/**
+		 * Creates the seeds lists
+		 * @param sliceView {desk.SliceView} the sliceView to add lists to
+		 */
 		__addSeedsLists : function( sliceView ) {
 			var lists = [new qx.ui.form.List(), new qx.ui.form.List()];
 			sliceView.setUserData("seeds", lists);
@@ -1707,6 +1824,9 @@ qx.Class.define("desk.SegTools",
 
 		},
 
+		/**
+		 * Removes all seeds
+		 */
 		__clearSeeds : function ( ) {
 			this.__master.getViewers().forEach (function (viewer) {
 				viewer.setUserData("previousSlice", viewer.getSlice());
@@ -1716,6 +1836,12 @@ qx.Class.define("desk.SegTools",
 			}, this);
 		},
 
+		/**
+		 * Adds a seed image to the list
+		 * @param sliceView {desk.SliceView} the sliceView to add the miage to
+		 * @param sliceId {Integer} slice Id
+		 * @param seedsType {Integer} seeds type
+		 */
 		__addNewSeedItemToList : function ( sliceView, sliceId, seedsType ) {
 			var seedsList = sliceView.getUserData("seeds")[seedsType];
 			var position = 0;
@@ -1735,6 +1861,13 @@ qx.Class.define("desk.SegTools",
 			}
 		},
 
+		/**
+		 * Returns the seed file name
+		 * @param sliceView {desk.SliceView} target sliceView
+		 * @param sliceId  {Integer} the slice Id
+		 * @param seedType {Integer} seed type
+		 * @return {String} the file name
+		 */
 		__getSeedFileName : function(sliceView, sliceId, seedType) {			
 			return (seedType == 0 ? "seed" : "correction") +
 				["XY", "ZY", "XZ"][sliceView.getOrientation()] + 
@@ -1742,6 +1875,9 @@ qx.Class.define("desk.SegTools",
 				".png";
 		},
 
+		/**
+		 * Creates the window ued to reorder labels
+		 */
 		__createReorderingWindow : function () {
 			var currentListItem;
 

@@ -596,6 +596,7 @@ qx.Class.define("desk.VolumeSlice",
 
 		/**
 		 * returns the slice 3D coordinates the form [x0, y0, z0, ... , x3, y3, z3]
+		 * @param slice {Integer} optional slice index, current slice is used if not provided
 		 * @return {Array} array of coordinates
 		 */
 		getCornersCoordinates : function (slice) {
@@ -690,7 +691,7 @@ qx.Class.define("desk.VolumeSlice",
 		 * loads slices pointed by an xml file
 		 * @param xmlURL {String} file url
 		 * @param callback {Function} callback when done
-		 * param context {Object} optional callback context
+		 * @param context {Object} optional callback context
 		 */
 		openXMLURL : function (xmlURL, callback, context) {
 			var req = new qx.io.request.Xhr(xmlURL + "?nocache=" + Math.random());
@@ -714,6 +715,11 @@ qx.Class.define("desk.VolumeSlice",
 			req.send();
 		},
 
+		/**
+		 * callback when the volume xml file is loaded
+		 * @param xmlDoc {Element} xml content
+		 * @param xmlURL {Strig} xml file url
+		 */
 		__parseXMLresponse : function (xmlDoc, xmlURL) {
 			this.__availableImageFormat = this.getImageFormat();
 			var volume = xmlDoc.getElementsByTagName("volume")[0];
@@ -738,7 +744,7 @@ qx.Class.define("desk.VolumeSlice",
 			});
 
 			var XMLscalars = volume.getElementsByTagName("scalars")[0];
-			this.__numberOfScalarComponents = parseInt(XMLscalars.getAttribute("numberOfScalarComponents"),10);
+			this.__numberOfScalarComponents = parseInt(XMLscalars.getAttribute(	"numberOfScalarComponents"),10);
 			this.__scalarType = parseInt(XMLscalars.getAttribute("type"),10);
 			this.__scalarSize = parseInt(XMLscalars.getAttribute("size"),10);
 			this.__scalarMin = parseFloat(XMLscalars.getAttribute("min"),10);
@@ -765,12 +771,18 @@ qx.Class.define("desk.VolumeSlice",
 
 		__timeout : null,
 
+		/**
+		 * changes the image url, sets timeouts
+		 */
 		__updateImage : function () {
 			clearTimeout(this.__timeout);
 			this.__timeout = setTimeout(this.__updateImage.bind(this), 5000);
 			this.__image.src = this.getSliceURL(this.getSlice()) + "?nocache=" + this.__timestamp;
 		},
 
+		/**
+		 * Setups image loading
+		 */
 		__initImageLoader : function () {
 			this.__image = new Image();
 
