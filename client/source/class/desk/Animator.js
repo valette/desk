@@ -19,7 +19,7 @@
  * var animator = new desk.Animator(viewer.render.bind(viewer),
  *   {
  *     visibilityCallback : function (object, visibility) {
- *       object.visible = visible; // this is what the default callback does
+ *       object.visible = visibility; // this is what the default callback does
  *     },
  *     snapshotCallback : function () {
  *       viewer.snapshot();
@@ -229,7 +229,8 @@ qx.Class.define("desk.Animator",
 					}
 
 					setTimeout(callback, this.getRefreshTime());
-				}.bind(this)
+				}.bind(this),
+				function (err) {}
 			);
 		},
 
