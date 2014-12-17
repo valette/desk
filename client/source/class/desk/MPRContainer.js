@@ -185,7 +185,7 @@ qx.Class.define("desk.MPRContainer",
 		/**
 		 * Triggers rendering on all viewers
 		 */
-		 __renderAll : function () {
+		 render : function () {
 			this.__viewers.forEach(function (viewer) {
 				viewer.render();
 			});
@@ -205,7 +205,7 @@ qx.Class.define("desk.MPRContainer",
 					}
 				});
 			}, this);
-			this.__renderAll();
+			this.render();
 		},
 
         __scroll : null,
@@ -236,7 +236,6 @@ qx.Class.define("desk.MPRContainer",
 			for(var i = 0; i < this.__nbUsedOrientations; i++) {
 				var sliceView = new desk.SliceView(i, options);
 				this.__viewers.push(sliceView);
-				sliceView.setOrientPlane(this.__viewsNames[i]);
 				sliceView.addListener("changeCrossPosition", this.__onChangeCrossPosition, this);
 				sliceView.addListener("changeCameraZ", this.__onChangeCameraZ, this);
 				this.__setupMaximize(sliceView);
@@ -349,7 +348,6 @@ qx.Class.define("desk.MPRContainer",
 			var boxes = this.__layoutSelectBoxes;
 
 			var viewer = this.__viewers[_.indexOf(boxes, box)];
-			viewer.setOrientPlane(label);
 
 			for(var i = 0; i < this.__nbUsedOrientations; i++) {
 				if((boxes[i].getSelection()[0].getLabel() === label)
@@ -498,10 +496,21 @@ qx.Class.define("desk.MPRContainer",
 		/**
 		 * returns an array containing volumes slices for a loaded volume
 		 * @param volume {qx.ui.container.Composite} : volume
-		 * @return {Array} array of volume slices
+		 * @return {Array} array of desk.VolumeSlice
 		 */
 		getVolumeSlices : function (volume) {
 			return volume.getUserData("slices");
+		},
+
+		/**
+		 * returns an array containing meshes for a loaded volume
+		 * @param volume {qx.ui.container.Composite} : volume
+		 * @return {Array} array of THREE.Mesh
+		 */
+		getVolumeMeshes : function (volume) {
+			return this.getVolumeSlices(volume).map(function (slice) {
+				return slice.getUserData("mesh");
+			});
 		},
 
         /**
@@ -625,10 +634,10 @@ qx.Class.define("desk.MPRContainer",
 			var hideShowCheckbox = new qx.ui.form.CheckBox();
 			hideShowCheckbox.set({value : true,toolTipText : "visible/hidden"});
 			hideShowCheckbox.addListener( "changeValue", function (e) {
-				for ( var i = 0; i < volumeSlices.length; i++ ) {
-					volumeSlices[i].getUserData("mesh").visible = e.getData();
-				}
-				this.__renderAll();
+				volumeSlices.forEach(function (volumeSlice) {
+					volumeSlice.getUserData("mesh").visible = e.getData();
+				});
+				this.render();
 			}, this );
 
 			// create file format change widget
@@ -836,7 +845,7 @@ qx.Class.define("desk.MPRContainer",
 					this.__volumes.addAt(volumeListItem, index+1);
 				}
 				this.__reorderMeshes();
-				this.__renderAll();
+				this.render();
 				},this);
 			menu.add(moveForwardButton);
 
@@ -854,7 +863,7 @@ qx.Class.define("desk.MPRContainer",
 					this.__volumes.addAt(volumeListItem, index-1);
 				}
 				this.__reorderMeshes();
-				this.__renderAll();
+				this.render();
 				},this);
 			menu.add(moveBackwardButton);
 
@@ -1040,10 +1049,6 @@ qx.Class.define("desk.MPRContainer",
 				viewLabel.setFont(font);
 				qx.util.DisposeUtil.disposeTriggeredBy(font, this);
 				labelsContainer.add(viewLabel);
-					// Shows plane name...unused and unfinished...
-					//~ var orientPlaneLabel = new qx.ui.basic.Label(_this.__viewsNames[i]);
-					//~ orientPlaneLabel.bind("value", _this.__viewers[i], "orientPlane");
-					//~ labelsContainer.add(orientPlaneLabel);
 				gridContainer.add(labelsContainer, viewGridCoor.viewers[i]);
 			}
 			return (gridContainer);
