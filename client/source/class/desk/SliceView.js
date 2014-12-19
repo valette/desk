@@ -1243,9 +1243,9 @@ qx.Class.define("desk.SliceView",
 			this.__undoData = [];
 			this.__redoData = [];
 			this.__doingIndex = 0;
-			var undoCommand = new qx.ui.core.Command("Ctrl+Z");
+			var undoCommand = new qx.ui.command.Command("Ctrl+Z");
 			undoCommand.addListener("execute", this.__onCtrlZ, this);
-			var redoCommand = new qx.ui.core.Command("Ctrl+Y");
+			var redoCommand = new qx.ui.command.Command("Ctrl+Y");
 			redoCommand.addListener("execute", this.__onCtrlY, this);
 			this.addListener("changeSlice", function (event) {
 				this.__undoData = [];
