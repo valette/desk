@@ -253,7 +253,7 @@ io.on('connection', function(socket) {
 	var client;
 	dns.reverse(socket.client.conn.request.headers['x-forwarded-for'] 
 			|| socket.handshake.address, function (err, domains) {
-		client = domains.join(" ");
+		client = (domains || ["no_domain"]).join(" ");
 		console.log('a user connected : ' + client);
 	});
 	socket.on('disconnect', function(){
