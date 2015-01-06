@@ -201,16 +201,19 @@ function updateSync() {
 	});
 	cleanCache();
 
+	// filter actions according to permissions
+	actions = _.pick(actions, function(action) {
+		var perm = action.permissions;
+		if (perm !== 0) {
+			perm = 1;
+		}
+		return permissions >= perm;
+	});
+
 	// export filtered actions.json
 	fs.writeFileSync(libpath.join(filesRoot, "actions.json"),
 		prettyPrint.json({
-			actions : _.pick(actions, function(action) {
-				var perm = action.permissions;
-				if (perm !== 0) {
-					perm = 1;
-				}
-				return permissions >= perm;
-			}),
+			actions : actions,
 			permissions : permissions,
 			dataDirs : dataDirs
 		})

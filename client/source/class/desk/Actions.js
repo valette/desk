@@ -200,14 +200,6 @@ qx.Class.define("desk.Actions",
 		},
 
 		/**
-		* Returns the permission level
-		* @return {Int} the permissions level
-		*/	
-		getPermissionsLevel : function () {
-			return this.__settings.permissions;
-		},
-
-		/**
 		* Returns the JSON object defining a specific action
 		* @param name {String} the action name
 		* @return {Object} action parameters as a JSON object

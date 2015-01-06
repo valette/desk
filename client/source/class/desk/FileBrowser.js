@@ -623,7 +623,7 @@ qx.Class.define("desk.FileBrowser",
 				actionsButton.setMenu(desk.Actions.getInstance().getActionsMenu(this));
 			}, this);
 
-			if (desk.Actions.getInstance().getPermissionsLevel()<1) {
+			if (desk.Actions.getInstance().getSettings().permissions < 1) {
 				return;
 			}
 
