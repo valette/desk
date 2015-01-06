@@ -804,7 +804,7 @@ qx.Class.define("desk.MPRContainer",
 
 
 			if(this.__standalone) {
-				if (desk.Actions.getInstance().getPermissionsLevel()>0) {
+				if (desk.Actions.getInstance().getSettings().permissions) {
 					var segmentButton = new qx.ui.menu.Button("segment(GC)");
 					segmentButton.addListener("execute", function () {
 						new desk.SegTools(this, this.getVolumeFile(volumeListItem));

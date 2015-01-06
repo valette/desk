@@ -201,10 +201,20 @@ function updateSync() {
 	});
 	cleanCache();
 
-	// export actions.json
+	// export filtered actions.json
 	fs.writeFileSync(libpath.join(filesRoot, "actions.json"),
-		prettyPrint.json(JSON.stringify({actions : actions ,
-		permissions : permissions, dataDirs : dataDirs})));
+		prettyPrint.json({
+			actions : _.pick(actions, function(action) {
+				var perm = action.permissions;
+				if (perm !== 0) {
+					perm = 1;
+				}
+				return permissions >= perm;
+			}),
+			permissions : permissions,
+			dataDirs : dataDirs
+		})
+	);
 
 	exports.emit("actionsUpdated");
 };

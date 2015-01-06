@@ -183,7 +183,7 @@ qx.Class.define("desk.Actions",
 		},
 
 		__actionMenu : null,
-		__actions : null,
+		__settings : null,
 		__ongoingActions : null,
 		__settingsButton : null,
 
@@ -191,14 +191,12 @@ qx.Class.define("desk.Actions",
 
 		__currentFileBrowser : null,
 
-		__permissionsLevel : 0,
-
 		/**
-		* Returns the permission level
-		* @return {Int} the permissions level
+		* Returns the complete settings object
+		* @return {Object} settings
 		*/	
 		getSettings : function () {
-			return JSON.parse(JSON.stringify(this.__actions));
+			return JSON.parse(JSON.stringify(this.__settings));
 		},
 
 		/**
@@ -206,7 +204,7 @@ qx.Class.define("desk.Actions",
 		* @return {Int} the permissions level
 		*/	
 		getPermissionsLevel : function () {
-			return this.__permissionsLevel;
+			return this.__settings.permissions;
 		},
 
 		/**
@@ -215,7 +213,7 @@ qx.Class.define("desk.Actions",
 		* @return {Object} action parameters as a JSON object
 		*/	
 		getAction : function (name) {
-			var action = this.__actions.actions[name];
+			var action = this.__settings.actions[name];
 			if (action) {
 				return JSON.parse(JSON.stringify(action));
 			} else {
@@ -395,7 +393,7 @@ qx.Class.define("desk.Actions",
 		__launch : function (e) {
 			var name = e.getTarget().getLabel();
 			var action = new desk.Action(name, {standalone : true});
-			_.some(this.__actions.actions[name].parameters, function (param) {
+			_.some(this.__settings.actions[name].parameters, function (param) {
 				if ((param.type !== "file") && (param.type !== "directory")) {
 					return false;
 				}
@@ -424,31 +422,22 @@ qx.Class.define("desk.Actions",
 		__populateActionMenu : function(callback) {
 			desk.FileSystem.readFile('actions.json', function (error, settings) {
 				this.__actionMenu = new qx.ui.menu.Menu();
-				this.__actions = settings;
-				this.__permissionsLevel = parseInt(settings.permissions, 10);
-				if (this.__permissionsLevel) {
+				this.__settings = settings;
+
+				if (this.__settings.permissions) {
 					this.__createActionsMenu();
 				}
 
-				var actions = this.__actions.actions;
+				var actions = this.__settings.actions;
 
 				var libs = {};
 				Object.keys(actions).forEach(function (actionName) {
 					var action = actions[actionName];
-					var permissionLevel = parseInt(action.permissions, 10);
-					if (permissionLevel !== 0) {
-						permissionLevel = 1;
-					}
-					if (this.__permissionsLevel < permissionLevel) {
-						// skip this action as we do not have enough permissions
-						return;
-					}
-
 					if (!libs[action.lib]) {
 						libs[action.lib] = [];
 					}
 					libs[action.lib].push(actionName);
-				});
+				}, this);
 
 				Object.keys(libs).sort(this.__myComparator).forEach(function (lib) {
 					var menu = new qx.ui.menu.Menu();
