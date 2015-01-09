@@ -1,6 +1,28 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
+<style type="text/css">
+/*this is what we want the div to look like
+when it is not showing*/
+div.loading-invisible{
+/*make invisible*/
+display:none;
+}
+
+/*this is what we want the div to look like
+when it IS showing*/
+div.loading-visible{
+/*make visible*/
+display:block;
+
+/*position it 200px down the screen*/
+position:absolute;
+top:200px;
+left:0;
+width:100%;
+text-align:center;
+}
+</style>
 <link rel="icon" type="image/png" href="resource/desk/desk.png"/>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <title>desk</title>
