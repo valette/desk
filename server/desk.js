@@ -133,8 +133,9 @@ var cacheExists,
 function testCache() {
 	cacheExists = fs.existsSync(jsFiles);
 	if (!cacheExists && !browserGet) {
-		browserGet = browserify(__dirname + '/lib/browserify.js', 
-			browserify.settings[argv.debug ? 'debug' : 'production']);
+		browserify.settings('transform', ['cssify']);
+		browserify.settings.mode = argv.debug ? 'development' : 'production';
+		browserGet = browserify(__dirname + '/lib/browserify.js');
 	}
 }
 
