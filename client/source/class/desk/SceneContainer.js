@@ -614,8 +614,6 @@ qx.Class.define("desk.SceneContainer",
 			}, this);
 		},
 
-		__draggingInProgress : false,
-
 		/**
 		 * fired whenever a button is clicked
 		 * @param event {qx.event.type.Event} the event
@@ -623,7 +621,6 @@ qx.Class.define("desk.SceneContainer",
 		__onMouseDown : function (event) {
 			if (event.getTarget() != this.getCanvas()) return;
 			this.capture();
-			this.__draggingInProgress = true;
 			if (this.isPickMode()) {
 				var mesh = this.__pickMeshes(this.getMeshes());
 				if (mesh !== Infinity) {
@@ -662,20 +659,21 @@ qx.Class.define("desk.SceneContainer",
 			this.__x = event.getDocumentLeft();
 			this.__y = event.getDocumentTop();
 
-			if (this.__draggingInProgress) {
-				if (this.isPickMode()) {
-					var mesh = this.__pickMeshes(this.getMeshes());
-					if (mesh !== Infinity) {
-						this.fireDataEvent("pick", mesh);
-						return;
-					}
-				}
-				var origin = this.getContentLocation();
-				this.getControls().mouseMove(event.getDocumentLeft() - origin.left,
-					event.getDocumentTop() - origin.top);
-				this.render();
-				this.__propagateLinks();
+			if (!this.isCapturing()) {
+				return;
 			}
+			if (this.isPickMode()) {
+				var mesh = this.__pickMeshes(this.getMeshes());
+				if (mesh !== Infinity) {
+					this.fireDataEvent("pick", mesh);
+					return;
+				}
+			}
+			var origin = this.getContentLocation();
+			this.getControls().mouseMove(event.getDocumentLeft() - origin.left,
+				event.getDocumentTop() - origin.top);
+			this.render();
+			this.__propagateLinks();
 		},
 
 		/**
@@ -684,7 +682,6 @@ qx.Class.define("desk.SceneContainer",
 		 */
 		__onMouseUp : function (event) {
 			this.releaseCapture();
-			this.__draggingInProgress = false;
 			this.getControls().mouseUp();
 		},
 

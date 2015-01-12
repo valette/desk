@@ -658,9 +658,9 @@ qx.Class.define("desk.MPRContainer",
 
 			fileFormatBox.addListener("changeSelection", function ( ) {
 				imageFormat=fileFormatBox.getSelection()[0].getUserData("imageFormat");
-				for (var i=0;i<volumeSlices.length;i++) {
-					volumeSlices[i].setImageFormat(imageFormat);
-				}
+				volumeSlices.forEach(function (slice) {
+					slice.setImageFormat(imageFormat);
+				});
 			});
 
 			// create opacity widget
@@ -668,56 +668,48 @@ qx.Class.define("desk.MPRContainer",
 			opacitySlider.set({value : opacity*100,
 					toolTipText : "change opacity"});
 			opacitySlider.addListener("changeValue", function(event) {
-				var opacity = event.getData() / 100;
-				for (var i = 0; i < volumeSlices.length; i++) {
-					volumeSlices[i].setOpacity(opacity);
-				}
+				volumeSlices.forEach(function (slice) {
+					slice.setOpacity(event.getData() / 100);
+				});
 			},this);
 			
 			////Create brightness/contrast fixing
 			var brightnessButton = new qx.ui.form.Button(null, "desk/Contrast_Logo_petit.PNG");
 			brightnessButton.set({toolTipText : "Click and drag to change brightnes, right-click to reset brightness"});
 
-			var clicked = false;
 			var x, y;
 
-			brightnessButton.addListener("mousedown", function(event)	{
+			brightnessButton.addListener("pointerdown", function(event)	{
 				if (event.isRightPressed()) {
-					for (var i = 0; i < volumeSlices.length; i++) {
-						volumeSlices[i].setBrightnessAndContrast(0, 1);
+					volumeSlices.forEach(function (slice) {
+						slice.setBrightnessAndContrast(0, 1);
+					});
 //						updateWindowLevel();
-					}
 				} else {
 					x = event.getScreenLeft();
 					y = event.getScreenTop();
-					brightnessButton.capture();
-					clicked = true;
 				}
 			}, this);
 
-			brightnessButton.addListener("mousemove", function(event) {
-				if (clicked) {
-					var newX = event.getScreenLeft();
-					var newY = event.getScreenTop();
-					var deltaX = newX - x;
-					var deltaY = newY - y;
-					var contrast = volumeSlices[0].getContrast();
-					var brightness = volumeSlices[0].getBrightness();
+			brightnessButton.addListener("pointermove", function(event) {
+				if (!brightnessButton.isCapturing()) {
+					return;
+				}
+				var newX = event.getScreenLeft();
+				var newY = event.getScreenTop();
+				var deltaX = newX - x;
+				var deltaY = newY - y;
+				var contrast = volumeSlices[0].getContrast();
+				var brightness = volumeSlices[0].getBrightness();
 
-					brightness -= deltaY / 300;
-					contrast *= 1 + deltaX / 300;
-					x = newX;
-					y = newY;
-					for (var i = 0; i < volumeSlices.length; i++) {
-						volumeSlices[i].setBrightnessAndContrast(brightness,contrast);
-					}
+				brightness -= deltaY / 300;
+				contrast *= 1 + deltaX / 300;
+				x = newX;
+				y = newY;
+				volumeSlices.forEach(function (slice) {
+					slice.setBrightnessAndContrast(brightness,contrast);
+				});
 //					updateWindowLevel();
-				}
-			}, this);
-
-			brightnessButton.addListener("mouseup", function(event) {
-				brightnessButton.releaseCapture();
-				clicked = false;
 			}, this);
 
 			var scalarBounds;
