@@ -1,2 +1,2 @@
 mkdir cache
-browserify lib/browserify.js | uglifyjs > cache/browserified.js
+browserify -t cssify lib/browserify.js | uglifyjs > cache/browserified.js
