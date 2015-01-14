@@ -173,7 +173,13 @@ qx.Class.define("desk.Animator",
 		/**
 		 * Defines each frame duration in milliseconds
 		 */
-		refreshTime : { init : 50, check: 'Number'}
+		refreshTime : { init : 50, check: 'Number'},
+
+		/**
+		 * Defines current frame
+		 */
+		frame : { init : 0, check: 'Number', apply : "__applyFrame"}
+
 	},
 
 	members : {
@@ -184,8 +190,7 @@ qx.Class.define("desk.Animator",
 
 		__controls : null,
 
-		__index : 0,
-		__indexLabel : null,
+		__frameLabel : null,
 
 		/**
 		 * Changes the visibility of a given object
@@ -208,12 +213,6 @@ qx.Class.define("desk.Animator",
 				return;
 			}
 			var numberOfObjects = this.__getNumberOfObjects();
-			for (var i = 0; i != numberOfObjects;i++) {
-				var mesh = this.__getObject(i);
-				if (mesh) {
-					this.__setVisibility(mesh, false);
-				}
-			}
 			this.__animate = true;
 
 			async.whilst(function () {
@@ -221,8 +220,7 @@ qx.Class.define("desk.Animator",
 				}.bind(this),
 
 				function (callback) {
-					this.__index = (this.__index +1 )% numberOfObjects;
-					this.__showCurrentFrame();
+					this.setFrame((this.getFrame() + 1) % numberOfObjects);
 
 					if (this.__snapshotCheckBox.getValue()) {
 						setTimeout(this.__snapshot, this.getRefreshTime() / 3);
@@ -237,25 +235,16 @@ qx.Class.define("desk.Animator",
 		/**
 		 * Updates all the objects'visibility and triggers rendering
 		 */
-		 __showCurrentFrame : function () {
-			var index = this.__index;
-			var numberOfObjects = this.__getNumberOfObjects();
-			var mesh = this.__getObject(index);
-			if (mesh) {
-				this.__setVisibility(mesh, true);
-			}
-
-			mesh = this.__getObject((index - 1 + numberOfObjects) % numberOfObjects);
-			if (mesh) {
-				this.__setVisibility(mesh, false);
-			}
-
-			mesh = this.__getObject((index + 1) % numberOfObjects);
-			if (mesh) {
-				this.__setVisibility(mesh, false);
-			}
+		 __applyFrame : function () {
+			var frame = this.getFrame();
+			this.__list.getChildren().forEach(function (item, index) {
+				var obj = item.getUserData('threeObject');
+				if (obj) {
+					this.__setVisibility(obj, index === frame);
+				}
+			}, this);
+			this.__frameLabel.setValue(frame.toString());
 			this.__render();
-			this.__indexLabel.setValue(index.toString());
 		},
 
 		/**
@@ -269,8 +258,7 @@ qx.Class.define("desk.Animator",
 		 * Seeks to the next frame
 		 */
 		getNextFrame : function () {
-			this.__index = (this.__index + 1 ) % this.__getNumberOfObjects();
-			this.__showCurrentFrame();
+			this.setFrame((this.getFrame() + 1 ) % this.__getNumberOfObjects());
 		},
 
 		/**
@@ -278,8 +266,7 @@ qx.Class.define("desk.Animator",
 		 */
 		getPreviousFrame : function () {
 			var numberOfObjects = this.__getNumberOfObjects();
-			this.__index = (this.__index - 1 +numberOfObjects) % numberOfObjects;
-			this.__showCurrentFrame();
+			this.setFrame((this.getFrame() - 1 + numberOfObjects) % numberOfObjects);
 		},
 
 		/**
@@ -318,8 +305,8 @@ qx.Class.define("desk.Animator",
 				return this.__controls;
 			}
 
-			var indexLabel = this.__indexLabel = new qx.ui.basic.Label("0");
-			indexLabel.setWidth(30);
+			var frameLabel = this.__frameLabel = new qx.ui.basic.Label("0");
+			frameLabel.setWidth(30);
 
 			var startButton = new qx.ui.form.Button(null, "icon/16/actions/media-playback-start.png");
 			startButton.addListener("execute", this.startAnimation, this);
@@ -338,7 +325,7 @@ qx.Class.define("desk.Animator",
 
 			var container = this.__controls = new qx.ui.container.Composite();		
 			container.setLayout(new qx.ui.layout.HBox());
-			container.add(indexLabel);
+			container.add(frameLabel);
 			container.add(startButton, {flex : 1});
 			container.add(stopButton, {flex : 1});
 			container.add(prevButton, {flex : 1});
@@ -356,6 +343,21 @@ qx.Class.define("desk.Animator",
 			var item = new qx.ui.form.ListItem(label);
 			item.setUserData('threeObject', object);
 			this.__list.add(item);
+		},
+
+		/**
+		 * Removes all objects handled by the animator
+		 */
+		clearObjects : function () {
+			this.__list.removeAll();
+		},
+
+		/**
+		 * Refreshes visibility of all objects
+		 */
+		refresh : function () {
+			this.__applyFrame();
 		}
+
 	}
 });
