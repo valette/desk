@@ -9,7 +9,7 @@
  * Here is a little example of how to use the widget.
  * 
  * <pre class='javascript'>
- * var viewer = new desk.SceneContainer();
+ * var viewer = new desk.MeshViewer();
  * // add your objects to the scene
  * viewer.addMesh(object1);
  * viewer.addMesh(object2);
@@ -31,7 +31,7 @@
  * animator.addObject(objectN);
  * 
  * // now you can control it
- * animator.startAnimation();
+ * animator.setPlay(true);
  * </pre>
  * 
  * @ignore (async.*)
@@ -75,7 +75,7 @@ qx.Class.define("desk.Animator",
 			win.setCaption('animate');
 			win.add(this, {flex : 1});
 			win.addListener('close', function () {
-				this.stopAnimation();
+				this.setPlay(false);
 				this.fireEvent('close');
 			}, this);
 			win.open();
@@ -178,14 +178,17 @@ qx.Class.define("desk.Animator",
 		/**
 		 * Defines current frame
 		 */
-		frame : { init : 0, check: 'Number', apply : "__applyFrame"}
+		frame : { init : 0, check: 'Number', apply : "__applyFrame"},
 
+		/**
+		 * Defines if animation is running
+		 */
+		play : { init : false, check: 'Boolean', apply : "__applyPlay"}
 	},
 
 	members : {
 		__list : null,
 		__snapshotCheckBox : null,
-		__animate : false,
 		__standalone : false,
 
 		__controls : null,
@@ -205,20 +208,21 @@ qx.Class.define("desk.Animator",
 
 		__render : null,
 
+		__counter : 0,
+
 		/**
-		 * Starts the animation
+		 * Starts/stops the animation
 		 */
-		startAnimation : function () {
-			if (this.__animate) {
-				return;
-			}
+		__applyPlay : function (play) {
+			if (!play) return;
+
+			var counter = ++this.__counter;
+
 			var numberOfObjects = this.__getNumberOfObjects();
-			this.__animate = true;
 
 			async.whilst(function () {
-					return this.__animate;
+					return (counter === this.__counter) && this.getPlay();
 				}.bind(this),
-
 				function (callback) {
 					this.setFrame((this.getFrame() + 1) % numberOfObjects);
 
@@ -245,13 +249,6 @@ qx.Class.define("desk.Animator",
 			}, this);
 			this.__frameLabel.setValue(frame.toString());
 			this.__render();
-		},
-
-		/**
-		 * Stops the animation
-		 */
-		stopAnimation : function () {
-			this.__animate = false;
 		},
 
 		/**
@@ -309,10 +306,10 @@ qx.Class.define("desk.Animator",
 			frameLabel.setWidth(30);
 
 			var startButton = new qx.ui.form.Button(null, "icon/16/actions/media-playback-start.png");
-			startButton.addListener("execute", this.startAnimation, this);
+			startButton.addListener("execute", function () {this.setPlay(true);}, this);
 
 			var stopButton = new qx.ui.form.Button(null, "icon/16/actions/media-playback-stop.png");
-			stopButton.addListener("execute", this.stopAnimation, this);
+			stopButton.addListener("execute", function () {this.setPlay(false);}, this);
 
 			var nextButton = new qx.ui.form.Button(null, "icon/16/actions/media-seek-forward.png");
 			nextButton.addListener("execute", this.getNextFrame, this);
