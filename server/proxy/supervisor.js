@@ -114,7 +114,7 @@ function update (user) {
 		}
 		console.log(message);
 		console.log("restart task for user " + user);
-		forever.stop(_.indexOf(tasks, previousTask));
+		forever.stop(foreverUID);
 	} else {
 		console.log(message);
 		if (file) {

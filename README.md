@@ -22,6 +22,8 @@ Copyright (c) CNRS, INSA-Lyon, UCBL, INSERM
 To install desk on your computer, you need:
 * git
 * node.js
+
+to visualize 3D data (meshes, volumes) you also need;
 * vtk + headers
 * cmake
 
@@ -30,6 +32,12 @@ To install desk on your computer, you need:
 	git clone http://github.com/valette/desk.git
 	cd desk/server
 	npm install
+
+startup takes a few seconds due to client-side javascript build step. To skip code generation, you can generate a static file using:
+
+	tools/build_cache.sh
+
+Note that to execute this script, you need to install [browserify](http://browserify.org/#install)
 
 to install binary addons for 3D data visualization :
 
