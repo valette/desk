@@ -26,7 +26,6 @@ function updateTasks() {
 			var users = content.users;
 			users.push(proxyUser);
 			users = _.uniq(users);
-			rootUsers = content.rootUsers || [];
 
 			console.log(users.length + " users");
 			users.forEach(update);
