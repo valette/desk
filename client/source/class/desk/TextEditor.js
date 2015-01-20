@@ -116,7 +116,7 @@ qx.Class.define("desk.TextEditor",
 			var body = document.getElementsByTagName('body')[0];
 			this.__script = document.createElement('script');
 			this.__script.setAttribute('type','text/javascript');
-			this.__script.text = 'desk.TextEditor.codeInTextEditor = function(){' +
+			this.__script.text = 'desk.TextEditor.codeInTextEditor = function(__dirname){' +
 				this.__text.getCode() + '\n};' + '\n//@ sourceURL=v' +
 				desk.TextEditor.codeVersion + '-' +
 				desk.FileSystem.getFileName(this.__file);
@@ -124,7 +124,7 @@ qx.Class.define("desk.TextEditor",
 			body.appendChild(this.__script);
 
 			if (desk.TextEditor.codeInTextEditor) {
-				desk.TextEditor.codeInTextEditor();
+				desk.TextEditor.codeInTextEditor(desk.FileSystem.getFileDirectory(this.__file));
 			} else {
 				alert('Error while parsing your code, please check syntax');
 			}
