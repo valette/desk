@@ -19,7 +19,7 @@ qx.Class.define("desk.VolumeSlice",
 	/**
 	 * Constructor
 	 * @param file {String} volume to slice
-	 * @param orientation {Number} orienation, equals to 0, 1 or 2
+	 * @param orientation {Number} orientation, equals to 0, 1 or 2
 	 * @param opts {Object} optional additional options
 	 * @param callback {Function} callback when slicing is finished
 	 * @param context {Objext} optional context for the callback

@@ -12,7 +12,8 @@ qx.Class.define("desk.MPRContainer",
 	/**
 	* constructor
 	* @param file {String} : file to visualize
-	* @param options {Object} : see desk.MPRContainer.addFile() for description
+	* @param options {Object} : options, see desk.MPRContainer.addVolume() for more doc
+	* @see desk.MPRContainer#addVolume for options description
 	* @param callback {Function} : callback when done.
 	* @param context {Object} : optional callback context
 	*/
@@ -516,8 +517,14 @@ qx.Class.define("desk.MPRContainer",
         /**
 		* adds a file into the viewer
 		* @param file {String} : file to load
-        * @param options {Object} : options object containing settings
-        * such as imageFormat (0 or 1), label (text), visible (bool)
+        * @param options {Object} : options object containing settings:
+        * <pre class='javascript'>
+        * { <br>
+        * 	format : 1,// (0 : png, 1 : jpg) <br>
+        *   label : "label in list", <br>
+        *   visible : true <br>
+        * }
+		* </pre>
         * @param callback {Function} : callback when loaded. First 
         *  callback argument is the error, the second is the volume widget
         * @param context {Object} : optional callback context
