@@ -5,6 +5,9 @@
 async    = require('async');
 _        = require('lodash');
 operative = require('operative');
+operative.setBaseURL(window.location.protocol + '//' 
+					+ window.location.host
+					+ (qx.bom.Cookie.get("homeURL") || '/') + 'files/' );
 io = require('socket.io-client');
 numeric = require('numeric');
 kdTree = require ('kdt');
