@@ -232,7 +232,9 @@ qx.Class.define("desk.FileSystem",
 			desk.FileSystem.readFile(file, function (err, content) {
 				var script = document.createElement('script');
 				script.setAttribute('type','text/javascript');
-				script.text = '(function () {' + content + '\n})()\n//@ sourceURL=' + file;
+				script.text = '(function (__dirname) {' + content
+					+ '\n})("' + desk.FileSystem.getFileDirectory(file)
+					+ '")\n//@ sourceURL=' + file;
 				document.getElementsByTagName('body')[0].appendChild(script);
 				if (typeof callback === "function") {
 					callback.apply(context);
