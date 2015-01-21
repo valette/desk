@@ -90,6 +90,32 @@ qx.Class.define("desk.FileSystem",
 				output_directory : desk.FileSystem.getFileDirectory(file)},
 				callback, context);
 		},
+	    
+	    
+		/**
+		* Writes an object to a JSON file
+		*
+		* @param file {String} the file to write to
+		* @param content {Object} the object to write
+		* @param callback {Function} callback when done
+		* @param context {Object} optional context for the callback
+		* 
+		* <pre class="javascript">
+		* example : <br>
+		* desk.FileSystem.writeJSON ("myFilePath", myContent, function () {<br>
+		* // here, the file has been written to disk<br>
+		* });<br>
+		* </pre>
+		*/
+		writeJSON : function (file, content, callback, context) {
+			desk.Actions.getInstance().launchAction({
+				action : "write_string",
+				file_name : desk.FileSystem.getFileName(file),
+				data : JSON.stringify(content, true),
+				output_directory : desk.FileSystem.getFileDirectory(file)},
+				callback, context);
+		},
+
 
 		/**
 		* extracts the directory from input file.
