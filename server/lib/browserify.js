@@ -5,6 +5,7 @@
 async     = require('async');
 numeric   = require('numeric');
 kdTree    = require ('kdt');
+_         = require('lodash');
             require('../../client/ext/mhdParse.js');
 
 if (typeof importScripts == 'function') {
@@ -13,7 +14,6 @@ if (typeof importScripts == 'function') {
 }
 // we are not in a worker
 Heap      = require('heap');
-_         = require('lodash');
 operative = require('operative');
 io        = require('socket.io-client');
 c3        = require ('c3');
