@@ -57,6 +57,8 @@ qx.Class.define("desk.VolumeSlice",
 		}.bind(this);
 		image.onerror = image.onabort = this.update.bind(this);
 
+		this.addListener("changeImageFormat", this.update, this);
+		this.addListener("changeSlice", this.__updateImage, this);
 		this.update(callback, context);
 	},
 
@@ -64,7 +66,7 @@ qx.Class.define("desk.VolumeSlice",
 		/**
 		 * current slice index
 		 */
-		slice : { init : -1, check: "Number", event : "changeSlice", apply : "__updateImage"},
+		slice : { init : -1, check: "Number", event : "changeSlice"},
 
 		/**
 		 * current orientation
@@ -74,7 +76,7 @@ qx.Class.define("desk.VolumeSlice",
 		/**
 		 * current Image format
 		 */
-		imageFormat : { init : 1, check: "Number", event : "changeImageFormat", apply : "update"}
+		imageFormat : { init : 1, check: "Number", event : "changeImageFormat"}
 	},
 
 	events : {
@@ -687,17 +689,18 @@ qx.Class.define("desk.VolumeSlice",
 
 		/**
 		 * loads slices pointed by an xml file
-		 * @param xmlURL {String} file url
+		 * @param url {String} file url
 		 * @param callback {Function} callback when done
 		 * @param context {Object} optional callback context
 		 */
 		openXMLURL : function (url, callback, context) {
 			var req = new qx.io.request.Xhr(url + "?nocache=" + Math.random());
 			req.setAsync(true);
+			this.__path = desk.FileSystem.getFileDirectory(url);
 
 			req.addListener("success", function(e) {
 				try {
-					this.__parseXMLresponse(e.getTarget().getResponse(), url);
+					this.__parseXMLresponse(e.getTarget().getResponse());
 					req.dispose();
 				} catch (err) {
 					console.log(err);
@@ -717,9 +720,8 @@ qx.Class.define("desk.VolumeSlice",
 		/**
 		 * callback when the volume xml file is loaded
 		 * @param xmlDoc {Element} xml content
-		 * @param xmlURL {Strig} xml file url
 		 */
-		__parseXMLresponse : function (xmlDoc, xmlURL) {
+		__parseXMLresponse : function (xmlDoc) {
 			this.__availableImageFormat = this.getImageFormat();
 			var volume = xmlDoc.getElementsByTagName("volume")[0];
 			if (!volume)
@@ -754,8 +756,6 @@ qx.Class.define("desk.VolumeSlice",
 			this.__offset = parseInt(slices.getAttribute("offset"), 10);
 			this.__timestamp = slices.getAttribute("timestamp") || Math.random();
 			this.__prefix = slices.childNodes[0].nodeValue;
-
-			this.__path = desk.FileSystem.getFileDirectory(xmlURL);
 
 			// feed shader with constants
 			this.__materials.forEach(function (material) {
