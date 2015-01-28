@@ -135,6 +135,7 @@ function update (user) {
 	var logFile = path.join(deskPath, 'log.txt');
 
 	forever.startDaemon (file, {
+		append : true,
 		args: args,
 		cwd : path.dirname(file),
 		outFile : logFile,
