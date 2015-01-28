@@ -153,6 +153,22 @@
       "js": "write_binary",
       "voidAction": true
     },
+    "write_string": {
+      "parameters": [
+        {
+          "name": "file_name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "data",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "js": "write_string",
+      "voidAction": true
+    },
     "unzip_file": {
       "parameters": [
         {
