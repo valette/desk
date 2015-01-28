@@ -44,21 +44,27 @@ qx.Class.define("desk.VolumeSlice",
 		if (opts.opacity != null) {
 			this.__opacity = opts.opacity;
 		}
-		this.__convert_to_uchar = opts.convert_to_uchar || false;
 		this.__textureFilter = opts.linearFilter ? THREE.LinearFilter : THREE.NearestFilter;
 		this.__file = file;
 
-		this.__initImageLoader();
+		var image = this.__image = new Image();
+		image.onload = function() {
+			clearTimeout(this.__timeout);
+			this.__materials.forEach(function (material) {
+				material.uniforms.texture.value.needsUpdate = true;
+			});
+			this.fireEvent("changeImage");
+		}.bind(this);
+		image.onerror = image.onabort = this.update.bind(this);
 
 		this.update(callback, context);
-		this.addListener("changeImageFormat", this.update, this);
 	},
 
 	properties : {
 		/**
 		 * current slice index
 		 */
-		slice : { init : -1, check: "Number", event : "changeSlice"},
+		slice : { init : -1, check: "Number", event : "changeSlice", apply : "__updateImage"},
 
 		/**
 		 * current orientation
@@ -68,7 +74,7 @@ qx.Class.define("desk.VolumeSlice",
 		/**
 		 * current Image format
 		 */
-		imageFormat : { init : 1, check: "Number", event : "changeImageFormat"}
+		imageFormat : { init : 1, check: "Number", event : "changeImageFormat", apply : "update"}
 	},
 
 	events : {
@@ -214,8 +220,6 @@ qx.Class.define("desk.VolumeSlice",
 		__contrast : 1,
 		__opacity : 1,
 
-		__convert_to_uchar : null,
-
 		__ready : false,
 
 		/**
@@ -315,16 +319,10 @@ qx.Class.define("desk.VolumeSlice",
 		 * @param context {Object} optional callback context
 		 */
 		update : function (callback, context) {
-            var params = {
+            var params = _.extend({
 			    input_volume : this.__file,
 			    slice_orientation : this.getOrientation()
-			};
-
-			_.extend(params, this.__opts.sliceWith || {});
-
-			if (this.__convert_to_uchar) {
-				params.convert_to_uchar = "1";
-			}
+			}, this.__opts.sliceWith || {});
 
 			if ((desk.Actions.getInstance().getAction("vol_slice") != null)
 				&& (desk.FileSystem.getFileExtension(this.__file) == "vol")) {
@@ -683,7 +681,7 @@ qx.Class.define("desk.VolumeSlice",
 		 * returns the total number of slices
 		 * @return {Number} number of slices
 		 */
-		 getNumberOfSlices : function () {
+		getNumberOfSlices : function () {
 			return this.__dimensions[this.getZIndex()];
 		},
 
@@ -693,25 +691,26 @@ qx.Class.define("desk.VolumeSlice",
 		 * @param callback {Function} callback when done
 		 * @param context {Object} optional callback context
 		 */
-		openXMLURL : function (xmlURL, callback, context) {
-			var req = new qx.io.request.Xhr(xmlURL + "?nocache=" + Math.random());
+		openXMLURL : function (url, callback, context) {
+			var req = new qx.io.request.Xhr(url + "?nocache=" + Math.random());
 			req.setAsync(true);
 
 			req.addListener("success", function(e) {
-				var error;
 				try {
-					this.__parseXMLresponse(e.getTarget().getResponse(), xmlURL);
+					this.__parseXMLresponse(e.getTarget().getResponse(), url);
 					req.dispose();
 				} catch (err) {
-					error = err;
+					console.log(err);
+					this.update(callback, context);
+					return;
 				}
 				if (typeof callback === 'function') {
-					callback.call(context, error);
+					callback.call(context);
 				}
 			}, this);
 			req.addListener("fail", function (e) {
-				callback.apply(context, req.getStatusText())
-			});
+				this.update(callback, context);
+			}, this);
 			req.send();
 		},
 
@@ -778,24 +777,6 @@ qx.Class.define("desk.VolumeSlice",
 			clearTimeout(this.__timeout);
 			this.__timeout = setTimeout(this.__updateImage.bind(this), 5000);
 			this.__image.src = this.getSliceURL(this.getSlice()) + "?nocache=" + this.__timestamp;
-		},
-
-		/**
-		 * Setups image loading
-		 */
-		__initImageLoader : function () {
-			this.__image = new Image();
-
-			this.__image.onload = function() {
-				clearTimeout(this.__timeout);
-				this.__materials.forEach(function (material) {
-					material.uniforms.texture.value.needsUpdate = true;
-				});
-				this.fireEvent("changeImage");
-			}.bind(this);
-
-			this.__image.onerror = this.__image.onabort = this.__updateImage.bind(this);
-			this.addListener("changeSlice", this.__updateImage, this);
 		},
 
 		/**
