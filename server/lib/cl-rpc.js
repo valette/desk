@@ -398,7 +398,7 @@ RPC.prototype.parseParameter = function (parameter, cb) {
 	var prefix = parameter.prefix || '';
 	var value = this.POST[parameter.name];
 
-	if (value === undefined) {
+	if (value === undefined || value === null) {
 		if (parameter.required) {
 			callback ("parameter " + parameter.name + " is required!");
 		} else {
