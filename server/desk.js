@@ -17,9 +17,10 @@ var	actions      = require(__dirname + '/lib/cl-rpc');
 	mkdirp       = require('mkdirp'),
 	mv           = require('mv'),
 	os           = require('os'),
+	osenv        = require('osenv'),
 	socketIO     = require('socket.io');
 
-var user = process.env.USER,
+var user = osenv.user(),
 	homeURL = argv.multi ? '/' + user + '/' : '/',
 	port = argv.multi ? process.getuid() : 8080;
 
@@ -49,8 +50,7 @@ app.use (function (req, res, next) {
 	next();
 });
 
-var	homeDir = process.platform === "darwin" ? '/Users' : '/home',
-	deskDir = libPath.join(homeDir, user, 'desk') + '/',
+var	deskDir = libPath.join(osenv.home(), 'desk') + '/',
 	uploadDir = libPath.join(deskDir, 'upload') + '/',
 	extensionsDir = libPath.join(deskDir, 'extensions') + '/';
 
@@ -67,40 +67,45 @@ console.log('Welcome to Desk');
 console.log('Running as user : ' + user);
 console.log(separator);
 
-var id = {username : user, password : "password"};
-// look for correctly formated password.json file.
-if (fs.existsSync(passwordFile)) {
-	id = require(passwordFile);
-}
+var id;
+fs.watchFile(passwordFile, updatePassword);
+function updatePassword() {
+	console.log("load " + passwordFile);
+	if (fs.existsSync(passwordFile)) {
+		try {
+			id = JSON.parse(fs.readFileSync(passwordFile));
+		}
+		catch (e) {
+			console.log("error while reading password file : ");
+			console.log(e);
+			id = {};
+		}
+	} else {
+		id = {username : user, password : "password"};
+	}
 
-if (id.password) {
-	// convert to more secure format
-	var shasum = crypto.createHash('sha1');
-	shasum.update(id.password);
-	id.sha = shasum.digest('hex');
-	delete id.password;
-	fs.writeFileSync(passwordFile, JSON.stringify(id));
-}
-
-if (id.username && id.sha) {
-	app.use(function(req, res, next) {
-		var user = auth(req) || {};
+	if (id.password) {
+		// convert to more secure format
 		var shasum = crypto.createHash('sha1');
-		shasum.update(user.pass || '');
-		if (user && user.name === id.username && shasum.digest('hex') === id.sha) {
+		shasum.update(id.password);
+		id.sha = shasum.digest('hex');
+		delete id.password;
+		fs.writeFileSync(passwordFile, JSON.stringify(id));
+	}
+}
+updatePassword();
+app.use(function(req, res, next) {
+	var user = auth(req) || {};
+	var shasum = crypto.createHash('sha1');
+	shasum.update(user.pass || '');
+	if ((id.username === undefined) || (id.sha === undefined)
+		|| (user && user.name === id.username && shasum.digest('hex') === id.sha)) {
 			next();
 			return;
-		}
-		res.statusCode = 401;
-		res.setHeader('WWW-Authenticate', 'Basic realm="' +
-			"please enter your login/password" + '"');
-		res.end('Unauthorized');
-	});
-	console.log("Using basic authentication");
-} else {
-	console.log("No password file " + passwordFile + " provided or incorrect file");
-	console.log("see " + passwordFile + ".example file for an example");
-}
+	}
+	res.setHeader('WWW-Authenticate', 'Basic realm="please enter your login/password"');
+	res.sendStatus(401);
+});
 
 // handle body parsing
 app.use(bodyParser.urlencoded({limit : '10mb', extended : true}));
@@ -138,7 +143,6 @@ function testCache() {
 		browserGet = browserify(__dirname + '/lib/browserify.js');
 	}
 }
-
 testCache();
 fs.watchFile(jsFiles, testCache);
 router.use('/js', function (req, res, next) {
@@ -235,10 +239,6 @@ if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 } else {
 	server = http.createServer(app);
 	console.log("No certificate provided, using non secure mode");
-	console.log("You can generate a certificate with these 3 commands:");
-	console.log("(1) openssl genrsa -out privatekey.pem 1024");
-	console.log("(2) openssl req -new -key privatekey.pem -out certrequest.csr");
-	console.log("(3) openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem");
 	baseURL = "http://";
 }
 console.log(separator);
@@ -276,6 +276,3 @@ console.log(separator);
 console.log(new Date().toLocaleString());
 console.log ("server running on port " + port);
 console.log(baseURL + "localhost:" + port + homeURL);
-if (id) {
-	console.log('login as : user : ' + id.username);
-}
