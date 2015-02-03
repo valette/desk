@@ -178,12 +178,12 @@ qx.Class.define("desk.Animator",
 		/**
 		 * Defines current frame
 		 */
-		frame : { init : 0, check: 'Number', apply : "__applyFrame"},
+		frame : { init : 0, check: 'Number', event: "changeFrame", apply : "__applyFrame"},
 
 		/**
 		 * Defines if animation is running
 		 */
-		play : { init : false, check: 'Boolean', apply : "__applyPlay"}
+		play : { init : false, check: 'Boolean', event : "changePlay", apply : "__applyPlay"}
 	},
 
 	members : {
