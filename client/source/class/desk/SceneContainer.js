@@ -55,7 +55,7 @@ qx.Class.define("desk.SceneContainer",
 					return;
 			}
 
-			var mesh = this.getIntersections(this.getMeshes())[0];
+			var mesh = this.getIntersections()[0];
 			if (mesh === undefined) return;
 			console.log("picked mesh : ");
 			console.log(mesh);
@@ -622,7 +622,7 @@ qx.Class.define("desk.SceneContainer",
 			if (event.getTarget() != this.getCanvas()) return;
 			this.capture();
 			if (this.isPickMode()) {
-				var mesh = this.getIntersections(meshes)[0];
+				var mesh = this.getIntersections()[0];
 				if (mesh !== undefined) {
 					this.fireDataEvent("pick", mesh);
 					return;
@@ -663,7 +663,7 @@ qx.Class.define("desk.SceneContainer",
 				return;
 			}
 			if (this.isPickMode()) {
-				var mesh = this.getIntersections(meshes)[0];
+				var mesh = this.getIntersections()[0];
 				if (mesh !== undefined) {
 					this.fireDataEvent("pick", mesh);
 					return;
@@ -687,7 +687,7 @@ qx.Class.define("desk.SceneContainer",
 
 		/**
 		 * computes the intersections between an array of objects and the mouse pointer
-		 * @param meshes {Array} array of THREE objects
+		 * @param meshes {Array} array of THREE objects. Default value : all visible objects in the scene 
 		 * @return {Array} array of intersections
 		 */
 		getIntersections : function (meshes) {
@@ -706,7 +706,7 @@ qx.Class.define("desk.SceneContainer",
 			var ray = new THREE.Raycaster(camera.position,
 				vector.sub(camera.position).normalize());
 
-			return ray.intersectObjects(_.filter(meshes, function (mesh) {
+			return ray.intersectObjects(_.filter(meshes || this.getMeshes(), function (mesh) {
 				return mesh.visible;
 			}));
 		},
@@ -724,7 +724,7 @@ qx.Class.define("desk.SceneContainer",
 					slices.push(mesh);
 				}
 			});
-			var intersects = this.getIntersections(meshes)[0];
+			var intersects = this.getIntersections(slices)[0];
 			var delta = event.getWheelDelta() > 0 ? 1 : -1;
 			if (intersects != undefined) {
 				var slice = intersects.object.userData.viewerProperties.volumeSlice;
