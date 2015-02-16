@@ -55,8 +55,8 @@ qx.Class.define("desk.SceneContainer",
 					return;
 			}
 
-			var mesh = this.__pickMeshes(this.getMeshes());
-			if (mesh === Infinity) return;
+			var mesh = this.getIntersections(this.getMeshes())[0];
+			if (mesh === undefined) return;
 			console.log("picked mesh : ");
 			console.log(mesh);
 			var controls = this.getControls();
@@ -622,8 +622,8 @@ qx.Class.define("desk.SceneContainer",
 			if (event.getTarget() != this.getCanvas()) return;
 			this.capture();
 			if (this.isPickMode()) {
-				var mesh = this.__pickMeshes(this.getMeshes());
-				if (mesh !== Infinity) {
+				var mesh = this.getIntersections(meshes)[0];
+				if (mesh !== undefined) {
 					this.fireDataEvent("pick", mesh);
 					return;
 				}
@@ -663,8 +663,8 @@ qx.Class.define("desk.SceneContainer",
 				return;
 			}
 			if (this.isPickMode()) {
-				var mesh = this.__pickMeshes(this.getMeshes());
-				if (mesh !== Infinity) {
+				var mesh = this.getIntersections(meshes)[0];
+				if (mesh !== undefined) {
 					this.fireDataEvent("pick", mesh);
 					return;
 				}
@@ -686,15 +686,11 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		/**
-		 * computes the intersection between an array of objects and the mouse pointer
+		 * computes the intersections between an array of objects and the mouse pointer
 		 * @param meshes {Array} array of THREE objects
-		 * @return {Object} the (possibly empty) intersection
+		 * @return {Array} array of intersections
 		 */
-		__pickMeshes : function (meshes) {
-			meshes = _.filter(meshes, function (mesh) {
-				return mesh.visible;
-			});
-			
+		getIntersections : function (meshes) {
 			var origin = this.getContentLocation();
 			var x = this.__x - origin.left;
 			var y = this.__y - origin.top;
@@ -710,10 +706,9 @@ qx.Class.define("desk.SceneContainer",
 			var ray = new THREE.Raycaster(camera.position,
 				vector.sub(camera.position).normalize());
 
-			var intersection =  ray.intersectObjects(meshes);
-			return _.min(intersection, function (inter) {
-				return inter.distance;
-			});
+			return ray.intersectObjects(_.filter(meshes, function (mesh) {
+				return mesh.visible;
+			}));
 		},
 
 		/**
@@ -729,9 +724,9 @@ qx.Class.define("desk.SceneContainer",
 					slices.push(mesh);
 				}
 			});
-			var intersects = this.__pickMeshes(slices);
+			var intersects = this.getIntersections(meshes)[0];
 			var delta = event.getWheelDelta() > 0 ? 1 : -1;
-			if (intersects != Infinity) {
+			if (intersects != undefined) {
 				var slice = intersects.object.userData.viewerProperties.volumeSlice;
 				var maximum = slice.getNumberOfSlices() - 1;
 				var newValue = slice.getSlice() + delta;
