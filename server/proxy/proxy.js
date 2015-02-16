@@ -1,12 +1,11 @@
 var	async     = require('async'),
 	cluster   = require('cluster'),
-	exec      = require('child_process').exec,
+	execSync  = require('child_process').execSync,
 	fs        = require('fs'),
 	http      = require('http'),
 	https     = require('https'),
 	httpProxy = require('http-proxy'),
-	os        = require('os'),
-	userid    = require ("userid");
+	os        = require('os');
 
 var	port      = 80,
 	port2     = 443;
@@ -117,7 +116,7 @@ function updateRoutes() {
 
 		users.forEach(function (user) {
 			routes[os.hostname() + '/' + user] = 
-				{target : 'http://' + os.hostname() + ':' + userid.uid(user)};
+				{target : 'http://' + os.hostname() + ':' + parseInt(execSync("id -u " + user))};
 		});
 
 		// add external proxies

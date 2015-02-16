@@ -1,9 +1,9 @@
-var	forever   = require('forever'),
+var	execSync  = require('child_process').execSync;
+	forever   = require('forever'),
 	fs        = require('fs'),
 	mkdirp    = require('mkdirp'),
 	path      = require('path'),
 	_         = require('underscore');
-	userid    = require ("userid");
 
 var config = __dirname + '/config.json',
 	uidPrefix = 'desk-',
@@ -62,16 +62,19 @@ function getForeverUID(user) {
 }
 
 function update (user) {
-	var deskPath = path.join('/home/', user, 'desk');
-	mkdirp.sync(deskPath);
-	fs.chownSync(deskPath, userid.uid(user), userid.gid(user));
-
-	var message = "*** " + user + " ***",
-	    foreverUID  = getForeverUID(user),
-	    args = [],
-	    spawnWith = {},
-	    env = {},
+	var deskPath   = path.join('/home/', user, 'desk'),
+		uid        = parseInt(execSync("id -u " + user)),
+		gid        = parseInt(execSync("id -g " + user)),
+		logFile    = path.join(deskPath, 'log.txt'),
+		message    = "*** " + user + " ***",
+	    foreverUID = getForeverUID(user),
+	    args       = [],
+	    spawnWith  = {},
+	    env        = {},
 	    userConfig = getUserConfigFile(user);
+
+	mkdirp.sync(deskPath);
+	fs.chownSync(deskPath, uid, gid);
 
 	if (user === proxyUser) {
 		file = path.join(__dirname, "proxy.js");
@@ -80,7 +83,7 @@ function update (user) {
 		args.push ("--multi");
 		env = {USER : user, CCACHE_DIR : "/home/" + user + "/.ccache",
 			HOME : "/home/" + user, LOGNAME : user};
-		spawnWith = {uid : userid.uid(user), gid : userid.gid(user)};
+		spawnWith = {uid : uid, gid : gid};
 
 		if (fs.existsSync(userConfig)) {
 			try {
@@ -132,8 +135,6 @@ function update (user) {
 		return;
 	}
 
-	var logFile = path.join(deskPath, 'log.txt');
-
 	forever.startDaemon (file, {
 		append : true,
 		args: args,
@@ -151,7 +152,7 @@ function update (user) {
 fs.watchFile(config, onModification);
 
 function onModification(curr, prev) {
-	if ((curr.mtime > prev.mtime) || (curr.dev === 0)) {
+	if ((curr.mtime > prev.mtime) || ((curr.dev === 0) && (prev.dev !== 0))) {
 		console.log('Updating...');
 		updateTasks();
 	}
