@@ -7,13 +7,13 @@ numeric   = require('numeric');
 kdTree    = require ('kdt');
 _         = require('lodash');
             require('../../client/ext/mhdParse.js');
+Heap      = require('heap');
 
 if (typeof importScripts == 'function') {
 	// we are in a worker
 	return;
 }
 // we are not in a worker
-Heap      = require('heap');
 operative = require('operative');
 io        = require('socket.io-client');
 c3        = require ('c3');
