@@ -33,6 +33,7 @@
     "serve-index": ">0.0.0",
     "socket.io": ">0.0.0",
     "socket.io-client": ">0.0.0",
+    "three" : "0.69.0",
     "webworkify": ">0.0.0",
     "winston": ">0.0.0",
     "yargs": ">0.0.0"

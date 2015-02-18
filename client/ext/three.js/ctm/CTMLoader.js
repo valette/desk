@@ -250,7 +250,8 @@ THREE.CTMLoader.prototype.createModel = function ( file, callback ) {
 	var geometry = new Model();
 
 	geometry.computeOffsets();
-
+	// "offsets" have been renamed to "drawcalls"
+	geometry.drawcalls = geometry.offsets;
 	// compute vertex normals if not present in the CTM model
 	if ( geometry.attributes.normal === undefined ) {
 		geometry.computeVertexNormals();

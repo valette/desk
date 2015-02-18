@@ -4,10 +4,17 @@
 
 async     = require('async');
 numeric   = require('numeric');
-kdTree    = require ('kdt');
+kdTree    = require('kdt');
 _         = require('lodash');
             require('../../client/ext/mhdParse.js');
 Heap      = require('heap');
+
+THREE     =	require('three');
+			require('../../client/ext/three.js/VTKLoader.js');
+			require('../../client/ext/three.js/TrackballControls2.js');
+			require('../../client/ext/three.js/ctm/CTMLoader.js');
+			require('../../client/ext/three.js/ctm/lzma.js');
+			require('../../client/ext/three.js/ctm/ctm.js');
 
 if (typeof importScripts == 'function') {
 	// we are in a worker
@@ -29,12 +36,6 @@ var ace   = require('brace');
 			require("brace/ext/language_tools");
 
 Detector  = require('../../client/ext/three.js/Detector.js');
-THREE     = require('../../client/ext/three.js/three.js');
-			require('../../client/ext/three.js/VTKLoader.js');
-			require('../../client/ext/three.js/TrackballControls2.js');
-			require('../../client/ext/three.js/ctm/CTMLoader.js');
-			require('../../client/ext/three.js/ctm/lzma.js');
-			require('../../client/ext/three.js/ctm/ctm.js');
 
 var work  = require('webworkify');
 
