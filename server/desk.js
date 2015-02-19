@@ -20,24 +20,26 @@ var	actions      = require(__dirname + '/lib/cl-rpc');
 	osenv        = require('osenv'),
 	socketIO     = require('socket.io');
 
-var user = osenv.user(),
-	homeURL = argv.multi ? '/' + user + '/' : '/',
-	port = argv.multi ? process.getuid() : 8080;
+var homeURL         = argv.multi ? '/' + osenv.user() + '/' : '/',
+	port            = argv.multi ? process.getuid() : 8080,
+	clientPath      = libPath.join(__dirname + '/../client/') + '/',
+	privateKeyFile  = libPath.join(__dirname, "privatekey.pem"),
+	certificateFile = libPath.join(__dirname, "certificate.pem"),
+	deskDir         = libPath.join(osenv.home(), 'desk') + '/',
+	passwordFile    = libPath.join(deskDir, "password.json"),
+	uploadDir       = libPath.join(deskDir, 'upload') + '/',
+	extensionsDir   = libPath.join(deskDir, 'extensions') + '/',
+	id              = {username : osenv.user(), password : "password"},
+	serverLog       = false;
 
-var log = false;
 // hijack console.log
 var oldConsolelog = console.log;
 console.log = function (message) {
 	oldConsolelog.apply(console, arguments);
-	if (io && log) {io.emit("log", message);}
+	if (io && serverLog) {
+		io.emit("log", message);
+	}
 };
-
-var separator = "*******************************************************************************";
-console.log(separator);
-console.log(separator);
-
-// user parameters
-var clientPath = fs.realpathSync(__dirname + '/../client/') + '/';
 
 // configure express server
 var app = express();
@@ -50,24 +52,9 @@ app.use (function (req, res, next) {
 	next();
 });
 
-var	deskDir = libPath.join(osenv.home(), 'desk') + '/',
-	uploadDir = libPath.join(deskDir, 'upload') + '/',
-	extensionsDir = libPath.join(deskDir, 'extensions') + '/';
-
-// make desk and upload directories if not existent
 mkdirp.sync(deskDir);
 mkdirp.sync(uploadDir);
 
-// certificate default file names
-var passwordFile = libPath.join(deskDir, "password.json"),
-	privateKeyFile = "privatekey.pem",
-	certificateFile = "certificate.pem";
-
-console.log('Welcome to Desk');
-console.log('Running as user : ' + user);
-console.log(separator);
-
-var id;
 fs.watchFile(passwordFile, updatePassword);
 function updatePassword() {
 	console.log("load " + passwordFile);
@@ -80,12 +67,10 @@ function updatePassword() {
 			console.log(e);
 			id = {};
 		}
-	} else {
-		id = {username : user, password : "password"};
 	}
 
 	if (id.password) {
-		// convert to more secure format
+		// convert to secure format
 		var shasum = crypto.createHash('sha1');
 		shasum.update(id.password);
 		id.sha = shasum.digest('hex');
@@ -94,6 +79,7 @@ function updatePassword() {
 	}
 }
 updatePassword();
+
 app.use(function(req, res, next) {
 	var user = auth(req) || {};
 	var shasum = crypto.createHash('sha1');
@@ -103,11 +89,10 @@ app.use(function(req, res, next) {
 			next();
 			return;
 	}
-	res.setHeader('WWW-Authenticate', 'Basic realm="please enter your login/password"');
+	res.setHeader('WWW-Authenticate', 'Basic realm="login/password?"');
 	res.sendStatus(401);
 });
 
-// handle body parsing
 app.use(bodyParser.urlencoded({limit : '10mb', extended : true}));
 
 var router = express.Router();
@@ -116,14 +101,7 @@ app.use(homeURL, router);
 var rpc = express.Router();
 router.use('/rpc', rpc);
 
-var rootPath = libPath.join(clientPath, 'default');
-if (!fs.existsSync(rootPath)) {
-	rootPath = libPath.join(clientPath, 'application/release');
-	console.log('serving default folder application/release/');
-} else {
-	console.log('serving custom default folder');
-}
-router.use('/', express.static(rootPath))
+router.use('/', express.static(libPath.join(clientPath, 'application/build')))
 .use('/files', express.static(deskDir))
 .use('/files', directory(deskDir))
 .use('/', express.static(clientPath))
@@ -223,12 +201,8 @@ rpc.post('/upload', function(req, res) {
 	});
 });
 
-console.log(separator);
-
 var server;
 var baseURL;
-
-// run the server in normal or secure mode depending on provided certificate
 if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	server = https.createServer({
 		key: fs.readFileSync(privateKeyFile),
@@ -241,38 +215,42 @@ if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	console.log("No certificate provided, using non secure mode");
 	baseURL = "http://";
 }
-console.log(separator);
 
 actions.setRoot(deskDir);
 
-// make extensions directory if not present
 mkdirp.sync(extensionsDir);
 actions.includeDirectory(extensionsDir);
 
 var io = socketIO(server, {path : libPath.join(homeURL, "socket/socket.io")});
 io.on('connection', function(socket) {
 	var client;
-	dns.reverse(socket.client.conn.request.headers['x-forwarded-for'] 
-			|| socket.handshake.address, function (err, domains) {
+	var ip = (socket.client.conn.request.headers['x-forwarded-for']
+		|| socket.handshake.address).split(":").pop();
+
+	dns.reverse(ip, function (err, domains) {
 		client = (domains || ["no_domain"]).join(" ");
-		console.log('a user connected : ' + client);
+		console.log('connect : ' + ip + ' ('  + client + ')');
 	});
-	socket.on('disconnect', function(){
-		console.log('user ' + client + ' disconnected');
+
+	socket.on('disconnect', function() {
+		console.log('disconnect : ' + ip + ' (' + client + ')');
 	});
-	socket.on('action', function(parameters){
+
+	socket.on('action', function(parameters) {
 		actions.performAction(parameters, function (response) {
 			io.emit("action finished", response);
 		});
 	});
-	socket.on('setLog', function(value){log = value;});
+
+	socket.on('setLog', function(value){serverLog = value;});
 });
 
-actions.on("actionsUpdated", function () {io.emit("actions updated");});
-actions.on("log", function (message) {io.emit("log", message);});
+actions.on("actionsUpdated", function () {
+	io.emit("actions updated");
+});
+actions.on("log", console.log);
 
 server.listen(port);
-console.log(separator);
 console.log(new Date().toLocaleString());
 console.log ("server running on port " + port);
 console.log(baseURL + "localhost:" + port + homeURL);

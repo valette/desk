@@ -1,16 +1,15 @@
-var	async       = require('async'),
-	CronJob     = require('cron').CronJob,
-	crypto      = require('crypto'),
-	exec        = require('child_process').exec,
-	EventEmitter= require('events').EventEmitter,
-	fs          = require('fs'),
-	libpath     = require('path'),
-	mkdirp      = require('mkdirp'),
-	ms          = require('ms'),
-	os          = require('os'),
-	prettyPrint = require('pretty-data').pd,
-	winston     = require('winston'),
-	_           = require('lodash');
+var	async        = require('async'),
+	CronJob      = require('cron').CronJob,
+	crypto       = require('crypto'),
+	exec         = require('child_process').exec,
+	EventEmitter = require('events').EventEmitter,
+	fs           = require('fs'),
+	libpath      = require('path'),
+	mkdirp       = require('mkdirp'),
+	ms           = require('ms'),
+	os           = require('os'),
+	prettyPrint  = require('pretty-data').pd,
+	_            = require('lodash');
 
 var cacheCleaner = require('./cacheCleaner.js');
 
@@ -46,7 +45,6 @@ var watchers = [];
 exports = module.exports = new EventEmitter();
 
 function myLog(message) {
-	winston.log('info', message.toString());
 	exports.emit("log", message);
 }
 
