@@ -22,7 +22,7 @@ var	actions      = require(__dirname + '/lib/cl-rpc');
 
 var homeURL         = argv.multi ? '/' + osenv.user() + '/' : '/',
 	port            = argv.multi ? process.getuid() : 8080,
-	clientPath      = libPath.join(__dirname + '/../client/') + '/',
+	clientPath      = libPath.join(__dirname, 'client') + '/',
 	privateKeyFile  = libPath.join(__dirname, "privatekey.pem"),
 	certificateFile = libPath.join(__dirname, "certificate.pem"),
 	deskDir         = libPath.join(osenv.home(), 'desk') + '/',

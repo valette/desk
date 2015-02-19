@@ -6,6 +6,10 @@
     "name": "Sebastien Valette"
   },
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/valette/desk.git"
+  },
   "devDependencies": {},
   "dependencies": {
     "async": ">0.0.0",
