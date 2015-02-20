@@ -41,7 +41,7 @@ Note that to execute this script, you need to install [browserify](http://browse
 
 to install binary addons for 3D data visualization (needs vtk and cmake):
 
-	tools/build.sh
+	node tools/build.js
 
 ### Usage ###
 
