@@ -32,10 +32,8 @@ var homeURL         = argv.multi ? '/' + osenv.user() + '/' : '/',
 	id              = {username : osenv.user(), password : "password"},
 	serverLog       = false;
 
-// hijack console.log
-var oldConsolelog = console.log;
-console.log = function (message) {
-	oldConsolelog.apply(console, arguments);
+function log (message) {
+	console.log(message);
 	if (io && serverLog) {
 		io.emit("log", message);
 	}
@@ -57,14 +55,14 @@ mkdirp.sync(uploadDir);
 
 fs.watchFile(passwordFile, updatePassword);
 function updatePassword() {
-	console.log("load " + passwordFile);
+	log("load " + passwordFile);
 	if (fs.existsSync(passwordFile)) {
 		try {
 			id = JSON.parse(fs.readFileSync(passwordFile));
 		}
 		catch (e) {
-			console.log("error while reading password file : ");
-			console.log(e);
+			log("error while reading password file : ");
+			log(e);
 			id = {};
 		}
 	}
@@ -134,9 +132,9 @@ rpc.post('/upload', function(req, res) {
 		var file = files.file;
 		var outputDir = fields.uploadDir.toString().replace(/%2F/g,'/') || 'upload';
 		outputDir = libPath.join(deskDir, outputDir);
-		console.log("file : " + file.path.toString());
+		log("file : " + file.path.toString());
 		var fullName = libPath.join(outputDir, file.name.toString());
-		console.log("uploaded to " +  fullName);
+		log("uploaded to " +  fullName);
 		mv(file.path.toString(), fullName, function(err) {
 			if (err) throw err;
 			res.send('file ' + file.name + ' uploaded successfully');
@@ -208,11 +206,11 @@ if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 		key: fs.readFileSync(privateKeyFile),
 		cert: fs.readFileSync(certificateFile)
 	}, app);
-	console.log("Using secure https mode");
+	log("Using secure https mode");
 	baseURL = "https://";
 } else {
 	server = http.createServer(app);
-	console.log("No certificate provided, using non secure mode");
+	log("No certificate provided, using non secure mode");
 	baseURL = "http://";
 }
 
@@ -229,11 +227,11 @@ io.on('connection', function(socket) {
 
 	dns.reverse(ip, function (err, domains) {
 		client = (domains || ["no_domain"]).join(" ");
-		console.log('connect : ' + ip + ' ('  + client + ')');
+		log('connect : ' + ip + ' ('  + client + ')');
 	});
 
 	socket.on('disconnect', function() {
-		console.log('disconnect : ' + ip + ' (' + client + ')');
+		log('disconnect : ' + ip + ' (' + client + ')');
 	});
 
 	socket.on('action', function(parameters) {
@@ -248,9 +246,9 @@ io.on('connection', function(socket) {
 actions.on("actionsUpdated", function () {
 	io.emit("actions updated");
 });
-actions.on("log", console.log);
+actions.on("log", log);
 
 server.listen(port);
-console.log(new Date().toLocaleString());
-console.log ("server running on port " + port);
-console.log(baseURL + "localhost:" + port + homeURL);
+log(new Date().toLocaleString());
+log ("server running on port " + port);
+log(baseURL + "localhost:" + port + homeURL);
