@@ -35,12 +35,11 @@ to visualize 3D data (meshes, volumes) you also need;
 
 startup takes a few seconds due to client-side javascript build step. To skip code generation, you can generate a static file using:
 
-	tools/build_cache.sh
+	gulp
 
-Note that to execute this script, you need to install browserify and uglifyjs2:
+Note that to execute this script, you need to install gulp:
 
-	npm install browserify -g
-	npm install uglify-js -g
+	npm install gulp -g
 
 to install binary addons for 3D data visualization (needs vtk and cmake):
 
