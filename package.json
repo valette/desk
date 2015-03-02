@@ -16,6 +16,7 @@
     "basic-auth": ">0.0.0",
     "body-parser": ">0.0.0",
     "brace": ">0.0.0",
+    "browserify": ">0.0.0",
     "browserify-middleware": ">0.0.0",
     "c3": ">0.0.0",
     "compression": ">0.0.0",
@@ -24,6 +25,8 @@
     "d3": ">0.0.0",
     "express": ">0.0.0",
     "formidable": ">0.0.0",
+    "gulp": ">0.0.0",
+    "gulp-uglify": ">0.0.0",
     "heap": ">0.0.0",
     "kdt": ">0.0.0",
     "lodash": ">0.0.0",
@@ -39,11 +42,15 @@
     "socket.io": ">0.0.0",
     "socket.io-client": ">0.0.0",
     "three" : "0.69.0",
+    "vinyl-transform": ">0.0.0",
     "webworkify": ">0.0.0",
     "yargs": ">0.0.0"
   },
   "optionalDependencies": {},
   "engines": {
     "node": "*"
+  },
+  "browserify": {
+    "transform": ["cssify"]
   }
 }

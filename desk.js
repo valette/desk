@@ -116,7 +116,7 @@ function testCache() {
 	if (!cacheExists && !browserGet) {
 		browserify.settings('transform', ['cssify']);
 		browserify.settings.mode = argv.debug ? 'development' : 'production';
-		browserGet = browserify(__dirname + '/lib/browserify.js');
+		browserGet = browserify(__dirname + '/lib/browserified.js');
 	}
 }
 testCache();
