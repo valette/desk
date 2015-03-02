@@ -2,6 +2,7 @@
  * Singleton helper class for file system operations : path->URL conversion, session management etc...
  * @lint ignoreDeprecated(alert)
  * @ignore (_.*)
+ * @ignore (async.eachSeries)
  */
 qx.Class.define("desk.FileSystem", 
 {
@@ -49,15 +50,9 @@ qx.Class.define("desk.FileSystem",
 				url += "?nocache=" + Math.random();
 			}
 			var req = new qx.io.request.Xhr(url);
-			req.setAsync(true);
 			req.addListener('load', function () {
-				var response;
-				if (options.forceText) {
-					response = req.getResponseText()
-				} else {
-					response = req.getResponse()
-				}
-				callback.call(context, null, response);
+				callback.call(context, null, options.forceText ? 
+					req.getResponseText() : req.getResponse());
 				req.dispose();
 			});
 			req.addListener('fail', function (e) {
@@ -275,7 +270,7 @@ qx.Class.define("desk.FileSystem",
 		* @param context {Object} optional context for the callback
 		*/
 		exists : function (path, callback, context) {
-			desk.FileSystem.get('exists', {path : path}, callback, context);
+			desk.FileSystem.__get('exists', {path : path}, callback, context);
 		},
 
 		/**
@@ -285,7 +280,7 @@ qx.Class.define("desk.FileSystem",
 		* @param context {Object} optional context for the callback
 		*/
 		readDir : function (path, callback, context) {
-			desk.FileSystem.get('ls', {path : path}, callback, context);
+			desk.FileSystem.__get('ls', {path : path}, callback, context);
 		},
 
 		/**
@@ -296,34 +291,18 @@ qx.Class.define("desk.FileSystem",
 		*/
 		includeScripts : function (scripts, callback, context) {
 			var fs = desk.FileSystem.getInstance();
-			if (!fs.__includedScripts) {
-				fs.__includedScripts = {};
-			}
-			var index = -1;
 			var req = new qx.bom.request.Script();
-			req.onload = myScriptLoader;
 
-			function myScriptLoader() {
-				if (index >= 0) {
-					fs.__includedScripts[scripts[index]] = 1;
+			async.eachSeries(scripts, function (url, callback) {
+				req.open("GET", url);
+				req.onload = callback;
+				req.send();
+			}, function (err) {
+				req.dispose();
+				if (typeof callback === 'function') {
+					callback.call(context, err);
 				}
-				index += 1;
-				if (index !== scripts.length) {
-					if (fs.__includedScripts[scripts[index]] === 1) {
-						// the script is already loaded. Use a timeout to stay async
-						setTimeout(myScriptLoader,1);
-					} else {
-						req.open("GET", scripts[index]);
-						req.send();
-					}
-				} else {
-					req.dispose();
-					if (typeof callback === 'function') {
-						callback.apply(context);
-					}
-				}
-			}
-			myScriptLoader();
+			});
 		},
 
 		/**
@@ -333,36 +312,26 @@ qx.Class.define("desk.FileSystem",
 		* @param callback {Function} callback when done
 		* @param context {Object} optional context for the callback
 		*/
-		get : function (action, params, callback, context) {
-			desk.FileSystem.__xhr('GET', action, params, function (err, request) {
-				try { var obj = JSON.parse(request.getResponseText());}
-				catch(e) {err = e;}
-				callback.call(context, err, obj);
-			});
-		},
-
-		/**
-		* performs an xmlhttp request
-		* @param method {String} request method aka "GET" or "POST"
-		* @param action {String} action path
-		* @param requestData {Object} POST
-		* @param callback {Function} callback when done
-		* @param context {Object} optional context for the callback
-		*/
-		__xhr : function (method, action, requestData, callback, context) {
+		__get : function (action, params, callback, context) {
 			var fs = desk.FileSystem.getInstance();
-			var req = new qx.io.request.Xhr();
-			req.setUrl(fs.__actionsURL + action);
-			req.setRequestData(requestData);
-			req.setMethod(method);
-			req.setAsync(true);
-			req.addListener('load', function (e) {
-				callback.call(context, null, e.getTarget());
+			var req = new qx.io.request.Xhr(fs.__actionsURL + action, 'GET');
+
+			function cb (err) {
+				try {
+					var obj = JSON.parse(req.getResponseText());
+				} catch(e) {
+					err = e;
+				}
 				req.dispose();
+				callback.call(context, err, obj);
+			}
+
+			req.setRequestData(params);
+			req.addListener('load', function (e) {
+				cb();
 			});
 			req.addListener('error', function (e) {
-				callback.call(context, req.getResponse());
-				req.dispose();
+				cb(req.getResponse());
 			});
 			req.send();
 		}
@@ -372,8 +341,6 @@ qx.Class.define("desk.FileSystem",
 		__baseURL : null,
 		__filesURL : null,
 		__actionsURL : null,
-
-		__includedScripts : null,
 
 		/**
 		* Returns the base URL string

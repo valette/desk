@@ -20,17 +20,19 @@ qx.Class.define("desk.Actions",
 	*/
 	construct : function() {
 		this.base(arguments);
-		this.__populateActionMenu();
 
 		this.__ongoingActions = new qx.ui.container.Composite(new qx.ui.layout.VBox());
 
 		var baseURL = desk.FileSystem.getInstance().getBaseURL();
-		desk.FileSystem.includeScripts([baseURL + 'js/browserified.js'], function () {
+		var req = new qx.bom.request.Script();
+		req.onload = function () {
 			this.__socket = io({path : baseURL + 'socket/socket.io'});
 			this.__socket.on("action finished", this.__onActionEnd.bind(this));
 			this.__socket.on("actions updated", this.__populateActionMenu.bind(this));
-			if (--this.__remainingInits === 0) this.fireEvent('changeReady');
-		}, this);
+			this.__populateActionMenu();
+		}.bind(this);
+		req.open("GET", baseURL + 'js/browserified.js');
+		req.send();
 	},
 
 	statics : {
@@ -41,7 +43,7 @@ qx.Class.define("desk.Actions",
 		*/
 		init : function (callback, context) {
 			var actions = desk.Actions.getInstance();
-			if (actions.__remainingInits <= 0) {
+			if (actions.__settings) {
 				callback.apply(context);
 			} else {
 				actions.addListenerOnce("changeReady", callback , context);
@@ -66,7 +68,6 @@ qx.Class.define("desk.Actions",
 	members : {
 		__socket : null,
 		__runingActions : [],
-		__remainingInits : 2,
 
 		/**
 		* Creates the action menu, visible on all file browsers
@@ -291,9 +292,7 @@ qx.Class.define("desk.Actions",
 			}
 
 			if (typeof params.callback === 'function') {
-				setTimeout(function () {
-					params.callback.call(params.context, response);
-				}, 1);
+				params.callback.call(params.context, response);
 			}
 		},
 
@@ -301,24 +300,12 @@ qx.Class.define("desk.Actions",
 
 		/**
 		* launches an action
-		* @param params {Object} object containing action aprameters
-		* @param callback {Function} callback for when the action has been performed
-		* @param context {Object} optional context for the callback
-		*/
-		launchAction : function (params, callback, context) {
-			desk.Actions.init(function () {
-				this.__launchAction(params, callback, context);
-			}, this);
-		},
-
-		/**
-		* launches an action
-		* @param params {Object} object containing action aprameters
+		* @param params {Object} object containing action parameters
 		* @param callback {Function} callback for when the action has been performed
 		* @param context {Object} optional context for the callback
 		* @return {String} action handle for managemenent (kill etc...)
 		*/
-		__launchAction : function (params, callback, context) {
+		launchAction : function (params, callback, context) {
 			params = JSON.parse(JSON.stringify(params));
 			params.handle = Math.random().toString();
 
@@ -409,34 +396,32 @@ qx.Class.define("desk.Actions",
 
 		/**
 		* Loads actions.json from server and refreshes the action menu
-		* @param callback {function} callback when done
 		*/
-		__populateActionMenu : function(callback) {
+		__populateActionMenu : function() {
 			desk.FileSystem.readFile('actions.json', function (error, settings) {
 				this.__actionMenu = new qx.ui.menu.Menu();
-				this.__settings = settings;
 
-				if (this.__settings.permissions) {
+				if (settings.permissions) {
 					this.__createActionsMenu();
 				}
 
-				var actions = this.__settings.actions;
+				var actions = settings.actions;
 
 				var libs = {};
-				Object.keys(actions).forEach(function (actionName) {
-					var action = actions[actionName];
+				Object.keys(actions).forEach(function (name) {
+					var action = actions[name];
 					if (!libs[action.lib]) {
 						libs[action.lib] = [];
 					}
-					libs[action.lib].push(actionName);
+					libs[action.lib].push(name);
 				}, this);
 
 				Object.keys(libs).sort(this.__myComparator).forEach(function (lib) {
 					var menu = new qx.ui.menu.Menu();
 					var menubutton = new qx.ui.menu.Button(lib, null, null, menu);
-					libs[lib].sort(this.__myComparator).forEach(function (actionName) {
-						var button = new qx.ui.menu.Button(actionName);
-						var description = actions[actionName].description;
+					libs[lib].sort(this.__myComparator).forEach(function (name) {
+						var button = new qx.ui.menu.Button(name);
+						var description = actions[name].description;
 						if (description) {
 							button.setBlockToolTip(false);
 							button.setToolTipText(description);
@@ -447,8 +432,12 @@ qx.Class.define("desk.Actions",
 					this.__actionMenu.add(menubutton);
 				}, this);
 
-				if (--this.__remainingInits === 0) this.fireEvent('changeReady');
-				if (typeof callback === "function") callback();
+				if (this.__settings === null) {
+					this.__settings = settings;
+					this.fireEvent('changeReady');
+				}
+				this.__settings = settings;
+
 			}, this);
 		}
 	}
