@@ -43,7 +43,7 @@ Note that to execute this script, you need to install gulp:
 
 to install binary addons for 3D data visualization (needs vtk and cmake):
 
-	node tools/build.js
+	node lib/build.js
 
 ### Usage ###
 
