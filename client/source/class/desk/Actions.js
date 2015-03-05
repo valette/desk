@@ -401,10 +401,6 @@ qx.Class.define("desk.Actions",
 			desk.FileSystem.readFile('actions.json', function (error, settings) {
 				this.__actionMenu = new qx.ui.menu.Menu();
 
-				if (settings.permissions) {
-					this.__createActionsMenu();
-				}
-
 				var actions = settings.actions;
 
 				var libs = {};
@@ -434,6 +430,9 @@ qx.Class.define("desk.Actions",
 
 				if (this.__settings === null) {
 					this.__settings = settings;
+					if (settings.permissions) {
+						this.__createActionsMenu();
+					}
 					this.fireEvent('changeReady');
 				}
 				this.__settings = settings;
