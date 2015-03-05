@@ -29,12 +29,12 @@ var homeURL         = argv.multi ? '/' + osenv.user() + '/' : '/',
 	passwordFile    = libPath.join(deskDir, "password.json"),
 	uploadDir       = libPath.join(deskDir, 'upload') + '/',
 	extensionsDir   = libPath.join(deskDir, 'extensions') + '/',
-	id              = {username : osenv.user(), password : "password"},
-	serverLog       = false;
+	emitLog         = false;
+	id              = {username : osenv.user(), password : "password"};
 
 function log (message) {
 	console.log(message);
-	if (io && serverLog) {
+	if (io && emitLog) {
 		io.emit("log", message);
 	}
 };
@@ -214,13 +214,8 @@ if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	baseURL = "http://";
 }
 
-actions.setRoot(deskDir);
-
-mkdirp.sync(extensionsDir);
-actions.includeDirectory(extensionsDir);
-
 var io = socketIO(server, {path : libPath.join(homeURL, "socket/socket.io")});
-io.on('connection', function(socket) {
+io.on('connection', function (socket) {
 	var client;
 	var ip = (socket.client.conn.request.headers['x-forwarded-for']
 		|| socket.handshake.address).split(":").pop();
@@ -231,22 +226,26 @@ io.on('connection', function(socket) {
 	});
 
 	socket.on('disconnect', function() {
-		log('disconnect : ' + ip + ' (' + client + ')');
-	});
-
-	socket.on('action', function(parameters) {
-		actions.performAction(parameters, function (response) {
-			io.emit("action finished", response);
+			log('disconnect : ' + ip + ' (' + client + ')');
+		})
+		.on('action', function(parameters) {
+			actions.performAction(parameters, function (response) {
+				io.emit("action finished", response);
+			});
+		})
+		.on('setLog', function(value) {
+			emitLog = value;
 		});
-	});
-
-	socket.on('setLog', function(value){serverLog = value;});
 });
+
+mkdirp.sync(extensionsDir);
 
 actions.on("actionsUpdated", function () {
-	io.emit("actions updated");
-});
-actions.on("log", log);
+		io.emit("actions updated");
+	})
+	.on("log", log)
+	.setRoot(deskDir)
+	.includeDirectory(extensionsDir);
 
 server.listen(port);
 log(new Date().toLocaleString());
