@@ -24,7 +24,7 @@ To install desk on your computer, you need:
 * node.js
 
 to visualize 3D data (meshes, volumes) you also need;
-* vtk + headers
+* vtk + headers (versions 5 or 6)
 * cmake
 
 ### Installation ###
@@ -43,7 +43,8 @@ Note that to execute this script, you need to install gulp:
 
 to install binary addons for 3D data visualization (needs vtk and cmake):
 
-	node lib/build.js
+	node lib/build.js        // if you vtk5 is installed
+	node lib/build.js --vtk6 // if you vtk6 is installed
 
 ### Usage ###
 
