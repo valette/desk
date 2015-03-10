@@ -306,7 +306,7 @@ qx.Class.define("desk.ThreeContainer",
 		viewAll : function () {
 			var bbox = new THREE.Box3();
 
-			this.__scene.traverse(function(child){
+			this.__scene.traverseVisible(function(child){
 				var geometry = child.geometry;
 				if (geometry) {
 					if (!geometry.boundingBox) {
