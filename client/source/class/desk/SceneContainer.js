@@ -706,9 +706,11 @@ qx.Class.define("desk.SceneContainer",
 			var ray = new THREE.Raycaster(camera.position,
 				vector.sub(camera.position).normalize());
 
-			return ray.intersectObjects(_.filter(meshes || this.getMeshes(), function (mesh) {
+			meshes = meshes || _.filter(this.getMeshes(), function (mesh) {
 				return mesh.visible;
-			}));
+			});
+
+			return ray.intersectObjects(meshes);
 		},
 
 		/**
