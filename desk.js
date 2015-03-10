@@ -112,7 +112,7 @@ var cacheExists,
 	serveCache = express.static(libPath.join(__dirname, 'cache'));
 
 function testCache() {
-	cacheExists = fs.existsSync(jsFiles);
+	cacheExists = fs.existsSync(jsFiles) && !argv.debug;
 	if (!cacheExists && !browserGet) {
 		browserify.settings('transform', ['cssify']);
 		browserify.settings.mode = argv.debug ? 'development' : 'production';
