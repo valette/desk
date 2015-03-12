@@ -779,6 +779,17 @@ qx.Class.define("desk.SliceView",
 		},
 
 		/** 
+		 * Return the cross position i.e. x, y, z float coordinates
+		 * @return {THREE.Vector3} xyz coordinates
+		 */
+		getCrossFloatPosition : function () {
+			return new THREE.Vector3().fromArray(this.__position.map(
+				function (coord, index) {
+					return this.__origin[index] + coord * this.__spacing[index];
+			}, this));
+		},
+
+		/** 
 		 * Sets the cross position i.e. i,j,k coordinates
 		 * @param pos {Array} ijk coordinates
 		 */
