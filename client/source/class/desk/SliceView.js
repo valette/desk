@@ -24,7 +24,11 @@ qx.Class.define("desk.SliceView",
 		this.__textColor = options.textColor || "yellow";
 		this.__createUI();
 		this.__initUndo();
-		this.__setupInteractionEvents();
+		this.addListener("mousedown", this.__onMouseDown, this);
+		this.addListener("mouseout", this.__onMouseOut, this);
+		this.addListener("mousemove", this.__onMouseMove, this);
+		this.addListener("mouseup", this.__onMouseUp, this);
+		this.addListener("mousewheel", this.__onMouseWheel, this);
 		this.setDecorator(new qx.ui.decoration.Decorator().set({
 			color : desk.VolumeSlice.COLORS[orientation], width : 3}));
 	},
@@ -837,7 +841,6 @@ qx.Class.define("desk.SliceView",
 		 * @param e {qx.event.type.Mouse} mouse event
 		 */
 		 __onMouseDown : function (e) {
-			this.capture();
 			var controls = this.getControls();
 			this.__interactionMode = 0;
 			var origin, position, width;
@@ -929,7 +932,7 @@ qx.Class.define("desk.SliceView",
 					brushMesh.position.set(position.x, position.y, 0);
 					this.render();
 				}
-				break;
+				return;
 			case 0 :
 				this.__setCrossPositionFromEvent(event);
 				break;
@@ -976,7 +979,7 @@ qx.Class.define("desk.SliceView",
 				this.updateDrawingCanvas();
 				break;
 			}
-			event.preventDefault(); // Prevent cursor changing to "text" cursor while drawing
+			this.capture();
 		},
 
 		/** 
@@ -1012,17 +1015,6 @@ qx.Class.define("desk.SliceView",
 
 			slider.setValue(Math.min(slider.getMaximum(), Math.max(
 				slider.getValue() + delta, slider.getMinimum())));
-		},
-
-		/** 
-		 * setups all viewer listeners
-		 */
-		__setupInteractionEvents : function () {
-			this.addListener("mousedown", this.__onMouseDown, this);
-			this.addListener("mouseout", this.__onMouseOut, this);
-			this.addListener("mousemove", this.__onMouseMove, this);
-			this.addListener("mouseup", this.__onMouseUp, this);
-			this.addListener("mousewheel", this.__onMouseWheel, this);
 		},
 
 		__intersection : null,
