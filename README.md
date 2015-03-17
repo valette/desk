@@ -34,14 +34,6 @@ to visualize 3D data (meshes, volumes) you also need;
 	cd desk
 	npm install
 
-startup takes a few seconds due to client-side javascript build step. To skip code generation, you can generate a static file using gulp:
-
-	gulp
-
-note that gulp needs to be installed before (with root permissions):
-
-	npm install gulp -g
-
 to install binary addons for 3D data visualization (needs vtk and cmake):
 
 	node lib/build.js        // if vtk5 is installed
@@ -56,6 +48,21 @@ then point your browser to [localhost:8080](http://localhost:8080)
 login as:
 - user : your linux username
 - password : "password"
+
+startup takes a few seconds due to client-side javascript build step. To skip code generation, you can generate a static file using gulp:
+
+	gulp
+
+note that gulp needs to be installed before (with root permissions):
+
+	npm install gulp -g
+
+### Update ###
+
+	git pull
+	npm install
+	npm update
+	gulp // if you have used gulp
 
 ### Acknowledgements ###
 
