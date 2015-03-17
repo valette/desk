@@ -298,7 +298,7 @@ qx.Class.define("desk.SliceView",
 				mesh.material.uniforms.texture.value.dispose();
 				mesh.material.dispose();
 				mesh.geometry.dispose();
-				this.removeListenerById(slice.getUserData("updateListener"));
+				this.removeBinding(slice.getUserData("binding"));
 				this.render();
 				slice.dispose();
 				this.__slices = _.without(this.__slices, slice);
@@ -628,44 +628,38 @@ qx.Class.define("desk.SliceView",
 
 		/**
 		 * adds a slice to the scene
-		 * @param volumeSlice {desk.VolumeSlice} the slice to add
+		 * @param slice {desk.VolumeSlice} the slice to add
 		 * @param callback {Function} callback when done
 		 * @param context {Object} optional callback context
 		 */
-		__addSlice : function (volumeSlice, callback, context) {
+		__addSlice : function (slice, callback, context) {
 			var geometry = new THREE.PlaneBufferGeometry(1, 1);
-			var coords = volumeSlice.get2DCornersCoordinates();
+			var coords = slice.get2DCornersCoordinates();
 			var vertices = geometry.attributes.position;
 			for (var i = 0; i < 4; i++) {
 				vertices.setXYZ(i, coords[2 * i], coords[2 * i + 1], 0);
 			}
 
-			volumeSlice.setUserData("updateListener", this.addListener(
-				"changeSlice", function (e) {
-					volumeSlice.setSlice(e.getData());
-			}));
+			slice.setUserData("binding", this.bind("slice", slice, "slice"));
+			slice.bind("slice", this, "slice");
 
-			var material = volumeSlice.getMaterial();
+			var material = slice.getMaterial();
 			material.side = THREE.DoubleSide;
 			var mesh = new THREE.Mesh(geometry, material);
 			mesh.renderDepth = - this.__slices.length;
-			volumeSlice.setUserData("mesh", mesh);
+			slice.setUserData("mesh", mesh);
 			geometry.computeFaceNormals();
 			geometry.computeVertexNormals();
 			geometry.computeBoundingSphere();
 
-			volumeSlice.addListenerOnce('changeImage',function () {
+			slice.addListenerOnce('changeImage',function () {
 				this.getScene().add(mesh);
 				callback.call(context);
 			}, this);
 
-			volumeSlice.addListener('changeImage', function () {
+			slice.addListener('changeImage', function () {
 				// whe need directly render to avoid race conditions
 				this.render(true);
-			}, this);
-
-			volumeSlice.addListener("changeSlice", function (e) {
-				this.setSlice(e.getData());
 			}, this);
 		},
 
