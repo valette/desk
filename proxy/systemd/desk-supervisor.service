@@ -7,7 +7,7 @@ Type=simple
 User=root
 Group=root
 PIDFile=/var/run/desk-supervisor.pid
-ExecStart=/usr/local/bin/node /opt/desk/server/proxy/supervisor.js
+ExecStart=/usr/local/bin/node /opt/desk/proxy/supervisor.js
 Restart=always
 KillMode=process
 
