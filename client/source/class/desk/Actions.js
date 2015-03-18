@@ -70,7 +70,7 @@ qx.Class.define("desk.Actions",
 		__runingActions : [],
 
 		/**
-		* Creates the action menu, visible on all file browsers
+		* Creates the action menu
 		*/
 		__createActionsMenu : function () {
 			var menu = new qx.ui.menu.Menu();
@@ -91,12 +91,13 @@ qx.Class.define("desk.Actions",
 			qx.core.Init.getApplication().getRoot().add(button, {top : 0, right : 0});
 
 			// add already running actions
-			this.getOngoingActions(function (actions) {
+			this.launchAction({manage : 'list'}, function (res) {
+				var actions = res.ongoingActions
 				Object.keys(actions).forEach(function (handle) {
 					this.__addActionToList(actions[handle]);
 					this.__runingActions[handle] = actions[handle];
 				}, this);
-			}, this);
+			});
 		},
 
 		/**
@@ -255,20 +256,6 @@ qx.Class.define("desk.Actions",
 					}
 				}
 			);
-		},
-
-		/**
-		* gets the list of currently runing actions on the server
-		* @param callback {Function} when the response is available. 
-		* The first function parameter is a JSON object containing all the actions
-		* @param context {Object} optional context for the callback
-		*/
-		getOngoingActions : function (callback, context) {
-			this.launchAction({manage : 'list'}, function (res) {
-				if (typeof callback === "function") {
-					callback.call(context, res.ongoingActions);
-				}
-			});
 		},
 
 		/**

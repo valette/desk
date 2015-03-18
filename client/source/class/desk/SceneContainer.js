@@ -971,9 +971,7 @@ qx.Class.define("desk.SceneContainer",
 				var alwaysOnTopCheckBox = new qx.ui.form.CheckBox("this window always on top");
 				alwaysOnTopCheckBox.setValue(true);
 				parentWindow.setAlwaysOnTop(true);
-				alwaysOnTopCheckBox.addListener('changeValue',function (e){
-					parentWindow.setAlwaysOnTop(alwaysOnTopCheckBox.getValue());
-					});
+				alwaysOnTopCheckBox.bind("value", parentWindow, "alwaysOnTop");
 				topBox.add(alwaysOnTopCheckBox);
 			}
 			var ratio = 255;

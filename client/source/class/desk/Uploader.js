@@ -100,9 +100,7 @@ qx.Class.define("desk.Uploader",
   		// Auto upload? (default=true)
   		var cbx = new qx.ui.form.CheckBox("Automatically Upload");
   		cbx.setValue(true);
-  		cbx.addListener("changeValue", function(evt) {
-  			uploader.setAutoUpload(evt.getData());
-  		}, this);
+  		cbx.bind("value", uploader, "autoUpload");
   		
   		// add them to the UI
   		win.add(cbx);
