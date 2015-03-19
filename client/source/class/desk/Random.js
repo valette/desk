@@ -1,6 +1,6 @@
 /**
- * An RC4 Seedable Random Number Generator, inspired from : 
- * http://www.webdeveloper.com/forum/showthread.php?140572-Need-random-numbers-based-on-seeds
+ * A Seedable Random Number Generator
+ * @ignore (randomJS.*)
  */
 qx.Class.define("desk.Random", 
 {
@@ -8,10 +8,10 @@ qx.Class.define("desk.Random",
 
 	/**
 	* Constructor, with seed
-	* @param seed {String} optional seed
+	* @param seed {Integer} optional seed
 	* <pre class="javascript">
 	* example : <br>
-	* var rng = new desk.Random();<br>
+	* var rng = new desk.Random(1234);<br>
 	* for (var i = 0; i < 10; i++) {<br>
 	*	console.log(rng.random());<br>
 	* }<br>
@@ -20,67 +20,23 @@ qx.Class.define("desk.Random",
 	*/
 	construct : function(seed) {
 		this.base(arguments);
-		this.__keySchedule = [];
-		this.__keySchedule_i = 0;
-		this.__keySchedule_j = 0;
 
-		seed = seed || "defaultSeed"
-		this.__init(seed.toString());
+		if (seed === undefined) {
+			seed = 1;
+		}
+
+		this.__random = randomJS(randomJS.engines.mt19937().seed(seed));
 	},
 
 	members : {
-		/**
-		 * Initializes the seed generator;
-		 * @param seed {String} a seed
-		 */
-		__init : function (seed) {
-			var keySchedule = this.__keySchedule;
-			for (var i = 0; i < 256; i++) {
-				keySchedule[i] = i;
-			}
-			
-			var j = 0;
-			for (i = 0; i < 256; i++) {
-				j = (j + keySchedule[i] + seed.charCodeAt(i % seed.length)) % 256;
-				
-				var t = keySchedule[i];
-				keySchedule[i] = keySchedule[j];
-				keySchedule[j] = t;
-			}
-		},
-
-		__keySchedule  : null,
-		__keySchedule_i : null,
-		__keySchedule_j : null,
-
-		/**
-		 * Returns a random number in the [0, 255] range
-		 * @return {Int} random number
-		 */
-		 __getRandomByte : function () {
-			var keySchedule = this.__keySchedule;
-			this.__keySchedule_i = (this.__keySchedule_i + 1) % 256;
-			this.__keySchedule_j = (this.__keySchedule_j + keySchedule[this.__keySchedule_i]) % 256;
-			
-			var t = keySchedule[this.__keySchedule_i];
-			keySchedule[this.__keySchedule_i] = keySchedule[this.__keySchedule_j];
-			keySchedule[this.__keySchedule_j] = t;
-			
-			return keySchedule[(keySchedule[this.__keySchedule_i] + keySchedule[this.__keySchedule_j]) % 256];
-		},
+		__random : null,
 
 		/**
 		 * Returns a random number in the [0,1] range
 		 * @return {Float} random number
 		 */
 		random : function() {
-			var number = 0;
-			var multiplier = 1;
-			for (var i = 0; i < 8; i++) {
-				number += this.__getRandomByte() * multiplier;
-				multiplier *= 256;
-			}
-			return number / 18446744073709551616;
+			return this.__random.real(0, 1, true);
 		}
 	}
 });
