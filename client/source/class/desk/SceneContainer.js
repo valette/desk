@@ -326,7 +326,7 @@ qx.Class.define("desk.SceneContainer",
 					"input_mesh" : file},
                     function (response) {
                        var outputDir = response.outputDirectory;
-                        opt.mtime = response.MTime;
+                        opt.timeStamp = response.timeStamp;
                         this.__loadFile(outputDir + '/mesh.ctm', opt, callback);
 				}, this);
 				break;
@@ -346,7 +346,7 @@ qx.Class.define("desk.SceneContainer",
 		 * @param callback {Function} callback when done
 		 */
 		__loadFile : function (file, opt, callback) {
-			opt.mtime = opt.mtime || Math.random();
+			opt.timeStamp = opt.timeStamp || Math.random();
 			opt.url = desk.FileSystem.getFileURL(file);
 			this.loadURL(opt, callback);
 		},
@@ -394,7 +394,7 @@ qx.Class.define("desk.SceneContainer",
 		 */
 		 __parseXMLData : function (file, xml, opts, callback) {
 			var root = xml.childNodes[0];
-			opts.mtime = root.hasAttribute("timestamp")?
+			opts.timeStamp = root.hasAttribute("timestamp")?
 				parseFloat(root.getAttribute("timestamp")) : Math.random();
 
 			var dataModel = this.__meshes.getDataModel();
@@ -798,7 +798,7 @@ qx.Class.define("desk.SceneContainer",
 		 */
 		 __urlLoad : function (opts, callback) {
 			if (desk.FileSystem.getFileExtension(opts.url) === "vtk") {
-				this.__vtkLoader.load (opts.url + "?nocache=" + opts.mtime,
+				this.__vtkLoader.load (opts.url + "?nocache=" + opts.timeStamp,
 					function (geometry) {
 						callback (this.addGeometry(geometry, opts));
 				}.bind(this));
@@ -810,7 +810,7 @@ qx.Class.define("desk.SceneContainer",
 					worker = this.__ctmLoader.createWorker();
 				}
 
-				this.__ctmLoader.load (opts.url + "?nocache=" + opts.mtime, function (geometry) {
+				this.__ctmLoader.load (opts.url + "?nocache=" + opts.timeStamp, function (geometry) {
 					this.__ctmWorkers.push(worker);
 					callback (this.addGeometry(geometry, opts));
 				}.bind(this), {useWorker : true, worker : worker});

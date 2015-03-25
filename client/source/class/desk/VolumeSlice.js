@@ -2,6 +2,7 @@
 * @ignore(THREE.*)
 * @ignore(Uint8Array)
 * @ignore (_.*)
+* @ignore (MHD.parse)
 * @lint ignoreDeprecated(alert)
 */
 
@@ -119,22 +120,27 @@ qx.Class.define("desk.VolumeSlice",
 		].join("\n"),
 
 		FRAGMENTSHADERCHAR : [
+				"// for char",
 				"float color = rawBytes[0] - 256.0 * step ( 128.0, rawBytes[0] );"
 		].join("\n"),
 
 		FRAGMENTSHADERUCHAR : [
+				"// for uchar",
 				"float color = rawBytes[0];"
 		].join("\n"),
 
 		FRAGMENTSHADERSHORT : [
+				"// for short",
 				"float color = rawBytes[0]+ 256.0 * rawBytes[3] - 65536.0 * step ( 128.0, rawBytes[3] );"
 		].join("\n"),
 
 		FRAGMENTSHADERUSHORT : [
+				"// for ushort",
 				"float color = rawBytes[0] + 256.0 * rawBytes[3];"
 		].join("\n"),
 
 		FRAGMENTSHADERFLOAT : [
+				"// for float",
 			// just discard rawBytes if the type is not float, otherwise it might affect JPG results...
 				"rawBytes=rawBytes* (1.0 - imageType);",
 				"float Sign = 1.0 - step(128.0,rawBytes[3])*2.0 ;",
@@ -152,6 +158,19 @@ qx.Class.define("desk.VolumeSlice",
 
 				"float unscaledValueJPG=( scalarMax - scalarMin ) * valueJPG + scalarMin;",
 				"float pixelValue=mix(color, unscaledValueJPG, imageType);",
+				"float clampedValue=clamp(pixelValue/ lookupTableLength, 0.0, 1.0);",
+				"vec2 colorIndex=vec2(clampedValue,0.0);",
+				"vec4 colorFromLookupTable = texture2D( lookupTable,colorIndex  );",
+				"colorFromLookupTable[3] *= opacity;",
+				"gl_FragColor=mix (correctedColor, colorFromLookupTable, useLookupTable);",
+		].join("\n"),
+
+		FRAGMENTSHADERENDOOC : [
+		"//ooc",
+				"float correctedPixelValue=(color+brightness)*contrast;",
+				"vec4 correctedColor=vec4(correctedPixelValue);",
+				"correctedColor[3]=opacity;",
+				"float pixelValue=correctedColor[0];",
 				"float clampedValue=clamp(pixelValue/ lookupTableLength, 0.0, 1.0);",
 				"vec2 colorIndex=vec2(clampedValue,0.0);",
 				"vec4 colorFromLookupTable = texture2D( lookupTable,colorIndex  );",
@@ -219,7 +238,10 @@ qx.Class.define("desk.VolumeSlice",
 		__materials : null,
 
 		__brightness : 0,
+		__brightnessOffset : 0,
 		__contrast : 1,
+		__contrastMultiplier : 1,
+		__rangeInitialized : false,
 		__opacity : 1,
 
 		__ready : false,
@@ -315,12 +337,48 @@ qx.Class.define("desk.VolumeSlice",
 			return [this.__scalarMin, this.__scalarMax];
 		},
 
+		__mhd : null,
+
+		__updateOOC : function (callback, context) {
+			this.__availableImageFormat = 0;
+			if (this.__mhd && callback) {
+				setTimeout(function () {
+					callback.call(context);
+				}.bind(this), 10);
+				return;
+			} else {
+				desk.FileSystem.readFile(this.__file, function (err, res) {
+					var mhd = this.__mhd = MHD.parse(res);
+					if (mhd.CompressedData === true) {
+						alert ("cannot read compressed data out of core!");
+						return;
+					}
+					var dims = this.__dimensions = mhd.DimSize;
+					this.__origin = mhd.Offset;
+					this.__spacing = mhd.ElementSpacing;
+					this.__extent = [0, dims[0] - 1, 0, dims[1] - 1, 0, dims[2] - 1];
+					this.__scalarTypeString = mhd.scalarTypeAsString;
+					this.__scalarType = mhd.scalarType;
+					this.__scalarMin = 0;
+					this.__scalarMax = 65000;
+					this.__numberOfScalarComponents = mhd.ElementNumberOfChannels || 1;
+					this.__ready = true;
+					if (callback) callback.call(context);
+				}, this);
+			}
+		},
+
 		/**
 		 * reloads the volume
 		 * @param callback {Function} callback when done
 		 * @param context {Object} optional callback context
 		 */
 		update : function (callback, context) {
+			if (this.__opts.ooc) {
+				this.__updateOOC(callback, context);
+				return;
+			}
+
             var params = _.extend({
 			    input_volume : this.__file,
 			    slice_orientation : this.getOrientation()
@@ -369,9 +427,9 @@ qx.Class.define("desk.VolumeSlice",
 			this.__brightness = brightness;
 			this.__contrast = contrast;
 			this.__materials.forEach(function (material) {
-				material.uniforms.brightness.value = brightness;
-				material.uniforms.contrast.value = contrast;
-			});
+				material.uniforms.brightness.value = brightness + this.__brightnessOffset;
+				material.uniforms.contrast.value = contrast * this.__contrastMultiplier;
+			}, this);
 			this.fireEvent("changeImage");
 		},
 
@@ -500,12 +558,11 @@ qx.Class.define("desk.VolumeSlice",
 			lookupTable.minFilter = filter;
 			lookupTable.needsUpdate = true;
 
-			var middleShader;
 			switch (this.__scalarType) {
 			case 2 :
 			case 15:
 				//char / signed char
-				middleShader = desk.VolumeSlice.FRAGMENTSHADERCHAR;
+				var middleShader = desk.VolumeSlice.FRAGMENTSHADERCHAR;
 				break;
 			case 3:
 				middleShader = desk.VolumeSlice.FRAGMENTSHADERUCHAR;
@@ -522,10 +579,13 @@ qx.Class.define("desk.VolumeSlice",
 			}
 
 			var shader;
+			var endShader = this.__opts.ooc ? desk.VolumeSlice.FRAGMENTSHADERENDOOC
+				: desk.VolumeSlice.FRAGMENTSHADEREND;
+
 			if (this.__numberOfScalarComponents == 1) {
 				shader = [desk.VolumeSlice.FRAGMENTSHADERBEGIN,
 						middleShader,
-						desk.VolumeSlice.FRAGMENTSHADEREND,
+						endShader,
 						desk.VolumeSlice.FRAGMENTSHADERFINISH].join("\n");
 			} else {
 				shader = desk.VolumeSlice.FRAGMENTSHADERENDMULTICHANNEL;
@@ -536,8 +596,8 @@ qx.Class.define("desk.VolumeSlice",
 					lookupTable : {type : "t", slot: 1, value: lookupTable },
 					lookupTableLength : {type: "f", value: 2 },
 					useLookupTable : {type: "f", value: 0 },
-					contrast : {type: "f", value: this.__contrast },
-					brightness : {type: "f", value: this.__brightness },
+					contrast : {type: "f", value: this.__contrast * this.__contrastMultiplier},
+					brightness : {type: "f", value: this.__brightness + this.__brightnessOffset},
 					opacity : {type: "f", value: this.__opacity},
 					scalarMin : {type: "f", value: this.__scalarMin},
 					scalarMax : {type: "f", value: this.__scalarMax},
@@ -546,7 +606,7 @@ qx.Class.define("desk.VolumeSlice",
 
 			var baseShaderBegin = [desk.VolumeSlice.FRAGMENTSHADERBEGIN,
 				middleShader,
-				desk.VolumeSlice.FRAGMENTSHADEREND].join("\n");
+				endShader].join("\n");
 
 			var baseShaderEnd = desk.VolumeSlice.FRAGMENTSHADERFINISH;
 
@@ -776,7 +836,39 @@ qx.Class.define("desk.VolumeSlice",
 		__updateImage : function () {
 			clearTimeout(this.__timeout);
 			this.__timeout = setTimeout(this.__updateImage.bind(this), 5000);
-			this.__image.src = this.getSliceURL(this.getSlice()) + "?nocache=" + this.__timestamp;
+			if (!this.__opts.ooc) {
+				this.__image.src = this.getSliceURL(this.getSlice()) + "?nocache=" + this.__timestamp;
+				return;
+			}
+			var slice = this.getSlice();
+			this.debug("load slide with index " + slice);
+
+			desk.Actions.getInstance().launchAction({
+				action : "VolumeOOCSlice",
+				input_file : this.__file,
+				slice : slice,
+				stdout : true
+			},
+			function (response) {
+				if (!this.__rangeInitialized && this.__numberOfScalarComponents === 1) {
+					this.__rangeInitialized = true;
+					desk.FileSystem.readFile(response.outputDirectory + 'range.txt', function (err, result) {
+						var range = result.split(" ").map(function (value) {
+							return parseFloat(value);
+						});
+						this.__contrastMultiplier = 1 / Math.abs(range[1] - range[0]);
+						this.__brightnessOffset = - range[0];
+						this.addListenerOnce('changeImage', function () {
+							this.setBrightnessAndContrast(this.__brightness, this.__contrast);
+						}, this);
+					}, this);
+				}
+				if (this.getSlice() !== slice) return;
+				this.__image.src = desk.FileSystem.getFileURL(
+					response.outputDirectory + 'slice.png?nocache='
+					+ response.timeStamp
+				);
+			}, this);
 		},
 
 		/**

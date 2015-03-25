@@ -30,6 +30,9 @@ qx.Class.define("desk.MPRContainer",
 		};
 
 		this.__nbUsedOrientations = options.nbOrientations || 3;
+		if (this.__nbUsedOrientations === 1) {
+			this.__gridCoords.volList = {column : 1, row : 0};
+		}
 
 		var gridLayout = new qx.ui.layout.Grid(2,2);
 		for (var i = 0 ; i < 2 ; i++) {
@@ -648,27 +651,30 @@ qx.Class.define("desk.MPRContainer",
 			}, this );
 
 			// create file format change widget
-			var fileFormatBox = new qx.ui.form.SelectBox();
-			fileFormatBox.setWidth(60);
-			fileFormatBox.set({width : 60,
-					toolTipText : "change image format"});
-			var SelectJPG = new qx.ui.form.ListItem("jpg");
-			SelectJPG.setUserData("imageFormat", 1);
-			fileFormatBox.add(SelectJPG);
-			var SelectPNG = new qx.ui.form.ListItem("png");
-			SelectPNG.setUserData("imageFormat", 0);
-			fileFormatBox.add(SelectPNG);
+			var fileFormatBox;
+			if (!options.ooc) {
+				fileFormatBox = new qx.ui.form.SelectBox();
+				fileFormatBox.setWidth(60);
+				fileFormatBox.set({width : 60,
+						toolTipText : "change image format"});
+				var SelectJPG = new qx.ui.form.ListItem("jpg");
+				SelectJPG.setUserData("imageFormat", 1);
+				fileFormatBox.add(SelectJPG);
+				var SelectPNG = new qx.ui.form.ListItem("png");
+				SelectPNG.setUserData("imageFormat", 0);
+				fileFormatBox.add(SelectPNG);
 
-			if (imageFormat != 1) {
-				fileFormatBox.setSelection([SelectPNG]);
-			}
+				if (imageFormat != 1) {
+					fileFormatBox.setSelection([SelectPNG]);
+				}
 
-			fileFormatBox.addListener("changeSelection", function ( ) {
-				imageFormat=fileFormatBox.getSelection()[0].getUserData("imageFormat");
-				volumeSlices.forEach(function (slice) {
-					slice.setImageFormat(imageFormat);
+				fileFormatBox.addListener("changeSelection", function ( ) {
+					imageFormat=fileFormatBox.getSelection()[0].getUserData("imageFormat");
+					volumeSlices.forEach(function (slice) {
+						slice.setImageFormat(imageFormat);
+					});
 				});
-			});
+			}
 
 			// create opacity widget
             var opacitySlider = new qx.ui.form.Slider();
@@ -745,7 +751,9 @@ qx.Class.define("desk.MPRContainer",
 
 			settingsContainer.add(brightnessButton);
 //			settingsContainer.add(windowLevelContainer);
-			settingsContainer.add(fileFormatBox);
+			if (fileFormatBox) {
+				settingsContainer.add(fileFormatBox);
+			}
 			settingsContainer.add(opacitySlider, {flex : 1});
 			settingsContainer.add(hideShowCheckbox);
 			// add this user data to avoid race conditions

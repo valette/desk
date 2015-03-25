@@ -455,13 +455,12 @@ qx.Class.define("desk.FileBrowser",
 			}				
 		},
 
-		/**
-		* Launches the simple volume viewer
-		* @param node {Objecy} file node
-		*/
-		__volViewSimpleAction : function (node) {
+		__OOCViewAction : function (node) {
 			if (!node.getChildren) {
-				new desk.VolViewSimple(node.getFullName());
+				new desk.VolumeViewer(node.getFullName(), {
+					ooc : true,
+					nbOrientations : 1
+					});
 			} else {
 				alert("Cannot view a directory!");
 			}
@@ -627,7 +626,7 @@ qx.Class.define("desk.FileBrowser",
 				return;
 			}
 
-			this.addAction("VolViewSimple", this.__volViewSimpleAction, this);
+			this.addAction("OOC Volume viewer", this.__OOCViewAction, this);
 			this.addAction("download", this.__downloadAction, this);
 			this.addAction("upload", this.__uploadAction, this);
 			this.addAction("view/edit text", this.__viewEditAction, this);
