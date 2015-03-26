@@ -168,9 +168,10 @@ qx.Class.define("desk.VolumeSlice",
 		FRAGMENTSHADERENDOOC : [
 		"//ooc",
 				"float correctedPixelValue=(color+brightness)*contrast;",
-				"vec4 correctedColor=vec4(correctedPixelValue);",
+				"float pixelValue=mix(correctedPixelValue, valueJPG, imageType);",
+				"vec4 correctedColor=vec4(pixelValue);",
 				"correctedColor[3]=opacity;",
-				"float pixelValue=correctedColor[0];",
+				"pixelValue=correctedColor[0];",
 				"float clampedValue=clamp(pixelValue/ lookupTableLength, 0.0, 1.0);",
 				"vec2 colorIndex=vec2(clampedValue,0.0);",
 				"vec4 colorFromLookupTable = texture2D( lookupTable,colorIndex  );",
@@ -230,7 +231,7 @@ qx.Class.define("desk.VolumeSlice",
 		__scalarTypeString : null,
 		__scalarType : null,
 		__scalarSize : null,
-		__scalarMin : null,
+		__scalarMin : undefined,
 		__scalarMax : null,
 
 		__lookupTables : null,
@@ -241,7 +242,6 @@ qx.Class.define("desk.VolumeSlice",
 		__brightnessOffset : 0,
 		__contrast : 1,
 		__contrastMultiplier : 1,
-		__rangeInitialized : false,
 		__opacity : 1,
 
 		__ready : false,
@@ -340,11 +340,18 @@ qx.Class.define("desk.VolumeSlice",
 		__mhd : null,
 
 		__updateOOC : function (callback, context) {
-			this.__availableImageFormat = 0;
-			if (this.__mhd && callback) {
-				setTimeout(function () {
-					callback.call(context);
-				}.bind(this), 10);
+			this.__availableImageFormat = this.getImageFormat();
+			this.__contrastMultiplier = 1;
+			this.__brightnessOffset = 0;
+			this.setBrightnessAndContrast(this.__brightness, this.__contrast);
+
+			if (this.__mhd) {
+				this.__finalizeUpdate();
+				if (typeof callback === 'function') {
+					setTimeout(function () {
+						callback.call(context);
+					}.bind(this), 10);
+				}
 				return;
 			} else {
 				desk.FileSystem.readFile(this.__file, function (err, res) {
@@ -359,10 +366,9 @@ qx.Class.define("desk.VolumeSlice",
 					this.__extent = [0, dims[0] - 1, 0, dims[1] - 1, 0, dims[2] - 1];
 					this.__scalarTypeString = mhd.scalarTypeAsString;
 					this.__scalarType = mhd.scalarType;
-					this.__scalarMin = 0;
-					this.__scalarMax = 65000;
 					this.__numberOfScalarComponents = mhd.ElementNumberOfChannels || 1;
-					this.__ready = true;
+					this.__finalizeUpdate();
+
 					if (callback) callback.call(context);
 				}, this);
 			}
@@ -817,6 +823,10 @@ qx.Class.define("desk.VolumeSlice",
 			this.__timestamp = slices.getAttribute("timestamp") || Math.random();
 			this.__prefix = slices.childNodes[0].nodeValue;
 
+			this.__finalizeUpdate();
+		},
+
+		__finalizeUpdate : function () {
 			// feed shader with constants
 			this.__materials.forEach(function (material) {
 				material.uniforms.imageType.value = this.__availableImageFormat;
@@ -830,45 +840,60 @@ qx.Class.define("desk.VolumeSlice",
 
 		__timeout : null,
 
+		__lastHandle : null,
+
 		/**
 		 * changes the image url, sets timeouts
 		 */
 		__updateImage : function () {
 			clearTimeout(this.__timeout);
-			this.__timeout = setTimeout(this.__updateImage.bind(this), 5000);
+			this.__timeout = setTimeout(this.__updateImage.bind(this), 10000);
 			if (!this.__opts.ooc) {
 				this.__image.src = this.getSliceURL(this.getSlice()) + "?nocache=" + this.__timestamp;
 				return;
 			}
 			var slice = this.getSlice();
-			this.debug("load slide with index " + slice);
 
-			desk.Actions.getInstance().launchAction({
-				action : "VolumeOOCSlice",
-				input_file : this.__file,
-				slice : slice,
-				stdout : true
-			},
-			function (response) {
-				if (!this.__rangeInitialized && this.__numberOfScalarComponents === 1) {
-					this.__rangeInitialized = true;
-					desk.FileSystem.readFile(response.outputDirectory + 'range.txt', function (err, result) {
-						var range = result.split(" ").map(function (value) {
-							return parseFloat(value);
-						});
-						this.__contrastMultiplier = 1 / Math.abs(range[1] - range[0]);
-						this.__brightnessOffset = - range[0];
-						this.addListenerOnce('changeImage', function () {
-							this.setBrightnessAndContrast(this.__brightness, this.__contrast);
+			var handle = desk.Actions.getInstance().launchAction({
+					action : "VolumeOOCSlice",
+					input_file : this.__file,
+					slice : slice,
+					format : this.getImageFormat(),
+					stdout : true
+				},
+				function (response) {
+					this.__lastHandle = 0;
+					if (response.status === "killed") return;
+
+					if (this.__scalarMin === undefined && this.__numberOfScalarComponents === 1) {
+						desk.FileSystem.readFile(response.outputDirectory + 'range.txt', function (err, result) {
+							var range = result.split(" ").map(function (value) {
+								return parseFloat(value);
+							});
+							range[0] = Math.min(range[0], 0);
+							this.__scalarMin = range[0];
+							this.__scalarMax = range[1];
+							if (this.getImageFormat() === 0) {
+								this.__contrastMultiplier = 1 / Math.abs(range[1] - range[0]);
+								this.__brightnessOffset = - range[0];
+								this.setBrightnessAndContrast(this.__brightness, this.__contrast);
+							}
 						}, this);
-					}, this);
-				}
-				if (this.getSlice() !== slice) return;
-				this.__image.src = desk.FileSystem.getFileURL(
-					response.outputDirectory + 'slice.png?nocache='
-					+ response.timeStamp
-				);
+					}
+					if (this.getSlice() !== slice) return;
+					this.__image.src = desk.FileSystem.getFileURL(
+						response.outputDirectory + 'slice.'
+							+ (this.getImageFormat()? 'jpg' : 'png')
+							+'?nocache='
+							+ response.timeStamp
+					);
 			}, this);
+
+			if (this.__lastHandle) {
+				desk.Actions.getInstance().killAction(this.__lastHandle);
+			}
+			this.__lastHandle = handle
+
 		},
 
 		/**

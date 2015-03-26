@@ -652,29 +652,27 @@ qx.Class.define("desk.MPRContainer",
 
 			// create file format change widget
 			var fileFormatBox;
-			if (!options.ooc) {
-				fileFormatBox = new qx.ui.form.SelectBox();
-				fileFormatBox.setWidth(60);
-				fileFormatBox.set({width : 60,
-						toolTipText : "change image format"});
-				var SelectJPG = new qx.ui.form.ListItem("jpg");
-				SelectJPG.setUserData("imageFormat", 1);
-				fileFormatBox.add(SelectJPG);
-				var SelectPNG = new qx.ui.form.ListItem("png");
-				SelectPNG.setUserData("imageFormat", 0);
-				fileFormatBox.add(SelectPNG);
+			fileFormatBox = new qx.ui.form.SelectBox();
+			fileFormatBox.setWidth(60);
+			fileFormatBox.set({width : 60,
+					toolTipText : "change image format"});
+			var SelectJPG = new qx.ui.form.ListItem("jpg");
+			SelectJPG.setUserData("imageFormat", 1);
+			fileFormatBox.add(SelectJPG);
+			var SelectPNG = new qx.ui.form.ListItem("png");
+			SelectPNG.setUserData("imageFormat", 0);
+			fileFormatBox.add(SelectPNG);
 
-				if (imageFormat != 1) {
-					fileFormatBox.setSelection([SelectPNG]);
-				}
-
-				fileFormatBox.addListener("changeSelection", function ( ) {
-					imageFormat=fileFormatBox.getSelection()[0].getUserData("imageFormat");
-					volumeSlices.forEach(function (slice) {
-						slice.setImageFormat(imageFormat);
-					});
-				});
+			if (imageFormat != 1) {
+				fileFormatBox.setSelection([SelectPNG]);
 			}
+
+			fileFormatBox.addListener("changeSelection", function ( ) {
+				imageFormat=fileFormatBox.getSelection()[0].getUserData("imageFormat");
+				volumeSlices.forEach(function (slice) {
+					slice.setImageFormat(imageFormat);
+				});
+			});
 
 			// create opacity widget
             var opacitySlider = new qx.ui.form.Slider();
