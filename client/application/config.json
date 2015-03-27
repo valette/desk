@@ -67,7 +67,7 @@
           "manifest" : "../Manifest.json"
         },
         {
-          "manifest"   : "contrib://UploadMgr/trunk/Manifest.json"
+          "manifest"   : "../../node_modules/uploadmgr/Manifest.json"
         }
       ]
     }
