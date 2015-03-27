@@ -658,8 +658,7 @@ qx.Class.define("desk.SliceView",
 			}, this);
 
 			slice.addListener('changeImage', function () {
-				// whe need directly render to avoid race conditions
-				this.render(true);
+				this.render();
 			}, this);
 		},
 

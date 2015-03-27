@@ -529,7 +529,7 @@ qx.Class.define("desk.SceneContainer",
 					vertices2.copyAt(j, vertices, i);
 				});
 				vertices2.needsUpdate = true;
-				this.render(true);
+				this.render();
 			}, this);
 
 			this.addMesh(mesh, {label : 'View ' + (volumeSlice.getOrientation()+1),

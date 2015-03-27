@@ -339,11 +339,13 @@ qx.Class.define("desk.VolumeSlice",
 
 		__mhd : null,
 
-		__updateOOC : function (callback, context) {
+		/**
+		 * reloads the volume (OOC version)
+		 * @param callback {Function} callback when done
+		 * @param context {Object} optional callback context
+		 */
+		 __updateOOC : function (callback, context) {
 			this.__availableImageFormat = this.getImageFormat();
-			this.__contrastMultiplier = 1;
-			this.__brightnessOffset = 0;
-			this.setBrightnessAndContrast(this.__brightness, this.__contrast);
 
 			if (this.__mhd) {
 				this.__finalizeUpdate();
@@ -826,7 +828,10 @@ qx.Class.define("desk.VolumeSlice",
 			this.__finalizeUpdate();
 		},
 
-		__finalizeUpdate : function () {
+		/**
+		 * function to finalize update, common to update() and uptateOOC()
+		 */
+		 __finalizeUpdate : function () {
 			// feed shader with constants
 			this.__materials.forEach(function (material) {
 				material.uniforms.imageType.value = this.__availableImageFormat;
@@ -850,6 +855,9 @@ qx.Class.define("desk.VolumeSlice",
 			this.__timeout = setTimeout(this.__updateImage.bind(this), 10000);
 			if (!this.__opts.ooc) {
 				this.__image.src = this.getSliceURL(this.getSlice()) + "?nocache=" + this.__timestamp;
+				this.__materials.forEach(function (material) {
+					material.uniforms.texture.value.needsUpdate = false;
+				});
 				return;
 			}
 			var slice = this.getSlice();
@@ -887,7 +895,10 @@ qx.Class.define("desk.VolumeSlice",
 							+'?nocache='
 							+ response.timeStamp
 					);
-			}, this);
+					this.__materials.forEach(function (material) {
+						material.uniforms.texture.value.needsUpdate = false;
+					});
+				}, this);
 
 			if (this.__lastHandle) {
 				desk.Actions.getInstance().killAction(this.__lastHandle);
