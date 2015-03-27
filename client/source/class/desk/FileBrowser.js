@@ -455,6 +455,10 @@ qx.Class.define("desk.FileBrowser",
 			}				
 		},
 
+		/**
+		* Launches Out-of-core volume visualization
+		* @param node {Object} file node
+		*/
 		__OOCViewAction : function (node) {
 			if (!node.getChildren) {
 				new desk.VolumeViewer(node.getFullName(), {
@@ -468,7 +472,7 @@ qx.Class.define("desk.FileBrowser",
 
 		/**
 		* Launches the file download
-		* @param node {Objecy} file node
+		* @param node {Object} file node
 		*/
 		__downloadAction : function (node) {
 			if (!node.getChildren) {
@@ -490,7 +494,7 @@ qx.Class.define("desk.FileBrowser",
 
 		/**
 		* Launches an uploader 
-		* @param node {Objecy} file node
+		* @param node {Object} file node
 		*/
 		__uploadAction : function (node) {
 			var dir = node.getFullName();
@@ -507,7 +511,7 @@ qx.Class.define("desk.FileBrowser",
 
 		/**
 		* Creates a directory
-		* @param node {Objecy} file node
+		* @param node {Object} file node
 		*/
 		__newDirectoryAction : function (node) {
 			var dir = node.getFullName();
@@ -526,7 +530,7 @@ qx.Class.define("desk.FileBrowser",
 
 		/**
 		* Deletes a file/directory
-		* @param node {Objecy} file node
+		* @param node {Object} file node
 		*/
 		__deleteAction : function (node) {
 			var nodes = this.__files.getSelection().toArray();
@@ -552,7 +556,7 @@ qx.Class.define("desk.FileBrowser",
 
 		/**
 		* Renames file/directory
-		* @param node {Objecy} file node
+		* @param node {Object} file node
 		*/
 		__renameAction : function (node) {
 			var file = node.getFullName();
@@ -573,7 +577,7 @@ qx.Class.define("desk.FileBrowser",
 
 		/**
 		* Creates a new file
-		* @param node {Objecy} file node
+		* @param node {Object} file node
 		*/
 		__newFileAction : function (node) {
 			var dir = node.getFullName();
@@ -591,7 +595,7 @@ qx.Class.define("desk.FileBrowser",
 
 		/**
 		* Launches the text editor on the file
-		* @param node {Objecy} file node
+		* @param node {Object} file node
 		*/
 		__viewEditAction : function (node) {
 			if (!node.getChildren) {
