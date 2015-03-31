@@ -52,9 +52,13 @@ qx.Class.define("desk.VolumeSlice",
 		image.onload = function() {
 			clearTimeout(this.__timeout);
 			this.__materials.forEach(function (material) {
+				material.uniforms.imageType.value = this.__availableImageFormat;
 				material.uniforms.texture.value.needsUpdate = true;
-			});
-			this.fireEvent("changeImage");
+			}, this);
+
+			this.__contrastMultiplier = 1 / Math.abs(this.__scalarMax - this.__scalarMin);
+			this.__brightnessOffset = - this.__scalarMin;
+			this.setBrightnessAndContrast(this.__brightness, this.__contrast);
 		}.bind(this);
 		image.onerror = image.onabort = this.update.bind(this);
 
@@ -167,12 +171,11 @@ qx.Class.define("desk.VolumeSlice",
 
 		FRAGMENTSHADERENDOOC : [
 		"//ooc",
+				"color = mix(color, valueJPG, imageType);",
 				"float correctedPixelValue=(color+brightness)*contrast;",
-				"float pixelValue=mix(correctedPixelValue, valueJPG, imageType);",
-				"vec4 correctedColor=vec4(pixelValue);",
+				"vec4 correctedColor=vec4(correctedPixelValue);",
 				"correctedColor[3]=opacity;",
-				"pixelValue=correctedColor[0];",
-				"float clampedValue=clamp(pixelValue/ lookupTableLength, 0.0, 1.0);",
+				"float clampedValue=clamp(correctedPixelValue/ lookupTableLength, 0.0, 1.0);",
 				"vec2 colorIndex=vec2(clampedValue,0.0);",
 				"vec4 colorFromLookupTable = texture2D( lookupTable,colorIndex  );",
 				"colorFromLookupTable[3] *= opacity;",
@@ -262,7 +265,6 @@ qx.Class.define("desk.VolumeSlice",
 			return this.__file;
 		},
 
-		
 		/**
 		 * returns the volume dimensions
 		 * @return {Array} array of 3D dimensions
@@ -345,8 +347,6 @@ qx.Class.define("desk.VolumeSlice",
 		 * @param context {Object} optional callback context
 		 */
 		 __updateOOC : function (callback, context) {
-			this.__availableImageFormat = this.getImageFormat();
-
 			if (this.__mhd) {
 				this.__finalizeUpdate();
 				if (typeof callback === 'function') {
@@ -434,9 +434,15 @@ qx.Class.define("desk.VolumeSlice",
 		setBrightnessAndContrast : function (brightness, contrast) {
 			this.__brightness = brightness;
 			this.__contrast = contrast;
+			if (this.__opts.ooc && (this.__availableImageFormat === 0)) {
+				brightness += this.__brightnessOffset;
+				contrast *= this.__contrastMultiplier;
+			}
+
 			this.__materials.forEach(function (material) {
-				material.uniforms.brightness.value = brightness + this.__brightnessOffset;
-				material.uniforms.contrast.value = contrast * this.__contrastMultiplier;
+				material.uniforms.brightness.value = brightness;
+				material.uniforms.contrast.value = contrast;
+				material.needsUpdate = true;
 			}, this);
 			this.fireEvent("changeImage");
 		},
@@ -790,7 +796,6 @@ qx.Class.define("desk.VolumeSlice",
 		 * @param xmlDoc {Element} xml content
 		 */
 		__parseXMLresponse : function (xmlDoc) {
-			this.__availableImageFormat = this.getImageFormat();
 			var volume = xmlDoc.getElementsByTagName("volume")[0];
 			if (!volume)
 				return;
@@ -831,11 +836,8 @@ qx.Class.define("desk.VolumeSlice",
 		/**
 		 * function to finalize update, common to update() and uptateOOC()
 		 */
-		 __finalizeUpdate : function () {
-			// feed shader with constants
-			this.__materials.forEach(function (material) {
-				material.uniforms.imageType.value = this.__availableImageFormat;
-			}, this);
+		__finalizeUpdate : function () {
+			this.__availableImageFormat = this.getImageFormat();
 
 			if (this.__ready) {
 				this.__updateImage();
@@ -878,14 +880,8 @@ qx.Class.define("desk.VolumeSlice",
 							var range = result.split(" ").map(function (value) {
 								return parseFloat(value);
 							});
-							range[0] = Math.min(range[0], 0);
-							this.__scalarMin = range[0];
+							this.__scalarMin = Math.min(range[0], 0);
 							this.__scalarMax = range[1];
-							if (this.getImageFormat() === 0) {
-								this.__contrastMultiplier = 1 / Math.abs(range[1] - range[0]);
-								this.__brightnessOffset = - range[0];
-								this.setBrightnessAndContrast(this.__brightness, this.__contrast);
-							}
 						}, this);
 					}
 					if (this.getSlice() !== slice) return;

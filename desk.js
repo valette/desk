@@ -18,7 +18,8 @@ var	actions      = require(__dirname + '/lib/cl-rpc');
 	mv           = require('mv'),
 	os           = require('os'),
 	osenv        = require('osenv'),
-	socketIO     = require('socket.io');
+	socketIO     = require('socket.io'),
+	validator    = require('validator');
 
 var homeURL         = argv.multi ? '/' + osenv.user() + '/' : '/',
 	port            = argv.multi ? process.getuid() : 8080,
@@ -220,10 +221,14 @@ io.on('connection', function (socket) {
 	var ip = (socket.client.conn.request.headers['x-forwarded-for']
 		|| socket.handshake.address).split(":").pop();
 
-	dns.reverse(ip, function (err, domains) {
-		client = (domains || ["no_domain"]).join(" ");
-		log('connect : ' + ip + ' ('  + client + ')');
-	});
+	if (validator.isIP(ip)) {
+		dns.reverse(ip, function (err, domains) {
+			client = (domains || ["no_domain"]).join(" ");
+			log('connect : ' + ip + ' ('  + client + ')');
+		});
+	} else {
+		log('connect : ' + ip);
+	}
 
 	socket.on('disconnect', function() {
 			log('disconnect : ' + ip + ' (' + client + ')');
