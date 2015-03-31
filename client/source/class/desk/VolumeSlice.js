@@ -56,8 +56,10 @@ qx.Class.define("desk.VolumeSlice",
 				material.uniforms.texture.value.needsUpdate = true;
 			}, this);
 
-			this.__contrastMultiplier = 1 / Math.abs(this.__scalarMax - this.__scalarMin);
-			this.__brightnessOffset = - this.__scalarMin;
+			if (this.__numberOfScalarComponents === 1) {
+				this.__contrastMultiplier = 1 / Math.abs(this.__scalarMax - this.__scalarMin);
+				this.__brightnessOffset = - this.__scalarMin;
+			}
 			this.setBrightnessAndContrast(this.__brightness, this.__contrast);
 		}.bind(this);
 		image.onerror = image.onabort = this.update.bind(this);
@@ -434,7 +436,9 @@ qx.Class.define("desk.VolumeSlice",
 		setBrightnessAndContrast : function (brightness, contrast) {
 			this.__brightness = brightness;
 			this.__contrast = contrast;
-			if (this.__opts.ooc && (this.__availableImageFormat === 0)) {
+			if (this.__opts.ooc 
+				&& (this.__availableImageFormat === 0)
+				&& (this.__numberOfScalarComponents === 1)) {
 				brightness += this.__brightnessOffset;
 				contrast *= this.__contrastMultiplier;
 			}
@@ -592,12 +596,11 @@ qx.Class.define("desk.VolumeSlice",
 				break;
 			}
 
-			var shader;
 			var endShader = this.__opts.ooc ? desk.VolumeSlice.FRAGMENTSHADERENDOOC
 				: desk.VolumeSlice.FRAGMENTSHADEREND;
 
 			if (this.__numberOfScalarComponents == 1) {
-				shader = [desk.VolumeSlice.FRAGMENTSHADERBEGIN,
+				var shader = [desk.VolumeSlice.FRAGMENTSHADERBEGIN,
 						middleShader,
 						endShader,
 						desk.VolumeSlice.FRAGMENTSHADERFINISH].join("\n");
@@ -855,11 +858,12 @@ qx.Class.define("desk.VolumeSlice",
 		__updateImage : function () {
 			clearTimeout(this.__timeout);
 			this.__timeout = setTimeout(this.__updateImage.bind(this), 10000);
+			this.__materials.forEach(function (material) {
+				material.uniforms.texture.value.needsUpdate = false;
+			});
+
 			if (!this.__opts.ooc) {
 				this.__image.src = this.getSliceURL(this.getSlice()) + "?nocache=" + this.__timestamp;
-				this.__materials.forEach(function (material) {
-					material.uniforms.texture.value.needsUpdate = false;
-				});
 				return;
 			}
 			var slice = this.getSlice();
@@ -891,10 +895,8 @@ qx.Class.define("desk.VolumeSlice",
 							+'?nocache='
 							+ response.timeStamp
 					);
-					this.__materials.forEach(function (material) {
-						material.uniforms.texture.value.needsUpdate = false;
-					});
-				}, this);
+				},
+			this);
 
 			if (this.__lastHandle) {
 				desk.Actions.getInstance().killAction(this.__lastHandle);
