@@ -446,7 +446,6 @@ qx.Class.define("desk.VolumeSlice",
 			this.__materials.forEach(function (material) {
 				material.uniforms.brightness.value = brightness;
 				material.uniforms.contrast.value = contrast;
-				material.needsUpdate = true;
 			}, this);
 			this.fireEvent("changeImage");
 		},
@@ -564,7 +563,6 @@ qx.Class.define("desk.VolumeSlice",
 		 */
 		 getMaterial :function () {
 			var texture = new THREE.Texture(this.__image);
-			texture.needsUpdate = true;
 			texture.generateMipmaps = false;
 			var filter = this.__textureFilter;
 			texture.magFilter = filter;
@@ -574,7 +572,6 @@ qx.Class.define("desk.VolumeSlice",
 			lookupTable.generateMipmaps = false;
 			lookupTable.magFilter = filter;
 			lookupTable.minFilter = filter;
-			lookupTable.needsUpdate = true;
 
 			switch (this.__scalarType) {
 			case 2 :
