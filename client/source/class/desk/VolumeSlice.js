@@ -434,6 +434,16 @@ qx.Class.define("desk.VolumeSlice",
 		 * @param contrast {Number} contrast
 		 */
 		setBrightnessAndContrast : function (brightness, contrast) {
+			this.__setBrightnessAndContrast(brightness, contrast);
+			this.fireEvent("changeImage");
+		},
+
+		/**
+		 * sets brightness and contrast for all generated materials
+		 * @param brightness {Number} brightness
+		 * @param contrast {Number} contrast
+		 */
+		__setBrightnessAndContrast : function (brightness, contrast) {
 			this.__brightness = brightness;
 			this.__contrast = contrast;
 			if (this.__opts.ooc 
@@ -447,7 +457,6 @@ qx.Class.define("desk.VolumeSlice",
 				material.uniforms.brightness.value = brightness;
 				material.uniforms.contrast.value = contrast;
 			}, this);
-			this.fireEvent("changeImage");
 		},
 
 		/**
@@ -610,8 +619,8 @@ qx.Class.define("desk.VolumeSlice",
 					lookupTable : {type : "t", slot: 1, value: lookupTable },
 					lookupTableLength : {type: "f", value: 2 },
 					useLookupTable : {type: "f", value: 0 },
-					contrast : {type: "f", value: this.__contrast * this.__contrastMultiplier},
-					brightness : {type: "f", value: this.__brightness + this.__brightnessOffset},
+					contrast : {type: "f", value: 0},
+					brightness : {type: "f", value: 0},
 					opacity : {type: "f", value: this.__opacity},
 					scalarMin : {type: "f", value: this.__scalarMin},
 					scalarMax : {type: "f", value: this.__scalarMax},
@@ -652,6 +661,11 @@ qx.Class.define("desk.VolumeSlice",
 			material.addEventListener('dispose', function () {
 				this.__materials = _.without(this.__materials, material);
 			}, this);
+
+			this.__setBrightnessAndContrast(this.__brightness, this.__contrast);
+			if (this.__image.complete) {
+				material.uniforms.texture.value.needsUpdate = true;
+			}
 			return material;
 		},
 
