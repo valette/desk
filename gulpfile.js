@@ -1,16 +1,14 @@
 var browserify = require('browserify'),
-    gulp       = require('gulp'),
-    transform  = require('vinyl-transform'),
-    uglify     = require('gulp-uglify');
-    
-gulp.task('default', function () {
-	var browserified = transform(
-		function(filename) {
-			return browserify(filename).bundle();
-		});
-
-	return gulp.src([__dirname + '/lib/browserified.js'])
-		.pipe(browserified)
-		.pipe(uglify())
+	gulp       = require('gulp'),
+	rename     = require('gulp-rename'),
+	source     = require('vinyl-source-stream'),
+	streamify  = require('gulp-streamify'),
+	uglify     = require('gulp-uglify');
+ 
+gulp.task('default', function() {
+	browserify(__dirname + '/lib/browserified.js').bundle()
+		.pipe(source(__dirname + '/lib/browserified.js'))
+		.pipe(streamify(uglify()))
+		.pipe(rename('browserified.js'))
 		.pipe(gulp.dest(__dirname + '/cache'));
 });
