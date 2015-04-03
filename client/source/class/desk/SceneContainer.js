@@ -511,7 +511,6 @@ qx.Class.define("desk.SceneContainer",
 			opts = opts || {};
 			var geometry = new THREE.PlaneBufferGeometry( 1, 1);
 			var material = volumeSlice.getMaterial();
-			material.side = THREE.DoubleSide;
 			var mesh = new THREE.Mesh(geometry,material);
 
 			var listenerId = volumeSlice.addListener('changeImage', function () {

@@ -666,6 +666,7 @@ qx.Class.define("desk.VolumeSlice",
 			if (this.__image.complete) {
 				material.uniforms.texture.value.needsUpdate = true;
 			}
+			material.side = THREE.DoubleSide;
 			return material;
 		},
 

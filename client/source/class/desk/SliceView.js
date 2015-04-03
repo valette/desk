@@ -644,7 +644,6 @@ qx.Class.define("desk.SliceView",
 			slice.bind("slice", this, "slice");
 
 			var material = slice.getMaterial();
-			material.side = THREE.DoubleSide;
 			var mesh = new THREE.Mesh(geometry, material);
 			mesh.renderDepth = - this.__slices.length;
 			slice.setUserData("mesh", mesh);
