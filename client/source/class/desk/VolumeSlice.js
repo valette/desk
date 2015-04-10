@@ -888,7 +888,7 @@ qx.Class.define("desk.VolumeSlice",
 					stdout : true
 				},
 				function (response) {
-					this.__lastHandle = 0;
+					if (this.__lastHandle === handle) this.__lastHandle = 0;
 					if (response.status === "killed") return;
 
 					if (this.__scalarMin === undefined && this.__numberOfScalarComponents === 1) {
