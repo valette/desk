@@ -92,12 +92,12 @@ qx.Class.define("desk.Actions",
 
 			// add already running actions
 			this.launchAction({manage : 'list'}, function (res) {
-				var actions = res.ongoingActions
+				var actions = res.ongoingActions;
 				Object.keys(actions).forEach(function (handle) {
 					this.__addActionToList(actions[handle]);
 					this.__runingActions[handle] = actions[handle];
 				}, this);
-			});
+			}, this);
 		},
 
 		/**
@@ -319,7 +319,7 @@ qx.Class.define("desk.Actions",
 		* @param parameters {Object} action parameters
 		*/
 		__addActionToList : function(parameters) {
-			if (parameters.actionFinished) {
+			if (parameters.actionFinished || parameters.POST.manage) {
 				return;
 			}
 			if (this.__ongoingActions.getChildren().length > 20) {
