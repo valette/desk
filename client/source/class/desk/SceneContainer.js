@@ -168,14 +168,10 @@ qx.Class.define("desk.SceneContainer",
 
 	events : {
 		/**
-		 * Fired whenever a mesh is removed. Attached data is the removed mesh
-		 */
-		"meshRemoved" : "qx.event.type.Data",
-		/**
 		 * Fired whenever picking is performed (in pick mode only)
 		 */
 		"pick" : "qx.event.type.Data"
-		},
+	},
 
 	members : {
 		// a treeVirtual element storing all meshes
@@ -1090,7 +1086,6 @@ qx.Class.define("desk.SceneContainer",
 			delete mesh.userData.viewerProperties;
 			this.__setData();
 
-			this.fireDataEvent("meshRemoved", mesh);
 			if (dispose === false) return;
 
 			if (!params.keepGeometry && mesh.geometry) {
