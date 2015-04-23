@@ -415,7 +415,7 @@ qx.Class.define("desk.SceneContainer",
 						}
 					);
 					meshParameters.color = color;
-					meshParameters.renderDepth = color[4];
+					meshParameters.renderOrder = color[4];
 				}
 
 				if (mesh.hasAttribute("Mesh")) {
@@ -761,29 +761,28 @@ qx.Class.define("desk.SceneContainer",
             opts = opts || {label : 'geometry'};
 			geometry.computeBoundingBox();
 
-			var color = opts.color || [1, 1, 1, 1];
+			var color = opts.color || [1, 1, 1];
+			var opacity = color[3];
+			if (opts.opacity !== undefined) {
+				opacity = opts.opacity;
+			}
  
-			if (typeof opts.opacity !== "undefined") {
-				color[3] = opts.opacity;
-			}
-
-			var col = new THREE.Color(color[0], color[1], color[2]);
-
 			var material =  new THREE.MeshPhongMaterial({
-				color : col.getHex(), opacity : color[3]});
-			material.ambient = new THREE.Color().copy(col).multiplyScalar(0.3);
-			material.shininess = 5;
-			material.specular = new THREE.Color( 0x303030 );
-			if (color[3] < 0.999) {
+				color : new THREE.Color().fromArray(color).getHex(),
+				shininess : 5,
+				side : THREE.DoubleSide
+			});
+
+			if ((opacity !== undefined) && (opacity < 1)) {
 				material.transparent = true;
+				material.opacity = opacity;
 			}
-			material.side = THREE.DoubleSide;
 
 			var mesh = new THREE.Mesh(geometry, material );
 			if (geometry.attributes && geometry.attributes.color) {
 				mesh.material.vertexColors = THREE.VertexColors;
 			}
-			mesh.renderDepth = opts.renderDepth || 0
+			mesh.renderOrder = opts.renderOrder || 0
             this.addMesh( mesh, opts );
             return mesh;
         },
@@ -959,11 +958,11 @@ qx.Class.define("desk.SceneContainer",
 			var colorSelector = new qx.ui.control.ColorSelector();
 			bottomBox.add(colorSelector);//, {flex:1});
 
-			var renderDepthLabel = new qx.ui.basic.Label("Render Depth");
-			topBox.add(renderDepthLabel);
+			var renderOrderLabel = new qx.ui.basic.Label("Render Order");
+			topBox.add(renderOrderLabel);
 
-			var renderDepthSpinner=new qx.ui.form.Spinner(-100, 0,100);
-			topBox.add(renderDepthSpinner);
+			var renderOrderSpinner = new qx.ui.form.Spinner(-100, 0,100);
+			topBox.add(renderOrderSpinner);
 
 			topBox.add(new qx.ui.core.Spacer(10, 20),{flex:1});
 			if (parentWindow) {
@@ -995,8 +994,8 @@ qx.Class.define("desk.SceneContainer",
 					colorSelector.setPreviousColor(Math.round(ratio*color.r),
 							Math.round(ratio*color.g),Math.round(ratio*color.b));
 					opacitySlider.setValue(Math.round(firstSelectedMesh.material.opacity*ratio));
-                    if (firstSelectedMesh.renderDepth) {
-                        renderDepthSpinner.setValue(firstSelectedMesh.renderDepth);
+                    if (firstSelectedMesh.renderOrder) {
+                        renderOrderSpinner.setValue(firstSelectedMesh.renderOrder);
                     }
 					enableUpdate=true;
 				}
@@ -1032,10 +1031,10 @@ qx.Class.define("desk.SceneContainer",
 				}
 			}, this);
 
-			renderDepthSpinner.addListener("changeValue", function(event){
+			renderOrderSpinner.addListener("changeValue", function(event){
 				if (enableUpdate) {
                     this.getSelectedMeshes().forEach(function (mesh){
-                        mesh.renderDepth = renderDepthSpinner.getValue();
+                        mesh.renderOrder = renderOrderSpinner.getValue();
                     });
 					this.render();
 				}

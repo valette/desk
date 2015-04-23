@@ -30,16 +30,19 @@ qx.Class.define("desk.ThreeContainer",
 		scene.add(camera);
 
 		// lights
-		var dirLight = new THREE.DirectionalLight( 0xcccccc );
+		var dirLight = new THREE.DirectionalLight( 0xaaaaaa );
 		dirLight.position.set(200, 200, 1000).normalize();
 		camera.add(dirLight);
 		camera.add(dirLight.target);
-		scene.add(new THREE.AmbientLight(0x555555));
+		scene.add(new THREE.AmbientLight(0x444444));
 
 		// renderer
 		var renderer = this.__renderer = new THREE.WebGLRenderer({
-			canvas : canvas, antialias: true, alpha : true,
-			premultipliedAlpha : false, devicePixelRatio: 1});
+			canvas : canvas,
+			antialias: true,
+			alpha : true,
+			premultipliedAlpha : false
+		});
 		renderer.setClearColor( 0xffffff, 1 );
 
 		this.__listenerId = threeCanvas.addListener("resize", this.__resizeThreeCanvas, this);

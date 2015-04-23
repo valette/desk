@@ -205,7 +205,7 @@ qx.Class.define("desk.MPRContainer",
 					if (!slice) { return }
 					var mesh = slice.getUserData("mesh");
 					if (mesh) {
-						mesh.renderDepth = - rank;
+						mesh.renderOrder = rank;
 					}
 				});
 			}, this);

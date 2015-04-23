@@ -252,7 +252,7 @@ qx.Class.define("desk.Markers",
 				xGeometry.vertices.push( new THREE.Vector3(xMin, y, z) );
 				xGeometry.vertices.push( new THREE.Vector3(xMax, y, z) );
 			var xline = new THREE.Line(xGeometry, material);
-				xline.renderDepth = this.getMrksRndrDpth();
+			xline.renderOrder = this.getMrksRndrDpth();
 			scene.add(xline);
 			
 			// Create the vertical line
@@ -260,7 +260,7 @@ qx.Class.define("desk.Markers",
 				yGeometry.vertices.push( new THREE.Vector3(x, yMin, z) );
 				yGeometry.vertices.push( new THREE.Vector3(x, yMax, z) );
 			var yline = new THREE.Line(yGeometry, material);
-				yline.renderDepth = this.getMrksRndrDpth();
+				yline.renderOrder = this.getMrksRndrDpth();
 			scene.add(yline);
 			
 			var cross = {hl:xline, vl:yline};

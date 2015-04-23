@@ -458,7 +458,7 @@ qx.Class.define("desk.SliceView",
 				var geometry = new THREE.Geometry();
 				geometry.vertices.push(coords[0], coords[1]);
 				var line = new THREE.Line(geometry, material);
-				line.renderDepth = -900;
+				line.renderOrder = 900;
 				this.getScene().add(line);
 				return line;
 			}, this);
@@ -499,7 +499,7 @@ qx.Class.define("desk.SliceView",
 			material.side = THREE.DoubleSide;
 
 			var mesh = new THREE.Mesh(geometry,material);
-			mesh.renderDepth = -1000;
+			mesh.renderOrder = 1000;
 			this.__brushMesh = mesh;
 			this.__updateBrush();
 
@@ -588,7 +588,7 @@ qx.Class.define("desk.SliceView",
 			material.side = THREE.DoubleSide;
 
 			var mesh = new THREE.Mesh(geometry,material);
-			mesh.renderDepth = -800;
+			mesh.renderOrder = 800;
 
 			this.getScene().add(mesh);
 			if (this.__drawingMesh) {
@@ -645,7 +645,7 @@ qx.Class.define("desk.SliceView",
 
 			var material = slice.getMaterial();
 			var mesh = new THREE.Mesh(geometry, material);
-			mesh.renderDepth = - this.__slices.length;
+			mesh.renderOrder = this.__slices.length;
 			slice.setUserData("mesh", mesh);
 			geometry.computeFaceNormals();
 			geometry.computeVertexNormals();
