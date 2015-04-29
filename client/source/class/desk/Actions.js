@@ -67,7 +67,7 @@ qx.Class.define("desk.Actions",
 
 	members : {
 		__socket : null,
-		__runingActions : [],
+		__runingActions : {},
 
 		/**
 		* Creates the action menu
@@ -332,16 +332,32 @@ qx.Class.define("desk.Actions",
 			if (!item) {
 				item = new qx.ui.form.ListItem("dummy");
 				item.set({decorator : "button-hover", opacity : 0.7});
+
 				var killButton = new qx.ui.menu.Button('kill');
 				killButton.addListener('execute', function () {
 					this.killAction(item.getUserData("handle"));
 				}, this);
+
+				var killAllButton = new qx.ui.menu.Button('Kill all');
+				killAllButton.setBlockToolTip(false);
+				killAllButton.setToolTipText("To kill all runing actions on server");
+				killAllButton.addListener('execute', function () {
+					if (!confirm('Do you want to kill all actions?')) {
+						return;
+					}
+					Object.keys(this.__runingActions).forEach(function (handle) {
+						this.killAction(handle);
+					}, this);
+				}, this);
+				
 				var propertiesButton = new qx.ui.menu.Button('properties');
 				propertiesButton.addListener('execute', function () {
 					console.log(parameters);
 				}, this);
+				
 				var menu = new qx.ui.menu.Menu();
 				menu.add(killButton);
+				menu.add(killAllButton);
 				menu.add(propertiesButton);
 				item.setContextMenu(menu);
 			}
