@@ -307,7 +307,7 @@ qx.Class.define("desk.Actions",
 
             setTimeout(function () {
 				this.__addActionToList(parameters);
-			}.bind(this), Math.max(1000, (this.__runingActions.length - 20) * 1000));
+			}.bind(this), Math.max(1000, (_.size(this.__runingActions) - 20) * 1000));
 
 			this.__socket.emit('action', params);
 			this.__runingActions[params.handle] = parameters;
