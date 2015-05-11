@@ -6,7 +6,8 @@ var browserify = require('browserify'),
 	uglify     = require('gulp-uglify');
  
 gulp.task('default', function() {
-	browserify(__dirname + '/lib/browserified.js').bundle()
+	return browserify(__dirname + '/lib/browserified.js')
+		.bundle()
 		.pipe(source(__dirname + '/lib/browserified.js'))
 		.pipe(streamify(uglify()))
 		.pipe(rename('browserified.js'))
