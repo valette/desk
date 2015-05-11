@@ -375,34 +375,48 @@ qx.Class.define("desk.ThreeContainer",
 
 		/**
 		* Triggers a snapshot of the scene which will be downloaded by the browser
-		* @param ratio {Number} size multiplication ratio e.g. when set to 2, the 
-		* image dimensions will be twice the current scene dimensions. Default : 1
+		* @param opts {Object} options such as 'ratio' to multiplpy image dimensions,
+		* 'path' to write to server
 		*/
-		snapshot : function (ratio) {
-			ratio = ratio || 1;
+		snapshot : function (opts) {
+			opts = opts || {};
+			var ratio = opts.ratio || 1;
 
 			this.__threeCanvas.setSyncDimension(false);
 			this.__multiplyDimensions(ratio);
 
 			this.render(true);
-			var binary = atob(this.__renderer.domElement.toDataURL("image/png").split(',')[1]);
-			var array = [];
-			for(var i = 0; i < binary.length; i++) {
-				array.push(binary.charCodeAt(i));
-			}
-			var blob =  new Blob([new Uint8Array(array)], {type: 'image/png'});
-			var a = document.createElement('a');
-			a.href = window.URL.createObjectURL(blob);
-			var date = new Date();
-			a.download = "snapshot-"+ date.getFullYear() + "-" +
-				(date.getMonth() + 1) + "-"+ date.getDate() + "_" +
-				date.getHours() + "h" + date.getMinutes() + "mn" +
-				date.getSeconds() + "s" +  ".png";
-			document.body.appendChild(a);
-			a.click();
-			document.body.removeChild(a);
+			var dataURL = this.__renderer.domElement.toDataURL("image/png");
+			if (opts.path) {
+				var saveData = dataURL.replace("image/png", "image/octet-stream");
+				var commaIndex = dataURL.lastIndexOf(",");
 
-			// restore wireframe width : 
+				desk.Actions.getInstance().launchAction({
+					action : "write_binary",
+					file_name : desk.FileSystem.getFileName(opts.path),
+					base64data : dataURL.substring(commaIndex + 1, dataURL.length),
+					output_directory : desk.FileSystem.getFileDirectory(opts.path)
+				});
+			} else {
+				var binary = atob(dataURL.split(',')[1]);
+				var array = [];
+				for(var i = 0; i < binary.length; i++) {
+					array.push(binary.charCodeAt(i));
+				}
+				var blob =  new Blob([new Uint8Array(array)], {type: 'image/png'});
+				var a = document.createElement('a');
+				a.href = window.URL.createObjectURL(blob);
+				var date = new Date();
+				a.download = "snapshot-"+ date.getFullYear() + "-" +
+					(date.getMonth() + 1) + "-"+ date.getDate() + "_" +
+					date.getHours() + "h" + date.getMinutes() + "mn" +
+					date.getSeconds() + "s" +  ".png";
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+			}
+
+			// restore wireframe width
 			this.__multiplyDimensions(1.0 / ratio);
 			this.__threeCanvas.setSyncDimension(true);
 			this.render();

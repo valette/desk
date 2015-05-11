@@ -828,7 +828,7 @@ qx.Class.define("desk.SceneContainer",
 
 			var button = new qx.ui.form.Button(null, "desk/camera-photo.png");
 			button.addListener("click", function(e) {
-				this.snapshot(factor);
+				this.snapshot({ratio : factor});
 			}, this);
 
 			button.setContextMenu(menu);
