@@ -506,8 +506,8 @@ qx.Class.define("desk.Action",
 				}
 
 				//use default value if provided
-				if (parameter.defaultValue)  {
-					form.setValue(parameter.defaultValue);
+				if (parameter.defaultValue !== undefined)  {
+					form.setValue('' + parameter.defaultValue);
 				}
 
 				form.addListener("input", function(e) {
