@@ -329,13 +329,13 @@ qx.Class.define("desk.Action",
 		* @param params {Object} action parameters
 		*/
 		__executeAction : function (params) {
-			var actionId = this.__actionsCounter;
+			var id = this.__actionsCounter;
 			this.__actionsCounter++;
 			desk.Actions.getInstance().launchAction (params,
 				function (response) {
-					this.__afterExecute(actionId, response);
+					this.__afterExecute(id, response);
 			}, this);
-			this.fireDataEvent("actionTriggered", actionId);
+			this.fireDataEvent("actionTriggered", {id : id, params : params});
 		},
 
 		/**
@@ -343,20 +343,20 @@ qx.Class.define("desk.Action",
 		* @param actionId {Int} the action id
 		* @param response {Ojbect} action response
 		*/
-		__afterExecute : function (actionId, response) {
+		__afterExecute : function (id, res) {
 			this.__update.setEnabled(true);
 			this.__update.setLabel("Update");
 			if ((this.__outputDir === null) ||
 					(this.__outputDir.substring(0, 6) === "cache/") ||
 					(this.__outputDir.substring(0, 8) === "actions/")) {
-				this.setOutputDirectory(response.outputDirectory);
+				this.setOutputDirectory(res.outputDirectory);
 			}
 
-			this.__status.setValue(response.status);
+			this.__status.setValue(res.status);
 			if (!this.__action.voidAction) {
 				this.__showLog.setVisibility("visible");
 			}
-			this.fireDataEvent("actionUpdated", actionId);
+			this.fireDataEvent("actionUpdated", {id : id, response : res});
 		},
 
 		/**

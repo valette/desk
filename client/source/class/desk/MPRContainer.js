@@ -127,14 +127,14 @@ qx.Class.define("desk.MPRContainer",
 			var volume;
 			var currentActionId = -1;
 			action.addListener('actionTriggered', function (e) {
-				var actionId = e.getData();
+				var actionId = e.getData().id;
 				if (currentActionId < actionId) {
 					currentActionId = actionId;
 				}
 			}, this);
 
 			action.addListener('actionUpdated', function (e) {
-				var actionId = e.getData();
+				var actionId = e.getData().id;
 				if (currentActionId !== actionId) {
 					// ignore this update as the action has been triggered since
 					return;
