@@ -163,7 +163,7 @@ qx.Class.define("desk.SceneContainer",
 		/**
 		 * allows picking with mouse instead of rotation, pan, etc..
 		 */
-		 pickMode : {init : false, check: "Boolean"}
+		pickMode : {init : false, check: "Boolean"}
 	},
 
 	events : {
@@ -828,6 +828,7 @@ qx.Class.define("desk.SceneContainer",
 
 			var button = new qx.ui.form.Button(null, "desk/camera-photo.png");
 			button.addListener("click", function(e) {
+				if (!e.isLeftPressed()) return;
 				this.snapshot({ratio : factor});
 			}, this);
 
@@ -853,6 +854,8 @@ qx.Class.define("desk.SceneContainer",
 		__getSaveViewButton : function () {
 			var button = new qx.ui.form.Button("save view");
 			button.addListener("click", function () {
+				console.log("viewPoint : ");
+				console.log(JSON.stringify(this.getControls().getState()));
 				var file = prompt("Enter file name to save camera view point", "data/viewpoint.json");
 				if (!file) {return;}
 				button.setEnabled(false);
