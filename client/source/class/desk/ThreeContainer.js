@@ -360,8 +360,9 @@ qx.Class.define("desk.ThreeContainer",
 		 */
 		__multiplyDimensions : function (ratio) {
 			this.__scene.traverse(function (object) {
-				if (object.material && object.material.wireframe) {
-					object.material.wireframeLinewidth *= ratio;
+				if (object.material && object.material.linewidth) {
+					object.material.linewidth *= ratio;
+					object.material.needsUpdate = true;
 				} else if (object.userData.edges) {
 					object.userData.edges.material.linewidth *= ratio;
 				}
@@ -376,7 +377,7 @@ qx.Class.define("desk.ThreeContainer",
 		/**
 		* Triggers a snapshot of the scene which will be downloaded by the browser
 		* @param opts {Object} options such as 'ratio' to multiplpy image dimensions,
-		* 'path' to write to server
+		* 'file' to choose file name or 'path' to write to server
 		*/
 		snapshot : function (opts) {
 			opts = opts || {};
@@ -407,7 +408,7 @@ qx.Class.define("desk.ThreeContainer",
 				var a = document.createElement('a');
 				a.href = window.URL.createObjectURL(blob);
 				var date = new Date();
-				a.download = "snapshot-"+ date.getFullYear() + "-" +
+				a.download = opts.file || "snapshot-"+ date.getFullYear() + "-" +
 					(date.getMonth() + 1) + "-"+ date.getDate() + "_" +
 					date.getHours() + "h" + date.getMinutes() + "mn" +
 					date.getSeconds() + "s" +  ".png";
