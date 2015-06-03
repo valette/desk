@@ -340,8 +340,8 @@ qx.Class.define("desk.Action",
 
 		/**
 		* callback launched when the action has been performed
-		* @param actionId {Int} the action id
-		* @param response {Ojbect} action response
+		* @param id {Int} the action id
+		* @param res {Ojbect} action response
 		*/
 		__afterExecute : function (id, res) {
 			this.__update.setEnabled(true);
