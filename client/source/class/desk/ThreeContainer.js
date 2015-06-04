@@ -397,7 +397,7 @@ qx.Class.define("desk.ThreeContainer",
 					file_name : desk.FileSystem.getFileName(opts.path),
 					base64data : dataURL.substring(commaIndex + 1, dataURL.length),
 					output_directory : desk.FileSystem.getFileDirectory(opts.path)
-				});
+				}, opts.callback);
 			} else {
 				var binary = atob(dataURL.split(',')[1]);
 				var array = [];
