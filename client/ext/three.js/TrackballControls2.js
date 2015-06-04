@@ -15,7 +15,7 @@ THREE.TrackballControls2 = function ( object ) {
 		this.width = width;
 		this.height = height;
 		this.radius = width  + height;
-	}
+	};
 
 	this.setSize();
 
@@ -54,23 +54,54 @@ THREE.TrackballControls2 = function ( object ) {
 	// methods
 
 	this.getState = function () {
-		return [ _zoomStart, _zoomEnd, _panStart, _panEnd, _eye, 
-			this.object.up, this.object.position, this.target];
+		return {
+			zoomStart : _zoomStart,
+			zoomEnd : _zoomEnd,
+			panStart  : _panStart,
+			panEnd : _panEnd,
+			eye : _eye,
+			objectUp : this.object.up,
+			objectPosition : this.object.position,
+			target : this.target
+		};
 	};
 
 	this.setState = function (state) {
-		_zoomStart = state[0];
-		_zoomEnd = state[1];
-		_panStart.copy(state[2]);
-		_panEnd.copy(state[3]);
-
-		_eye.copy(state[4]);	
-		this.object.up.copy(state[5]);
-		this.object.position.copy(state[6]);
-		this.target.copy(state[7]);
+		if (Array.isArray(state)) {
+		    // backwards compatibility
+			_zoomStart = state[0];
+			_zoomEnd = state[1];
+			_panStart.copy(state[2]);
+			_panEnd.copy(state[3]);
+			_eye.copy(state[4]);
+			this.object.up.copy(state[5]);
+			this.object.position.copy(state[6]);
+			this.target.copy(state[7]);
+		} else {
+			if (state.zoomStart !== undefined) _zoomStart = state.zoomStart;
+			if (state.zoomEnd !== undefined) _zoomEnd = state.zoomEnd;
+			if (state.panStart !== undefined) _panStart.copy(state.panStart);
+			if (state.panEnd !== undefined) _panEnd.copy(state.panEnd);
+			if (state.eye) _eye.copy(state.eye);
+			if (state.objectUp) this.object.up.copy(state.objectUp);	
+			if (state.objectPosition) this.object.position.copy(state.objectPosition);	
+			if (state.target) this.target.copy(state.target);	
+		}
 		this.update();
 	};
 
+	this.interpolateState = function (state1, state2, ratio) {
+		var iRatio = 1 - ratio;
+		_zoomStart = iRatio * state1.zoomStart + ratio * state2.zoomStart;
+		_zoomEnd = iRatio * state1.zoomEnd + ratio * state2.zoomEnd;
+		_panStart.copy(state1.panStart).lerp(state2.panStart, ratio);
+		_panEnd.copy(state1.panEnd).lerp(state2.panEnd, ratio);
+		_eye.copy(state1.eye).lerp(state2.eye, ratio).normalize();	
+		this.object.up.copy(state1.objectUp).lerp(state2.objectUp, ratio).normalize();	
+		this.object.position.copy(state1.objectPosition).lerp(state2.objectPosition, ratio);	
+		this.target.copy(state1.target).lerp(state2.target, ratio);	
+		this.update();
+	};
 
 	this.copy = function (source) {
 		this.setState(source.getState());
@@ -92,7 +123,7 @@ THREE.TrackballControls2 = function ( object ) {
 	this.rotateCamera = function() {
 		var angle;
 
-		if ( this._dy != 0 ) {
+		if ( this._dy !== 0 ) {
 			angle = this.rotateSpeed * this._dy / this.radius;
 
 			axis.crossVectors( _eye, this.object.up ).normalize();
@@ -102,7 +133,7 @@ THREE.TrackballControls2 = function ( object ) {
 			this.object.up.applyQuaternion(quaternion);
 		}
 
-		if ( this._dx != 0 ) {
+		if ( this._dx !== 0 ) {
 			angle = - this.rotateSpeed * this._dx / this.radius;
 			axis.copy( this.object.up ).normalize();
 			quaternion.setFromAxisAngle( axis , angle );
@@ -111,7 +142,7 @@ THREE.TrackballControls2 = function ( object ) {
 			this.object.up.applyQuaternion(quaternion);
 		}
 
-		if ( this._alpha != 0 ) {
+		if ( this._alpha !== 0 ) {
 			axis.copy( _eye ).normalize();
 			quaternion.setFromAxisAngle( axis , this._alpha );
 
