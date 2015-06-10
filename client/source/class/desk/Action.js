@@ -377,14 +377,13 @@ qx.Class.define("desk.Action",
 		* @return {Boolean} true if the aprameter is valid
 		*/
         __intValidator : function(value, item) {
-			var parameterName = this.name;
 			if ((value == null) || (value == '')) {
 				if (this.required) {
-					item.setInvalidMessage('"' + parameterName + '" is empty');
+					item.setInvalidMessage('"' + this.name + '" is empty');
 					return false;
 				}
 			} else if ((parseInt(value, 10) != parseFloat(value)) || isNaN(value)) {
-				item.setInvalidMessage('"' + parameterName + '" should be an integer');
+				item.setInvalidMessage('"' + this.name + '" should be an integer');
 				return false;
 			}
 			return true;
@@ -397,14 +396,13 @@ qx.Class.define("desk.Action",
 		* @return {Boolean} true if the aprameter is valid
 		*/
 		__stringValidator : function(value, item) {
-			var parameterName = this.name;
 			if ((value == null) || (value == '')) {
 				if (this.required) {
-					item.setInvalidMessage('"' + parameterName + '" is empty');
+					item.setInvalidMessage('"' + this.name + '" is empty');
 					return false;
 				}
 			} else if (value.split(" ").length != 1){
-				item.setInvalidMessage('"' + parameterName + '" should contain no space characters');
+				item.setInvalidMessage('"' + this.name + '" should contain no space characters');
 				return false;
 			}
 			return true;
@@ -417,14 +415,13 @@ qx.Class.define("desk.Action",
 		* @return {Boolean} true if the aprameter is valid
 		*/
 		__floatValidator : function(value, item) {
-			var parameterName = this.name;
 			if ((value == null) || (value == '')) {
 				if (this.required) {
-					item.setInvalidMessage('"' + parameterName + '" is empty');
+					item.setInvalidMessage('"' + this.name + '" is empty');
 					return false;
 				}
 			} else if (isNaN(value)){
-				item.setInvalidMessage('"' + parameterName + '" should be a number');
+				item.setInvalidMessage('"' + this.name + '" should be a number');
 				return false;
 			}
 			return true;
@@ -436,8 +433,24 @@ qx.Class.define("desk.Action",
 		* @param item {qx.ui.form.TextField} the parameter UI form
 		* @return {Boolean} true if the aprameter is valid
 		*/
+		__flagValidator : function(value, item) {
+			switch(value.toLowerCase()) {
+				case "true": case "yes": case "1": 
+				case "false": case "no": case "0": return true;
+				default: 
+					item.setInvalidMessage('"' + this.name + '" should be a boolean');
+					return false;
+			}
+        },
+
+		/**
+		* Dummy validator (always returns true)
+		* @param value {String} the parameter value
+		* @param item {qx.ui.form.TextField} the parameter UI form
+		* @return {Boolean} true if the aprameter is valid
+		*/
 		__dummyValidator : function(value, item) {
-            return (true);
+            return true;
         },
 
 		/**
@@ -496,7 +509,8 @@ qx.Class.define("desk.Action",
 					"float" : this.__floatValidator,
 					"file" : this.__dummyValidator,
 					"directory" : this.__dummyValidator,
-					"xmlcontent" : this.__dummyValidator
+					"xmlcontent" : this.__dummyValidator,
+					"flag" : this.__flagValidator
 				}[parameter.type];
 
 				if (validator) {
