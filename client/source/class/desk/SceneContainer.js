@@ -419,7 +419,7 @@ qx.Class.define("desk.SceneContainer",
 				} else {
 					xmlName = mesh.getAttribute("mesh");
 				}
-				this.__readFile(path + "/" + xmlName, meshParameters,
+				this.__readFile(path + xmlName, meshParameters,
 					function () {callback();});
 			}.bind(this), function () {
 				callback(object);
