@@ -121,6 +121,11 @@
           "name": "destination",
           "type": "string",
           "required": true
+        },
+        {
+		  "name" : "recursive",
+		  "type" : "flag",
+		  "prefix" : "-r"
         }
       ],
       "command": "cp",
