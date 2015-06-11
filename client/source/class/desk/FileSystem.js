@@ -21,8 +21,6 @@ qx.Class.define("desk.FileSystem",
 		* Loads a file into memory. Depending on the file type, the result can be a string, a json object or an xml element
 		*
 		* @param file {String} the file to load
-		* @param callback {Function} success callback, with request as first parameter
-		* @param context {Object} optional context for the callback
 		* @param options {Object} options which can be : 
 		* <pre class='javascript'>
 		* { <br>
@@ -30,7 +28,8 @@ qx.Class.define("desk.FileSystem",
 		*   forceText : true/false // to force text output <br>
 		* }
 		* </pre>
-		* @param options {Object} boolean to force response as text instead of json or xml
+		* @param callback {Function} success callback, with request as first parameter
+		* @param context {Object} optional context for the callback
 		* 
 		* <pre class='javascript'>
 		* example :<br>
@@ -43,8 +42,15 @@ qx.Class.define("desk.FileSystem",
 		*});<br>
 		*</pre>
 		*/
-		readFile : function (file, callback, context, options) {
+		readFile : function (file, options, callback, context) {
+			if (typeof options === "function") {
+				var temp = callback;
+				callback = options;
+				options = context;
+				context = temp;
+			}
 			options = options || {};
+
 			var url = desk.FileSystem.getFileURL(file);
 			if (options.cache !== false) {
 				url += "?nocache=" + Math.random();
@@ -72,7 +78,7 @@ qx.Class.define("desk.FileSystem",
 		* 
 		* <pre class="javascript">
 		* example : <br>
-		* desk.FileSystem.writeFile ("myFilePath", myContent, function () {<br>
+		* desk.FileSystem.writeFile ("myFilePath", myContent, function (err) {<br>
 		* // here, the file has been written to disk<br>
 		* });<br>
 		* </pre>
@@ -83,7 +89,9 @@ qx.Class.define("desk.FileSystem",
 				file_name : desk.FileSystem.getFileName(file),
 				base64data : qx.util.Base64.encode(content, true),
 				output_directory : desk.FileSystem.getFileDirectory(file)},
-				callback, context);
+				function (res) {
+					callback.call(context, res.error);
+			});
 		},
 	    
 	    
