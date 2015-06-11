@@ -323,7 +323,8 @@ qx.Class.define("desk.FileBrowser",
 			var dirs = Object.keys(dataDirs);
 			dirs.sort();
 			dirs.forEach(function (dir) {
-				if ((dir === "cache") || ((permissions === 0) && (dir ==="actions"))) {
+				if ((dir === "cache") || (dir === "application") ||
+					((permissions === 0) && (dir ==="actions"))) {
 					return;
 				}
 
