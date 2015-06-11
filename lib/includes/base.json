@@ -3,7 +3,8 @@
     "data": "data",
     "code": "code",
     "cache": "cache",
-    "actions": "actions"
+    "actions": "actions",
+    "application" : "./../../client/application"
   },
   "permissions": 1,
   "actions": {
