@@ -1,6 +1,7 @@
 {
   "name": "desk",
   "description": "a medical remote desktop, for visualization and processing of medical data",
+  "license" : "CECILL-B",
   "main": "./desk",
   "author": {
     "name": "Sebastien Valette"
@@ -30,6 +31,7 @@
     "gulp-streamify": ">0.0.0",
     "gulp-rename": ">0.0.0",
     "heap": ">0.0.0",
+    "jssha": ">0.0.0",
     "kdt": ">0.0.0",
     "lodash": ">0.0.0",
     "mkdirp": ">0.0.0",
