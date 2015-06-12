@@ -752,7 +752,7 @@ qx.Class.define("desk.SliceView",
 		 */
 		__setCrossPositionFromEvent : function (event) {
 			var position = this.getPositionOnSlice(event);
-			if (!position) return;
+			if (position.i === undefined) return;
 
 			var v = [position.i, position.j].map(function (v, index) {
 				return Math.max(0, Math.min(this.__2DDimensions[index] - 1, v));

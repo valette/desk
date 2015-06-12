@@ -460,6 +460,7 @@ qx.Class.define("desk.SceneContainer",
 						if (error) {
 							alert("Error while reading " + file + "\n" + error);
 							throw (error);
+							return;
 						}
 						this.__parseXMLData(file, result, opts, after);
 					}, this);

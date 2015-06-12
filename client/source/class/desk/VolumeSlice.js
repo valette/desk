@@ -793,7 +793,7 @@ qx.Class.define("desk.VolumeSlice",
 					req.dispose();
 				} catch (err) {
 					console.log(err);
-					this.update(callback, context);
+					setTimeout(this.update.bind(this), 1000, callback, context);
 					return;
 				}
 				if (typeof callback === 'function') {
