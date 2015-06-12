@@ -11,7 +11,7 @@ qx.Class.define("desk.FileSystem",
 	type : "singleton",
 
 	construct : function() {
-		this.__baseURL = qx.bom.Cookie.get("homeURL") || '/';
+		this.__baseURL = qx.bom.Cookie.get("homeURL") || window.location.href;
 		this.__actionsURL = this.__baseURL + 'rpc/';
 		this.__filesURL = this.__baseURL + 'files/';
 	},
@@ -43,6 +43,36 @@ qx.Class.define("desk.FileSystem",
 		*</pre>
 		*/
 		readFile : function (file, options, callback, context) {
+			var url = desk.FileSystem.getFileURL(file);
+			desk.FileSystem.readURL(url, options, callback, context);
+		},
+
+		/**
+		* Loads a URL into memory. Depending on the file type, the result can be a string, a json object or an xml element
+		*
+		* @param file {String} the file to load
+		* @param options {Object} options which can be : 
+		* <pre class='javascript'>
+		* { <br>
+		*   cache : true/false // enable/disable cache (false by default) <br>
+		*   forceText : true/false // to force text output <br>
+		* }
+		* </pre>
+		* @param callback {Function} success callback, with request as first parameter
+		* @param context {Object} optional context for the callback
+		* 
+		* <pre class='javascript'>
+		* example :<br>
+		* desk.FileSystem.readURL ("myURL", function (err, result) {<br>
+		*   if (!err) {<br>
+		*      // do something with result<br>
+		*   } else {<br>
+		*      // read error message<br>
+		*   }<br>
+		*});<br>
+		*</pre>
+		*/
+		readURL : function (url, options, callback, context) {
 			if (typeof options === "function") {
 				var temp = callback;
 				callback = options;
@@ -50,15 +80,19 @@ qx.Class.define("desk.FileSystem",
 				context = temp;
 			}
 			options = options || {};
-
-			var url = desk.FileSystem.getFileURL(file);
 			if (options.cache !== false) {
 				url += "?nocache=" + Math.random();
 			}
 			var req = new qx.io.request.Xhr(url);
 			req.addListener('load', function () {
-				callback.call(context, null, options.forceText ? 
-					req.getResponseText() : req.getResponse());
+				var res = options.forceText ? req.getResponseText() : req.getResponse();
+				if ((typeof res === "string")
+					& (req.getResponseHeader("Content-Type").indexOf("xml") >= 0)) {
+					// qooxdoo has a bug here : file is of xml type 
+					// but the response is sometimes a string containing the xml, not an xml node
+					res = (new DOMParser()).parseFromString(res, "text/xml");
+				}
+				callback.call(context, null, res);
 				req.dispose();
 			});
 			req.addListener('fail', function (e) {
