@@ -784,7 +784,7 @@ qx.Class.define("desk.VolumeSlice",
 		 */
 		openXMLURL : function (url, callback, context) {
 			var req = new qx.io.request.Xhr(url + "?nocache=" + Math.random());
-			req.setAsync(true);
+			req.set({async : true, parser : 'xml'});
 			this.__path = desk.FileSystem.getFileDirectory(url);
 
 			req.addListener("success", function(e) {
