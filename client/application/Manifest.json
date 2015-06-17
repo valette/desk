@@ -8,7 +8,7 @@
     
     "homepage" : "http://www.creatis.insa-lyon.fr/~valette",
 
-    "license" : "LGPL/EPL",
+    "license" : "CECILL-B",
     "authors" : 
     [
       {
@@ -18,7 +18,7 @@
     ],
 
     "version" : "trunk",
-    "qooxdoo-versions": ["1.6"]
+    "qooxdoo-versions": ["5.0"]
   },
   
   "provides" : 
