@@ -132,6 +132,17 @@
       "command": "cp",
       "voidAction": true
     },
+    "mkdirp": {
+      "parameters" : [
+        {
+          "name": "directory",
+          "type": "directory",
+          "required": true
+        }
+      ],
+      "js": "mkdirp",
+      "voidAction": true
+    },
     "create_directory": {
       "parameters": [
         {
