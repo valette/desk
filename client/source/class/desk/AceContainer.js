@@ -56,10 +56,10 @@ qx.Class.define("desk.AceContainer", {
 			this.__editor.addListener("resize", this.__onResize, this);
 			if (this.__mode) {
 				this.__ace.getSession().setMode('ace/mode/' + this.__mode);
-				this.__ace.setOptions({
-					enableBasicAutocompletion: true,
-					enableLiveAutocompletion: true
-				});
+//				this.__ace.setOptions({
+//					enableBasicAutocompletion: true,
+//					enableLiveAutocompletion: true
+//				});
 			}
 
 			this.setFontSize(this.__fontSize);
