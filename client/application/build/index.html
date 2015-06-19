@@ -41,6 +41,9 @@ function endsWith(str, suffix) {
   var oldLoad = window.onload;
   var newLoad = oldLoad ? function(){hideDiv.call(this);oldLoad.call(this);} : hideDiv;
   window.onload = newLoad;
+
+  desk_RPC = true;
+  //desk_startup_script = "path/to/my/script"
 </script>
 <script type="text/javascript" src="script/desk.demo.js"></script>
 </body>

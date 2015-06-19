@@ -10,6 +10,8 @@
 
 /**
  * @asset(desk/*)
+ * @ignore (desk_startup_script)
+ * @ignore (desk.auto)
  */
 
 qx.Class.define("desk.demo.Application",
@@ -46,14 +48,24 @@ qx.Class.define("desk.demo.Application",
 			desk.Actions.init(afterActionsInitialized);
 
 			function afterActionsInitialized () {
+				actions.debug("actions initialized!");
+				desk.auto = false;
 				// first try to automatically launch startup script if it exists
 				if (getParameter("noauto")) {
 					next();
 					return;
 				}
+
+				if (typeof desk_startup_script === "string") {
+					desk.auto = true;
+					desk.FileSystem.executeScript(desk_startup_script);
+					return;
+				}
+				
 				var initScript = 'code/init.js';
 				desk.FileSystem.exists(initScript, function (err, exists) {
 					if (exists) {
+						desk.auto = true;
 						desk.FileSystem.executeScript(initScript);
 					} else {
 						next();

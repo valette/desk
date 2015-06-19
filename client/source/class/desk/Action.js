@@ -331,9 +331,8 @@ qx.Class.define("desk.Action",
 		__executeAction : function (params) {
 			var id = this.__actionsCounter;
 			this.__actionsCounter++;
-			desk.Actions.getInstance().launchAction (params,
-				function (response) {
-					this.__afterExecute(id, response);
+			desk.Actions.execute(params, function (err, response) {
+				this.__afterExecute(id, response);
 			}, this);
 			this.fireDataEvent("actionTriggered", {id : id, params : params});
 		},

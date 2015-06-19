@@ -392,7 +392,7 @@ qx.Class.define("desk.ThreeContainer",
 				var saveData = dataURL.replace("image/png", "image/octet-stream");
 				var commaIndex = dataURL.lastIndexOf(",");
 
-				desk.Actions.getInstance().launchAction({
+				desk.Actions.execute({
 					action : "write_binary",
 					file_name : desk.FileSystem.getFileName(opts.path),
 					base64data : dataURL.substring(commaIndex + 1, dataURL.length),

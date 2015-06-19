@@ -317,10 +317,10 @@ qx.Class.define("desk.SceneContainer",
 			case "obj":
 			case "stl":
 			case "off":
-				desk.Actions.getInstance().launchAction({
+				desk.Actions.execute({
                     "action" : "mesh2ctm",
 					"input_mesh" : file},
-                    function (response) {
+                    function (err, response) {
                        var outputDir = response.outputDirectory;
                         opt.timeStamp = response.timeStamp;
                         this.__loadFile(outputDir + '/mesh.ctm', opt, callback);

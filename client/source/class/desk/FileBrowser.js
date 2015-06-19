@@ -277,7 +277,7 @@ qx.Class.define("desk.FileBrowser",
 					files.join('\n') + 'to :\n' + destination)) return;
 
 			async.each(files, function (file, callback) {
-				desk.Actions.getInstance().launchAction({
+				desk.Actions.execute({
 						action : actionType,
 						source : file,
 						destination : destination},
@@ -521,7 +521,7 @@ qx.Class.define("desk.FileBrowser",
 			}
 			var newDir = prompt('Name of the directory to create','new_dir');
 			if (!newDir) return;
-			desk.Actions.getInstance().launchAction({
+			desk.Actions.execute({
 				"action" : "create_directory",
 				"directory" : dir + '/' + newDir},
 				function () {
@@ -544,13 +544,13 @@ qx.Class.define("desk.FileBrowser",
 			if (!confirm(message)) return;
 
 			async.each(nodes, function (node, callback) {
-				desk.Actions.getInstance().launchAction({
+				desk.Actions.execute({
 					action : node.getChildren ? 'delete_directory' : 'delete_file',
 					file_name : node.getFullName(),
 					directory : node.getFullName()},
 					callback
 				);
-			}.bind(this), function (err) {
+			}, function (err) {
 				this.__updateDirectories(dirs);
 			}.bind(this));
 		},
@@ -566,7 +566,7 @@ qx.Class.define("desk.FileBrowser",
 				return;
 			}
 			var dir = desk.FileSystem.getFileDirectory(file);
-			desk.Actions.getInstance().launchAction({
+			desk.Actions.execute({
 					action : "move",
 					source : file,
 					destination : dir + newFile

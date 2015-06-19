@@ -89,8 +89,6 @@ qx.Class.define("desk.FileSystem",
 				var res = options.forceText ? req.getResponseText() : req.getResponse();
 				if ((typeof res === "string") && !options.forceText 
 					&& (req.getResponseHeader("Content-Type").indexOf("xml") >= 0)) {
-					// qooxdoo has a bug here : file is of xml type 
-					// but the response is sometimes a string containing the xml, not an xml node
 					res = (new DOMParser()).parseFromString(res, "text/xml");
 				}
 				callback.call(context, null, res);
@@ -119,14 +117,12 @@ qx.Class.define("desk.FileSystem",
 		* </pre>
 		*/
 		writeFile : function (file, content, callback, context) {
-			desk.Actions.getInstance().launchAction({
+			desk.Actions.execute({
 				action : "write_binary",
 				file_name : desk.FileSystem.getFileName(file),
 				base64data : qx.util.Base64.encode(content, true),
-				output_directory : desk.FileSystem.getFileDirectory(file)},
-				function (res) {
-					callback.call(context, res.error);
-			});
+				output_directory : desk.FileSystem.getFileDirectory(file)
+			}, callback, context);
 		},
 	    
 	    
@@ -146,7 +142,7 @@ qx.Class.define("desk.FileSystem",
 		* </pre>
 		*/
 		writeJSON : function (file, content, callback, context) {
-			desk.Actions.getInstance().launchAction({
+			desk.Actions.execute({
 				action : "write_string",
 				file_name : desk.FileSystem.getFileName(file),
 				data : JSON.stringify(content, true),
@@ -161,9 +157,7 @@ qx.Class.define("desk.FileSystem",
 		* @param context {Object} optional context for the callback
 		*/
 		mkdirp : function (dir, callback, context) {
-			desk.Actions.execute({action : "mkdirp", directory: dir}, function (err) {
-				callback.call(context, err);
-			});
+			desk.Actions.execute({action : "mkdirp", directory: dir}, callback, context);
 		},
 
 		/**
@@ -481,7 +475,7 @@ qx.Class.define("desk.FileSystem",
 				var lastSlash = file.lastIndexOf("/");
 				var subdir = file.substring(lastSlash+1) + "." + sessionType + "." + newSessionId;
 
-				desk.Actions.getInstance().launchAction({
+				desk.Actions.execute({
 					action : "add_subdirectory",
 					subdirectory_name : subdir,
 					output_directory : file.substring(0,lastSlash)},

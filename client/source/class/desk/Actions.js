@@ -5,6 +5,9 @@
  * @asset(qx/icon/${qx.icontheme}/16/categories/system.png) 
  * @ignore (io)
  * @ignore (_.*)
+ * @ignore (async.*)
+ * @ignore (jsSHA)
+ * @ignore (desk_RPC)
  * @lint ignoreDeprecated (alert)
  * @require(desk.LogContainer)
  * @require(desk.Random)
@@ -20,12 +23,24 @@ qx.Class.define("desk.Actions",
 	*/
 	construct : function() {
 		this.base(arguments);
-
 		this.__ongoingActions = new qx.ui.container.Composite(new qx.ui.layout.VBox());
 
 		var baseURL = desk.FileSystem.getInstance().getBaseURL();
 		var req = new qx.bom.request.Script();
 		req.onload = function () {
+			this.debug("loaded browserified.js");
+			if (!desk_RPC) {
+				desk.FileSystem.readFile(this.__savedActionsFile, 
+					function (err, result) {
+						if (err) {
+							console.log("Error while reading actions cache");
+						}
+						this.__recordedActions = result.actions;
+						this.__populateActionMenu();
+				}, this);
+				return;
+			}
+
 			this.__socket = io({path : baseURL + 'socket/socket.io'});
 			this.__socket.on("action finished", this.__onActionEnd.bind(this));
 			this.__socket.on("actions updated", this.__populateActionMenu.bind(this));
@@ -48,6 +63,48 @@ qx.Class.define("desk.Actions",
 			} else {
 				actions.addListenerOnce("changeReady", callback , context);
 			}
+		},
+
+		/**
+		* executes an action
+		* @param opts {Object} object containing action parameters
+		* @param cb {Function} callback for when the action has been performed
+		* @param context {Object} optional context for the callback
+		* @return {String} action handle for managemenent (kill etc...)
+		*/
+		execute : function (params, callback, context) {
+			params = JSON.parse(JSON.stringify(params));
+			params.handle = Math.random().toString();
+			var actions = desk.Actions.getInstance();
+			if (actions.isForceUpdate()) params.force_update = true;
+
+			var parameters = {
+				actionFinished :false,
+				callback : callback,
+				context : context,
+				POST : params
+			};
+
+			if (actions.__recordedActions && !desk_RPC) {
+				var response = actions.__recordedActions[actions.__getActionSHA(params)];
+				if (response) {
+					response.handle = params.handle;
+					setTimeout(function () {
+						actions.__onActionEnd(response);
+					}, 1);
+				} else {
+					console.log("Error : action not found");
+					console.log(params);
+				}
+			} else {
+				actions.__socket.emit('action', params);
+				setTimeout(function () {
+					actions.__addActionToList(parameters);
+				}, Math.max(1000, (_.size(actions.__runingActions) - 20) * 1000));
+			}
+
+			actions.__runingActions[params.handle] = parameters;
+			return params.handle;
 		}
 	},
 
@@ -68,6 +125,13 @@ qx.Class.define("desk.Actions",
 	members : {
 		__socket : null,
 		__runingActions : {},
+		__actionMenu : null,
+		__settings : null,
+		__ongoingActions : null,
+		__currentFileBrowser : null,
+		__recordedActions : null,
+		__savedActionsFile : 'cache/actions.json',
+
 
 		/**
 		* Creates the action menu
@@ -84,20 +148,100 @@ qx.Class.define("desk.Actions",
 			menu.add(this.__getPasswordButton());
 			menu.add(this.__getConsoleLogButton());
 			menu.add(this.__getServerLogButton());
+			this.__addSaveActionButtons(menu);
+
+			if (!desk_RPC) {
+				return;
+			}
 
 			var button = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png", menu);
 			button.setToolTipText("Configuration");
-
 			qx.core.Init.getApplication().getRoot().add(button, {top : 0, right : 0});
 
 			// add already running actions
-			this.launchAction({manage : 'list'}, function (res) {
+			desk.Actions.execute({manage : 'list'}, function (err, res) {
 				var actions = res.ongoingActions;
 				Object.keys(actions).forEach(function (handle) {
 					this.__addActionToList(actions[handle]);
 					this.__runingActions[handle] = actions[handle];
 				}, this);
 			}, this);
+		},
+
+		/**
+		* Creates the actions record/save buttons
+		* @param actionsMenu {qx.ui.menu.Menu} input menu
+		*/
+		__addSaveActionButtons : function (actionsMenu) {
+			var menu = new qx.ui.menu.Menu();
+			var menuButton = new qx.ui.menu.Button("Statifier", null, null, menu);
+			actionsMenu.add(menuButton);
+			var recordedFiles
+			var oldReadFile;
+
+			var self = this;
+			function readFile (file, options, callback, context) {
+				self.debug("read : " + file);			
+				var sha = new jsSHA("SHA-1", "TEXT");
+				sha.update(JSON.stringify(file));
+				recordedFiles[sha.getHash("HEX")] = file;
+				oldReadFile(file, options, callback, context);
+			}
+
+			var button = new qx.ui.menu.Button('Start recording');
+			button.setBlockToolTip(false);
+			button.setToolTipText("To save recorded actions");
+			button.addListener('execute', function () {
+				this.__recordedActions = {};
+				recordedFiles = {}
+				oldReadFile = desk.FileSystem.readFile;
+				desk.FileSystem.readFile = readFile;
+				button.setVisibility("excluded");
+				button2.setVisibility("visible");
+			}, this);
+			menu.add(button);
+
+			var button2 = new qx.ui.menu.Button('Stop recording');
+			button2.setBlockToolTip(false);
+			button2.setToolTipText("To stop recording and save actions");
+			button2.setVisibility("excluded");
+			button2.addListener('execute', function () {
+				desk.FileSystem.readFile = oldReadFile;
+				var recordedActions = {actions : {}, files : {}};
+				desk.FileSystem.readFile(this.__savedActionsFile, function (err, result) {
+					if (!err) recordedActions = result;
+					recordedActions.actions = recordedActions.actions || {};
+					recordedActions.files = recordedActions.files || {};
+					_.extend(recordedActions.actions, this.__recordedActions);
+					_.extend(recordedActions.files, recordedFiles);
+					this.__recordedActions = null;
+					desk.FileSystem.writeFile(this.__savedActionsFile,
+						JSON.stringify(recordedActions), function () {
+							alert(Object.keys(recordedActions.actions).length + " actions recorded\n"
+								+ Object.keys(recordedActions.files).length + " files recorded");
+							button.setVisibility("visible");
+							button2.setVisibility("excluded");
+					}, this);
+				}, this);
+			}, this);
+			menu.add(button2);
+
+			var button3 = new qx.ui.menu.Button('Clear records');
+			button3.addListener('execute', function () {
+				desk.Actions.execute({action : "delete_file",
+					file_name : this.__savedActionsFile
+				}, function (err) {
+					if (!err) 
+						alert("Records cleared")
+					else 
+						alert('error');
+				});
+			}, this);
+			menu.add(button3);
+
+			var button4 = new qx.ui.menu.Button('Statify');
+			button4.addListener('execute', this.__statify, this);
+			menu.add(button4);
 		},
 
 		/**
@@ -184,15 +328,6 @@ qx.Class.define("desk.Actions",
 			return button;
 		},
 
-		__actionMenu : null,
-		__settings : null,
-		__ongoingActions : null,
-		__settingsButton : null,
-
-		__actionsList : null,
-
-		__currentFileBrowser : null,
-
 		/**
 		* Returns the complete settings object
 		* @return {Object} settings
@@ -208,11 +343,7 @@ qx.Class.define("desk.Actions",
 		*/	
 		getAction : function (name) {
 			var action = this.__settings.actions[name];
-			if (action) {
-				return JSON.parse(JSON.stringify(action));
-			} else {
-				return null;
-			}
+			return action ? JSON.parse(JSON.stringify(action)) : null;
 		},
 
 		/**
@@ -249,37 +380,64 @@ qx.Class.define("desk.Actions",
 		* @param context {Object} optional context for the callback
 		*/
 		killAction : function (handle, callback, context) {
-			this.launchAction({manage : 'kill', actionHandle : handle},
-				function (res) {
-					if (typeof callback === "function") {
-						callback.call(context, res);
-					}
-				}
-			);
+			var params = this.__runingActions[handle];
+			if (params && params.item && (params.item.getDecorator() === "tooltip-error")) {
+				this.__garbageContainer.add(params.item);
+				params.item.resetDecorator();
+				delete this.__runingActions[handle];
+				return;
+			}
+			desk.Actions.execute({manage : 'kill', actionHandle : handle}, callback, context);
+		},
+
+		/**
+		* returns the SHA1 hash of action parameters (handle omitted)
+		* @param params {Object} action parameters
+		* @return {String} the hash
+		*/
+		__getActionSHA : function (params) {
+			var parameters = _.omit(params, 'handle');
+			var sha = new jsSHA("SHA-1", "TEXT");
+			sha.update(JSON.stringify(parameters));
+			return sha.getHash("HEX");
 		},
 
 		/**
 		* Fired whenever an action is finished
 		* @param response {Object} the server response
 		*/
-		__onActionEnd : function (response) {
-			var params = this.__runingActions[response.handle];
+		__onActionEnd : function (res) {
+			var params = this.__runingActions[res.handle];
 			if (!params) return;
-			delete this.__runingActions[response.handle];
-			params.actionFinished = true;
-			if (response.error) {
-				console.log(response);
-				var message = "error for action " + params.POST.action + ": \n";
-				message += JSON.stringify(response.error);
-				alert (message);
+
+			if (this.__recordedActions && desk_RPC) {
+				this.__recordedActions[this.__getActionSHA(params.POST)] = res;
 			}
 
-			if (params.actionItem) {
-				this.__garbageContainer.add(params.actionItem);
+			if (res.error) {
+				console.log(res);
+				var message = "error for action " + params.POST.action + ": \n";
+				message += JSON.stringify(res.error);
+				//alert (message);
+				var item = params.item;
+				if (!item) {
+					this.__addActionToList(params);
+					item = params.item;
+				}
+				item.setDecorator("tooltip-error");
+				item.setToolTipText(Object.keys(res.error).map(function (key) {
+					return '' + key + ':' + res.error[key];
+				}).join("<br>"));
+			} else {
+				delete this.__runingActions[res.handle];
+				params.actionFinished = true;
+				if (params.item) {
+					this.__garbageContainer.add(params.item);
+				}
 			}
 
 			if (typeof params.callback === 'function') {
-				params.callback.call(params.context, response);
+				params.callback.call(params.context, res.error, res);
 			}
 		},
 
@@ -293,25 +451,14 @@ qx.Class.define("desk.Actions",
 		* @return {String} action handle for managemenent (kill etc...)
 		*/
 		launchAction : function (params, callback, context) {
-			params = JSON.parse(JSON.stringify(params));
-			params.handle = Math.random().toString();
-
-			if (this.isForceUpdate()) params.force_update = true;
-
-			var parameters = {
-				actionFinished :false,
-				callback : callback,
-				context : context,
-				POST : params
-			};
-
-            setTimeout(function () {
-				this.__addActionToList(parameters);
-			}.bind(this), Math.max(1000, (_.size(this.__runingActions) - 20) * 1000));
-
-			this.__socket.emit('action', params);
-			this.__runingActions[params.handle] = parameters;
-			return params.handle;
+			console.warn('desk.actions.launchAction is deprecated! Use desk.Actions.execute() instead!');
+			console.warn(new Error().stack);
+			desk.Actions.execute(params, function (err, res) {
+				if (typeof callback === "function") {
+					res.err = err;
+					callback.call(context, res);
+				}
+			});
 		},
 
 		/**
@@ -333,12 +480,12 @@ qx.Class.define("desk.Actions",
 				item = new qx.ui.form.ListItem("dummy");
 				item.set({decorator : "button-hover", opacity : 0.7});
 
-				var killButton = new qx.ui.menu.Button('kill');
+				var killButton = new qx.ui.menu.Button('Kill/remove');
 				killButton.addListener('execute', function () {
 					this.killAction(item.getUserData("handle"));
 				}, this);
 
-				var killAllButton = new qx.ui.menu.Button('Kill all');
+				var killAllButton = new qx.ui.menu.Button('Kill/remove all');
 				killAllButton.setBlockToolTip(false);
 				killAllButton.setToolTipText("To kill all runing actions on server");
 				killAllButton.addListener('execute', function () {
@@ -350,7 +497,7 @@ qx.Class.define("desk.Actions",
 					}, this);
 				}, this);
 				
-				var propertiesButton = new qx.ui.menu.Button('properties');
+				var propertiesButton = new qx.ui.menu.Button('Properties');
 				propertiesButton.addListener('execute', function () {
 					console.log(parameters);
 				}, this);
@@ -362,7 +509,7 @@ qx.Class.define("desk.Actions",
 				item.setContextMenu(menu);
 			}
 			item.setLabel(parameters.POST.action || parameters.POST.manage);
-			parameters.actionItem = item;
+			parameters.item = item;
 			item.setUserData("handle", parameters.POST.handle);
 			this.__ongoingActions.add(item);
 		},
@@ -441,6 +588,133 @@ qx.Class.define("desk.Actions",
 				this.__settings = settings;
 
 			}, this);
+		},
+
+		/**
+		* Copies recorded actions and files to a static location
+		*/
+		__statify : function() {
+			var installDir = prompt('output directory?' , "code/static");
+			var browserifiedFile = "js/browserified.js";
+
+			var boot = prompt('what is the startup file?', 'code/');
+			var startupFile;
+			if (!boot) {
+				boot = "";
+			} else {
+				startupFile = boot;
+				boot = 'desk_startup_script = "' + boot + '";';
+			}
+
+			var content;
+			var self = this;
+
+			async.waterfall([
+				function (cb) {
+					desk.Actions.execute({
+					   action : "copy",
+					   source : "application/build",
+					   destination : installDir,
+					   recursive : true
+					}, cb);
+				},
+				function (res, cb) {
+					desk.FileSystem.readFile("cache/actions.json", cb);
+				},
+				function (res, cb) {
+					self.debug("copying actions results...");
+					content = res;
+					var files = content.actions;
+					async.eachSeries(Object.keys(files), function (hash, cb) {
+						var res = files[hash];
+						var source = res.outputDirectory;
+						var des2 = source.split('/');
+						des2.pop();
+						des2.pop();
+						var dest = installDir + '/files/' + des2.join("/");
+						desk.FileSystem.mkdirp(dest, function (err) {
+							if (err) {
+								cb (err);
+								return;
+							}
+							desk.Actions.execute({
+								action : "copy",
+								source : source,
+								recursive : true,
+								destination : dest
+							}, cb);
+						});
+					}, cb);
+				},
+				function (cb) {
+					self.debug("copying files...");
+					var files = content.files;
+					files.boot = startupFile;
+					async.eachSeries(Object.keys(files), function (hash, cb) {
+						var file = files[hash];
+						self.debug("file : ", file);
+						var dest = installDir + "/files/" + desk.FileSystem.getFileDirectory(file);
+						desk.FileSystem.mkdirp(dest, function (err) {
+							if (err) {
+								cb (err);
+								return;
+							}
+							desk.Actions.execute({
+								action : "copy",
+								source : file,
+								recursive : true,
+								destination : dest
+							}, cb);
+						});
+					}, cb);
+				},
+				function (callback) {
+					// hack index.html
+					var file = installDir + "/index.html";
+					desk.FileSystem.readFile(file, {forceText : true}, function (err, res) {
+						var lines = res.split('\n').map(function (line, index) {
+							if (line.indexOf('desk_RPC') >= 0) {
+								return 'desk_RPC = false;' + boot;
+							} else {
+								return line;
+							}
+						});
+						desk.FileSystem.writeFile(file, lines.join('\n'), callback);
+					});
+				},
+				function (res, callback) {
+					self.debug("copying recorded actions");
+					desk.Actions.execute({
+						action : "copy",
+						source : "cache/actions.json",
+						destination : installDir + "/files/cache"
+					}, callback);
+				},
+				function (res, callback) {
+					self.debug("copying actions list");
+					desk.Actions.execute({
+						action : "copy",
+						source : "actions.json",
+						destination : installDir + "/files"
+					}, callback);
+				},
+				function (res, callback) {
+					desk.FileSystem.readURL(desk.FileSystem.getInstance().getBaseURL() + browserifiedFile, callback);
+				},
+				function (res, callback) {
+					self.debug("copying browserified code");
+					self.debug(installDir + "/" + browserifiedFile);
+					desk.FileSystem.writeFile(installDir + "/" + browserifiedFile, res, callback);
+				}
+			], function (err) {
+				if (err) {
+					alert("error, see console output");
+					self.debug(err);
+				} else {
+					self.debug("Records statified!");
+					alert("done");
+				}
+			});
 		}
 	}
 });

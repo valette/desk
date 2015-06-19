@@ -401,10 +401,10 @@ qx.Class.define("desk.VolumeSlice",
 				params.action = "slice_volume";
 			    params.format = this.getImageFormat();
 			}
-		    desk.Actions.getInstance().launchAction(params,
-				function (response) {
-					if (response.error) {
-						callback("Error while slicing volume : " + response.error);
+		    desk.Actions.execute(params,
+				function (err, response) {
+					if (err) {
+						callback("Error while slicing volume : " + err);
 						return;
 					}
 					this.openXMLURL(desk.FileSystem.getFileURL(response.outputDirectory) + "volume.xml",
@@ -880,14 +880,14 @@ qx.Class.define("desk.VolumeSlice",
 			}
 			var slice = this.getSlice();
 
-			var handle = desk.Actions.getInstance().launchAction({
+			var handle = desk.Actions.execute({
 					action : "VolumeOOCSlice",
 					input_file : this.__file,
 					slice : slice,
 					format : this.getImageFormat(),
 					stdout : true
 				},
-				function (response) {
+				function (err, response) {
 					if (this.__lastHandle === handle) this.__lastHandle = 0;
 					if (response.status === "killed") return;
 

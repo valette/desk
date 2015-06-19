@@ -1434,7 +1434,7 @@ qx.Class.define("desk.SegTools",
 												"source" : srcSession + "/*",
 												"destination" : tools.getSessionDirectory()
 											};
-					desk.Actions.getInstance().launchAction( cpFromSessParamMap, tools.loadSession, tools);
+					desk.Actions.execute(cpFromSessParamMap, tools.loadSession, tools);
 					cpSessCheckBox.setValue(false);
 				}
 				updateCPList();
@@ -1487,11 +1487,10 @@ qx.Class.define("desk.SegTools",
 					if(confirmed)
 					{
 						var rmSessParamMap = {
-													"action" : "delete_directory",
-													"directory" : sessionDirectory
-												};
-						desk.Actions.getInstance().launchAction( rmSessParamMap, function()
-						{
+							"action" : "delete_directory",
+							"directory" : sessionDirectory
+						};
+						desk.Actions.execute(rmSessParamMap, function() {
 							var toSelect = rmSessCheckBox.getUserData("currSel");
 							if(sessionsList.indexOf(toSelect)!=-1)
 								updateList(toSelect.getLabel());
@@ -1533,7 +1532,7 @@ qx.Class.define("desk.SegTools",
 
 						this.__addNewSeedItemToList (viewer, sliceId, seedsType);
 
-						desk.Actions.getInstance().launchAction({
+						desk.Actions.execute({
 							action : "write_binary",
 							file_name : this.__getSeedFileName (viewer, sliceId, seedsType),
 							base64data : base64Img,
@@ -1678,7 +1677,7 @@ qx.Class.define("desk.SegTools",
 			}, this);
 
 			var seeds = element('seeds', xmlContent);
-			desk.Actions.getInstance().launchAction({
+			desk.Actions.execute({
 				action : "write_binary",
 				file_name : "seeds.xml",
 				base64data : qx.util.Base64.encode(seeds, true),
@@ -1795,9 +1794,10 @@ qx.Class.define("desk.SegTools",
 						var sliceId = selectedChild.getUserData("slice");
 
 						////Erase image on the server
-						desk.Actions.getInstance().launchAction({action : "delete_file",
+						desk.Actions.execute({action : "delete_file",
 							"file_name" : this.getSessionDirectory()+"/"+
-								this.__getSeedFileName(sliceView, sliceId, seedsType)});
+							this.__getSeedFileName(sliceView, sliceId, seedsType)
+						});
 						list.remove(selectedChild);
 						this.__reloadSeedImage( sliceView );
 					}
