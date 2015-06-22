@@ -76,6 +76,7 @@ qx.Class.define("desk.demo.Application",
 			function next() {
 				var startupScript = getParameter("script");
 				if (startupScript) {
+					desk.auto = true;
 					desk.FileSystem.executeScript(startupScript);
 					return;
 				}
