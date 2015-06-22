@@ -175,16 +175,17 @@ qx.Class.define("desk.ThreeContainer",
 		 * configures widget for fullscreen
 		 */
 		 __setupFullscreen : function () {
-			var parent, width, height, color, alpha;
+			var parent, width, height, color, alpha, props;
 			this.addListener('changeFullscreen', function (e) {
 				if (!e.getData()) {
 					this.set({height : height, width : width});
 					this.__renderer.setClearColor(color, alpha);
-					parent.add(this);
+					parent.add(this, props);
 				} else {
 					height = this.getHeight();
 					width = this.getWidth();
 					parent = this.getLayoutParent();
+					props = this.getLayoutProperties();
 					this.set ({width : window.innerWidth,
 							height : window.innerHeight,
 							zIndex : 500000});
@@ -290,6 +291,29 @@ qx.Class.define("desk.ThreeContainer",
 		*/
 		getRenderer : function () {
 			return this.__renderer;
+		},
+
+		/**
+		* Returns the viewpoint
+		* @return {Object} the viewpoint
+		*/
+		getViewpoint : function () {			
+			return {
+				controls : this.__controls.getState(),
+				camera : this.__camera,
+				bbdl : this.__boudingBoxDiagonalLength
+			};
+		},
+
+		/**
+		* sets viewpoint
+		* @parap viewpoint {Object} the viewpoint
+		*/
+		setViewpoint : function (viewpoint) {
+			this.__camera.near = viewpoint.camera.near;
+			this.__camera.far = viewpoint.camera.far;
+			this.__controls.setState(viewpoint.controls);
+			this.__boudingBoxDiagonalLength = viewpoint.bbdl;
 		},
 
 		// stores the scene bounding box diagonal length, usefull for updating

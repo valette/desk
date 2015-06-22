@@ -472,8 +472,7 @@ qx.Class.define("desk.SceneContainer",
 							throw (error);
 						}
 						if (result.viewpoint) {
-							var controls = this.getControls();
-							controls.setState(result.viewpoint);
+							this.setViewpoint(result.viewpoint);
 							setTimeout(function () {
 								this.render();
 								this.__propagateLinks();
@@ -528,9 +527,8 @@ qx.Class.define("desk.SceneContainer",
 				this.render();
 			}, this);
 
-			this.addMesh(mesh, {label : 'View ' + (volumeSlice.getOrientation()+1),
-				volumeSlice : volumeSlice, updateCamera : false, parent : opts.parent
-			});
+			this.addMesh(mesh, _.extend({label : 'View ' + (volumeSlice.getOrientation()+1),
+				volumeSlice : volumeSlice}, opts));
 
 			var lineMaterial = new THREE.LineBasicMaterial({linewidth: 3,
 				color: desk.VolumeSlice.COLORS[volumeSlice.getOrientation()]});
@@ -567,26 +565,25 @@ qx.Class.define("desk.SceneContainer",
 				opts = {};
 			}
 
-			var error;
-			function cb() {
+			function cb(err) {
 				if (typeof(callback) === "function") {
-					callback.call(context, error);
+					callback.call(context, err);
 				}
 			}
 
 			var group = new THREE.Group();
-			this.addMesh(group, {branch : true, label : file});
+			this.addMesh(group, _.extend({branch : true, label : file}, opts));
 			async.eachSeries([0, 1, 2], function (orientation, callback) {
 				var slice = new desk.VolumeSlice(file, orientation,
 					{sliceWith : opts.sliceWith}, function (err) {
-						error = err;
 					if (err) {
-						cb();
+						callback(err);
 						return;
 					}
 					slice.setSlice(Math.floor(slice.getNumberOfSlices() / 2));
 					slice.addListenerOnce("changeImage", function () {
-						var mesh = this.attachVolumeSlice(slice, {parent : group});
+						var mesh = this.attachVolumeSlice(slice,
+							_.extend({parent : group}, opts));
 						group.add(mesh);
 						callback();
 					}, this);
@@ -856,12 +853,12 @@ qx.Class.define("desk.SceneContainer",
 			var button = new qx.ui.form.Button("save view");
 			button.addListener("click", function () {
 				console.log("viewPoint : ");
-				console.log(JSON.stringify(this.getControls().getState()));
+				console.log(JSON.stringify(this.getViewpoint()));
 				var file = prompt("Enter file name to save camera view point", "data/viewpoint.json");
 				if (!file) {return;}
 				button.setEnabled(false);
 				desk.FileSystem.writeFile(file,
-					JSON.stringify({viewpoint : this.getControls().getState()}), 
+					JSON.stringify({viewpoint : this.getViewpoint()}),
 					function () {
 						button.setEnabled(true);
 				});
