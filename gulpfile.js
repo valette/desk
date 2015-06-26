@@ -9,7 +9,7 @@ gulp.task('default', function() {
 	return browserify(__dirname + '/lib/browserified.js')
 		.bundle()
 		.pipe(source(__dirname + '/lib/browserified.js'))
-		.pipe(streamify(uglify()))
+		.pipe(streamify(uglify({output : {ascii_only : true}})))
 		.pipe(rename('browserified.js'))
 		.pipe(gulp.dest(__dirname + '/cache'));
 });
