@@ -2,6 +2,7 @@
  * Singleton helper class for file system operations : path->URL conversion, session management etc...
  * @lint ignoreDeprecated(alert)
  * @ignore (_.*)
+ * @ignore (desk_RPC)
  * @ignore (async.eachSeries)
  */
 qx.Class.define("desk.FileSystem", 
@@ -11,8 +12,7 @@ qx.Class.define("desk.FileSystem",
 	type : "singleton",
 
 	construct : function() {
-		this.__baseURL = qx.bom.Cookie.get("homeURL") || window.location.href;
-		this.debug("baseURL : ", this.__baseURL);
+		this.__baseURL = desk_RPC ? qx.bom.Cookie.get("homeURL") : window.location.href;
 		this.__actionsURL = this.__baseURL + 'rpc/';
 		this.__filesURL = this.__baseURL + 'files/';
 	},

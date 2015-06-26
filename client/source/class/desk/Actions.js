@@ -583,6 +583,7 @@ qx.Class.define("desk.Actions",
 					if (settings.permissions) {
 						this.__createActionsMenu();
 					}
+					console.log("DESK launched, baseURL : " + desk.FileSystem.getInstance().getBaseURL());
 					this.fireEvent('changeReady');
 				}
 				this.__settings = settings;
