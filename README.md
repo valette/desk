@@ -69,6 +69,7 @@ note that gulp needs to be installed before (with root permissions):
 updating the qooxdoo build is performed using:
 
 	cd client/application
+	npm install
 	./generate.py build  // to rebuild the qooxdoo parts
 	./generate.py source // to rebuild the debug version
 	./generate.py api    // to rebuild the api browser
