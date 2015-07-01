@@ -11,7 +11,9 @@
     "type": "git",
     "url": "git://github.com/valette/desk.git"
   },
-  "devDependencies": {},
+  "devDependencies": {
+      "qooxdoo" : "git://github.com/qooxdoo/qooxdoo#branch_5_0_x"
+},
   "dependencies": {
     "async": ">0.0.0",
     "basic-auth": ">0.0.0",
