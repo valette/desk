@@ -64,6 +64,17 @@ note that gulp needs to be installed before (with root permissions):
 	npm update
 	gulp // if you have used gulp
 
+### Qooxdoo bits (needs python) ###
+
+updating the qooxdoo build is performed using:
+
+	cd client/application
+	./generate.py build  // to rebuild the qooxdoo parts
+	./generate.py source // to rebuild the debug version
+	./generate.py api    // to rebuild the api browser
+
+note that these take a few minutes at first launch
+
 ### Acknowledgements ###
 
 This software benefits from several open-source contributions:
@@ -73,5 +84,3 @@ This software benefits from several open-source contributions:
 * [qooxdoo](http://www.qooxdoo.org/)
 * [OpenCTM](http://openctm.sourceforge.net/)
 * [ACVD](http://github.com/valette/ACVD.git)
-
-
