@@ -67,8 +67,8 @@ qx.Class.define("desk.Actions",
 
 		/**
 		* executes an action
-		* @param opts {Object} object containing action parameters
-		* @param cb {Function} callback for when the action has been performed
+		* @param params {Object} object containing action parameters
+		* @param callback {Function} callback for when the action has been performed
 		* @param context {Object} optional context for the callback
 		* @return {String} action handle for managemenent (kill etc...)
 		*/
@@ -79,8 +79,8 @@ qx.Class.define("desk.Actions",
 			if (actions.isForceUpdate()) params.force_update = true;
 
 			var parameters = {
-				actionFinished :false,
-				callback : callback,
+				actionFinished : false,
+				callback : callback || function () {},
 				context : context,
 				POST : params
 			};
@@ -150,9 +150,7 @@ qx.Class.define("desk.Actions",
 			menu.add(this.__getServerLogButton());
 			this.__addSaveActionButtons(menu);
 
-			if (!desk_RPC) {
-				return;
-			}
+			if (!desk_RPC) return;
 
 			var button = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png", menu);
 			button.setToolTipText("Configuration");
@@ -174,60 +172,56 @@ qx.Class.define("desk.Actions",
 		*/
 		__addSaveActionButtons : function (actionsMenu) {
 			var menu = new qx.ui.menu.Menu();
-			var menuButton = new qx.ui.menu.Button("Statifier", null, null, menu);
-			actionsMenu.add(menuButton);
+			actionsMenu.add(new qx.ui.menu.Button("Statifier", null, null, menu));
 			var recordedFiles
 			var oldReadFile;
 
-			var self = this;
-			function readFile (file, options, callback, context) {
-				self.debug("read : " + file);			
+			var readFile = function (file, options, callback, context) {
+				this.debug("read : " + file);			
 				var sha = new jsSHA("SHA-1", "TEXT");
 				sha.update(JSON.stringify(file));
 				recordedFiles[sha.getHash("HEX")] = file;
 				oldReadFile(file, options, callback, context);
-			}
+			}.bind(this);
 
-			var button = new qx.ui.menu.Button('Start recording');
-			button.setBlockToolTip(false);
-			button.setToolTipText("To save recorded actions");
-			button.addListener('execute', function () {
+			var start = new qx.ui.menu.Button('Start recording');
+			start.setBlockToolTip(false);
+			start.setToolTipText("To save recorded actions");
+			start.addListener('execute', function () {
 				this.__recordedActions = {};
 				recordedFiles = {}
 				oldReadFile = desk.FileSystem.readFile;
 				desk.FileSystem.readFile = readFile;
-				button.setVisibility("excluded");
-				button2.setVisibility("visible");
+				start.setVisibility("excluded");
+				stop.setVisibility("visible");
 			}, this);
-			menu.add(button);
+			menu.add(start);
 
-			var button2 = new qx.ui.menu.Button('Stop recording');
-			button2.setBlockToolTip(false);
-			button2.setToolTipText("To stop recording and save actions");
-			button2.setVisibility("excluded");
-			button2.addListener('execute', function () {
+			var stop = new qx.ui.menu.Button('Stop recording').set({
+				blockToolTip : false, toolTipText : "To stop recording and save actions",
+				visibility : "excluded"});
+			stop.addListener('execute', function () {
 				desk.FileSystem.readFile = oldReadFile;
-				var recordedActions = {actions : {}, files : {}};
-				desk.FileSystem.readFile(this.__savedActionsFile, function (err, result) {
-					if (!err) recordedActions = result;
-					recordedActions.actions = recordedActions.actions || {};
-					recordedActions.files = recordedActions.files || {};
-					_.extend(recordedActions.actions, this.__recordedActions);
-					_.extend(recordedActions.files, recordedFiles);
+				desk.FileSystem.readFile(this.__savedActionsFile, function (err, res) {
+					var records = err ? {actions : {}, files : {}} : res;
+					records.actions = records.actions || {};
+					records.files = records.files || {};
+					_.extend(records.actions, this.__recordedActions);
+					_.extend(records.files, recordedFiles);
 					this.__recordedActions = null;
 					desk.FileSystem.writeFile(this.__savedActionsFile,
-						JSON.stringify(recordedActions), function () {
-							alert(Object.keys(recordedActions.actions).length + " actions recorded\n"
-								+ Object.keys(recordedActions.files).length + " files recorded");
-							button.setVisibility("visible");
-							button2.setVisibility("excluded");
+						JSON.stringify(records), function () {
+							alert(Object.keys(records.actions).length + " actions recorded\n"
+								+ Object.keys(records.files).length + " files recorded");
+							start.setVisibility("visible");
+							stop.setVisibility("excluded");
 					}, this);
 				}, this);
 			}, this);
-			menu.add(button2);
+			menu.add(stop);
 
-			var button3 = new qx.ui.menu.Button('Clear records');
-			button3.addListener('execute', function () {
+			var clear = new qx.ui.menu.Button('Clear records');
+			clear.addListener('execute', function () {
 				desk.Actions.execute({action : "delete_file",
 					file_name : this.__savedActionsFile
 				}, function (err) {
@@ -237,11 +231,11 @@ qx.Class.define("desk.Actions",
 						alert('error');
 				});
 			}, this);
-			menu.add(button3);
+			menu.add(clear);
 
-			var button4 = new qx.ui.menu.Button('Statify');
-			button4.addListener('execute', this.__statify, this);
-			menu.add(button4);
+			var statify = new qx.ui.menu.Button('Statify');
+			statify.addListener('execute', this.__statify, this);
+			menu.add(statify);
 		},
 
 		/**
@@ -284,11 +278,10 @@ qx.Class.define("desk.Actions",
 					log.log(data, 'yellow');
 				}
 				this.__socket.emit('setLog', true);
-				var win = new qx.ui.window.Window('Server log');
-				win.setLayout(new qx.ui.layout.HBox());
+				var win = new qx.ui.window.Window('Server log').set(
+					{width : 600, height : 500, layout : new qx.ui.layout.HBox()});
 				var log = new desk.LogContainer().set({backgroundColor : 'black'});
 				win.add(log, {flex : 1});
-				win.set({width : 600, height : 500});
 				this.__socket.on("log", displayLog);
 				win.addListener('close', function () {
 					this.__socket.removeListener('log', displayLog);
@@ -314,11 +307,10 @@ qx.Class.define("desk.Actions",
 					oldConsoleLog.apply(console, arguments);
 					log.log(message.toString());
 				};
-				var win = new qx.ui.window.Window('Console log');
-				win.setLayout(new qx.ui.layout.HBox());
+				var win = new qx.ui.window.Window('Console log').set(
+					{width : 600, height : 300, layout : new qx.ui.layout.HBox()});
 				var log = new desk.LogContainer();
 				win.add(log, {flex : 1});
-				win.set({width : 600, height : 300});
 				win.addListener('close', function () {
 					console.log = oldConsoleLog;
 				});
@@ -404,7 +396,7 @@ qx.Class.define("desk.Actions",
 
 		/**
 		* Fired whenever an action is finished
-		* @param response {Object} the server response
+		* @param res {Object} the server response
 		*/
 		__onActionEnd : function (res) {
 			var params = this.__runingActions[res.handle];
@@ -416,9 +408,6 @@ qx.Class.define("desk.Actions",
 
 			if (res.error) {
 				console.log(res);
-				var message = "error for action " + params.POST.action + ": \n";
-				message += JSON.stringify(res.error);
-				//alert (message);
 				var item = params.item;
 				if (!item) {
 					this.__addActionToList(params);
@@ -436,9 +425,7 @@ qx.Class.define("desk.Actions",
 				}
 			}
 
-			if (typeof params.callback === 'function') {
-				params.callback.call(params.context, res.error, res);
-			}
+			params.callback.call(params.context, res.error, res);
 		},
 
 		__garbageContainer : new qx.ui.container.Composite(new qx.ui.layout.HBox()),
@@ -453,7 +440,7 @@ qx.Class.define("desk.Actions",
 		launchAction : function (params, callback, context) {
 			console.warn('desk.actions.launchAction is deprecated! Use desk.Actions.execute() instead!');
 			console.warn(new Error().stack);
-			desk.Actions.execute(params, function (err, res) {
+			return desk.Actions.execute(params, function (err, res) {
 				if (typeof callback === "function") {
 					res.err = err;
 					callback.call(context, res);
@@ -463,15 +450,15 @@ qx.Class.define("desk.Actions",
 
 		/**
 		* Adds the action widget to the list of runing actions
-		* @param parameters {Object} action parameters
+		* @param params {Object} action parameters
 		*/
-		__addActionToList : function(parameters) {
-			if (parameters.actionFinished || parameters.POST.manage) {
+		__addActionToList : function(params) {
+			if (params.item || params.actionFinished || params.POST.manage) {
 				return;
 			}
 			if (this.__ongoingActions.getChildren().length > 20) {
 				setTimeout(function () {
-					this.__addActionToList(parameters);
+					this.__addActionToList(params);
 				}.bind(this), 2000 * Math.random());
 				return;
 			}
@@ -480,40 +467,36 @@ qx.Class.define("desk.Actions",
 				item = new qx.ui.form.ListItem("dummy");
 				item.set({decorator : "button-hover", opacity : 0.7});
 
-				var killButton = new qx.ui.menu.Button('Kill/remove');
-				killButton.addListener('execute', function () {
-					this.killAction(item.getUserData("handle"));
+				var kill = new qx.ui.menu.Button('Kill/remove');
+				kill.addListener('execute', function () {
+					this.killAction(item.getUserData("params").POST.handle);
 				}, this);
 
-				var killAllButton = new qx.ui.menu.Button('Kill/remove all');
-				killAllButton.setBlockToolTip(false);
-				killAllButton.setToolTipText("To kill all runing actions on server");
-				killAllButton.addListener('execute', function () {
+				var killAll = new qx.ui.menu.Button('Kill/remove all').set({
+					blockToolTip : false, toolTipText : "To kill all runing actions on server"});
+				killAll.addListener('execute', function () {
 					if (!confirm('Do you want to kill all actions?')) {
 						return;
 					}
-					Object.keys(this.__runingActions).forEach(function (handle) {
-						this.killAction(handle);
-					}, this);
+					Object.keys(this.__runingActions).forEach(_.ary(this.killAction, 1), this);
 				}, this);
 				
-				var propertiesButton = new qx.ui.menu.Button('Properties');
-				propertiesButton.addListener('execute', function () {
-					console.log(parameters);
+				var properties = new qx.ui.menu.Button('Properties');
+				properties.addListener('execute', function () {
+					console.log(item.getUserData("params"));
 				}, this);
 				
 				var menu = new qx.ui.menu.Menu();
-				menu.add(killButton);
-				menu.add(killAllButton);
-				menu.add(propertiesButton);
+				menu.add(kill);
+				menu.add(killAll);
+				menu.add(properties);
 				item.setContextMenu(menu);
 			}
-			item.setLabel(parameters.POST.action || parameters.POST.manage);
-			parameters.item = item;
-			item.setUserData("handle", parameters.POST.handle);
+			item.setLabel(params.POST.action || params.POST.manage);
+			params.item = item;
+			item.setUserData("params", params);
 			this.__ongoingActions.add(item);
 		},
-
 
 		/**
 		* fired when an action is launched via the action menu

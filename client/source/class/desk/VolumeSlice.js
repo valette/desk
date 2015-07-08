@@ -351,11 +351,7 @@ qx.Class.define("desk.VolumeSlice",
 		 __updateOOC : function (callback, context) {
 			if (this.__mhd) {
 				this.__finalizeUpdate();
-				if (typeof callback === 'function') {
-					setTimeout(function () {
-						callback.call(context);
-					}.bind(this), 10);
-				}
+				setTimeout(callback.bind(context), 10);
 				return;
 			} else {
 				desk.FileSystem.readFile(this.__file, function (err, res) {
@@ -384,6 +380,7 @@ qx.Class.define("desk.VolumeSlice",
 		 * @param context {Object} optional callback context
 		 */
 		update : function (callback, context) {
+			callback = callback || function () {};
 			if (this.__opts.ooc) {
 				this.__updateOOC(callback, context);
 				return;

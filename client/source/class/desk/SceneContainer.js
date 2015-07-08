@@ -565,12 +565,6 @@ qx.Class.define("desk.SceneContainer",
 				opts = {};
 			}
 
-			function cb(err) {
-				if (typeof(callback) === "function") {
-					callback.call(context, err);
-				}
-			}
-
 			var group = new THREE.Group();
 			this.addMesh(group, _.extend({branch : true, label : file}, opts));
 			async.eachSeries([0, 1, 2], function (orientation, callback) {
@@ -588,7 +582,7 @@ qx.Class.define("desk.SceneContainer",
 						callback();
 					}, this);
 				}.bind(this));
-			}.bind(this), cb);
+			}.bind(this), (callback || function () {}).bind(context));
 			return group;
 		},
 

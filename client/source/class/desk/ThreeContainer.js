@@ -307,7 +307,7 @@ qx.Class.define("desk.ThreeContainer",
 
 		/**
 		* sets viewpoint
-		* @parap viewpoint {Object} the viewpoint
+		* @param viewpoint {Object} the viewpoint
 		*/
 		setViewpoint : function (viewpoint) {
 			this.__camera.near = viewpoint.camera.near;

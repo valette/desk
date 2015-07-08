@@ -274,11 +274,7 @@ qx.Class.define("desk.FileSystem",
 			}, 4);
 
 			crawler.push(directory);
-			crawler.drain = function () {
-				if (typeof callback === "function") {
-					callback.apply(context);
-				};
-			};
+			crawler.drain = (callback || function(){}).bind(context);
 		},
 
 		/**
