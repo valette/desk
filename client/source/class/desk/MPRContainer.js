@@ -545,7 +545,7 @@ qx.Class.define("desk.MPRContainer",
 				desk.FileSystem.readFile(file, function (err, viewpoints) {
 					this.setViewPoints(viewpoints.viewpoints);
 				}, this);
-				return;
+				return null;
 			}
 
 			var volumeSlices = [];
@@ -1070,7 +1070,7 @@ qx.Class.define("desk.MPRContainer",
 		/**
 		 * sets a specific Lookup Table of a loaded volume
 		 * @param volume {qx.ui.container.Composite} the volume
-		 * @param LUTS {Array} an array of 4 lookuup tables [red, green blue, alpha]
+		 * @param LUT {Array} an array of 4 lookuup tables [red, green blue, alpha]
 		 */
 		setVolumeLUT : function (volume, LUT) {
 			this.getVolumeSlices(volume).forEach(function (slice) {
