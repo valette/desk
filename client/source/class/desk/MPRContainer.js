@@ -544,8 +544,8 @@ qx.Class.define("desk.MPRContainer",
 			if (desk.FileSystem.getFileExtension(file) === "json") {
 				desk.FileSystem.readFile(file, function (err, viewpoints) {
 					this.setViewPoints(viewpoints.viewpoints);
-				}.bind(this));
-				return null;
+				}, this);
+				return;
 			}
 
 			var volumeSlices = [];
@@ -561,26 +561,25 @@ qx.Class.define("desk.MPRContainer",
 				imageFormat = options.imageFormat;
 			}
 
-			var volumeListItem = new qx.ui.container.Composite();
-			volumeListItem.setLayout( new qx.ui.layout.VBox() );
-			volumeListItem.setDecorator("main");
-			volumeListItem.set({toolTipText : file});
-			volumeListItem.setUserData("slices", volumeSlices);
-			volumeListItem.setUserData("file", file);
+			var volume = new qx.ui.container.Composite();
+			volume.setLayout( new qx.ui.layout.VBox() );
+			volume.setDecorator("main");
+			volume.set({toolTipText : file});
+			volume.setUserData("slices", volumeSlices);
+			volume.setUserData("file", file);
 
 			// drag and drop support
-			volumeListItem.setDraggable(true);
-			volumeListItem.addListener("dragstart", function(e) {
+			volume.setDraggable(true);
+			volume.addListener("dragstart", function(e) {
 				e.addAction("alias");
 				e.addType("volumeSlices");
 				e.addType("VolumeViewer");
 				e.addType("file");
-				});
+			});
 
-			volumeListItem.addListener("droprequest", function(e) {
-					var type = e.getCurrentType();
-					switch (type)
-					{
+			volume.addListener("droprequest", function(e) {
+				var type = e.getCurrentType();
+				switch (type) {
 					case "volumeSlices":
 						e.addData(type, volumeSlices);
 						break;
@@ -593,9 +592,8 @@ qx.Class.define("desk.MPRContainer",
 					default :
 						alert ("type "+type+"not supported for drag and drop");
 						break;
-					}
-				}, this);
-
+				}
+			}, this);
 
 			var baseName = desk.FileSystem.getFileName(file);
 			var baseLength = baseName.length;
@@ -606,8 +604,8 @@ qx.Class.define("desk.MPRContainer",
 
 			var labelcontainer = new qx.ui.container.Composite();
 			labelcontainer.setLayout(new qx.ui.layout.HBox());
-			labelcontainer.setContextMenu(this.__getVolumeContextMenu(volumeListItem));
-			volumeListItem.add(labelcontainer);
+			labelcontainer.setContextMenu(this.__getVolumeContextMenu(volume));
+			volume.add(labelcontainer);
 
             var label = new qx.ui.basic.Label(baseName);
             if (options.label) {
@@ -627,18 +625,18 @@ qx.Class.define("desk.MPRContainer",
 					}
 //					scalarBounds = volumeSlice.getScalarBounds();
 //					updateWindowLevel();
-					volumeListItem.setUserData("loadingInProgress", false);
-					if (volumeListItem.getUserData("toDelete")) {
-						this.removeVolume(volumeListItem);
+					volume.setUserData("loadingInProgress", false);
+					if (volume.getUserData("toDelete")) {
+						this.removeVolume(volume);
 					}
 					this.__reorderMeshes();
-					callback.call(context, err, volumeListItem);
+					callback.call(context, err, volume);
 				}.bind(this)
 			);
 
 			var settingsContainer = new qx.ui.container.Composite();
 			settingsContainer.setLayout(new qx.ui.layout.HBox());
-			volumeListItem.add(settingsContainer);
+			volume.add(settingsContainer);
 
 			// create hide/show widget
 			var hideShowCheckbox = new qx.ui.form.CheckBox();
@@ -654,8 +652,7 @@ qx.Class.define("desk.MPRContainer",
 			var fileFormatBox;
 			fileFormatBox = new qx.ui.form.SelectBox();
 			fileFormatBox.setWidth(60);
-			fileFormatBox.set({width : 60,
-					toolTipText : "change image format"});
+			fileFormatBox.set({width : 60, toolTipText : "change image format"});
 			var SelectJPG = new qx.ui.form.ListItem("jpg");
 			SelectJPG.setUserData("imageFormat", 1);
 			fileFormatBox.add(SelectJPG);
@@ -668,7 +665,7 @@ qx.Class.define("desk.MPRContainer",
 			}
 
 			fileFormatBox.addListener("changeSelection", function ( ) {
-				imageFormat=fileFormatBox.getSelection()[0].getUserData("imageFormat");
+				imageFormat = fileFormatBox.getSelection()[0].getUserData("imageFormat");
 				volumeSlices.forEach(function (slice) {
 					slice.setImageFormat(imageFormat);
 				});
@@ -676,12 +673,9 @@ qx.Class.define("desk.MPRContainer",
 
 			// create opacity widget
             var opacitySlider = new qx.ui.form.Slider();
-			opacitySlider.set({value : opacity*100,
-					toolTipText : "change opacity"});
+			opacitySlider.set({value : opacity * 100, toolTipText : "change opacity"});
 			opacitySlider.addListener("changeValue", function(event) {
-				volumeSlices.forEach(function (slice) {
-					slice.setOpacity(event.getData() / 100);
-				});
+				this.setVolumeOpacity(volume, event.getData() / 100);
 			},this);
 			
 			////Create brightness/contrast fixing
@@ -723,9 +717,8 @@ qx.Class.define("desk.MPRContainer",
 //					updateWindowLevel();
 			}, this);
 
-			var scalarBounds;
-
-/*			var windowLevelContainer = new qx.ui.container.Composite();
+/*			var scalarBounds;
+			var windowLevelContainer = new qx.ui.container.Composite();
 			windowLevelContainer.setLayout(new qx.ui.layout.VBox());
 			var font= new qx.bom.Font(12, ["Arial"]);
 			var windowLabel = new qx.ui.basic.Label();
@@ -755,9 +748,9 @@ qx.Class.define("desk.MPRContainer",
 			settingsContainer.add(opacitySlider, {flex : 1});
 			settingsContainer.add(hideShowCheckbox);
 			// add this user data to avoid race conditions
-			volumeListItem.setUserData("loadingInProgress", true);
-			this.__volumes.add(volumeListItem);
-			return volumeListItem;
+			volume.setUserData("loadingInProgress", true);
+			this.__volumes.add(volume);
+			return volume;
 		},
 
 
@@ -1075,6 +1068,47 @@ qx.Class.define("desk.MPRContainer",
 		},
 
 		/**
+		 * sets a specific Lookup Table of a loaded volume
+		 * @param volume {qx.ui.container.Composite} the volume
+		 * @param LUTS {Array} an array of 4 lookuup tables [red, green blue, alpha]
+		 */
+		setVolumeLUT : function (volume, LUT) {
+			this.getVolumeSlices(volume).forEach(function (slice) {
+				slice.setLookupTables(LUT);
+			});
+		},
+
+		/**
+		 * returns the Lookup Table of a volume
+		 * @param volume {qx.ui.container.Composite} the volume
+		 * @return {Array} an array of 4 lookuup tables [red, green blue, alpha]
+		 */
+		getVolumeLUT : function (volume) {
+			return this.getVolumeSlices(volume)[0].getLookupTables();
+		},
+
+		/**
+		 * sets opacity of a volume
+		 * @param volume {qx.ui.container.Composite} the volume
+		 * @param opacity {Number} opacity
+		 */
+		setVolumeOpacity : function (volume, opacity) {
+			this.getVolumeSlices(volume).forEach(function (slice) {
+				slice.setOpacity(opacity);
+			});
+		},
+
+		/**
+		 * returns the volume opacity
+		 * @param volume {qx.ui.container.Composite} the volume
+		 * @return {Number} opacity of the volume
+		 */
+		getVolumeOpacity : function (volume) {
+			return this.getVolumeSlices(volume)[0].getOpacity();
+		},
+
+
+		/**
 		 * creates the save camera viewpoint button
 		 * @return {qx.ui.form.Button} the button
 		 */
@@ -1137,13 +1171,11 @@ qx.Class.define("desk.MPRContainer",
 
 		/**
 		 * creates the 'colors' window
-		 * @param volumeListItem {qx.ui.container.Composite} the volume to modify
+		 * @param volume {qx.ui.container.Composite} the volume to modify
 		 */
-		__createColormapWindow : function(volumeListItem) {
-			var slices = this.getVolumeSlices(volumeListItem);
-
+		__createColormapWindow : function(volume) {
 			var win = new qx.ui.window.Window().set ({
-				caption : "colors for " + slices[0].getFileName(),
+				caption : "colors for " + this.getVolumeFile(volume),
 				layout : new qx.ui.layout.HBox(),
 				showClose : true,
 				showMinimize : false
@@ -1174,7 +1206,7 @@ qx.Class.define("desk.MPRContainer",
 				{name : "random blues", lut : [zeros, zeros, randomBlue]},
 				{name : "random colors", lut : [randomRed, randomGreen, randomBlue]},
 				{name : "grey levels", lut : null},
-				{name : "other colors", lut : slices[0].getLookupTables()}
+				{name : "other colors", lut : this.getVolumeLUT(volume)}
 			].forEach(function (colors, index) {
 				if (!colors.lut && (index > 7)) return;
 				var button = new qx.ui.form.RadioButton(colors.name);
@@ -1184,10 +1216,8 @@ qx.Class.define("desk.MPRContainer",
 			});
 
 			group.addListener("changeSelection", function (e) {
-				slices.forEach(function (slice) {
-					slice.setLookupTables(e.getData()[0].getUserData('lut'));
-				})
-			});
+				this.setVolumeLUT(volume, e.getData()[0].getUserData('lut'));
+			}, this);
 			win.open();
 			win.center();
 		},
