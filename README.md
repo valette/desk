@@ -22,6 +22,7 @@ Copyright (c) CNRS, INSA-Lyon, UCBL, INSERM
 To install desk on your computer, you need:
 * git
 * node.js
+* python to build the API browser or rebuild core qooxdoo code
 
 to visualize 3D data (meshes, volumes) you also need;
 
@@ -57,24 +58,26 @@ note that gulp needs to be installed before (with root permissions):
 
 	npm install gulp -g
 
-### Update ###
+### Update node packages ###
 
 	git pull
 	npm install
 	npm update
 	gulp // if you have used gulp
 
-### Qooxdoo bits (needs python) ###
-
-updating the qooxdoo build is performed using:
+### Build the API browser / update the qooxdoo core  ###
 
 	cd client/application
 	npm install
-	./generate.py build  // to rebuild the qooxdoo parts
-	./generate.py source // to rebuild the debug version
-	./generate.py api    // to rebuild the api browser
+	./generate.py api    // to build the API browser
+	./generate.py build  // to build the qooxdoo core
+	./generate.py source // to build the debug version
 
-note that these take a few minutes at first launch
+note that these take a few minutes at first launch. Afterwards, you have access to:
+
+* The API viewer    	: [http://localhost:8080/application/api](http://localhost:8080/application/api)
+* The build version 	: [http://localhost:8080](http://localhost:8080)
+* The debug version 	: [http://localhost:8080/application/source](http://localhost:8080/application/source)
 
 ### Acknowledgements ###
 
