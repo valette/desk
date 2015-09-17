@@ -131,7 +131,7 @@ qx.Class.define("desk.Actions",
 		__currentFileBrowser : null,
 		__recordedActions : null,
 		__savedActionsFile : 'cache/actions.json',
-
+		__firstReadFile : null,
 
 		/**
 		* Creates the action menu
@@ -177,7 +177,8 @@ qx.Class.define("desk.Actions",
 			var oldReadFile;
 
 			var readFile = function (file, options, callback, context) {
-				this.debug("read : " + file);			
+				this.debug("read : " + file);
+				this.__firstReadFile = this.__firstReadFile || file;
 				var sha = new jsSHA("SHA-1", "TEXT");
 				sha.update(JSON.stringify(file));
 				recordedFiles[sha.getHash("HEX")] = file;
@@ -189,7 +190,8 @@ qx.Class.define("desk.Actions",
 			start.setToolTipText("To save recorded actions");
 			start.addListener('execute', function () {
 				this.__recordedActions = {};
-				recordedFiles = {}
+				recordedFiles = {};
+				this.__firstReadFile = null;
 				oldReadFile = desk.FileSystem.readFile;
 				desk.FileSystem.readFile = readFile;
 				start.setVisibility("excluded");
@@ -581,7 +583,7 @@ qx.Class.define("desk.Actions",
 			var installDir = prompt('output directory?' , "code/static");
 			var browserifiedFile = "js/browserified.js";
 
-			var boot = prompt('what is the startup file?', 'code/');
+			var boot = prompt('what is the startup file?', this.__firstReadFile);
 			var startupFile;
 			if (!boot) {
 				boot = "";
@@ -603,7 +605,10 @@ qx.Class.define("desk.Actions",
 					}, cb);
 				},
 				function (res, cb) {
-					desk.FileSystem.readFile("cache/actions.json", cb);
+					desk.FileSystem.mkdirp(installDir + "/files/cache", cb);
+				},
+				function (res, cb) {
+					desk.FileSystem.readFile(self.__savedActionsFile, cb);
 				},
 				function (res, cb) {
 					self.debug("copying actions results...");
@@ -670,7 +675,7 @@ qx.Class.define("desk.Actions",
 					self.debug("copying recorded actions");
 					desk.Actions.execute({
 						action : "copy",
-						source : "cache/actions.json",
+						source : self.__savedActionsFile,
 						destination : installDir + "/files/cache"
 					}, callback);
 				},
