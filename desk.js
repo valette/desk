@@ -3,7 +3,6 @@ var	actions      = require(__dirname + '/lib/cl-rpc');
 	async        = require('async'),
 	auth         = require('basic-auth'),
 	bodyParser   = require('body-parser'),
-	browserify   = require('browserify-middleware'),
 	compress     = require('compression'),
 	crypto       = require('crypto'),
 	directory    = require('serve-index'),
@@ -39,12 +38,13 @@ function log (message) {
 };
 
 // configure express server
-var app = express();
-app.use(compress());
-app.set('trust proxy', true);
+var app = express(),
+    router = express.Router(),
+    rpc = express.Router();
 
-// transmit homeURL cookie
-app.use (function (req, res, next) {
+app.use(compress())
+.set('trust proxy', true)
+.use (function (req, res, next) {
 	res.cookie('homeURL', homeURL);
 	next();
 });
@@ -88,41 +88,17 @@ app.use(function(req, res, next) {
 	}
 	res.setHeader('WWW-Authenticate', 'Basic realm="login/password?"');
 	res.sendStatus(401);
-});
+})
+.use(bodyParser.urlencoded({limit : '10mb', extended : true}))
+.use(homeURL, router);
 
-app.use(bodyParser.urlencoded({limit : '10mb', extended : true}));
-
-var router = express.Router();
-app.use(homeURL, router);
-
-var rpc = express.Router();
-router.use('/rpc', rpc);
-
-router.use('/', express.static(libPath.join(clientPath, 'application/build')))
+router.use('/rpc', rpc)
+.use('/', express.static(libPath.join(clientPath, 'application/build')))
 .use('/files', express.static(deskDir))
 .use('/files', directory(deskDir))
 .use('/', express.static(clientPath))
-.use('/', directory(clientPath));
-
-// handle third part js libraries compilation
-var cacheExists,
-	browserGet,
-	jsFiles = libPath.join(__dirname, 'cache', 'browserified.js'),
-	serveCache = express.static(libPath.join(__dirname, 'cache'));
-
-function testCache() {
-	cacheExists = fs.existsSync(jsFiles) && !argv.debug;
-	if (!cacheExists && !browserGet) {
-		browserify.settings('transform', ['cssify']);
-		browserify.settings.mode = argv.debug ? 'development' : 'production';
-		browserGet = browserify(__dirname + '/lib/browserified.js');
-	}
-}
-testCache();
-fs.watchFile(jsFiles, testCache);
-router.use('/js', function (req, res, next) {
-	(cacheExists ? serveCache : browserGet) (req, res, next);
-});
+.use('/', directory(clientPath))
+.use('/js', express.static(libPath.join(__dirname, 'cache')));
 
 rpc.post('/upload', function(req, res) {
 	var form = new formidable.IncomingForm();
@@ -246,9 +222,9 @@ fs.mkdirsSync(extensionsDir);
 actions.on("actionsUpdated", function () {
 		io.emit("actions updated");
 	})
-	.on("log", log)
-	.setRoot(deskDir)
-	.includeDirectory(extensionsDir);
+.on("log", log)
+.setRoot(deskDir)
+.includeDirectory(extensionsDir);
 
 server.listen(port);
 log(new Date().toLocaleString());

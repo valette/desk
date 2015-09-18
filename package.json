@@ -12,7 +12,7 @@
     "url": "git://github.com/valette/desk.git"
   },
   "devDependencies": {
-      "qooxdoo" : "git://github.com/qooxdoo/qooxdoo#branch_5_0_x"
+      "qooxdoo" : "git://github.com/qooxdoo/qooxdoo#release_5_0_1"
 },
   "dependencies": {
     "async": ">0.0.0",
@@ -20,7 +20,6 @@
     "body-parser": ">0.0.0",
     "brace": ">0.0.0",
     "browserify": ">0.0.0",
-    "browserify-middleware": ">0.0.0",
     "c3": ">0.0.0",
     "compression": ">0.0.0",
     "cron": ">0.0.0",
