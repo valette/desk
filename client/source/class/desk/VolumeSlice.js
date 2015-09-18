@@ -64,7 +64,7 @@ qx.Class.define("desk.VolumeSlice",
 		}.bind(this);
 		image.onerror = image.onabort = this.update.bind(this);
 
-		this.addListener("changeImageFormat", this.update, this);
+		this.addListener("changeImageFormat", function () {this.update();}, this);
 		this.addListener("changeSlice", this.__updateImage, this);
 		this.update(callback, context);
 	},
