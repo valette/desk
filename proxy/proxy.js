@@ -1,5 +1,4 @@
-var	async     = require('async'),
-	cluster   = require('cluster'),
+var	cluster   = require('cluster'),
 	execSync  = require('child_process').execSync,
 	fs        = require('fs'),
 	http      = require('http'),
@@ -93,19 +92,13 @@ proxyServer.on('upgrade', function (req, socket, head) {
 updateRoutes();
 
 // start proxies
-async.series([
-	function (callback) {
-		server.listen(port, callback)
-	},
-
-	function (callback) {
-		proxyServer.listen(port2, callback);
-	}
-], function () {
-	console.log('desk-http2https service listening on port ' + port);
-	console.log('desk-proxy service listening on port ' + port2);
-	process.setgid('dproxy');
-	process.setuid('dproxy');
+server.listen(port, function () {
+	proxyServer.listen(port2, function () {
+		console.log('desk-http2https service listening on port ' + port);
+		console.log('desk-proxy service listening on port ' + port2);
+		process.setgid('dproxy');
+		process.setuid('dproxy');
+	});
 });
 
 function updateRoutes() {
@@ -144,4 +137,3 @@ fs.watchFile(config, function (curr, prev) {
 });
 
 console.log('Watching file ' + config + ' for routes');
-

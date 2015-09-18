@@ -1,9 +1,8 @@
 var	execSync  = require('child_process').execSync;
 	forever   = require('forever'),
-	fs        = require('fs'),
-	mkdirp    = require('mkdirp'),
+	fs        = require('fs-extra'),
 	path      = require('path'),
-	_         = require('underscore');
+	_         = require('lodash');
 
 var config = __dirname + '/config.json',
 	uidPrefix = 'desk-',
@@ -73,7 +72,7 @@ function update (user) {
 	    env        = {},
 	    userConfig = getUserConfigFile(user);
 
-	mkdirp.sync(deskPath);
+	fs.mkdirsSync(deskPath);
 	fs.chownSync(deskPath, uid, gid);
 
 	if (user === proxyUser) {
