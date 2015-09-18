@@ -1101,6 +1101,7 @@ qx.Class.define("desk.SceneContainer",
 				});
 			}
 			this._deleteMembers(mesh);
+			this.render();
         },
 
 		__animator : null,
