@@ -10,12 +10,10 @@ var	actions      = require(__dirname + '/lib/cl-rpc');
 	dns          = require("dns"),
 	express      = require('express'),
 	formidable   = require('formidable'),
-    fs           = require('fs'),
+    fs           = require('fs-extra'),
 	http         = require('http'),
 	https        = require('https'),
 	libPath      = require('path'),
-	mkdirp       = require('mkdirp'),
-	mv           = require('mv'),
 	os           = require('os'),
 	osenv        = require('osenv'),
 	socketIO     = require('socket.io'),
@@ -51,8 +49,8 @@ app.use (function (req, res, next) {
 	next();
 });
 
-mkdirp.sync(deskDir);
-mkdirp.sync(uploadDir);
+fs.mkdirsSync(deskDir);
+fs.mkdirsSync(uploadDir);
 
 fs.watchFile(passwordFile, updatePassword);
 function updatePassword() {
@@ -136,7 +134,7 @@ rpc.post('/upload', function(req, res) {
 		log("file : " + file.path.toString());
 		var fullName = libPath.join(outputDir, file.name.toString());
 		log("uploaded to " +  fullName);
-		mv(file.path.toString(), fullName, function(err) {
+		fs.move(file.path.toString(), fullName, function(err) {
 			if (err) throw err;
 			res.send('file ' + file.name + ' uploaded successfully');
 		});
@@ -243,7 +241,7 @@ io.on('connection', function (socket) {
 		});
 });
 
-mkdirp.sync(extensionsDir);
+fs.mkdirsSync(extensionsDir);
 
 actions.on("actionsUpdated", function () {
 		io.emit("actions updated");
