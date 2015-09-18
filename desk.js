@@ -3,19 +3,16 @@ var	actions      = require(__dirname + '/lib/cl-rpc');
 	async        = require('async'),
 	auth         = require('basic-auth'),
 	bodyParser   = require('body-parser'),
-	browserify   = require('browserify-middleware'),
 	compress     = require('compression'),
 	crypto       = require('crypto'),
 	directory    = require('serve-index'),
 	dns          = require("dns"),
 	express      = require('express'),
 	formidable   = require('formidable'),
-    fs           = require('fs'),
+    fs           = require('fs-extra'),
 	http         = require('http'),
 	https        = require('https'),
 	libPath      = require('path'),
-	mkdirp       = require('mkdirp'),
-	mv           = require('mv'),
 	os           = require('os'),
 	osenv        = require('osenv'),
 	socketIO     = require('socket.io'),
@@ -41,18 +38,19 @@ function log (message) {
 };
 
 // configure express server
-var app = express();
-app.use(compress());
-app.set('trust proxy', true);
+var app = express(),
+    router = express.Router(),
+    rpc = express.Router();
 
-// transmit homeURL cookie
-app.use (function (req, res, next) {
+app.use(compress())
+.set('trust proxy', true)
+.use (function (req, res, next) {
 	res.cookie('homeURL', homeURL);
 	next();
 });
 
-mkdirp.sync(deskDir);
-mkdirp.sync(uploadDir);
+fs.mkdirsSync(deskDir);
+fs.mkdirsSync(uploadDir);
 
 fs.watchFile(passwordFile, updatePassword);
 function updatePassword() {
@@ -90,41 +88,17 @@ app.use(function(req, res, next) {
 	}
 	res.setHeader('WWW-Authenticate', 'Basic realm="login/password?"');
 	res.sendStatus(401);
-});
+})
+.use(bodyParser.urlencoded({limit : '10mb', extended : true}))
+.use(homeURL, router);
 
-app.use(bodyParser.urlencoded({limit : '10mb', extended : true}));
-
-var router = express.Router();
-app.use(homeURL, router);
-
-var rpc = express.Router();
-router.use('/rpc', rpc);
-
-router.use('/', express.static(libPath.join(clientPath, 'application/build')))
+router.use('/rpc', rpc)
+.use('/', express.static(libPath.join(clientPath, 'application/build')))
 .use('/files', express.static(deskDir))
 .use('/files', directory(deskDir))
 .use('/', express.static(clientPath))
-.use('/', directory(clientPath));
-
-// handle third part js libraries compilation
-var cacheExists,
-	browserGet,
-	jsFiles = libPath.join(__dirname, 'cache', 'browserified.js'),
-	serveCache = express.static(libPath.join(__dirname, 'cache'));
-
-function testCache() {
-	cacheExists = fs.existsSync(jsFiles) && !argv.debug;
-	if (!cacheExists && !browserGet) {
-		browserify.settings('transform', ['cssify']);
-		browserify.settings.mode = argv.debug ? 'development' : 'production';
-		browserGet = browserify(__dirname + '/lib/browserified.js');
-	}
-}
-testCache();
-fs.watchFile(jsFiles, testCache);
-router.use('/js', function (req, res, next) {
-	(cacheExists ? serveCache : browserGet) (req, res, next);
-});
+.use('/', directory(clientPath))
+.use('/js', express.static(libPath.join(__dirname, 'cache')));
 
 rpc.post('/upload', function(req, res) {
 	var form = new formidable.IncomingForm();
@@ -136,7 +110,7 @@ rpc.post('/upload', function(req, res) {
 		log("file : " + file.path.toString());
 		var fullName = libPath.join(outputDir, file.name.toString());
 		log("uploaded to " +  fullName);
-		mv(file.path.toString(), fullName, function(err) {
+		fs.move(file.path.toString(), fullName, function(err) {
 			if (err) throw err;
 			res.send('file ' + file.name + ' uploaded successfully');
 		});
@@ -243,14 +217,14 @@ io.on('connection', function (socket) {
 		});
 });
 
-mkdirp.sync(extensionsDir);
+fs.mkdirsSync(extensionsDir);
 
 actions.on("actionsUpdated", function () {
 		io.emit("actions updated");
 	})
-	.on("log", log)
-	.setRoot(deskDir)
-	.includeDirectory(extensionsDir);
+.on("log", log)
+.setRoot(deskDir)
+.includeDirectory(extensionsDir);
 
 server.listen(port);
 log(new Date().toLocaleString());

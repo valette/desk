@@ -30,10 +30,11 @@ to visualize 3D data (meshes, volumes) you also need;
 * cmake
 
 ### Installation ###
-
 	git clone http://github.com/valette/desk.git
 	cd desk
 	npm install
+	npm install gulp -g // must be root to install gulp
+	gulp                // takes about 1 mn to execute
 
 to install binary addons for 3D data visualization (needs vtk and cmake):
 
@@ -50,20 +51,12 @@ login as:
 - user : your linux username
 - password : "password"
 
-startup takes a few seconds due to client-side javascript build step. To skip code generation, you can generate a static file using gulp:
-
-	gulp
-
-note that gulp needs to be installed before (with root permissions):
-
-	npm install gulp -g
-
 ### Update node packages ###
 
 	git pull
 	npm install
 	npm update
-	gulp // if you have used gulp
+	gulp
 
 ### Build the API browser / update the qooxdoo core  ###
 

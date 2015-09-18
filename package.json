@@ -12,7 +12,7 @@
     "url": "git://github.com/valette/desk.git"
   },
   "devDependencies": {
-      "qooxdoo" : "git://github.com/qooxdoo/qooxdoo#branch_5_0_x"
+      "qooxdoo" : "git://github.com/qooxdoo/qooxdoo#release_5_0_1"
 },
   "dependencies": {
     "async": ">0.0.0",
@@ -20,7 +20,6 @@
     "body-parser": ">0.0.0",
     "brace": ">0.0.0",
     "browserify": ">0.0.0",
-    "browserify-middleware": ">0.0.0",
     "c3": ">0.0.0",
     "compression": ">0.0.0",
     "cron": ">0.0.0",
@@ -28,6 +27,7 @@
     "d3": ">0.0.0",
     "express": ">0.0.0",
     "formidable": ">0.0.0",
+    "fs-extra": ">0.0.0",
     "gulp": ">0.0.0",
     "gulp-uglify": ">0.0.0",
     "gulp-streamify": ">0.0.0",
@@ -36,9 +36,7 @@
     "jssha": ">0.0.0",
     "kdt": ">0.0.0",
     "lodash": ">0.0.0",
-    "mkdirp": ">0.0.0",
     "ms": ">0.0.0",
-    "mv": ">0.0.0",
     "numeric": ">0.0.0",
     "operative": ">0.0.0",
     "osenv" : ">0.0.0",
