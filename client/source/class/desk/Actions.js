@@ -174,15 +174,15 @@ qx.Class.define("desk.Actions",
 			var menu = new qx.ui.menu.Menu();
 			actionsMenu.add(new qx.ui.menu.Button("Statifier", null, null, menu));
 			var recordedFiles
-			var oldReadFile;
+			var oldGetFileURL;
 
-			var readFile = function (file, options, callback, context) {
+			var getFileURL = function (file) {
 				this.debug("read : " + file);
 				this.__firstReadFile = this.__firstReadFile || file;
 				var sha = new jsSHA("SHA-1", "TEXT");
 				sha.update(JSON.stringify(file));
 				recordedFiles[sha.getHash("HEX")] = file;
-				oldReadFile(file, options, callback, context);
+				return oldGetFileURL(file);
 			}.bind(this);
 
 			var start = new qx.ui.menu.Button('Start recording');
@@ -192,8 +192,8 @@ qx.Class.define("desk.Actions",
 				this.__recordedActions = {};
 				recordedFiles = {};
 				this.__firstReadFile = null;
-				oldReadFile = desk.FileSystem.readFile;
-				desk.FileSystem.readFile = readFile;
+				oldGetFileURL = desk.FileSystem.getFileURL;
+				desk.FileSystem.getFileURL = getFileURL;
 				start.setVisibility("excluded");
 				stop.setVisibility("visible");
 			}, this);
@@ -203,7 +203,7 @@ qx.Class.define("desk.Actions",
 				blockToolTip : false, toolTipText : "To stop recording and save actions",
 				visibility : "excluded"});
 			stop.addListener('execute', function () {
-				desk.FileSystem.readFile = oldReadFile;
+				desk.FileSystem.getFileURL = oldGetFileURL;
 				desk.FileSystem.readFile(this.__savedActionsFile, function (err, res) {
 					var records = err ? {actions : {}, files : {}} : res;
 					records.actions = records.actions || {};
