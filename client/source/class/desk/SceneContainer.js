@@ -541,7 +541,7 @@ qx.Class.define("desk.SceneContainer",
 
 			volumeSlice.fireEvent('changeImage');
 
-			mesh.addEventListener("removedFromScene", function () {
+			mesh.addEventListener("removed", function () {
 				volumeSlice.removeListenerById(listenerId);
 				lineGeometry.dispose();
 				lineMaterial.dispose();
