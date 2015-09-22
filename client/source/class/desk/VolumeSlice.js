@@ -45,7 +45,7 @@ qx.Class.define("desk.VolumeSlice",
 		if (opts.opacity != null) {
 			this.__opacity = opts.opacity;
 		}
-		this.__textureFilter = opts.linearFilter ? THREE.LinearFilter : THREE.NearestFilter;
+
 		this.__file = file;
 
 		var image = this.__image = new Image();
@@ -53,8 +53,8 @@ qx.Class.define("desk.VolumeSlice",
 			clearTimeout(this.__timeout);
 			this.__materials.forEach(function (material) {
 				material.uniforms.imageType.value = this.__availableImageFormat;
-				this.__setNeedsUpdate(material.uniforms.texture.value, true);
 			}, this);
+			this.__texture.needsUpdate = true;
 
 			if (this.__numberOfScalarComponents === 1) {
 				this.__contrastMultiplier = 1 / Math.abs(this.__scalarMax - this.__scalarMin);
@@ -63,6 +63,19 @@ qx.Class.define("desk.VolumeSlice",
 			this.setBrightnessAndContrast(this.__brightness, this.__contrast);
 		}.bind(this);
 		image.onerror = image.onabort = this.update.bind(this);
+
+		var filter = opts.linearFilter ? THREE.LinearFilter : THREE.NearestFilter;
+		this.__texture = new THREE.Texture(image);
+		this.__texture.onUpdate = function () {
+			this.__texture.lastVersion = this.__texture.version;
+		}.bind(this);
+		this.__texture.lastVersion = 0;
+
+		this.__lookupTable = new THREE.DataTexture(this.__dummyLut, 2, 1, THREE.RGBAFormat);
+		[this.__lookupTable, this.__texture].forEach(function (texture) {
+			texture.generateMipmaps = false;
+			texture.magFilter = texture.minFilter = filter;
+		});
 
 		this.addListener("changeImageFormat", function () {this.update();}, this);
 		this.addListener("changeSlice", this.__updateImage, this);
@@ -215,7 +228,6 @@ qx.Class.define("desk.VolumeSlice",
 		__opts : null,
 		__orientationNames : ['XY', 'ZY', 'XZ'],
 
-		__textureFilter : null,
 		__availableImageFormat : 1,
 
 		__file : null,
@@ -224,6 +236,8 @@ qx.Class.define("desk.VolumeSlice",
 		__offset : null,
 		__prefix : null,
 		__image : null,
+		__texture : null,
+		__lookupTable : null,
 
 		__timestamp : null,
 
@@ -567,21 +581,7 @@ qx.Class.define("desk.VolumeSlice",
 		 * returns a three.js material fit for rendering
 		 * @return {THREE.ShaderMaterial} material
 		 */
-		 getMaterial :function () {
-			var texture = new THREE.Texture(this.__image);
-			texture.onUpdate = function () {
-				texture.lastVersion = texture.version;
-			}
-			texture.generateMipmaps = false;
-			var filter = this.__textureFilter;
-			texture.magFilter = filter;
-			texture.minFilter = filter;
-
-			var lookupTable = new THREE.DataTexture(this.__dummyLut, 2, 1, THREE.RGBAFormat);
-			lookupTable.generateMipmaps = false;
-			lookupTable.magFilter = filter;
-			lookupTable.minFilter = filter;
-
+		 getMaterial : function () {
 			switch (this.__scalarType) {
 			case 2 :
 			case 15:
@@ -615,8 +615,8 @@ qx.Class.define("desk.VolumeSlice",
 			}
 
 			var baseUniforms = {
-					texture : {type : "t", slot: 0, value: texture },
-					lookupTable : {type : "t", slot: 1, value: lookupTable },
+					texture : {type : "t", slot: 0, value: this.__texture },
+					lookupTable : {type : "t", slot: 1, value: this.__lookupTable },
 					lookupTableLength : {type: "f", value: 2 },
 					useLookupTable : {type: "f", value: 0 },
 					contrast : {type: "f", value: 0},
@@ -664,7 +664,7 @@ qx.Class.define("desk.VolumeSlice",
 
 			this.__setBrightnessAndContrast(this.__brightness, this.__contrast);
 			if (this.__image.complete) {
-				this.__setNeedsUpdate(material.uniforms.texture.value, true);
+				this.__texture.needsUpdate = true;
 			}
 			material.side = THREE.DoubleSide;
 			return material;
@@ -864,22 +864,14 @@ qx.Class.define("desk.VolumeSlice",
 
 		__lastHandle : null,
 
-		__setNeedsUpdate : function (texture, needsUpdate) {
-			texture.needsUpdate = needsUpdate;
-			if (!needsUpdate) {
-				texture.version = texture.lastVersion;
-			}
-		},
-
 		/**
 		 * changes the image url, sets timeouts
 		 */
 		__updateImage : function () {
 			clearTimeout(this.__timeout);
 			this.__timeout = setTimeout(this.__updateImage.bind(this), 10000);
-			this.__materials.forEach(function (material) {
-				this.__setNeedsUpdate(material.uniforms.texture.value, false);
-			}, this);
+			this.__texture.needsUpdate = false;
+			this.__texture.version = this.__texture.lastVersion;
 
 			if (!this.__opts.ooc) {
 				this.__image.src = this.getSliceURL(this.getSlice()) + "?nocache=" + this.__timestamp;
