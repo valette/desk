@@ -53,7 +53,7 @@ qx.Class.define("desk.VolumeSlice",
 			clearTimeout(this.__timeout);
 			this.__materials.forEach(function (material) {
 				material.uniforms.imageType.value = this.__availableImageFormat;
-				material.uniforms.texture.value.needsUpdate = true;
+				this.__setNeedsUpdate(material.uniforms.texture.value, true);
 			}, this);
 
 			if (this.__numberOfScalarComponents === 1) {
@@ -569,6 +569,9 @@ qx.Class.define("desk.VolumeSlice",
 		 */
 		 getMaterial :function () {
 			var texture = new THREE.Texture(this.__image);
+			texture.onUpdate = function () {
+				texture.lastVersion = texture.version;
+			}
 			texture.generateMipmaps = false;
 			var filter = this.__textureFilter;
 			texture.magFilter = filter;
@@ -661,7 +664,7 @@ qx.Class.define("desk.VolumeSlice",
 
 			this.__setBrightnessAndContrast(this.__brightness, this.__contrast);
 			if (this.__image.complete) {
-				material.uniforms.texture.value.needsUpdate = true;
+				this.__setNeedsUpdate(material.uniforms.texture.value, true);
 			}
 			material.side = THREE.DoubleSide;
 			return material;
@@ -861,6 +864,13 @@ qx.Class.define("desk.VolumeSlice",
 
 		__lastHandle : null,
 
+		__setNeedsUpdate : function (texture, needsUpdate) {
+			texture.needsUpdate = needsUpdate;
+			if (!needsUpdate) {
+				texture.version = texture.lastVersion;
+			}
+		},
+
 		/**
 		 * changes the image url, sets timeouts
 		 */
@@ -868,8 +878,8 @@ qx.Class.define("desk.VolumeSlice",
 			clearTimeout(this.__timeout);
 			this.__timeout = setTimeout(this.__updateImage.bind(this), 10000);
 			this.__materials.forEach(function (material) {
-				material.uniforms.texture.value.needsUpdate = false;
-			});
+				this.__setNeedsUpdate(material.uniforms.texture.value, false);
+			}, this);
 
 			if (!this.__opts.ooc) {
 				this.__image.src = this.getSliceURL(this.getSlice()) + "?nocache=" + this.__timestamp;
