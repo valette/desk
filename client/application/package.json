@@ -7,6 +7,7 @@
   "version": "0.0.1",
   "devDependencies": {},
   "dependencies": {
+    "qooxdoo" : "git://github.com/qooxdoo/qooxdoo#release_5_0_1",
     "uploadmgr": ">0.0.0"
   },
   "optionalDependencies": {},

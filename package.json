@@ -11,9 +11,6 @@
     "type": "git",
     "url": "git://github.com/valette/desk.git"
   },
-  "devDependencies": {
-      "qooxdoo" : "git://github.com/qooxdoo/qooxdoo#release_5_0_1"
-},
   "dependencies": {
     "async": ">0.0.0",
     "basic-auth": ">0.0.0",
