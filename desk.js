@@ -109,10 +109,24 @@ rpc.post('/upload', function(req, res) {
 		outputDir = libPath.join(deskDir, outputDir);
 		log("file : " + file.path.toString());
 		var fullName = libPath.join(outputDir, file.name.toString());
-		log("uploaded to " +  fullName);
-		fs.move(file.path.toString(), fullName, function(err) {
-			if (err) throw err;
-			res.send('file ' + file.name + ' uploaded successfully');
+		var exists = true;
+		var index = 0;
+		var newfile;
+		async.whilst(function () {
+			return exists;
+		}, function (callback) {
+			newFile = fullName + ( index > 0 ? "." + index : "" );
+			fs.exists(newFile, function (fileExist) {
+				exists = fileExist;
+				index++;
+				callback();
+			});
+		}, function () {
+			fs.move(file.path.toString(), newFile, function(err) {
+				if (err) throw err;
+				res.send('file ' + file.name + ' uploaded successfully');
+				log("uploaded to " +  newFile);
+			});
 		});
 	});
 })

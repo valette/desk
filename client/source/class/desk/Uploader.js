@@ -36,7 +36,7 @@ qx.Class.define("desk.Uploader",
 		//	uploader.setParam("myGlobalParam", "global123");
   		
   		// Optionally restrict the max number of simultaneous uploads (default is 5)
-  		//uploader.getUploadHandler().setMaxConnections(1);
+  		uploader.getUploadHandler().setMaxConnections(1);
   		
   		uploader.addListener( "addFile", function( evt ) {
   			var file = evt.getData(),
