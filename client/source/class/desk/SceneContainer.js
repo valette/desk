@@ -576,9 +576,7 @@ qx.Class.define("desk.SceneContainer",
 					}
 					slice.setSlice(Math.floor(slice.getNumberOfSlices() / 2));
 					slice.addListenerOnce("changeImage", function () {
-						var mesh = this.attachVolumeSlice(slice,
-							_.extend({parent : group}, opts));
-						group.add(mesh);
+						this.attachVolumeSlice(slice, _.extend({parent : group}, opts));
 						callback();
 					}, this);
 				}.bind(this));
