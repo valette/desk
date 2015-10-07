@@ -501,6 +501,7 @@ qx.Class.define("desk.FileBrowser",
 			var dir = node.getFullName();
 			if (!node.getChildren) {
 				dir = desk.FileSystem.getFileDirectory(dir);
+				node = this.__getFileNode(dir);
 			}
 			var uploader = new desk.Uploader(dir);
 			uploader.addListener("upload",
