@@ -361,21 +361,23 @@ qx.Class.define("desk.FileSystem",
 			var req = new qx.io.request.Xhr(fs.__actionsURL + action, 'GET');
 
 			function cb (err) {
-				try {
-					var obj = JSON.parse(req.getResponseText());
-				} catch(e) {
-					err = e;
-				}
-				req.dispose();
-				callback.call(context, err, obj);
 			}
 
 			req.setRequestData(params);
-			req.addListener('load', function (e) {
-				cb();
-			});
-			req.addListener('error', function (e) {
-				cb(req.getResponse());
+			req.addListener('loadEnd', function (e) {
+				var err, res;
+				try {
+					res = JSON.parse(req.getResponseText());
+				} catch(e) {
+					err = e;
+				}
+
+				if (req.getStatus() === 200) {
+					callback.call(context, err, res);
+				} else {					
+					callback.call(context, res);
+				}
+				req.dispose();
 			});
 			req.send();
 		}

@@ -173,7 +173,8 @@ rpc.post('/upload', function(req, res) {
 			}, callback);
 		}],
 		function (error, files) {
-			res.send(files);
+			if (error) res.status(500);
+			res.send(error || files);
 		}
 	);
 })
