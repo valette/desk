@@ -427,7 +427,9 @@ qx.Class.define("desk.Actions",
 				}
 			}
 
-			params.callback.call(params.context, res.error, res);
+			if (params.callback) {
+				params.callback.call(params.context, res.error, res);
+			}
 		},
 
 		__garbageContainer : new qx.ui.container.Composite(new qx.ui.layout.HBox()),
