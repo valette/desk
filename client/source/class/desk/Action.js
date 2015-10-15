@@ -185,6 +185,7 @@ qx.Class.define("desk.Action",
 		setParameters : function (parameters, hide) {
 			if (typeof parameters.output_directory === "string") {
 				this.__outputDir = parameters.output_directory;
+				this.__addOutputTab();
 			}
             Object.keys(parameters).forEach(function (key) {
                 var form = this.getForm(key);
