@@ -564,9 +564,12 @@ qx.Class.define("desk.SliceView",
 			var geometry = new THREE.PlaneBufferGeometry(1, 1);
 			var coords = volumeSlice.get2DCornersCoordinates();
 			var vertices = geometry.attributes.position;
-			for (var i = 0; i < 4; i++) {
-				vertices.setXYZ(i, coords[2 * i], coords[2 * i + 1], 0);
-			}
+
+			// flip Y axis
+			vertices.setXYZ(0, coords[4], coords[5], 0);
+			vertices.setXYZ(1, coords[6], coords[7], 0);
+			vertices.setXYZ(2, coords[0], coords[1], 0);
+			vertices.setXYZ(3, coords[2], coords[3], 0);
 
 			var width = this.__2DDimensions[0];
 			var height = this.__2DDimensions[1];
