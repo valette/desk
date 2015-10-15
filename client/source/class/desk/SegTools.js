@@ -341,7 +341,7 @@ qx.Class.define("desk.SegTools",
 				if (!this.__meshViewer) {
 					this.__meshViewer = new desk.MeshViewer(this.getSessionDirectory() +
 						"/meshes/meshes.xml");
-					this.__meshViewer.addListener("close", function () {
+					this.__meshViewer.getWindow().addListener("close", function () {
 						this.__meshViewer = null;
 					}, this)
 				} else {
@@ -427,7 +427,7 @@ qx.Class.define("desk.SegTools",
 				if (!this.__meshViewer) {
 					this.__meshViewer = new desk.MeshViewer(this.getSessionDirectory() +
 						"/meshes/meshes.xml");
-					this.__meshViewer.addListener("close", function () {
+					this.__meshViewer.getWindow().addListener("close", function () {
 						this.__meshViewer = null;
 					}, this)
 				} else {
@@ -517,7 +517,7 @@ qx.Class.define("desk.SegTools",
 				if (!this.__meshViewer) {
 					this.__meshViewer = new desk.MeshViewer(this.getSessionDirectory() +
 						"/meshes/meshes.xml");
-					this.__meshViewer.addListener("close", function () {
+					this.__meshViewer.getWindow().addListener("close", function () {
 						this.__meshViewer = null;
 					}, this)
 				} else {
@@ -614,7 +614,7 @@ qx.Class.define("desk.SegTools",
 				if (!this.__meshViewer) {
 					this.__meshViewer = new desk.MeshViewer(this.getSessionDirectory() +
 						"/meshes/meshes.xml");
-					this.__meshViewer.addListener("close", function () {
+					this.__meshViewer.getWindow().addListener("close", function () {
 						this.__meshViewer = null;
 					}, this)
 				} else {
