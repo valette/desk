@@ -80,6 +80,7 @@ qx.Class.define("desk.FileSystem",
 				options = context;
 				context = temp;
 			}
+
 			options = options || {};
 			if (options.cache !== false) {
 				url += "?nocache=" + Math.random();
@@ -91,11 +92,11 @@ qx.Class.define("desk.FileSystem",
 					&& (req.getResponseHeader("Content-Type").indexOf("xml") >= 0)) {
 					res = (new DOMParser()).parseFromString(res, "text/xml");
 				}
-				callback.call(context, null, res);
+				if (typeof callback === "function") callback.call(context, null, res);
 				req.dispose();
 			});
 			req.addListener('fail', function (e) {
-				callback.call(context, req.getStatusText());
+				if (typeof callback === "function") callback.call(context, req.getStatusText());
 				req.dispose();
 			});
 			req.send();					
@@ -301,9 +302,7 @@ qx.Class.define("desk.FileSystem",
 					+ '\n})("' + desk.FileSystem.getFileDirectory(file)
 					+ '")\n//@ sourceURL=' + file;
 				document.getElementsByTagName('body')[0].appendChild(script);
-				if (typeof callback === "function") {
-					callback.apply(context);
-				};
+				if (typeof callback === "function") callback.call(context, err);
 			});
 		},
 
@@ -343,9 +342,7 @@ qx.Class.define("desk.FileSystem",
 				req.send();
 			}, function (err) {
 				req.dispose();
-				if (typeof callback === 'function') {
-					callback.call(context, err);
-				}
+				if (typeof callback === 'function') callback.call(context, err);
 			});
 		},
 
@@ -359,9 +356,6 @@ qx.Class.define("desk.FileSystem",
 		__get : function (action, params, callback, context) {
 			var fs = desk.FileSystem.getInstance();
 			var req = new qx.io.request.Xhr(fs.__actionsURL + action, 'GET');
-
-			function cb (err) {
-			}
 
 			req.setRequestData(params);
 			req.addListener('loadEnd', function (e) {

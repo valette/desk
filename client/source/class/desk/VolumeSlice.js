@@ -394,7 +394,7 @@ qx.Class.define("desk.VolumeSlice",
 		 * @param context {Object} optional callback context
 		 */
 		update : function (callback, context) {
-			callback = callback || function () {};
+			callback = typeof callback === "function" ? callback : function () {};
 			if (this.__opts.ooc) {
 				this.__updateOOC(callback, context);
 				return;
