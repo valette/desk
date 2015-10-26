@@ -565,6 +565,8 @@ qx.Class.define("desk.SceneContainer",
 				opts = {};
 			}
 
+			opts = opts || {};
+
 			var group = new THREE.Group();
 			this.addMesh(group, _.extend({branch : true, label : file}, opts));
 			async.eachSeries([0, 1, 2], function (orientation, callback) {
