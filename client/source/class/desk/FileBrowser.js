@@ -440,6 +440,12 @@ qx.Class.define("desk.FileBrowser",
 			case "mhd":
 				new desk.VolumeViewer(file);
 				break;
+			case "gz":
+				var suffix = ".nii.gz";
+				if (file.indexOf(suffix, file.length - suffix.length) !== -1) {
+					new desk.VolumeViewer(file);
+				}
+				break;					
 			case "vol": 
 				if (desk.Actions.getInstance().getAction("vol_slice") != null) {
 					new desk.VolumeViewer(file);
