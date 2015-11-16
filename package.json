@@ -17,10 +17,10 @@
     "body-parser": ">0.0.0",
     "brace": ">0.0.0",
     "browserify": ">0.0.0",
+    "browserify-css": ">0.0.0",
     "c3": ">0.0.0",
     "compression": ">0.0.0",
     "cron": ">0.0.0",
-    "cssify" : ">0.0.0",
     "d3": ">0.0.0",
     "express": ">0.0.0",
     "formidable": ">0.0.0",
@@ -54,6 +54,6 @@
     "node": "*"
   },
   "browserify": {
-    "transform": ["cssify"]
+    "transform": ["browserify-css"]
   }
 }
