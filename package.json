@@ -36,7 +36,6 @@
     "ms": ">0.0.0",
     "numeric": ">0.0.0",
     "operative": ">0.0.0",
-    "osenv" : ">0.0.0",
     "pretty-data": ">0.0.0",
     "random-js": ">0.0.0",
     "serve-index": ">0.0.0",

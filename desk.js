@@ -14,21 +14,21 @@ var	actions      = require(__dirname + '/lib/cl-rpc');
 	https        = require('https'),
 	libPath      = require('path'),
 	os           = require('os'),
-	osenv        = require('osenv'),
+	process      = require('process'),
 	socketIO     = require('socket.io'),
 	validator    = require('validator');
 
-var homeURL         = argv.multi ? '/' + osenv.user() + '/' : '/',
+var homeURL         = argv.multi ? '/' + process.env.USER + '/' : '/',
 	port            = argv.multi ? process.getuid() : 8080,
 	clientPath      = libPath.join(__dirname, 'client') + '/',
 	privateKeyFile  = libPath.join(__dirname, "privatekey.pem"),
 	certificateFile = libPath.join(__dirname, "certificate.pem"),
-	deskDir         = libPath.join(osenv.home(), 'desk') + '/',
+	deskDir         = libPath.join(os.homedir(), 'desk') + '/',
 	passwordFile    = libPath.join(deskDir, "password.json"),
 	uploadDir       = libPath.join(deskDir, 'upload') + '/',
 	extensionsDir   = libPath.join(deskDir, 'extensions') + '/',
 	emitLog         = false;
-	id              = {username : osenv.user(), password : "password"};
+	id              = {username : process.env.USER, password : "password"};
 
 function log (message) {
 	console.log(message);
