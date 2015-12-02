@@ -282,6 +282,14 @@ qx.Class.define("desk.VolumeSlice",
 		},
 
 		/**
+		 * returns the Image element used to load slices
+		 * @return {Image} the image
+		 */
+		getImage : function () {
+			return this.__image;
+		},
+
+		/**
 		 * returns the volume dimensions
 		 * @return {Array} array of 3D dimensions
 		 */
