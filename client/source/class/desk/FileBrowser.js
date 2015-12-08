@@ -274,7 +274,7 @@ qx.Class.define("desk.FileBrowser",
 			actionType = actionType === '1' ? 'move' : 'copy'
 
 			if (!confirm ('Are you sure you want to ' + actionType + ' move these files:\n' +
-					files.join('\n') + 'to :\n' + destination)) return;
+					files.join('\n') + ' to :\n' + destination)) return;
 
 			async.each(files, function (file, callback) {
 				desk.Actions.execute({
