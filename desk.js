@@ -1,4 +1,4 @@
-var	actions      = require(__dirname + '/lib/cl-rpc');
+var	actions      = require(__dirname + '/lib/index.js').server();
 	argv         = require('yargs').argv,
 	async        = require('async'),
 	auth         = require('basic-auth'),
@@ -26,16 +26,17 @@ var homeURL         = argv.multi ? '/' + process.env.USER + '/' : '/',
 	deskDir         = libPath.join(os.homedir(), 'desk') + '/',
 	passwordFile    = libPath.join(deskDir, "password.json"),
 	uploadDir       = libPath.join(deskDir, 'upload') + '/',
-	extensionsDir   = libPath.join(deskDir, 'extensions') + '/',
 	emitLog         = false;
 	id              = {username : process.env.USER, password : "password"};
 
-function log (message) {
+var log = function (message) {
 	console.log(message);
 	if (io && emitLog) {
 		io.emit("log", message);
 	}
 };
+
+log("Start : " + new Date().toLocaleString());
 
 // configure express server
 var app = express(),
@@ -54,7 +55,6 @@ fs.mkdirsSync(uploadDir);
 
 fs.watchFile(passwordFile, updatePassword);
 function updatePassword() {
-	log("load " + passwordFile);
 	if (fs.existsSync(passwordFile)) {
 		try {
 			id = JSON.parse(fs.readFileSync(passwordFile));
@@ -200,7 +200,6 @@ if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	baseURL = "https://";
 } else {
 	server = http.createServer(app);
-	log("No certificate provided, using non secure mode");
 	baseURL = "http://";
 }
 
@@ -223,7 +222,7 @@ io.on('connection', function (socket) {
 			log('disconnect : ' + ip + ' (' + client + ')');
 		})
 		.on('action', function(parameters) {
-			actions.performAction(parameters, function (response) {
+			actions.execute(parameters, function (response) {
 				io.emit("action finished", response);
 			});
 		})
@@ -232,16 +231,14 @@ io.on('connection', function (socket) {
 		});
 });
 
-fs.mkdirsSync(extensionsDir);
-
 actions.on("actionsUpdated", function () {
 		io.emit("actions updated");
 	})
-.on("log", log)
-.setRoot(deskDir)
-.includeDirectory(extensionsDir);
+.on("log", function (message) {
+	log(message);
+});
 
 server.listen(port);
-log(new Date().toLocaleString());
-log ("server running on port " + port);
-log(baseURL + "localhost:" + port + homeURL);
+
+log ("server running : " + baseURL + "localhost:" + port + homeURL);
+
