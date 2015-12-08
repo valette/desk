@@ -217,6 +217,7 @@ qx.Class.define("desk.Actions",
 								+ Object.keys(records.files).length + " files recorded");
 							start.setVisibility("visible");
 							stop.setVisibility("excluded");
+							this.__statify(false);
 					}, this);
 				}, this);
 			}, this);
@@ -224,14 +225,17 @@ qx.Class.define("desk.Actions",
 
 			var clear = new qx.ui.menu.Button('Clear records');
 			clear.addListener('execute', function () {
-				desk.Actions.execute({action : "delete_file",
-					file_name : this.__savedActionsFile
-				}, function (err) {
-					if (!err) 
-						alert("Records cleared")
-					else 
-						alert('error');
-				});
+				desk.FileSystem.exists(this.__savedActionsFile, function (err, exists) {
+					if (!exists) {
+						this.__statify(false);
+						return;
+					}
+					desk.Actions.execute({action : "delete_file",
+						file_name : this.__savedActionsFile
+					}, function () {
+						this.__statify(false);
+					}, this);
+				}, this);
 			}, this);
 			menu.add(clear);
 
@@ -581,7 +585,54 @@ qx.Class.define("desk.Actions",
 		/**
 		* Copies recorded actions and files to a static location
 		*/
-		__statify : function() {
+
+		__statifyWindow : null,
+		__statifyLog : null,
+
+		__statify : function (show) {
+			var win = this.__statifyWindow;
+			if (!win) {
+				win = this.__statifyWindow = new qx.ui.window.Window("Statify");
+				win.set({layout : new qx.ui.layout.VBox(), 
+					height :400, width : 500, showClose : false});
+				this.__statifyLog = new desk.LogContainer();
+				win.add(this.__statifyLog, {flex :1});
+				var button = new qx.ui.form.Button("Statify");
+				button.addListener("execute", function () {
+					this.__statify2(content);
+				}, this);
+				win.add(button);
+			}
+			var log = this.__statifyLog;
+			if (show) {
+				win.open();
+				win.center();
+			}
+			log.clear();
+			var content;
+			desk.FileSystem.readFile(this.__savedActionsFile, function (err, res) {
+				content = res;
+				if (err) content = {files : {} ,actions : {}};
+				log.log("Actions to copy : ");
+				var actions = content.actions;
+				Object.keys(actions).forEach(function (hash) {
+					log.log(actions[hash].outputDirectory, "blue");
+				});
+				if (Object.keys(actions).length === 0) {
+					log.log("none");
+				}
+				log.log("Files to copy : ");
+				var files = content.files;
+				Object.keys(files).forEach(function (hash) {
+					log.log(files[hash]);
+				});
+				if (Object.keys(files).length === 0) {
+					log.log("none");
+				}
+			});
+		},
+
+		__statify2 : function(content) {
 			var installDir = prompt('output directory?' , "code/static");
 			var browserifiedFile = "js/browserified.js";
 
@@ -594,7 +645,6 @@ qx.Class.define("desk.Actions",
 				boot = 'desk_startup_script = "' + boot + '";';
 			}
 
-			var content;
 			var self = this;
 
 			async.waterfall([
@@ -610,12 +660,9 @@ qx.Class.define("desk.Actions",
 					desk.FileSystem.mkdirp(installDir + "/files/cache", cb);
 				},
 				function (res, cb) {
-					desk.FileSystem.readFile(self.__savedActionsFile, cb);
-				},
-				function (res, cb) {
 					self.debug("copying actions results...");
-					content = res;
 					var files = content.actions;
+						console.log(files);
 					async.eachSeries(Object.keys(files), function (hash, cb) {
 						var res = files[hash];
 						var source = res.outputDirectory;
@@ -628,6 +675,7 @@ qx.Class.define("desk.Actions",
 								cb (err);
 								return;
 							}
+							self.__statifyLog.log("copying " + source + " to " + dest);
 							desk.Actions.execute({
 								action : "copy",
 								source : source,
@@ -641,6 +689,7 @@ qx.Class.define("desk.Actions",
 					self.debug("copying files...");
 					var files = content.files;
 					files.boot = startupFile;
+					console.log(files);
 					async.eachSeries(Object.keys(files), function (hash, cb) {
 						var file = files[hash];
 						self.debug("file : ", file);
@@ -650,6 +699,7 @@ qx.Class.define("desk.Actions",
 								cb (err);
 								return;
 							}
+							self.__statifyLog.log("copying " + file + " to " + dest);
 							desk.Actions.execute({
 								action : "copy",
 								source : file,
@@ -702,6 +752,7 @@ qx.Class.define("desk.Actions",
 					alert("error, see console output");
 					self.debug(err);
 				} else {
+					self.__statifyLog.log("Done");
 					self.debug("Records statified!");
 					alert("done");
 				}
