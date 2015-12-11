@@ -238,6 +238,15 @@ actions.on("actionsUpdated", function () {
 	log(message);
 });
 
+var nCPUS = os.cpus().length;
+var emitLoad = function () {
+	io.emit("loadavg", os.loadavg().map(function (avg) {
+		return avg / nCPUS;
+	}));
+	setTimeout(emitLoad, 5000);
+};
+emitLoad();
+
 server.listen(port);
 
 log ("server running : " + baseURL + "localhost:" + port + homeURL);

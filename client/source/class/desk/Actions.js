@@ -164,6 +164,19 @@ qx.Class.define("desk.Actions",
 					this.__runingActions[handle] = actions[handle];
 				}, this);
 			}, this);
+
+			// add server load widget
+			var label = new qx.ui.basic.Label("");
+			label.setBlockToolTip(false);
+			label.setToolTipText("CPU load");
+			qx.core.Init.getApplication().getRoot().add(label, {top : 0, right : 40});
+
+			this.__socket.on("loadavg", function (loadavg) {
+				var load = Math.max(0, Math.min(1.0, loadavg[0]));
+				var color = Math.floor(255 * (1 - load));
+				label.setBackgroundColor('rgb(255,'  + color + ', ' + color + ')');
+				label.setValue((100 * load).toPrecision(3) + "%");
+			});
 		},
 
 		/**
