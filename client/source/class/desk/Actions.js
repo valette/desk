@@ -172,10 +172,10 @@ qx.Class.define("desk.Actions",
 			qx.core.Init.getApplication().getRoot().add(label, {top : 0, right : 40});
 
 			this.__socket.on("loadavg", function (loadavg) {
-				var load = Math.max(0, Math.min(1.0, loadavg[0]));
-				var color = Math.floor(255 * (1 - load));
+				var load = Math.max(0, Math.min(100, Math.round(100 * loadavg[0])));
+				var color = Math.floor(2.55 * (100 - load));
 				label.setBackgroundColor('rgb(255,'  + color + ', ' + color + ')');
-				label.setValue((100 * load).toPrecision(3) + "%");
+				label.setValue(load + "%");
 			});
 		},
 
