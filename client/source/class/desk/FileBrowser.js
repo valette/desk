@@ -324,7 +324,8 @@ qx.Class.define("desk.FileBrowser",
 			dirs.sort();
 			dirs.forEach(function (dir) {
 				if ((dir === "cache") || (dir === "application") ||
-					((permissions === 0) && (dir ==="actions"))) {
+					((permissions === 0) && (dir ==="actions")) ||
+					dataDirs[dir].hidden) {
 					return;
 				}
 
