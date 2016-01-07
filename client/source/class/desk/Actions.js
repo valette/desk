@@ -8,6 +8,7 @@
  * @ignore (async.*)
  * @ignore (jsSHA)
  * @ignore (desk_RPC)
+ * @ignore (prettyData.json)
  * @lint ignoreDeprecated (alert)
  * @require(desk.LogContainer)
  * @require(desk.Random)
@@ -426,16 +427,21 @@ qx.Class.define("desk.Actions",
 			}
 
 			if (res.error) {
-				console.log(res);
 				var item = params.item;
 				if (!item) {
 					this.__addActionToList(params);
 					item = params.item;
 				}
 				item.setDecorator("tooltip-error");
-				item.setToolTipText(Object.keys(res.error).map(function (key) {
-					return '' + key + ':' + res.error[key];
-				}).join("<br>"));
+				console.log("Error : ");
+				console.log(res);
+				var toPrint;
+				if (typeof res.error === 'string') {
+					toPrint = prettyData.json('"' + res.error + '"');
+				} else {
+					toPrint = prettyData.json(res.error);
+				}
+				item.setToolTipText(toPrint.split('\n').join("<br>"));
 			} else {
 				delete this.__runingActions[res.handle];
 				params.actionFinished = true;
@@ -486,7 +492,6 @@ qx.Class.define("desk.Actions",
 			var item = this.__garbageContainer.getChildren()[0];
 			if (!item) {
 				item = new qx.ui.form.ListItem("dummy");
-				item.set({decorator : "button-hover", opacity : 0.7});
 
 				var kill = new qx.ui.menu.Button('Kill/remove');
 				kill.addListener('execute', function () {
@@ -514,6 +519,7 @@ qx.Class.define("desk.Actions",
 				item.setContextMenu(menu);
 			}
 			item.setLabel(params.POST.action || params.POST.manage);
+			item.set({decorator : "button-hover", opacity : 0.7});
 			params.item = item;
 			item.setUserData("params", params);
 			this.__ongoingActions.add(item);
