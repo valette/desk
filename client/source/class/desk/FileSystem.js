@@ -4,6 +4,8 @@
  * @ignore (_.*)
  * @ignore (desk_RPC)
  * @ignore (async.eachSeries)
+ * @ignore (async.waterfall)
+ * @ignore (jsSHA);
  */
 qx.Class.define("desk.FileSystem", 
 {
@@ -149,6 +151,44 @@ qx.Class.define("desk.FileSystem",
 				data : JSON.stringify(content, true),
 				output_directory : desk.FileSystem.getFileDirectory(file)
 			}, callback, context);
+		},
+
+		/**
+		* Writes content to a cached file
+		*
+		* @param content {Object} the content to write
+		* @param callback {Function} callback when done
+		* @param context {Object} optional context for the callback
+		* 
+		* <pre class="javascript">
+		* example : <br>
+		* desk.FileSystem.writeCachedFile (myContent, function (err, file) {<br>
+		* // here, the file has been written to disk, its location <br>
+		* // given by the 'file' callback parameter <br>
+		* });<br>
+		* </pre>
+		*/
+		writeCachedFile : function (name, content, callback, context) {
+			var sha = new jsSHA("SHA-1", "TEXT");
+			sha.update(content);
+			var hash = sha.getHash("HEX");
+			var file = "cache/" + hash[0] + "/" + hash[1] + "/" + hash +
+				"/" + name;
+			async.waterfall([
+				function (callback) {
+					desk.FileSystem.exists(file, callback);
+				},
+				function (exists, callback) {
+					if (exists) {
+						callback();
+						return;
+					}
+					desk.FileSystem.writeFile(file, content, callback);
+				}
+			], function (err) {
+				callback = callback || function () {};
+				callback.call(context, err, file);
+			});
 		},
 
 		/**
