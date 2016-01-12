@@ -138,8 +138,6 @@ function update (user) {
 		append : true,
 		args: args,
 		cwd : path.dirname(file),
-		outFile : logFile,
-		errFile : logFile,
 		logFile : logFile,
 		spawnWith : spawnWith,
 		env : env,
