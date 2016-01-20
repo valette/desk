@@ -276,4 +276,8 @@ THREE.CTMLoader.prototype.createModel = function ( file, callback ) {
 
 	callback( geometry );
 
+	// to avoid memory leaks...
+	Object.keys(file.body).forEach(function (key) {
+		delete file.body[key];
+	});
 };
