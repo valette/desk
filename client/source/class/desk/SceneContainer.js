@@ -13,6 +13,16 @@
 * @ignore (_.*)
 * @ignore (Float32Array)
 */
+
+window.addEventListener("dragover",function(e){
+  e = e || event;
+  e.preventDefault();
+},false);
+window.addEventListener("drop",function(e){
+  e = e || event;
+  e.preventDefault();
+},false);
+
 qx.Class.define("desk.SceneContainer", 
 {
     extend : desk.ThreeContainer,
@@ -331,7 +341,7 @@ qx.Class.define("desk.SceneContainer",
 				this.__loadFile(file, opt, callback);
 				break;
 			default : 
-				alert("error : file " + file + " cannot be displayed by mesh viewer");
+				console.error("error : file " + file + " cannot be displayed by mesh viewer");
 			}
 		},
 
@@ -458,7 +468,7 @@ qx.Class.define("desk.SceneContainer",
 				case "xml":
 					desk.FileSystem.readFile(file, function (error, result){
 						if (error) {
-							alert("Error while reading " + file + "\n" + error);
+							console.error("Error while reading " + file + "\n" + error);
 							throw (error);
 							return;
 						}
@@ -468,7 +478,7 @@ qx.Class.define("desk.SceneContainer",
 				case "json" : 
 					desk.FileSystem.readFile(file, function (error, result){
 						if (error) {
-							alert("Error while reading " + file + "\n" + error);
+							console.error("Error while reading " + file + "\n" + error);
 							throw (error);
 						}
 						if (result.viewpoint) {
@@ -481,7 +491,7 @@ qx.Class.define("desk.SceneContainer",
 					}, this);
 					break;
 				default : 
-					alert ("error : meshviewer cannot read " + file);
+					console.error ("error : meshviewer cannot read " + file);
 					break;
 			}
 		},
@@ -597,6 +607,41 @@ qx.Class.define("desk.SceneContainer",
 					this.attachVolumeSlices(e.getData("volumeSlices"));
 				}
 			}, this);
+			this.addListener('appear', function() {
+				var element = this.getContentElement().getDomElement();
+				element.ondrop = function (e) {
+					var files = e.dataTransfer.files;
+					var files2 = [];
+					for (var i = 0; i < files.length; i++) {
+						files2.push(files[i]);
+					}
+					files2.forEach(function (file) {
+						var reader = new FileReader();
+						console.log(file);
+						reader.onload = function() {
+							var loader;
+							switch (desk.FileSystem.getFileExtension(file.name))  {
+							case "vtk" :
+								loader = this.__vtkLoader;
+								break;
+							default :
+								console.error("Error : cannot load " + file.name +
+									" : unrecognized format");
+							}
+							if (!loader) {
+								return;
+							}
+							loader.load(reader.result, function (geometry) {
+								this.addGeometry(geometry, {label : file.name});
+							}.bind(this));
+						}.bind(this);
+						reader.readAsDataURL(file);
+					}.bind(this));
+					e.stopPropagation();
+					e.preventDefault();
+				}.bind(this);
+				element.ondragover = function() {return false;};
+            }, this);
 		},
 
 		/**
@@ -1071,18 +1116,27 @@ qx.Class.define("desk.SceneContainer",
 
 			var leaf = this.__meshes.nodeGet(params.leaf);
 			if (leaf) {
+				this._deleteMembers(leaf.viewerProperties);
 				delete leaf.viewerProperties;
 				this.__meshes.getDataModel().prune(leaf.nodeId, true);
 			}
 
-			delete params.mesh;
-			delete mesh.userData.viewerProperties;
+			this._deleteMembers(mesh.userData.viewerProperties);
 			this.__setData();
 
-			if (dispose === false) return;
+			if (dispose === false) {
+				return;
+			}
 
 			if (!params.keepGeometry && mesh.geometry) {
 				mesh.geometry.dispose();
+				var attributes = mesh.geometry.attributes;
+				Object.keys(attributes).forEach(function (key) {
+					delete attributes[key].array;
+				});
+				if (mesh.geometry.index) {
+					delete mesh.geometry.index.array;
+				}
 			}
 
 			if (!params.keepMaterial && mesh.material) {
@@ -1098,6 +1152,7 @@ qx.Class.define("desk.SceneContainer",
 					}
 				});
 			}
+			this._deleteMembers(mesh.userData);
 			this._deleteMembers(mesh);
 			this.render();
         },
@@ -1130,7 +1185,7 @@ qx.Class.define("desk.SceneContainer",
 						nT = geometry.attributes.index.array.length / 3;
 					}
 				}
-				alert ("Mesh with " + nV + " vertices and " + nT + " triangles");
+				console.log("Mesh with " + nV + " vertices and " + nT + " triangles");
 			}, this);
 			menu.add(properties);
 
@@ -1193,18 +1248,7 @@ qx.Class.define("desk.SceneContainer",
 				this.render();		
 			},this);
 			menu.add(removeButton);
-			
-			var analysis = new qx.ui.menu.Button("Mesh Tools");
-			analysis.addListener("execute", function (){
-				this.__meshes.getSelectedNodes().forEach(function (mesh) {
-					if (mesh.type == qx.ui.treevirtual.MTreePrimitive.Type.LEAF) {
-						new desk.MeshTools({meshViewer : this,
-							specMesh : (this.getMeshes())[mesh.nodeId]});
-					}
-				}, this);
-			}, this);
-			menu.add(analysis);
-			
+
 			var animate = new qx.ui.menu.Button('animate');
 			animate.addListener('execute', function () {
 				var nodes = this.__meshes.getSelectedNodes();
@@ -1235,7 +1279,7 @@ qx.Class.define("desk.SceneContainer",
 					visibility = "excluded";
 				}
 
-				[properties, appearance, analysis, animate].forEach(function (button) {
+				[properties, appearance, animate].forEach(function (button) {
 					button.setVisibility(visibility);
 				});
 			}, this);
