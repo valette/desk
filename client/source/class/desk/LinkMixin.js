@@ -1,6 +1,6 @@
 /**
  * Mixin for handling links between several objects
- * @ignore (_.contains)
+ * @ignore (_.includes)
  */
 qx.Mixin.define("desk.LinkMixin",
 {
@@ -26,7 +26,7 @@ qx.Mixin.define("desk.LinkMixin",
 		* @param object {Object} the object to link to
 		*/
 		__addUnique  : function (object) {
-			if (!_.contains(this.__links, object)) {
+			if (!_.includes(this.__links, object)) {
 				this.__links.push(object);
 				object.__links = this.__links;
 			}
