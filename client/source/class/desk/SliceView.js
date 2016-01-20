@@ -288,7 +288,7 @@ qx.Class.define("desk.SliceView",
 		 * @param slice {desk.VolumeSlice} slice to remove
 		*/
 		removeVolume : function (slice) {
-			if (!_.contains(this.__slices, slice)) return;
+			if (!_.includes(this.__slices, slice)) return;
 
 			var mesh = slice.getUserData("mesh");
 
