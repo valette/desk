@@ -41,9 +41,17 @@ qx.Class.define("desk.VolumeSlice",
 		if (opts.format != null) {
 			this.setImageFormat(opts.format);
 		}
-		this.__lookupTables = opts.colors || null;
+		if (opts.imageFormat != null) {
+			this.setImageFormat(opts.imageFormat);
+			console.error('desk.VolumeSlice : option "imageFormat" is deprecated. Use option "format"');
+		}
+
 		if (opts.opacity != null) {
 			this.__opacity = opts.opacity;
+		}
+
+		if (opts.LUTFactor) {
+			this.__LUTFactor = opts.LUTFactor;
 		}
 
 		this.__file = file;
@@ -58,7 +66,7 @@ qx.Class.define("desk.VolumeSlice",
 
 			if (this.__numberOfScalarComponents === 1) {
 				this.__contrastMultiplier = 1 / Math.abs(this.__scalarMax - this.__scalarMin);
-				this.__brightnessOffset = - this.__scalarMin;
+				this.__brightnessOffset = - this.__scalarMin * this.__contrastMultiplier;
 			}
 			this.setBrightnessAndContrast(this.__brightness, this.__contrast);
 		}.bind(this);
@@ -77,8 +85,13 @@ qx.Class.define("desk.VolumeSlice",
 			texture.magFilter = texture.minFilter = filter;
 		});
 
-		this.addListener("changeImageFormat", function () {this.update();}, this);
+		this.addListener("changeImageFormat", this.update, this);
 		this.addListener("changeSlice", this.__updateImage, this);
+
+		if (opts.colors) {
+			this.setLookupTables(opts.colors);
+		}
+
 		this.update(callback, context);
 	},
 
@@ -120,9 +133,10 @@ qx.Class.define("desk.VolumeSlice",
 		].join("\n"),
 
 		FRAGMENTSHADERBEGIN : [
+			"precision highp float;",
 			"uniform sampler2D texture;",
 			"uniform sampler2D lookupTable;",
-			"uniform float lookupTableLength;",
+			"uniform float lutRatio;",
 			"uniform float useLookupTable;",
 			"uniform float contrast;",
 			"uniform float brightness;",
@@ -135,27 +149,26 @@ qx.Class.define("desk.VolumeSlice",
 			"void main() {",
 				"vec4 rawData = texture2D( texture, vUv );",
 				"vec4 rawBytes = floor(rawData*vec4(255.0)+vec4(0.5));",
-				"float valueJPG=rawData[0];"
 		].join("\n"),
 
 		FRAGMENTSHADERCHAR : [
 				"// for char",
-				"float color = rawBytes[0] - 256.0 * step ( 128.0, rawBytes[0] );"
+				"float value = rawBytes[0] - 256.0 * step ( 128.0, rawBytes[0] );"
 		].join("\n"),
 
 		FRAGMENTSHADERUCHAR : [
 				"// for uchar",
-				"float color = rawBytes[0];"
+				"float value = rawBytes[0];"
 		].join("\n"),
 
 		FRAGMENTSHADERSHORT : [
 				"// for short",
-				"float color = rawBytes[0]+ 256.0 * rawBytes[3] - 65536.0 * step ( 128.0, rawBytes[3] );"
+				"float value = rawBytes[0]+ 256.0 * rawBytes[3] - 65536.0 * step ( 128.0, rawBytes[3] );"
 		].join("\n"),
 
 		FRAGMENTSHADERUSHORT : [
 				"// for ushort",
-				"float color = rawBytes[0] + 256.0 * rawBytes[3];"
+				"float value = rawBytes[0] + 256.0 * rawBytes[3];"
 		].join("\n"),
 
 		FRAGMENTSHADERFLOAT : [
@@ -165,19 +178,20 @@ qx.Class.define("desk.VolumeSlice",
 				"float Sign = 1.0 - step(128.0,rawBytes[3])*2.0 ;",
 				"float Exponent = 2.0 * mod(rawBytes[3],128.0) + step(128.0,rawBytes[2]) - 127.0;",
 				"float Mantissa = mod(rawBytes[2],128.0)*65536.0 + rawBytes[1]*256.0 +rawBytes[0]+ 8388608.0;",
-				"float color = Sign * Mantissa * pow(2.0,Exponent - 23.0);"
+				"float value = Sign * Mantissa * pow(2.0,Exponent - 23.0);"
 		].join("\n"),
 
 		FRAGMENTSHADEREND : [
-				"float rescaledValuePNG = ( color - scalarMin ) / ( scalarMax - scalarMin );",
-				"float rescaledPixelValue= (1.0 - imageType )*  rescaledValuePNG + imageType * valueJPG;",
-				"float correctedPixelValue=(rescaledPixelValue+brightness)*contrast;",
-				"vec4 correctedColor=vec4(correctedPixelValue);",
-				"correctedColor[3]=opacity;",
+				"if (imageType == 1.0) {",
+				"	value = scalarMin + rawData[0] * ( scalarMax - scalarMin );",
+				"}",
 
-				"float unscaledValueJPG=( scalarMax - scalarMin ) * valueJPG + scalarMin;",
-				"float pixelValue=mix(color, unscaledValueJPG, imageType);",
-				"float clampedValue=clamp(pixelValue/ lookupTableLength, 0.0, 1.0);",
+				"float correctedValue = value * contrast + brightness;",
+
+				"vec4 correctedColor = vec4(correctedValue);",
+				"correctedColor[3] = opacity;",
+
+				"float clampedValue=clamp(correctedValue * lutRatio, 0.0, 1.0);",
 				"vec2 colorIndex=vec2(clampedValue,0.0);",
 				"vec4 colorFromLookupTable = texture2D( lookupTable,colorIndex  );",
 				"colorFromLookupTable[3] *= opacity;",
@@ -185,12 +199,12 @@ qx.Class.define("desk.VolumeSlice",
 		].join("\n"),
 
 		FRAGMENTSHADERENDOOC : [
-		"//ooc",
-				"color = mix(color, valueJPG, imageType);",
-				"float correctedPixelValue=(color+brightness)*contrast;",
+				"//ooc",
+				"color = mix(color, rawData[0], imageType);",
+				"float correctedPixelValue = (color + brightness) * contrast;",
 				"vec4 correctedColor=vec4(correctedPixelValue);",
 				"correctedColor[3]=opacity;",
-				"float clampedValue=clamp(correctedPixelValue/ lookupTableLength, 0.0, 1.0);",
+				"float clampedValue=clamp(correctedPixelValue * lutRatio, 0.0, 1.0);",
 				"vec2 colorIndex=vec2(clampedValue,0.0);",
 				"vec4 colorFromLookupTable = texture2D( lookupTable,colorIndex  );",
 				"colorFromLookupTable[3] *= opacity;",
@@ -202,7 +216,7 @@ qx.Class.define("desk.VolumeSlice",
 		FRAGMENTSHADERENDMULTICHANNEL : [
 			"uniform sampler2D texture;",
 			"uniform sampler2D lookupTable;",
-			"uniform float lookupTableLength;",
+			"uniform float lutRatio;",
 			"uniform float useLookupTable;",
 			"uniform float contrast;",
 			"uniform float brightness;",
@@ -252,6 +266,7 @@ qx.Class.define("desk.VolumeSlice",
 		__scalarSize : null,
 		__scalarMin : undefined,
 		__scalarMax : null,
+		__LUTFactor : 1,
 
 		__lookupTables : null,
 
@@ -465,12 +480,8 @@ qx.Class.define("desk.VolumeSlice",
 		__setBrightnessAndContrast : function (brightness, contrast) {
 			this.__brightness = brightness;
 			this.__contrast = contrast;
-			if (this.__opts.ooc 
-				&& (this.__availableImageFormat === 0)
-				&& (this.__numberOfScalarComponents === 1)) {
-				brightness += this.__brightnessOffset;
-				contrast *= this.__contrastMultiplier;
-			}
+			brightness += this.__brightnessOffset;
+			contrast *= this.__contrastMultiplier;
 
 			this.__materials.forEach(function (material) {
 				material.uniforms.brightness.value = brightness;
@@ -505,7 +516,7 @@ qx.Class.define("desk.VolumeSlice",
 		 __setLookupTablesToMaterial : function ( luts , material ) {
 			var lut = material.uniforms.lookupTable.value;
 			var numberOfColors = luts[0].length;
-			material.uniforms.lookupTableLength.value = numberOfColors;
+			material.uniforms.lutRatio.value = 1;//this.__LUTFactor / numberOfColors;
 			material.uniforms.useLookupTable.value = 1;
 			lut.needsUpdate = true;
 			var image = lut.image;
@@ -625,7 +636,7 @@ qx.Class.define("desk.VolumeSlice",
 			var baseUniforms = {
 					texture : {type : "t", slot: 0, value: this.__texture },
 					lookupTable : {type : "t", slot: 1, value: this.__lookupTable },
-					lookupTableLength : {type: "f", value: 2 },
+					lutRatio : {type: "f", value: 2 },
 					useLookupTable : {type: "f", value: 0 },
 					contrast : {type: "f", value: 0},
 					brightness : {type: "f", value: 0},

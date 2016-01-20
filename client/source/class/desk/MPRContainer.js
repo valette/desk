@@ -557,7 +557,7 @@ qx.Class.define("desk.MPRContainer",
             if ( options.opacity != null ) {
 				opacity = options.opacity;
 			}
-			if ( options.imageFormat != null ) {
+			if ( options.format != null ) {
 				imageFormat = options.imageFormat;
 			}
 
