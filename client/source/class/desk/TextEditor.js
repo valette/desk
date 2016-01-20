@@ -14,7 +14,7 @@ qx.Class.define("desk.TextEditor",
 	construct : function(file) {
 		this.base(arguments);
 		this.set({layout : new qx.ui.layout.VBox(), 
-			height :400, width : 500, showMinimize : false});
+			height :700, width : 700, showMinimize : false});
 
 		this.__reload = new qx.ui.form.Button("Reload");
 		this.__reload.addListener("execute", function(e) {
