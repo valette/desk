@@ -158,14 +158,13 @@ qx.Class.define("desk.ThreeContainer",
 		 * @param object {Object} object to clean
 		 */
 		_deleteMembers : function (object) {
-			var members = Object.keys(object);
-			for (var i = 0; i < members.length; i++) {
-				if (members[i] === "children") {
-					object.children.length = 0;
-				} else {
-					delete object[members[i]];
+			Object.keys(object).forEach(function (key) {
+				var value = object[key];
+				if (Array.isArray(value)) {
+					value.length = 0;
 				}
-			}
+				delete object[key];
+			});
 		},
 
 		__garbageContainer : new qx.ui.container.Composite(new qx.ui.layout.HBox()),
