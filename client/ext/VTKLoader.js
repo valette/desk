@@ -94,7 +94,7 @@ THREE.VTKLoader.prototype.load = function( url, callback, parameters ) {
 
 		} else if ( xhr.readyState === 2 ) {
 
-			length = xhr.getResponseHeader( "Content-Length" );
+			//length = xhr.getResponseHeader( "Content-Length" );
 
 		}
 
