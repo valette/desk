@@ -152,63 +152,63 @@ qx.Class.define("desk.VolumeSlice",
 		].join("\n"),
 
 		FRAGMENTSHADERCHAR : [
-				"// for char",
-				"float value = rawBytes[0] - 256.0 * step ( 128.0, rawBytes[0] );"
+			"// for char",
+			"float value = rawBytes[0] - 256.0 * step ( 128.0, rawBytes[0] );"
 		].join("\n"),
 
 		FRAGMENTSHADERUCHAR : [
-				"// for uchar",
-				"float value = rawBytes[0];"
+			"// for uchar",
+			"float value = rawBytes[0];"
 		].join("\n"),
 
 		FRAGMENTSHADERSHORT : [
-				"// for short",
-				"float value = rawBytes[0]+ 256.0 * rawBytes[3] - 65536.0 * step ( 128.0, rawBytes[3] );"
+			"// for short",
+			"float value = rawBytes[0]+ 256.0 * rawBytes[3] - 65536.0 * step ( 128.0, rawBytes[3] );"
 		].join("\n"),
 
 		FRAGMENTSHADERUSHORT : [
-				"// for ushort",
-				"float value = rawBytes[0] + 256.0 * rawBytes[3];"
+			"// for ushort",
+			"float value = rawBytes[0] + 256.0 * rawBytes[3];"
 		].join("\n"),
 
 		FRAGMENTSHADERFLOAT : [
-				"// for float",
-			// just discard rawBytes if the type is not float, otherwise it might affect JPG results...
-				"rawBytes=rawBytes* (1.0 - imageType);",
-				"float Sign = 1.0 - step(128.0,rawBytes[3])*2.0 ;",
-				"float Exponent = 2.0 * mod(rawBytes[3],128.0) + step(128.0,rawBytes[2]) - 127.0;",
-				"float Mantissa = mod(rawBytes[2],128.0)*65536.0 + rawBytes[1]*256.0 +rawBytes[0]+ 8388608.0;",
-				"float value = Sign * Mantissa * pow(2.0,Exponent - 23.0);"
+			"// for float",
+		// just discard rawBytes if the type is not float, otherwise it might affect JPG results...
+			"rawBytes=rawBytes* (1.0 - imageType);",
+			"float Sign = 1.0 - step(128.0,rawBytes[3])*2.0 ;",
+			"float Exponent = 2.0 * mod(rawBytes[3],128.0) + step(128.0,rawBytes[2]) - 127.0;",
+			"float Mantissa = mod(rawBytes[2],128.0)*65536.0 + rawBytes[1]*256.0 +rawBytes[0]+ 8388608.0;",
+			"float value = Sign * Mantissa * pow(2.0,Exponent - 23.0);"
 		].join("\n"),
 
 		FRAGMENTSHADEREND : [
-				"if (imageType == 1.0) {",
-				"	value = scalarMin + rawData[0] * ( scalarMax - scalarMin );",
-				"}",
+			"if (imageType == 1.0) {",
+			"	value = scalarMin +  ( rawData[0] * ( scalarMax - scalarMin ));",
+			"}",
 
-				"float correctedValue = value * contrast + brightness;",
+			"float correctedValue = value * contrast + brightness;",
 
-				"vec4 correctedColor = vec4(correctedValue);",
-				"correctedColor[3] = opacity;",
+			"vec4 correctedColor = vec4(correctedValue);",
+			"correctedColor[3] = opacity;",
 
-				"float clampedValue=clamp(correctedValue * lutRatio, 0.0, 1.0);",
-				"vec2 colorIndex=vec2(clampedValue,0.0);",
-				"vec4 colorFromLookupTable = texture2D( lookupTable,colorIndex  );",
-				"colorFromLookupTable[3] *= opacity;",
-				"gl_FragColor=mix (correctedColor, colorFromLookupTable, useLookupTable);",
+			"float clampedValue=clamp(correctedValue * lutRatio, 0.0, 1.0);",
+			"vec2 colorIndex=vec2(clampedValue,0.0);",
+			"vec4 colorFromLookupTable = texture2D( lookupTable,colorIndex  );",
+			"colorFromLookupTable[3] *= opacity;",
+			"gl_FragColor=mix (correctedColor, colorFromLookupTable, useLookupTable);",
 		].join("\n"),
 
 		FRAGMENTSHADERENDOOC : [
-				"//ooc",
-				"color = mix(color, rawData[0], imageType);",
-				"float correctedPixelValue = (color + brightness) * contrast;",
-				"vec4 correctedColor=vec4(correctedPixelValue);",
-				"correctedColor[3]=opacity;",
-				"float clampedValue=clamp(correctedPixelValue * lutRatio, 0.0, 1.0);",
-				"vec2 colorIndex=vec2(clampedValue,0.0);",
-				"vec4 colorFromLookupTable = texture2D( lookupTable,colorIndex  );",
-				"colorFromLookupTable[3] *= opacity;",
-				"gl_FragColor=mix (correctedColor, colorFromLookupTable, useLookupTable);",
+			"//ooc",
+			"color = mix(color, rawData[0], imageType);",
+			"float correctedPixelValue = (color + brightness) * contrast;",
+			"vec4 correctedColor=vec4(correctedPixelValue);",
+			"correctedColor[3]=opacity;",
+			"float clampedValue=clamp(correctedPixelValue * lutRatio, 0.0, 1.0);",
+			"vec2 colorIndex=vec2(clampedValue,0.0);",
+			"vec4 colorFromLookupTable = texture2D( lookupTable,colorIndex  );",
+			"colorFromLookupTable[3] *= opacity;",
+			"gl_FragColor=mix (correctedColor, colorFromLookupTable, useLookupTable);",
 		].join("\n"),
 
 		FRAGMENTSHADERFINISH : "\n }",
