@@ -119,7 +119,7 @@ qx.Class.define("desk.MPRContainer",
 		* @param action {desk.Action} : action to watch
 		* @param file {String} : output file to visualize (without path)
 		* @param options {Object} : options object containing settings
-		* such as imageFormat (0 or 1), label (text), visible (bool)
+		* such as format (0 for png or 1 for jpg), label (text), visible (bool)
 		* @param callback {Function} : callback when updated.
 		* @param context {Object} : optional callback context
 		*/
@@ -558,7 +558,7 @@ qx.Class.define("desk.MPRContainer",
 				opacity = options.opacity;
 			}
 			if ( options.format != null ) {
-				imageFormat = options.imageFormat;
+				imageFormat = options.format;
 			}
 
 			var volume = new qx.ui.container.Composite();
