@@ -588,16 +588,21 @@ qx.Class.define("desk.Actions",
 					this.__actionMenu.add(menubutton);
 				}, this);
 
-				if (this.__settings === null) {
-					this.__settings = settings;
-					if (settings.permissions) {
-						this.__createActionsMenu();
+				desk.FileSystem.includeScripts(
+					settings.init.map(function (file) {
+						return desk.FileSystem.getFileURL(file);
+					}),
+					function () {
+					if (this.__settings === null) {
+						this.__settings = settings;
+						if (settings.permissions) {
+							this.__createActionsMenu();
+						}
+						console.log("DESK launched, baseURL : " + desk.FileSystem.getInstance().getBaseURL());
+						this.fireEvent('changeReady');
 					}
-					console.log("DESK launched, baseURL : " + desk.FileSystem.getInstance().getBaseURL());
-					this.fireEvent('changeReady');
-				}
-				this.__settings = settings;
-
+					this.__settings = settings;					
+				}.bind(this));
 			}, this);
 		},
 
