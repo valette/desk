@@ -358,8 +358,6 @@ qx.Class.define("desk.FileSystem",
 				path : path,
 				stdout : true
 			}, function (err, message) {
-				console.log(path);
-				console.log(message);
 				callback.call(context, null, JSON.parse(message.stdout));
 			});
 			return;
