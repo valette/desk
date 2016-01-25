@@ -157,7 +157,7 @@ qx.Class.define("desk.SceneContainer",
 	destruct : function(){
 		this.__setData = function () {};
 		qx.util.DisposeUtil.destroyContainer(this.__leftContainer);
-		this.removeAllMeshes();
+		this.removeMesh(this.getScene());
 		this.unlink();
 		this.__meshes.dispose();
 		this.__meshes.getDataModel().dispose();
@@ -253,8 +253,7 @@ qx.Class.define("desk.SceneContainer",
 			(opt.parent || this.getScene()).add(mesh);
 			var leaf = opt.leaf = opt.leaf || this.__addLeaf(opt);
 			opt.mesh = mesh;
-			this.__meshes.nodeGet(leaf).viewerProperties = opt;
-			mesh.userData.viewerProperties = opt;
+			this.__meshes.nodeGet(leaf).viewerProperties = mesh.userData.viewerProperties = opt;
 			if (opt.updateCamera !== false) {
 				this.viewAll();
 			}
@@ -1105,41 +1104,39 @@ qx.Class.define("desk.SceneContainer",
 		 * @param mesh {THREE.Mesh} mesh to remove
 		 * @param dispose {Boolean} dispose mesh to avoid memory leaks (default : true)
 		 */
-		removeMesh : function (mesh, dispose) {
+		removeMesh : function (mesh) {
+			if (mesh.parent) {
+				mesh.parent.remove(mesh);
+			}
+
+			mesh.children.forEach(this.removeMesh, this);
+
 			var params = mesh && mesh.userData && mesh.userData.viewerProperties;
-			if (!params) {
-				console.warn("Trying to remove a mesh not part of the scene");
-				return;
+			if (params) {
+				var leaf = this.__meshes.nodeGet(params.leaf);
+				if (leaf) {
+					delete leaf.viewerProperties;
+					this.__meshes.getDataModel().prune(leaf.nodeId, true);
+				}
+				this._deleteMembers(params);
 			}
 
-			mesh.parent.remove(mesh);
-
-			var leaf = this.__meshes.nodeGet(params.leaf);
-			if (leaf) {
-				this._deleteMembers(leaf.viewerProperties);
-				delete leaf.viewerProperties;
-				this.__meshes.getDataModel().prune(leaf.nodeId, true);
-			}
-
-			this._deleteMembers(mesh.userData.viewerProperties);
 			this.__setData();
 
-			if (dispose === false) {
-				return;
-			}
-
-			if (!params.keepGeometry && mesh.geometry) {
+			if (mesh.geometry) {
 				mesh.geometry.dispose();
 				var attributes = mesh.geometry.attributes;
-				Object.keys(attributes).forEach(function (key) {
-					delete attributes[key].array;
-				});
+				if (attributes) {
+					Object.keys(attributes).forEach(function (key) {
+						delete attributes[key].array;
+					});
+				}
 				if (mesh.geometry.index) {
 					delete mesh.geometry.index.array;
 				}
 			}
 
-			if (!params.keepMaterial && mesh.material) {
+			if (mesh.material) {
 				if (mesh.material.map) {
 					mesh.material.map.dispose();
 				}
@@ -1152,6 +1149,8 @@ qx.Class.define("desk.SceneContainer",
 					}
 				});
 			}
+
+			mesh.geometry = mesh.material  = undefined;
 			this._deleteMembers(mesh.userData);
 			this._deleteMembers(mesh);
 			this.render();

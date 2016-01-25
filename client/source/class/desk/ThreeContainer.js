@@ -158,12 +158,9 @@ qx.Class.define("desk.ThreeContainer",
 		 * @param object {Object} object to clean
 		 */
 		_deleteMembers : function (object) {
+			if (!object) return;
 			Object.keys(object).forEach(function (key) {
-				var value = object[key];
-				if (Array.isArray(value)) {
-					value.length = 0;
-				}
-				delete object[key];
+			    delete object[key];
 			});
 		},
 
