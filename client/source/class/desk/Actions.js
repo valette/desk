@@ -616,6 +616,10 @@ qx.Class.define("desk.Actions",
 		__statifyWindow : null,
 		__statifyLog : null,
 
+		/**
+		* Executes statification
+		* @param show {Boolean} display or not the statify window
+		*/
 		__statify : function (show) {
 			var win = this.__statifyWindow;
 			if (!win) {
@@ -659,6 +663,10 @@ qx.Class.define("desk.Actions",
 			});
 		},
 
+		/**
+		* Executes statification (for real...)
+		* @param content {Object} content to statify
+		*/
 		__statify2 : function(content) {
 			var installDir = prompt('output directory?' , "code/static");
 			var browserifiedFile = "js/browserified.js";

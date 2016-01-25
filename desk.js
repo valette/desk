@@ -44,11 +44,11 @@ var app = express(),
     rpc = express.Router();
 
 app.use(compress())
-.set('trust proxy', true)
-.use (function (req, res, next) {
-	res.cookie('homeURL', homeURL);
-	next();
-});
+	.set('trust proxy', true)
+	.use (function (req, res, next) {
+		res.cookie('homeURL', homeURL);
+		next();
+	});
 
 fs.mkdirsSync(deskDir);
 fs.mkdirsSync(uploadDir);
@@ -93,58 +93,58 @@ app.use(function(req, res, next) {
 .use(homeURL, router);
 
 router.use('/rpc', rpc)
-.use('/', express.static(libPath.join(clientPath, 'application/build')))
-.use('/files', express.static(deskDir))
-.use('/files', directory(deskDir))
-.use('/', express.static(clientPath))
-.use('/', directory(clientPath))
-.use('/js', express.static(libPath.join(__dirname, 'cache')));
+	.use('/', express.static(libPath.join(clientPath, 'application/build')))
+	.use('/files', express.static(deskDir))
+	.use('/files', directory(deskDir))
+	.use('/', express.static(clientPath))
+	.use('/', directory(clientPath))
+	.use('/js', express.static(libPath.join(__dirname, 'cache')));
 
 rpc.post('/upload', function(req, res) {
-	var form = new formidable.IncomingForm();
-	form.uploadDir = uploadDir;
-	form.parse(req, function(err, fields, files) {
-		var file = files.file;
-		var outputDir = fields.uploadDir.toString().replace(/%2F/g,'/') || 'upload';
-		outputDir = libPath.join(deskDir, outputDir);
-		log("file : " + file.path.toString());
-		var fullName = libPath.join(outputDir, file.name.toString());
-		var exists = true;
-		var index = 0;
-		var newfile;
-		async.whilst(function () {
-			return exists;
-		}, function (callback) {
-			newFile = fullName + ( index > 0 ? "." + index : "" );
-			fs.exists(newFile, function (fileExist) {
-				exists = fileExist;
-				index++;
-				callback();
-			});
-		}, function () {
-			fs.move(file.path.toString(), newFile, function(err) {
-				if (err) throw err;
-				res.send('file ' + file.name + ' uploaded successfully');
-				log("uploaded to " +  newFile);
+		var form = new formidable.IncomingForm();
+		form.uploadDir = uploadDir;
+		form.parse(req, function(err, fields, files) {
+			var file = files.file;
+			var outputDir = fields.uploadDir.toString().replace(/%2F/g,'/') || 'upload';
+			outputDir = libPath.join(deskDir, outputDir);
+			log("file : " + file.path.toString());
+			var fullName = libPath.join(outputDir, file.name.toString());
+			var exists = true;
+			var index = 0;
+			var newfile;
+			async.whilst(function () {
+				return exists;
+			}, function (callback) {
+				newFile = fullName + ( index > 0 ? "." + index : "" );
+				fs.exists(newFile, function (fileExist) {
+					exists = fileExist;
+					index++;
+					callback();
+				});
+			}, function () {
+				fs.move(file.path.toString(), newFile, function(err) {
+					if (err) throw err;
+					res.send('file ' + file.name + ' uploaded successfully');
+					log("uploaded to " +  newFile);
+				});
 			});
 		});
+	})
+	.post('/password', function(req, res){
+		if (!req.body.password) {
+			res.json({error : 'no password entered!'});
+			return;
+		}
+		if (req.body.password.length > 4) {
+			var shasum = crypto.createHash('sha1');
+			shasum.update(req.body.password);
+			id.sha = shasum.digest('hex');
+			fs.writeFileSync(passwordFile, JSON.stringify(id));
+			res.json({status : "password changed"});
+		} else {
+			res.json({error : 'password too short!'});
+		}
 	});
-})
-.post('/password', function(req, res){
-	if (!req.body.password) {
-		res.json({error : 'no password entered!'});
-		return;
-	}
-	if (req.body.password.length > 4) {
-		var shasum = crypto.createHash('sha1');
-		shasum.update(req.body.password);
-		id.sha = shasum.digest('hex');
-		fs.writeFileSync(passwordFile, JSON.stringify(id));
-		res.json({status : "password changed"});
-	} else {
-		res.json({error : 'password too short!'});
-	}
-});
 
 var server;
 var baseURL;

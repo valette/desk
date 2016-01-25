@@ -14,15 +14,6 @@
 * @ignore (Float32Array)
 */
 
-window.addEventListener("dragover",function(e){
-  e = e || event;
-  e.preventDefault();
-},false);
-window.addEventListener("drop",function(e){
-  e = e || event;
-  e.preventDefault();
-},false);
-
 qx.Class.define("desk.SceneContainer", 
 {
     extend : desk.ThreeContainer,
@@ -1102,7 +1093,6 @@ qx.Class.define("desk.SceneContainer",
 		/**
 		 * Removes a mesh from the scene
 		 * @param mesh {THREE.Mesh} mesh to remove
-		 * @param dispose {Boolean} dispose mesh to avoid memory leaks (default : true)
 		 */
 		removeMesh : function (mesh) {
 			if (mesh.parent) {
@@ -1288,3 +1278,12 @@ qx.Class.define("desk.SceneContainer",
 		}
 	}
 });
+
+window.addEventListener("dragover",function(e){
+  e = e || event;
+  e.preventDefault();
+},false);
+window.addEventListener("drop",function(e){
+  e = e || event;
+  e.preventDefault();
+},false);

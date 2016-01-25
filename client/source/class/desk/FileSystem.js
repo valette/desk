@@ -156,6 +156,7 @@ qx.Class.define("desk.FileSystem",
 		/**
 		* Writes content to a cached file
 		*
+		* @param name {String} the file name
 		* @param content {Object} the content to write
 		* @param callback {Function} callback when done
 		* @param context {Object} optional context for the callback
