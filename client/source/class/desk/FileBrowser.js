@@ -484,17 +484,10 @@ qx.Class.define("desk.FileBrowser",
 		*/
 		__downloadAction : function (node) {
 			if (!node.getChildren) {
-				var iframe = qx.bom.Iframe.create({
-					name : "testFrame" + Math.random(),
-					src : desk.FileSystem.getActionURL('download') +
-						'?file=' + node.getFullName()
-				});
-
-				qx.bom.Element.addListener(iframe, "load", function(e) {
-					iframe.dispose();
-				});
-
-				document.body.appendChild(iframe);
+				var link = document.createElement("a");
+				link.download = desk.FileSystem.getFileName(node.getFullName());
+				link.href = desk.FileSystem.getFileURL(node.getFullName());
+				link.click();
 			} else {
 				alert("Cannot download a directory!");
 			}

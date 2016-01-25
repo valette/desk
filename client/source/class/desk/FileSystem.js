@@ -353,7 +353,16 @@ qx.Class.define("desk.FileSystem",
 		* @param context {Object} optional context for the callback
 		*/
 		exists : function (path, callback, context) {
-			desk.FileSystem.__get('exists', {path : path}, callback, context);
+			desk.Actions.execute({
+				action : "exists",
+				path : path,
+				stdout : true
+			}, function (err, message) {
+				console.log(path);
+				console.log(message);
+				callback.call(context, null, JSON.parse(message.stdout));
+			});
+			return;
 		},
 
 		/**
@@ -363,7 +372,13 @@ qx.Class.define("desk.FileSystem",
 		* @param context {Object} optional context for the callback
 		*/
 		readDir : function (path, callback, context) {
-			desk.FileSystem.__get('ls', {path : path}, callback, context);
+			desk.Actions.execute({
+				action : 'ls',
+				directory : path,
+				stdout  : true
+			}, function (err, message) {
+				callback.call(context, err, JSON.parse(message.stdout));
+			});
 		},
 
 		/**
@@ -379,41 +394,14 @@ qx.Class.define("desk.FileSystem",
 			async.eachSeries(scripts, function (url, callback) {
 				req.open("GET", url);
 				req.onload = callback;
+				req.onerror = function () {
+					callback("Could not load " + url);
+				};
 				req.send();
 			}, function (err) {
 				req.dispose();
 				if (typeof callback === 'function') callback.call(context, err);
 			});
-		},
-
-		/**
-		* performs an xmlhttp GET request
-		* @param action {String} action path
-		* @param params {Object} requestData
-		* @param callback {Function} callback when done
-		* @param context {Object} optional context for the callback
-		*/
-		__get : function (action, params, callback, context) {
-			var fs = desk.FileSystem.getInstance();
-			var req = new qx.io.request.Xhr(fs.__actionsURL + action, 'GET');
-
-			req.setRequestData(params);
-			req.addListener('loadEnd', function (e) {
-				var err, res;
-				try {
-					res = JSON.parse(req.getResponseText());
-				} catch(e) {
-					err = e;
-				}
-
-				if (req.getStatus() === 200) {
-					callback.call(context, err, res);
-				} else {					
-					callback.call(context, res);
-				}
-				req.dispose();
-			});
-			req.send();
 		}
 	},
 

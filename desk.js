@@ -144,49 +144,6 @@ rpc.post('/upload', function(req, res) {
 	} else {
 		res.json({error : 'password too short!'});
 	}
-})
-.get('/exists', function (req, res) {
-	var path = req.query.path;
-	fs.exists(libPath.join(deskDir, path), function (exists) {
-		res.json(exists);
-	});
-})
-.get('/ls', function (req, res) {
-	var path = libPath.normalize(req.query.path);
-	var realDir = libPath.join(deskDir, path);
-	async.waterfall([
-		function (callback) {
-			actions.validatePath(path, callback);
-		},
-
-		function (callback) {
-			fs.readdir(realDir, callback)
-		},
-
-		function (files, callback) {
-			async.map(files, function (file, callback) {
-				fs.stat(libPath.join(realDir, file), function (err, stats) {
-					callback(null, {name : file, size : stats.size,
-							isDirectory : stats.isDirectory(),
-							mtime : stats.mtime.getTime()});
-				});
-			}, callback);
-		}],
-		function (error, files) {
-			if (error) res.status(500);
-			res.send(error || files);
-		}
-	);
-})
-.get('/download', function (req, res) {
-	var file = req.query.file;
-	actions.validatePath(file, function (error) {
-		if (error) {
-			res.send(error);
-			return;
-		}
-		res.download(libPath.join(deskDir, file));
-	});
 });
 
 var server;
@@ -248,6 +205,4 @@ var emitLoad = function () {
 emitLoad();
 
 server.listen(port);
-
 log ("server running : " + baseURL + "localhost:" + port + homeURL);
-

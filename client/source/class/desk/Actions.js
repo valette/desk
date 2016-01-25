@@ -592,7 +592,10 @@ qx.Class.define("desk.Actions",
 					settings.init.map(function (file) {
 						return desk.FileSystem.getFileURL(file);
 					}),
-					function () {
+					function (err) {
+					if (err) {
+						alert (err);
+					}
 					if (this.__settings === null) {
 						this.__settings = settings;
 						if (settings.permissions) {

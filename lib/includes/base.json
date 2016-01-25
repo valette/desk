@@ -170,6 +170,28 @@
       "js": "write_binary",
       "voidAction": true
     },
+    "ls": {
+      "parameters": [
+        {
+          "name": "directory",
+          "type": "directory",
+          "required": true
+        }
+      ],
+      "js": "ls",
+      "voidAction": true
+    },
+    "exists": {
+      "parameters": [
+        {
+          "name": "path",
+          "type": "file",
+          "required": true
+        }
+      ],
+      "js": "exists",
+      "voidAction": true
+    },
     "write_string": {
       "parameters": [
         {
