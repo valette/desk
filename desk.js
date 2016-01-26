@@ -188,12 +188,8 @@ io.on('connection', function (socket) {
 		});
 });
 
-actions.on("actionsUpdated", function () {
-		io.emit("actions updated");
-	})
-.on("log", function (message) {
-	log(message);
-});
+actions.on("actionsUpdated", () => io.emit("actions updated"))
+	.on("log", message => log(message));
 
 var nCPUS = os.cpus().length;
 var emitLoad = function () {
