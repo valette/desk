@@ -589,7 +589,7 @@ qx.Class.define("desk.Actions",
 				}, this);
 
 				desk.FileSystem.includeScripts(
-					settings.init.map(function (file) {
+					(settings.init || [] ).map(function (file) {
 						return desk.FileSystem.getFileURL(file);
 					}),
 					function (err) {
