@@ -30,11 +30,11 @@ qx.Class.define("desk.ThreeContainer",
 		scene.add(camera);
 
 		// lights
-		var dirLight = new THREE.DirectionalLight( 0xaaaaaa );
+		var dirLight = new THREE.DirectionalLight( 0x888888 );
 		dirLight.position.set(200, 200, 1000).normalize();
 		camera.add(dirLight);
 		camera.add(dirLight.target);
-		scene.add(new THREE.AmbientLight(0x444444));
+		scene.add(new THREE.AmbientLight(0x666666));
 
 		// renderer
 		var renderer = this.__renderer = new THREE.WebGLRenderer({
@@ -379,10 +379,16 @@ qx.Class.define("desk.ThreeContainer",
 		 * @param ratio {Float} ratio
 		 */
 		__multiplyDimensions : function (ratio) {
+			var uuids = {};
 			this.__scene.traverse(function (object) {
-				if (object.material && object.material.linewidth) {
-					object.material.linewidth *= ratio;
-					object.material.needsUpdate = true;
+				// this does not work...
+				var material = object.material;
+				if (material && material.linewidth) {
+					if (!uuids[material.uuid]) {
+						material.linewidth *= ratio;
+						material.needsUpdate = true;
+						uuids[material.uuid] = material;
+					}
 				} else if (object.userData.edges) {
 					object.userData.edges.material.linewidth *= ratio;
 				}

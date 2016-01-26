@@ -790,7 +790,6 @@ qx.Class.define("desk.SceneContainer",
  
 			var material =  new THREE.MeshPhongMaterial({
 				color : new THREE.Color().fromArray(color).getHex(),
-				shininess : 5,
 				side : THREE.DoubleSide
 			});
 
@@ -803,7 +802,7 @@ qx.Class.define("desk.SceneContainer",
 			if (geometry.attributes && geometry.attributes.color) {
 				mesh.material.vertexColors = THREE.VertexColors;
 			}
-			mesh.renderOrder = opts.renderOrder || 0
+			mesh.renderOrder = opts.renderOrder || 0;
             this.addMesh( mesh, opts );
             return mesh;
         },
