@@ -30,7 +30,7 @@ qx.Class.define("desk.Uploader",
   		var uploadCount = 0;
   
   		var uploader = new com.zenesis.qx.upload.UploadMgr( btn, 
-			desk.FileSystem.getActionURL('upload'));
+			desk.FileSystem.getBaseURL() + 'upload');
   		
   		// Parameter tp be added to all uploads (can be overridden by individual files)
 		//	uploader.setParam("myGlobalParam", "global123");

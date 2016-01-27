@@ -39,11 +39,8 @@ var log = function (message) {
 log("Start : " + new Date().toLocaleString());
 
 // configure express server
-var app = express(),
-    router = express.Router(),
-    rpc = express.Router();
-
-app.use(compress())
+var app = express()
+	.use(compress())
 	.set('trust proxy', true)
 	.use (function (req, res, next) {
 		res.cookie('homeURL', homeURL);
@@ -89,18 +86,10 @@ app.use(function(req, res, next) {
 	res.setHeader('WWW-Authenticate', 'Basic realm="login/password?"');
 	res.sendStatus(401);
 })
-.use(bodyParser.urlencoded({limit : '10mb', extended : true}))
-.use(homeURL, router);
+.use(bodyParser.urlencoded({limit : '10mb', extended : true}));
 
-router.use('/rpc', rpc)
-	.use('/', express.static(libPath.join(clientPath, 'application/build')))
-	.use('/files', express.static(deskDir))
-	.use('/files', directory(deskDir))
-	.use('/', express.static(clientPath))
-	.use('/', directory(clientPath))
-	.use('/js', express.static(libPath.join(__dirname, 'cache')));
-
-rpc.post('/upload', function(req, res) {
+var router = express.Router()
+	.post('/upload', function(req, res) {
 		var form = new formidable.IncomingForm();
 		form.uploadDir = uploadDir;
 		form.parse(req, function(err, fields, files) {
@@ -130,7 +119,7 @@ rpc.post('/upload', function(req, res) {
 			});
 		});
 	})
-	.post('/password', function(req, res){
+	.post('/password', function(req, res) {
 		if (!req.body.password) {
 			res.json({error : 'no password entered!'});
 			return;
@@ -144,7 +133,15 @@ rpc.post('/upload', function(req, res) {
 		} else {
 			res.json({error : 'password too short!'});
 		}
-	});
+	})
+	.use('/', express.static(libPath.join(clientPath, 'application/build')))
+	.use('/files', express.static(deskDir))
+	.use('/files', directory(deskDir))
+	.use('/', express.static(clientPath))
+	.use('/', directory(clientPath))
+	.use('/js', express.static(libPath.join(__dirname, 'cache')));
+
+app.use(homeURL, router);
 
 var server;
 var baseURL;

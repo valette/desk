@@ -26,7 +26,7 @@ qx.Class.define("desk.Actions",
 		this.base(arguments);
 		this.__ongoingActions = new qx.ui.container.Composite(new qx.ui.layout.VBox());
 
-		var baseURL = desk.FileSystem.getInstance().getBaseURL();
+		var baseURL = desk.FileSystem.getBaseURL();
 		var req = new qx.bom.request.Script();
 		req.onload = function () {
 			this.debug("loaded browserified.js");
@@ -268,7 +268,7 @@ qx.Class.define("desk.Actions",
 			button.setToolTipText("To change your password");
 			button.addListener('execute', function () {
 				var password = prompt('Enter new password (more than 4 letters)');
-				var req = new qx.io.request.Xhr(desk.FileSystem.getActionURL('password'));
+				var req = new qx.io.request.Xhr(desk.FileSystem.getBaseURL() + 'password');
 				req.setMethod('POST');
 				req.setRequestData({password : password});
 				req.addListener('success', function(e) {
@@ -601,7 +601,7 @@ qx.Class.define("desk.Actions",
 						if (settings.permissions) {
 							this.__createActionsMenu();
 						}
-						console.log("DESK launched, baseURL : " + desk.FileSystem.getInstance().getBaseURL());
+						console.log("DESK launched, baseURL : " + desk.FileSystem.getBaseURL());
 						this.fireEvent('changeReady');
 					}
 					this.__settings = settings;					
@@ -775,7 +775,7 @@ qx.Class.define("desk.Actions",
 					}, callback);
 				},
 				function (res, callback) {
-					desk.FileSystem.readURL(desk.FileSystem.getInstance().getBaseURL() + browserifiedFile, callback);
+					desk.FileSystem.readURL(desk.FileSystem.getBaseURL() + browserifiedFile, callback);
 				},
 				function (res, callback) {
 					self.debug("copying browserified code");

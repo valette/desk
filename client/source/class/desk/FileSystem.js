@@ -15,7 +15,6 @@ qx.Class.define("desk.FileSystem",
 
 	construct : function() {
 		this.__baseURL = desk_RPC ? qx.bom.Cookie.get("homeURL") : window.location.href;
-		this.__actionsURL = this.__baseURL + 'rpc/';
 		this.__filesURL = this.__baseURL + 'files/';
 	},
 
@@ -320,16 +319,6 @@ qx.Class.define("desk.FileSystem",
 		},
 
 		/**
-		* Returns the URL for a specific action
-		* @param action {String}
-		* 
-		* @return {String} actionsURL
-		*/
-		getActionURL : function (action) {
-			return desk.FileSystem.getInstance().__actionsURL + action;
-		},
-
-		/**
 		* executes the javascript code in file
 		* @param file {String} the file to execute
 		* @param callback {Function} callback when done
@@ -401,13 +390,7 @@ qx.Class.define("desk.FileSystem",
 				req.dispose();
 				if (typeof callback === 'function') callback.call(context, err);
 			});
-		}
-	},
-
-	members : {
-		__baseURL : null,
-		__filesURL : null,
-		__actionsURL : null,
+		},
 
 		/**
 		* Returns the base URL string
@@ -415,8 +398,14 @@ qx.Class.define("desk.FileSystem",
 		* @return {String} baseURL
 		*/
 		getBaseURL : function () {
-			return this.__baseURL;
-		},
+			return desk.FileSystem.getInstance().__baseURL;
+		}
+
+	},
+
+	members : {
+		__baseURL : null,
+		__filesURL : null,
 
 		/**
 		* Returns the directory for the given file, session type and Id
