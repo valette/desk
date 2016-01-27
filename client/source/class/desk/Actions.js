@@ -540,7 +540,7 @@ qx.Class.define("desk.Actions",
 				parameters[param.name] = this.__currentFileBrowser.getSelectedFiles()[0];
 				action.setParameters(parameters);
 				return true;
-			}, this);
+			}.bind(this));
 			action.setOutputDirectory("actions/");
 		},
 
