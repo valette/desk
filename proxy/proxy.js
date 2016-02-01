@@ -1,5 +1,4 @@
-var	cluster   = require('cluster'),
-	execSync  = require('child_process').execSync,
+var	execSync  = require('child_process').execSync,
 	fs        = require('fs'),
 	http      = require('http'),
 	https     = require('https'),
@@ -10,7 +9,8 @@ var	port      = 80,
 	port2     = 443;
 
 var defaultRoutes,
-	config = __dirname + '/config.json',
+	config     = __dirname + '/config.json',
+	ports      = __dirname + '/ports.json',
 	keyFile    = __dirname + '/cert/privatekey.pem',
 	certFile   = __dirname + '/cert/certificate.pem',
 	caFile     = __dirname + '/cert/chain.pem',
@@ -18,17 +18,6 @@ var defaultRoutes,
 
 var routes, // main routing object
 	ca = []; // certificate chain
-
-if (cluster.isMaster) {
-	for (var i = 0; i < 4; i++) {
-		cluster.fork();
-	}
-	cluster.on('exit', function(worker, code, signal) {
-		console.log('worker ' + worker.process.pid + ' died');
-		cluster.fork();
-	});
-	return;
-}
 
 var proxy = httpProxy.createProxyServer({xfwd : true});
 proxy.on('error', function(err, req, res) {

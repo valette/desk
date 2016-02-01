@@ -2,7 +2,7 @@
   "name": "proxy",
   "description": "a simple proxy + supervisor to handle multi-user DESK installs",
   "license" : "CECILL-B",
-  "main": "./supervisor",
+  "main": "./start",
   "private": true,
   "author": {
     "name": "Sebastien Valette"
@@ -12,10 +12,9 @@
   },
 
   "dependencies": {
-    "forever" : ">0.0.0",
-    "fs-extra" : ">0.0.0",
+    "async" : ">0.0.0",
     "http-proxy" : ">0.0.0",
-    "lodash" : ">0.0.0"
+    "pm2" : ">0.0.0"
   },
   "optionalDependencies": {},
   "engines": {
