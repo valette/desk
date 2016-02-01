@@ -73,7 +73,14 @@ qx.Class.define("desk.Actions",
 		* @param context {Object} optional context for the callback
 		* @return {String} action handle for managemenent (kill etc...)
 		*/
-		execute : function (params, callback, context) {
+		execute : function (params, options, callback, context) {
+			if (typeof options === "function") {
+				context = callback;
+				callback = options;
+				options = {};
+			}
+			options = options || {};
+
 			params = JSON.parse(JSON.stringify(params));
 			params.handle = Math.random().toString();
 			var actions = desk.Actions.getInstance();
@@ -83,8 +90,20 @@ qx.Class.define("desk.Actions",
 				actionFinished : false,
 				callback : callback || function () {},
 				context : context,
+				options : options,
 				POST : params
 			};
+
+			if (typeof options.logHandler === "function") {
+				parameters.stream = true;
+				["stdout", "stderr"].forEach(function (type) {
+					desk.Actions.getInstance().__socket.on(type, function (message) {
+						if (params.handle === message.handle) {
+							options.logHandler(type, message.data);
+						}
+					});
+				});
+			}
 
 			if (actions.__recordedActions && !desk_RPC) {
 				var response = actions.__recordedActions[actions.__getActionSHA(params)];
