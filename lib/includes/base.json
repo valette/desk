@@ -178,6 +178,7 @@
           "required": true
         }
       ],
+      "permissions" : 0,
       "js": "ls",
       "voidAction": true
     },
@@ -189,6 +190,7 @@
           "required": true
         }
       ],
+      "permissions" : 0,
       "js": "exists",
       "voidAction": true
     },
