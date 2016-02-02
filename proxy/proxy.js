@@ -16,8 +16,7 @@ var defaultRoutes,
 	caFile     = __dirname + '/cert/chain.pem',
 	httpAllowed;
 
-var routes, // main routing object
-	ca = []; // certificate chain
+var routes; // main routing object
 
 var proxy = httpProxy.createProxyServer({xfwd : true});
 proxy.on('error', function(err, req, res) {
@@ -25,25 +24,10 @@ proxy.on('error', function(err, req, res) {
 	res.end();
 });
 
-if (fs.existsSync(caFile)) {
-	var chain = fs.readFileSync (caFile, 'utf8').split ("\n");
-	var cert = [];
-	chain.forEach(function (line) {
-		if (line.length === 0) return;
-
-		cert.push(line);
-
-		if (line.match(/-END CERTIFICATE-/)) {
-			ca.push (cert.join("\n"));
-			cert = [];
-		}
-	});
-}
-
 var proxyServer = https.createServer({
 	key: fs.readFileSync(keyFile, 'utf8'),
 	cert: fs.readFileSync(certFile, 'utf8'),
-	ca : ca
+	ca : fs.readFileSync(caFile, 'utf8')
 }, processRequest);
 
 var server = http.createServer(function (req, res) {
