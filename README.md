@@ -33,6 +33,7 @@ to visualize 3D data (meshes, volumes) you also need;
 	git clone http://github.com/valette/desk.git
 	cd desk
 	npm install
+	node lib/buildJS.js
 
 to install binary addons for 3D data visualization (needs vtk and cmake):
 
