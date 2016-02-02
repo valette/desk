@@ -19,7 +19,7 @@ var	actions      = require(__dirname + '/lib/index.js').server();
 	validator    = require('validator');
 
 var homeURL         = argv.multi ? '/' + process.env.USER + '/' : '/',
-	port            = argv.multi ? process.getuid() : 8080,
+	port            = argv.multi ? process.env.PORT : 8080,
 	clientPath      = libPath.join(__dirname, 'client') + '/',
 	privateKeyFile  = libPath.join(__dirname, "privatekey.pem"),
 	certificateFile = libPath.join(__dirname, "certificate.pem"),

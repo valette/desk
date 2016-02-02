@@ -1,7 +1,7 @@
-var	async     = require('async');
-	fs        = require('fs'),
-	path      = require('path'),
-	pm2       = require('pm2');
+var	async      = require('async'),
+	fs         = require('fs'),
+	path       = require('path'),
+	pm2        = require('pm2');
 
 var config = JSON.parse(fs.readFileSync(__dirname + '/config.json'));
 var proxyUser = "dproxy"
@@ -20,6 +20,7 @@ pm2.connect(function(err) {
 			"merge_logs" : true,
 			"env": {
 				"DESK_USER" : user,
+				"PORT" : config.basePort + config.users.indexOf(user),
 				"DESK_CMD" : "node "	+ path.join(__dirname, '../desk.js --multi')
 			}
 		};

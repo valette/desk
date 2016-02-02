@@ -96,9 +96,11 @@ function updateRoutes() {
 		var users = routesContent.users;
 		routes = {};
 
-		users.forEach(function (user) {
-			routes[os.hostname() + '/' + user] = 
-				{target : 'http://' + os.hostname() + ':' + parseInt(execSync("id -u " + user))};
+		users.forEach(function (user, index) {
+			routes[os.hostname() + '/' + user] = {
+				target : 'http://' + os.hostname() + ':'
+					+ (routesContent.basePort + index)
+			};
 		});
 
 		// add external proxies
