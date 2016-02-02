@@ -55,5 +55,9 @@
   },
   "browserify": {
     "transform": ["browserify-css"]
+  },
+  "scripts": {
+    "postinstall": "node lib/buildJS.js",
+    "postupdate": "node lib/buildJS.js"
   }
 }
