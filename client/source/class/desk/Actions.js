@@ -94,14 +94,16 @@ qx.Class.define("desk.Actions",
 				POST : params
 			};
 
-			if (typeof options.logHandler === "function") {
-				parameters.stream = true;
-				["stdout", "stderr"].forEach(function (type) {
-					desk.Actions.getInstance().__socket.on(type, function (message) {
+			if (options.logHandler) {
+				params.stream = true;
+				parameters.listeners = ["stdout", "stderr"].map(function (type) {
+					var onMessage = function (message) {
 						if (params.handle === message.handle) {
 							options.logHandler(type, message.data);
 						}
-					});
+					};
+					desk.Actions.getInstance().__socket.on(type, onMessage);
+					return onMessage;
 				});
 			}
 
@@ -158,6 +160,17 @@ qx.Class.define("desk.Actions",
 		*/
 		__createActionsMenu : function () {
 			var menu = new qx.ui.menu.Menu();
+
+			// add server load item
+			var loadWidget = new qx.ui.menu.Button("CPU Load");
+			menu.add(loadWidget);
+			loadWidget.set({blockToolTip : false,
+				toolTipText : "server CPU Load",
+				appearance : "label"
+			});
+
+			menu.addSeparator();
+
 			var forceButton = new qx.ui.menu.CheckBox("Disable cache");
 			forceButton.setBlockToolTip(false);
 			forceButton.setToolTipText("When active, this options disables actions caching");
@@ -172,6 +185,13 @@ qx.Class.define("desk.Actions",
 
 			if (!desk_RPC) return;
 
+			this.__socket.on("loadavg", function (loadavg) {
+				var load = Math.max(0, Math.min(100, Math.round(100 * loadavg[0])));
+				var color = Math.floor(2.55 * (100 - load));
+				loadWidget.setBackgroundColor('rgb(255,'  + color + ', ' + color + ')');
+				loadWidget.setLabel("CPU Load  : " + load + "%");
+			});
+
 			var button = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png", menu);
 			button.setToolTipText("Configuration");
 			qx.core.Init.getApplication().getRoot().add(button, {top : 0, right : 0});
@@ -184,19 +204,6 @@ qx.Class.define("desk.Actions",
 					this.__runingActions[handle] = actions[handle];
 				}, this);
 			}, this);
-
-			// add server load widget
-			var label = new qx.ui.basic.Label("");
-			label.setBlockToolTip(false);
-			label.setToolTipText("CPU load");
-			qx.core.Init.getApplication().getRoot().add(label, {top : 0, right : 40});
-
-			this.__socket.on("loadavg", function (loadavg) {
-				var load = Math.max(0, Math.min(100, Math.round(100 * loadavg[0])));
-				var color = Math.floor(2.55 * (100 - load));
-				label.setBackgroundColor('rgb(255,'  + color + ', ' + color + ')');
-				label.setValue(load + "%");
-			});
 		},
 
 		/**
@@ -236,41 +243,22 @@ qx.Class.define("desk.Actions",
 				blockToolTip : false, toolTipText : "To stop recording and save actions",
 				visibility : "excluded"});
 			stop.addListener('execute', function () {
+				this.__settings.init.forEach(desk.FileSystem.getFileURL);
+
 				desk.FileSystem.getFileURL = oldGetFileURL;
-				desk.FileSystem.readFile(this.__savedActionsFile, function (err, res) {
-					var records = err ? {actions : {}, files : {}} : res;
-					records.actions = records.actions || {};
-					records.files = records.files || {};
-					_.extend(records.actions, this.__recordedActions);
-					_.extend(records.files, recordedFiles);
-					this.__recordedActions = null;
-					desk.FileSystem.writeFile(this.__savedActionsFile,
-						JSON.stringify(records), function () {
-							alert(Object.keys(records.actions).length + " actions recorded\n"
-								+ Object.keys(records.files).length + " files recorded");
-							start.setVisibility("visible");
-							stop.setVisibility("excluded");
-							this.__statify(false);
-					}, this);
+				var records = {actions : this.__recordedActions,
+					files : recordedFiles
+				};
+				this.__recordedActions = null;
+				desk.FileSystem.writeFile(this.__savedActionsFile,
+					JSON.stringify(records), function () {
+						alert(Object.keys(records.actions).length + " actions recorded\n"
+							+ Object.keys(records.files).length + " files recorded");
+						start.setVisibility("visible");
+						stop.setVisibility("excluded");
 				}, this);
 			}, this);
 			menu.add(stop);
-
-			var clear = new qx.ui.menu.Button('Clear records');
-			clear.addListener('execute', function () {
-				desk.FileSystem.exists(this.__savedActionsFile, function (err, exists) {
-					if (!exists) {
-						this.__statify(false);
-						return;
-					}
-					desk.Actions.execute({action : "delete_file",
-						file_name : this.__savedActionsFile
-					}, function () {
-						this.__statify(false);
-					}, this);
-				}, this);
-			}, this);
-			menu.add(clear);
 
 			var statify = new qx.ui.menu.Button('Statify');
 			statify.addListener('execute', this.__statify, this);
@@ -441,6 +429,12 @@ qx.Class.define("desk.Actions",
 			var params = this.__runingActions[res.handle];
 			if (!params) return;
 
+			if (params.listeners) {
+				["stdout", "stderr"].forEach(function (type, index) {
+					this.__socket.removeListener(type, params.listeners[index]);
+				}, this);
+			}
+
 			if (this.__recordedActions && desk_RPC) {
 				this.__recordedActions[this.__getActionSHA(params.POST)] = res;
 			}
@@ -607,8 +601,9 @@ qx.Class.define("desk.Actions",
 					this.__actionMenu.add(menubutton);
 				}, this);
 
+				settings.init = settings.init || [];
 				desk.FileSystem.includeScripts(
-					(settings.init || [] ).map(function (file) {
+					settings.init.map(function (file) {
 						return desk.FileSystem.getFileURL(file);
 					}),
 					function (err) {
@@ -716,10 +711,13 @@ qx.Class.define("desk.Actions",
 				function (res, cb) {
 					self.debug("copying actions results...");
 					var files = content.actions;
-						console.log(files);
 					async.eachSeries(Object.keys(files), function (hash, cb) {
 						var res = files[hash];
 						var source = res.outputDirectory;
+						if (!source) {
+							cb();
+							return;
+						}
 						var des2 = source.split('/');
 						des2.pop();
 						des2.pop();
@@ -743,24 +741,30 @@ qx.Class.define("desk.Actions",
 					self.debug("copying files...");
 					var files = content.files;
 					files.boot = startupFile;
-					console.log(files);
 					async.eachSeries(Object.keys(files), function (hash, cb) {
 						var file = files[hash];
 						self.debug("file : ", file);
-						var dest = installDir + "/files/" + desk.FileSystem.getFileDirectory(file);
-						desk.FileSystem.mkdirp(dest, function (err) {
-							if (err) {
-								cb (err);
+						desk.FileSystem.exists(file, function (err, exists) {
+							if (!exists) {
+								self.__statifyLog.log("skipping " + file + " copy");
+								cb();
 								return;
 							}
-							self.__statifyLog.log("copying " + file + " to " + dest);
-							desk.Actions.execute({
-								action : "copy",
-								source : file,
-								recursive : true,
-								destination : dest
-							}, cb);
-						});
+							var dest = installDir + "/files/" + desk.FileSystem.getFileDirectory(file);
+								desk.FileSystem.mkdirp(dest, function (err) {
+									if (err) {
+										cb (err);
+										return;
+									}
+									self.__statifyLog.log("copying " + file + " to " + dest);
+									desk.Actions.execute({
+										action : "copy",
+										source : file,
+										recursive : true,
+										destination : dest
+									}, cb);
+								});
+							});
 					}, cb);
 				},
 				function (callback) {

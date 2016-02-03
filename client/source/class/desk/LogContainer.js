@@ -45,9 +45,13 @@ members : {
 		color = color || "black";
 
 		this.setHtml(message.toString().replace(' ', '&nbsp')
-		    .split('\n').reduce(function (lines, line) {
-			    return lines + '<span style="color:' + color + '">' + line + '<br/></span>';
-		    }, this.getHtml())
+		    .split('\n')
+		    .filter(function (message) {
+					return message.trim().length > 0;
+				})
+			.reduce(function (lines, line) {
+					return lines + '<span style="color:' + color + '">' + line + '<br/></span>';
+				}, this.getHtml())
 		);
 		this.getContentElement().scrollToY(1000000, true); 
 	}
