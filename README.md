@@ -33,7 +33,7 @@ to visualize 3D data (meshes, volumes) you also need;
 	git clone http://github.com/valette/desk.git
 	cd desk
 	npm install
-	node lib/buildJS.js
+	npm run build
 
 to install binary addons for 3D data visualization (needs vtk and cmake):
 
@@ -55,7 +55,7 @@ login as:
 	git pull
 	npm install
 	npm update
-	node lib/buildJS.js
+	npm run build
 
 ### Build the API browser / update the qooxdoo core  ###
 

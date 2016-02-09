@@ -55,5 +55,8 @@
   },
   "browserify": {
     "transform": ["browserify-css"]
+  },
+  "scripts" : {
+    "build": "node lib/buildJS.js"
   }
 }
