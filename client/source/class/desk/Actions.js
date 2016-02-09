@@ -127,6 +127,10 @@ qx.Class.define("desk.Actions",
 
 			actions.__runingActions[params.handle] = parameters;
 			return params.handle;
+		},
+
+		getSettingsButton : function () {
+			return desk.Actions.getInstance().__settingsButton;
 		}
 	},
 
@@ -154,6 +158,7 @@ qx.Class.define("desk.Actions",
 		__recordedActions : null,
 		__savedActionsFile : 'cache/actions.json',
 		__firstReadFile : null,
+		__settingsButton : null,
 
 		/**
 		* Creates the action menu
@@ -192,7 +197,7 @@ qx.Class.define("desk.Actions",
 				loadWidget.setLabel("CPU Load  : " + load + "%");
 			});
 
-			var button = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png", menu);
+			var button = this.__settingsButton = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png", menu);
 			button.setToolTipText("Configuration");
 			qx.core.Init.getApplication().getRoot().add(button, {top : 0, right : 0});
 
@@ -602,6 +607,14 @@ qx.Class.define("desk.Actions",
 				}, this);
 
 				settings.init = settings.init || [];
+
+				if (this.__settings === null) {
+					this.__settings = settings;
+					if (settings.permissions) {
+						this.__createActionsMenu();
+					}
+				}
+
 				desk.FileSystem.includeScripts(
 					settings.init.map(function (file) {
 						return desk.FileSystem.getFileURL(file);
@@ -610,15 +623,8 @@ qx.Class.define("desk.Actions",
 					if (err) {
 						alert (err);
 					}
-					if (this.__settings === null) {
-						this.__settings = settings;
-						if (settings.permissions) {
-							this.__createActionsMenu();
-						}
-						console.log("DESK launched, baseURL : " + desk.FileSystem.getBaseURL());
-						this.fireEvent('changeReady');
-					}
-					this.__settings = settings;					
+					console.log("DESK launched, baseURL : " + desk.FileSystem.getBaseURL());
+					this.fireEvent('changeReady');
 				}.bind(this));
 			}, this);
 		},

@@ -4,8 +4,15 @@
     "code": "code",
     "cache": "cache",
     "actions": "actions",
+    "dev": {
+		"path" : "./dev",
+		"hidden" : true
+	},
     "application" : "./../../client/application"
   },
+  "init" : [
+	"dev/init.js"
+  ],
   "permissions": 1,
   "actions": {
     "compress_to_zip": {
