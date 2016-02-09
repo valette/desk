@@ -1,0 +1,38 @@
+{
+	"dataDirs" : {
+		"dev": {
+			"path" : "./",
+			"hidden" : true
+		}
+	},
+
+	"init" : [
+		"dev/init.js"
+	],
+  
+	"actions": {
+		"make" : {
+			"parameters" : [
+				 {
+					"name":"number_of_concurrent_jobs",
+					"type":"int",
+					"prefix" : "-j "
+				}
+			],
+	        "command":"make",
+			"hidden": true
+		},
+		"qooxdoo_generator": {
+			"parameters": [
+				{
+				"name": "job",
+				"type": "string",
+				"required": true
+				}
+			],
+			"command": "./generate.py",
+			"noCache": true,
+			"hidden": true
+		}
+	}
+}
