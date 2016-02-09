@@ -343,7 +343,7 @@ qx.Class.define("desk.ThreeContainer",
 				}
 			});
 
-			if (bbox.empty()) {
+			if (bbox.isEmpty()) {
 				return;
 			}
 
