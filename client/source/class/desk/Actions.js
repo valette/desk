@@ -54,6 +54,7 @@ qx.Class.define("desk.Actions",
 	statics : {
 		/**
 		* Calls callback when the actions list is constructed
+		* @internal
 		* @param callback {Function} : callback to be called when ready
 		* @param context {Object} : optional context for the callback
 		*/
@@ -69,6 +70,7 @@ qx.Class.define("desk.Actions",
 		/**
 		* executes an action
 		* @param params {Object} object containing action parameters
+		* @param options {Object} options for the action (force_update, logHandler)
 		* @param callback {Function} callback for when the action has been performed
 		* @param context {Object} optional context for the callback
 		* @return {String} action handle for managemenent (kill etc...)
@@ -129,6 +131,10 @@ qx.Class.define("desk.Actions",
 			return params.handle;
 		},
 
+		/**
+		* returns the setting button located on the upper right corner
+		* @return {qx.ui.form.MenuButton} settings button
+		*/
 		getSettingsButton : function () {
 			return desk.Actions.getInstance().__settingsButton;
 		}
@@ -477,6 +483,7 @@ qx.Class.define("desk.Actions",
 
 		/**
 		* launches an action
+		* @deprecated {5.0} Please use Use desk.Actions.execute() instead
 		* @param params {Object} object containing action parameters
 		* @param callback {Function} callback for when the action has been performed
 		* @param context {Object} optional context for the callback
