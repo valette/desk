@@ -37,8 +37,7 @@ to visualize 3D data (meshes, volumes) you also need;
 
 to install binary addons for 3D data visualization (needs vtk and cmake):
 
-	node lib/build.js        // if vtk6 is installed
-	node lib/build.js --vtk5 // if vtk5 is installed
+	npm run buildAddons
 
 ### Usage ###
 

@@ -57,6 +57,7 @@
     "transform": ["browserify-css"]
   },
   "scripts" : {
-    "build": "node lib/buildJS.js"
+    "build": "node lib/buildJS.js",
+    "buildAddons": "node lib/build.js"
   }
 }
