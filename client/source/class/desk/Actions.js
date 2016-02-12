@@ -96,17 +96,15 @@ qx.Class.define("desk.Actions",
 				POST : params
 			};
 
-			if (options.logHandler) {
+			if (options.listener) {
 				params.stream = true;
-				parameters.listeners = ["stdout", "stderr"].map(function (type) {
-					var onMessage = function (message) {
+				parameters.listener = desk.Actions.getInstance().__socket.on("actionEvent",
+					function (message) {
 						if (params.handle === message.handle) {
-							options.logHandler(type, message.data);
+							options.listener(message);
 						}
-					};
-					desk.Actions.getInstance().__socket.on(type, onMessage);
-					return onMessage;
-				});
+					}
+				);
 			}
 
 			if (actions.__recordedActions && !desk_RPC) {
@@ -226,6 +224,8 @@ qx.Class.define("desk.Actions",
 			actionsMenu.add(new qx.ui.menu.Button("Statifier", null, null, menu));
 			var recordedFiles
 			var oldGetFileURL;
+			var oldWriteFunctions;
+			var writers = ['writeFile', 'writeJSON', 'writeCachedFile'];
 
 			var getFileURL = function (file) {
 				this.debug("read : " + file);
@@ -236,6 +236,11 @@ qx.Class.define("desk.Actions",
 				return oldGetFileURL(file);
 			}.bind(this);
 
+			var fakeWriteFunction = function (file, content, callback, context) {
+				console.error(new Error("Write file called while applying statifier").stack);
+				(callback || function () {}).call(context);
+			};
+
 			var start = new qx.ui.menu.Button('Start recording');
 			start.setBlockToolTip(false);
 			start.setToolTipText("To save recorded actions");
@@ -244,6 +249,12 @@ qx.Class.define("desk.Actions",
 				recordedFiles = {};
 				this.__firstReadFile = null;
 				oldGetFileURL = desk.FileSystem.getFileURL;
+				oldWriteFunctions = writers.map(function (writer) {
+					var oldWriter = desk.FileSystem[writer];
+					desk.FileSystem[writer] = fakeWriteFunction;
+					return oldWriter;
+				});
+
 				desk.FileSystem.getFileURL = getFileURL;
 				start.setVisibility("excluded");
 				stop.setVisibility("visible");
@@ -252,11 +263,17 @@ qx.Class.define("desk.Actions",
 
 			var stop = new qx.ui.menu.Button('Stop recording').set({
 				blockToolTip : false, toolTipText : "To stop recording and save actions",
-				visibility : "excluded"});
+				visibility : "excluded"
+			});
+
 			stop.addListener('execute', function () {
 				this.__settings.init.forEach(desk.FileSystem.getFileURL);
 
 				desk.FileSystem.getFileURL = oldGetFileURL;
+				writers.forEach(function (writer, index) {
+					desk.FileSystem[writer] = oldWriteFunctions[index];
+				});
+
 				var records = {actions : this.__recordedActions,
 					files : recordedFiles
 				};
@@ -440,10 +457,8 @@ qx.Class.define("desk.Actions",
 			var params = this.__runingActions[res.handle];
 			if (!params) return;
 
-			if (params.listeners) {
-				["stdout", "stderr"].forEach(function (type, index) {
-					this.__socket.removeListener(type, params.listeners[index]);
-				}, this);
+			if (params.listener) {
+				this.__socket.removeListener("actionEvent", params.listener);
 			}
 
 			if (this.__recordedActions && desk_RPC) {
@@ -490,8 +505,7 @@ qx.Class.define("desk.Actions",
 		* @return {String} action handle for managemenent (kill etc...)
 		*/
 		launchAction : function (params, callback, context) {
-			console.warn('desk.actions.launchAction is deprecated! Use desk.Actions.execute() instead!');
-			console.warn(new Error().stack);
+			console.error(new Error('desk.actions.launchAction is deprecated! Use desk.Actions.execute() instead!'));
 			return desk.Actions.execute(params, function (err, res) {
 				if (typeof callback === "function") {
 					res.err = err;

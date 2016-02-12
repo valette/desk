@@ -187,8 +187,7 @@ io.on('connection', function (socket) {
 
 actions.on("actionsUpdated", () => io.emit("actions updated"))
 	.on("log", message => log(message))
-	.on("stdout", message => io.emit("stdout", message))
-	.on("stderr", message => io.emit("stderr", message));
+	.on("actionEvent", message => io.emit("actionEvent", message));
 
 var nCPUS = os.cpus().length;
 var emitLoad = function () {
