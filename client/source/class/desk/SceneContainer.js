@@ -788,7 +788,7 @@ qx.Class.define("desk.SceneContainer",
 				opacity = opts.opacity;
 			}
  
-			var material =  new THREE.MeshPhongMaterial({
+			var material =  new THREE.MeshLambertMaterial({
 				color : new THREE.Color().fromArray(color).getHex(),
 				side : THREE.DoubleSide
 			});
