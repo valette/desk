@@ -25,6 +25,7 @@
     "express": ">0.0.0",
     "formidable": ">0.0.0",
     "fs-extra": ">0.0.0",
+    "fwd": ">0.0.0",
     "gulp": ">0.0.0",
     "gulp-uglify": ">0.0.0",
     "gulp-streamify": ">0.0.0",

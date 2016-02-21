@@ -10,6 +10,7 @@ var	actions      = require(__dirname + '/lib/index.js').server();
 	express      = require('express'),
 	formidable   = require('formidable'),
     fs           = require('fs-extra'),
+    fwd          = require('fwd'),
 	http         = require('http'),
 	https        = require('https'),
 	libPath      = require('path'),
@@ -183,11 +184,9 @@ io.on('connection', function (socket) {
 		.on('setLog', function(value) {
 			emitLog = value;
 		});
-});
 
-actions.on("actionsUpdated", () => io.emit("actions updated"))
-	.on("log", message => log(message))
-	.on("actionEvent", message => io.emit("actionEvent", message));
+    fwd(actions, socket);
+});
 
 var nCPUS = os.cpus().length;
 var emitLoad = function () {
