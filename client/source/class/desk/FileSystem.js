@@ -90,6 +90,7 @@ qx.Class.define("desk.FileSystem",
 			req.addListener('load', function () {
 				var res = options.forceText ? req.getResponseText() : req.getResponse();
 				if ((typeof res === "string") && !options.forceText 
+					&& req.getResponseHeader("Content-Type")
 					&& (req.getResponseHeader("Content-Type").indexOf("xml") >= 0)) {
 					res = (new DOMParser()).parseFromString(res, "text/xml");
 				}
