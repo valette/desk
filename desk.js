@@ -6,7 +6,6 @@ var	actions      = require(__dirname + '/lib/index.js').server();
 	compress     = require('compression'),
 	crypto       = require('crypto'),
 	directory    = require('serve-index'),
-	dns          = require("dns"),
 	express      = require('express'),
 	formidable   = require('formidable'),
     fs           = require('fs-extra'),
@@ -16,8 +15,7 @@ var	actions      = require(__dirname + '/lib/index.js').server();
 	libPath      = require('path'),
 	os           = require('os'),
 	process      = require('process'),
-	socketIO     = require('socket.io'),
-	validator    = require('validator');
+	socketIO     = require('socket.io');
 
 var homeURL         = argv.multi ? '/' + process.env.USER + '/' : '/',
 	port            = argv.multi ? process.env.PORT : 8080,
@@ -27,29 +25,54 @@ var homeURL         = argv.multi ? '/' + process.env.USER + '/' : '/',
 	deskDir         = libPath.join(os.homedir(), 'desk') + '/',
 	passwordFile    = libPath.join(deskDir, "password.json"),
 	uploadDir       = libPath.join(deskDir, 'upload') + '/',
-	emitLog         = false;
 	id              = {username : process.env.USER, password : "password"};
 
-var log = function (message) {
-	console.log(message);
-	if (io && emitLog) {
-		io.emit("log", message);
-	}
-};
+var baseURL, server, io;
 
-log("Start : " + new Date().toLocaleString());
-
-// configure express server
 var app = express()
 	.use(compress())
 	.set('trust proxy', true)
 	.use (function (req, res, next) {
 		res.cookie('homeURL', homeURL);
 		next();
-	});
+	})
+	.use(function(req, res, next) {
+		var user = auth(req) || {};
+		var shasum = crypto.createHash('sha1');
+		shasum.update(user.pass || '');
+		if ((id.username === undefined) || (id.sha === undefined)
+			|| (user && user.name === id.username && shasum.digest('hex') === id.sha)) {
+				next();
+				return;
+		}
+		res.setHeader('WWW-Authenticate', 'Basic realm="login/password?"');
+		res.sendStatus(401);
+	})
+	.use(bodyParser.urlencoded({limit : '10mb', extended : true}));
 
 fs.mkdirsSync(deskDir);
 fs.mkdirsSync(uploadDir);
+
+
+if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
+	server = https.createServer({
+		key: fs.readFileSync(privateKeyFile),
+		cert: fs.readFileSync(certificateFile)
+	}, app);
+	baseURL = "https://";
+} else {
+	server = http.createServer(app);
+	baseURL = "http://";
+}
+
+io = socketIO(server, {path : libPath.join(homeURL, "socket/socket.io")});
+
+function log (message) {
+	console.log(message);
+	io.emit("log", message);
+}
+
+log("Start : " + new Date().toLocaleString());
 
 fs.watchFile(passwordFile, updatePassword);
 function updatePassword() {
@@ -74,20 +97,6 @@ function updatePassword() {
 	}
 }
 updatePassword();
-
-app.use(function(req, res, next) {
-	var user = auth(req) || {};
-	var shasum = crypto.createHash('sha1');
-	shasum.update(user.pass || '');
-	if ((id.username === undefined) || (id.sha === undefined)
-		|| (user && user.name === id.username && shasum.digest('hex') === id.sha)) {
-			next();
-			return;
-	}
-	res.setHeader('WWW-Authenticate', 'Basic realm="login/password?"');
-	res.sendStatus(401);
-})
-.use(bodyParser.urlencoded({limit : '10mb', extended : true}));
 
 var router = express.Router()
 	.post('/upload', function(req, res) {
@@ -144,57 +153,33 @@ var router = express.Router()
 
 app.use(homeURL, router);
 
-var server;
-var baseURL;
-if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
-	server = https.createServer({
-		key: fs.readFileSync(privateKeyFile),
-		cert: fs.readFileSync(certificateFile)
-	}, app);
-	log("Using secure https mode");
-	baseURL = "https://";
-} else {
-	server = http.createServer(app);
-	baseURL = "http://";
-}
-
-var io = socketIO(server, {path : libPath.join(homeURL, "socket/socket.io")});
 io.on('connection', function (socket) {
-	var client;
 	var ip = (socket.client.conn.request.headers['x-forwarded-for']
 		|| socket.handshake.address).split(":").pop();
 
-	if (validator.isIP(ip)) {
-		dns.reverse(ip, function (err, domains) {
-			client = (domains || ["no_domain"]).join(" ");
-			log('connect : ' + ip + ' ('  + client + ')');
-		});
-	} else {
-		log('connect : ' + ip);
-	}
+	log('connect : ' + ip);
 
 	socket.on('disconnect', function() {
-			log('disconnect : ' + ip + ' (' + client + ')');
+			log('disconnect : ' + ip);
 		})
 		.on('action', function(parameters) {
 			actions.execute(parameters, function (response) {
 				io.emit("action finished", response);
 			});
-		})
-		.on('setLog', function(value) {
-			emitLog = value;
 		});
 
     fwd(actions, socket);
 });
 
+actions.on('log', log);
+
 var nCPUS = os.cpus().length;
-var emitLoad = function () {
+function emitLoad () {
 	io.emit("loadavg", os.loadavg().map(function (avg) {
 		return avg / nCPUS;
 	}));
 	setTimeout(emitLoad, 5000);
-};
+}
 emitLoad();
 
 server.listen(port);

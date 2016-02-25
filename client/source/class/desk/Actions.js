@@ -332,7 +332,6 @@ qx.Class.define("desk.Actions",
 				function displayLog(data) {
 					log.log(data, 'yellow');
 				}
-				this.__socket.emit('setLog', true);
 				var win = new qx.ui.window.Window('Server log').set(
 					{width : 600, height : 500, layout : new qx.ui.layout.HBox()});
 				var log = new desk.LogContainer().set({backgroundColor : 'black'});
@@ -340,7 +339,6 @@ qx.Class.define("desk.Actions",
 				this.__socket.on("log", displayLog);
 				win.addListener('close', function () {
 					this.__socket.removeListener('log', displayLog);
-					this.__socket.emit('setLog', false);
 				}, this);
 				win.open();
 				win.center();

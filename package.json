@@ -45,7 +45,6 @@
     "socket.io": ">0.0.0",
     "socket.io-client": ">0.0.0",
     "three" : ">0.0.0",
-    "validator": ">0.0.0",
     "vinyl-source-stream" : ">0.0.0",
     "webworkify": ">0.0.0",
     "yargs": ">0.0.0"
