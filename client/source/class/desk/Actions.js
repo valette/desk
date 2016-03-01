@@ -180,6 +180,18 @@ qx.Class.define("desk.Actions",
 
 			menu.addSeparator();
 
+			var filesMenu = new qx.ui.menu.Menu();
+			var filesButton = new qx.ui.menu.Button("Files", null, null, filesMenu);
+			menu.add(filesButton);
+
+			Object.keys(this.__settings.dataDirs).sort().forEach(function (dir) {
+				var button = new qx.ui.menu.Button(dir);
+				button.addListener("execute", function (e) {
+					new desk.FileBrowser(dir, {standalone : true});
+				});
+				filesMenu.add(button);
+			});
+
 			var forceButton = new qx.ui.menu.CheckBox("Disable cache");
 			forceButton.setBlockToolTip(false);
 			forceButton.setToolTipText("When active, this options disables actions caching");

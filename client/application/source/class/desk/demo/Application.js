@@ -104,19 +104,6 @@ qx.Class.define("desk.demo.Application",
 					return;
 				}
 				actions.buildUI();
-				var menu = new qx.ui.menu.Menu();
-				var button = new qx.ui.form.MenuButton("Places", null, menu);
-				qx.core.Init.getApplication().getRoot().add(button, {top : 0, left : 0});
-
-				var dataDirs = actions.getSettings().dataDirs;
-				Object.keys(dataDirs).sort().forEach(function (dir) {
-					var button = new qx.ui.menu.Button(dir);
-					button.addListener("execute", function (e) {
-						new desk.FileBrowser(e.getTarget().getLabel(), {standalone : true});
-					});
-					menu.add(button);
-				});
-
 				new desk.FileBrowser(getParameter("rootDir"), {standalone : true});
 			}
 		}
