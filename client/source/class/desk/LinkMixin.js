@@ -48,7 +48,8 @@ qx.Mixin.define("desk.LinkMixin",
 		/**
 		* gives the array of all linked object (this included)
 		* @return {Array} the linked objects
-		*/		getLinks : function () {
+		*/
+		getLinks : function () {
 			return this.__links;
 		}
 	}
