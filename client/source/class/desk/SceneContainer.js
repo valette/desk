@@ -1168,9 +1168,9 @@ qx.Class.define("desk.SceneContainer",
 					nV = geometry.vertices.length;
 					nT = geometry.faces.length;
 				} else {
-					nV = geometry.attributes.position.numItems / 3;
-					if (geometry.attributes.index) {
-						nT = geometry.attributes.index.array.length / 3;
+					nV = geometry.attributes.position.count;
+					if (geometry.index) {
+						nT = geometry.index.count;
 					}
 				}
 				console.log("Mesh with " + nV + " vertices and " + nT + " triangles");
