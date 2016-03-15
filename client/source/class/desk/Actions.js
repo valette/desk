@@ -200,8 +200,10 @@ qx.Class.define("desk.Actions",
 			menu.add(forceButton);
 
 			menu.add(this.__getPasswordButton());
-			menu.add(this.__getConsoleLogButton());
-			menu.add(this.__getServerLogButton());
+			var logMenu = new qx.ui.menu.Menu();
+			menu.add(new qx.ui.menu.Button("Logs", null, null, logMenu));
+			logMenu.add(this.__getConsoleLogButton());
+			logMenu.add(this.__getServerLogButton());
 			this.__addSaveActionButtons(menu);
 
 			if (!desk_RPC) return;
