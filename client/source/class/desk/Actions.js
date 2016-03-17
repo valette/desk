@@ -36,6 +36,7 @@ qx.Class.define("desk.Actions",
 						if (err) {
 							console.log("Error while reading actions cache");
 						}
+						result = JSON.parse(result);
 						this.__recordedActions = result.actions;
 						this.__populateActionMenu();
 				}, this);
@@ -610,6 +611,7 @@ qx.Class.define("desk.Actions",
 		*/
 		__populateActionMenu : function() {
 			desk.FileSystem.readFile('actions.json', function (error, settings) {
+				settings = JSON.parse(settings);
 				this.__actionMenu = new qx.ui.menu.Menu();
 
 				var actions = settings.actions;
@@ -695,7 +697,7 @@ qx.Class.define("desk.Actions",
 			log.clear();
 			var content;
 			desk.FileSystem.readFile(this.__savedActionsFile, function (err, res) {
-				content = res;
+				content = JSON.parse(res) ;
 				if (err) content = {files : {} ,actions : {}};
 				log.log("Actions to copy : ");
 				var actions = content.actions;

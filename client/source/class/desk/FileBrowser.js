@@ -428,6 +428,7 @@ qx.Class.define("desk.FileBrowser",
 				break;
 			case "xml":
 				desk.FileSystem.readFile(file, function (error, xmlDoc) {
+					xmlDoc = (new DOMParser()).parseFromString(xmlDoc, "text/xml")
 					if (xmlDoc.getElementsByTagName("mesh").length !== 0) {
 						new desk.MeshViewer(file);
 					} else {

@@ -3,8 +3,7 @@
   "description": "a medical remote desktop, for visualization and processing of medical data",
   "license" : "CECILL-B",
   "main": "./lib/index.js",
-  "author": "Sebastien Valette <sebastien.valette@creatis.insa-lyon.fr> (http://www.creatis.insa-lyon.fr/~valette)"
-
+  "author": "Sebastien Valette <sebastien.valette@creatis.insa-lyon.fr> (http://www.creatis.insa-lyon.fr/~valette)",
   "version": "0.0.1",
   "repository": {
     "type": "git",
