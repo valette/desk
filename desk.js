@@ -1,4 +1,4 @@
-var	actions      = require(__dirname + '/lib/index.js').server();
+var	actions      = require(__dirname + '/lib/index.js');
 	argv         = require('yargs').argv,
 	async        = require('async'),
 	auth         = require('basic-auth'),
@@ -166,6 +166,9 @@ io.on('connection', function (socket) {
 			actions.execute(parameters, function (response) {
 				io.emit("action finished", response);
 			});
+		})
+		.on('setEmitLog', function (log) {
+			actions.setEmitLog(log);
 		});
 
     fwd(actions, socket);

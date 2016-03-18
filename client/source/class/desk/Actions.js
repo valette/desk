@@ -351,9 +351,11 @@ qx.Class.define("desk.Actions",
 					{width : 600, height : 500, layout : new qx.ui.layout.HBox()});
 				var log = new desk.LogContainer().set({backgroundColor : 'black'});
 				win.add(log, {flex : 1});
+				this.__socket.emit('setEmitLog', true);
 				this.__socket.on("log", displayLog);
 				win.addListener('close', function () {
 					this.__socket.removeListener('log', displayLog);
+					this.__socket.emit('setEmitLog', false);
 				}, this);
 				win.open();
 				win.center();
