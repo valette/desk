@@ -36,6 +36,7 @@ qx.Class.define("desk.Actions",
 						if (err) {
 							console.log("Error while reading actions cache");
 						}
+						result = JSON.parse(result);
 						this.__recordedActions = result.actions;
 						this.__populateActionMenu();
 				}, this);
@@ -180,6 +181,18 @@ qx.Class.define("desk.Actions",
 
 			menu.addSeparator();
 
+			var filesMenu = new qx.ui.menu.Menu();
+			var filesButton = new qx.ui.menu.Button("Files", null, null, filesMenu);
+			menu.add(filesButton);
+
+			Object.keys(this.__settings.dataDirs).sort().forEach(function (dir) {
+				var button = new qx.ui.menu.Button(dir);
+				button.addListener("execute", function (e) {
+					new desk.FileBrowser(dir, {standalone : true});
+				});
+				filesMenu.add(button);
+			});
+
 			var forceButton = new qx.ui.menu.CheckBox("Disable cache");
 			forceButton.setBlockToolTip(false);
 			forceButton.setToolTipText("When active, this options disables actions caching");
@@ -188,8 +201,10 @@ qx.Class.define("desk.Actions",
 			menu.add(forceButton);
 
 			menu.add(this.__getPasswordButton());
-			menu.add(this.__getConsoleLogButton());
-			menu.add(this.__getServerLogButton());
+			var logMenu = new qx.ui.menu.Menu();
+			menu.add(new qx.ui.menu.Button("Logs", null, null, logMenu));
+			logMenu.add(this.__getConsoleLogButton());
+			logMenu.add(this.__getServerLogButton());
 			this.__addSaveActionButtons(menu);
 
 			if (!desk_RPC) return;
@@ -336,9 +351,11 @@ qx.Class.define("desk.Actions",
 					{width : 600, height : 500, layout : new qx.ui.layout.HBox()});
 				var log = new desk.LogContainer().set({backgroundColor : 'black'});
 				win.add(log, {flex : 1});
+				this.__socket.emit('setEmitLog', true);
 				this.__socket.on("log", displayLog);
 				win.addListener('close', function () {
 					this.__socket.removeListener('log', displayLog);
+					this.__socket.emit('setEmitLog', false);
 				}, this);
 				win.open();
 				win.center();
@@ -596,6 +613,7 @@ qx.Class.define("desk.Actions",
 		*/
 		__populateActionMenu : function() {
 			desk.FileSystem.readFile('actions.json', function (error, settings) {
+				settings = JSON.parse(settings);
 				this.__actionMenu = new qx.ui.menu.Menu();
 
 				var actions = settings.actions;
@@ -681,7 +699,7 @@ qx.Class.define("desk.Actions",
 			log.clear();
 			var content;
 			desk.FileSystem.readFile(this.__savedActionsFile, function (err, res) {
-				content = res;
+				content = JSON.parse(res) ;
 				if (err) content = {files : {} ,actions : {}};
 				log.log("Actions to copy : ");
 				var actions = content.actions;

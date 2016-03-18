@@ -46,6 +46,7 @@ qx.Class.define("desk.Action",
 		*/
 		CREATEFROMFILE : function (file) {
 			desk.FileSystem.readFile(file, function (err, parameters) {
+				parameters = JSON.parse (parameters);
 				var action = new desk.Action (parameters.action, {standalone : true});
 				action.setParameters(parameters);
 			});
@@ -139,7 +140,7 @@ qx.Class.define("desk.Action",
 						if (err) {
 							return;
 						}
-						this.setParameters(result);
+						this.setParameters(JSON.parse(result));
 						if (this.__tabView) {
 							this.__addOutputTab();
 						}

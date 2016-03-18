@@ -543,7 +543,7 @@ qx.Class.define("desk.MPRContainer",
 
 			if (desk.FileSystem.getFileExtension(file) === "json") {
 				desk.FileSystem.readFile(file, function (err, viewpoints) {
-					this.setViewPoints(viewpoints.viewpoints);
+					this.setViewPoints(JSON.parse(viewpoints).viewpoints);
 				}, this);
 				return null;
 			}

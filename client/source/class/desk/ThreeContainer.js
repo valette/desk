@@ -393,17 +393,22 @@ qx.Class.define("desk.ThreeContainer",
 		__multiplyDimensions : function (ratio) {
 			var uuids = {};
 			this.__scene.traverse(function (object) {
-				// this does not work...
 				var material = object.material;
+				if (!material || uuids[material.uuid]) return;
+				uuids[material.uuid] = material;
+
 				if (material && material.linewidth) {
-					if (!uuids[material.uuid]) {
-						material.linewidth *= ratio;
-						material.needsUpdate = true;
-						uuids[material.uuid] = material;
-					}
-				} else if (object.userData.edges) {
-					object.userData.edges.material.linewidth *= ratio;
+//					console.log("old linewidth : ", material.linewidth);
+					material.linewidth *= ratio
+//					console.log(material)
+//					console.log("new linewidth : ", material.linewidth);
+				} else if (material && material.wireframeLinewidth) {
+//					console.log("old wireframelinewidth : ", material.wireframeLinewidth);
+					material.wireframeLinewidth *= ratio;
+//					console.log(material)
+//					console.log("new wireframelinewidth : ", material.wireframeLinewidth);
 				}
+				material.needsUpdate = true;
 			});
 			if (ratio < 1) {ratio = 1};
 			var size = this.__threeCanvas.getInnerSize();

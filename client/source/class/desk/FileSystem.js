@@ -57,7 +57,6 @@ qx.Class.define("desk.FileSystem",
 		* <pre class='javascript'>
 		* { <br>
 		*   cache : true/false // enable/disable cache (false by default) <br>
-		*   forceText : true/false // to force text output <br>
 		* }
 		* </pre>
 		* @param callback {Function} success callback, with request as first parameter
@@ -88,13 +87,14 @@ qx.Class.define("desk.FileSystem",
 			}
 			var req = new qx.io.request.Xhr(url);
 			req.addListener('load', function () {
-				var res = options.forceText ? req.getResponseText() : req.getResponse();
-				if ((typeof res === "string") && !options.forceText 
-					&& req.getResponseHeader("Content-Type")
-					&& (req.getResponseHeader("Content-Type").indexOf("xml") >= 0)) {
-					res = (new DOMParser()).parseFromString(res, "text/xml");
+				if (typeof callback === "function") {
+					try {
+						callback.call(context, null, req.getResponseText());
+					} catch (e) {
+						console.error("Error in a desk.FileSystem.readFile() callback. API has changed : response is pure text, maybe you need to parse it");
+						throw (e);
+					}
 				}
-				if (typeof callback === "function") callback.call(context, null, res);
 				req.dispose();
 			});
 			req.addListener('fail', function (e) {

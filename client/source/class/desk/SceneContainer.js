@@ -450,6 +450,7 @@ qx.Class.define("desk.SceneContainer",
 							throw (error);
 							return;
 						}
+						result = (new DOMParser()).parseFromString(result, "text/xml");
 						this.__parseXMLData(file, result, opts, after);
 					}, this);
 					break;
@@ -459,6 +460,7 @@ qx.Class.define("desk.SceneContainer",
 							console.error("Error while reading " + file + "\n" + error);
 							throw (error);
 						}
+						result = JSON.parse(result);
 						if (result.viewpoint) {
 							this.setViewpoint(result.viewpoint);
 							setTimeout(function () {
@@ -1156,9 +1158,9 @@ qx.Class.define("desk.SceneContainer",
 					nV = geometry.vertices.length;
 					nT = geometry.faces.length;
 				} else {
-					nV = geometry.attributes.position.numItems / 3;
-					if (geometry.attributes.index) {
-						nT = geometry.attributes.index.array.length / 3;
+					nV = geometry.attributes.position.count;
+					if (geometry.index) {
+						nT = geometry.index.count;
 					}
 				}
 				console.log("Mesh with " + nV + " vertices and " + nT + " triangles");
@@ -1192,9 +1194,6 @@ qx.Class.define("desk.SceneContainer",
 
 				function removeEdges() {
 					this.remove(this.userData.edges);
-					if (this.userData.edges) {
-						this.userData.edges.geometry.dispose();
-					}
 					this.removeEventListener("removedFromScene", removeEdges);
 					delete this.userData.edges;
 				}
@@ -1204,8 +1203,12 @@ qx.Class.define("desk.SceneContainer",
 					if (edges) {
 						removeEdges.apply(mesh)
 					} else {
-						edges = new THREE.WireframeHelper(mesh);
-						edges.material.color.setRGB(0,0,0);
+						edges = new THREE.Mesh(mesh.geometry,
+							new THREE.MeshBasicMaterial({
+								color : 0x000000,
+								wireframe : true
+							})
+						);
 						mesh.userData.edges = edges;
 						mesh.material.polygonOffset = true;
 						mesh.material.polygonOffsetFactor = 1;

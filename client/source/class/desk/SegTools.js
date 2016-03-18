@@ -743,6 +743,7 @@ qx.Class.define("desk.SegTools",
 				}
 			} else {
 				desk.FileSystem.readFile(file, function (err, result) {
+					result = (new DOMParser()).parseFromString(result, "text/xml");
 					this.__setColorsFromElements(result.getElementsByTagName("color"),
 									result.getElementsByTagName("adjacency"));
 				}, this);
@@ -1270,6 +1271,7 @@ qx.Class.define("desk.SegTools",
 					this.__loadColors();
 					return;
 				}
+				response = (new DOMParser()).parseFromString(response, "text/xml")
 				["seed", "correction"].forEach(function (tag, index) {
 					var slices = response.getElementsByTagName(tag);
 
