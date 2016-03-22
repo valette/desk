@@ -3,7 +3,8 @@
 		"dev": {
 			"path" : "./",
 			"hidden" : true
-		}
+		},
+		"application": "./../../client/application"
 	},
 
 	"init" : [

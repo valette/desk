@@ -1,4 +1,4 @@
-var	actions      = require(__dirname + '/lib/index.js');
+var	actions      = require('desk-base');
 	argv         = require('yargs').argv,
 	async        = require('async'),
 	auth         = require('basic-auth'),
@@ -53,6 +53,7 @@ var app = express()
 fs.mkdirsSync(deskDir);
 fs.mkdirsSync(uploadDir);
 
+actions.includeFile(__dirname + '/lib/includes/default.json');
 
 if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	server = https.createServer({

@@ -1,6 +1,5 @@
 {
 	"include":[
-		"base/base.json",
 		"dev/dev.json",
 		"demos/demos.json"
 	]
