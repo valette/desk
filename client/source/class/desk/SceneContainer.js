@@ -17,7 +17,6 @@
 qx.Class.define("desk.SceneContainer", 
 {
     extend : desk.ThreeContainer,
-	include : desk.LinkMixin,
 
 	/** 
 	 * constructor
@@ -77,7 +76,7 @@ qx.Class.define("desk.SceneContainer",
 					this.render();
 					setTimeout(callback, 10);
 					count++;
-					this.__propagateLinks();
+					this._propagateLinks();
 				}.bind(this),
 				function () {}
 			);
@@ -363,17 +362,6 @@ qx.Class.define("desk.SceneContainer",
 		},
 
 		/**
-		 * reloads all loaded objects
-		 */
-		 __propagateLinks : function () {
-			this.getLinks().forEach(function (link) {
-				if (this === link) {return;}
-				link.getControls().copy(this.getControls());
-				link.render();
-			}, this);
-		},
-
-		/**
 		 * Removes all meshes in the scene
 		 * @param dispose {Boolean} dispose meshes to avoid memory leaks (default : true)
 		 */
@@ -477,7 +465,7 @@ qx.Class.define("desk.SceneContainer",
 							this.setViewpoint(result.viewpoint);
 							setTimeout(function () {
 								this.render();
-								this.__propagateLinks();
+								this._propagateLinks();
 							}.bind(this), 50);
 						};
 					}, this);
@@ -695,7 +683,7 @@ qx.Class.define("desk.SceneContainer",
 			this.getControls().mouseMove(event.getDocumentLeft() - origin.left,
 				event.getDocumentTop() - origin.top);
 			this.render();
-			this.__propagateLinks();
+			this._propagateLinks();
 		},
 
 		/**
@@ -761,7 +749,7 @@ qx.Class.define("desk.SceneContainer",
 				controls.mouseMove(0, 0.05 * delta * this.getInnerSize().height);
 				controls.mouseUp();
 				this.render();
-				this.__propagateLinks();
+				this._propagateLinks();
 			}
 		},
 
@@ -951,7 +939,7 @@ qx.Class.define("desk.SceneContainer",
 				if (!e.supportsType("meshView")) {return}
 				var meshView = e.getData("meshView");
 				this.link(meshView);
-				meshView.__propagateLinks();
+				meshView._propagateLinks();
 			},this);
 
 			var menu = new qx.ui.menu.Menu();

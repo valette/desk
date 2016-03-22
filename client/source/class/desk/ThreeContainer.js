@@ -9,6 +9,7 @@
 qx.Class.define("desk.ThreeContainer", 
 {
 	extend : qx.ui.container.Composite,
+	include : desk.LinkMixin,
 
 	/**
 	 * Constructor
@@ -164,6 +165,16 @@ qx.Class.define("desk.ThreeContainer",
 			});
 		},
 
+		/**
+		 * updates all links
+		 */
+		 _propagateLinks : function () {
+			this.getLinks().forEach(function (link) {
+				if (this === link) {return;}
+				link.getControls().copy(this.getControls());
+				link.render();
+			}, this);
+		},
 		__garbageContainer : new qx.ui.container.Composite(new qx.ui.layout.HBox()),
 		__listenerId : null,
 
@@ -372,6 +383,7 @@ qx.Class.define("desk.ThreeContainer",
 			camera.updateProjectionMatrix();
 			controls.update();
 			this.render();
+			this._propagateLinks();
 		},
 
 		/**

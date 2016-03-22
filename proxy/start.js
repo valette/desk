@@ -1,5 +1,6 @@
 var	async      = require('async'),
 	fs         = require('fs'),
+	mkdirp     = require('mkdirp'),
 	path       = require('path'),
 	pm2        = require('pm2');
 
@@ -10,6 +11,8 @@ pm2.connect(function(err) {
 	async.each(config.users, function (user, callback) {
 		console.log("Starting " + user);
 		var cwd = '/home/' + user + '/desk/';
+		mkdirp.sync(cwd);
+		fs.chownSync(cwd, user, user);
 		var logFile = cwd + 'log.txt';
 		var settings = {
 			"name"       : user,
