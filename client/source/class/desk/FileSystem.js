@@ -2,7 +2,6 @@
  * Singleton helper class for file system operations : path->URL conversion, session management etc...
  * @lint ignoreDeprecated(alert)
  * @ignore (_.*)
- * @ignore (desk_RPC)
  * @ignore (async.eachSeries)
  * @ignore (async.waterfall)
  * @ignore (jsSHA);
@@ -14,8 +13,7 @@ qx.Class.define("desk.FileSystem",
 	type : "singleton",
 
 	construct : function() {
-		this.__baseURL = desk_RPC ? qx.bom.Cookie.get("homeURL") : window.location.href;
-		this.__filesURL = this.__baseURL + 'files/';
+		this.__baseURL = qx.bom.Cookie.get("homeURL") || window.location.href;
 	},
 
 	statics : {
@@ -270,7 +268,7 @@ qx.Class.define("desk.FileSystem",
 		* @return {String} the file URL
 		*/
 		getFileURL : function (file) {
-			return desk.FileSystem.getInstance().__filesURL + file;
+			return desk.FileSystem.getInstance().__baseURL + 'files/' + file;
 		},
 
 		/**
@@ -406,7 +404,6 @@ qx.Class.define("desk.FileSystem",
 
 	members : {
 		__baseURL : null,
-		__filesURL : null,
 
 		/**
 		* Returns the directory for the given file, session type and Id

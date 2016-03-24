@@ -7,7 +7,6 @@
  * @ignore (_.*)
  * @ignore (async.*)
  * @ignore (jsSHA)
- * @ignore (desk_RPC)
  * @ignore (prettyData.json)
  * @lint ignoreDeprecated (alert)
  * @require(desk.LogContainer)
@@ -23,11 +22,14 @@ qx.Class.define("desk.Actions",
 	* Constructor, never to be used. Use desk.Actions.getInstance() instead
 	*/
 	construct : function() {
+		if (qx.bom.Cookie.get("homeURL")) {
+			this.__rpcPresent = true;
+		}
+
 		this.base(arguments);
 		this.__ongoingActions = new qx.ui.container.Composite(new qx.ui.layout.VBox());
-
 		var baseURL = desk.FileSystem.getBaseURL();
-		if (!desk_RPC) {
+		if (!this.__rpcPresent) {
 			desk.FileSystem.readFile(this.__savedActionsFile,
 				function (err, result) {
 					if (err) {
@@ -102,7 +104,7 @@ qx.Class.define("desk.Actions",
 				);
 			}
 
-			if (actions.__recordedActions && !desk_RPC) {
+			if (actions.__recordedActions && !actions.__rpcPresent) {
 				var response = actions.__recordedActions[actions.__getActionSHA(params)];
 				if (response) {
 					response.handle = params.handle;
@@ -158,6 +160,7 @@ qx.Class.define("desk.Actions",
 		__savedActionsFile : 'cache/responses.json',
 		__firstReadFile : null,
 		__settingsButton : null,
+		__rpcPresent : false,
 
 		/**
 		* Creates the action menu
@@ -204,7 +207,7 @@ qx.Class.define("desk.Actions",
 			var button = this.__settingsButton = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png", menu);
 			button.setToolTipText("Configuration");
 
-			if (!desk_RPC) return;
+			if (!this.__rpcPresent) return;
 
 			this.__socket.on("loadavg", function (loadavg) {
 				var load = Math.max(0, Math.min(100, Math.round(100 * loadavg[0])));
@@ -214,15 +217,6 @@ qx.Class.define("desk.Actions",
 			});
 
 			qx.core.Init.getApplication().getRoot().add(button, {top : 0, right : 0});
-
-			// add already running actions
-			desk.Actions.execute({manage : 'list'}, function (err, res) {
-				var actions = res.ongoingActions;
-				Object.keys(actions).forEach(function (handle) {
-					this.__addActionToList(actions[handle]);
-					this.__runingActions[handle] = actions[handle];
-				}, this);
-			}, this);
 		},
 
 		/**
@@ -456,7 +450,7 @@ qx.Class.define("desk.Actions",
 				this.__socket.removeListener("actionEvent", params.listener);
 			}
 
-			if (this.__recordedActions && desk_RPC) {
+			if (this.__recordedActions && this.__rpcPresent) {
 				this.__recordedActions[this.__getActionSHA(params.POST)] = res;
 			}
 
@@ -633,16 +627,15 @@ qx.Class.define("desk.Actions",
 				}
 
 				this.debug("loading init files");
-
 				var initDir = 'code/init';
 				async.waterfall([
 					function (cb) {
-						if (!desk_RPC) {
+						if (!this.__rpcPresent) {
 							cb(1);
 							return;
 						}
 						desk.FileSystem.exists(initDir, cb);
-					},
+					}.bind(this),
 					function (exists, cb) {
 						if (!exists) {
 							cb();
@@ -822,8 +815,8 @@ qx.Class.define("desk.Actions",
 					var file = installDir + "/index.html";
 					desk.FileSystem.readFile(file, {forceText : true}, function (err, res) {
 						var lines = res.split('\n').map(function (line, index) {
-							if (line.indexOf('desk_RPC') >= 0) {
-								return 'desk_RPC = false;' + boot;
+							if (line.indexOf('desk_startup_script') >= 0) {
+								return boot;
 							} else {
 								return line;
 							}
