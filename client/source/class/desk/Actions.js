@@ -27,29 +27,23 @@ qx.Class.define("desk.Actions",
 		this.__ongoingActions = new qx.ui.container.Composite(new qx.ui.layout.VBox());
 
 		var baseURL = desk.FileSystem.getBaseURL();
-		var req = new qx.bom.request.Script();
-		req.onload = function () {
-			this.debug("loaded browserified.js");
-			if (!desk_RPC) {
-				desk.FileSystem.readFile(this.__savedActionsFile, 
-					function (err, result) {
-						if (err) {
-							console.log("Error while reading actions cache");
-						}
-						result = JSON.parse(result);
-						this.__recordedActions = result.actions;
-						this.__populateActionMenu();
-				}, this);
-				return;
-			}
+		if (!desk_RPC) {
+			desk.FileSystem.readFile(this.__savedActionsFile,
+				function (err, result) {
+					if (err) {
+						console.log("Error while reading actions cache");
+					}
+					result = JSON.parse(result);
+					this.__recordedActions = result.actions;
+					this.__populateActionMenu();
+			}, this);
+			return;
+		}
 
-			this.__socket = io({path : baseURL + 'socket/socket.io'});
-			this.__socket.on("action finished", this.__onActionEnd.bind(this));
-			this.__socket.on("actions updated", this.__populateActionMenu.bind(this));
-			this.__populateActionMenu();
-		}.bind(this);
-		req.open("GET", baseURL + 'js/browserified.js');
-		req.send();
+		this.__socket = io({path : baseURL + 'socket/socket.io'});
+		this.__socket.on("action finished", this.__onActionEnd.bind(this));
+		this.__socket.on("actions updated", this.__populateActionMenu.bind(this));
+		this.__populateActionMenu();
 	},
 
 	statics : {
@@ -161,7 +155,7 @@ qx.Class.define("desk.Actions",
 		__ongoingActions : null,
 		__currentFileBrowser : null,
 		__recordedActions : null,
-		__savedActionsFile : 'cache/actions.json',
+		__savedActionsFile : 'cache/responses.json',
 		__firstReadFile : null,
 		__settingsButton : null,
 
@@ -207,6 +201,9 @@ qx.Class.define("desk.Actions",
 			logMenu.add(this.__getServerLogButton());
 			this.__addSaveActionButtons(menu);
 
+			var button = this.__settingsButton = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png", menu);
+			button.setToolTipText("Configuration");
+
 			if (!desk_RPC) return;
 
 			this.__socket.on("loadavg", function (loadavg) {
@@ -216,8 +213,6 @@ qx.Class.define("desk.Actions",
 				loadWidget.setLabel("CPU Load  : " + load + "%");
 			});
 
-			var button = this.__settingsButton = new qx.ui.form.MenuButton(null, "icon/16/categories/system.png", menu);
-			button.setToolTipText("Configuration");
 			qx.core.Init.getApplication().getRoot().add(button, {top : 0, right : 0});
 
 			// add already running actions
@@ -239,8 +234,6 @@ qx.Class.define("desk.Actions",
 			actionsMenu.add(new qx.ui.menu.Button("Statifier", null, null, menu));
 			var recordedFiles
 			var oldGetFileURL;
-			var oldWriteFunctions;
-			var writers = ['writeFile', 'writeJSON', 'writeCachedFile'];
 
 			var getFileURL = function (file) {
 				this.debug("read : " + file);
@@ -251,11 +244,6 @@ qx.Class.define("desk.Actions",
 				return oldGetFileURL(file);
 			}.bind(this);
 
-			var fakeWriteFunction = function (file, content, callback, context) {
-				console.error(new Error("Write file called while applying statifier").stack);
-				(callback || function () {}).call(context);
-			};
-
 			var start = new qx.ui.menu.Button('Start recording');
 			start.setBlockToolTip(false);
 			start.setToolTipText("To save recorded actions");
@@ -264,11 +252,6 @@ qx.Class.define("desk.Actions",
 				recordedFiles = {};
 				this.__firstReadFile = null;
 				oldGetFileURL = desk.FileSystem.getFileURL;
-				oldWriteFunctions = writers.map(function (writer) {
-					var oldWriter = desk.FileSystem[writer];
-					desk.FileSystem[writer] = fakeWriteFunction;
-					return oldWriter;
-				});
 
 				desk.FileSystem.getFileURL = getFileURL;
 				start.setVisibility("excluded");
@@ -285,9 +268,6 @@ qx.Class.define("desk.Actions",
 				this.__settings.init.forEach(desk.FileSystem.getFileURL);
 
 				desk.FileSystem.getFileURL = oldGetFileURL;
-				writers.forEach(function (writer, index) {
-					desk.FileSystem[writer] = oldWriteFunctions[index];
-				});
 
 				var records = {actions : this.__recordedActions,
 					files : recordedFiles
@@ -652,17 +632,45 @@ qx.Class.define("desk.Actions",
 					}
 				}
 
-				desk.FileSystem.includeScripts(
-					settings.init.map(function (file) {
-						return desk.FileSystem.getFileURL(file);
-					}),
-					function (err) {
-					if (err) {
-						alert (err);
+				this.debug("loading init files");
+
+				var initDir = 'code/init';
+				async.waterfall([
+					function (cb) {
+						if (!desk_RPC) {
+							cb(1);
+							return;
+						}
+						desk.FileSystem.exists(initDir, cb);
+					},
+					function (exists, cb) {
+						if (!exists) {
+							cb();
+							return;
+						}
+						desk.FileSystem.readDir(initDir, cb);
 					}
-					console.log("DESK launched, baseURL : " + desk.FileSystem.getBaseURL());
-					this.fireEvent('changeReady');
+				], function (err, files) {
+					if (!err) files.forEach(function (file) {
+						if (desk.FileSystem.getFileExtension(file.name).toLowerCase() === "js") {
+							settings.init.push(initDir + '/' + file.name);
+						}
+					});
+
+					desk.FileSystem.includeScripts(
+						settings.init.map(function (file) {
+							return desk.FileSystem.getFileURL(file);
+						}),
+						function (err) {
+						if (err) {
+							alert (err);
+						}
+						console.log("DESK launched, baseURL : " + desk.FileSystem.getBaseURL());
+						this.fireEvent('changeReady');
+					}.bind(this));
+
 				}.bind(this));
+
 			}, this);
 		},
 
@@ -726,7 +734,6 @@ qx.Class.define("desk.Actions",
 		*/
 		__statify2 : function(content) {
 			var installDir = prompt('output directory?' , "code/static");
-			var browserifiedFile = "js/browserified.js";
 
 			var boot = prompt('what is the startup file?', this.__firstReadFile);
 			var startupFile;
@@ -784,7 +791,7 @@ qx.Class.define("desk.Actions",
 					self.debug("copying files...");
 					var files = content.files;
 					files.boot = startupFile;
-					async.eachSeries(Object.keys(files), function (hash, cb) {
+					async.each(Object.keys(files), function (hash, cb) {
 						var file = files[hash];
 						self.debug("file : ", file);
 						desk.FileSystem.exists(file, function (err, exists) {
@@ -834,24 +841,12 @@ qx.Class.define("desk.Actions",
 				},
 				function (res, callback) {
 					self.debug("copying actions list");
-					desk.Actions.execute({
-						action : "copy",
-						source : "actions.json",
-						destination : installDir + "/files"
-					}, callback);
-				},
-				function (res, callback) {
-					desk.FileSystem.readURL(desk.FileSystem.getBaseURL() + browserifiedFile, callback);
-				},
-				function (res, callback) {
-					self.debug("copying browserified code");
-					self.debug(installDir + "/" + browserifiedFile);
-					desk.FileSystem.writeFile(installDir + "/" + browserifiedFile, res, callback);
+					desk.FileSystem.writeJSON(installDir + "/files/actions.json", self.__settings, callback);
 				}
 			], function (err) {
 				if (err) {
 					alert("error, see console output");
-					self.debug(err);
+					console.log(err);
 				} else {
 					self.__statifyLog.log("Done");
 					self.debug("Records statified!");

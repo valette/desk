@@ -74,29 +74,6 @@ qx.Class.define("desk.demo.Application",
 			}
 
 			function next() {
-				var initDir = 'code/init';
-				desk.FileSystem.exists(initDir, function (err, exists) {
-					if (err || !exists) {
-						next2();
-						return;
-					}
-					desk.FileSystem.readDir(initDir, function (err, files) {
-						if (err) {
-							next2();
-							return;
-						}
-						var jsFiles = files.map(function (file) {
-								return desk.FileSystem.getFileURL(initDir + '/' + file.name);
-							})
-							.filter(function (file) {
-								return desk.FileSystem.getFileExtension(file).toLowerCase() === "js";
-							});
-						desk.FileSystem.includeScripts(jsFiles, next2);
-					});
-				});
-			}
-
-			function next2() {
 				var startupScript = getParameter("script");
 				if (startupScript) {
 					desk.auto = true;

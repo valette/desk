@@ -5,22 +5,22 @@
 /*this is what we want the div to look like
 when it is not showing*/
 div.loading-invisible{
-/*make invisible*/
-display:none;
+	/*make invisible*/
+	display:none;
 }
 
 /*this is what we want the div to look like
 when it IS showing*/
 div.loading-visible{
-/*make visible*/
-display:block;
+	/*make visible*/
+	display:block;
 
-/*position it 200px down the screen*/
-position:absolute;
-top:200px;
-left:0;
-width:100%;
-text-align:center;
+	/*position it 200px down the screen*/
+	position:absolute;
+	top:200px;
+	left:0;
+	width:100%;
+	text-align:center;
 }
 </style>
 <link rel="icon" type="image/png" href="resource/desk/desk.png"/>
@@ -33,21 +33,17 @@ text-align:center;
 </div>
 
 <script type="text/javascript">
-function endsWith(str, suffix) {
-    return str.indexOf(suffix, str.length - suffix.length) !== -1;
+window.onload = function(){
+	document.getElementById("loading").className = "loading-invisible";
+};
+
+window.onbeforeunload = function() {
+	return "Are you sure you want to navigate away?";
 }
-
-  var hideDiv = function(){document.getElementById("loading").className = "loading-invisible";};
-  var oldLoad = window.onload;
-  var newLoad = oldLoad ? function(){hideDiv.call(this);oldLoad.call(this);} : hideDiv;
-  window.onload = newLoad;
-
-  window.onbeforeunload = function() {
-    return "Are you sure you want to navigate away?";
-  }
-  desk_RPC = true;
-  //desk_startup_script = "path/to/my/script"
+desk_RPC = true;
+//desk_startup_script = "path/to/my/script"
 </script>
+<script type="text/javascript" src="script/bundle.js"></script>
 <script type="text/javascript" src="script/desk.demo.js"></script>
 </body>
 </html>

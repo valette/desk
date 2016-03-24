@@ -149,8 +149,7 @@ var router = express.Router()
 	.use('/files', express.static(deskDir))
 	.use('/files', directory(deskDir))
 	.use('/', express.static(clientPath))
-	.use('/', directory(clientPath))
-	.use('/js', express.static(libPath.join(__dirname, 'cache')));
+	.use('/', directory(clientPath));
 
 app.use(homeURL, router);
 
