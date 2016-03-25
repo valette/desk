@@ -4,7 +4,10 @@
 			"path" : "./",
 			"hidden" : true
 		},
-		"ui": "./../../../node_modules/desk-ui"
+		"ui": {
+			"path" : "./../../../node_modules/desk-ui",
+			"hidden" : true
+		}
 	},
 
 	"init" : [
