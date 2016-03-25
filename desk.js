@@ -145,11 +145,9 @@ var router = express.Router()
 			res.json({error : 'password too short!'});
 		}
 	})
-	.use('/', express.static(libPath.join(clientPath, 'application/build')))
+	.use('/', express.static(__dirname + '/node_modules/desk-ui/build'))
 	.use('/files', express.static(deskDir))
-	.use('/files', directory(deskDir))
-	.use('/', express.static(clientPath))
-	.use('/', directory(clientPath));
+	.use('/files', directory(deskDir));
 
 app.use(homeURL, router);
 

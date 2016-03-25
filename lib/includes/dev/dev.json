@@ -4,7 +4,7 @@
 			"path" : "./",
 			"hidden" : true
 		},
-		"application": "./../../../client/application"
+		"ui": "./../../../node_modules/desk-ui"
 	},
 
 	"init" : [
