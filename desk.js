@@ -174,14 +174,5 @@ io.on('connection', function (socket) {
 
 actions.on('log', log);
 
-var nCPUS = os.cpus().length;
-function emitLoad () {
-	io.emit("loadavg", os.loadavg().map(function (avg) {
-		return avg / nCPUS;
-	}));
-	setTimeout(emitLoad, 5000);
-}
-emitLoad();
-
 server.listen(port);
 log ("server running : " + baseURL + "localhost:" + port + homeURL);
