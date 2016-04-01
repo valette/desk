@@ -19,7 +19,6 @@ var	actions      = require('desk-base');
 
 var homeURL         = argv.multi ? '/' + process.env.USER + '/' : '/',
 	port            = argv.multi ? process.env.PORT : 8080,
-	clientPath      = libPath.join(__dirname, 'client') + '/',
 	privateKeyFile  = libPath.join(__dirname, "privatekey.pem"),
 	certificateFile = libPath.join(__dirname, "certificate.pem"),
 	deskDir         = libPath.join(os.homedir(), 'desk') + '/',
@@ -66,7 +65,7 @@ if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	baseURL = "http://";
 }
 
-io = socketIO(server, {path : libPath.join(homeURL, "socket/socket.io")});
+io = socketIO(server, {path : libPath.join(homeURL, 'socket.io')});
 
 function log (message) {
 	console.log(message);
@@ -146,8 +145,8 @@ var router = express.Router()
 		}
 	})
 	.use('/', express.static(__dirname + '/node_modules/desk-ui/build'))
-	.use('/files', express.static(deskDir))
-	.use('/files', directory(deskDir));
+	.use('/', express.static(deskDir))
+	.use('/', directory(deskDir));
 
 app.use(homeURL, router);
 
@@ -171,8 +170,6 @@ io.on('connection', function (socket) {
 
     fwd(actions, socket);
 });
-
-actions.on('log', log);
 
 server.listen(port);
 log ("server running : " + baseURL + "localhost:" + port + homeURL);
