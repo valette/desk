@@ -22,7 +22,6 @@ Copyright (c) CNRS, INSA-Lyon, UCBL, INSERM
 To install desk on your computer, you need:
 * git
 * node.js
-* python to build the API browser or rebuild core qooxdoo code
 
 to visualize 3D data (meshes, volumes) you also need;
 
@@ -48,12 +47,9 @@ login as:
 - user : your linux username
 - password : "password"
 
-### API, debug ###
-
-You also have access to:
-
-* The API viewer    	: [http://localhost:8080/files/ui/api](http://localhost:8080/application/api)
-* The debug version 	: [http://localhost:8080/files/ui/source](http://localhost:8080/application/source)
+### API, debug###
+* The API is also visible here :  [http://localhost:8080/ui/api](http://localhost:8080/ui/api)
+* The debug version is here	: [http://localhost:8080/ui/source](http://localhost:8080/ui/source)
 
 ### Acknowledgements ###
 
