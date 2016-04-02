@@ -9,10 +9,6 @@
 			"hidden" : true
 		}
 	},
-
-	"init" : [
-		"dev/init.js"
-	],
   
 	"actions": {
 		"make" : {
