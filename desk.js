@@ -52,7 +52,7 @@ var app = express()
 fs.mkdirsSync(deskDir);
 fs.mkdirsSync(uploadDir);
 
-actions.include(__dirname + '/lib/includes');
+actions.include(__dirname + '/extensions');
 
 if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	server = https.createServer({

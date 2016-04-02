@@ -33,6 +33,6 @@
     "node": "*"
   },
   "scripts" : {
-    "buildAddons": "node lib/build.js"
+    "buildAddons": "node node_modules/desk-ui/lib/buildAddons.js"
   }
 }
