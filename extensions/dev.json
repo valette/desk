@@ -5,7 +5,7 @@
 			"hidden" : true
 		},
 		"ui": {
-			"path" : "./../../node_modules/desk-ui",
+			"path" : "./../node_modules/desk-ui",
 			"hidden" : true
 		}
 	},
