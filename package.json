@@ -30,7 +30,7 @@
   },
   "optionalDependencies": {},
   "engines": {
-    "node": "*"
+    "node": ">=4.0.0"
   },
   "scripts" : {
     "buildAddons": "node node_modules/desk-ui/lib/buildAddons.js"
