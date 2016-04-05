@@ -1,10 +1,10 @@
 {
-  "name": "desk-server",
-  "description": "a medical remote desktop, for visualization and processing of medical data",
+  "name": "desk-node",
+  "description": "a node.js remote desktop, for visualization and processing of medical data",
   "license" : "CECILL-B",
-  "main": "./lib/index.js",
+  "main": "./desk.js",
   "author": "Sebastien Valette <sebastien.valette@creatis.insa-lyon.fr> (http://www.creatis.insa-lyon.fr/~valette)",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "repository": {
     "type": "git",
     "url": "git://github.com/valette/desk.git"
