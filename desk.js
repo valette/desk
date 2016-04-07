@@ -1,4 +1,6 @@
-var	actions      = require('desk-base');
+'use strict';
+
+var	actions      = require('desk-base'),
 	argv         = require('yargs').argv,
 	async        = require('async'),
 	auth         = require('basic-auth'),
@@ -98,35 +100,43 @@ function updatePassword() {
 }
 updatePassword();
 
+function moveFile(file, outputDir) {
+	log("file : " + file.path.toString());
+	var fullName = libPath.join(outputDir, file.name);
+	var exists = true;
+	var index = 0;
+	var newFile;
+	async.whilst(function () {
+		return exists;
+	}, function (callback) {
+		newFile = fullName + ( index > 0 ? "." + index : "" );
+		index++;
+		fs.exists(newFile, function (fileExist) {
+			exists = fileExist;
+			callback();
+		});
+	}, function () {
+		fs.move(file.path.toString(), newFile, function(err) {
+			if (err) throw err;
+			log("uploaded to " +  newFile);
+		});
+	});
+}
+
 var router = express.Router()
 	.post('/upload', function(req, res) {
 		var form = new formidable.IncomingForm();
+		var outputDir;
+		var files = [];
 		form.uploadDir = uploadDir;
 		form.parse(req, function(err, fields, files) {
-			var file = files.file;
-			var outputDir = fields.uploadDir.toString().replace(/%2F/g,'/') || 'upload';
-			outputDir = libPath.join(deskDir, outputDir);
-			log("file : " + file.path.toString());
-			var fullName = libPath.join(outputDir, file.name.toString());
-			var exists = true;
-			var index = 0;
-			var newfile;
-			async.whilst(function () {
-				return exists;
-			}, function (callback) {
-				newFile = fullName + ( index > 0 ? "." + index : "" );
-				fs.exists(newFile, function (fileExist) {
-					exists = fileExist;
-					index++;
-					callback();
-				});
-			}, function () {
-				fs.move(file.path.toString(), newFile, function(err) {
-					if (err) throw err;
-					res.send('file ' + file.name + ' uploaded successfully');
-					log("uploaded to " +  newFile);
-				});
-			});
+			outputDir = libPath.join(deskDir, unescape(fields.uploadDir));
+		});
+
+		form.on('file', (name, file) => files.push(file));
+		form.on('end', function() {
+			res.send('file(s) uploaded successfully');
+			files.forEach((file) => moveFile(file, outputDir));
 		});
 	})
 	.post('/password', function(req, res) {
@@ -155,6 +165,7 @@ io.on('connection', function (socket) {
 		|| socket.handshake.address).split(":").pop();
 
 	log('connect : ' + ip);
+	io.emit("actions updated", actions.getSettings());
 
 	socket.on('disconnect', function() {
 			log('disconnect : ' + ip);
