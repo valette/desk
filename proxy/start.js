@@ -1,4 +1,5 @@
 var	async      = require('async'),
+	execSync   = require('child_process').execSync,
 	fs         = require('fs'),
 	mkdirp     = require('mkdirp'),
 	path       = require('path'),
@@ -11,8 +12,13 @@ pm2.connect(function(err) {
 	async.each(config.users, function (user, callback) {
 		console.log("Starting " + user);
 		var cwd = '/home/' + user + '/desk/';
-		mkdirp.sync(cwd);
-		fs.chownSync(cwd, user, user);
+		if (!fs.existsSync(cwd)) {
+			mkdirp.sync(cwd);
+			var id = parseInt(execSync('id -u ' + user));
+			var group = parseInt(execSync('id -g ' + user));
+			fs.chownSync(cwd, id, group);
+			console.log("Created desk directory for user " + user);
+		}
 		var logFile = cwd + 'log.txt';
 		var settings = {
 			"name"       : user,
@@ -23,6 +29,7 @@ pm2.connect(function(err) {
 			"merge_logs" : true,
 			"env": {
 				"DESK_USER" : user,
+				"DESK_MEMORY_RATIO" : "0.1",
 				"PORT" : config.basePort + config.users.indexOf(user),
 				"DESK_CMD" : "node "	+ path.join(__dirname, '../desk.js --multi')
 			}
