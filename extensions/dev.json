@@ -4,12 +4,11 @@
 			"path" : "./",
 			"hidden" : true
 		},
-		"application": "./../../../client/application"
+		"ui": {
+			"path" : "./../node_modules/desk-ui",
+			"hidden" : true
+		}
 	},
-
-	"init" : [
-		"dev/init.js"
-	],
   
 	"actions": {
 		"make" : {

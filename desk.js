@@ -1,4 +1,6 @@
-var	actions      = require('desk-base');
+'use strict';
+
+var	actions      = require('desk-base'),
 	argv         = require('yargs').argv,
 	async        = require('async'),
 	auth         = require('basic-auth'),
@@ -19,7 +21,6 @@ var	actions      = require('desk-base');
 
 var homeURL         = argv.multi ? '/' + process.env.USER + '/' : '/',
 	port            = argv.multi ? process.env.PORT : 8080,
-	clientPath      = libPath.join(__dirname, 'client') + '/',
 	privateKeyFile  = libPath.join(__dirname, "privatekey.pem"),
 	certificateFile = libPath.join(__dirname, "certificate.pem"),
 	deskDir         = libPath.join(os.homedir(), 'desk') + '/',
@@ -53,7 +54,7 @@ var app = express()
 fs.mkdirsSync(deskDir);
 fs.mkdirsSync(uploadDir);
 
-actions.include(__dirname + '/lib/includes');
+actions.include(__dirname + '/extensions');
 
 if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	server = https.createServer({
@@ -66,7 +67,7 @@ if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	baseURL = "http://";
 }
 
-io = socketIO(server, {path : libPath.join(homeURL, "socket/socket.io")});
+io = socketIO(server, {path : libPath.join(homeURL, 'socket.io')});
 
 function log (message) {
 	console.log(message);
@@ -99,35 +100,43 @@ function updatePassword() {
 }
 updatePassword();
 
+function moveFile(file, outputDir) {
+	log("file : " + file.path.toString());
+	var fullName = libPath.join(outputDir, file.name);
+	var exists = true;
+	var index = 0;
+	var newFile;
+	async.whilst(function () {
+		return exists;
+	}, function (callback) {
+		newFile = fullName + ( index > 0 ? "." + index : "" );
+		index++;
+		fs.exists(newFile, function (fileExist) {
+			exists = fileExist;
+			callback();
+		});
+	}, function () {
+		fs.move(file.path.toString(), newFile, function(err) {
+			if (err) throw err;
+			log("uploaded to " +  newFile);
+		});
+	});
+}
+
 var router = express.Router()
 	.post('/upload', function(req, res) {
 		var form = new formidable.IncomingForm();
+		var outputDir;
+		var files = [];
 		form.uploadDir = uploadDir;
 		form.parse(req, function(err, fields, files) {
-			var file = files.file;
-			var outputDir = fields.uploadDir.toString().replace(/%2F/g,'/') || 'upload';
-			outputDir = libPath.join(deskDir, outputDir);
-			log("file : " + file.path.toString());
-			var fullName = libPath.join(outputDir, file.name.toString());
-			var exists = true;
-			var index = 0;
-			var newfile;
-			async.whilst(function () {
-				return exists;
-			}, function (callback) {
-				newFile = fullName + ( index > 0 ? "." + index : "" );
-				fs.exists(newFile, function (fileExist) {
-					exists = fileExist;
-					index++;
-					callback();
-				});
-			}, function () {
-				fs.move(file.path.toString(), newFile, function(err) {
-					if (err) throw err;
-					res.send('file ' + file.name + ' uploaded successfully');
-					log("uploaded to " +  newFile);
-				});
-			});
+			outputDir = libPath.join(deskDir, unescape(fields.uploadDir));
+		});
+
+		form.on('file', (name, file) => files.push(file));
+		form.on('end', function() {
+			res.send('file(s) uploaded successfully');
+			files.forEach((file) => moveFile(file, outputDir));
 		});
 	})
 	.post('/password', function(req, res) {
@@ -145,12 +154,9 @@ var router = express.Router()
 			res.json({error : 'password too short!'});
 		}
 	})
-	.use('/', express.static(libPath.join(clientPath, 'application/build')))
-	.use('/files', express.static(deskDir))
-	.use('/files', directory(deskDir))
-	.use('/', express.static(clientPath))
-	.use('/', directory(clientPath))
-	.use('/js', express.static(libPath.join(__dirname, 'cache')));
+	.use('/', express.static(__dirname + '/node_modules/desk-ui/build'))
+	.use('/', express.static(deskDir))
+	.use('/', directory(deskDir));
 
 app.use(homeURL, router);
 
@@ -159,6 +165,7 @@ io.on('connection', function (socket) {
 		|| socket.handshake.address).split(":").pop();
 
 	log('connect : ' + ip);
+	io.emit("actions updated", actions.getSettings());
 
 	socket.on('disconnect', function() {
 			log('disconnect : ' + ip);
@@ -174,17 +181,6 @@ io.on('connection', function (socket) {
 
     fwd(actions, socket);
 });
-
-actions.on('log', log);
-
-var nCPUS = os.cpus().length;
-function emitLoad () {
-	io.emit("loadavg", os.loadavg().map(function (avg) {
-		return avg / nCPUS;
-	}));
-	setTimeout(emitLoad, 5000);
-}
-emitLoad();
 
 server.listen(port);
 log ("server running : " + baseURL + "localhost:" + port + homeURL);

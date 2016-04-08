@@ -9,7 +9,7 @@ win.set({
   height : 400
 });
 
-var directory = new desk.FileField('git/desk/client/application');
+var directory = new desk.FileField('ui/');
 win.add(directory);
 
 var container = new qx.ui.container.Composite(new qx.ui.layout.HBox());
