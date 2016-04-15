@@ -1,9 +1,20 @@
-desk
-====
+DESK Exposing Server Kit
+========================
 
-#### Remote desktop for medical imaging ####
+#### Remote desktop ####
 
-The aim of the project is to create a remote desktop for visualization and processing of medical images. Only works under linux or Mac OS, but patches are welcome!
+DESK  is a remote desktop, originally for visualization and processing of medical images. It currently only works under linux or Mac OS, but patches are welcome!
+
+This repository contains the node.js code to run the server.
+There are also two local versions available (run locally on your computer) : 
+* [desk-electron](https://github.com/valette/desk-electron)
+* [desk-nw](https://github.com/valette/desk-nw)
+
+#### Goals ####
+
+The goal is to be able to use efficient visualisation tools such as THREE.js and qooxdoo on top of already existing commandline programs.
+
+each program as registered as an 'action', provided by a .json file. As an example, you can have a look at the ACVD.json config file on the [ACVD repository](https://github.com/valette/ACVD)
 
 ### Infos and live demo ###
 
@@ -47,9 +58,16 @@ login as:
 - user : your linux username
 - password : "password"
 
-### API, debug###
-* The API is also visible here :  [http://localhost:8080/ui/api](http://localhost:8080/ui/api)
-* The debug version is here	: [http://localhost:8080/ui/source](http://localhost:8080/ui/source)
+The desk API is visible here :  [http://localhost:8080/ui/api](http://localhost:8080/ui/api)
+
+### Debug ###
+Building the debug version is done as follows : 
+
+	cd node_modules/desk-ui
+	npm install		// takes some time
+	npm run build	// also takes some time
+
+Afterwards, the debug version is here : [http://localhost:8080/ui/source](http://localhost:8080/ui/source)
 
 ### Acknowledgements ###
 
