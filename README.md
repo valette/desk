@@ -14,6 +14,8 @@ The goal is to be able to use efficient visualisation tools such as THREE.js and
 
 each program as registered as an 'action', provided by a .json file. As an example, you can have a look at the ACVD.json file from the [ACVD repository](https://github.com/valette/ACVD)
 
+DESK can also help to generate static content suited to release on the web. An example of static content served by a classic apache server is visible here : [http://www.creatis.insa-lyon.fr/~valette/200]([http://www.creatis.insa-lyon.fr/~valette/200])
+
 ### Infos and live demo ###
 
 a live demo is visible here: [https://desk.creatis.insa-lyon.fr/demo/](https://desk.creatis.insa-lyon.fr/demo/)
