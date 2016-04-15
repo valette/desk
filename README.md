@@ -1,8 +1,6 @@
 DESK Exposing Server Kit
 ========================
 
-#### Remote desktop ####
-
 DESK  is a remote desktop, originally for visualization and processing of medical images. It currently only works under linux or Mac OS, but patches are welcome!
 
 This repository contains the node.js code to run the server.
@@ -14,7 +12,7 @@ There are also two local versions available (run locally on your computer) :
 
 The goal is to be able to use efficient visualisation tools such as THREE.js and qooxdoo on top of already existing commandline programs.
 
-each program as registered as an 'action', provided by a .json file. As an example, you can have a look at the ACVD.json config file on the [ACVD repository](https://github.com/valette/ACVD)
+each program as registered as an 'action', provided by a .json file. As an example, you can have a look at the ACVD.json file from the [ACVD repository](https://github.com/valette/ACVD)
 
 ### Infos and live demo ###
 
