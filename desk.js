@@ -1,36 +1,38 @@
 'use strict';
 
-var	actions      = require('desk-base'),
-	argv         = require('yargs').argv,
-	async        = require('async'),
-	auth         = require('basic-auth'),
-	bodyParser   = require('body-parser'),
-	compress     = require('compression'),
-	crypto       = require('crypto'),
-	directory    = require('serve-index'),
-	express      = require('express'),
-	formidable   = require('formidable'),
-    fs           = require('fs-extra'),
-    fwd          = require('fwd'),
-	http         = require('http'),
-	https        = require('https'),
-	libPath      = require('path'),
-	os           = require('os'),
-	process      = require('process'),
-	socketIO     = require('socket.io');
+const actions    = require('desk-base'),
+      argv       = require('yargs').argv,
+      auth       = require('basic-auth'),
+      bodyParser = require('body-parser'),
+      compress   = require('compression'),
+      crypto     = require('crypto'),
+      directory  = require('serve-index'),
+      express    = require('express'),
+      formidable = require('formidable'),
+      fs         = require('fs-extra'),
+      fwd        = require('fwd'),
+      http       = require('http'),
+      https      = require('https'),
+      path       = require('path'),
+      os         = require('os'),
+      process    = require('process'),
+      socketIO   = require('socket.io');
 
-var homeURL         = argv.multi ? '/' + process.env.USER + '/' : '/',
-	port            = argv.multi ? process.env.PORT : 8080,
-	privateKeyFile  = libPath.join(__dirname, "privatekey.pem"),
-	certificateFile = libPath.join(__dirname, "certificate.pem"),
-	deskDir         = libPath.join(os.homedir(), 'desk') + '/',
-	passwordFile    = libPath.join(deskDir, "password.json"),
-	uploadDir       = libPath.join(deskDir, 'upload') + '/',
-	id              = {username : process.env.USER, password : "password"};
+const certificateFile = path.join(__dirname, "certificate.pem"),
+      deskDir         = actions.getRootDir(),
+      homeURL         = argv.multi ? '/' + process.env.USER + '/' : '/',
+      port            = argv.multi ? process.env.PORT : 8080,
+      passwordFile    = path.join(deskDir, "password.json"),
+      privateKeyFile  = path.join(__dirname, "privatekey.pem"),
+      uploadDir       = path.join(deskDir, 'upload') + '/';
 
-var baseURL, server, io;
+let baseURL, server, io,
+	id = {
+		username : process.env.USER,
+		password : "password"
+	};
 
-var app = express()
+let app = express()
 	.use(compress())
 	.set('trust proxy', true)
 	.use (function (req, res, next) {
@@ -38,10 +40,11 @@ var app = express()
 		next();
 	})
 	.use(function(req, res, next) {
-		var user = auth(req) || {};
-		var shasum = crypto.createHash('sha1');
+		let user = auth(req) || {};
+		let shasum = crypto.createHash('sha1');
 		shasum.update(user.pass || '');
-		if ((id.username === undefined) || (id.sha === undefined)
+		if ((id.username === undefined)
+			|| (id.sha === undefined)
 			|| (user && user.name === id.username && shasum.digest('hex') === id.sha)) {
 				next();
 				return;
@@ -67,7 +70,7 @@ if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	baseURL = "http://";
 }
 
-io = socketIO(server, {path : libPath.join(homeURL, 'socket.io')});
+io = socketIO(server, {path : path.join(homeURL, 'socket.io')});
 
 function log (message) {
 	console.log(message);
@@ -91,7 +94,7 @@ function updatePassword() {
 
 	if (id.password) {
 		// convert to secure format
-		var shasum = crypto.createHash('sha1');
+		let shasum = crypto.createHash('sha1');
 		shasum.update(id.password);
 		id.sha = shasum.digest('hex');
 		delete id.password;
@@ -102,41 +105,42 @@ updatePassword();
 
 function moveFile(file, outputDir) {
 	log("file : " + file.path.toString());
-	var fullName = libPath.join(outputDir, file.name);
-	var exists = true;
-	var index = 0;
-	var newFile;
-	async.whilst(function () {
-		return exists;
-	}, function (callback) {
+	let fullName = path.join(outputDir, file.name);
+	let index = 0;
+	let newFile;
+
+	function tryToMove() {
 		newFile = fullName + ( index > 0 ? "." + index : "" );
-		index++;
-		fs.exists(newFile, function (fileExist) {
-			exists = fileExist;
-			callback();
+		fs.exists(newFile, function (exists) {
+			if (exists) {
+				index++;
+				move();
+				return;
+			}
+			fs.move(file.path.toString(), newFile, function(err) {
+				if (err) throw err;
+				log("uploaded to " +  newFile);
+			});
 		});
-	}, function () {
-		fs.move(file.path.toString(), newFile, function(err) {
-			if (err) throw err;
-			log("uploaded to " +  newFile);
-		});
-	});
+	}
+
+	tryToMove();
 }
 
-var router = express.Router()
+let router = express.Router()
 	.post('/upload', function(req, res) {
-		var form = new formidable.IncomingForm();
-		var outputDir;
-		var files = [];
+		let form = new formidable.IncomingForm();
+		let outputDir;
+		let files = [];
 		form.uploadDir = uploadDir;
 		form.parse(req, function(err, fields, files) {
-			outputDir = libPath.join(deskDir, unescape(fields.uploadDir));
+			outputDir = path.join(deskDir, unescape(fields.uploadDir));
 		});
 
 		form.on('file', (name, file) => files.push(file));
 		form.on('end', function() {
 			res.send('file(s) uploaded successfully');
-			files.forEach((file) => moveFile(file, outputDir));
+			files.forEach(file => moveFile(file, outputDir));
 		});
 	})
 	.post('/password', function(req, res) {
@@ -145,7 +149,7 @@ var router = express.Router()
 			return;
 		}
 		if (req.body.password.length > 4) {
-			var shasum = crypto.createHash('sha1');
+			let shasum = crypto.createHash('sha1');
 			shasum.update(req.body.password);
 			id.sha = shasum.digest('hex');
 			fs.writeFileSync(passwordFile, JSON.stringify(id));
@@ -154,30 +158,23 @@ var router = express.Router()
 			res.json({error : 'password too short!'});
 		}
 	})
-	.use('/', express.static(__dirname + '/node_modules/desk-ui/build'))
-	.use('/', express.static(deskDir))
-	.use('/', directory(deskDir));
+	.use('/', express.static(__dirname + '/node_modules/desk-ui/build'),
+		express.static(deskDir),
+		directory(deskDir));
 
 app.use(homeURL, router);
 
 io.on('connection', function (socket) {
-	var ip = (socket.client.conn.request.headers['x-forwarded-for']
+	let ip = (socket.client.conn.request.headers['x-forwarded-for']
 		|| socket.handshake.address).split(":").pop();
 
 	log('connect : ' + ip);
 	io.emit("actions updated", actions.getSettings());
 
-	socket.on('disconnect', function() {
-			log('disconnect : ' + ip);
-		})
-		.on('action', function(parameters) {
-			actions.execute(parameters, function (response) {
-				io.emit("action finished", response);
-			});
-		})
-		.on('setEmitLog', function (log) {
-			actions.setEmitLog(log);
-		});
+	socket.on('disconnect', () => log('disconnect : ' + ip))
+		.on('action', action => actions.execute(action,
+			res => io.emit("action finished", res)))
+		.on('setEmitLog', log => actions.setEmitLog(log));
 
     fwd(actions, socket);
 });

@@ -10,7 +10,6 @@
     "url": "git://github.com/valette/desk.git"
   },
   "dependencies": {
-    "async": ">0.0.0",
     "basic-auth": ">0.0.0",
     "body-parser": ">0.0.0",
     "compression": ">0.0.0",
@@ -20,8 +19,6 @@
     "formidable": ">0.0.0",
     "fs-extra": ">0.0.0",
     "fwd": ">0.0.0",
-    "lodash": ">0.0.0",
-    "pretty-data": ">0.0.0",
     "serve-index": ">0.0.0",
     "shelljs": ">0.0.0",
     "socket.io": ">0.0.0",
