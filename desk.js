@@ -15,7 +15,6 @@ const actions    = require('desk-base'),
       https      = require('https'),
       path       = require('path'),
       os         = require('os'),
-      process    = require('process'),
       socketIO   = require('socket.io');
 
 const certificateFile = path.join(__dirname, "certificate.pem"),
