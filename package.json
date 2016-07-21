@@ -29,6 +29,6 @@
     "node": ">=4.0.0"
   },
   "scripts" : {
-    "buildAddons": "node node_modules/desk-ui/lib/buildAddons.js"
+    "buildAddons": "node node_modules/desk-ui/source/buildAddons.js"
   }
 }
