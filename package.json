@@ -19,6 +19,8 @@
     "formidable": ">0.0.0",
     "fs-extra": ">0.0.0",
     "fwd": ">0.0.0",
+    "pty.js": ">0.0.0",
+    "ps-tree": ">0.0.0",
     "serve-index": ">0.0.0",
     "shelljs": ">0.0.0",
     "socket.io": ">0.0.0",
