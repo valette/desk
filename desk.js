@@ -181,9 +181,12 @@ io.on('connection', function (socket) {
 
 });
 
+var terms = {};
+
 if (actions.getSettings().permissions) io.of( '/xterm' ).on( 'connection', function( socket ) {
 	socket.on( 'newTerminal', function( options ) {
-		log( "new terminal : " + + options.name );
+		if ( terms[ options.name ] ) return;
+		log( "new terminal : " + options.name );
 		io.of( '/xterm' + options.name ).on( 'connection', function( socket ) {
 			var term = pty.spawn(process.platform === 'win32' ? 'cmd.exe' : 'bash', [], {
 				name: 'xterm-color',
@@ -198,6 +201,7 @@ if (actions.getSettings().permissions) io.of( '/xterm' ).on( 'connection', funct
 				} catch (ex) {
 				}
 			});
+			terms[ options.name ] = true;
 
 			socket.on('resize', function ( size ) {
 				term.resize( size.nCols, size.nRows );
@@ -231,6 +235,7 @@ if (actions.getSettings().permissions) io.of( '/xterm' ).on( 'connection', funct
 				namespace.removeAllListeners();
 				delete io.nsps[ '/xterm' + options.name ]; // Remove from the server namespaces
 				log("namespaces : " + Object.keys(io.nsps).join(','));
+				delete terms[ options.name ];
 			});
 		});
 	});
