@@ -115,7 +115,7 @@ function moveFile(file, outputDir) {
 		fs.exists(newFile, function (exists) {
 			if (exists) {
 				index++;
-				move();
+				tryToMove();
 				return;
 			}
 			fs.move(file.path.toString(), newFile, function(err) {
