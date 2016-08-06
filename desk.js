@@ -13,9 +13,10 @@ const actions    = require('desk-base'),
       fwd        = require('fwd'),
       http       = require('http'),
       https      = require('https'),
-      path       = require('path'),
       os         = require('os'),
-      process    = require('process'),
+      path       = require('path'),
+      psTree     = require('ps-tree'),
+      pty        = require('pty.js'),
       socketIO   = require('socket.io');
 
 const certificateFile = path.join(__dirname, "certificate.pem"),
@@ -114,7 +115,7 @@ function moveFile(file, outputDir) {
 		fs.exists(newFile, function (exists) {
 			if (exists) {
 				index++;
-				move();
+				tryToMove();
 				return;
 			}
 			fs.move(file.path.toString(), newFile, function(err) {
@@ -177,6 +178,67 @@ io.on('connection', function (socket) {
 		.on('setEmitLog', log => actions.setEmitLog(log));
 
     fwd(actions, socket);
+
+});
+
+var terms = {};
+
+if (actions.getSettings().permissions) io.of( '/xterm' ).on( 'connection', function( socket ) {
+	socket.on( 'newTerminal', function( options ) {
+		if ( terms[ options.name ] ) return;
+		log( "new terminal : " + options.name );
+		io.of( '/xterm' + options.name ).on( 'connection', function( socket ) {
+			var term = pty.spawn(process.platform === 'win32' ? 'cmd.exe' : 'bash', [], {
+				name: 'xterm-color',
+				cols: 80,
+				rows: 24,
+				cwd: process.env.PWD,
+				env: process.env
+			})
+			.on('data', function(data) {
+				try {
+					socket.send(data);
+				} catch (ex) {
+				}
+			});
+			terms[ options.name ] = true;
+
+			socket.on('resize', function ( size ) {
+				term.resize( size.nCols, size.nRows );
+			})
+			.on('message', function(msg) {
+				term.write(msg);
+			})
+			.on('disconnect', function () {
+				psTree(term.pid, function (err, children) {
+					function kill (pid) {
+						try {
+							log( 'killing terminal process ' + pid );
+							process.kill(pid, 'SIGTERM');
+							process.kill(pid, 'SIGHUP');
+						} catch (e) {
+							log( 'could not kill process ' + pid + ' : ' + e );
+						}
+					}
+
+					children.forEach(function (child) {
+						kill (child.PID);
+					});
+					kill( term.pid );
+				});
+
+				const namespace = io.of( '/xterm' + options.name );
+				const connectedNameSpaceSockets = Object.keys(namespace.connected);
+				connectedNameSpaceSockets.forEach( socketId => {
+					connectedNameSpaceSockets[ socketId ].disconnect();
+				});
+				namespace.removeAllListeners();
+				delete io.nsps[ '/xterm' + options.name ]; // Remove from the server namespaces
+				log("namespaces : " + Object.keys(io.nsps).join(','));
+				delete terms[ options.name ];
+			});
+		});
+	});
 });
 
 server.listen(port);

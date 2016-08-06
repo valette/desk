@@ -4,7 +4,7 @@
   "license" : "CECILL-B",
   "main": "./desk.js",
   "author": "Sebastien Valette <sebastien.valette@creatis.insa-lyon.fr> (http://www.creatis.insa-lyon.fr/~valette)",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "repository": {
     "type": "git",
     "url": "git://github.com/valette/desk.git"
@@ -19,6 +19,8 @@
     "formidable": ">0.0.0",
     "fs-extra": ">0.0.0",
     "fwd": ">0.0.0",
+    "pty.js": ">0.0.0",
+    "ps-tree": ">0.0.0",
     "serve-index": ">0.0.0",
     "shelljs": ">0.0.0",
     "socket.io": ">0.0.0",
@@ -29,6 +31,6 @@
     "node": ">=4.0.0"
   },
   "scripts" : {
-    "buildAddons": "node node_modules/desk-ui/lib/buildAddons.js"
+    "buildAddons": "node node_modules/desk-ui/source/buildAddons.js"
   }
 }
