@@ -34,18 +34,20 @@ var server = http.createServer(function (req, res) {
 	if (httpAllowed[req.headers.host]) {
 		processRequest(req, res);
 	} else {
-		res.writeHead(301, {Location: 'https://' + req.headers.host + req.url});
+		res.writeHead(302, {Location: 'https://' + req.headers.host + req.url});
 		res.end();
 	}
 });
 
-function  processRequest (req, res) {
+function processRequest (req, res) {
 	if (req.url == "/") {
-		res.writeHead(301, {Location: defaultRoutes[req.headers.host]});
+		res.writeHead( 302, {Location: defaultRoutes[req.headers.host]} );
 		res.end();
 	} else {
 		var target = routes[req.headers.host + '/' + req.url.split("/")[1]];
 		if (!target)  {
+			res.writeHead(404, {"Content-Type": "text/plain"});
+			res.write("404 Not Found\n");
 			res.end();
 			return;
 		}
@@ -65,8 +67,8 @@ proxyServer.on('upgrade', function (req, socket, head) {
 updateRoutes();
 
 // start proxies
-server.listen(port, function () {
-	proxyServer.listen(port2, function () {
+server.listen( port, function () {
+	proxyServer.listen( port2, function () {
 		console.log('desk-http2https service listening on port ' + port);
 		console.log('desk-proxy service listening on port ' + port2);
 		process.setgid('dproxy');
@@ -77,28 +79,26 @@ server.listen(port, function () {
 function updateRoutes() {
 	try{
 		var routesContent = JSON.parse(fs.readFileSync(config));
-		var users = routesContent.users;
 		routes = {};
 
-		users.forEach(function (user, index) {
-			routes[os.hostname() + '/' + user] = {
-				target : 'http://' + os.hostname() + ':'
-					+ (routesContent.basePort + index)
+		routesContent.users.forEach( function ( user ) {
+			routes[ os.hostname() + '/' + user ] = {
+				target : 'http://' + os.hostname() + ':' + routesContent.ports[user]
 			};
 		});
 
 		// add external proxies
 		var otherRoutes = routesContent.otherRoutes || {};
-		Object.keys(otherRoutes).forEach(function (key) {
-			routes[key] = {target : otherRoutes[key]};
+		Object.keys( otherRoutes ).forEach(function (key) {
+			routes[ key ] = { target : otherRoutes[ key ] };
 		});
 		defaultRoutes = routesContent.defaultRoutes;
 		httpAllowed = routesContent.httpAllowed || {}
-		console.log('... done! Routes:');
-		console.log(routes);
+		console.log( '... done! Routes:' );
+		console.log( routes );
 	} catch (err) {
-		console.log("error updating routes : ");
-		console.log(err);
+		console.log( "error updating routes : " );
+		console.log( err );
 	}
 }
 
