@@ -160,21 +160,6 @@ let router = express.Router()
 			files.forEach(file => moveFile(file, outputDir));
 		});
 	})
-	.post('/password', function(req, res) {
-		if (!req.body.password) {
-			res.json({error : 'no password entered!'});
-			return;
-		}
-		if (req.body.password.length > 4) {
-			let shasum = crypto.createHash('sha1');
-			shasum.update(req.body.password);
-			id.sha = shasum.digest('hex');
-			fs.writeFileSync(passwordFile, JSON.stringify(id));
-			res.json({status : "password changed"});
-		} else {
-			res.json({error : 'password too short!'});
-		}
-	})
 	.use('/', express.static(__dirname + '/node_modules/desk-ui/build'),
 		express.static(deskDir),
 		directory(deskDir));
@@ -188,10 +173,16 @@ io.on('connection', function (socket) {
 	log('connect : ' + ip);
 	io.emit("actions updated", actions.getSettings());
 
-	socket.on('disconnect', () => log('disconnect : ' + ip))
-		.on('action', action => actions.execute(action,
-			res => io.emit("action finished", res)))
-		.on('setEmitLog', log => actions.setEmitLog(log));
+	socket.on( 'disconnect', () => log( 'disconnect : ' + ip ) )
+		.on( 'action', action => actions.execute( action,
+			res => io.emit("action finished", res ) ) )
+		.on('setEmitLog', log => actions.setEmitLog( log ) )
+		.on( 'password', function( password ) {
+			let shasum = crypto.createHash('sha1');
+			shasum.update( password );
+			id.sha = shasum.digest( 'hex' );
+			fs.writeFileSync( passwordFile, JSON.stringify( id ) );
+		});
 
     fwd(actions, socket);
 
