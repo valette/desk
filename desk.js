@@ -33,22 +33,38 @@ let baseURL, server, io,
 		password : "password"
 	};
 
+var publicDirs = {};
+function updatePublicDirs () {
+    var dirs = actions.getSettings().dataDirs;
+    publicDirs = {};
+    Object.keys( dirs ).forEach( function ( dir ) {
+        if (dirs[dir].public) {
+            publicDirs[ dir ] = true;
+        }
+    });
+    if ( Object.keys ( publicDirs ).length ) {
+        log("public data : " + Object.keys( publicDirs ).join(', ') );
+    }
+}
+actions.on('actions updated', updatePublicDirs);
+updatePublicDirs();
+
 let app = express()
 	.use(compress())
 	.set('trust proxy', true)
-	.use (function (req, res, next) {
-		res.cookie('homeURL', homeURL);
-		next();
-	})
 	.use(function(req, res, next) {
 		let user = auth(req) || {};
 		let shasum = crypto.createHash('sha1');
 		shasum.update(user.pass || '');
-		if ((id.username === undefined)
-			|| (id.sha === undefined)
+		if ( publicDirs[ req.path.slice( homeURL.length ).split( '/' )[ 0 ] ]) {
+		    next();
+		    return;
+		}
+		if ((id.username === undefined)	|| (id.sha === undefined)
 			|| (user && user.name === id.username && shasum.digest('hex') === id.sha)) {
-				next();
-				return;
+			res.cookie('homeURL', homeURL);
+			next();
+			return;
 		}
 		res.setHeader('WWW-Authenticate', 'Basic realm="login/password?"');
 		res.sendStatus(401);
@@ -75,7 +91,7 @@ io = socketIO(server, {path : path.join(homeURL, 'socket.io')});
 
 function log (message) {
 	console.log(message);
-	io.emit("log", message);
+	if ( io ) io.emit("log", message);
 }
 
 log("Start : " + new Date().toLocaleString());
