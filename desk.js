@@ -170,10 +170,10 @@ io.on('connection', function (socket) {
 	let ip = (socket.client.conn.request.headers['x-forwarded-for']
 		|| socket.handshake.address).split(":").pop();
 
-	log('connect : ' + ip);
+	log( new Date().toString() + ': connect : ' + ip );
 	io.emit("actions updated", actions.getSettings());
 
-	socket.on( 'disconnect', () => log( 'disconnect : ' + ip ) )
+	socket.on( 'disconnect', () => log( new Date().toString() + ': disconnect : ' + ip ) )
 		.on( 'action', action => actions.execute( action,
 			res => io.emit("action finished", res ) ) )
 		.on('setEmitLog', log => actions.setEmitLog( log ) )
