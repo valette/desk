@@ -90,7 +90,7 @@ function addApp ( user, callback ) {
 function remove( user, callback ) {
 	var app = apps.find( app => ( app.name === user ) );
 	if ( config.users.indexOf( user ) >= 0 ) {
-		config.users = config.users.filter( u => u.name !== user );
+		config.users = config.users.filter( u => u !== user );
 	}
 
 	if ( config.ports[ user ] ) {
