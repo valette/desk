@@ -52,16 +52,20 @@ function addApp ( user, callback ) {
 	var logFile = cwd + 'log.txt';
 	var settings = {
 		"name"       : user,
-		"script"     : __dirname + "/deskSU.js",
+		"script"     : path.join( __dirname, "/deskSU.js" ),
 		"cwd"        : cwd,
 		"error_file" : logFile,
 		"out_file"   : logFile,
 		"merge_logs" : true,
 		"env": {
-			"DESK_USER" : user,
-			"DESK_MEMORY_RATIO" : "0.1",
-			"PORT" : config.ports[ user ],
-			"DESK_CMD" : "node "	+ path.join(__dirname, '../desk.js --multi')
+			DESK_USER : user,
+			DESK_MEMORY_RATIO : "0.1",
+			PORT : config.ports[ user ],
+			USER : user,
+			DESK_PREFIX : user,
+			CCACHE_DIR : "/home/" + user + "/.ccache",
+			HOME : "/home/" + user,
+			LOGNAME : user
 		}
 	};
 
@@ -70,8 +74,8 @@ function addApp ( user, callback ) {
 		try {
 			var boot = JSON.parse( fs.readFileSync( userConfig ) ).boot;
 			if ( boot ) {
-				console.log( "using custom command : " + boot );
-				settings.env.DESK_CMD = "node " + boot;
+				console.log( "using custom script : " + boot );
+				settings.env.DESK_STARTUP = boot;
 			}
 		} catch ( err ) {
 			console.log( '\nerror while reading ' + userConfig );

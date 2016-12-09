@@ -21,8 +21,8 @@ const actions    = require('desk-base'),
 
 const certificateFile = path.join(__dirname, "certificate.pem"),
       deskDir         = actions.getRootDir(),
-      homeURL         = argv.multi ? '/' + process.env.USER + '/' : '/',
-      port            = argv.multi ? process.env.PORT : 8080,
+      homeURL         = process.env.DESK_PREFIX ? ( "/" + process.env.DESK_PREFIX + "/" ) : '/',
+      port            = process.env.PORT || 8080,
       passwordFile    = path.join(deskDir, "password.json"),
       privateKeyFile  = path.join(__dirname, "privatekey.pem"),
       uploadDir       = path.join(deskDir, 'upload') + '/';
