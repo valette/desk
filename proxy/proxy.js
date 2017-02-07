@@ -18,7 +18,13 @@ var defaultRoutes,
 
 var routes; // main routing object
 
-var proxy = httpProxy.createProxyServer({xfwd : true});
+var proxy = httpProxy.createProxyServer( {
+
+	xfwd : true,
+	agent : new http.Agent( { keepAlive: true } )
+
+} );
+
 proxy.on('error', function(err, req, res) {
 	//just end the request
 	res.end();
