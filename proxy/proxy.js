@@ -30,11 +30,18 @@ proxy.on('error', function(err, req, res) {
 	res.end();
 });
 
-var proxyServer = https.createServer({
+var serverOpts = {
 	key: fs.readFileSync(keyFile, 'utf8'),
 	cert: fs.readFileSync(certFile, 'utf8'),
-	ca : fs.readFileSync(caFile, 'utf8')
-}, processRequest);
+};
+
+if ( fs.existsSync( caFile ) ) {
+	serverOpts.ca = fs.readFileSync(caFile, 'utf8')
+} else {
+	console.warn( 'no .ca file provided' );
+}
+
+var proxyServer = https.createServer( serverOpts, processRequest);
 
 var server = http.createServer(function (req, res) {
 	if (httpAllowed[req.headers.host]) {
@@ -87,9 +94,11 @@ function updateRoutes() {
 		var routesContent = JSON.parse(fs.readFileSync(config));
 		routes = {};
 
+		var baseURL = routesContent.baseURL || os.hostname();
+
 		routesContent.users.forEach( function ( user ) {
-			routes[ os.hostname() + '/' + user ] = {
-				target : 'http://' + os.hostname() + ':' + routesContent.ports[user]
+			routes[ baseURL + '/' + user ] = {
+				target : 'http://' + baseURL + ':' + routesContent.ports[user]
 			};
 		});
 

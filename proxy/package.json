@@ -1,23 +1,21 @@
 {
   "name": "proxy",
   "description": "a simple proxy + supervisor to handle multi-user DESK installs",
-  "license" : "CECILL-B",
+  "license": "CECILL-B",
   "main": "./start",
   "private": true,
   "author": {
     "name": "Sebastien Valette"
   },
   "version": "0.0.1",
-  "devDependencies": {
-  },
-
+  "devDependencies": {},
   "dependencies": {
-    "async" : ">0.0.0",
-    "get-port" : ">0.0.0",
-    "http-proxy" : ">0.0.0",
+    "async": ">0.0.0",
+    "get-port": ">0.0.0",
+    "http-proxy": ">0.0.0",
     "mkdirp": ">0.0.0",
-    "pm2" : ">0.0.0",
-    "pretty-data" : ">0.0.0"
+    "pm2": ">0.0.0",
+    "pretty-data": ">0.0.0"
   },
   "optionalDependencies": {},
   "engines": {

@@ -4,14 +4,14 @@
 		"user2"
 	],
 
-	"basePort" : 8000,
+	"baseURL" : "localhost",
 
 	"defaultRoutes" : {
 		"hostname1" : "url1",
 		"hostname2" : "url2"
 	},
 
-	"httpAllowed : {
+	"httpAllowed" : {
 		"hostname2" : true
 	},
 
