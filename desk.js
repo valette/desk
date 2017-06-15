@@ -87,7 +87,7 @@ if (fs.existsSync(privateKeyFile) && fs.existsSync(certificateFile)) {
 	baseURL = "http://";
 }
 
-io = socketIO(server, {path : path.join(homeURL, 'socket.io')});
+io = socketIO(server, {wsEngine: 'ws', path : path.join(homeURL, 'socket.io')});
 
 function log (message) {
 	console.log(message);
