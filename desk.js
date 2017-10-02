@@ -172,7 +172,7 @@ io.on('connection', function (socket) {
 		|| socket.handshake.address).split(":").pop();
 
 	log( new Date().toString() + ': connect : ' + ip );
-	io.emit("actions updated", actions.getSettings());
+	socket.emit("actions updated", actions.getSettings());
 
 	socket.on( 'disconnect', () => log( new Date().toString() + ': disconnect : ' + ip ) )
 		.on( 'action', action => actions.execute( action,
