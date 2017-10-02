@@ -10,7 +10,6 @@ const actions    = require('desk-base'),
       express    = require('express'),
       formidable = require('formidable'),
       fs         = require('fs-extra'),
-      fwd        = require('fwd'),
       http       = require('http'),
       https      = require('https'),
       os         = require('os'),
@@ -166,6 +165,8 @@ let router = express.Router()
 
 app.use(homeURL, router);
 
+actions.emit = io.emit.bind( io );
+
 io.on('connection', function (socket) {
 	let ip = (socket.client.conn.request.headers['x-forwarded-for']
 		|| socket.handshake.address).split(":").pop();
@@ -183,8 +184,6 @@ io.on('connection', function (socket) {
 			id.sha = shasum.digest( 'hex' );
 			fs.writeFileSync( passwordFile, JSON.stringify( id ) );
 		});
-
-    fwd(actions, socket);
 
 });
 
