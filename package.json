@@ -1,6 +1,6 @@
 {
   "name": "desk-node",
-  "description": "a node.js remote desktop, for visualization and processing of medical data",
+  "description": "js web IDE with 3D data visualization tools and CLI-based RPC",
   "license": "CECILL-B",
   "main": "./desk.js",
   "author": "Sebastien Valette <sebastien.valette@creatis.insa-lyon.fr> (http://www.creatis.insa-lyon.fr/~valette)",
