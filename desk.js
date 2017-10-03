@@ -14,9 +14,10 @@ const actions    = require('desk-base'),
       https      = require('https'),
       os         = require('os'),
       path       = require('path'),
-      psTree     = require('ps-tree'),
       pty        = require('pty.js'),
-      socketIO   = require('socket.io');
+      socketIO   = require('socket.io'),
+      util       = require('util'),
+      kill       = util.promisify( require( 'tree-kill') );
 
 const certificateFile = path.join(__dirname, "certificate.pem"),
       deskDir         = actions.getRootDir(),
@@ -36,13 +37,11 @@ var publicDirs = {};
 function updatePublicDirs () {
     var dirs = actions.getSettings().dataDirs;
     publicDirs = {};
-    Object.keys( dirs ).forEach( function ( dir ) {
-        if (dirs[dir].public) {
-            publicDirs[ dir ] = true;
-        }
-    });
+    Object.keys( dirs ).filter( dir => dirs[ dir ].public )
+		.forEach( dir => publicDirs[ dir ] = true )
+
     if ( Object.keys ( publicDirs ).length ) {
-        log("public data : " + Object.keys( publicDirs ).join(', ') );
+        log( "public data : " + Object.keys( publicDirs ).join(', ') );
     }
 }
 actions.on('actions updated', updatePublicDirs);
@@ -96,51 +95,53 @@ function log (message) {
 log("Start : " + new Date().toLocaleString());
 
 fs.watchFile(passwordFile, updatePassword);
+
 function updatePassword() {
-	if (fs.existsSync(passwordFile)) {
-		try {
-			id = JSON.parse(fs.readFileSync(passwordFile));
-		}
-		catch (e) {
-			log("error while reading password file : ");
-			log(e);
-			id = {};
-		}
+
+	try {
+
+		id = JSON.parse( fs.readFileSync( passwordFile ) );
+
+	} catch ( e ) {
+
+		log( "error while reading password file : " );
+		log( e );
+		id = {};
+
 	}
 
-	if (id.password) {
+	if ( id.password ) {
+
 		// convert to secure format
 		let shasum = crypto.createHash('sha1');
 		shasum.update(id.password);
 		id.sha = shasum.digest('hex');
 		delete id.password;
 		fs.writeFileSync(passwordFile, JSON.stringify(id));
+
 	}
+
 }
+
 updatePassword();
 
-function moveFile(file, outputDir) {
-	log("file : " + file.path.toString());
-	let fullName = path.join(outputDir, file.name);
-	let index = 0;
-	let newFile;
+async function moveFile(file, outputDir) {
 
-	function tryToMove() {
+	log( "file : " + file.path.toString() );
+	let fullName = path.join( outputDir, file.name );
+	let newFile, index = 0;
+
+	while ( 1 ) {
+
 		newFile = fullName + ( index > 0 ? "." + index : "" );
-		fs.exists(newFile, function (exists) {
-			if (exists) {
-				index++;
-				tryToMove();
-				return;
-			}
-			fs.move(file.path.toString(), newFile, function(err) {
-				if (err) throw err;
-				log("uploaded to " +  newFile);
-			});
-		});
+		if ( !( await fs.exists( newFile ) ) ) break;
+		index++
+
 	}
 
-	tryToMove();
+	await fs.move( file.path.toString(), newFile );
+	log( "uploaded to " +  newFile );
+
 }
 
 let router = express.Router()
@@ -215,33 +216,15 @@ if (actions.getSettings().permissions) io.of( '/xterm' ).on( 'connection', funct
 			.on('message', function(msg) {
 				term.write(msg);
 			})
-			.on('disconnect', function () {
-				psTree(term.pid, function (err, children) {
-					function kill (pid) {
-						try {
-							log( 'killing terminal process ' + pid );
-							process.kill(pid, 'SIGTERM');
-							process.kill(pid, 'SIGHUP');
-						} catch (e) {
-							log( 'could not kill process ' + pid + ' : ' + e );
-						}
-					}
+			.on('disconnect', async function () {
 
-					children.forEach(function (child) {
-						kill (child.PID);
-					});
-					kill( term.pid );
-				});
-
-				const namespace = io.of( '/xterm' + options.name );
-				const connectedNameSpaceSockets = Object.keys(namespace.connected);
-				connectedNameSpaceSockets.forEach( socketId => {
-					connectedNameSpaceSockets[ socketId ].disconnect();
-				});
-				namespace.removeAllListeners();
-				delete io.nsps[ '/xterm' + options.name ]; // Remove from the server namespaces
+				await kill( term.pid );
+				const name = '/xterm' + options.name;
+				io.of( name ).removeAllListeners();
+				delete io.nsps[ name ]; // Remove from the server namespaces
 				log("namespaces : " + Object.keys(io.nsps).join(','));
 				delete terms[ options.name ];
+
 			});
 		});
 	});
