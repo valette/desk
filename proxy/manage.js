@@ -1,55 +1,68 @@
-const	async      = require('async'),
-		execSync   = require('child_process').execSync,
-		fs         = require('fs'),
-		getPort    = require('get-port'),
-		mkdirp     = require('mkdirp'),
-		path       = require('path'),
-		pm2        = require('pm2');
+const	execSync   = require( 'child_process' ).execSync,
+		fs         = require( 'fs' ),
+		getPort    = require( 'get-port' ),
+		mkdirp     = require( 'mkdirp' ),
+		path       = require( 'path' ),
+		pm2        = require( 'pm2' ),
+		promisify  = require( 'util' ).promisify;
 
 const configFile = __dirname + '/config.json';
 const proxyUser = "dproxy";
 const proxyApp = "PROXY";
 
-var config = JSON.parse( fs.readFileSync( configFile ) );
+for ( let name of [ "delete", "list", "start" ] ) {
+
+	pm2[ name + 'Async' ] = promisify( pm2[ name ] );
+
+}
+
+const config = JSON.parse( fs.readFileSync( configFile ) );
 
 function exportConfig () {
+
 	config.users.sort();
 	fs.writeFileSync( configFile, JSON.stringify( config, null, "\t" ) );
+
 }
 
-function addUser( user, callback ) {
-	var app = apps.find( function ( app ) {
-		return app.name === user;
-	});
+async function addUser( apps, user ) {
 
-	if ( config.users.indexOf( user ) === -1 ) config.users.push( user );
+	if ( !config.users.includes( user ) ) config.users.push( user );
 
-	if (app) {
+	const app = apps.find( a => ( a.name === user ) );
+
+	if ( app ) {
+
 		console.log( 'User ' + user + ' is already active' );
 		config.ports[ user ] = app.pm2_env.PORT;
-		callback();
 		return;
+
 	}
 
-	getPort().then( function ( port ) {
-		config.ports[ user ] = port;
-		addApp( user, callback );
-	});
+	const port = await getPort()
+	config.ports[ user ] = port;
+	await addApp( user );
+
 }
 
-function addApp ( user, callback ) {
+async function addApp ( user ) {
+
 	console.log("Starting " + user);
-	var cwd = '/home/' + user + '/desk/';
-	if (!fs.existsSync(cwd)) {
-		mkdirp.sync(cwd);
-		var id = parseInt(execSync('id -u ' + user));
-		var group = parseInt(execSync('id -g ' + user));
-		fs.chownSync(cwd, id, group);
-		console.log("Created desk directory for user " + user);
+	const  cwd = '/home/' + user + '/desk/';
+
+	if ( !fs.existsSync( cwd ) ) {
+
+		mkdirp.sync( cwd );
+		const id = parseInt( execSync( 'id -u ' + user ) );
+		const group = parseInt( execSync( 'id -g ' + user ) );
+		fs.chownSync( cwd, id, group );
+		console.log( "Created desk directory for user " + user );
+
 	}
 
-	var logFile = cwd + 'log.txt';
-	var settings = {
+	const logFile = cwd + 'log.txt';
+	const settings = {
+
 		"name"       : user,
 		"uid"        : user,
 		"script"     : path.join( __dirname, "../desk.js" ),
@@ -58,130 +71,137 @@ function addApp ( user, callback ) {
 		"out_file"   : logFile,
 		"merge_logs" : true,
 		"env": {
+
 			PORT : config.ports[ user ],
 			USER : user,
 			DESK_PREFIX : user,
 			CCACHE_DIR : "/home/" + user + "/.ccache",
 			HOME : "/home/" + user,
 			LOGNAME : user
+
 		}
+
 	};
 
-	var userConfig = path.join('/home/', user, 'desk/config.json');
+	const userConfig = path.join( '/home', user, 'desk/config.json' );
+
 	if ( fs.existsSync( userConfig ) ) {
+
 		try {
-			var boot = JSON.parse( fs.readFileSync( userConfig ) ).boot;
+
+			const boot = JSON.parse( fs.readFileSync( userConfig ) ).boot;
 			if ( boot ) {
+
 				console.log( "using custom script : " + boot );
 				settings.script = boot;
+
 			}
+
 		} catch ( err ) {
+
 			console.log( '\nerror while reading ' + userConfig );
 			console.log( err );
 			settings = null;
+
 		}
 	}
 
-	if ( settings ) {
-		pm2.start( settings, callback );
-	} else {
-		callback();
-	}
+	if ( !settings ) return;
+	await pm2.startAsync( settings );
+
 }
 
-function remove( user, callback ) {
-	var app = apps.find( app => ( app.name === user ) );
-	if ( config.users.indexOf( user ) >= 0 ) {
+async function removeUser( apps, user ) {
+
+	if ( config.users.includes( user ) ) {
+
 		config.users = config.users.filter( u => u !== user );
+
 	}
 
-	if ( config.ports[ user ] ) {
-		delete config.ports[user];
-	}
+	if ( config.ports[ user ] ) delete config.ports[user];
 
-	if ( app ) {
-		pm2.delete( user, function ( err ) {
-			console.log( 'app stopped for user ' + user );
-			callback();
-		});
+	if ( apps.find( app => ( app.name === user ) ) ) {
+
+		await pm2.deleteAsync( user );
+		console.log( 'app stopped for user ' + user );
+
 	} else {
+
 		console.log( 'no app found for user ' + user );
-		callback();
 	}
+
 }
 
-function init() {
-	var users = config.users;
+async function init( apps ) {
+
+	const users = config.users;
 	config.users = [];
 	config.ports = {};
 
-	async.each( users, addUser, function ( err ) {
-		exportConfig();
-		console.log("All apps launched");
+	await Promise.all(  users.map ( user => addUser( apps, user ) ) );
+	console.log("All apps launched");
 
-		if ( apps.find( app => ( app.name === proxyApp ) ) ) {
-			console.log( 'Proxy already started');
-			process.exit();
-		}
+	if ( apps.find( app => ( app.name === proxyApp ) ) ) {
 
-		// add proxy cluster app
-		var cwd = '/home/' + proxyUser + '/desk/';
-		var logFile = cwd + 'log.txt';
-		var proxy = {
-			"name"       : proxyApp,
-			"script"     : __dirname + "/proxy.js",
-			"error_file" : logFile,
-			"out_file"   : logFile,
-			"merge_logs" : true,
-			"exec_mode"  : 'cluster_mode',
-			"instances"  : 4
-		};
-		pm2.start( proxy, function ( err ) {
-			console.log("Proxy started");
-			if ( err ) {
-				console.log( err )
-			}
-			process.exit();
-		} );
-	});
+		console.log( 'Proxy already started');
+		return;
+
+	}
+
+	// add proxy cluster app
+	const cwd = '/home/' + proxyUser + '/desk/';
+	const logFile = cwd + 'log.txt';
+	const proxy = {
+
+		"name"       : proxyApp,
+		"script"     : __dirname + "/proxy.js",
+		"error_file" : logFile,
+		"out_file"   : logFile,
+		"merge_logs" : true,
+		"exec_mode"  : 'cluster_mode',
+		"instances"  : 4
+
+	};
+
+	await pm2.startAsync( proxy );
+	console.log( "Proxy started" );
+
 }
 
-const args = process.argv;
-var action = args[ 2 ];
-var user = args[ 3 ];
+( async function () {
 
-var apps;
-pm2.list( function ( err, res ) {
-	apps = res;
+	const [ , , action, user ] = process.argv;
+	const apps = await pm2.listAsync();
+
 	switch ( action ) {
-		case undefined :
-			init();
-			break;
+
 		case "add" :
-			if ( !user ) {
-				console.log( "Error : no user specified" );
-				process.exit( 1 );
-			}
-			addUser ( user, function ( err ) {
-				if ( err ) {
-					process.exit(1);
-				}
-				exportConfig();
-				process.exit();
-			} );
+
+			if ( !user ) throw "no user specified";
+			await addUser ( apps, user );
 			break;
+
 		case "remove" :
-			if ( !user ) {
-				console.log( "Error : no user specified" );
-				process.exit( 1 );
-			}
-			remove ( user, function ( err ) {
-				if ( err ) {
-					process.exit(1);
-				}
-				exportConfig();
-				process.exit();
-			} );
+
+			if ( !user ) throw "no user specified";
+			await removeUser ( apps, user );
 			break;
+
+
+		default:
+
+			await init( apps );
+
 	}
-});
+
+	exportConfig();
+
+} )()
+	.then( () => process.exit() )
+	.catch( err => {
+
+		console.log( 'Error : ', err )
+		process.exit( 1 );
+
+	} );
