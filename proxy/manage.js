@@ -4,8 +4,7 @@ const	async      = require('async'),
 		getPort    = require('get-port'),
 		mkdirp     = require('mkdirp'),
 		path       = require('path'),
-		pm2        = require('pm2'),
-		prettyPrint= require('pretty-data').pd;
+		pm2        = require('pm2');
 
 const configFile = __dirname + '/config.json';
 const proxyUser = "dproxy";
@@ -15,7 +14,7 @@ var config = JSON.parse( fs.readFileSync( configFile ) );
 
 function exportConfig () {
 	config.users.sort();
-	fs.writeFileSync( configFile, prettyPrint.json( config ) );
+	fs.writeFileSync( configFile, JSON.stringify( config, null, "\t" ) );
 }
 
 function addUser( user, callback ) {
@@ -52,14 +51,13 @@ function addApp ( user, callback ) {
 	var logFile = cwd + 'log.txt';
 	var settings = {
 		"name"       : user,
-		"script"     : path.join( __dirname, "/deskSU.js" ),
+		"uid"        : user,
+		"script"     : path.join( __dirname, "../desk.js" ),
 		"cwd"        : cwd,
 		"error_file" : logFile,
 		"out_file"   : logFile,
 		"merge_logs" : true,
 		"env": {
-			DESK_USER : user,
-			DESK_MEMORY_RATIO : "0.1",
 			PORT : config.ports[ user ],
 			USER : user,
 			DESK_PREFIX : user,
@@ -75,7 +73,7 @@ function addApp ( user, callback ) {
 			var boot = JSON.parse( fs.readFileSync( userConfig ) ).boot;
 			if ( boot ) {
 				console.log( "using custom script : " + boot );
-				settings.env.DESK_STARTUP = boot;
+				settings.script = boot;
 			}
 		} catch ( err ) {
 			console.log( '\nerror while reading ' + userConfig );
