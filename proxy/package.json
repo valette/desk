@@ -10,12 +10,12 @@
   "version": "0.0.1",
   "devDependencies": {},
   "dependencies": {
-    "async": ">0.0.0",
-    "get-port": ">0.0.0",
-    "http-proxy": ">0.0.0",
-    "mkdirp": ">0.0.0",
-    "pm2": ">0.0.0",
-    "pretty-data": ">0.0.0"
+    "async": "2.5.0",
+    "get-port": "3.2.0",
+    "http-proxy": "1.16.2",
+    "mkdirp": "0.5.1",
+    "pm2": "2.7.2",
+    "pretty-data": "0.40.0"
   },
   "optionalDependencies": {},
   "engines": {
