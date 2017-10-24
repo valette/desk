@@ -3,7 +3,8 @@ DESK Exposing Server Kit
 
 DESK  is a remote desktop, originally for visualization and processing of medical images. It currently only works under linux or Mac OS, but patches are welcome!
 
-This repository contains the node.js code to run the server.
+This repository contains the node.js code to run the server. The source code for the UI is available here: [https://github.com/valette/desk-ui](https://github.com/valette/desk-ui)
+
 There are also two local versions available (run locally on your computer) : 
 * [desk-electron](https://github.com/valette/desk-electron)
 * [desk-nw](https://github.com/valette/desk-nw)
