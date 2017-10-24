@@ -53,7 +53,7 @@ var server = http.createServer(function (req, res) {
 });
 
 function processRequest (req, res) {
-	if (req.url == "/") {
+	if (req.url == "/" && defaultRoutes[req.headers.host] ) {
 		res.writeHead( 302, {Location: defaultRoutes[req.headers.host]} );
 		res.end();
 	} else {
