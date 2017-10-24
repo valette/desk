@@ -76,7 +76,7 @@ const app = express()
 		form.on( 'end', () => {
 
 			res.send('file(s) uploaded successfully');
-			files.forEach(file => moveFile( file, outputDir ) );
+			for ( let file of files ) moveFile( file, outputDir );
 
 		} );
 
@@ -116,16 +116,20 @@ let publicDirs = {};
 
 function updatePublicDirs () {
 
-    const dirs = actions.getSettings().dataDirs;
-    publicDirs = {};
-    Object.keys( dirs ).filter( dir => dirs[ dir ].public )
-		.forEach( dir => publicDirs[ dir ] = true )
+	const dirs = actions.getSettings().dataDirs;
+	publicDirs = {};
 
-    if ( Object.keys ( publicDirs ).length ) {
+	for ( let dir of Object.keys( dirs ).filter( dir => dirs[ dir ].public ) ) {
 
-        log( "public data : " + Object.keys( publicDirs ).join(', ') );
+		publicDirs[ dir ] = true;
 
-    }
+	}
+
+	if ( Object.keys ( publicDirs ).length ) {
+
+		log( "public data : " + Object.keys( publicDirs ).join(', ') );
+
+	}
 
 }
 
@@ -190,7 +194,7 @@ io.on( 'connection', socket => {
 	socket.emit( "actions updated", actions.getSettings() );
 
 	socket.on( 'disconnect', () => log( new Date().toString() + ': disconnect : ' + ip ) )
-		.on( 'action', action => actions.execute( action, res => io.emit("action finished", res ) ) )
+		.on( 'action', action => actions.execute( action, res => { io.emit( "action finished", res ) } ) )
 		.on( 'setEmitLog', log => actions.setEmitLog( log ) )
 		.on( 'password', password => {
 
