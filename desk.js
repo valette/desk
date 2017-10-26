@@ -57,8 +57,6 @@ const app = express()
 	.use( compress() )
 	.set( 'trust proxy', true )
 	.use( express.urlencoded( { limit : '10mb', extended : true } ) )
-	.use( homeURL, express.static( __dirname + '/node_modules/desk-ui/build' ),
-		express.static( deskDir ), directory( deskDir ) )
 	.post( path.join( homeURL, '/upload' ), ( req, res ) => {
 
 		const form = new formidable.IncomingForm();
@@ -80,7 +78,9 @@ const app = express()
 
 		} );
 
-	} );
+	} )
+	.use( homeURL, express.static( __dirname + '/node_modules/desk-ui/build' ),
+		express.static( deskDir ), directory( deskDir ) );
 
 let server, baseURL = "http://";
 
