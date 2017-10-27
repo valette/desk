@@ -18,13 +18,6 @@ for ( let name of [ "delete", "list", "start" ] ) {
 
 const config = JSON.parse( fs.readFileSync( configFile ) );
 
-function exportConfig () {
-
-	config.users.sort();
-	fs.writeFileSync( configFile, JSON.stringify( config, null, "\t" ) );
-
-}
-
 async function addUser( apps, user ) {
 
 	if ( !config.users.includes( user ) ) config.users.push( user );
@@ -179,13 +172,13 @@ async function init( apps ) {
 		case "add" :
 
 			if ( !user ) throw "no user specified";
-			await addUser ( apps, user );
+			await addUser( apps, user );
 			break;
 
 		case "remove" :
 
 			if ( !user ) throw "no user specified";
-			await removeUser ( apps, user );
+			await removeUser( apps, user );
 			break;
 
 
@@ -195,7 +188,8 @@ async function init( apps ) {
 
 	}
 
-	exportConfig();
+	config.users.sort();
+	fs.writeFileSync( configFile, JSON.stringify( config, null, "\t" ) );
 
 } )()
 	.then( () => process.exit() )
