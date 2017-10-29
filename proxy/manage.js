@@ -6,7 +6,7 @@ const	execSync   = require( 'child_process' ).execSync,
 		pm2        = require( 'pm2' ),
 		promisify  = require( 'util' ).promisify;
 
-const configFile = __dirname + '/config.json';
+const file = __dirname + '/config.json';
 const proxyUser = "dproxy";
 const proxyApp = "PROXY";
 
@@ -16,7 +16,7 @@ for ( let name of [ "delete", "list", "start" ] ) {
 
 }
 
-const config = JSON.parse( fs.readFileSync( configFile ) );
+const config = JSON.parse( fs.readFileSync( file ) );
 
 async function addUser( apps, user ) {
 
@@ -34,14 +34,8 @@ async function addUser( apps, user ) {
 
 	const port = await getPort()
 	config.ports[ user ] = port;
-	await addApp( user );
-
-}
-
-async function addApp ( user ) {
-
 	console.log("Starting " + user);
-	const  cwd = '/home/' + user + '/desk/';
+	const cwd = '/home/' + user + '/desk/';
 
 	if ( !fs.existsSync( cwd ) ) {
 
@@ -65,7 +59,7 @@ async function addApp ( user ) {
 		"merge_logs" : true,
 		"env": {
 
-			PORT : config.ports[ user ],
+			PORT : port,
 			USER : user,
 			DESK_PREFIX : user,
 			CCACHE_DIR : "/home/" + user + "/.ccache",
@@ -78,25 +72,22 @@ async function addApp ( user ) {
 
 	const userConfig = path.join( '/home', user, 'desk/config.json' );
 
-	if ( fs.existsSync( userConfig ) ) {
+	if ( fs.existsSync( userConfig ) ) try {
 
-		try {
+		const boot = JSON.parse( fs.readFileSync( userConfig ) ).boot;
+		if ( boot ) {
 
-			const boot = JSON.parse( fs.readFileSync( userConfig ) ).boot;
-			if ( boot ) {
-
-				console.log( "using custom script : " + boot );
-				settings.script = boot;
-
-			}
-
-		} catch ( err ) {
-
-			console.log( '\nerror while reading ' + userConfig );
-			console.log( err );
-			settings = null;
+			console.log( "using custom script : " + boot );
+			settings.script = boot;
 
 		}
+
+	} catch ( err ) {
+
+		console.log( '\nerror while reading ' + userConfig );
+		console.log( err );
+		settings = null;
+
 	}
 
 	if ( !settings ) return;
@@ -112,17 +103,14 @@ async function removeUser( apps, user ) {
 
 	}
 
-	if ( config.ports[ user ] ) delete config.ports[user];
+	if ( config.ports[ user ] ) delete config.ports[ user ];
 
 	if ( apps.find( app => ( app.name === user ) ) ) {
 
 		await pm2.deleteAsync( user );
 		console.log( 'app stopped for user ' + user );
 
-	} else {
-
-		console.log( 'no app found for user ' + user );
-	}
+	} else throw 'no app found for user ' + user;
 
 }
 
@@ -137,7 +125,7 @@ async function init( apps ) {
 
 	if ( apps.find( app => ( app.name === proxyApp ) ) ) {
 
-		console.log( 'Proxy already started');
+		console.log( 'Proxy already started' );
 		return;
 
 	}
@@ -167,32 +155,23 @@ async function init( apps ) {
 	const [ , , action, user ] = process.argv;
 	const apps = await pm2.listAsync();
 
-	switch ( action ) {
+	if ( action === "add" ) {
 
-		case "add" :
+		if ( !user ) throw "no user specified";
+		await addUser( apps, user );
 
-			if ( !user ) throw "no user specified";
-			await addUser( apps, user );
-			break;
+	} else if ( action === "remove" ) {
 
-		case "remove" :
+		if ( !user ) throw "no user specified";
+		await removeUser( apps, user );
 
-			if ( !user ) throw "no user specified";
-			await removeUser( apps, user );
-			break;
-
-
-		default:
-
-			await init( apps );
-
-	}
+	} else await init( apps );
 
 	config.users.sort();
-	fs.writeFileSync( configFile, JSON.stringify( config, null, "\t" ) );
+	fs.writeFileSync( file, JSON.stringify( config, null, "\t" ) );
 
 } )()
-	.then( () => process.exit() )
+	.then( process.exit )
 	.catch( err => {
 
 		console.log( 'Error : ', err )
