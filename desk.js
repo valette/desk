@@ -63,6 +63,7 @@ const app = express()
 		let outputDir;
 		const files = [];
 		form.uploadDir = uploadDir;
+
 		form.parse( req, function( err, fields, files ) {
 
 			outputDir = path.join(deskDir, unescape(fields.uploadDir));
@@ -71,10 +72,10 @@ const app = express()
 
 		form.on( 'file', ( name, file ) => files.push( file ) );
 
-		form.on( 'end', () => {
+		form.on( 'end', async () => {
 
-			res.send('file(s) uploaded successfully');
-			for ( let file of files ) moveFile( file, outputDir );
+			for ( let file of files ) await moveFile( file, outputDir );
+			res.send( 'file(s) uploaded successfully' );
 
 		} );
 
@@ -119,9 +120,9 @@ function updatePublicDirs () {
 	const dirs = actions.getSettings().dataDirs;
 	publicDirs = {};
 
-	for ( let dir of Object.keys( dirs ).filter( dir => dirs[ dir ].public ) ) {
+	for ( let [ dir, props ] of Object.entries( dirs ) ) {
 
-		publicDirs[ dir ] = true;
+		if ( props.public ) publicDirs[ dir ] = true;
 
 	}
 
