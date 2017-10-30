@@ -16,13 +16,11 @@ for ( let name of [ "delete", "list", "start" ] ) {
 
 }
 
-const config = JSON.parse( fs.readFileSync( file ) );
-
-async function addUser( apps, user ) {
+async function addUser( config, runningApps, user ) {
 
 	if ( !config.users.includes( user ) ) config.users.push( user );
 
-	const app = apps.find( a => ( a.name === user ) );
+	const app = runningApps.find( a => ( a.name === user ) );
 
 	if ( app ) {
 
@@ -32,22 +30,23 @@ async function addUser( apps, user ) {
 
 	}
 
+	const id = parseInt( execSync( 'id -u ' + user ) );
 	const port = await getPort()
-	config.ports[ user ] = port;
-	console.log("Starting " + user);
+	console.log( "Starting " + user );
 	const cwd = '/home/' + user + '/desk/';
 
 	if ( !fs.existsSync( cwd ) ) {
 
 		mkdirp.sync( cwd );
-		const id = parseInt( execSync( 'id -u ' + user ) );
 		const group = parseInt( execSync( 'id -g ' + user ) );
 		fs.chownSync( cwd, id, group );
 		console.log( "Created desk directory for user " + user );
 
 	}
 
+	config.ports[ user ] = port;
 	const logFile = cwd + 'log.txt';
+
 	const settings = {
 
 		"name"       : user,
@@ -95,7 +94,7 @@ async function addUser( apps, user ) {
 
 }
 
-async function removeUser( apps, user ) {
+async function removeUser( config, runningApps, user ) {
 
 	if ( config.users.includes( user ) ) {
 
@@ -105,7 +104,7 @@ async function removeUser( apps, user ) {
 
 	if ( config.ports[ user ] ) delete config.ports[ user ];
 
-	if ( apps.find( app => ( app.name === user ) ) ) {
+	if ( runningApps.find( app => ( app.name === user ) ) ) {
 
 		await pm2.deleteAsync( user );
 		console.log( 'app stopped for user ' + user );
@@ -114,16 +113,16 @@ async function removeUser( apps, user ) {
 
 }
 
-async function init( apps ) {
+async function init( config, runningApps ) {
 
 	const users = config.users;
 	config.users = [];
 	config.ports = {};
 
-	await Promise.all(  users.map ( user => addUser( apps, user ) ) );
-	console.log("All apps launched");
+	for ( let user of users ) await addUser( config, runningApps, user );
+	console.log("All runningApps launched");
 
-	if ( apps.find( app => ( app.name === proxyApp ) ) ) {
+	if ( runningApps.find( app => ( app.name === proxyApp ) ) ) {
 
 		console.log( 'Proxy already started' );
 		return;
@@ -152,29 +151,34 @@ async function init( apps ) {
 
 ( async function () {
 
-	const [ , , action, user ] = process.argv;
-	const apps = await pm2.listAsync();
+	try {
 
-	if ( action === "add" ) {
+		const [ , , action, user ] = process.argv;
+		const runningApps = await pm2.listAsync();
+		const config = JSON.parse( fs.readFileSync( file ) );
 
-		if ( !user ) throw "no user specified";
-		await addUser( apps, user );
+		if ( action === "add" ) {
 
-	} else if ( action === "remove" ) {
+			if ( !user ) throw "no user specified";
+			await addUser( config, runningApps, user );
 
-		if ( !user ) throw "no user specified";
-		await removeUser( apps, user );
+		} else if ( action === "remove" ) {
 
-	} else await init( apps );
+			if ( !user ) throw "no user specified";
+			await removeUser( config, runningApps, user );
 
-	config.users.sort();
-	fs.writeFileSync( file, JSON.stringify( config, null, "\t" ) );
+		} else await init( config, runningApps );
 
-} )()
-	.then( process.exit )
-	.catch( err => {
+		config.users.sort();
+		fs.writeFileSync( file, JSON.stringify( config, null, "\t" ) );
 
-		console.log( 'Error : ', err )
+	} catch ( error ) {
+
+		console.log( 'Error : ', error.toString() );
 		process.exit( 1 );
 
-	} );
+	}
+
+	process.exit();
+
+} )();
