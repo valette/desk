@@ -11,10 +11,8 @@ const actions    = require( 'desk-base' ),
       http       = require( 'http' ),
       https      = require( 'https' ),
       path       = require( 'path' ),
-      pty        = require( 'pty.js' ),
-      socketIO   = require( 'socket.io' ),
-      util       = require( 'util' ),
-      kill       = util.promisify( require( 'tree-kill') );
+      pty        = require( 'node-pty' ),
+      socketIO   = require( 'socket.io' );
 
 const certificateFile = path.join( __dirname, "certificate.pem" ),
       deskDir         = actions.getRootDir(),
@@ -24,7 +22,7 @@ const certificateFile = path.join( __dirname, "certificate.pem" ),
       privateKeyFile  = path.join( __dirname, "privatekey.pem" ),
       uploadDir       = path.join( deskDir, 'upload' ) + '/';
 
-process.title = "desk";
+process.title =v"desk";
 let id = { username : process.env.USER, password : "password" };
 fs.mkdirsSync( deskDir );
 fs.mkdirsSync( uploadDir );
@@ -223,11 +221,12 @@ if ( actions.getSettings().permissions ) io.of( '/xterm' ).on( 'connection', soc
 				name: 'xterm-color',
 				cols: 80,
 				rows: 24,
-				cwd: process.env.PWD,
+				cwd: process.env.HOME,
 				env: process.env
 
-			} )
-			.on('data', data => {
+			} );
+
+			term.on('data', data => {
 
 				try { socket.send( data ); } catch ( ex ) { }
 
@@ -239,7 +238,7 @@ if ( actions.getSettings().permissions ) io.of( '/xterm' ).on( 'connection', soc
 				.on( 'message', msg => term.write(msg) )
 				.on( 'disconnect', async () => {
 
-					await kill( term.pid );
+					term.kill();
 					const name = '/xterm' + options.name;
 					io.of( name ).removeAllListeners();
 					delete io.nsps[ name ]; // Remove from the server namespaces
