@@ -19,7 +19,7 @@ var button = new qx.ui.form.Button("generate");
 button.addListener("execute", function(e) {
 	button.setEnabled(false);
 	result.clear();
-	result.log("starting", "yellow");
+	result.log("starting\n", "yellow");
 
 	desk.Actions.execute({
 		action : "qooxdoo_generator",
@@ -39,15 +39,12 @@ button.addListener("execute", function(e) {
 					break;
 				default : return;
 			}
-			// filter out progress indicators...
-			if (/[a-z0-9]/.test(message.data)) {
-				result.log(message.data, color);
-			}
+			result.log( message.data, color );
 		}
 	},
 	function (err, message) {
 		button.setEnabled(true);
-		result.log("finished", "yellow");
+		result.log("finished\n", "yellow");
 	});
 });
 container.add(button, {flex : 1});
