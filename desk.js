@@ -22,7 +22,7 @@ const certificateFile = path.join( __dirname, "certificate.pem" ),
       privateKeyFile  = path.join( __dirname, "privatekey.pem" ),
       uploadDir       = path.join( deskDir, 'upload' ) + '/';
 
-process.title =v"desk";
+process.title = "desk";
 let id = { username : process.env.USER, password : "password" };
 fs.mkdirsSync( deskDir );
 fs.mkdirsSync( uploadDir );
