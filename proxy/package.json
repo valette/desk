@@ -13,7 +13,7 @@
     "get-port": "3.2.0",
     "http-proxy": "1.16.2",
     "mkdirp": "0.5.1",
-    "pm2": "2.7.2"
+    "pm2": "^2.8.0"
   },
   "optionalDependencies": {},
   "engines": {
