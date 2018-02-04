@@ -4,7 +4,7 @@
   "license": "CECILL-B",
   "main": "./desk.js",
   "author": "Sebastien Valette <sebastien.valette@creatis.insa-lyon.fr> (http://www.creatis.insa-lyon.fr/~valette)",
-  "version": "1.1.2",
+  "version": "1.2.1",
   "repository": {
     "type": "git",
     "url": "git://github.com/valette/desk.git"
@@ -12,16 +12,15 @@
   "dependencies": {
     "basic-auth": "2.0.0",
     "compression": "1.7.1",
-    "desk-base": "^1.0.1",
-    "desk-ui": "1.0.1",
+    "desk-base": "1.1.0",
+    "desk-ui": "1.1.1",
     "express": "4.16.2",
     "formidable": "1.1.1",
-    "fs-extra": "4.0.2",
-    "pty.js": "0.3.1",
+    "fs-extra": "5.0.0",
+    "node-pty": "0.7.4",
     "serve-index": "1.9.1",
-    "shelljs": "0.7.8",
-    "socket.io": "2.0.4",
-    "tree-kill": "1.2.0"
+    "shelljs": "0.8.1",
+    "socket.io": "2.0.4"
   },
   "optionalDependencies": {},
   "engines": {
