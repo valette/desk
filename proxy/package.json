@@ -11,9 +11,9 @@
   "devDependencies": {},
   "dependencies": {
     "get-port": "3.2.0",
-    "http-proxy": "1.16.2",
+    "http-proxy": "1.17.0",
     "mkdirp": "0.5.1",
-    "pm2": "^2.8.0"
+    "pm2": "^2.10.4"
   },
   "optionalDependencies": {},
   "engines": {
