@@ -144,7 +144,6 @@ function updatePassword() {
 
 		log( "error while reading password file : " );
 		log( e );
-		id = {};
 
 	}
 
