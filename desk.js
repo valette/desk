@@ -135,8 +135,6 @@ function updatePublicDirs () {
 actions.on( 'actions updated', updatePublicDirs );
 updatePublicDirs();
 
-fs.watchFile( passwordFile, updatePassword );
-
 function updatePassword() {
 
 	try { id = JSON.parse( fs.readFileSync( passwordFile ) ); }
@@ -161,6 +159,7 @@ function updatePassword() {
 }
 
 updatePassword();
+fs.watchFile( passwordFile, updatePassword );
 
 async function moveFile( file, outputDir ) {
 
