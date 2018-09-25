@@ -10,10 +10,10 @@
   "version": "0.0.1",
   "devDependencies": {},
   "dependencies": {
-    "get-port": "3.2.0",
+    "get-port": "4.0.0",
     "http-proxy": "1.17.0",
     "mkdirp": "0.5.1",
-    "pm2": "^2.10.4"
+    "pm2": "^3.0.4"
   },
   "optionalDependencies": {},
   "engines": {
