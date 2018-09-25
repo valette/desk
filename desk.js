@@ -61,6 +61,7 @@ const app = express()
 		let outputDir;
 		const files = [];
 		form.uploadDir = uploadDir;
+		form.maxFileSize = 200 * 1024 * 1024 * 1024;
 
 		form.parse( req, function( err, fields, files ) {
 
@@ -69,6 +70,8 @@ const app = express()
 		} );
 
 		form.on( 'file', ( name, file ) => files.push( file ) );
+
+		form.on( 'error', ( err ) => log( "upload error : " + err ) );
 
 		form.on( 'end', async () => {
 
