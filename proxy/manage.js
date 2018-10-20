@@ -18,8 +18,6 @@ for ( let name of [ "delete", "list", "start" ] ) {
 
 async function addUser( config, runningApps, user ) {
 
-	if ( !config.users.includes( user ) ) config.users.push( user );
-
 	const app = runningApps.find( a => ( a.name === user ) );
 
 	if ( app ) {
@@ -96,13 +94,7 @@ async function addUser( config, runningApps, user ) {
 
 async function removeUser( config, runningApps, user ) {
 
-	if ( config.users.includes( user ) ) {
-
-		config.users = config.users.filter( u => u !== user );
-
-	}
-
-	if ( config.ports[ user ] ) delete config.ports[ user ];
+	delete config.ports[ user ];
 
 	if ( runningApps.find( app => ( app.name === user ) ) ) {
 
@@ -115,11 +107,7 @@ async function removeUser( config, runningApps, user ) {
 
 async function init( config, runningApps ) {
 
-	const users = config.users;
-	config.users = [];
-	config.ports = {};
-
-	for ( let user of users ) await addUser( config, runningApps, user );
+	for ( let user of Object.keys( config.ports ) ) await addUser( config, runningApps, user );
 	console.log("All runningApps launched");
 
 	if ( runningApps.find( app => ( app.name === proxyApp ) ) ) {
@@ -157,19 +145,30 @@ async function init( config, runningApps ) {
 		const runningApps = await pm2.listAsync();
 		const config = JSON.parse( fs.readFileSync( file ) );
 
-		if ( action === "add" ) {
+		switch ( action ) {
 
-			if ( !user ) throw "no user specified";
-			await addUser( config, runningApps, user );
+			case "add":
+				if ( !user ) throw "no user specified";
+				await addUser( config, runningApps, user );
+				break;
 
-		} else if ( action === "remove" ) {
+			case "remove":
 
-			if ( !user ) throw "no user specified";
-			await removeUser( config, runningApps, user );
+				if ( !user ) throw "no user specified";
+				await removeUser( config, runningApps, user );
+				break;
 
-		} else await init( config, runningApps );
+			default:
+				await init( config, runningApps );
 
-		config.users.sort();
+		}
+
+		// sort ports
+		const entries = Object.entries( config.ports );
+		entries.sort( ( a, b ) => a[ 0 ].localeCompare( b[ 0 ] ) );
+		config.ports = {}
+		for ( let [ user, port ] of entries ) config.ports[ user ] = port;
+
 		execSync( "pm2 save" );
 		fs.writeFileSync( file, JSON.stringify( config, null, "\t" ) );
 

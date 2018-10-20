@@ -1,7 +1,7 @@
 {
-	"users" : [
-		"user1",
-		"user2"
+	"ports" : [
+		"user1" : 0,
+		"user2" : 0
 	],
 
 	"baseURL" : "localhost",
