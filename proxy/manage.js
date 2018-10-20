@@ -170,6 +170,7 @@ async function init( config, runningApps ) {
 		} else await init( config, runningApps );
 
 		config.users.sort();
+		execSync( "pm2 save" );
 		fs.writeFileSync( file, JSON.stringify( config, null, "\t" ) );
 
 	} catch ( error ) {
