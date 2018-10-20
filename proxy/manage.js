@@ -165,7 +165,7 @@ async function init( config, runningApps ) {
 
 		// sort ports
 		const entries = Object.entries( config.ports );
-		entries.sort( ( a, b ) => a[ 0 ].localeCompare( b[ 0 ] ) );
+		entries.sort( ( a, b ) => a[ 0 ].toLowerCase().localeCompare( b[ 0 ].toLowerCase() ) );
 		config.ports = {}
 		for ( let [ user, port ] of entries ) config.ports[ user ] = port;
 
