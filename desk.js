@@ -194,7 +194,7 @@ io.on( 'connection', socket => {
 	socket.emit( "actions updated", actions.getSettings() );
 
 	socket.on( 'disconnect', () => log( new Date().toString() + ': disconnect : ' + ip ) )
-		.on( 'action', action => actions.execute( action, res => { io.emit( "action finished", res ) } ) )
+		.on( 'action', action => actions.execute( action ) )
 		.on( 'setEmitLog', log => actions.setEmitLog( log ) )
 		.on( 'password', password => {
 
