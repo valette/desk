@@ -19,7 +19,7 @@
     "fs-extra": "7.0.1",
     "node-pty": "0.7.8",
     "serve-index": "1.9.1",
-    "shelljs": "0.8.2",
+    "shelljs": "0.8.3",
     "socket.io": "2.1.1"
   },
   "optionalDependencies": {},
