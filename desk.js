@@ -28,28 +28,38 @@ fs.mkdirsSync( deskDir );
 fs.mkdirsSync( uploadDir );
 actions.include( __dirname + '/extensions' );
 
+function authenticate ( user, pass ) {
+
+	if ( ( id.username === undefined ) && ( id.sha === undefined ) ) return true;
+	const shasum = crypto.createHash( 'sha1' );
+	shasum.update( pass );
+	const sha = shasum.digest( 'hex' );
+	if ( !user || !pass ||  user !== id.username ||  sha !== id.sha ) throw new Error( 'bad auth' );
+
+}
+
 const app = express()
 	.use( ( req, res, next ) => {
 
-		const user = auth( req ) || {};
-		const shasum = crypto.createHash( 'sha1' );
-		shasum.update( user.pass || '' );
 		if ( publicDirs[ req.path.slice( homeURL.length ).split( '/' )[ 0 ] ] ) {
 
 			return next();
 
 		}
 
-		if ( ( id.username === undefined )	|| ( id.sha === undefined )
-			|| ( user && user.name === id.username && shasum.digest( 'hex' ) === id.sha ) ) {
+		try {
 
+			const user = auth( req );
+			authenticate( user.name, user.pass );
 			res.cookie( 'homeURL', homeURL );
 			return next();
 
-		}
+		} catch ( e ) {
 
-		res.setHeader( 'WWW-Authenticate', 'Basic realm="login/password?"' );
-		res.sendStatus( 401 );
+			res.setHeader( 'WWW-Authenticate', 'Basic realm="Identity?"' );
+			res.sendStatus( 401 );
+
+		}
 
 	} )
 	.use( compress() )
@@ -186,6 +196,14 @@ actions.oldEmit = actions.emit;
 actions.emit = ( e, d ) => { io.emit( e, d ); return actions.oldEmit( e, d ) };
 
 io.on( 'connection', socket => {
+
+	try {
+
+		const auth = socket.request.headers.authorization.slice( 6 );
+		const id = ( '' + Buffer.from( auth, 'base64' ) ).split( ':' );
+		authenticate( ...id );
+
+	} catch ( e ) { return socket.disconnect(); }
 
 	const ip = ( socket.client.conn.request.headers[ 'x-forwarded-for' ]
 		|| socket.handshake.address ).split( ":" ).pop();
