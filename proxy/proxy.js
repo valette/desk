@@ -1,5 +1,4 @@
-const execSync  = require( 'child_process' ).execSync,
-      fs        = require( 'fs' ),
+const fs        = require( 'fs' ),
       http      = require( 'http' ),
       https     = require( 'https' ),
       httpProxy = require( 'http-proxy' ),
@@ -117,11 +116,11 @@ function updateRoutes() {
 
 		const baseURL = newRoutes.baseURL || os.hostname();
 
-		for( let user of newRoutes.users ) {
+		for( let [ user, port ] of Object.entries( newRoutes.ports ) ) {
 
 			routes[ baseURL + '/' + user ] = {
 
-				target : 'http://' + baseURL + ':' + newRoutes.ports[ user ]
+				target : 'http://' + baseURL + ':' + port
 
 			};
 
