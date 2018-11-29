@@ -30,7 +30,7 @@ actions.include( __dirname + '/extensions' );
 
 function authenticate ( user, pass ) {
 
-	if ( ( id.username === undefined ) && ( id.sha === undefined ) ) return true;
+	if ( id.username === undefined ) return true;
 	const shasum = crypto.createHash( 'sha1' );
 	shasum.update( pass );
 	const sha = shasum.digest( 'hex' );
@@ -49,7 +49,7 @@ const app = express()
 
 		try {
 
-			const user = auth( req );
+			const user = auth( req ) || {};
 			authenticate( user.name, user.pass );
 			res.cookie( 'homeURL', homeURL );
 			return next();
@@ -199,7 +199,7 @@ io.on( 'connection', socket => {
 
 	try {
 
-		const auth = socket.request.headers.authorization.slice( 6 );
+		const auth = ( socket.request.headers.authorization || "" ).slice( 6 );
 		const id = ( '' + Buffer.from( auth, 'base64' ) ).split( ':' );
 		authenticate( ...id );
 
