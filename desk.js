@@ -27,7 +27,7 @@ let id = { username : process.env.USER, password : "password" };
 fs.mkdirsSync( deskDir );
 fs.mkdirsSync( uploadDir );
 actions.include( __dirname + '/extensions' );
-console.log(process.getgroups());
+
 function authenticate ( user, pass ) {
 
 	if ( id.username === undefined ) return true;
