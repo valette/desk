@@ -65,8 +65,9 @@ The desk API is visible here :  [http://localhost:8080/ui/api](http://localhost:
 Building the debug version is done as follows : 
 
 	cd node_modules/desk-ui
-	npm install		// takes some time
-	npm run build	// also takes some time
+	git clone https://github.com/qooxdoo/qooxdoo
+	npm install
+	npm run build
 
 Afterwards, the debug version is here : [http://localhost:8080/ui/source](http://localhost:8080/ui/source)
 
