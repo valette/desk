@@ -48,8 +48,7 @@ async function addUser( config, runningApps, user ) {
 	const settings = {
 
 		"name"       : user,
-		"uid"        : user,
-		"script"     : path.join( __dirname, "../desk.js" ),
+		"script"     : path.join( __dirname, "deskSU.js" ),
 		"cwd"        : cwd,
 		"error_file" : logFile,
 		"out_file"   : logFile,
@@ -58,6 +57,7 @@ async function addUser( config, runningApps, user ) {
 
 			PORT : port,
 			USER : user,
+			DESK_USER : user,
 			DESK_PREFIX : user,
 			CCACHE_DIR : "/home/" + user + "/.ccache",
 			HOME : "/home/" + user,
@@ -75,7 +75,7 @@ async function addUser( config, runningApps, user ) {
 		if ( boot ) {
 
 			console.log( "using custom script : " + boot );
-			settings.script = boot;
+			settings.env.DESK_STARTUP  = boot;
 
 		}
 
@@ -169,7 +169,7 @@ async function init( config, runningApps ) {
 		config.ports = {}
 		for ( let [ user, port ] of entries ) config.ports[ user ] = port;
 
-		execSync( "pm2 save" );
+		execSync( "npx pm2 save" );
 		fs.writeFileSync( file, JSON.stringify( config, null, "\t" ) );
 
 	} catch ( error ) {
