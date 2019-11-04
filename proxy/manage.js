@@ -10,7 +10,7 @@ const file = __dirname + '/config.json';
 const proxyUser = "dproxy";
 const proxyApp = "PROXY";
 
-for ( let name of [ "delete", "list", "start" ] ) {
+for ( let name of [ "delete", "dump", "list", "start" ] ) {
 
 	pm2[ name + 'Async' ] = promisify( pm2[ name ] );
 
@@ -47,17 +47,17 @@ async function addUser( config, runningApps, user ) {
 
 	const settings = {
 
-		"name"       : user,
-		"uid"        : user,
-		"script"     : path.join( __dirname, "../desk.js" ),
-		"cwd"        : cwd,
-		"error_file" : logFile,
-		"out_file"   : logFile,
-		"merge_logs" : true,
-		"env": {
+		name       : user,
+		script     : path.join( __dirname, "deskSU.js" ),
+		cwd        : cwd,
+		error_file : logFile,
+		out_file   : logFile,
+		merge_logs : true,
+		env: {
 
 			PORT : port,
 			USER : user,
+			DESK_USER : user,
 			DESK_PREFIX : user,
 			CCACHE_DIR : "/home/" + user + "/.ccache",
 			HOME : "/home/" + user,
@@ -75,7 +75,7 @@ async function addUser( config, runningApps, user ) {
 		if ( boot ) {
 
 			console.log( "using custom script : " + boot );
-			settings.script = boot;
+			settings.env.DESK_STARTUP  = boot;
 
 		}
 
@@ -122,13 +122,13 @@ async function init( config, runningApps ) {
 	const logFile = cwd + 'log.txt';
 	const proxy = {
 
-		"name"       : proxyApp,
-		"script"     : __dirname + "/proxy.js",
-		"error_file" : logFile,
-		"out_file"   : logFile,
-		"merge_logs" : true,
-		"exec_mode"  : 'cluster_mode',
-		"instances"  : 4
+		name       : proxyApp,
+		script     : __dirname + "/proxy.js",
+		error_file : logFile,
+		out_file   : logFile,
+		merge_logs : true,
+		exec_mode  : 'cluster_mode',
+		instances  : 4
 
 	};
 
@@ -169,7 +169,7 @@ async function init( config, runningApps ) {
 		config.ports = {}
 		for ( let [ user, port ] of entries ) config.ports[ user ] = port;
 
-		execSync( "pm2 save" );
+		await pm2.dumpAsync();
 		fs.writeFileSync( file, JSON.stringify( config, null, "\t" ) );
 
 	} catch ( error ) {
