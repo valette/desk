@@ -91,7 +91,7 @@ const app = express()
 		} );
 
 	} )
-	.use( homeURL, express.static( __dirname + '/node_modules/desk-ui/build' ),
+	.use( homeURL, express.static( __dirname + '/node_modules/desk-ui/compiled/build' ),
 		express.static( deskDir ), directory( deskDir ) );
 
 let server, baseURL = "http://";
