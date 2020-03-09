@@ -1,44 +1,57 @@
 "use strict";
 /*global THREE desk async _ operative qx numeric MHD performance Heap desk_RPC*/
+console.clear();
+const concurrency = 2;
+const numberOfJobs = 10;
+const nIterationsPerJob = 1e7;
 
-var concurrency = 2;
-var numberOfJobs = 6;
+const workers = [];
+const results = [];
 
-var workers = [];
-var compute = function (payload, callback) {
-    var worker = workers.pop();
-    if (!worker) {
+async function compute( payload ) {
+
+    let worker = workers.pop();
+
+    if ( !worker ) {
+
         console.log("creating one worker");
-        worker = operative({
-            getPi : function (n, callback) {
-                var pi = 0;
+
+        worker = operative( function ( n ) {
+
+                let pi = 0;
+
                 for (var i = 0; i != n ; i++){
-                    var x = Math.random();
-                    var y = Math.random();
-                    if ((x * x + y * y) <= 1) {
-                        pi++;
-                    }
+
+                    const x = Math.random();
+                    const y = Math.random();
+                    if ((x * x + y * y) <= 1) pi++;
+
                 }
-                callback (4 * pi / n);
+
+                return 4 * pi / n;
             }
-        });
+
+        );
+
     }
 
-    worker.getPi(1e8, function (result) {
-        workers.push(worker);
-        callback (result);
-    });
+    const result = await worker( nIterationsPerJob );
+    results.push( result );
+    workers.push( worker );
+    return result;
+
 };
 
-var queue = async.queue(compute, concurrency);
-queue.drain = function () {
+const queue = async.queue(compute, concurrency);
+
+queue.drain( function () {
+
+    const pi = _.mean( results );
     console.timeEnd("Computing done in ");
-    alert('done');
-};
+    alert('done, pi=' + pi);
 
-var log = res => console.log(res);
+} );
 
+var log = res => console.log("finished one job");
 console.time("Computing done in ");
-for (var i = 0; i  < numberOfJobs; i++) {
-    queue.push({}, log);
-}
+for (var i = 0; i  < numberOfJobs; i++) queue.push({}, log);

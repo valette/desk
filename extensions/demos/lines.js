@@ -1,19 +1,19 @@
-var nSegments = 2000;
+const nSegments = 2000;
 
-var geometry = new THREE.BufferGeometry();
-var material = new THREE.LineBasicMaterial({ vertexColors: true });
+const geometry = new THREE.BufferGeometry();
+const material = new THREE.LineBasicMaterial({ vertexColors: true });
 
-var positions = new Float32Array(nSegments *  3);
-var colors = new Float32Array(nSegments * 3);
+const positions = new Float32Array(nSegments *  3);
+const colors = new Float32Array(nSegments * 3);
 
-geometry.addAttribute( 'position', new THREE.BufferAttribute(positions, 3));
-geometry.addAttribute( 'color', new THREE.BufferAttribute(colors, 3));
+geometry.setAttribute( 'position', new THREE.BufferAttribute(positions, 3));
+geometry.setAttribute( 'color', new THREE.BufferAttribute(colors, 3));
 
-for ( var i = 0; i < nSegments; i ++ ) {
+for ( let i = 0; i < nSegments; i ++ ) {
 
-    var x = Math.random();
-    var y = Math.random();
-    var z = Math.random();
+    const x = Math.random();
+    const y = Math.random();
+    const z = Math.random();
     
     // positions
     positions[ i * 3 ] = x;
@@ -27,7 +27,6 @@ for ( var i = 0; i < nSegments; i ++ ) {
 
 }
 
-mesh = new THREE.LineSegments( geometry, material, THREE.LineSegments );
-
-var scene = new desk.MeshViewer();
-scene.addMesh( mesh );
+const mesh = new THREE.LineSegments( geometry, material, THREE.LineSegments );
+const viewer = new desk.MeshViewer();
+viewer.addMesh( mesh );

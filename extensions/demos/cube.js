@@ -1,13 +1,11 @@
  
-var view = new desk.MeshViewer();
+const viewer = new desk.MeshViewer();
 
-var geometry = new THREE.BoxGeometry( 200, 200, 200 );
+const geometry = new THREE.BoxGeometry( 200, 200, 200 );
+const mesh = viewer.addGeometry( geometry , {label : "my cube"});
+viewer.getWindow().setCaption("my cube!");
 
-var mesh = view.addGeometry( geometry , {label : "my cube"});
-view.getWindow().setCaption("my cube!");
-
-var edges = new THREE.WireframeHelper(mesh);
+const edgeGeometry = new THREE.WireframeGeometry( geometry );
+const edges = new THREE.LineSegments( edgeGeometry );
 edges.material.color.setRGB(0,0,0);
-mesh.add(edges);
-
-view.viewAll();
+viewer.addMesh(  edges );

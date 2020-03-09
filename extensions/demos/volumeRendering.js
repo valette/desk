@@ -652,7 +652,7 @@ function addVolume(orientation, callback){
     }
 
 
-    q.drain = function () {
+    q.drain( function () {
         if (orientation === 0) {
             for (j = 0; j != voxels.length; j++) {
                 histogram[voxels[j]]++;
@@ -665,7 +665,7 @@ function addVolume(orientation, callback){
         if (typeof callback === "function") {
             callback();
         }
-    };
+    } );
 }
 
 function loadLut(file) {

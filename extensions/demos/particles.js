@@ -70,9 +70,9 @@ function next(img) {
         colors.setXYZ(i, myColor.r, myColor.g, myColor.b);
     }
 
-    geometry.addAttribute( 'position', positions);
-    geometry.addAttribute( 'id', ids );
-    geometry.addAttribute( 'customColor', colors);
+    geometry.setAttribute( 'position', positions);
+    geometry.setAttribute( 'id', ids );
+    geometry.setAttribute( 'customColor', colors);
 
     var points = new THREE.Points( geometry, material );
 
