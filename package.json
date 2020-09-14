@@ -4,7 +4,7 @@
   "license": "CECILL-B",
   "main": "./desk.js",
   "author": "Sebastien Valette <sebastien.valette@creatis.insa-lyon.fr> (http://www.creatis.insa-lyon.fr/~valette)",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "repository": {
     "type": "git",
     "url": "git://github.com/valette/desk.git"
