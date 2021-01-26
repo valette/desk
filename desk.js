@@ -260,8 +260,8 @@ if ( actions.getSettings().permissions ) io.of( '/xterm' ).on( 'connection', soc
 					term.kill();
 					const name = '/xterm' + options.name;
 					io.of( name ).removeAllListeners();
-					delete io.nsps[ name ]; // Remove from the server namespaces
-					log( "namespaces : " + Object.keys( io.nsps ).join( ',' ) );
+					io._nsps.delete( name );// Remove from the server namespaces
+					log( "namespaces : " + Array.from( io._nsps.keys() ).join( ',' ) );
 					delete terms[ options.name ];
 
 				} );
