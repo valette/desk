@@ -50,7 +50,7 @@ var vertexShader = [
 var fragmentShader = [
 	'uniform vec3 origin;',
 	'uniform vec3 direction;',
-	'uniform sampler2D texture;',
+	'uniform sampler2D myTexture;',
     "uniform sampler2D lookupTable;",
     'uniform float preMult;',
     'uniform float amplitude;',
@@ -58,7 +58,7 @@ var fragmentShader = [
 	'varying vec2 vUv;',
     'varying vec3 v_position;',
 	'void main() {',
-    '	gl_FragColor = texture2D( texture, vUv );',
+    '	gl_FragColor = texture2D( myTexture, vUv );',
     '   float opacity = gl_FragColor[0];',
 	'   float clampedValue = clamp(opacity * preMult, 0.0, 1.0);',
     '   vec2 colorIndex = vec2(clampedValue, 0.0);',
@@ -580,7 +580,7 @@ function addVolume(orientation, callback){
             var uniforms = {
                 amplitude: { type: "f", value: getOpacityFromSlider() },
                 opacityOffset: { type: "f", value: 0.0 },
-                texture:  { type: "t", slot: 0, value: texture},
+                myTexture:  { type: "t", slot: 0, value: texture},
                 lookupTable:  { type: "t", slot: 0, value: lookupTable},
                 origin : { type: "v3", value: new THREE.Vector3()}, 
                 direction : { type: "v3", value: new THREE.Vector3()},

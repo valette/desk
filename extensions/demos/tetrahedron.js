@@ -1,6 +1,11 @@
-var view = new desk.MeshViewer();
+"use strict";
+const { desk, THREE } = window; 
 
-var geometry = new THREE.Geometry();
+const viewer = new desk.MeshViewer();
+
+const vertices = [];
+const triangles = [];
+
 addVertex(0,0,0);
 addVertex(1,0,0);
 addVertex(0,1,0);
@@ -11,26 +16,16 @@ addTriangle(1,2,3);
 addTriangle(0,1,3);
 addTriangle(0,2, 3);
 
-//geometry.computeVertexNormals(true);
-geometry.computeFaceNormals();
-var mesh = view.addGeometry( geometry , {label : "my tetrahedron", color : [0,0,1,1, 0]});
+const geometry = new THREE.BufferGeometry();
+geometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array( vertices ), 3 ) );
+geometry.setIndex( triangles );
+geometry.computeVertexNormals();
 
-//var geometry2 = new THREE.CubeGeometry( 0.5, 0.5, 0.5 );
-//view.addGeometry( geometry2 , {label : "my cube", color : [1,0,0,1, 0]});
+const mesh = viewer.addGeometry( geometry , {label : "my tetrahedron", color : [0,0,1,1, 0]});
 
-view.getWindow().setCaption("my tetrahedron!");
-view.viewAll();
-console.log(mesh);
+viewer.getWindow().setCaption("my tetrahedron!");
+viewer.viewAll();
 
-function addVertex (x,y,z) {
-    geometry.vertices.push (new THREE.Vector3(x,y,z));
-}
-
-function addTriangle (v1, v2, v3) {
-    geometry.faces.push (new THREE.Face3(v1, v2, v3));
-}
-
-function addQuad (v1, v2, v3, v4) {
-    geometry.faces.push (new THREE.Face4(v1, v2, v3, v4));
-}
+function addVertex ( x,y,z ) { vertices.push ( x,y,z ) }
+function addTriangle (v1, v2, v3) { triangles.push ( v1, v2, v3 ) }
 

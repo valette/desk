@@ -22,12 +22,12 @@ function next(img) {
     '}'].join('\n');
 
     var fragmentShader = [
-        'uniform sampler2D texture;',
+        'uniform sampler2D myTexture;',
         'uniform vec3 color;',
         'varying vec3 vColor;',
         'void main() {',
         '	gl_FragColor = vec4( color * vColor, 1.0 );',
-        '	gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );',
+        '	gl_FragColor = gl_FragColor * texture2D( myTexture, gl_PointCoord );',
     '}'].join('\n');
 
     var viewer = new desk.MeshViewer();
@@ -38,7 +38,7 @@ function next(img) {
             color:     { type: "c", value: new THREE.Color( 0xffffff ) },
             size:     { type: "f", value: particlesSize },
             amplitude: { type: "f", value: 1.0 },
-            texture:   { type: "t", slot: 0, value: img},
+            myTexture:   { type: "t", slot: 0, value: img},
             time:      { type: "f", value: 1.0 }
         },
         vertexShader :   vertexShader,
