@@ -13,14 +13,14 @@
     "basic-auth": "2.0.1",
     "compression": "1.7.4",
     "desk-base": "1.6.2",
-    "desk-ui": "2.6.0",
+    "desk-ui": "2.7.0",
     "express": "4.17.1",
     "formidable": "1.2.2",
     "fs-extra": "10.0.0",
     "node-pty": "0.10.1",
     "serve-index": "1.9.1",
     "shelljs": "0.8.4",
-    "socket.io": "4.1.2"
+    "socket.io": "4.2.0"
   },
   "optionalDependencies": {},
   "engines": {
