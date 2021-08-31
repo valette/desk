@@ -113,7 +113,8 @@ if ( fs.existsSync( privateKeyFile ) && fs.existsSync( certificateFile ) ) {
 
 }
 
-const io = socketIO( server, { path : path.join( homeURL, 'socket.io' ) } );
+const io = socketIO( server, { path : path.join( homeURL, 'socket.io' ),
+	maxHttpBufferSize : 1e8 } );
 
 function log ( message ) {
 
