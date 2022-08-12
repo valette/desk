@@ -67,11 +67,11 @@ const app = express()
 	.use( express.urlencoded( { limit : '10mb', extended : true } ) )
 	.post( path.join( homeURL, '/upload' ), ( req, res ) => {
 
-		const form = new formidable.IncomingForm();
+		if ( !actions.getSettings().permissions ) return;
 		let outputDir;
 		const files = [];
-		form.uploadDir = uploadDir;
-		form.maxFileSize = 200 * 1024 * 1024 * 1024;
+		const form = new formidable.IncomingForm( {
+			uploadDir, maxFileSize : 200 * 1024 * 1024 * 1024 } );
 
 		form.parse( req, function( err, fields, files ) {
 
@@ -85,8 +85,28 @@ const app = express()
 
 		form.on( 'end', async () => {
 
-			for ( let file of files ) await moveFile( file, outputDir );
-			res.send( 'file(s) uploaded successfully' );
+			const length = files.length;
+
+			while ( files.length ) {
+
+				const file = files.pop();
+				log( "file : " + file.filepath.toString() );
+				const fullName = path.join( outputDir, file.originalFilename );
+				let newFile, index = 0;
+
+				do {
+
+					newFile = fullName + ( index > 0 ? "." + index : "" );
+					index++
+
+				} while ( await fs.exists( newFile ) )
+
+				await fs.move( file.filepath.toString(), newFile );
+				log( "uploaded to " +  newFile );
+
+			}
+
+			if ( length ) res.send( 'file(s) uploaded successfully' );
 
 		} );
 
@@ -174,24 +194,6 @@ function updatePassword() {
 
 updatePassword();
 fs.watchFile( passwordFile, updatePassword );
-
-async function moveFile( file, outputDir ) {
-
-	log( "file : " + file.path.toString() );
-	const fullName = path.join( outputDir, file.name );
-	let newFile, index = 0;
-
-	do {
-
-		newFile = fullName + ( index > 0 ? "." + index : "" );
-		index++
-
-	} while ( await fs.exists( newFile ) )
-
-	await fs.move( file.path.toString(), newFile );
-	log( "uploaded to " +  newFile );
-
-}
 
 actions.oldEmit = actions.emit;
 actions.emit = ( e, d ) => { io.emit( e, d ); return actions.oldEmit( e, d ) };
