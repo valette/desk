@@ -232,6 +232,14 @@ const terms = {};
 
 if ( actions.getSettings().permissions ) io.of( '/xterm' ).on( 'connection', socket => {
 
+	try {
+
+		const auth = ( socket.request.headers.authorization || "" ).slice( 6 );
+		const id = ( '' + Buffer.from( auth, 'base64' ) ).split( ':' );
+		authenticate( ...id );
+
+	} catch ( e ) { return socket.disconnect(); }
+
 	socket.on( 'newTerminal', function( options ) {
 
 		if ( terms[ options.name ] ) return;
