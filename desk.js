@@ -240,7 +240,7 @@ if ( actions.getSettings().permissions ) io.of( '/xterm' ).on( 'connection', soc
 
 	} catch ( e ) { return socket.disconnect(); }
 
-	socket.on( 'newTerminal', function( options ) {
+	socket.on( 'newTerminal', function( options, cb ) {
 
 		if ( terms[ options.name ] ) return;
 		log( "new terminal : " + options.name );
@@ -258,7 +258,8 @@ if ( actions.getSettings().permissions ) io.of( '/xterm' ).on( 'connection', soc
 
 			term.on('data', data => {
 
-				try { socket.send( data ); } catch ( ex ) { }
+				try { socket.send( data ); }
+				catch ( ex ) { console.warn( ex ); }
 
 			} );
 
@@ -278,6 +279,8 @@ if ( actions.getSettings().permissions ) io.of( '/xterm' ).on( 'connection', soc
 				} );
 
 		} );
+
+		if ( cb ) cb();
 
 	} );
 
