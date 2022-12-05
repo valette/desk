@@ -33,6 +33,18 @@
 			"command": "./generate.py",
 			"noCache": true,
 			"hidden": true
+		},
+		"touch": {
+			"parameters": [
+				{
+				"name": "file",
+				"type": "file",
+				"required": true
+				}
+			],
+			"command": "touch",
+			"noCache": true,
+			"hidden": true
 		}
 	}
 }
