@@ -4,7 +4,6 @@
   "license": "CECILL-B",
   "main": "./manage",
   "private": true,
-  "type" : "module",
   "author": {
     "name": "Sebastien Valette"
   },
