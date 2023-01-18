@@ -1,11 +1,13 @@
-const	execSync   = require( 'child_process' ).execSync,
-		fs         = require( 'fs' ),
-		getPort    = require( 'get-port' ),
-		mkdirp     = require( 'mkdirp' ),
-		path       = require( 'path' ),
-		pm2        = require( 'pm2' ),
-		promisify  = require( 'util' ).promisify;
+import { execSync } from 'child_process';
+import * as fs from 'fs';
+import getPort from 'get-port';
+import { mkdirp } from 'mkdirp'
+import * as path from 'path';
+import pm2 from 'pm2';
+import { promisify } from 'util';
+import * as url from 'url';
 
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const file = __dirname + '/config.json';
 const proxyUser = "dproxy";
 const proxyApp = "PROXY";
@@ -137,48 +139,35 @@ async function init( config, runningApps ) {
 
 }
 
-( async function () {
+const [ , , action, user ] = process.argv;
+const runningApps = await pm2.listAsync();
+const config = JSON.parse( fs.readFileSync( file ) );
 
-	try {
+switch ( action ) {
 
-		const [ , , action, user ] = process.argv;
-		const runningApps = await pm2.listAsync();
-		const config = JSON.parse( fs.readFileSync( file ) );
+	case "add":
+		if ( !user ) throw "no user specified";
+		await addUser( config, runningApps, user );
+		break;
 
-		switch ( action ) {
+	case "remove":
 
-			case "add":
-				if ( !user ) throw "no user specified";
-				await addUser( config, runningApps, user );
-				break;
+		if ( !user ) throw "no user specified";
+		await removeUser( config, runningApps, user );
+		break;
 
-			case "remove":
+	default:
+		await init( config, runningApps );
 
-				if ( !user ) throw "no user specified";
-				await removeUser( config, runningApps, user );
-				break;
+}
 
-			default:
-				await init( config, runningApps );
+// sort ports
+const entries = Object.entries( config.ports );
+entries.sort( ( a, b ) => a[ 0 ].toLowerCase().localeCompare( b[ 0 ].toLowerCase() ) );
+config.ports = {}
+for ( let [ user, port ] of entries ) config.ports[ user ] = port;
 
-		}
+await pm2.dumpAsync();
+fs.writeFileSync( file, JSON.stringify( config, null, "\t" ) );
 
-		// sort ports
-		const entries = Object.entries( config.ports );
-		entries.sort( ( a, b ) => a[ 0 ].toLowerCase().localeCompare( b[ 0 ].toLowerCase() ) );
-		config.ports = {}
-		for ( let [ user, port ] of entries ) config.ports[ user ] = port;
-
-		await pm2.dumpAsync();
-		fs.writeFileSync( file, JSON.stringify( config, null, "\t" ) );
-
-	} catch ( error ) {
-
-		console.log( 'Error : ', error.toString() );
-		process.exit( 1 );
-
-	}
-
-	process.exit();
-
-} )();
+process.exit();
