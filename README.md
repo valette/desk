@@ -41,7 +41,7 @@ To install desk on your computer, you need:
 
 to visualize 3D data (meshes, volumes) you also need;
 
-* vtk + headers (versions 5 or 6)
+* vtk + headers
 * cmake
 
 ### Installation ###
