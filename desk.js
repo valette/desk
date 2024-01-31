@@ -13,6 +13,7 @@ const actions    = require( 'desk-base' ),
       path       = require( 'path' ),
       pty        = require( 'node-pty' ),
       socketIO   = require( 'socket.io' );
+const { test } = require('shelljs');
 
 const certificateFile = path.join( __dirname, "certificate.pem" ),
       deskDir         = actions.getRootDir(),
@@ -31,11 +32,27 @@ actions.include( __dirname + '/extensions' );
 function authenticate ( user, pass ) {
 
 	if ( id.username === undefined ) return true;
-	const shasum = crypto.createHash( 'sha1' );
-	shasum.update( pass );
-	const sha = shasum.digest( 'hex' );
-	if ( !user || !pass ||  user !== id.username ||  sha !== id.sha ) throw new Error( 'bad auth' );
+	const pass256 = pass; 
+	const shasum256 = crypto.createHash( 'sha256' ); 
+	shasum256.update(pass256);
+	const sha256 = shasum256.digest( 'hex' ); 
 
+	if ( id.sha) {
+		const pass1 = pass; 
+    	const shasum1  = crypto.createHash( 'sha1' );
+		shasum1.update( pass1 );
+		const sha1 = shasum1.digest( 'hex' ); 
+		id.sha256 = sha256;
+ 	    if ( !user || !pass ||  user !== id.username ||  sha1 !== id.sha ) { throw new Error( 'bad auth' );} 
+		else if (user && pass && user == id.username && sha1 == id.sha) {  
+			delete id.sha; 
+			fs.writeFileSync( passwordFile, JSON.stringify( id ) );
+		};
+	} else { 
+		if ( !user || !pass ||  user !== id.username ||  sha256 !== id.sha256 )  { throw new Error( 'bad auth' )};
+	}
+ 
+ 
 }
 
 const app = express()
@@ -182,9 +199,9 @@ function updatePassword() {
 	if ( id.password ) {
 
 		// convert to secure format
-		const shasum = crypto.createHash( 'sha1' );
+		const shasum = crypto.createHash( 'sha256' );
 		shasum.update( id.password );
-		id.sha = shasum.digest( 'hex' );
+		id.sha256 = shasum.digest( 'hex' );
 		delete id.password;
 		fs.writeFileSync( passwordFile, JSON.stringify( id ) );
 
@@ -219,9 +236,9 @@ io.on( 'connection', socket => {
 		.on( 'setEmitLog', log => actions.setEmitLog( log ) )
 		.on( 'password', password => {
 
-			const shasum = crypto.createHash( 'sha1' );
+			const shasum = crypto.createHash( 'sha256' );
 			shasum.update( password );
-			id.sha = shasum.digest( 'hex' );
+			id.sha256 = shasum.digest( 'hex' );
 			fs.writeFileSync( passwordFile, JSON.stringify( id ) );
 
 		} );
