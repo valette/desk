@@ -37,17 +37,20 @@ function authenticate ( user, pass ) {
 	shasum256.update(pass256);
 	const sha256 = shasum256.digest( 'hex' ); 
 
+	//If the hash of the password is calculated with SHA-1 then we change it
 	if ( id.sha) {
 		const pass1 = pass; 
     	const shasum1  = crypto.createHash( 'sha1' );
 		shasum1.update( pass1 );
 		const sha1 = shasum1.digest( 'hex' ); 
-		id.sha256 = sha256;
  	    if ( !user || !pass ||  user !== id.username ||  sha1 !== id.sha ) { throw new Error( 'bad auth' );} 
+		// We verify that the logins are correct before deleting and addind the hash 256
 		else if (user && pass && user == id.username && sha1 == id.sha) {  
 			delete id.sha; 
+			id.sha256 = sha256;
 			fs.writeFileSync( passwordFile, JSON.stringify( id ) );
 		};
+	//	
 	} else { 
 		if ( !user || !pass ||  user !== id.username ||  sha256 !== id.sha256 )  { throw new Error( 'bad auth' )};
 	}
