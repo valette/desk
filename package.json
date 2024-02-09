@@ -20,7 +20,7 @@
     "node-pty": "1.0.0",
     "serve-index": "1.9.1",
     "shelljs": "0.8.5",
-    "socket.io": "4.7.2"
+    "socket.io": "4.7.4"
   },
   "optionalDependencies": {},
   "engines": {
