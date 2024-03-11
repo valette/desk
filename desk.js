@@ -213,7 +213,6 @@ function updatePassword() {
 }
 
 updatePassword();
-fs.watchFile( passwordFile, updatePassword );
 
 actions.oldEmit = actions.emit;
 actions.emit = ( e, d ) => { io.emit( e, d ); return actions.oldEmit( e, d ) };
