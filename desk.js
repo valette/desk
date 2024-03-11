@@ -32,9 +32,8 @@ actions.include( __dirname + '/extensions' );
 function authenticate ( user, pass ) {
 
 	if ( id.username === undefined ) return true;
-	const pass256 = pass; 
 	const shasum256 = crypto.createHash( 'sha256' ); 
-	shasum256.update(pass256);
+	shasum256.update(pass);
 	const sha256 = shasum256.digest( 'hex' ); 
 
 	//If the hash of the password is calculated with SHA-1 then we change it
@@ -189,30 +188,24 @@ function updatePublicDirs () {
 actions.on( 'actions updated', updatePublicDirs );
 updatePublicDirs();
 
-function updatePassword() {
+try { id = JSON.parse( fs.readFileSync( passwordFile ) ); }
+catch ( e ) {
 
-	try { id = JSON.parse( fs.readFileSync( passwordFile ) ); }
-	catch ( e ) {
-
-		log( "error while reading password file : " );
-		log( e );
-
-	}
-
-	if ( id.password ) {
-
-		// convert to secure format
-		const shasum = crypto.createHash( 'sha256' );
-		shasum.update( id.password );
-		id.sha256 = shasum.digest( 'hex' );
-		delete id.password;
-		fs.writeFileSync( passwordFile, JSON.stringify( id ) );
-
-	}
+	log( "error while reading password file : " );
+	log( e );
 
 }
 
-updatePassword();
+if ( id.password ) {
+
+	// convert to secure format
+	const shasum = crypto.createHash( 'sha256' );
+	shasum.update( id.password );
+	id.sha256 = shasum.digest( 'hex' );
+	delete id.password;
+	fs.writeFileSync( passwordFile, JSON.stringify( id ) );
+
+}
 
 actions.oldEmit = actions.emit;
 actions.emit = ( e, d ) => { io.emit( e, d ); return actions.oldEmit( e, d ) };
