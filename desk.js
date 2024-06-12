@@ -217,6 +217,12 @@ io.on( 'connection', socket => {
 	socket.on( 'disconnect', () => log( new Date().toString() + ': disconnect : ' + ip ) )
 		.on( 'action', action => actions.execute( action ) )
 		.on( 'setEmitLog', log => actions.setEmitLog( log ) )
+        .on( 'checkPassword', (currPass) => {
+            const shasum = crypto.createHash( 'sha1' );
+			shasum.update( currPass );
+            const isCorrect = shasum.digest( 'hex' ) === id.sha;
+            socket.emit('checkPasswordResult', isCorrect );
+        })
 		.on( 'password', password => {
 
 			const shasum = crypto.createHash( 'sha1' );
