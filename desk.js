@@ -13,6 +13,7 @@ const actions    = require( 'desk-base' ),
       path       = require( 'path' ),
       pty        = require( 'node-pty' ),
       socketIO   = require( 'socket.io' );
+const { test } = require('shelljs');
 
 const certificateFile = path.join( __dirname, "certificate.pem" ),
       deskDir         = actions.getRootDir(),
@@ -31,11 +32,29 @@ actions.include( __dirname + '/extensions' );
 function authenticate ( user, pass ) {
 
 	if ( id.username === undefined ) return true;
-	const shasum = crypto.createHash( 'sha1' );
-	shasum.update( pass );
-	const sha = shasum.digest( 'hex' );
-	if ( !user || !pass ||  user !== id.username ||  sha !== id.sha ) throw new Error( 'bad auth' );
+	const shasum256 = crypto.createHash( 'sha256' ); 
+	shasum256.update(pass);
+	const sha256 = shasum256.digest( 'hex' ); 
 
+	//If the hash of the password is calculated with SHA-1 then we change it
+	if ( id.sha) {
+		const pass1 = pass; 
+    	const shasum1  = crypto.createHash( 'sha1' );
+		shasum1.update( pass1 );
+		const sha1 = shasum1.digest( 'hex' ); 
+ 	    if ( !user || !pass ||  user !== id.username ||  sha1 !== id.sha ) { throw new Error( 'bad auth' );} 
+		// We verify that the logins are correct before deleting and addind the hash 256
+		else if (user && pass && user == id.username && sha1 == id.sha) {  
+			delete id.sha; 
+			id.sha256 = sha256;
+			fs.writeFileSync( passwordFile, JSON.stringify( id ) );
+		};
+	//	
+	} else { 
+		if ( !user || !pass ||  user !== id.username ||  sha256 !== id.sha256 )  { throw new Error( 'bad auth' )};
+	}
+ 
+ 
 }
 
 const app = express()
@@ -169,31 +188,24 @@ function updatePublicDirs () {
 actions.on( 'actions updated', updatePublicDirs );
 updatePublicDirs();
 
-function updatePassword() {
+try { id = JSON.parse( fs.readFileSync( passwordFile ) ); }
+catch ( e ) {
 
-	try { id = JSON.parse( fs.readFileSync( passwordFile ) ); }
-	catch ( e ) {
-
-		log( "error while reading password file : " );
-		log( e );
-
-	}
-
-	if ( id.password ) {
-
-		// convert to secure format
-		const shasum = crypto.createHash( 'sha1' );
-		shasum.update( id.password );
-		id.sha = shasum.digest( 'hex' );
-		delete id.password;
-		fs.writeFileSync( passwordFile, JSON.stringify( id ) );
-
-	}
+	log( "error while reading password file : " );
+	log( e );
 
 }
 
-updatePassword();
-fs.watchFile( passwordFile, updatePassword );
+if ( id.password ) {
+
+	// convert to secure format
+	const shasum = crypto.createHash( 'sha256' );
+	shasum.update( id.password );
+	id.sha256 = shasum.digest( 'hex' );
+	delete id.password;
+	fs.writeFileSync( passwordFile, JSON.stringify( id ) );
+
+}
 
 actions.oldEmit = actions.emit;
 actions.emit = ( e, d ) => { io.emit( e, d ); return actions.oldEmit( e, d ) };
@@ -217,11 +229,17 @@ io.on( 'connection', socket => {
 	socket.on( 'disconnect', () => log( new Date().toString() + ': disconnect : ' + ip ) )
 		.on( 'action', action => actions.execute( action ) )
 		.on( 'setEmitLog', log => actions.setEmitLog( log ) )
+        .on( 'checkPassword', (currPass) => {
+            const shasum = crypto.createHash( 'sha1' );
+			shasum.update( currPass );
+            const isCorrect = shasum.digest( 'hex' ) === id.sha;
+            socket.emit('checkPasswordResult', isCorrect );
+        })
 		.on( 'password', password => {
 
-			const shasum = crypto.createHash( 'sha1' );
+			const shasum = crypto.createHash( 'sha256' );
 			shasum.update( password );
-			id.sha = shasum.digest( 'hex' );
+			id.sha256 = shasum.digest( 'hex' );
 			fs.writeFileSync( passwordFile, JSON.stringify( id ) );
 
 		} );
