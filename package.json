@@ -12,7 +12,7 @@
   "dependencies": {
     "basic-auth": "2.0.1",
     "compression": "1.7.4",
-    "desk-base": "1.10.1",
+    "desk-base": "1.10.2",
     "desk-ui": "3.5.1",
     "express": "4.19.2",
     "formidable": "3.5.1",
