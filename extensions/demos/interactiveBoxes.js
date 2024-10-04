@@ -1,4 +1,4 @@
-var view = new desk.MeshViewer();
+var view = new desk.THREE.Viewer();
 var geometry = new THREE.BoxGeometry( 40, 40, 60 );
 
 [[0, 0, 0], [200, 200, 200]].forEach(function (coords) {

@@ -30,7 +30,7 @@ function next(img) {
         '	gl_FragColor = gl_FragColor * texture2D( myTexture, gl_PointCoord );',
     '}'].join('\n');
 
-    var viewer = new desk.MeshViewer();
+    var viewer = new desk.THREE.Viewer();
     var scene = viewer.getScene();
 
     var material = new THREE.ShaderMaterial( {

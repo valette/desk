@@ -28,5 +28,5 @@ for ( let i = 0; i < nSegments; i ++ ) {
 }
 
 const mesh = new THREE.LineSegments( geometry, material, THREE.LineSegments );
-const viewer = new desk.MeshViewer();
+const viewer = new desk.THREE.Viewer();
 viewer.addMesh( mesh );

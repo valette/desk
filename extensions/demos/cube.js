@@ -1,5 +1,5 @@
  
-const viewer = new desk.MeshViewer();
+const viewer = new desk.THREE.Viewer();
 
 viewer.getWindow().setCaption("my cube!");
 const size = 40;

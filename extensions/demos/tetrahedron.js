@@ -1,7 +1,7 @@
 "use strict";
 const { desk, THREE } = window; 
 
-const viewer = new desk.MeshViewer();
+const viewer = new desk.THREE.Viewer();
 
 const vertices = [];
 const triangles = [];
