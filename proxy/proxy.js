@@ -86,7 +86,7 @@ function processRequest ( req, res ) {
 proxyServer.on( 'upgrade', function ( req, socket, head ) {
 
 	const target = routes[ req.headers.host + '/' + req.url.split( "/" )[ 1 ] ];
-	if ( !target ) return res.end();
+	if ( !target ) return req.end();
 	proxy.ws( req, socket, head, target );
 
 } );
