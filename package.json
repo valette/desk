@@ -11,15 +11,15 @@
   },
   "dependencies": {
     "basic-auth": "2.0.1",
-    "compression": "1.7.5",
+    "compression": "1.8.0",
     "desk-base": "1.10.2",
-    "desk-ui": "3.7.0",
-    "express": "4.21.2",
+    "desk-ui": "3.8.0",
+    "express": "5.1.0",
     "formidable": "3.5.2",
     "fs-extra": "11.3.0",
-    "node-pty": "1.1.0-beta27",
+    "node-pty": "1.1.0-beta31",
     "serve-index": "1.9.1",
-    "shelljs": "0.8.5",
+    "shelljs": "0.9.2",
     "socket.io": "4.8.1"
   },
   "engines": {
