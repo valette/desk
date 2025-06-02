@@ -32,29 +32,29 @@ actions.include( __dirname + '/extensions' );
 function authenticate ( user, pass ) {
 
 	if ( id.username === undefined ) return true;
-	const shasum256 = crypto.createHash( 'sha256' ); 
+	const shasum256 = crypto.createHash( 'sha256' );
 	shasum256.update(pass);
-	const sha256 = shasum256.digest( 'hex' ); 
+	const sha256 = shasum256.digest( 'hex' );
 
 	//If the hash of the password is calculated with SHA-1 then we change it
 	if ( id.sha) {
-		const pass1 = pass; 
+		const pass1 = pass;
     	const shasum1  = crypto.createHash( 'sha1' );
 		shasum1.update( pass1 );
-		const sha1 = shasum1.digest( 'hex' ); 
- 	    if ( !user || !pass ||  user !== id.username ||  sha1 !== id.sha ) { throw new Error( 'bad auth' );} 
+		const sha1 = shasum1.digest( 'hex' );
+ 	    if ( !user || !pass ||  user !== id.username ||  sha1 !== id.sha ) { throw new Error( 'bad auth' );}
 		// We verify that the logins are correct before deleting and addind the hash 256
-		else if (user && pass && user == id.username && sha1 == id.sha) {  
-			delete id.sha; 
+		else if (user && pass && user == id.username && sha1 == id.sha) {
+			delete id.sha;
 			id.sha256 = sha256;
 			fs.writeFileSync( passwordFile, JSON.stringify( id ) );
 		};
-	//	
-	} else { 
+	//
+	} else {
 		if ( !user || !pass ||  user !== id.username ||  sha256 !== id.sha256 )  { throw new Error( 'bad auth' )};
 	}
- 
- 
+
+
 }
 
 const app = express()
@@ -131,7 +131,7 @@ const app = express()
 
 	} )
 	.use( homeURL, express.static( __dirname + '/node_modules/desk-ui/compiled/dist' ),
-		express.static( deskDir ), directory( deskDir ) );
+		express.static( deskDir, { dotfiles : "allow" } ), directory( deskDir ) );
 
 let server, baseURL = "http://";
 
