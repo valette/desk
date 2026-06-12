@@ -17,5 +17,6 @@
 
 	"otherRoutes" : {
 		"foo.address/path" : "url3"
-	}
+	},
+	"env":{}
 }

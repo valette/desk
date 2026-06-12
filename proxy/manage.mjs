@@ -57,6 +57,7 @@ async function addUser( config, runningApps, user ) {
 		merge_logs : true,
 		env: {
 
+			...(config.env || {}),
 			PORT : port,
 			USER : user,
 			DESK_USER : user,
