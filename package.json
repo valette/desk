@@ -16,7 +16,7 @@
     "desk-ui": "3.9.0",
     "express": "5.2.1",
     "formidable": "3.5.4",
-    "fs-extra": "11.3.4",
+    "fs-extra": "11.3.5",
     "node-pty": "1.1.0",
     "serve-index": "1.9.2",
     "shelljs": "0.10.0",
