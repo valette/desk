@@ -1,7 +1,7 @@
 'use strict';
 
 const actions    = require( 'desk-base' ),
-      auth       = require( 'basic-auth' ),
+	  { parse }  = require('basic-auth'),
       compress   = require( 'compression' ),
       crypto     = require( 'crypto' ),
       directory  = require( 'serve-index' ),
@@ -29,9 +29,11 @@ fs.mkdirsSync( deskDir );
 fs.mkdirsSync( uploadDir );
 actions.include( __dirname + '/extensions' );
 
-function authenticate ( user, pass ) {
+function authenticate ( authorization ) {
 
 	if ( id.username === undefined ) return true;
+	const { name, pass } = parse( authorization );
+
 	const shasum256 = crypto.createHash( 'sha256' );
 	shasum256.update(pass);
 	const sha256 = shasum256.digest( 'hex' );
@@ -42,16 +44,16 @@ function authenticate ( user, pass ) {
     	const shasum1  = crypto.createHash( 'sha1' );
 		shasum1.update( pass1 );
 		const sha1 = shasum1.digest( 'hex' );
- 	    if ( !user || !pass ||  user !== id.username ||  sha1 !== id.sha ) { throw new Error( 'bad auth' );}
+ 	    if ( !name || !pass ||  name !== id.username ||  sha1 !== id.sha ) { throw new Error( 'bad auth' );}
 		// We verify that the logins are correct before deleting and addind the hash 256
-		else if (user && pass && user == id.username && sha1 == id.sha) {
+		else if (name && pass && name == id.username && sha1 == id.sha) {
 			delete id.sha;
 			id.sha256 = sha256;
 			fs.writeFileSync( passwordFile, JSON.stringify( id ) );
 		};
 	//
 	} else {
-		if ( !user || !pass ||  user !== id.username ||  sha256 !== id.sha256 )  { throw new Error( 'bad auth' )};
+		if ( !name || !pass ||  name !== id.username ||  sha256 !== id.sha256 )  { throw new Error( 'bad auth' )};
 	}
 
 
@@ -68,8 +70,7 @@ const app = express()
 
 		try {
 
-			const user = auth( req ) || {};
-			authenticate( user.name, user.pass );
+			authenticate( req.headers.authorization );
 			res.cookie( 'homeURL', homeURL );
 			return next();
 
@@ -214,9 +215,7 @@ io.on( 'connection', socket => {
 
 	try {
 
-		const auth = ( socket.request.headers.authorization || "" ).slice( 6 );
-		const id = ( '' + Buffer.from( auth, 'base64' ) ).split( ':' );
-		authenticate( ...id );
+		authenticate( socket.request.headers.authorization );
 
 	} catch ( e ) { return socket.disconnect(); }
 
@@ -252,9 +251,7 @@ if ( actions.getSettings().permissions ) io.of( '/xterm' ).on( 'connection', soc
 
 	try {
 
-		const auth = ( socket.request.headers.authorization || "" ).slice( 6 );
-		const id = ( '' + Buffer.from( auth, 'base64' ) ).split( ':' );
-		authenticate( ...id );
+		authenticate( socket.request.headers.authorization );
 
 	} catch ( e ) { return socket.disconnect(); }
 

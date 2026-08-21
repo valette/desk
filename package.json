@@ -10,13 +10,13 @@
     "url": "git://github.com/valette/desk.git"
   },
   "dependencies": {
-    "basic-auth": "2.0.1",
+    "basic-auth": "3.0.0",
     "compression": "1.8.1",
     "desk-base": "1.10.2",
     "desk-ui": "3.9.0",
     "express": "5.2.1",
     "formidable": "3.5.4",
-    "fs-extra": "11.3.5",
+    "fs-extra": "11.4.0",
     "node-pty": "1.1.0",
     "serve-index": "1.9.2",
     "shelljs": "0.10.0",
