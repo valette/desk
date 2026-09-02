@@ -1,4 +1,4 @@
-# DESK - Desktop Exposing Server Kit
+# DESK Exposing Server Kit
 
 [![npm version](https://badge.fury.io/js/desk-base.svg)](https://badge.fury.io/js/desk-base)
 [![License](https://img.shields.io/badge/License-CECILL--B-blue.svg)](LICENSE)
