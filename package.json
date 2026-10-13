@@ -27,5 +27,8 @@
   },
   "scripts": {
     "buildAddons": "node node_modules/desk-ui/source/buildAddons.js"
+  },
+  "allowScripts": {
+    "node-pty@1.1.0": true
   }
 }
