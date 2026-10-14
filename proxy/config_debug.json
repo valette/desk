@@ -1,0 +1,11 @@
+{
+	"ports": {
+		"alice": 41057,
+		"bob": 40745
+	},
+	"baseURL": "localhost:8080",
+	"defaultRoutes": {
+		"localhost:8080": "http://localhost:8080/alice/"
+	},
+	"env": {}
+}

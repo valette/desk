@@ -66,6 +66,11 @@ Once privileges are dropped it cannot be regained, so this happens **before**
 loading the real server. This is what guarantees each user's desk server runs
 as that user and cannot touch other users' files.
 
+**Debug (non-root):** when `deskSU.js` is run by a non-root user, the uid/gid
+switch is skipped and the server simply runs as the invoking user. Isolation is
+provided instead by a distinct `DESK_ROOTDIR` per configured user
+(`~/desk/debug/<user>`), not by Unix accounts.
+
 ## Routing (`proxy.js`)
 
 `updateRoutes()` builds a lookup object from `config.json`:
@@ -109,21 +114,28 @@ triggers a reload.
 
 ## Privilege model
 
-- `proxy.js` binds ports **80** (HTTP) and **443** (HTTPS), which require root.
-  It therefore starts as root and only then runs
-  `process.setgid('dproxy'); process.setuid('dproxy')` after both servers are
-  listening (`server.listen(port, () => proxyServer.listen(port2, ...))`).
-- The proxy runs as system user **`dproxy`**, whose home is
-  `/home/dproxy/desk/` (log directory).
-- Per-user DESK apps run as their owner via `deskSU.js` (see above).
+- In production `proxy.js` binds privileged ports and therefore starts as root,
+  then runs `process.setgid('dproxy'); process.setuid('dproxy')` only **after**
+  the servers are listening. The proxy runs as system user **`dproxy`**, whose
+  home is `/home/dproxy/desk/` (log directory).
+- **Debug (non-root):** `proxy.js` detects a non-root uid, skips the root and
+  `dproxy` checks and the privilege drop, and binds a high `HTTP_PORT`
+  (default 80, so set it high). No `dproxy` account is required.
+- Per-user DESK apps run as their owner via `deskSU.js` (production), or as the
+  invoking user (debug, see above).
 
 ## TLS
 
-The HTTPS server reads:
+HTTPS is **enabled by default** (production). `manage.mjs` disables it by
+passing `DESK_HTTPS=0` when a custom `--config` is given without `--https`
+(debug/HTTP-only mode).
+
+The HTTPS server reads (only when HTTPS is enabled):
 
 - `cert/privatekey.pem` (required key),
 - `cert/certificate.pem` (required cert),
 - `cert/chain.pem` (optional CA chain; a warning is printed if absent).
 
-Without these files the proxy cannot start. See
-[deployment.md](deployment.md) for generating them.
+If HTTPS is on and the cert files are missing, `proxy.js` exits with an error.
+In HTTP-only mode it serves plain HTTP on a single `HTTP_PORT` and no certs are
+needed.

@@ -119,9 +119,38 @@ addition to `env` from `config.json`):
 |----------|-------|-------|
 | `PORT` | allocated port | the DESK HTTP port |
 | `USER` | username | default auth identity |
-| `DESK_USER` | username | used by `deskSU.js` for uid/gid switch |
+| `DESK_USER` | username | used by `deskSU.js` for the uid/gid switch |
 | `DESK_PREFIX` | username | URL prefix routed by the proxy |
-| `HOME` | `/home/<user>` | user home |
+| `DESK_ROOTDIR` | the user's desk root | `~/desk/debug/<user>` in debug, `/home/<user>/desk` in production |
+| `HOME` | home dir | the user's home (or the invoking user's home in debug) |
 | `LOGNAME` | username | login name |
-| `CCACHE_DIR` | `/home/<user>/.ccache` | compiler cache |
+| `CCACHE_DIR` | `~/.ccache` | compiler cache location |
 | `DESK_STARTUP` | optional | custom boot script from desk config |
+
+## Debug / single-user mode
+
+`manage.mjs` accepts two flags (in any position, before/after the action):
+
+| Flag | Effect |
+|------|--------|
+| `--config <file>` | Use `<file>` as the shared config instead of `config.json`. **Also disables HTTPS** (proxy becomes HTTP-only) unless `--https` is passed. |
+| `--https` | Force HTTPS on even when a custom config was given with `--config`. |
+| `-h`, `--help` | Print usage/help and exit. |
+
+Running `manage.mjs` as a **non-root user** enables single-user debug: no setuid
+is attempted, and each configured user maps to an isolated
+`DESK_ROOTDIR` = `~/desk/debug/<user>`. See `docs/deployment.md`.
+
+## Proxy environment (`manage.mjs` passes these to the PROXY app)
+
+| Variable | Meaning | Default |
+|----------|---------|---------|
+| `DESK_CONFIG` | path of the shared config file (from `--config` or `config.json`) | `config.json` |
+| `DESK_HTTPS` | `1` enable HTTPS, `0` HTTP-only | `1` (production) |
+| `HTTP_PORT` | HTTP redirect port (HTTPS mode) or the sole serving port (HTTP-only mode) | `80` (HTTP-only/debug defaults to `8080`) |
+| `HTTPS_PORT` | TLS port (only used when `DESK_HTTPS=1`) | `443` |
+
+When serving on a non-standard port, `config.baseURL` must include the port so
+the routing key (`host + '/' + firstPathSegment`) matches what the browser
+sends, e.g. `baseURL: "localhost:8080"`. Both `manage.mjs` and `proxy.js` print
+the port(s) they bind on startup.

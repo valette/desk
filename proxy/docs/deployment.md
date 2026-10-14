@@ -14,6 +14,46 @@ behalf of all users require it).
   useradd --system --create-home dproxy
   ```
 
+## Single-user debug mode (no root)
+
+For local development you can run the whole stack as **one non-root user**:
+no root, no per-user Unix accounts, no privileged ports, no setuid. This is
+useful for debugging because all processes run under your account and can be
+inspected/attached directly.
+
+```bash
+cd proxy
+npm install
+cp config_debug.json config.json   # or write your own --config file
+
+# run everything as the current (non-root) user, HTTP only
+HTTP_PORT=8080 node manage.mjs --config config.json
+```
+
+What changes in debug mode:
+
+- **Custom config disables HTTPS.** Passing `--config <file>` switches the
+  proxy to HTTP-only unless `--https` is also given. (With `--https` you must
+  still provide TLS certs under `cert/`.)
+- **Non-root → single-user.** When run as a non-root user, `deskSU.js` skips
+  the setuid drop, the proxy skips the `dproxy` drop, and each configured
+  "user" maps to an isolated `DESK_ROOTDIR` under your home:
+  `~/desk/debug/<user>/`. Ports are high (allocated by `get-port`), and the
+  proxy binds `HTTP_PORT` (default 80, so set it high, e.g. 8080).
+- Logs go to `~/desk/log.txt` (proxy) and `~/desk/debug/<user>/log.txt` (per
+  user).
+
+```bash
+# add / remove virtual users at runtime
+HTTP_PORT=8080 node manage.mjs add carol --config config.json
+HTTP_PORT=8080 node manage.mjs remove bob  --config config.json
+```
+
+Open `http://localhost:8080/alice/` and `http://localhost:8080/bob/`.
+
+> **Security**: debug mode does **not** provide OS-level isolation between
+> users — they all share your account. Use it for development/QA only.
+
 ## 1. Install dependencies
 
 ```bash
@@ -112,12 +152,13 @@ Users should change their password from the desk-ui.
 
 | Symptom | Likely cause / fix |
 |---------|--------------------|
-| `EACCES` binding port 80/443 | Proxy must start as root; ensure the privilege drop happens after `listen`. |
+| `EACCES` binding port 80/443 | Proxy must start as root; ensure the privilege drop happens after `listen`. For non-root debug use a high `HTTP_PORT` (e.g. 8080). |
+| `proxy: missing TLS files ...` | HTTPS is on (default) but `cert/*.pem` absent. Either add certs, or disable HTTPS with a `--config` run (debug/HTTP-only). |
 | `no .ca file provided` warning | `cert/chain.pem` missing — only a warning; supply a chain if your CA requires it. |
-| User's app not starting | Check `/home/<user>/desk/log.txt`; a malformed `/home/<user>/desk/config.json` prevents startup. |
-| Route returns `404 Not Found` | The routing key `host + '/' + firstPathSegment` has no match — check `config.json` (baseURL must match the requested host). |
+| User's app not starting | Check `/home/<user>/desk/log.txt` (or `~/desk/debug/<user>/log.txt` in debug); a malformed per-user `config.json` prevents startup. |
+| Route returns `404 Not Found` | The routing key `host + '/' + firstPathSegment` has no match — check `config.json` (baseURL must match the requested host, including the port when serving on a non-standard port). |
 | Proxy not reloading routes | `fs.watchFile` uses mtime; ensure the file is actually saved with a newer mtime. |
-| Users see each other's files | Should not happen: each `deskSU.js` drops to its own uid. Verify no app is accidentally running as root (`pm2 list`, check log). |
+| Users see each other's files | Should not happen: each `deskSU.js` drops to its own uid. Verify no app is accidentally running as root (`pm2 list`, check log). Note that debug mode (non-root) intentionally shares one account — not isolated. |
 
 ## Security notes
 
