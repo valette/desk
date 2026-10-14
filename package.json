@@ -14,6 +14,7 @@
     "compression": "1.8.2",
     "desk-base": "1.10.2",
     "desk-ui": "3.9.0",
+    "desk-web": "^0.1.0",
     "express": "5.3.0",
     "formidable": "3.5.4",
     "fs-extra": "11.4.1",

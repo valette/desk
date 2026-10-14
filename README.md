@@ -199,6 +199,23 @@ DESK_ROOTDIR=/tmp/my-desk node desk.js
 # now write/read e.g. "data/test.txt" from the web UI
 ```
 
+### Test pages (desk-web)
+
+The server can serve the small [desk-web](https://github.com/valette/desk-web)
+test pages (connect and run actions, use the filesystem, stream + kill) at
+`/web/...` — no express route or extra dependency needed. The pages are
+ordinary static files served through an exposed `dataDir`:
+
+1. Build `desk-web`: `cd ../desk-web && npm run build` (copies `examples/*.html`
+   into `dist/` alongside `desk-web.mjs`).
+2. `extensions/desk-web.json` declares a `web` dataDir pointing at
+   `../desk-web/dist`, which `desk.js` resolves and serves under the root as
+   `/web/...` (behind the usual Basic auth).
+3. Open e.g. `http://localhost:8080/web/example-01-actions.html?username=...&password=...`.
+
+The `web` dir is marked `listed:false`/`hidden:true` so it doesn't clutter the
+desk-ui Files menu.
+
 ## Development
 
 Building the debug version:

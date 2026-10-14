@@ -64,6 +64,17 @@ DESK_ROOTDIR=$(mktemp -d) DESK_SINGLE=1 PORT=8080 node desk.js
 The desk-web library integration test does exactly this — see
 `desk-web/scripts/test-integration.cjs`.
 
+## Test pages (`desk-web`)
+
+The server also serves the `desk-web` test pages at `/web/...`. `extensions/`
+JSON files are auto-included via `actions.include(__dirname + '/extensions')`
+in `desk.js`; `extensions/desk-web.json` declares a `web` dataDir pointing at
+`../desk-web/dist` (relative to `desk/extensions/`). So the pages + bundle are
+served as ordinary exposed static files behind Basic auth. `dataDir` object
+fields used: `listed`/`hidden` (desk-ui visibility) and `public` (serve without
+auth). After changing `desk-web/src/`, rebuild `desk-web` (`npm run build`) so
+`dist/` (the served dir) has the updated bundle and example pages.
+
 ## Conventions
 
 - CommonJS `require`/`module.exports`; keep `desk.js` thin — push logic into

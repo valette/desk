@@ -1,0 +1,9 @@
+{
+	"dataDirs" : {
+		"web": {
+			"path" : "./../node_modules/desk-web/dist",
+			"listed" : false,
+			"hidden" : true
+		}
+	}
+}
