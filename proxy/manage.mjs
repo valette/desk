@@ -29,9 +29,15 @@ async function addUser( config, runningApps, user ) {
 
 	if ( app ) {
 
-		console.log( 'User ' + user + ' is already active' );
-		config.ports[ user ] = app.pm2_env.PORT;
-		return;
+		if ( app.pm2_env.PORT ) {
+
+			console.log( 'User ' + user + ' is already active' );
+			config.ports[ user ] = app.pm2_env.PORT;
+			return;
+
+		}
+
+		console.log( 'App ' + user + ' exists but has no PORT; restarting it' );
 
 	}
 
