@@ -88,14 +88,24 @@ const app = express()
 	.post( path.join( homeURL, '/upload' ), ( req, res ) => {
 
 		if ( !actions.getSettings().permissions ) return;
-		let outputDir;
+		let outputDir = null, relDir = null;
 		const files = [];
 		const form = new formidable.IncomingForm( {
 			uploadDir, maxFileSize : 200 * 1024 * 1024 * 1024 } );
 
 		form.parse( req, function( err, fields, files ) {
 
-			outputDir = path.join(deskDir, unescape(fields.uploadDir));
+			try {
+
+				relDir = path.normalize( decodeURIComponent( fields.uploadDir || '' ) );
+				outputDir = path.join( deskDir, relDir );
+
+			} catch ( e ) {
+
+				log( "upload error : bad uploadDir : " + e );
+				outputDir = null;
+
+			}
 
 		} );
 
@@ -106,6 +116,34 @@ const app = express()
 		form.on( 'end', async () => {
 
 			const length = files.length;
+			if ( !length ) return res.end();
+
+			if ( !outputDir ) {
+
+				log( "upload error : no valid uploadDir" );
+				return res.status( 400 ).send( 'invalid upload directory' );
+
+			}
+
+			// reject uploads escaping the exposed data dirs
+			const parts = relDir.split( '/' );
+			if ( !relDir || relDir.startsWith( '/' ) || parts.includes( '..' ) ) {
+
+				log( "upload error : path not allowed : " + relDir );
+				return res.status( 400 ).send( "path " + relDir + " not allowed" );
+
+			}
+
+			try {
+
+				await actions.validatePathAsync( parts[ 0 ] );
+
+			} catch ( e ) {
+
+				log( "upload error : " + e );
+				return res.status( 400 ).send( String( e ) );
+
+			}
 
 			while ( files.length ) {
 
