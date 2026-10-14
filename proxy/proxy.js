@@ -2,14 +2,16 @@ const fs        = require( 'fs' ),
       http      = require( 'http' ),
       https     = require( 'https' ),
       httpProxy = require( 'http-proxy' ),
-      os        = require( 'os' );
+      os        = require( 'os' ),
+      { execSync } = require( 'child_process' );
 
 const port      = 80,
       port2     = 443,
       file       = __dirname + '/config.json',
       keyFile    = __dirname + '/cert/privatekey.pem',
       certFile   = __dirname + '/cert/certificate.pem',
-      caFile     = __dirname + '/cert/chain.pem';
+      caFile     = __dirname + '/cert/chain.pem',
+      proxyUser  = 'dproxy';
 
 let defaultRoutes = {},
 	httpAllowed = {},
@@ -98,15 +100,46 @@ proxyServer.on( 'upgrade', function ( req, socket, head ) {
 
 updateRoutes();
 
+function checkPrivileges() {
+
+	if ( typeof process.getuid !== 'function' || process.getuid() !== 0 ) {
+
+		console.error( 'proxy: must be started as root to bind ports ' + port + '/' + port2 );
+		process.exit( 1 );
+
+	}
+
+	try {
+
+		execSync( 'id -u ' + proxyUser, { stdio : 'ignore' } );
+
+	} catch ( err ) {
+
+		console.error( 'proxy: system user ' + proxyUser + ' does not exist' );
+		process.exit( 1 );
+
+	}
+
+}
+
 // start proxies
+checkPrivileges();
 server.listen( port, function () {
 
 	proxyServer.listen( port2, function () {
 
 		console.log( 'desk-http2https service listening on port ' + port );
 		console.log( 'desk-proxy service listening on port ' + port2 );
-		process.setgid( 'dproxy' );
-		process.setuid( 'dproxy' );
+		try {
+
+			process.setgid( proxyUser );
+			process.setuid( proxyUser );
+
+		} catch ( err ) {
+
+			console.error( 'proxy: failed to drop privileges to ' + proxyUser + ' : ' + err );
+
+		}
 
 	} );
 
