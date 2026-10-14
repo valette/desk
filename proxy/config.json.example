@@ -1,8 +1,12 @@
 {
-	"ports" : [
+	"ports" : {
 		"user1" : 0,
 		"user2" : 0
-	],
+	},
+
+	"unmanaged" : {
+		"otherservice" : 3000
+	},
 
 	"baseURL" : "localhost",
 
@@ -18,5 +22,5 @@
 	"otherRoutes" : {
 		"foo.address/path" : "url3"
 	},
-	"env":{}
+	"env": {}
 }

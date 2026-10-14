@@ -216,6 +216,15 @@ ordinary static files served through an exposed `dataDir`:
 The `web` dir is marked `listed:false`/`hidden:true` so it doesn't clutter the
 desk-ui Files menu.
 
+### Multi-user deployment kit (`proxy/`)
+
+The [`proxy/`](proxy/) directory is a deployment layer for hosting many
+isolated DESK instances on a single machine behind one HTTPS endpoint. It uses
+[PM2](https://pm2.keymetrics.io/) to run per-user DESK servers (each under its
+own Unix account via a setuid launcher) and a reverse proxy that routes
+`https://<host>/<user>/` to each instance. See [`proxy/README.md`](proxy/README.md)
+and [`proxy/docs/`](proxy/docs/) for setup, configuration, and architecture.
+
 ## Development
 
 Building the debug version:
