@@ -267,9 +267,9 @@ io.on( 'connection', socket => {
 		.on( 'action', action => actions.execute( action ) )
 		.on( 'setEmitLog', log => actions.setEmitLog( log ) )
         .on( 'checkPassword', (currPass) => {
-            const shasum = crypto.createHash( 'sha1' );
+            const shasum = crypto.createHash( 'sha256' );
 			shasum.update( currPass );
-            const isCorrect = shasum.digest( 'hex' ) === id.sha;
+            const isCorrect = shasum.digest( 'hex' ) === id.sha256;
             socket.emit('checkPasswordResult', isCorrect );
         })
 		.on( 'password', password => {
