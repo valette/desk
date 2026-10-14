@@ -11,9 +11,9 @@ const port      = 80,
       certFile   = __dirname + '/cert/certificate.pem',
       caFile     = __dirname + '/cert/chain.pem';
 
-let defaultRoutes,
-	httpAllowed,
-	routes; // main routing object
+let defaultRoutes = {},
+	httpAllowed = {},
+	routes = {}; // main routing object
 
 const proxy = httpProxy.createProxyServer( {
 
