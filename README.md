@@ -151,6 +151,54 @@ Default login:
 - Username: your Linux username
 - Password: "password"
 
+## Configuration
+
+DESK is configured through environment variables:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DESK_ROOTDIR` | Absolute path of the server **root directory** (where all data lives) | `~/desk` |
+| `PORT` | HTTP port the server listens on | `8080` |
+| `DESK_PREFIX` | URL path prefix (e.g. `desk` → served under `/desk/`) | `/` |
+| `DESK_SINGLE` | Disable the IPC server and cron cache cleaner | unset |
+
+### Root directory and exposed directories
+
+`DESK_ROOTDIR` (default `~/desk`) is the base directory holding all server-side
+data. It is created automatically on first launch. The server only exposes a
+set of **allowed sub-directories** inside it; any path requested by an action
+must resolve inside one of them. The directories exposed by default are:
+
+| Exposed name | Directory | Notes |
+|--------------|-----------|-------|
+| `data` | `<root>/data` | main user data directory |
+| `code` | `<root>/code` | user code / scripts directory |
+| `home` | `$HOME` | the machine's home directory |
+| `cache` | `<root>/cache` | action result cache (hidden) |
+| `actions` | `<root>/actions` | generated action output (hidden) |
+
+File and directory paths sent to the server (via actions such as `write_string`,
+`read_string`, `ls`, `mkdirp`, ...) are **relative to the root directory**, and
+must start with an exposed directory name (e.g. `data/test.txt`, `code/foo.js`).
+Writing to the root itself (`/`) or to arbitrary absolute paths is **not
+allowed** and results in a `path ... not allowed` error.
+
+For example, using a throwaway root for testing:
+
+```bash
+DESK_ROOTDIR=$(mktemp -d) PORT=8080 node desk.js
+```
+
+### Custom root directory example
+
+A minimal isolation run, using a temporary root with a custom data file:
+
+```bash
+mkdir -p /tmp/my-desk/data /tmp/my-desk/code
+DESK_ROOTDIR=/tmp/my-desk node desk.js
+# now write/read e.g. "data/test.txt" from the web UI
+```
+
 ## Development
 
 Building the debug version:
