@@ -90,13 +90,23 @@ function processRequest ( req, res ) {
 	}
 }
 
-proxyServer.on( 'upgrade', function ( req, socket, head ) {
+function handleUpgrade ( req, socket, head ) {
 
 	const target = routes[ req.headers.host + '/' + req.url.split( "/" )[ 1 ] ];
 	if ( !target ) return socket.destroy();
 	proxy.ws( req, socket, head, target );
 
+}
+
+// http server: redirect to https, except for httpAllowed hosts
+server.on( 'upgrade', function ( req, socket, head ) {
+
+	if ( !httpAllowed[ req.headers.host ] ) return socket.destroy();
+	handleUpgrade( req, socket, head );
+
 } );
+
+proxyServer.on( 'upgrade', handleUpgrade );
 
 updateRoutes();
 
