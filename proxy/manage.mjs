@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import getPort from 'get-port';
 import { mkdirp } from 'mkdirp'
@@ -35,7 +35,7 @@ async function addUser( config, runningApps, user ) {
 
 	}
 
-	const id = parseInt( execSync( 'id -u ' + user ) );
+	const id = parseInt( execFileSync( 'id', [ '-u', user ] ).toString() );
 	const port = await getPort()
 	console.log( "Starting " + user );
 	const cwd = '/home/' + user + '/desk/';
@@ -43,7 +43,7 @@ async function addUser( config, runningApps, user ) {
 	if ( !fs.existsSync( cwd ) ) {
 
 		mkdirp.sync( cwd );
-		const group = parseInt( execSync( 'id -g ' + user ) );
+		const group = parseInt( execFileSync( 'id', [ '-g', user ] ).toString() );
 		fs.chownSync( cwd, id, group );
 		console.log( "Created desk directory for user " + user );
 
