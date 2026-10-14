@@ -1,7 +1,7 @@
 {
   "name": "desk-node",
   "description": "js web IDE with 3D data visualization tools and CLI-based RPC",
-  "license": "CECILL-B",
+  "license": "BSD-3-Clause",
   "main": "./desk.js",
   "author": "Sebastien Valette <sebastien.valette@creatis.insa-lyon.fr> (http://www.creatis.insa-lyon.fr/~valette)",
   "version": "2.2.0",

@@ -1,7 +1,7 @@
 # DESK Exposing Server Kit
 
 [![npm version](https://badge.fury.io/js/desk-base.svg)](https://badge.fury.io/js/desk-base)
-[![License](https://img.shields.io/badge/License-CECILL--B-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](LICENSE.txt)
 
 <p align="center">
   <img src="https://www.creatis.insa-lyon.fr/~valette/public/project/desk/featured_hub9df65f39462830ba627a3faff4f1e76_507899_85c5251d48138f2badd397219e873e59.webp">
@@ -48,7 +48,7 @@ More information: [http://www.creatis.insa-lyon.fr/~valette/desk.html](http://ww
 
 ## License
 
-CeCILL-B (BSD-compatible). For academic use, please cite:
+BSD-3-Clause. See [LICENSE](LICENSE.txt). For academic use, please cite:
 
 H. Jacinto, R. Kéchichan, M. Desvignes, R. Prost, and S. Valette, "A Web Interface for 3D Visualization and Interactive Segmentation of Medical Images", 17th International Conference on 3D Web Technology (Web 3D 2012), Los Angeles, USA, pp. 51-58, 2012
 
