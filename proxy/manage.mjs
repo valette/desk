@@ -108,7 +108,7 @@ async function removeUser( config, runningApps, user ) {
 		await pm2.deleteAsync( user );
 		console.log( 'app stopped for user ' + user );
 
-	} else throw 'no app found for user ' + user;
+	} else console.log( 'no running app found for user ' + user + '; port removed from config' );
 
 }
 
