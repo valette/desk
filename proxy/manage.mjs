@@ -91,11 +91,10 @@ async function addUser( config, runningApps, user ) {
 
 		console.log( '\nerror while reading ' + userConfig );
 		console.log( err );
-		settings = null;
+		return;
 
 	}
 
-	if ( !settings ) return;
 	await pm2.startAsync( settings );
 
 }
