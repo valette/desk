@@ -22,7 +22,12 @@ const proxy = httpProxy.createProxyServer( {
 
 } );
 
-proxy.on('error', ( err, req, res ) => res.end() );
+proxy.on('error', ( err, req, res ) => {
+
+	console.log( new Date().toISOString() + ' proxy error : ' + err.message + ' for ' + ( req && req.headers && req.headers.host ) + ( req && req.url ) );
+	if ( res ) res.end();
+
+});
 
 const serverOpts = {
 
