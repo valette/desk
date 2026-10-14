@@ -38,10 +38,12 @@ it that way.
    `Object.entries`. (The old `config.json.example` mistakenly showed array
    syntax — do not reintroduce it.) A `port` of `0` in a template means "pick
    one at runtime"; `manage.mjs` fills in real values.
-3. **Routing key** = `req.headers.host + '/' + req.url.split('/')[1]`
-   (host plus the first path segment). For the WebSocket upgrade path it is
-   computed the same way. Never change the key shape without updating both
-   `proxy.js` `processRequest` and the `upgrade` handler.
+3. **Routing key** — subdir mode (default): `host + '/' + req.url.split('/')[1]`
+   (host plus the first path segment). Subdomain mode (`config.subdomains`):
+   the **host only** (`user.baseURL`). Both modes go through the single
+   `routingKey(req)` helper in `proxy.js`; for the WebSocket upgrade path it is
+   computed the same way. Never change the key shape/helper without updating
+   both `processRequest` and the `upgrade` handler.
 4. **`unmanaged` users are never started** by `manage.mjs` (they map to an
    external/independent service), but they are still merged into `config.ports`
    before the file is saved so `proxy.js` keeps routing to them.
@@ -67,7 +69,7 @@ it that way.
 | `USER` | username | default auth identity |
 | `DESK_USER` | username | used by `deskSU.js` for the uid/gid switch |
 | `DESK_PREFIX` | username | URL prefix so `proxy.js` can route to it |
-| `DESK_ROOTDIR` | user desk root | `~/desk/debug/<user>` in debug, `/home/<user>/desk` in production |
+| `DESK_ROOTDIR` | user desk root | `<rootDir>/<user>` if `config.rootDir` is set, else `~/desk/debug/<user>` in debug, `/home/<user>/desk` in production |
 | `HOME` | user home | `/home/<user>` in production, the invoking user's home in debug |
 | `LOGNAME` | username | login name |
 | `CCACHE_DIR` | `~/.ccache` | compiler cache location |
@@ -105,8 +107,9 @@ node manage.mjs --help                         # usage/help
   forwarded to `proxy.js` as `DESK_CONFIG`. Do not hardcode a second path.
 - TLS (only used when HTTPS is enabled): `cert/privatekey.pem`,
   `cert/certificate.pem`, optional `cert/chain.pem` (relative to `proxy.js`).
-- User desk dir (production): `/home/<user>/desk/` (created + chowned by
-  `manage.mjs`); debug: `~/desk/debug/<user>`.
+- User desk dir (default): `/home/<user>/desk/` in production (created +
+  chowned by `manage.mjs`), `~/desk/debug/<user>` in debug — or `<rootDir>/<user>`
+  for both when `config.rootDir` is set.
 - Logs: `/home/<user>/desk/log.txt` and `/home/dproxy/desk/log.txt`
   (production), `~/desk/log.txt` and `~/desk/debug/<user>/log.txt` (debug).
 - Proxy system user: `dproxy` (also `proxyUser`); proxy PM2 app: `PROXY`

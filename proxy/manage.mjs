@@ -23,8 +23,10 @@ const isDebug = ( typeof process.getuid === 'function' && process.getuid() !== 0
 
 function userRoot ( user ) {
 
-	// Per-user DESK_ROOTDIR. In debug (single non-root account) every "user"
-	// maps to an isolated dir under the invoking user's home.
+	// Per-user DESK_ROOTDIR. A configured rootDir places every user's desk dir
+	// under <rootDir>/<user>. Otherwise, in debug (single non-root account)
+	// every "user" maps to an isolated dir under the invoking user's home.
+	if ( config.rootDir ) return path.join( config.rootDir, user );
 	if ( isDebug ) return path.join( os.homedir(), 'desk', 'debug', user );
 	return '/home/' + user + '/desk';
 
@@ -88,7 +90,9 @@ async function addUser( config, runningApps, user ) {
 			PORT : port,
 			USER : user,
 			DESK_USER : user,
-			DESK_PREFIX : user,
+			// in subdomain mode the subdomain identifies the user, so the desk
+			// server serves at root (no DESK_PREFIX); otherwise use /user/
+			...( config.subdomains ? {} : { DESK_PREFIX : user } ),
 			DESK_ROOTDIR : cwd,
 			HOME : isDebug ? os.homedir() : '/home/' + user,
 			LOGNAME : user

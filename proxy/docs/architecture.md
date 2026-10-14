@@ -73,10 +73,14 @@ provided instead by a distinct `DESK_ROOTDIR` per configured user
 
 ## Routing (`proxy.js`)
 
-`updateRoutes()` builds a lookup object from `config.json`:
+`updateRoutes()` builds a lookup object from `config.json`. The route key shape
+depends on the `subdomains` mode:
 
 ```js
+// subdir mode (default)
 routes[ baseURL + '/' + user ] = { target : 'http://' + baseURL + ':' + port }
+// subdomain mode
+routes[ user + '.' + baseURL ]  = { target : 'http://' + baseURL + ':' + port }
 ```
 
 - `baseURL` defaults to `os.hostname()`.
@@ -86,19 +90,29 @@ routes[ baseURL + '/' + user ] = { target : 'http://' + baseURL + ':' + port }
 - `httpAllowed[host]` lets a host be served over plain HTTP instead of being
   redirected to HTTPS.
 
-For an incoming request, `processRequest` computes the routing key:
+For an incoming request, `processRequest` computes the routing key through a
+mode-aware helper:
 
 ```js
-req.headers.host + '/' + req.url.split('/')[1]
+// subdir mode:   host + '/' + first path segment
+// subdomain mode: host only (the subdomain identifies the user)
+host.toLowerCase() (+ '/' + req.url.split('/')[1] in subdir mode)
 ```
 
-- If `req.url == '/'` and `defaultRoutes[host]` exists → `302` redirect.
+- A subdomain root `/` proxies straight to that user's desk (the host is the
+  route key, so no redirect is needed).
+- In subdomain mode, a bare base-domain `/user/...` request is `302`-redirected
+  to the matching subdomain, preserving path and query.
+- If `req.url == '/'` and `defaultRoutes[host]` exists (and no subdomain route
+  matched) → `302` redirect.
 - Otherwise look up the key; if missing → `404`.
 - Otherwise `proxy.web(req, res, target)` forwards the request.
 
 The **WebSocket upgrade** handler (`proxyServer.on('upgrade', ...)`) recomputes
-the same key and calls `proxy.ws(...)`. This is what keeps Socket.IO and the
-xterm terminal working through the proxy.
+the same key (via the same helper) and calls `proxy.ws(...)`. This is what
+keeps Socket.IO and the xterm terminal working through the proxy. Upgrades
+cannot be redirected, so in subdomain mode the subdomain host remains the
+canonical access point.
 
 The proxy uses `http-proxy` with `xfwd: true` (adds `X-Forwarded-For`) and a
 keep-alive agent for upstream connections. `proxy.on('error')` silently ends

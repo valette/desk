@@ -21,7 +21,9 @@ const httpsEnabled = process.env.DESK_HTTPS !== '0';
 
 let defaultRoutes = {},
 	httpAllowed = {},
-	routes = {}; // main routing object
+	routes = {}, // main routing object
+	subdomains = false, // route by host/subdomain instead of first path segment
+	baseDomain = '';    // normalized (lowercase) baseURL for subdomain mode
 
 const proxy = httpProxy.createProxyServer( {
 
@@ -37,16 +39,51 @@ proxy.on('error', ( err, req, res ) => {
 
 });
 
+function routingKey ( req ) {
+
+	// subdomain mode: the host itself identifies the user
+	// subdir mode: host + first path segment
+	const host = String( req.headers.host ).toLowerCase();
+	return subdomains ? host : host + '/' + req.url.split( "/" )[ 1 ];
+
+}
+
 function processRequest ( req, res ) {
 
-	if ( req.url == "/" && defaultRoutes[ req.headers.host ] ) {
+	const host = String( req.headers.host ).toLowerCase();
 
-		res.writeHead( 302, { Location: defaultRoutes[ req.headers.host ] } );
+	// subdomain mode: redirect a bare base-domain /<user>/... request to the
+	// matching subdomain (302, path + query preserved)
+	if ( subdomains && host === baseDomain ) {
+
+		const qIndex = req.url.indexOf( '?' );
+		const urlPath = qIndex >= 0 ? req.url.slice( 0, qIndex ) : req.url;
+		const query   = qIndex >= 0 ? req.url.slice( qIndex ) : '';
+		const parts   = urlPath.split( '/' );
+		const seg     = parts[ 1 ];
+
+		if ( seg && routes[ seg + '.' + host ] ) {
+
+			const scheme = httpsEnabled ? 'https' : 'http';
+			// strip the first path segment (the user name): it is now carried
+			// by the subdomain, and the desk server serves at root
+			const rest = '/' + parts.slice( 2 ).join( '/' );
+			res.writeHead( 302, { Location: scheme + '://' + seg + '.' + host + rest + query } );
+			res.end();
+			return;
+
+		}
+
+	}
+
+	if ( req.url == "/" && defaultRoutes[ host ] && !routes[ host ] ) {
+
+		res.writeHead( 302, { Location: defaultRoutes[ host ] } );
 		res.end();
 
 	} else {
 
-		const target = routes[ req.headers.host + '/' + req.url.split( "/" )[ 1 ] ];
+		const target = routes[ routingKey( req ) ];
 
 		if ( !target )  {
 
@@ -64,7 +101,7 @@ function processRequest ( req, res ) {
 
 function handleUpgrade ( req, socket, head ) {
 
-	const target = routes[ req.headers.host + '/' + req.url.split( "/" )[ 1 ] ];
+	const target = routes[ routingKey( req ) ];
 	if ( !target ) return socket.destroy();
 	proxy.ws( req, socket, head, target );
 
@@ -218,6 +255,8 @@ function updateRoutes() {
 		routes = {};
 
 		const baseURL = newRoutes.baseURL || os.hostname();
+		subdomains = !!newRoutes.subdomains;
+		baseDomain = String( baseURL ).toLowerCase();
 
 		// strip any port from baseURL to build the upstream host (per-user desk
 		// servers each listen on their own port, not the proxy's)
@@ -225,7 +264,12 @@ function updateRoutes() {
 
 		for( let [ user, port ] of Object.entries( newRoutes.ports ) ) {
 
-			routes[ baseURL + '/' + user ] = {
+			// subdomain mode routes by user.baseURL, otherwise by baseURL/user
+			const key = subdomains
+				? user + '.' + baseDomain
+				: baseDomain + '/' + user;
+
+			routes[ key ] = {
 
 				target : 'http://' + targetHost + ':' + port
 

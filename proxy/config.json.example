@@ -10,6 +10,10 @@
 
 	"baseURL" : "localhost",
 
+	"subdomains" : false,
+
+	"rootDir" : "",
+
 	"defaultRoutes" : {
 		"hostname1" : "url1",
 		"hostname2" : "url2"

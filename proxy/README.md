@@ -35,6 +35,12 @@ node manage.mjs remove bob # stop user "bob"
 After `init`, `https://<baseURL>/<user>/` proxies to
 `http://<baseURL>:<port>` where the DESK server for `<user>` listens.
 
+Set `"subdomains": true` in `config.json` to instead serve each user under its
+own subdomain: `https://<user>.<baseURL>/`. This requires a wildcard DNS record
+(`*.<baseURL>`) and a wildcard TLS certificate. A request to the bare
+`https://<baseURL>/<user>/...` is then `302`-redirected to the subdomain. See
+`docs/configuration.md`.
+
 ### Debug: single non-root user, HTTP only
 
 For local testing you can run the whole stack as **one non-root user**: no

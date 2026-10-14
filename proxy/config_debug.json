@@ -4,6 +4,7 @@
 		"bob": 40745
 	},
 	"baseURL": "localhost:8080",
+	"subdomains": false,
 	"defaultRoutes": {
 		"localhost:8080": "http://localhost:8080/alice/"
 	},

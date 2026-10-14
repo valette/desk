@@ -21,6 +21,8 @@ routing-only fields take effect without a restart.
 | `ports` | object `{ user: port }` | yes | both | Per-user DESK ports. `manage.mjs` starts one DESK app per key; `proxy.js` routes `/<user>/` to `http://<baseURL>:<port>`. A `0` placeholder means "allocate at runtime". |
 | `unmanaged` | object `{ name: target }` | no | both | Ports/URLs not managed by PM2. `manage.mjs` never starts these; it only merges them into `ports` when saving so `proxy.js` keeps routing to them. |
 | `baseURL` | string | no | proxy | Hostname used to build routes (e.g. `desk.example.org`). Defaults to `os.hostname()`. |
+| `subdomains` | boolean | no | both | Route by **host/subdomain** (`user.baseURL`) instead of first path segment (`baseURL/user`). See below. Default `false` (subdir mode). |
+| `rootDir` | string | no | manage | Root directory under which every user's `DESK_ROOTDIR` is created as `<rootDir>/<user>`. Empty/absent → default (`~/desk/debug/<user>` in debug, `/home/<user>/desk` in production). |
 | `defaultRoutes` | object `{ host: url }` | no | proxy | For a bare root request (`/`), the proxy `302`-redirects `host` to `url`. |
 | `httpAllowed` | object `{ host: true }` | no | proxy | Hosts served over plain HTTP instead of redirected to HTTPS. |
 | `otherRoutes` | object `{ "host/path": url }` | no | proxy | Extra external routes, added verbatim: key = routing key, value = target URL. |
@@ -38,6 +40,7 @@ routing-only fields take effect without a restart.
 		"matrix" : 3000
 	},
 	"baseURL" : "desk.example.org",
+	"subdomains" : false,
 	"defaultRoutes" : {
 		"desk.example.org" : "https://desk.example.org/alice/"
 	},
@@ -63,6 +66,43 @@ With the above:
 - `http://intranet.example.org/...` → served over HTTP (no redirect)
 
 ## Field details
+
+### Subdomain mode (`subdomains: true`)
+
+By default each user is served under a path of the base URL:
+`https://desk.example.org/alice/...`. Setting `"subdomains": true` instead
+serves each user under its own subdomain: `https://alice.desk.example.org/...`.
+
+- `proxy.js` builds routes keyed by `user.baseURL` and routes on the **host**
+  header only (no path prefix). Each user's `desk.js` serves at **root**
+  (`homeURL = "/"`), so socket.io and xterm paths are clean.
+- `manage.mjs` stops setting `DESK_PREFIX` for each user (it stays at root).
+- A request to the **bare base domain** with a user path, e.g.
+  `https://desk.example.org/alice/...`, is `302`-redirected to
+  `https://alice.desk.example.org/...` (path + query preserved).
+- `defaultRoutes` still applies to the bare base-domain root `/`; a subdomain's
+  root `/` proxies straight to that user's desk.
+
+> **Deployment prerequisites**: subdomain mode needs a **wildcard DNS** record
+> (`*.desk.example.org`) pointing at the proxy and a **wildcard TLS certificate**
+> covering `*.desk.example.org`. For local debug testing, add each test
+> subdomain to `/etc/hosts` (e.g. `127.0.0.1 alice.localhost bob.localhost`) —
+> `/etc/hosts` does not support `*` wildcards.
+
+### `rootDir`
+
+By default each user's desk data (`DESK_ROOTDIR`) lives at
+`~/desk/debug/<user>` (debug) or `/home/<user>/desk` (production). Setting
+`rootDir` relocates **all** of them under a single root, in both modes:
+
+```json
+{ "rootDir" : "/srv/desk" }
+```
+
+→ `alice`'s `DESK_ROOTDIR` becomes `/srv/desk/alice`, `bob`'s `/srv/desk/bob`,
+etc. `manage.mjs` creates `<rootDir>/<user>` if missing (and `chown`s the leaf
+to the user in production). The per-user `HOME` is **not** affected — it stays
+the login home (`/home/<user>` in production, `os.homedir()` in debug).
 
 ### `ports` vs `unmanaged`
 
@@ -120,8 +160,8 @@ addition to `env` from `config.json`):
 | `PORT` | allocated port | the DESK HTTP port |
 | `USER` | username | default auth identity |
 | `DESK_USER` | username | used by `deskSU.js` for the uid/gid switch |
-| `DESK_PREFIX` | username | URL prefix routed by the proxy |
-| `DESK_ROOTDIR` | the user's desk root | `~/desk/debug/<user>` in debug, `/home/<user>/desk` in production |
+| `DESK_PREFIX` | username | URL prefix routed by the proxy (omitted in subdomain mode — the server then serves at root) |
+| `DESK_ROOTDIR` | the user's desk root | `<rootDir>/<user>` if `rootDir` is set, else `~/desk/debug/<user>` in debug, `/home/<user>/desk` in production |
 | `HOME` | home dir | the user's home (or the invoking user's home in debug) |
 | `LOGNAME` | username | login name |
 | `CCACHE_DIR` | `~/.ccache` | compiler cache location |
