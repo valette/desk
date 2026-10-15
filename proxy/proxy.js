@@ -255,7 +255,11 @@ function updateRoutes() {
 		routes = {};
 
 		const baseURL = newRoutes.baseURL || os.hostname();
-		subdomains = !!newRoutes.subdomains;
+
+		// subdomain mode is overridable per-process via DESK_SUBDOMAINS
+		// (manage.mjs passes it from its --subdomains flag for this run only)
+		const envSub = process.env.DESK_SUBDOMAINS;
+		subdomains = envSub !== undefined ? ( envSub === '1' ) : !!newRoutes.subdomains;
 		baseDomain = String( baseURL ).toLowerCase();
 
 		// strip any port from baseURL to build the upstream host (per-user desk

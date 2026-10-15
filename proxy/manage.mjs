@@ -32,7 +32,7 @@ function userRoot ( user ) {
 
 }
 
-async function addUser( config, runningApps, user ) {
+async function addUser( config, runningApps, user, subdomains ) {
 
 	if ( ( config.unmanaged || {} )[ user ] ) {
 		console.log( user + " is an unmanaged port : " + config.unmanaged[ user ] );
@@ -92,7 +92,7 @@ async function addUser( config, runningApps, user ) {
 			DESK_USER : user,
 			// in subdomain mode the subdomain identifies the user, so the desk
 			// server serves at root (no DESK_PREFIX); otherwise use /user/
-			...( config.subdomains ? {} : { DESK_PREFIX : user } ),
+			...( subdomains ? {} : { DESK_PREFIX : user } ),
 			DESK_ROOTDIR : cwd,
 			HOME : isDebug ? os.homedir() : '/home/' + user,
 			LOGNAME : user
@@ -141,9 +141,9 @@ async function removeUser( config, runningApps, user ) {
 
 }
 
-async function init( config, runningApps, file, https, httpPort, httpsPort ) {
+async function init( config, runningApps, file, https, httpPort, httpsPort, subdomains ) {
 
-	for ( let user of Object.keys( config.ports ) ) await addUser( config, runningApps, user );
+	for ( let user of Object.keys( config.ports ) ) await addUser( config, runningApps, user, subdomains );
 	console.log("All runningApps launched");
 
 	if ( runningApps.find( app => ( app.name === proxyApp ) ) ) {
@@ -167,10 +167,11 @@ async function init( config, runningApps, file, https, httpPort, httpsPort ) {
 		instances  : 4,
 		env : {
 
-			DESK_CONFIG : file,
-			DESK_HTTPS  : https ? '1' : '0',
-			HTTP_PORT   : httpPort,
-			HTTPS_PORT  : httpsPort
+			DESK_CONFIG     : file,
+			DESK_HTTPS      : https ? '1' : '0',
+			DESK_SUBDOMAINS : subdomains ? '1' : '0',
+			HTTP_PORT       : httpPort,
+			HTTPS_PORT      : httpsPort
 
 		}
 
@@ -194,7 +195,8 @@ async function init( config, runningApps, file, https, httpPort, httpsPort ) {
 
 }
 
-// CLI: [action] [user] [--config <file>] [--https] [--help|-h]
+// CLI: [action] [user] [--config <file>] [--https] [--subdomains <true|false>]
+// [--help|-h]
 const args = parseArgs( process.argv.slice( 2 ) );
 const file = args.config || path.join( __dirname, 'config.json' );
 const https = ( args.config ? args.https : true );
@@ -218,6 +220,9 @@ Options:
                    Also disables HTTPS (proxy becomes HTTP-only) unless
                    --https is given.
   --https          force HTTPS on even when a custom config was given.
+  --subdomains <true|false>
+                   override config.subdomains for this run only (does not
+                   persist to the config file).
   -h, --help       show this help.
 
 Environment:
@@ -231,6 +236,8 @@ Examples:
   node manage.mjs remove bob             # stop user bob
   HTTP_PORT=8080 node manage.mjs --config config_debug.json   # debug, HTTP only
   node manage.mjs --config config.json --https                # custom config, HTTPS
+  node manage.mjs --subdomains true                           # subdomain routing this run
+  node manage.mjs --subdomains false                          # subdir routing this run
 ` );
 	process.exit( 0 );
 
@@ -251,6 +258,10 @@ try {
 	process.exit( 1 );
 
 }
+
+// Effective subdomain mode: the CLI flag overrides config.subdomains for this
+// run only (config.subdomains is left untouched so it does not persist).
+const subdomains = args.subdomains !== undefined ? args.subdomains : !!config.subdomains;
 
 // Proxy ports. Debug (HTTP-only) defaults to 8080 so it works as a non-root
 // user; production defaults to the privileged ports the proxy binds (80/443).
@@ -273,7 +284,7 @@ switch ( args.action ) {
 
 	case "add":
 		if ( !args.user ) throw "no user specified";
-		await addUser( config, runningApps, args.user );
+		await addUser( config, runningApps, args.user, subdomains );
 		break;
 
 	case "remove":
@@ -283,7 +294,7 @@ switch ( args.action ) {
 		break;
 
 	default:
-		await init( config, runningApps, file, https, httpPort, httpsPort );
+		await init( config, runningApps, file, https, httpPort, httpsPort, subdomains );
 
 }
 
