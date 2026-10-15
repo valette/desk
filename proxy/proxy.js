@@ -32,9 +32,18 @@ const proxy = httpProxy.createProxyServer( {
 
 } );
 
+// escape control/ANSI sequences so untrusted request data can't inject escape
+// codes into the log stream (log-injection hardening)
+function safe ( v ) {
+
+	const s = String( v ?? '' );
+	return s.replace( /[\x00-\x1f\x7f-\x9f]/g, ( c ) => '\\x' + c.charCodeAt( 0 ).toString( 16 ).padStart( 2, '0' ) );
+
+}
+
 proxy.on('error', ( err, req, res ) => {
 
-	console.log( new Date().toISOString() + ' proxy error : ' + err.message + ' for ' + ( req && req.headers && req.headers.host ) + ( req && req.url ) );
+	console.log( new Date().toISOString() + ' proxy error : ' + err.message + ' for ' + safe( req && req.headers && req.headers.host ) + safe( req && req.url ) );
 	if ( res ) res.end();
 
 });
