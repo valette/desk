@@ -76,7 +76,7 @@ const app = express()
 
 		} catch ( e ) {
 
-			res.setHeader( 'WWW-Authenticate', 'Basic realm="Identity?"' );
+			res.setHeader( 'WWW-Authenticate', `Basic realm="desk${homeURL}"` );
 			res.sendStatus( 401 );
 
 		}
